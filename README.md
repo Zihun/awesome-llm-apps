@@ -229,25 +229,90 @@ A curated collection of **Awesome LLM apps built with RAG, AI Agents, Multi-agen
 
 ## 🚀 Getting Started
 
-1. **Clone the repository** 
+This project now uses [uv](https://docs.astral.sh/uv/) for fast, reliable Python package management.
 
-    ```bash 
-    git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git 
-    ```
+### Prerequisites
 
-2. **Navigate to the desired project directory**
-
-    ```bash 
-    cd awesome-llm-apps/starter_ai_agents/ai_travel_agent
-    ```
-
-3. **Install the required dependencies**
+1. **Install uv** (if not already installed)
 
     ```bash
-    pip install -r requirements.txt
+    # macOS and Linux
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    # Windows
+    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+    # Or with pip
+    pip install uv
     ```
 
-4. **Follow the project-specific instructions** in each project's `README.md` file to set up and run the app.
+### Quick Start
+
+1. **Clone the repository**
+
+    ```bash
+    git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
+    cd awesome-llm-apps
+    ```
+
+2. **Install all dependencies with uv**
+
+    ```bash
+    # Install core dependencies only
+    uv sync
+
+    # Or install with all optional dependencies
+    uv sync --all-extras
+
+    # Or install specific extras (agents, rag, web, mcp, etc.)
+    uv sync --extra agents --extra rag
+    ```
+
+3. **Navigate to the desired project directory**
+
+    ```bash
+    cd starter_ai_agents/ai_travel_agent
+    ```
+
+4. **Run the project using uv**
+
+    ```bash
+    # Run Python scripts
+    uv run python script_name.py
+
+    # Run Streamlit apps
+    uv run streamlit run app.py
+    ```
+
+### Alternative: Traditional pip Installation
+
+If you prefer using pip, you can still install dependencies for individual projects:
+
+```bash
+cd awesome-llm-apps/starter_ai_agents/ai_travel_agent
+pip install -r requirements.txt
+```
+
+### Why uv?
+
+- ⚡ **10-100x faster** than pip for dependency resolution and installation
+- 🔒 **Reliable** with a lockfile (`uv.lock`) ensuring reproducible environments
+- 🎯 **Simple** single command to set up the entire project
+- 🔄 **Compatible** works alongside existing pip/requirements.txt workflows
+
+### Available Dependency Groups
+
+The project includes optional dependency groups you can install as needed:
+
+- `agents` - AI Agent frameworks (agno, openai-agents, mcp-agent)
+- `rag` - RAG and vector stores (lancedb, pypdf, faiss)
+- `web` - Web scraping and API tools
+- `mcp` - MCP agent tools
+- `local-llm` - Local LLM support (ollama)
+- `dev` - Development tools (pytest, ruff, mypy)
+- `all` - All dependencies
+
+**Follow the project-specific instructions** in each project's `README.md` file to set up and run the app.
 
 
 ### <img src="https://cdn.simpleicons.org/github"  alt="github logo" width="25" height="20"> Thank You, Community, for the Support! 🙏
