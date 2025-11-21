@@ -12,22 +12,30 @@ st.set_page_config(page_title="PyGame Code Generator", layout="wide")
 # Initialize session state
 if "api_keys" not in st.session_state:
     st.session_state.api_keys = {
-        "deepseek": "",
-        "openai": ""
+        "openai": "",
+        "gemini": ""
     }
+if "model_provider" not in st.session_state:
+    st.session_state.model_provider = "OpenAI"
 
 # Streamlit sidebar for API keys
 with st.sidebar:
     st.title("API Keys Configuration")
-    st.session_state.api_keys["deepseek"] = st.text_input(
-        "DeepSeek API Key",
-        type="password",
-        value=st.session_state.api_keys["deepseek"]
+
+    st.session_state.model_provider = st.selectbox(
+        "Select Model Provider",
+        ["OpenAI", "Google Gemini"]
     )
+
     st.session_state.api_keys["openai"] = st.text_input(
         "OpenAI API Key",
         type="password",
         value=st.session_state.api_keys["openai"]
+    )
+    st.session_state.api_keys["gemini"] = st.text_input(
+        "Google Gemini API Key",
+        type="password",
+        value=st.session_state.api_keys["gemini"]
     )
     
     st.markdown("---")
@@ -43,7 +51,7 @@ with st.sidebar:
     """)
 
 # Main UI
-st.title("🎮 AI 3D Visualizer with DeepSeek R1")
+st.title("🎮 AI 3D PyGame Visualizer")
 example_query = "Create a particle system simulation where 100 particles emit from the mouse position and respond to keyboard-controlled wind forces"
 query = st.text_area(
     "Enter your PyGame query:",
@@ -57,63 +65,55 @@ generate_code_btn = col1.button("Generate Code")
 generate_vis_btn = col2.button("Generate Visualization")
 
 if generate_code_btn and query:
-    if not st.session_state.api_keys["deepseek"] or not st.session_state.api_keys["openai"]:
-        st.error("Please provide both API keys in the sidebar")
+    provider = st.session_state.model_provider
+
+    # Validate API keys
+    if provider == "OpenAI" and not st.session_state.api_keys["openai"]:
+        st.error("Please provide OpenAI API key in the sidebar")
+        st.stop()
+    elif provider == "Google Gemini" and not st.session_state.api_keys["gemini"]:
+        st.error("Please provide Google Gemini API key in the sidebar")
         st.stop()
 
-    # Initialize Deepseek client
-    deepseek_client = OpenAI(
-        api_key=st.session_state.api_keys["deepseek"],
-        base_url="https://api.deepseek.com"
-    )
-
-    system_prompt = """You are a Pygame and Python Expert that specializes in making games and visualisation through pygame and python programming. 
-    During your reasoning and thinking, include clear, concise, and well-formatted Python code in your reasoning. 
-    Always include explanations for the code you provide."""
+    system_prompt = """You are a Pygame and Python Expert that specializes in making games and visualisation through pygame and python programming.
+    Generate complete, working Python pygame code for the user's request.
+    Return ONLY the Python code without any explanations or markdown backticks."""
 
     try:
-        # Get reasoning from Deepseek
-        with st.spinner("Generating solution..."):
-            deepseek_response = deepseek_client.chat.completions.create(
-                model="deepseek-reasoner",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": query}
-                ],
-                max_tokens=1  
-            )
+        with st.spinner("Generating code..."):
+            if provider == "OpenAI":
+                client = OpenAI(api_key=st.session_state.api_keys["openai"])
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": query}
+                    ]
+                )
+                extracted_code = response.choices[0].message.content
+            else:  # Google Gemini
+                import google.generativeai as genai
+                genai.configure(api_key=st.session_state.api_keys["gemini"])
+                model = genai.GenerativeModel("gemini-1.5-pro")
+                response = model.generate_content(f"{system_prompt}\n\nUser request: {query}")
+                extracted_code = response.text
 
-        reasoning_content = deepseek_response.choices[0].message.reasoning_content
-        print("\nDeepseek Reasoning:\n", reasoning_content)
-        with st.expander("R1's Reasoning"):      
-            st.write(reasoning_content)
-
-        # Initialize OpenAI agent
-        openai_agent = AgnoAgent(
-            model=AgnoOpenAIChat(
-                id="gpt-4o",
-                api_key=st.session_state.api_keys["openai"]
-            ),
-            debug_mode=True,
-            markdown=True
-        )
-
-        # Extract code
-        extraction_prompt = f"""Extract ONLY the Python code from the following content which is reasoning of a particular query to make a pygame script. 
-        Return nothing but the raw code without any explanations, or markdown backticks:
-        {reasoning_content}"""
-
-        with st.spinner("Extracting code..."):
-            code_response: RunOutput = openai_agent.run(extraction_prompt)
-            extracted_code = code_response.content
+        # Clean up code if wrapped in markdown
+        if extracted_code.startswith("```python"):
+            extracted_code = extracted_code[9:]
+        if extracted_code.startswith("```"):
+            extracted_code = extracted_code[3:]
+        if extracted_code.endswith("```"):
+            extracted_code = extracted_code[:-3]
+        extracted_code = extracted_code.strip()
 
         # Store the generated code in session state
         st.session_state.generated_code = extracted_code
-        
+
         # Display the code
-        with st.expander("Generated PyGame Code", expanded=True):      
+        with st.expander("Generated PyGame Code", expanded=True):
             st.code(extracted_code, language="python")
-            
+
         st.success("Code generated successfully! Click 'Generate Visualization' to run it.")
 
     except Exception as e:
