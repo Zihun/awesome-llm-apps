@@ -1,9 +1,13 @@
+import os
 import streamlit as st
 from agno.agent import Agent
 from agno.knowledge.embedder.ollama import OllamaEmbedder
 from agno.knowledge.knowledge import Knowledge
 from agno.models.ollama import Ollama
 from agno.vectordb.lancedb import LanceDb, SearchType
+
+# Local PDF file path
+LOCAL_PDF_PATH = os.path.join(os.path.dirname(__file__), "2503.11486v1.pdf")
 
 # Page configuration
 st.set_page_config(
@@ -29,8 +33,15 @@ if 'urls' not in st.session_state:
     st.session_state.urls = []
 if 'urls_loaded' not in st.session_state:
     st.session_state.urls_loaded = set()
+if 'local_pdf_loaded' not in st.session_state:
+    st.session_state.local_pdf_loaded = False
 
 kb = load_knowledge_base()
+
+# Auto-load local PDF file if it exists
+if not st.session_state.local_pdf_loaded and os.path.exists(LOCAL_PDF_PATH):
+    kb.add_content(path=LOCAL_PDF_PATH)
+    st.session_state.local_pdf_loaded = True
 
 # Load initial URLs if any (only load once per URL)
 for url in st.session_state.urls:
