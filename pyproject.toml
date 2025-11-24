@@ -17,6 +17,11 @@ dependencies = [
     "langchain-openai>=1.0.3",
     "browser-use>=0.9.7",
     "agno>=2.2.13",
+    "ddgs>=9.9.1",
+    "agents>=1.4.0",
+    "tensorflow>=2.20.0",
+    "contrib>=0.3.0",
+    "lancedb>=0.25.3",
 ]
 
 [project.optional-dependencies]
