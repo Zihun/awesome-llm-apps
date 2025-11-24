@@ -125,39 +125,40 @@ elif generate_vis_btn:
     else:
         async def run_pygame_on_trinket(code: str) -> None:
             browser = Browser()
-            from browser_use import Agent 
-            async with await browser.new_context() as context:
-                model = ChatOpenAI(
-                    model="gpt-4o", 
-                    api_key=st.session_state.api_keys["openai"]
-                )
-                
-                agent1 = Agent(
-                    task='Go to https://trinket.io/features/pygame, thats your only job.',
-                    llm=model,
-                    browser_context=context,
-                )
-                
-                executor = Agent(
-                    task='Executor. Execute the code written by the User by clicking on the run button on the right. ',
-                    llm=model,
-                    browser_context=context
-                )
-
-                coder = Agent(
-                    task='Coder. Your job is to wait for the user for 10 seconds to write the code in the code editor.',
-                    llm=model,
-                    browser_context=context
-                )
-                
-                viewer = Agent(
-                    task='Viewer. Your job is to just view the pygame window for 10 seconds.',
-                    llm=model,
-                    browser_context=context,
-                )
-
+            try:
+                context = await browser.start()
+                from browser_use import Agent 
                 with st.spinner("Running code on Trinket..."):
                     try:
+                        model = ChatOpenAI(
+                            model="gpt-4o", 
+                            api_key=st.session_state.api_keys["openai"]
+                        )
+                        
+                        agent1 = Agent(
+                            task='Go to https://trinket.io/features/pygame, thats your only job.',
+                            llm=model,
+                            browser_context=context,
+                        )
+                        
+                        executor = Agent(
+                            task='Executor. Execute the code written by the User by clicking on the run button on the right. ',
+                            llm=model,
+                            browser_context=context
+                        )
+
+                        coder = Agent(
+                            task='Coder. Your job is to wait for the user for 10 seconds to write the code in the code editor.',
+                            llm=model,
+                            browser_context=context
+                        )
+                        
+                        viewer = Agent(
+                            task='Viewer. Your job is to just view the pygame window for 10 seconds.',
+                            llm=model,
+                            browser_context=context,
+                        )
+
                         await agent1.run()
                         await coder.run()
                         await executor.run()
@@ -166,6 +167,8 @@ elif generate_vis_btn:
                     except Exception as e:
                         st.error(f"Error running code on Trinket: {str(e)}")
                         st.info("You can still copy the code above and run it manually on Trinket")
+            finally:
+                await browser.close()
 
         # Run the async function with the stored code
         asyncio.run(run_pygame_on_trinket(st.session_state.generated_code))
