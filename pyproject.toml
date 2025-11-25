@@ -22,6 +22,10 @@ dependencies = [
     "tensorflow>=2.20.0",
     "contrib>=0.3.0",
     "lancedb>=0.25.3",
+    "crewai>=1.5.0",
+    "crewai-tools>=1.5.0",
+    "gradio>=5.50.0",
+    "elevenlabs>=2.24.0",
 ]
 
 [project.optional-dependencies]
