@@ -68,6 +68,48 @@ dev = [
     "mypy",
 ]
 
+# CrewAI Version (crewai_version 디렉토리용)
+crewai = [
+    # Core AI Agent Framework
+    "crewai>=0.80.0",
+    "crewai-tools>=0.14.0",
+    # LangChain integrations (버전 호환성 맞춤)
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-anthropic>=0.2.0",
+    # UI Framework
+    "gradio>=5.0.0",
+    # LLM Providers
+    "anthropic>=0.30.0",
+    "groq>=0.11.0",
+    "together>=1.0.0",
+    # Vector Databases
+    "qdrant-client>=1.10.0",
+    "chromadb>=0.5.0",
+    # Document Processing
+    "pypdf>=4.0.0",
+    "unstructured>=0.15.0",
+    "python-docx>=1.0.0",
+    # Web & Browser
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+    "httpx>=0.27.0",
+    # Audio/Voice
+    "elevenlabs>=1.0.0",
+    "deepgram-sdk>=3.0.0",
+    # Data Processing
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "pydantic>=2.0.0",
+    # Memory & Storage
+    "mem0ai>=0.1.0",
+    "redis>=5.0.0",
+    # Utilities
+    "python-dotenv>=1.0.0",
+    "rich>=13.0.0",
+    "pillow>=10.0.0",
+]
+
 # All dependencies for development
 all = [
     "agno>=2.2.10",

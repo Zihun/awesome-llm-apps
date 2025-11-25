@@ -1,0 +1,38 @@
+# CrewAI Framework
+crewai>=0.28.0
+crewai-tools>=0.4.0
+
+# LangChain & LLMs
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-anthropic>=0.1.0
+langchain-community>=0.0.20
+
+# UI Framework
+gradio>=4.0.0
+
+# Core Dependencies
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Search Tools (Optional)
+google-serper>=1.0.0
+
+# Utilities
+asyncio>=3.4.3
+typing-extensions>=4.5.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# HTTP & API
+requests>=2.31.0
+httpx>=0.24.0
+
+# Development & Testing (Optional)
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
