@@ -27,6 +27,7 @@ dependencies = [
     "gradio>=5.50.0",
     "elevenlabs>=2.24.0",
     "langchain-google-genai>=3.0.0",
+    "duckdb>=1.4.2",
 ]
 
 [project.optional-dependencies]
