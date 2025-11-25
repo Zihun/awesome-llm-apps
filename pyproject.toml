@@ -3,7 +3,7 @@ name = "awesome-llm-apps"
 version = "0.1.0"
 description = "A curated collection of Awesome LLM apps built with RAG, AI Agents, Multi-agent Teams, MCP, Voice Agents, and more"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 license = { text = "MIT" }
 authors = [
     { name = "Shubham Saboo" }
@@ -26,6 +26,7 @@ dependencies = [
     "crewai-tools>=1.5.0",
     "gradio>=5.50.0",
     "elevenlabs>=2.24.0",
+    "langchain-google-genai>=3.0.0",
 ]
 
 [project.optional-dependencies]

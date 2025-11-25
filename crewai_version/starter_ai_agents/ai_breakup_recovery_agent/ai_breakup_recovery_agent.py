@@ -1,7 +1,5 @@
-from crewai import Agent, Task, Crew
+from crewai import Agent, Task, Crew, LLM
 import gradio as gr
-import google.generativeai as genai
-from langchain_google_genai import ChatGoogleGenerativeAI
 from typing import List
 import logging
 from pathlib import Path
@@ -16,8 +14,7 @@ logger = logging.getLogger(__name__)
 
 def initialize_agents(api_key: str) -> tuple:
     try:
-        genai.configure(api_key=api_key)
-        llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", google_api_key=api_key)
+        llm = LLM(model="gemini/gemini-2.0-flash", api_key=api_key)
 
         therapist_agent = Agent(
             role="Empathetic Therapist",
