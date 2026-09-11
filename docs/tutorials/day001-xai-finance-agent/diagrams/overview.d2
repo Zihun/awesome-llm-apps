@@ -1,0 +1,21 @@
+...@../../_tools/theme
+user: 사용자 { class: person }
+key: XAI_API_KEY (환경변수) { class: file }
+app: xai_finance_agent.py {
+  os: AgentOS 서버 (FastAPI, :7777) { class: ours }
+  agent: 금융 에이전트 (Agent) { class: ours }
+  ddg: 웹 검색 도구 (DuckDuckGoTools) { class: ours }
+  yf: 주가 도구 (YFinanceTools) { class: ours }
+}
+plane: AgentOS 컨트롤 플레인 (os.agno.com) { class: ext }
+grok: xAI Grok (grok-4-1-fast) { class: ext }
+ddgapi: DuckDuckGo { class: ext }
+yahoo: Yahoo Finance { class: ext }
+
+user -> plane: 브라우저에서 질문
+plane -> app.os: HTTP 요청
+app.os -> app.agent: run(message)
+key -> app.agent: 인증
+app.agent -> grok: 메시지 + 도구 스키마
+app.agent -> app.ddg -> ddgapi: 검색어
+app.agent -> app.yf -> yahoo: 티커 (예: AAPL)

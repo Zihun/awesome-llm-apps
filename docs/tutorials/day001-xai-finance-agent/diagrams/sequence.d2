@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+plane: 컨트롤 플레인 { class: ext }
+os: AgentOS 서버 { class: ours }
+agent: 금융 에이전트 { class: ours }
+grok: Grok { class: ext }
+yf: YFinanceTools { class: ours }
+
+user -> plane: "AAPL 최근 주가와 뉴스 요약해줘"
+plane -> os: "POST /agents/{id}/runs"
+os -> agent: run(message)
+agent -> grok: 메시지 + 도구 스키마 + 지시문
+grok -> agent: tool_call get_current_stock_price("AAPL")
+agent -> yf: get_current_stock_price("AAPL")
+yf -> agent: 가격 데이터
+agent -> grok: 도구 결과
+grok -> agent: 최종 답변 (markdown 표)
+agent -> os: 응답
+os -> plane -> user: 화면에 표시
