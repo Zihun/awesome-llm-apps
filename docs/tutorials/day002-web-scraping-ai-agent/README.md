@@ -23,7 +23,7 @@
 |---|---|---|
 | 사용자 | 브라우저에서 OpenAI 키·모델·URL·추출 프롬프트 입력 | 코드 없음 (브라우저) |
 | Streamlit UI | 입력을 받고 SmartScraperGraph를 실행해 결과를 표시 | `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:6-27` |
-| 스크래핑 그래프 (SmartScraperGraph) | 페이지 로드 → 텍스트 정리 → LLM 추출까지 파이프라인 실행 | `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:29-38` |
+| 스크래핑 그래프 (SmartScraperGraph) | 페이지 로드 → 텍스트 정리 → LLM 추출까지 파이프라인 실행 | `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:30-38` |
 | 대상 웹사이트 | 실제로 스크래핑할 페이지 | 코드 없음 (외부 사이트) |
 | OpenAI API (gpt-4o / gpt-5) | 페이지 텍스트에서 프롬프트에 맞는 정보를 구조화해 추출 | 코드 없음 (외부 서비스). 모델 선택은 `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:13-17` |
 
@@ -103,7 +103,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 200
 ```
 
-(직접 확인: 키를 넣지 않아도 이 시점까지는 화면이 정상적으로 뜬다. 제목·설명·키 입력창만 보이고 그 아래는 비어 있다.)
+(HTTP 200은 직접 확인. 제목·설명·키 입력창만 보이고 그 아래는 비어 있으리라는 것은 `if openai_access_token:` 가드 로직으로 추론한 것이며, 화면을 직접 열어 확인하지는 못했습니다.)
 
 ### Step 3. 모델 선택과 스크래핑 대상 입력
 
@@ -167,7 +167,7 @@ print(graph_config)
 
 **할 일.**
 
-`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:29-34`
+`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:30-34`
 
 ```python
     smart_scraper_graph = SmartScraperGraph(
@@ -264,7 +264,7 @@ Playwright로 `https://example.com`을 실제로 로드하는 데는 성공했�
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| "Scrape" 실행 시 `RuntimeError: Failed to scrape after 1 attempts: BrowserType.launch: Executable doesn't exist at ...\ms-playwright\chromium_headless_shell-1234\chrome-headless-shell.exe`와 함께 Playwright가 `playwright install` 실행을 안내하는 배너가 뜸 | `requirements.txt`의 `playwright`는 파이썬 바인딩만 설치하고, 실제 브라우저 실행 파일은 별도 다운로드가 필요하다. 앱 자체 README는 이 단계를 언급하지 않는다(직접 재현) | `uv run playwright install chromium` 실행 후 재시도 |
+| "Scrape" 실행 시 `RuntimeError: Failed to scrape after 1 attempts: BrowserType.launch: Executable doesn't exist at ...\ms-playwright\chromium_headless_shell-1234\chrome-headless-shell-win64\chrome-headless-shell.exe`(폴더 번호 `1234`는 설치된 playwright 버전마다 다를 수 있음)와 함께 Playwright가 `playwright install` 실행을 안내하는 배너가 뜸 | `requirements.txt`의 `playwright`는 파이썬 바인딩만 설치하고, 실제 브라우저 실행 파일은 별도 다운로드가 필요하다. 앱 자체 README는 이 단계를 언급하지 않는다(직접 재현) | `uv run playwright install chromium` 실행 후 재시도 |
 | 위 에러 메시지를 콘솔에 출력하는 도중 `UnicodeEncodeError: 'cp949' codec can't encode character '╔'...`까지 추가로 발생해 진짜 원인이 가려짐 | Playwright의 안내 배너가 상자 그리기 유니코드 문자(╔ 등)를 쓰는데, 한국어 Windows의 기본 콘솔 코드페이지(cp949)가 이 문자를 인코딩하지 못한다(직접 확인, 출력을 파이프로 받을 때 재현됨) | 진짜 원인(`RuntimeError`, 브라우저 없음)은 이미 나온 뒤이므로 그 줄을 찾아 위 해결을 따른다. `PYTHONIOENCODING=utf-8` 환경변수를 설정하고 재실행하면 배너까지 깨지지 않고 보인다(직접 확인) |
 | "Scrape"를 눌러도 무한 대기 없이 바로 에러가 뜨고, 페이지 로드 자체는 된 것처럼 보임 | OpenAI 키가 없거나 잘못됨. `SmartScraperGraph` 생성 시점에는 키를 검증하지 않고, 실제 LLM 호출 시점(`.run()` 내부)에야 인증을 확인한다(직접 확인: 페이지는 167자를 정상 파싱한 뒤 LLM 단계에서 401로 실패) | 유효한 OpenAI 키를 앱 화면 입력창에 다시 입력 |
 | 앱 자체 README의 "Getting Started"가 로컬 버전(`local_ai_scrapper.py`)을 쓸 때도 OpenAI 키가 필요한 것처럼 순서대로 안내 | 문서 구성 오류. `local_ai_scrapper.py`는 OpenAI를 전혀 쓰지 않고 `ollama/llama3.2`(`starter_ai_agents/web_scraping_ai_agent/local_ai_scrapper.py:12`)만 호출한다(직접 확인: 파일에 OpenAI 관련 import 없음) | 로컬 버전을 쓸 때는 OpenAI 키 없이 Ollama만 설치하면 된다 |
@@ -277,4 +277,4 @@ Playwright로 `https://example.com`을 실제로 로드하는 데는 성공했�
 
 ## 다음 날 예고
 
-[Day 003 · 🎙️ AI Blog to Podcast Agent](../day003-ai-blog-to-podcast-agent/README.md) — 블로그 글 하나를 요약해 팟캐스트 오디오로 바꾸는 에이전트를 만듭니다. (Day 003 폴더가 만들어지면 링크로 바뀝니다.)
+[Day 003 · 🎙️ AI Blog to Podcast Agent](../day003-ai-blog-to-podcast-agent/README.md) — 블로그 글 하나를 요약해 팟캐스트 오디오로 바꾸는 에이전트를 만듭니다.

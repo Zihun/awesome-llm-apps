@@ -915,6 +915,7 @@ export const REQUIRED_H2 = [
 
 const LINK_RE = /!?\[[^\]]*\]\(([^)\s]+)\)/g;
 const CODE_REF_RE = /`([A-Za-z0-9_.\-]+(?:\/[A-Za-z0-9_.\-]+)+\.[A-Za-z0-9]+):(\d+)(?:-(\d+))?`/g;
+const EXCERPT_RE = /^`([A-Za-z0-9_.\-]+(?:\/[A-Za-z0-9_.\-]+)+\.[A-Za-z0-9]+):(\d+)-(\d+)`[ \t]*\r?\n\r?\n```[A-Za-z0-9]*\r?\n([\s\S]*?)\r?\n```/gm;
 
 function stripFences(md) {
   return md.replace(/```[\s\S]*?```/g, (block) => (block.startsWith("```mermaid") ? block : ""));
@@ -969,6 +970,18 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
     const lines = text === "" ? 0 : text.split(/\r?\n/).length - (text.endsWith("\n") ? 1 : 0);
     const last = Number(end ?? start);
     if (Number(start) < 1 || last > lines || Number(start) > last) problems.push(rel(`코드 위치의 줄 범위가 파일 밖: ${path}:${start}${end ? `-${end}` : ""} (파일은 ${lines}줄)`));
+  }
+
+  // (9) 인용한 줄 범위와 바로 뒤 코드 블록의 내용이 일치하는지
+  const norm = (s) => s.split(/\r?\n/).map((l) => l.replace(/[ \t]+$/, "")).join("\n").replace(/\n+$/, "");
+  for (const m of md.matchAll(EXCERPT_RE)) {
+    const [, path, start, end, quoted] = m;
+    const file = resolve(repoRoot, path);
+    if (!existsSync(file)) continue; // (4)가 이미 보고함
+    const src = readFileSync(file, "utf8").split(/\r?\n/).slice(Number(start) - 1, Number(end));
+    if (norm(src.join("\n")) !== norm(quoted)) {
+      problems.push(rel(`코드 발췌가 인용한 줄 범위와 다름: ${path}:${start}-${end} — 발췌한 그대로의 범위를 적으세요`));
+    }
   }
 
   // (5) no mermaid

@@ -204,6 +204,7 @@ docs/tutorials/
 6. 로드맵 README에 일차 행이 133개 있고, 링크가 걸린 일차는 모두 존재하는 폴더를 가리킨다. (로드맵은 폴더가 있는 일차에만 링크를 걸고, 아직 없는 일차는 링크 없이 나열한다.)
 7. 골격의 미작성 표시 `(작성 필요)`가 본문에 남아 있지 않다. (`scaffold.mjs`가 만든 골격의 빈칸 표시. `roadmap.mjs`도 이 문자열이 없는 일차만 완료로 센다.)
 8. 렌더된 `.svg`의 너비가 1400px 이하다.
+9. 코드 발췌가 바로 앞에서 인용한 줄 범위와 정확히 일치한다.
 
 실행: `cd docs/tutorials/_tools && npm install && npm run render && npm run check`.
 

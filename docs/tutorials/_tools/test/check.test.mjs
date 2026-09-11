@@ -91,3 +91,12 @@ test("an svg wider than the column cap is reported", () => {
   writeFileSync(join(dayDir, "diagrams", "overview.svg"), embedHash('<svg width="1400" height="900"></svg>', hash));
   assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
 });
+
+test("a code excerpt that does not match its cited range is reported", () => {
+  const good = GOOD_README("`app/main.py:1-2`\n\n```python\nprint(1)\nprint(2)\n```\n");
+  const f1 = fixture({ readme: good });
+  assert.deepEqual(checkDay(f1.dayDir, { repoRoot: f1.repo }), [], "an exact excerpt passes");
+  const bad = GOOD_README("`app/main.py:1-2`\n\n```python\nprint(2)\n```\n");
+  const f2 = fixture({ readme: bad });
+  assert.ok(checkDay(f2.dayDir, { repoRoot: f2.repo }).some((p) => p.includes("코드 발췌가 인용한 줄 범위와 다름")), "a trimmed excerpt is reported");
+});

@@ -22,10 +22,10 @@
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
 | 사용자 | 블로그 URL과 키 3종을 입력 | 코드 없음 (브라우저) |
-| Streamlit UI | 입력을 받고 요약·오디오 결과를 표시 | `starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:10-24` |
+| Streamlit UI | 입력을 받고 요약·오디오 결과를 표시 | `starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:11-24` |
 | 요약 에이전트 (Agent) | FirecrawlTools로 블로그를 긁어와 OpenAI로 요약 | `starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:35-43` |
 | 스크래핑 도구 (FirecrawlTools) | 에이전트가 호출하는 블로그 본문 수집 함수(`scrape_website`) | `starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:38` |
-| TTS 클라이언트 (ElevenLabs) | 요약 텍스트를 오디오로 변환. 에이전트의 도구가 아니라 앱 코드가 `run()` 이후 직접 호출 | `starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:50-58` |
+| TTS 클라이언트 (ElevenLabs) | 요약 텍스트를 오디오로 변환. 에이전트의 도구가 아니라 앱 코드가 `run()` 이후 직접 호출 | `starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:51-58` |
 | OpenAI / Firecrawl / ElevenLabs API | 실제 요약·스크래핑·음성 합성을 수행하는 서드파티 서비스 3곳 | 코드 없음 (외부 서비스) |
 
 ## 단계별 진행
@@ -79,7 +79,7 @@ from elevenlabs import ElevenLabs
 import streamlit as st
 ```
 
-`starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:10-24`
+`starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:11-24`
 
 ```python
 st.set_page_config(page_title="📰 ➡️ 🎙️ Blog to Podcast", page_icon="🎙️")
@@ -182,7 +182,14 @@ gpt-4o None
 **확인.**
 
 ```bash
+# macOS/Linux, Git Bash
 FIRECRAWL_API_KEY=dummy uv run python -c "from agno.tools.firecrawl import FirecrawlTools; print(sorted(FirecrawlTools().functions))"
+```
+
+```powershell
+# Windows PowerShell
+$env:FIRECRAWL_API_KEY="dummy"
+uv run python -c "from agno.tools.firecrawl import FirecrawlTools; print(sorted(FirecrawlTools().functions))"
 ```
 
 ```
@@ -244,7 +251,7 @@ content: Incorrect API key provided: sk-invalid. You can find your API key at ht
 
 **할 일.**
 
-`starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:50-58`
+`starter_ai_agents/ai_blog_to_podcast_agent/blog_to_podcast_agent.py:51-58`
 
 ```python
                     client = ElevenLabs(api_key=elevenlabs_key)
@@ -339,4 +346,4 @@ headers: {...}, status_code: 401, body: {'detail': {'type': 'authentication_erro
 
 ## 다음 날 예고
 
-Day 004 · 🎵 AI Music Generator Agent — OpenAI GPT-4와 ModelsLab API로 프롬프트에서 음악을 생성하는 에이전트를 만듭니다. (Day 004 폴더가 만들어지면 링크로 바뀝니다.)
+Day 004 · 🎵 AI Music Generator Agent — OpenAI GPT-4o와 ModelsLab API로 프롬프트에서 음악을 생성하는 에이전트를 만듭니다. (Day 004 폴더가 만들어지면 링크로 바뀝니다.)

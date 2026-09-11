@@ -281,4 +281,4 @@ ERROR   Error in Agent run: XAI_API_KEY not set. Please set the XAI_API_KEY envi
 
 ## 다음 날 예고
 
-[Day 002 · 🕸️ Web Scraping AI Agent](../day002-web-scraping-ai-agent/README.md) — 웹 페이지를 LLM으로 구조화해서 긁어오는 에이전트를 만듭니다. (Day 002 폴더가 만들어지면 링크로 바뀝니다.)
+[Day 002 · 🕸️ Web Scraping AI Agent](../day002-web-scraping-ai-agent/README.md) — 웹 페이지를 LLM으로 구조화해서 긁어오는 에이전트를 만듭니다.
