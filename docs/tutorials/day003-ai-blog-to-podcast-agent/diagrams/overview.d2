@@ -1,0 +1,23 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+keys: API 키 3종 (사이드바 입력) { class: file }
+app: blog_to_podcast_agent.py {
+  ui: Streamlit UI (URL 입력) { class: ours }
+  agent: 요약 에이전트 (Agent) { class: ours }
+  fc: 스크래핑 도구 (FirecrawlTools) { class: ours }
+  tts: TTS 클라이언트 (ElevenLabs) { class: ours }
+}
+openai: OpenAI API (gpt-4o) { class: ext }
+firecrawl: Firecrawl API { class: ext }
+elevenlabs: ElevenLabs API { class: ext }
+
+user -> app.ui: 블로그 URL 입력
+keys -> app.agent: 환경변수로 연결
+keys -> app.tts: 생성자 인자로 전달
+app.ui -> app.agent: 실행 (Generate Podcast)
+app.agent -> app.fc: 블로그 URL
+app.fc -> firecrawl: 스크래핑 요청
+app.agent -> openai: 본문 + 요약 지시문
+app.agent -> app.tts: 요약 텍스트
+app.tts -> elevenlabs: 텍스트 음성 변환 요청

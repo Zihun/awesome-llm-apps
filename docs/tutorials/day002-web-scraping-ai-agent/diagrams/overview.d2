@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+key: OpenAI API 키 (UI 입력) { class: file }
+app: ai_scrapper.py {
+  ui: Streamlit UI (제목·키·모델 입력) { class: ours }
+  graph: 스크래핑 그래프 (SmartScraperGraph) { class: ours }
+}
+site: 대상 웹사이트 { class: ext }
+openai: OpenAI API (gpt-4o / gpt-5) { class: ext }
+
+user -> app.ui: URL + 추출 프롬프트
+key -> app.ui: API 키 입력
+app.ui -> app.graph: 실행 (Scrape 버튼)
+app.graph -> site: 페이지 요청 (Playwright)
+site -> app.graph: HTML
+app.graph -> openai: 페이지 텍스트 + 추출 프롬프트
+openai -> app.graph: 구조화된 JSON 결과
+app.graph -> app.ui: 결과 전달
+app.ui -> user: 화면에 표시

@@ -49,15 +49,15 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 133일 일정
 
-진도: 1 / 133일 완료
+진도: 3 / 133일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
 | ✅ | [Day 001](day001-xai-finance-agent/README.md) | 📊 xAI Finance Agent | [starter_ai_agents/xai_finance_agent](../../starter_ai_agents/xai_finance_agent/) |
-| ⬜ | Day 002 | 🕸️ Web Scraping AI Agent | [starter_ai_agents/web_scraping_ai_agent](../../starter_ai_agents/web_scraping_ai_agent/) |
-| ⬜ | Day 003 | 🎙️ AI Blog to Podcast Agent | [starter_ai_agents/ai_blog_to_podcast_agent](../../starter_ai_agents/ai_blog_to_podcast_agent/) |
+| ✅ | [Day 002](day002-web-scraping-ai-agent/README.md) | 🕸️ Web Scraping AI Agent | [starter_ai_agents/web_scraping_ai_agent](../../starter_ai_agents/web_scraping_ai_agent/) |
+| ✅ | [Day 003](day003-ai-blog-to-podcast-agent/README.md) | 🎙️ AI Blog to Podcast Agent | [starter_ai_agents/ai_blog_to_podcast_agent](../../starter_ai_agents/ai_blog_to_podcast_agent/) |
 | ⬜ | Day 004 | 🎵 AI Music Generator Agent | [starter_ai_agents/ai_music_generator_agent](../../starter_ai_agents/ai_music_generator_agent/) |
 | ⬜ | Day 005 | 🔄 Mixture of Agents | [starter_ai_agents/mixture_of_agents](../../starter_ai_agents/mixture_of_agents/) |
 | ⬜ | Day 006 | 📊 AI Data Analysis Agent | [starter_ai_agents/ai_data_analysis_agent](../../starter_ai_agents/ai_data_analysis_agent/) |

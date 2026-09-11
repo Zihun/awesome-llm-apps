@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: 요약 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+firecrawl: Firecrawl API { class: ext }
+elevenlabs: ElevenLabs API { class: ext }
+
+user -> ui: URL + 키 3종 입력
+ui -> agent: run() 실행
+agent -> openai: 프롬프트 + 도구 스키마
+openai -> agent: tool_call scrape_website(url)
+agent -> firecrawl: scrape_website(url)
+firecrawl -> agent: 블로그 본문
+agent -> openai: 도구 결과
+openai -> agent: 요약 텍스트
+agent -> ui: 요약 텍스트 반환
+ui -> elevenlabs: 음성 변환 요청
+elevenlabs -> ui: 오디오 데이터
+ui -> user: 재생·다운로드 화면
