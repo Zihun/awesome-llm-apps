@@ -74,3 +74,9 @@ test("checkRoadmap requires 133 rows and existing link targets", () => {
   writeFileSync(join(root, "README.md"), `# r\n${rows.split("\n").slice(0, 10).join("\n")}\n`);
   assert.ok(checkRoadmap(join(root, "README.md"), days, root).some((p) => p.includes("133")));
 });
+
+test("a code ref one line past the end of a newline-terminated file is reported", () => {
+  const { repo, dayDir } = fixture({ readme: GOOD_README("`app/main.py:1-3`\n") });
+  const problems = checkDay(dayDir, { repoRoot: repo });
+  assert.ok(problems.some((p) => p.includes("app/main.py:1-3") && p.includes("파일은 2줄")), problems.join("\n"));
+});

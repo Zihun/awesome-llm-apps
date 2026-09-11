@@ -64,7 +64,8 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
     const [, path, start, end] = m;
     const file = resolve(repoRoot, path);
     if (!existsSync(file)) { problems.push(rel(`코드 위치의 파일 없음: ${path}:${start}${end ? `-${end}` : ""}`)); continue; }
-    const lines = readFileSync(file, "utf8").split(/\r?\n/).length;
+    const text = readFileSync(file, "utf8");
+    const lines = text === "" ? 0 : text.split(/\r?\n/).length - (text.endsWith("\n") ? 1 : 0);
     const last = Number(end ?? start);
     if (Number(start) < 1 || last > lines || Number(start) > last) problems.push(rel(`코드 위치의 줄 범위가 파일 밖: ${path}:${start}${end ? `-${end}` : ""} (파일은 ${lines}줄)`));
   }
