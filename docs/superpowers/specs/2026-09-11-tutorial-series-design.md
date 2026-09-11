@@ -39,10 +39,16 @@
 docs/tutorials/
 ├── README.md                     # 133일 로드맵: 볼륨별 표(일차·앱·난이도·링크), 진도 체크박스, 공통 사전 준비
 ├── _tools/
-│   ├── package.json              # @terrastruct/d2 devDependency, scripts: render / check
+│   ├── package.json              # @terrastruct/d2 devDependency, scripts: render / check / test / scaffold / roadmap
 │   ├── render.mjs                # **/diagrams/*.d2 → 같은 이름 .svg
 │   ├── check.mjs                 # 문서·다이어그램 정합성 검사
-│   └── theme.d2                  # 공통 색·도형 클래스
+│   ├── theme.d2                  # 공통 색·도형 클래스
+│   ├── days.json                 # 133일 일정 데이터(부록 A와 동일). 로드맵·스캐폴딩의 원천
+│   ├── scaffold.mjs              # dayNNN-slug/ 폴더와 README 골격, diagrams/ 생성
+│   ├── roadmap.mjs               # roadmap.template.md + days.json + 진도 → README.md 생성
+│   ├── roadmap.template.md       # 로드맵의 고정 본문(소개, 공통 사전 준비). <!-- DAYS --> 자리에 표가 들어감
+│   ├── lib/                      # 스크립트가 공유하는 모듈 (d2.mjs, days.mjs, check.mjs)
+│   └── test/                     # node --test 로 도는 도구 테스트
 ├── day001-xai-finance-agent/
 │   ├── README.md
 │   └── diagrams/
@@ -136,7 +142,7 @@ docs/tutorials/
 | `sequence.d2` | 요청 하나가 사용자 → UI → 에이전트 → 도구/LLM → 응답으로 흐르는 시퀀스(`shape: sequence_diagram`) | 1 |
 | `extra-{이름}.d2` | 필요할 때만: 상태 기계(CRAG, LangGraph), 인덱스 데이터 모델(RAG), 배포 구성(Always-on) | 0~2 |
 
-**테마 `_tools/theme.d2`.** 모든 `.d2`는 첫 줄에서 테마를 가져온다. 클래스는 다음 일곱 가지로 고정한다.
+**테마 `_tools/theme.d2`.** 모든 `.d2`는 첫 줄에서 테마를 가져온다. 기본 클래스 다섯 개와 각각의 `-new`, `-todo` 변형까지 15개로 고정한다.
 
 | 클래스 | 용도 | 표현 |
 |---|---|---|
@@ -145,8 +151,10 @@ docs/tutorials/
 | `ext` | 외부 API, LLM 제공자 | 회색 `shape: cloud` |
 | `store` | DB, 벡터 저장소, 캐시 | 초록 `shape: cylinder` |
 | `file` | 파일, 문서, 설정 | `shape: page` |
-| `new` | 이번 스텝에서 추가된 요소 | 주황 굵은 테두리 |
-| `todo` | 아직 만들지 않은 요소 | 회색 점선, 낮은 불투명도 |
+| `<기본>-new` (예: `ours-new`) | 이번 스텝에서 추가된 요소 | 기본 모양·채움 그대로, 주황 굵은 테두리 |
+| `<기본>-todo` (예: `ext-todo`) | 아직 만들지 않은 요소 | 기본 모양·채움 그대로, 점선, 낮은 불투명도 |
+
+`stepK.d2`는 `...@overview`로 배치를 가져온 뒤 `app.agent.class: ours-new`처럼 **단일 클래스**로 덧씌운다. 배열 덧씌우기(`x.class: [ours; new]`)는 선언 뒤에 오면 사용 중인 렌더러가 무시하므로 쓰지 않는다(2026-09-11 확인).
 
 - 레이아웃은 ELK, 방향은 `direction: right`가 기본이고 세로가 자연스러운 경우 `down`. 손그림(`sketch`)은 쓰지 않는다.
 - 라벨은 "한국어 역할 (식별자)" 형식. 예: `여행 에이전트 (travel_agent.py)`, `검색 도구 (SerpApiTools)`.
@@ -165,33 +173,41 @@ docs/tutorials/
   "name": "awesome-llm-apps-tutorial-tools",
   "private": true,
   "type": "module",
-  "scripts": { "render": "node render.mjs", "check": "node check.mjs" },
+  "scripts": {
+    "render": "node render.mjs",
+    "check": "node check.mjs",
+    "scaffold": "node scaffold.mjs",
+    "roadmap": "node roadmap.mjs",
+    "test": "node --test --test-force-exit"
+  },
   "devDependencies": { "@terrastruct/d2": "^0.1.33" }
 }
 ```
 
 **`render.mjs`.**
 
-- 인자 없음: `docs/tutorials/day*/diagrams/*.d2` 전부. 인자 `day001` 등: 그 폴더만. `--force`: mtime 비교 없이 전부 다시 렌더.
-- 기본은 `.d2`가 `.svg`보다 새로울 때만 렌더한다.
-- 테마 import는 D2의 import 문법으로 처리하고, `@terrastruct/d2`의 `compile(..., { fs })` 옵션에 테마 파일 내용을 넘긴다. 이 방식이 동작하지 않으면 렌더 스크립트가 테마 내용을 소스 앞에 붙이는 방식으로 대체한다(두 경우 모두 `.d2` 파일 자체는 바꾸지 않는다).
-- 컴파일 옵션: `layout: "elk"`, `sketch: false`, `pad: 20`.
+- 인자 없음: `docs/tutorials/day*/diagrams/*.d2` 전부. 인자 `day001` 등: 그 폴더만. `--force`: 변경 여부와 상관없이 전부 다시 렌더.
+- 변경 감지는 mtime이 아니라 해시로 한다(git checkout은 mtime을 보존하지 않으므로). 렌더할 때 import를 펼친 최종 소스의 SHA-256을 `<!-- d2-source-sha256: … -->` 주석으로 SVG의 `</svg>` 바로 앞에 넣고, 다음 실행 때 같은 해시면 건너뛴다. 테마가 바뀌면 해시가 바뀌므로 모든 그림이 다시 렌더된다.
+- import는 render.mjs가 텍스트로 펼친다. `...@경로` 한 줄을 그 파일(`.d2` 확장자 생략 가능, 경로는 그 파일 기준 상대 경로)의 내용으로 치환하며 재귀 import와 순환을 처리한다. 일차 폴더의 `.d2`는 첫 줄에 `...@../../_tools/theme`를 쓰고, `stepK.d2`는 `...@overview`로 배치를 그대로 가져온 뒤 클래스만 덧씌운다(`app.agent.class: ours-new`). 이 문법은 D2 CLI에서도 그대로 유효하다.
+- D2의 ELK 레이아웃 워커가 Node 이벤트 루프를 붙잡아 프로세스가 스스로 끝나지 않으므로 `render.mjs`는 마지막에 `process.exit(code)`를 호출하고, 테스트는 `node --test --test-force-exit`로 돌린다.
+- 컴파일 옵션: `layout: "elk"`, `sketch: false`, `pad: 20`, `noXMLTag: true`.
 - 실패한 파일은 이름과 오류를 출력하고 마지막에 exit 1.
 
 **`check.mjs`.** 다음을 검사하고 하나라도 실패하면 exit 1.
 
 1. 모든 `day*/README.md`에 4절의 H2 제목 9개가 순서대로 있다(Day 133은 "다음 날 예고" 생략 허용).
 2. README가 참조하는 상대 링크와 이미지 파일이 존재한다.
-3. `diagrams/*.d2`마다 짝이 되는 `.svg`가 있고, `.svg`가 `.d2`보다 오래되지 않았다.
+3. `diagrams/*.d2`마다 짝이 되는 `.svg`가 있고, `.svg` 안의 `d2-source-sha256` 주석이 현재 소스(import를 펼친 것)의 해시와 같다(다르면 "stale").
 4. 본문의 코드 위치 표기 `` `경로:시작-끝` ``이 실제 파일을 가리키고 줄 범위가 파일 길이 안에 있다.
 5. mermaid 코드 펜스가 없다.
-6. 로드맵 README의 일차 링크 133개가 모두 존재하는 폴더를 가리킨다.
+6. 로드맵 README에 일차 행이 133개 있고, 링크가 걸린 일차는 모두 존재하는 폴더를 가리킨다. (로드맵은 폴더가 있는 일차에만 링크를 걸고, 아직 없는 일차는 링크 없이 나열한다.)
+7. 골격의 미작성 표시 `(작성 필요)`가 본문에 남아 있지 않다. (`scaffold.mjs`가 만든 골격의 빈칸 표시. `roadmap.mjs`도 이 문자열이 없는 일차만 완료로 센다.)
 
 실행: `cd docs/tutorials/_tools && npm install && npm run render && npm run check`.
 
 ## 7. 제작 순서와 커밋 규칙
 
-1. **스캐폴딩.** 로드맵 README, `_tools` 네 파일, Day 1 완성본을 만들고 렌더·검사를 통과시킨 뒤 커밋한다. 커밋 메시지: `docs(tutorials): scaffold 133-day series and Day 1`.
+1. **스캐폴딩.** 로드맵 README, `_tools` 일체, Day 1 완성본을 만들고 렌더·검사를 통과시킨 뒤 커밋한다. 도구는 작업 단위마다 따로 커밋해도 된다. 마지막 커밋 메시지: `docs(tutorials): scaffold 133-day series and Day 1`.
 2. **검토.** 사용자가 Day 1의 톤, 깊이, 그림 스타일을 보고 조정 사항을 준다. 조정을 템플릿과 테마에 반영한 뒤 확장한다.
 3. **볼륨 제작.** 볼륨 1부터 순서대로. 볼륨마다 커밋 하나. 메시지: `docs(tutorials): Volume {n} {볼륨명}, Day {a}-{b}`. 큰 볼륨(21일)은 중간 커밋을 허용한다.
 4. **진도 기록.** 로드맵 README의 체크박스를 완료된 일차만큼 채운다. 새 세션은 로드맵과 이 문서를 먼저 읽고 이어간다.
@@ -218,8 +234,9 @@ docs/tutorials/
 | upstream 동기화로 앱 코드가 바뀌어 줄 번호 참조가 어긋남 | `check.mjs`가 줄 범위 초과를 잡는다. 동기화 후에는 `npm run check`를 돌리고 어긋난 참조를 고친다. 코드 발췌는 줄 번호보다 함수·변수 이름을 기준으로 설명해 어긋나도 찾을 수 있게 한다 |
 | 일부 앱이 폐기된 라이브러리 API를 쓰거나 현재 실행되지 않음 | 고치지 않고 "문제 해결" 절에 증상과 우회법을 적는다. 문서 상단 난이도 옆에 ⚠ 표시 |
 | 대형 앱(수천~수만 줄)은 하루 분량을 넘음 | 핵심 파일과 요청 경로 하나만 다루고 나머지는 컴포넌트 표에 역할만 적는다 |
-| D2 JS 렌더러의 import 처리 불확실 | 6절의 대체 방식(테마 내용 선행 결합)으로 전환 |
-| 다이어그램 수가 많아(약 900장) 일관성이 무너짐 | 테마 클래스 일곱 개만 사용, `check.mjs`가 파일 세트 누락을 잡음, 볼륨마다 육안 표본 검사 |
+| D2 JS 렌더러의 import 처리 불확실 | render.mjs가 import를 텍스트로 펼치므로 렌더러의 import 지원에 의존하지 않는다(6절) |
+| 다이어그램 수가 많아(약 900장) 일관성이 무너짐 | 정해진 테마 클래스 15개만 사용, `check.mjs`가 파일 세트 누락을 잡음, 볼륨마다 육안 표본 검사 |
+| D2 렌더러 프로세스가 끝나지 않아 자동화가 멈춤 | 렌더 스크립트는 `process.exit`, 테스트는 `--test-force-exit`, 출력은 파이프 대신 파일로 |
 | API 비용 | 문서에 대략치를 적고 로컬 모델 대안이 있는 앱은 함께 안내 |
 
 ## 부록 A. 133일 전체 일정
