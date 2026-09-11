@@ -1,0 +1,15 @@
+{
+  "name": "awesome-llm-apps-tutorial-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs",
+    "check": "node check.mjs",
+    "scaffold": "node scaffold.mjs",
+    "roadmap": "node roadmap.mjs",
+    "test": "node --test --test-force-exit"
+  },
+  "devDependencies": {
+    "@terrastruct/d2": "^0.1.33"
+  }
+}
