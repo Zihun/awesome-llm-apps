@@ -1,0 +1,1066 @@
+[
+  {
+    "day": 1,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "📊 xAI Finance Agent",
+    "path": "starter_ai_agents/xai_finance_agent",
+    "slug": "xai-finance-agent"
+  },
+  {
+    "day": 2,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "🕸️ Web Scraping AI Agent",
+    "path": "starter_ai_agents/web_scraping_ai_agent",
+    "slug": "web-scraping-ai-agent"
+  },
+  {
+    "day": 3,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "🎙️ AI Blog to Podcast Agent",
+    "path": "starter_ai_agents/ai_blog_to_podcast_agent",
+    "slug": "ai-blog-to-podcast-agent"
+  },
+  {
+    "day": 4,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "🎵 AI Music Generator Agent",
+    "path": "starter_ai_agents/ai_music_generator_agent",
+    "slug": "ai-music-generator-agent"
+  },
+  {
+    "day": 5,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "🔄 Mixture of Agents",
+    "path": "starter_ai_agents/mixture_of_agents",
+    "slug": "mixture-of-agents"
+  },
+  {
+    "day": 6,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "📊 AI Data Analysis Agent",
+    "path": "starter_ai_agents/ai_data_analysis_agent",
+    "slug": "ai-data-analysis-agent"
+  },
+  {
+    "day": 7,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "😂 AI Meme Generator Agent (Browser)",
+    "path": "starter_ai_agents/ai_meme_generator_agent_browseruse",
+    "slug": "ai-meme-generator-agent-browseruse"
+  },
+  {
+    "day": 8,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "🩻 AI Medical Imaging Agent",
+    "path": "starter_ai_agents/ai_medical_imaging_agent",
+    "slug": "ai-medical-imaging-agent"
+  },
+  {
+    "day": 9,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "✨ Gemini Multimodal Agent",
+    "path": "starter_ai_agents/multimodal_ai_agent",
+    "slug": "multimodal-ai-agent"
+  },
+  {
+    "day": 10,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "💸 AI x402 Paying Agent",
+    "path": "starter_ai_agents/ai_x402_paying_agent",
+    "slug": "ai-x402-paying-agent"
+  },
+  {
+    "day": 11,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "❤️‍🩹 AI Breakup Recovery Agent",
+    "path": "starter_ai_agents/ai_breakup_recovery_agent",
+    "slug": "ai-breakup-recovery-agent"
+  },
+  {
+    "day": 12,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "🛫 AI Travel Agent (Local & Cloud)",
+    "path": "starter_ai_agents/ai_travel_agent",
+    "slug": "ai-travel-agent"
+  },
+  {
+    "day": 13,
+    "vol": 1,
+    "volLabel": "🌱 Starter AI Agents",
+    "title": "🔍 OpenAI Research Agent",
+    "path": "starter_ai_agents/openai_research_agent",
+    "slug": "openai-research-agent"
+  },
+  {
+    "day": 14,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 1_starter_agent",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/1_starter_agent",
+    "slug": "adk-1-starter-agent"
+  },
+  {
+    "day": 15,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 2_model_agnostic_agent",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/2_model_agnostic_agent",
+    "slug": "adk-2-model-agnostic-agent"
+  },
+  {
+    "day": 16,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 3_structured_output_agent",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent",
+    "slug": "adk-3-structured-output-agent"
+  },
+  {
+    "day": 17,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 4_tool_using_agent",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/4_tool_using_agent",
+    "slug": "adk-4-tool-using-agent"
+  },
+  {
+    "day": 18,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 5_memory_agent",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/5_memory_agent",
+    "slug": "adk-5-memory-agent"
+  },
+  {
+    "day": 19,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 6_callbacks",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/6_callbacks",
+    "slug": "adk-6-callbacks"
+  },
+  {
+    "day": 20,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 7_plugins",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/7_plugins",
+    "slug": "adk-7-plugins"
+  },
+  {
+    "day": 21,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 8_simple_multi_agent",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent",
+    "slug": "adk-8-simple-multi-agent"
+  },
+  {
+    "day": 22,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · 9_multi_agent_patterns",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns",
+    "slug": "adk-9-multi-agent-patterns"
+  },
+  {
+    "day": 23,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "Google ADK Crash Course · adk_yaml_examples",
+    "path": "ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples",
+    "slug": "adk-10-adk-yaml-examples"
+  },
+  {
+    "day": 24,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 1_starter_agent",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent",
+    "slug": "openai-sdk-1-starter-agent"
+  },
+  {
+    "day": 25,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 2_structured_output_agent",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/2_structured_output_agent",
+    "slug": "openai-sdk-2-structured-output-agent"
+  },
+  {
+    "day": 26,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 3_tool_using_agent",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/3_tool_using_agent",
+    "slug": "openai-sdk-3-tool-using-agent"
+  },
+  {
+    "day": 27,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 4_running_agents",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/4_running_agents",
+    "slug": "openai-sdk-4-running-agents"
+  },
+  {
+    "day": 28,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 5_context_management",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/5_context_management",
+    "slug": "openai-sdk-5-context-management"
+  },
+  {
+    "day": 29,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 6_guardrails_validation",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/6_guardrails_validation",
+    "slug": "openai-sdk-6-guardrails-validation"
+  },
+  {
+    "day": 30,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 7_sessions",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/7_sessions",
+    "slug": "openai-sdk-7-sessions"
+  },
+  {
+    "day": 31,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 8_handoffs_delegation",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/8_handoffs_delegation",
+    "slug": "openai-sdk-8-handoffs-delegation"
+  },
+  {
+    "day": 32,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 9_multi_agent_orchestration",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/9_multi_agent_orchestration",
+    "slug": "openai-sdk-9-multi-agent-orchestration"
+  },
+  {
+    "day": 33,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 10_tracing_observability",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/10_tracing_observability",
+    "slug": "openai-sdk-10-tracing-observability"
+  },
+  {
+    "day": 34,
+    "vol": 2,
+    "volLabel": "🧑‍🏫 Crash Courses",
+    "title": "OpenAI Agents SDK Crash Course · 11_voice",
+    "path": "ai_agent_framework_crash_course/openai_sdk_crash_course/11_voice",
+    "slug": "openai-sdk-11-voice"
+  },
+  {
+    "day": 35,
+    "vol": 3,
+    "volLabel": "💬 Chat with X",
+    "title": "📝 Chat with Substack",
+    "path": "advanced_llm_apps/chat_with_X_tutorials/chat_with_substack",
+    "slug": "chat-with-substack"
+  },
+  {
+    "day": 36,
+    "vol": 3,
+    "volLabel": "💬 Chat with X",
+    "title": "📚 Chat with Research Papers (ArXiv) (GPT & Llama3)",
+    "path": "advanced_llm_apps/chat_with_X_tutorials/chat_with_research_papers",
+    "slug": "chat-with-research-papers"
+  },
+  {
+    "day": 37,
+    "vol": 3,
+    "volLabel": "💬 Chat with X",
+    "title": "💬 Chat with GitHub (GPT & Llama3)",
+    "path": "advanced_llm_apps/chat_with_X_tutorials/chat_with_github",
+    "slug": "chat-with-github"
+  },
+  {
+    "day": 38,
+    "vol": 3,
+    "volLabel": "💬 Chat with X",
+    "title": "📄 Chat with PDF (GPT & Llama3)",
+    "path": "advanced_llm_apps/chat_with_X_tutorials/chat_with_pdf",
+    "slug": "chat-with-pdf"
+  },
+  {
+    "day": 39,
+    "vol": 3,
+    "volLabel": "💬 Chat with X",
+    "title": "📽️ Chat with YouTube Videos",
+    "path": "advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos",
+    "slug": "chat-with-youtube-videos"
+  },
+  {
+    "day": 40,
+    "vol": 3,
+    "volLabel": "💬 Chat with X",
+    "title": "📨 Chat with Gmail",
+    "path": "advanced_llm_apps/chat_with_X_tutorials/chat_with_gmail",
+    "slug": "chat-with-gmail"
+  },
+  {
+    "day": 41,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🦙 Local RAG Agent",
+    "path": "rag_tutorials/local_rag_agent",
+    "slug": "local-rag-agent"
+  },
+  {
+    "day": 42,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🔄 Llama 3.1 Local RAG",
+    "path": "rag_tutorials/llama3.1_local_rag",
+    "slug": "llama3.1-local-rag"
+  },
+  {
+    "day": 43,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🔍 Autonomous RAG",
+    "path": "rag_tutorials/autonomous_rag",
+    "slug": "autonomous-rag"
+  },
+  {
+    "day": 44,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🔥 Agentic RAG with Embedding Gemma",
+    "path": "rag_tutorials/agentic_rag_embedding_gemma",
+    "slug": "agentic-rag-embedding-gemma"
+  },
+  {
+    "day": 45,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🧩 RAG-as-a-Service",
+    "path": "rag_tutorials/rag-as-a-service",
+    "slug": "rag-as-a-service"
+  },
+  {
+    "day": 46,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "⛓️ Basic RAG Chain",
+    "path": "rag_tutorials/rag_chain",
+    "slug": "rag-chain"
+  },
+  {
+    "day": 47,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "👀 Hybrid Search RAG (Cloud)",
+    "path": "rag_tutorials/hybrid_search_rag",
+    "slug": "hybrid-search-rag"
+  },
+  {
+    "day": 48,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🧐 Agentic RAG with Reasoning",
+    "path": "rag_tutorials/agentic_rag_with_reasoning",
+    "slug": "agentic-rag-with-reasoning"
+  },
+  {
+    "day": 49,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🖥️ Local Hybrid Search RAG",
+    "path": "rag_tutorials/local_hybrid_search_rag",
+    "slug": "local-hybrid-search-rag"
+  },
+  {
+    "day": 50,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🩺 RAG Failure Diagnostics Clinic",
+    "path": "rag_tutorials/rag_failure_diagnostics_clinic",
+    "slug": "rag-failure-diagnostics-clinic"
+  },
+  {
+    "day": 51,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "✨ RAG Agent with Cohere",
+    "path": "rag_tutorials/rag_agent_cohere",
+    "slug": "rag-agent-cohere"
+  },
+  {
+    "day": 52,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🔄 Contextual AI RAG Agent",
+    "path": "rag_tutorials/contextualai_rag_agent",
+    "slug": "contextualai-rag-agent"
+  },
+  {
+    "day": 53,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "📰 AI Blog Search (RAG)",
+    "path": "rag_tutorials/ai_blog_search",
+    "slug": "ai-blog-search"
+  },
+  {
+    "day": 54,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "📠 RAG with Database Routing",
+    "path": "rag_tutorials/rag_database_routing",
+    "slug": "rag-database-routing"
+  },
+  {
+    "day": 55,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🔄 Corrective RAG (CRAG)",
+    "path": "rag_tutorials/corrective_rag",
+    "slug": "corrective-rag"
+  },
+  {
+    "day": 56,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🤔 Gemini Agentic RAG",
+    "path": "rag_tutorials/gemini_agentic_rag",
+    "slug": "gemini-agentic-rag"
+  },
+  {
+    "day": 57,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🕸️ Knowledge Graph RAG with Citations",
+    "path": "rag_tutorials/knowledge_graph_rag_citations",
+    "slug": "knowledge-graph-rag-citations"
+  },
+  {
+    "day": 58,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🐋 Deepseek Local RAG Agent",
+    "path": "rag_tutorials/deepseek_local_rag_agent",
+    "slug": "deepseek-local-rag-agent"
+  },
+  {
+    "day": 59,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🖼️ Vision RAG",
+    "path": "rag_tutorials/vision_rag",
+    "slug": "vision-rag"
+  },
+  {
+    "day": 60,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "📎 Typed Agentic RAG with Pydantic AI",
+    "path": "rag_tutorials/agentic_typed_rag_pydanticai",
+    "slug": "agentic-typed-rag-pydanticai"
+  },
+  {
+    "day": 61,
+    "vol": 4,
+    "volLabel": "📀 RAG",
+    "title": "🧬 Multimodal Agentic RAG",
+    "path": "rag_tutorials/multimodal_agentic_rag",
+    "slug": "multimodal-agentic-rag"
+  },
+  {
+    "day": 62,
+    "vol": 5,
+    "volLabel": "💾 LLM Apps with Memory",
+    "title": "💬 Llama3 Stateful Chat",
+    "path": "advanced_llm_apps/llm_apps_with_memory_tutorials/llama3_stateful_chat",
+    "slug": "llama3-stateful-chat"
+  },
+  {
+    "day": 63,
+    "vol": 5,
+    "volLabel": "💾 LLM Apps with Memory",
+    "title": "💾 AI ArXiv Agent with Memory",
+    "path": "advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory",
+    "slug": "ai-arxiv-agent-memory"
+  },
+  {
+    "day": 64,
+    "vol": 5,
+    "volLabel": "💾 LLM Apps with Memory",
+    "title": "📝 LLM App with Personalized Memory",
+    "path": "advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory",
+    "slug": "llm-app-personalized-memory"
+  },
+  {
+    "day": 65,
+    "vol": 5,
+    "volLabel": "💾 LLM Apps with Memory",
+    "title": "🧠 Multi-LLM Application with Shared Memory",
+    "path": "advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory",
+    "slug": "multi-llm-memory"
+  },
+  {
+    "day": 66,
+    "vol": 5,
+    "volLabel": "💾 LLM Apps with Memory",
+    "title": "🛩️ AI Travel Agent with Memory",
+    "path": "advanced_llm_apps/llm_apps_with_memory_tutorials/ai_travel_agent_memory",
+    "slug": "ai-travel-agent-memory"
+  },
+  {
+    "day": 67,
+    "vol": 5,
+    "volLabel": "💾 LLM Apps with Memory",
+    "title": "🗄️ Local ChatGPT Clone with Memory",
+    "path": "advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory",
+    "slug": "local-chatgpt-with-memory"
+  },
+  {
+    "day": 68,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "📈 AI Investment Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_investment_agent",
+    "slug": "ai-investment-agent"
+  },
+  {
+    "day": 69,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🎬 AI Movie Production Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_movie_production_agent",
+    "slug": "ai-movie-production-agent"
+  },
+  {
+    "day": 70,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🧬 AI Self-Evolving Agent",
+    "path": "advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent",
+    "slug": "ai-self-evolving-agent"
+  },
+  {
+    "day": 71,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🗞️ AI Journalist Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_journalist_agent",
+    "slug": "ai-journalist-agent"
+  },
+  {
+    "day": 72,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🔬 AI Research Planner & Executor (Google Interactions API)",
+    "path": "advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api",
+    "slug": "research-agent-gemini-interaction-api"
+  },
+  {
+    "day": 73,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🔍 AI Deep Research Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_deep_research_agent",
+    "slug": "ai-deep-research-agent"
+  },
+  {
+    "day": 74,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "📑 AI Meeting Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_meeting_agent",
+    "slug": "ai-meeting-agent"
+  },
+  {
+    "day": 75,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🧠 AI Mental Wellbeing Agent",
+    "path": "advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent",
+    "slug": "ai-mental-wellbeing-agent"
+  },
+  {
+    "day": 76,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🏋️‍♂️ AI Health & Fitness Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_health_fitness_agent",
+    "slug": "ai-health-fitness-agent"
+  },
+  {
+    "day": 77,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🏗️ AI System Architect Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_system_architect_r1",
+    "slug": "ai-system-architect-r1"
+  },
+  {
+    "day": 78,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🤝 AI Consultant Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_consultant_agent",
+    "slug": "ai-consultant-agent"
+  },
+  {
+    "day": 79,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🚀 AI Product Launch Intelligence Agent",
+    "path": "advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent",
+    "slug": "product-launch-intelligence-agent"
+  },
+  {
+    "day": 80,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🛡️ Trust-Gated Multi-Agent Research Team",
+    "path": "advanced_ai_agents/multi_agent_apps/trust_gated_agent_team",
+    "slug": "trust-gated-agent-team"
+  },
+  {
+    "day": 81,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "👨🏻‍💼 AI Sales Intelligence Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team",
+    "slug": "ai-sales-intelligence-agent-team"
+  },
+  {
+    "day": 82,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "📊 AI VC Due Diligence Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team",
+    "slug": "ai-vc-due-diligence-agent-team"
+  },
+  {
+    "day": 83,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🔍 AI Fraud Investigation Agent",
+    "path": "advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent",
+    "slug": "ai-fraud-investigation-agent"
+  },
+  {
+    "day": 84,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "💰 AI Financial Coach Agent",
+    "path": "advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent",
+    "slug": "ai-financial-coach-agent"
+  },
+  {
+    "day": 85,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro",
+    "path": "advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent",
+    "slug": "ai-home-renovation-agent"
+  },
+  {
+    "day": 86,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🧠 DevPulse AI - Multi-Agent Signal Intelligence",
+    "path": "advanced_ai_agents/multi_agent_apps/devpulse_ai",
+    "slug": "devpulse-ai"
+  },
+  {
+    "day": 87,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "📡 Earnings Call Analyst Agent",
+    "path": "advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent",
+    "slug": "earnings-call-analyst-agent"
+  },
+  {
+    "day": 88,
+    "vol": 6,
+    "volLabel": "🚀 Advanced AI Agents",
+    "title": "🎧 AI Social Media News and Podcast Agent",
+    "path": "advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents",
+    "slug": "ai-news-and-podcast-agents"
+  },
+  {
+    "day": 89,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "💲 AI Finance Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team",
+    "slug": "ai-finance-agent-team"
+  },
+  {
+    "day": 90,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "👨‍🏫 AI Teaching Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team",
+    "slug": "ai-teaching-agent-team"
+  },
+  {
+    "day": 91,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "✨ Multimodal Design Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team",
+    "slug": "multimodal-design-agent-team"
+  },
+  {
+    "day": 92,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "💻 Multimodal Coding Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team",
+    "slug": "multimodal-coding-agent-team"
+  },
+  {
+    "day": 93,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "🎨 AI Game Design Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team",
+    "slug": "ai-game-design-agent-team"
+  },
+  {
+    "day": 94,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "🧲 AI Competitor Intelligence Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team",
+    "slug": "ai-competitor-intelligence-agent-team"
+  },
+  {
+    "day": 95,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "👨‍💼 AI Services Agency (CrewAI)",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency",
+    "slug": "ai-services-agency"
+  },
+  {
+    "day": 96,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "🧭 AG2 Adaptive Research Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team",
+    "slug": "ag2-adaptive-research-team"
+  },
+  {
+    "day": 97,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "💼 AI Recruitment Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team",
+    "slug": "ai-recruitment-agent-team"
+  },
+  {
+    "day": 98,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "👨‍⚖️ AI Legal Agent Team (Cloud & Local)",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team",
+    "slug": "ai-legal-agent-team"
+  },
+  {
+    "day": 99,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "🎨 🍌 Multimodal UI/UX Feedback Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_uiux_feedback_agent_team",
+    "slug": "multimodal-uiux-feedback-agent-team"
+  },
+  {
+    "day": 100,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "🏠 AI Real Estate Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team",
+    "slug": "ai-real-estate-agent-team"
+  },
+  {
+    "day": 101,
+    "vol": 7,
+    "volLabel": "🤝 Multi-agent Teams",
+    "title": "🌏 AI Travel Planner Agent Team",
+    "path": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team",
+    "slug": "ai-travel-planner-agent-team"
+  },
+  {
+    "day": 102,
+    "vol": 8,
+    "volLabel": "♾️ MCP AI Agents",
+    "title": "📑 Notion MCP Agent",
+    "path": "mcp_ai_agents/notion_mcp_agent",
+    "slug": "notion-mcp-agent"
+  },
+  {
+    "day": 103,
+    "vol": 8,
+    "volLabel": "♾️ MCP AI Agents",
+    "title": "🐙 GitHub MCP Agent",
+    "path": "mcp_ai_agents/github_mcp_agent",
+    "slug": "github-mcp-agent"
+  },
+  {
+    "day": 104,
+    "vol": 8,
+    "volLabel": "♾️ MCP AI Agents",
+    "title": "♾️ Browser MCP Agent",
+    "path": "mcp_ai_agents/browser_mcp_agent",
+    "slug": "browser-mcp-agent"
+  },
+  {
+    "day": 105,
+    "vol": 8,
+    "volLabel": "♾️ MCP AI Agents",
+    "title": "🔌 OpenAI Remote MCP Tool Bridge",
+    "path": "mcp_ai_agents/openai_remote_mcp_bridge",
+    "slug": "openai-remote-mcp-bridge"
+  },
+  {
+    "day": 106,
+    "vol": 8,
+    "volLabel": "♾️ MCP AI Agents",
+    "title": "🌍 AI Travel Planner MCP Agent",
+    "path": "mcp_ai_agents/ai_travel_planner_mcp_agent_team",
+    "slug": "ai-travel-planner-mcp-agent-team"
+  },
+  {
+    "day": 107,
+    "vol": 8,
+    "volLabel": "♾️ MCP AI Agents",
+    "title": "🔀 Multi-MCP Agent Router",
+    "path": "mcp_ai_agents/multi_mcp_agent_router",
+    "slug": "multi-mcp-agent-router"
+  },
+  {
+    "day": 108,
+    "vol": 9,
+    "volLabel": "🎮 Autonomous Game-Playing",
+    "title": "♜ AI Chess Agent",
+    "path": "advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent",
+    "slug": "ai-chess-agent"
+  },
+  {
+    "day": 109,
+    "vol": 9,
+    "volLabel": "🎮 Autonomous Game-Playing",
+    "title": "🎮 AI 3D Pygame Agent",
+    "path": "advanced_ai_agents/autonomous_game_playing_agent_apps/ai_3dpygame_r1",
+    "slug": "ai-3dpygame-r1"
+  },
+  {
+    "day": 110,
+    "vol": 9,
+    "volLabel": "🎮 Autonomous Game-Playing",
+    "title": "🎲 AI Tic-Tac-Toe Agent",
+    "path": "advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent",
+    "slug": "ai-tic-tac-toe-agent"
+  },
+  {
+    "day": 111,
+    "vol": 10,
+    "volLabel": "🗣️ Voice AI Agents",
+    "title": "📞 Customer Support Voice Agent",
+    "path": "voice_ai_agents/customer_support_voice_agent",
+    "slug": "customer-support-voice-agent"
+  },
+  {
+    "day": 112,
+    "vol": 10,
+    "volLabel": "🗣️ Voice AI Agents",
+    "title": "🔊 Voice RAG Agent (OpenAI SDK)",
+    "path": "voice_ai_agents/voice_rag_openaisdk",
+    "slug": "voice-rag-openaisdk"
+  },
+  {
+    "day": 113,
+    "vol": 10,
+    "volLabel": "🗣️ Voice AI Agents",
+    "title": "🗣️ AI Audio Tour Agent",
+    "path": "voice_ai_agents/ai_audio_tour_agent",
+    "slug": "ai-audio-tour-agent"
+  },
+  {
+    "day": 114,
+    "vol": 10,
+    "volLabel": "🗣️ Voice AI Agents",
+    "title": "🛡️ Insurance Claim Live Agent Team",
+    "path": "voice_ai_agents/insurance_claim_live_agent_team",
+    "slug": "insurance-claim-live-agent-team"
+  },
+  {
+    "day": 115,
+    "vol": 11,
+    "volLabel": "🖼️ Generative UI",
+    "title": "🔍 AI Deep Research Agent",
+    "path": "generative_ui_agents/ai-deep-research-agent",
+    "slug": "genui-deep-research-agent"
+  },
+  {
+    "day": 116,
+    "vol": 11,
+    "volLabel": "🖼️ Generative UI",
+    "title": "🪙 AI Financial Coach Agent",
+    "path": "generative_ui_agents/ai-financial-coach-agent",
+    "slug": "genui-financial-coach-agent"
+  },
+  {
+    "day": 117,
+    "vol": 11,
+    "volLabel": "🖼️ Generative UI",
+    "title": "🗂️ Generative UI Starter Project",
+    "path": "generative_ui_agents/generative-ui-starter-project",
+    "slug": "genui-generative-ui-starter-project"
+  },
+  {
+    "day": 118,
+    "vol": 11,
+    "volLabel": "🖼️ Generative UI",
+    "title": "📊 AI Dashboard Canvas Agent",
+    "path": "generative_ui_agents/ai-dashboard-canvas-agent",
+    "slug": "genui-dashboard-canvas-agent"
+  },
+  {
+    "day": 119,
+    "vol": 11,
+    "volLabel": "🖼️ Generative UI",
+    "title": "✈️ MCP Apps Generative UI Showcase",
+    "path": "generative_ui_agents/mcp-apps-generative-ui-showcase",
+    "slug": "genui-mcp-apps-generative-ui-showcase"
+  },
+  {
+    "day": 120,
+    "vol": 11,
+    "volLabel": "🖼️ Generative UI",
+    "title": "🛠️ AI MCP App Builder",
+    "path": "generative_ui_agents/ai-mcp-app-builder",
+    "slug": "genui-mcp-app-builder"
+  },
+  {
+    "day": 121,
+    "vol": 11,
+    "volLabel": "🖼️ Generative UI",
+    "title": "🎛️ AI Shadcn Component Generator",
+    "path": "generative_ui_agents/ai-shadcn-component-generator",
+    "slug": "genui-shadcn-component-generator"
+  },
+  {
+    "day": 122,
+    "vol": 12,
+    "volLabel": "🛰️ Always-on Agents",
+    "title": "📰 Always-on Hacker News Briefing Agent",
+    "path": "always_on_agents/always_on_hn_briefing_agent",
+    "slug": "always-on-hn-briefing-agent"
+  },
+  {
+    "day": 123,
+    "vol": 12,
+    "volLabel": "🛰️ Always-on Agents",
+    "title": "📡 Release Radar Agent",
+    "path": "always_on_agents/release_radar_agent",
+    "slug": "release-radar-agent"
+  },
+  {
+    "day": 124,
+    "vol": 13,
+    "volLabel": "🎯 LLM Optimization",
+    "title": "🧠 Headroom Context Optimization",
+    "path": "advanced_llm_apps/llm_optimization_tools/headroom_context_optimization",
+    "slug": "headroom-context-optimization"
+  },
+  {
+    "day": 125,
+    "vol": 13,
+    "volLabel": "🎯 LLM Optimization",
+    "title": "🎯 Toonify Token Optimization",
+    "path": "advanced_llm_apps/llm_optimization_tools/toonify_token_optimization",
+    "slug": "toonify-token-optimization"
+  },
+  {
+    "day": 126,
+    "vol": 14,
+    "volLabel": "🔧 LLM Fine-tuning",
+    "title": "🦙 Llama 3.2 Fine-tuning",
+    "path": "advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning",
+    "slug": "llama3.2-finetuning"
+  },
+  {
+    "day": 127,
+    "vol": 14,
+    "volLabel": "🔧 LLM Fine-tuning",
+    "title": "🦥 Gemma 3 Fine-tuning",
+    "path": "advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning",
+    "slug": "gemma3-finetuning"
+  },
+  {
+    "day": 128,
+    "vol": 15,
+    "volLabel": "🧩 Agent Skills",
+    "title": "🧠 Advisor Orchestrator Worker",
+    "path": "agent_skills/advisor-orchestrator-worker",
+    "slug": "advisor-orchestrator-worker"
+  },
+  {
+    "day": 129,
+    "vol": 15,
+    "volLabel": "🧩 Agent Skills",
+    "title": "🏺 Commit Archaeologist",
+    "path": "agent_skills/commit-archaeologist",
+    "slug": "commit-archaeologist"
+  },
+  {
+    "day": 130,
+    "vol": 15,
+    "volLabel": "🧩 Agent Skills",
+    "title": "🩺 Dependency Doctor",
+    "path": "agent_skills/dependency-doctor",
+    "slug": "dependency-doctor"
+  },
+  {
+    "day": 131,
+    "vol": 15,
+    "volLabel": "🧩 Agent Skills",
+    "title": "🔭 Scope Creep Detector",
+    "path": "agent_skills/scope-creep-detector",
+    "slug": "scope-creep-detector"
+  },
+  {
+    "day": 132,
+    "vol": 15,
+    "volLabel": "🧩 Agent Skills",
+    "title": "⚰️ Project Graveyard",
+    "path": "agent_skills/project-graveyard",
+    "slug": "project-graveyard"
+  },
+  {
+    "day": 133,
+    "vol": 15,
+    "volLabel": "🧩 Agent Skills",
+    "title": "♾️ Self-Improving Agent Skills",
+    "path": "agent_skills/self-improving-agent-skills",
+    "slug": "self-improving-agent-skills"
+  }
+]
