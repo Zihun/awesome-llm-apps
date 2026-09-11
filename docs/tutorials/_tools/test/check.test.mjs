@@ -80,3 +80,14 @@ test("a code ref one line past the end of a newline-terminated file is reported"
   const problems = checkDay(dayDir, { repoRoot: repo });
   assert.ok(problems.some((p) => p.includes("app/main.py:1-3") && p.includes("파일은 2줄")), problems.join("\n"));
 });
+
+test("an svg wider than the column cap is reported", () => {
+  const { repo, dayDir } = fixture();
+  const d2 = join(dayDir, "diagrams", "overview.d2");
+  const hash = sourceHash(inlineImports(d2));
+  writeFileSync(join(dayDir, "diagrams", "overview.svg"), embedHash('<svg width="3030" height="349"></svg>', hash));
+  const problems = checkDay(dayDir, { repoRoot: repo });
+  assert.ok(problems.some((p) => p.includes("3030px") && p.includes("1400px")), problems.join("\n"));
+  writeFileSync(join(dayDir, "diagrams", "overview.svg"), embedHash('<svg width="1400" height="900"></svg>', hash));
+  assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
+});

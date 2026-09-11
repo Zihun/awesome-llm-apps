@@ -876,6 +876,8 @@ import { join, resolve, dirname } from "node:path";
 import { inlineImports, sourceHash, readSvgHash } from "./d2.mjs";
 import { folderName, PLACEHOLDER } from "./days.mjs";
 
+export const SVG_MAX_WIDTH = 1400;
+
 export const REQUIRED_H2 = [
   "## 오늘 만들 것",
   "## 사전 준비",
@@ -927,7 +929,10 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
       const svg = join(diagrams, f.replace(/\.d2$/, ".svg"));
       if (!existsSync(svg)) { problems.push(rel(`svg 없음: diagrams/${f}`)); continue; }
       const expected = sourceHash(inlineImports(join(diagrams, f)));
-      if (readSvgHash(readFileSync(svg, "utf8")) !== expected) problems.push(rel(`stale svg (다시 렌더 필요): diagrams/${f}`));
+      const svgText = readFileSync(svg, "utf8");
+      if (readSvgHash(svgText) !== expected) problems.push(rel(`stale svg (다시 렌더 필요): diagrams/${f}`));
+      const width = Number(svgText.match(/<svg[^>]*\swidth="(\d+)"/)?.[1] ?? 0);
+      if (width > SVG_MAX_WIDTH) problems.push(rel(`다이어그램이 본문 폭에서 읽히지 않음: diagrams/${f.replace(/\.d2$/, ".svg")} (${width}px, 상한 ${SVG_MAX_WIDTH}px) — direction: down으로 바꾸거나 노드를 컨테이너로 묶으세요`));
     }
   }
 

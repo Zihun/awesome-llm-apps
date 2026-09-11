@@ -39,9 +39,12 @@
 cd starter_ai_agents/xai_finance_agent
 uv venv
 uv pip install -r requirements.txt
+uv pip install ddgs openai fastapi python-multipart uvicorn
 ```
 
-(pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.)
+(pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pip install ddgs openai fastapi python-multipart uvicorn`.)
+
+두 번째 설치 명령이 필요한 이유를 미리 짚습니다. `requirements.txt`는 `agno`, `duckduckgo-search`, `yfinance`만 나열하지만, 코드가 실제로 쓰는 `agno.tools.duckduckgo` 모듈은 내부적으로 `duckduckgo-search`가 아니라 `ddgs`라는 별도 패키지를 가져오고, xAI 모델과 AgentOS도 각각 `openai`, `fastapi`·`python-multipart`·`uvicorn`을 추가로 요구합니다 — 다섯 개 모두 직접 하나씩 설치해 가며 확인한 사실입니다. 이 명령 없이 `requirements.txt`만 설치하면 이후 단계에서 순서대로 다른 `ModuleNotFoundError`/`ImportError`를 만나게 되며, 정확한 증상과 원인은 "문제 해결"에 정리했습니다. 참고로 `requirements.txt`의 `agno>=2.2.10`은 버전 상한이 없어서, 이 문서를 작성하며 설치했을 때는 **agno 3.0.9**가 받아졌습니다. 여러분이 설치한 시점의 최신 버전이 다르면 이후 확인 명령의 출력도 조금 다를 수 있습니다.
 
 키는 셸에 환경변수로 둡니다.
 
@@ -54,8 +57,6 @@ export XAI_API_KEY="여러분의-키"
 # Windows PowerShell
 $env:XAI_API_KEY="여러분의-키"
 ```
-
-여기서 미리 짚어야 할 문제가 있습니다. `requirements.txt`는 `duckduckgo-search`를 설치하라고 하지만, 코드가 실제로 쓰는 `agno.tools.duckduckgo` 모듈은 내부적으로 `ddgs`라는 별도 패키지를 가져옵니다(직접 설치해 확인한 사실입니다). `duckduckgo-search`만 설치된 상태로는 이후 단계에서 `ModuleNotFoundError: No module named 'ddgs'`가 나므로, 이 자리에서 `uv pip install ddgs`를 한 번 더 실행해 두는 것이 안전합니다. 자세한 원인과, 이 외에 추가로 필요한 패키지들은 "문제 해결"에 정리했습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -231,14 +232,20 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 키가 없어 이 단계의 최종 화면은 재현하지 못했습니다. 대신 키 없이 같은 경로로 `agent.run("hello")`를 직접 호출해 관찰한 동작을 대신 적습니다. 파이썬 예외가 밖으로 튀어나오지 않고, 터미널에
+**확인.** 키가 없어 이 단계의 최종 화면은 재현하지 못했습니다. 대신 같은 경로를 키 없이 직접 호출해 실제로 무슨 일이 일어나는지 확인합니다.
+
+```bash
+uv run python -c "import xai_finance_agent as m; m.agent.run('hello')"
+```
+
+파이썬 예외가 밖으로 튀어나오지 않고, 터미널에
 
 ```
 ERROR   Model authentication error from OpenAI API: XAI_API_KEY not set. Please set the XAI_API_KEY environment variable.
 ERROR   Error in Agent run: XAI_API_KEY not set. Please set the XAI_API_KEY environment variable.
 ```
 
-가 찍히고, 반환된 응답 객체는 `status=RunStatus.error`, `content`가 위와 같은 문구를 담습니다. 키를 넣으면 이 자리에서 대신 마크다운 표 형식의 실제 답변이 오고, 터미널에는 `web_search`·`search_news`·`get_current_stock_price` 중 필요한 도구가 호출되는 `DEBUG` 로그가 찍힙니다.
+가 찍힙니다. 반환된 응답 객체를 직접 보려면 `m.agent.run('hello')`를 `print(m.agent.run('hello'))`로 바꿔 실행하면 되며, 이때 `status=RunStatus.error`, `content`가 위와 같은 문구를 담고 있습니다. 키를 넣으면 이 자리에서 대신 마크다운 표 형식의 실제 답변이 오고, 터미널에는 `web_search`·`search_news`·`get_current_stock_price` 중 필요한 도구가 호출되는 `DEBUG` 로그가 찍힙니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -263,7 +270,7 @@ ERROR   Error in Agent run: XAI_API_KEY not set. Please set the XAI_API_KEY envi
 | `from agno.models.xai import xAI`, `from agno.os import AgentOS`, `agent_os.get_app()`, `agent_os.serve(...)` 단계에서 차례로 `ImportError`(`openai` 없음), `ModuleNotFoundError`(`fastapi`, `uvicorn` 없음), `RuntimeError`(`python-multipart` 없음) | `requirements.txt`는 `agno`, `duckduckgo-search`, `yfinance`만 나열하지만, xAI 모델(OpenAI 호환 클라이언트)과 AgentOS(FastAPI + uvicorn, 폼 라우트)가 이 패키지들을 필요로 한다(직접 설치해 하나씩 확인) | `uv pip install openai fastapi python-multipart uvicorn` 추가 실행 |
 | 질문을 보내면 무한 대기 없이 바로 에러 답변이 오고, 터미널에 `ERROR Error in Agent run: XAI_API_KEY not set. Please set the XAI_API_KEY environment variable.` | `XAI_API_KEY` 미설정. 다만 `xAI(...)` 객체 생성과 서버 기동 자체는 키 없이도 성공한다(직접 확인) — 키 확인은 실제로 모델을 호출하는 시점에 일어난다 | `export XAI_API_KEY=...`(PowerShell `$env:XAI_API_KEY="..."`) 설정 후 서버 재시작 |
 | 서버 기동 시 포트 관련 오류, 또는 브라우저에 다른 화면이 뜸 | 이미 7777 포트를 쓰는 프로세스가 떠 있음. 포트가 코드에 하드코딩돼 있어 `serve(port=...)`로 바꾸려면 앱 코드 수정이 필요 | 기존 프로세스 종료 후 재시작 (Windows: `netstat -ano \| findstr :7777`로 PID 확인 후 `taskkill /F /PID <PID>`) |
-| https://os.agno.com 컨트롤 플레인이 `http://localhost:7777`에 연결하지 못함 | 브라우저가 HTTPS 페이지에서 HTTP localhost로 가는 요청을 혼합 콘텐츠로 차단했거나, 서버가 떠 있지 않음 | 먼저 `curl http://localhost:7777/docs`로 서버 응답(직접 확인: `200`)을 본다. 브라우저가 차단하면 사이트 설정에서 안전하지 않은 콘텐츠를 허용 |
+| https://os.agno.com 컨트롤 플레인이 `http://localhost:7777`에 연결하지 못함 | 브라우저가 HTTPS 페이지에서 HTTP localhost로 가는 요청을 혼합 콘텐츠로 차단했거나, 서버가 떠 있지 않음 | 먼저 `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs`로 서버 응답 코드(직접 확인: `200`)를 본다(`curl` 없이 URL만 열면 HTML 문서가 그대로 보임). 브라우저가 차단하면 사이트 설정에서 안전하지 않은 콘텐츠를 허용 |
 | 앱 `README.md`의 3단계가 "Get your OpenAI API Key"라고 안내 | 문서 오탈자. 코드는 `xAI(id="grok-4-1-fast")`(`starter_ai_agents/xai_finance_agent/xai_finance_agent.py:11`)만 쓰고 OpenAI를 호출하지 않는다 | 그 문구는 무시하고 실제로는 xAI 키(`XAI_API_KEY`, https://console.x.ai/)를 발급받는다 |
 
 ## 더 해보기
@@ -274,4 +281,4 @@ ERROR   Error in Agent run: XAI_API_KEY not set. Please set the XAI_API_KEY envi
 
 ## 다음 날 예고
 
-Day 002 · 🕸️ Web Scraping AI Agent — 웹 페이지를 LLM으로 구조화해서 긁어오는 에이전트를 만듭니다. (Day 002 폴더는 아직 만들어지지 않아 이 문서에서는 링크 없이 이름만 적습니다.)
+Day 002 · 🕸️ Web Scraping AI Agent — 웹 페이지를 LLM으로 구조화해서 긁어오는 에이전트를 만듭니다. (Day 002 폴더가 만들어지면 링크로 바뀝니다.)
