@@ -22,7 +22,10 @@ test("readmeSkeleton contains the nine H2 headings in order and links the next d
   const heads = ["## 오늘 만들 것", "## 사전 준비", "## 아키텍처 한눈에 보기", "## 단계별 진행", "## 요청 한 건이 흐르는 과정", "## 실행 체크리스트", "## 문제 해결", "## 더 해보기", "## 다음 날 예고"];
   let pos = -1;
   for (const h of heads) { const i = text.indexOf(h); assert.ok(i > pos, `heading order: ${h}`); pos = i; }
-  assert.ok(text.includes(`(../${folderName(days[1])}/README.md)`));
+  assert.ok(text.includes(`Day 002 · ${days[1].title} — `), "unlinked by default");
+  assert.ok(!text.includes(`(../${folderName(days[1])}/README.md)`), "no link when the next day does not exist");
+  const linkedText = readmeSkeleton(days[0], days[1], true);
+  assert.ok(linkedText.includes(`[Day 002 · ${days[1].title}](../${folderName(days[1])}/README.md)`), "linked when it exists");
   assert.ok(text.includes("(작성 필요)"));
   assert.ok(readmeSkeleton(days[132], undefined).includes("시리즈의 마지막"));
 });
@@ -35,4 +38,15 @@ test("scaffoldDay creates folder, diagrams dir and README once", () => {
   const readme = readFileSync(join(dir, "README.md"), "utf8");
   assert.ok(readme.startsWith("# Day 001 · "));
   assert.throws(() => scaffoldDay(1, { root }), /already exists/);
+});
+
+test("scaffolding a day links the previous day's pointer", () => {
+  const root = mkdtempSync(join(tmpdir(), "tut-link-"));
+  const days = loadDays();
+  scaffoldDay(1, { root });
+  const day1Readme = join(root, folderName(days[0]), "README.md");
+  assert.ok(!readFileSync(day1Readme, "utf8").includes(`(../${folderName(days[1])}/README.md)`), "day 1 starts unlinked");
+  scaffoldDay(2, { root });
+  assert.ok(readFileSync(day1Readme, "utf8").includes(`[Day 002 · ${days[1].title}](../${folderName(days[1])}/README.md)`), "day 1 now links day 2");
+  assert.ok(!readFileSync(join(root, folderName(days[1]), "README.md"), "utf8").includes(`(../${folderName(days[2])}/README.md)`), "day 2 itself stays unlinked");
 });

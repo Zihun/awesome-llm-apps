@@ -257,7 +257,7 @@ git commit -m "docs(tutorials): add D2 tooling package, theme and render library
 **Interfaces:**
 - Produces: `days.json` 항목 `{ day: number, vol: number, volLabel: string, title: string, path: string, slug: string }` 133개, `day` 오름차순.
 - Produces (`lib/days.mjs`): `TOOLS_DIR`, `TUTORIALS_DIR`, `REPO_ROOT`, `loadDays(file?): Day[]`, `pad3(n): string`, `folderName(day): string` (`day001-xai-finance-agent`), `PLACEHOLDER = "(작성 필요)"` (골격의 미작성 표시. `scaffold.mjs`가 쓰고 `roadmap.mjs`(Task 4)와 `check.mjs`(Task 5)가 이 문자열을 찾는다).
-- Produces (`scaffold.mjs`): `readmeSkeleton(day, nextDay | undefined): string`, `scaffoldDay(dayNumber, { days?, root? }): string` (만든 폴더 경로). CLI `node scaffold.mjs 001`.
+- Produces (`scaffold.mjs`): `nextDayLine(nextDay, nextExists): string`, `readmeSkeleton(day, nextDay | undefined, nextExists?): string`, `linkPreviousDay(prevDay, nextDay, root): boolean`, `scaffoldDay(dayNumber, { days?, root? }): string` (만든 폴더 경로). CLI `node scaffold.mjs 001`.
 
 - [ ] **Step 1: 스펙 부록 A에서 days.json 생성**
 
@@ -361,15 +361,20 @@ export function folderName(day) {
 
 ```js
 #!/usr/bin/env node
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDays, folderName, pad3, PLACEHOLDER, TUTORIALS_DIR } from "./lib/days.mjs";
 
-export function readmeSkeleton(day, nextDay) {
-  const next = nextDay
-    ? `[Day ${pad3(nextDay.day)} · ${nextDay.title}](../${folderName(nextDay)}/README.md) — ${PLACEHOLDER}`
-    : "여기가 시리즈의 마지막 날입니다.";
+export function nextDayLine(nextDay, nextExists) {
+  if (!nextDay) return "여기가 시리즈의 마지막 날입니다.";
+  const label = `Day ${pad3(nextDay.day)} · ${nextDay.title}`;
+  const linked = nextExists ? `[${label}](../${folderName(nextDay)}/README.md)` : label;
+  return `${linked} — ${PLACEHOLDER}`;
+}
+
+export function readmeSkeleton(day, nextDay, nextExists = false) {
+  const next = nextDayLine(nextDay, nextExists);
   return `# Day ${pad3(day.day)} · ${day.title}
 
 > 볼륨 ${day.vol} ${day.volLabel} · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 ${PLACEHOLDER} · 원본 앱: \`${day.path}\`
@@ -430,13 +435,31 @@ ${next}
 `;
 }
 
+/** day N+1의 폴더가 생겼을 때, day N의 "다음 날 예고" 줄을 링크로 바꾼다. 형태가 다르면 아무것도 하지 않는다. */
+export function linkPreviousDay(prevDay, nextDay, root) {
+  if (!prevDay || !nextDay) return false;
+  const readme = join(root, folderName(prevDay), "README.md");
+  if (!existsSync(readme)) return false;
+  const label = `Day ${pad3(nextDay.day)} · ${nextDay.title}`;
+  const text = readFileSync(readme, "utf8");
+  if (text.includes(`](../${folderName(nextDay)}/README.md)`)) return false;
+  const idx = text.indexOf(label);
+  if (idx < 0) return false;
+  const updated = text.slice(0, idx) + `[${label}](../${folderName(nextDay)}/README.md)` + text.slice(idx + label.length);
+  writeFileSync(readme, updated);
+  return true;
+}
+
 export function scaffoldDay(dayNumber, { days = loadDays(), root = TUTORIALS_DIR } = {}) {
   const day = days.find((d) => d.day === dayNumber);
   if (!day) throw new Error(`no such day: ${dayNumber}`);
   const dir = join(root, folderName(day));
   if (existsSync(dir)) throw new Error(`already exists: ${dir}`);
   mkdirSync(join(dir, "diagrams"), { recursive: true });
-  writeFileSync(join(dir, "README.md"), readmeSkeleton(day, days.find((d) => d.day === dayNumber + 1)));
+  const nextDay = days.find((d) => d.day === dayNumber + 1);
+  const nextExists = Boolean(nextDay) && existsSync(join(root, folderName(nextDay), "README.md"));
+  writeFileSync(join(dir, "README.md"), readmeSkeleton(day, nextDay, nextExists));
+  linkPreviousDay(days.find((d) => d.day === dayNumber - 1), day, root);
   return dir;
 }
 
