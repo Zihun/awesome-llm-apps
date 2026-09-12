@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+buyer: 구매자 (에이전트+결제 클라이언트) { class: ours }
+claude: Claude { class: ext }
+seller: 판매자 (결제 미들웨어+라우트) { class: ours }
+facilitator: 파실리테이터 { class: ext }
+
+user -> buyer: 질문 (CLI 인자)
+buyer -> claude: 질문 + 도구 스키마
+claude -> buyer: tool_use fetch_paid_api(url)
+buyer -> seller: GET (결제 헤더 없음)
+seller -> buyer: 402 + 가격 정보 (accepts)
+buyer -> seller: GET 재시도 + 서명된 결제 헤더
+seller -> facilitator: 서명 검증 + 정산 요청
+facilitator -> seller: 검증·정산 결과 (테스트넷)
+seller -> buyer: 200 + JSON 데이터
+buyer -> claude: 도구 결과 재전송
+claude -> buyer: 최종 답변 텍스트
+buyer -> user: 답변 출력

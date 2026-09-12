@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+key: 지갑 개인키 (X402_PRIVATE_KEY) { class: file }
+buyer: 구매자 프로세스 (x402_paying_agent.py) {
+  agent: 에이전트 루프 (run_agent) { class: ours }
+  payer: 결제 트랜스포트 (build_paying_client) { class: ours }
+}
+claude: Claude API (anthropic SDK) { class: ext }
+seller: 판매자 프로세스 (seller.py, 로컬) {
+  mw: 결제 미들웨어 (payment_middleware) { class: ours }
+  api: 유료 라우트 (fortune/dice) { class: ours }
+}
+facilitator: x402 파실리테이터 (x402.org, 테스트넷) { class: ext }
+
+user -> buyer.agent: 질문 (CLI 인자)
+key -> buyer.payer: 결제 서명에 사용
+buyer.agent -> claude: 질문 + 도구 스키마
+claude -> buyer.agent: 도구 호출 (tool_use)
+buyer.agent -> buyer.payer: 요청 URL 위임
+buyer.payer -> seller.mw: GET (무결제 → 402 → 서명 헤더로 재시도)
+seller.mw -> facilitator: 결제 검증 + 정산 요청
+seller.mw -> seller.api: 결제 통과 후 실행
+seller.api -> buyer.payer: 200 + JSON 데이터
+buyer.payer -> buyer.agent: 응답 텍스트
+buyer.agent -> user: 최종 답변

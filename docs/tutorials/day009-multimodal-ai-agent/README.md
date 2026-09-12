@@ -289,4 +289,4 @@ content: {
 
 ## 다음 날 예고
 
-Day 010 · 💸 AI x402 Paying Agent — 에이전트가 x402 프로토콜로 직접 결제하며 API를 호출하는 과정을 다룹니다.
+[Day 010 · 💸 AI x402 Paying Agent](../day010-ai-x402-paying-agent/README.md) — 에이전트가 x402 프로토콜로 직접 결제하며 API를 호출하는 과정을 다룹니다.
