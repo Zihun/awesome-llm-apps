@@ -321,7 +321,7 @@ None 2 True
                     st.error("Please try rephrasing your query or check if the data format is correct.")
 ```
 
-키가 잘못돼도 `agent.run()`은 파이썬 예외를 던지지 않고 `RunStatus.error` 상태의 응답 객체를 반환합니다(직접 확인, 아래) — 이 객체에도 `content` 속성이 있으므로, 위 `except` 블록은 전혀 실행되지 않고 OpenAI의 원본 오류 문구가 `st.error()`의 빨간 박스가 아니라 **평범한 마크다운 텍스트로 그대로 화면에 표시**됩니다.
+키가 잘못돼도 `agent.run()`은 파이썬 예외를 던지지 않고 `RunStatus.error` 상태의 응답 객체를 반환합니다(직접 확인, 아래) — 이 동작 자체는 Day 1에서 xAI 에이전트로 이미 확인한 것과 같습니다(`day001-xai-finance-agent/README.md`, `m.agent.run('hello')`가 예외 없이 `status=RunStatus.error`를 반환함을 확인). 이 앱에서 새로 드러나는 것은, 그 객체에도 `content` 속성이 있어서 위 `except` 블록이 전혀 실행되지 않고 OpenAI의 원본 오류 문구가 `st.error()`의 빨간 박스가 아니라 **평범한 마크다운 텍스트로 그대로 화면에 표시**된다는 점입니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -379,7 +379,7 @@ content: Incorrect API key provided: sk-fake-**********-key. You can find your A
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `from agno.models.openai import OpenAIChat` 시 `ModuleNotFoundError: No module named 'openai.types.responses'`에 이어 ``ImportError: `openai` not installed. Please install using `pip install openai -U`` `` | `requirements.txt`가 `openai==1.58.1`로 고정하지만 `agno>=2.2.10`은 상한이 없어 최신 agno(직접 설치 시점 3.0.9)를 받으며, 이 버전의 OpenAI 연동이 `openai.types.responses`(Responses API 타입)를 요구한다 — 1.58.1에는 없음(직접 확인) | `uv pip install -U openai` 실행(직접 설치 시점 openai 3.13.0으로 갱신됨) |
+| `from agno.models.openai import OpenAIChat` 시 `ModuleNotFoundError: No module named 'openai.types.responses'`에 이어 ``ImportError: `openai` not installed. Please install using `pip install openai -U` `` | `requirements.txt`가 `openai==1.58.1`로 고정하지만 `agno>=2.2.10`은 상한이 없어 최신 agno(직접 설치 시점 3.0.9)를 받으며, 이 버전의 OpenAI 연동이 `openai.types.responses`(Responses API 타입)를 요구한다 — 1.58.1에는 없음(직접 확인) | `uv pip install -U openai` 실행(직접 설치 시점 openai 3.13.0으로 갱신됨) |
 | Python 3.13 가상환경에서 `uv pip install -r requirements.txt`가 몇 분간 멈춘 것처럼 보임 | `numpy==1.26.4`는 PyPI에 Python 3.13용 사전 빌드 wheel이 없다(3.11·3.12용은 있음). uv가 소스 배포판을 내려받아 로컬에서 빌드하느라 시간이 걸린다(uv 캐시에서 방금 빌드된 cp313 wheel을 직접 확인) | 실패는 아니므로 기다리면 끝난다. 시간을 아끼려면 `uv venv --python 3.12` 사용 |
 | OpenAI 키가 틀려도 화면에 `st.error()`의 빨간 오류 상자 대신 평범한 텍스트로 인증 오류 문구가 그대로 표시됨 | `agent.run()`이 모델 인증 오류를 파이썬 예외로 던지지 않고 `RunStatus.error` 응답 객체로 감싸 반환한다(직접 확인, Step 6) — `ai_data_analyst.py:119-121`의 `except Exception`은 이 경우 실행되지 않는다 | 화면에 뜬 텍스트가 정상 답변인지 오류 메시지인지 내용을 읽고 판단해야 함 |
 | 앱 `README.md`의 Features/Usage에 "데이터 시각화 생성"·"생성된 시각화 보기"라고 안내됨 | 실제 코드에는 시각화 관련 코드가 전혀 없다 — `plot`/`chart`/`matplotlib`/`plotly` 문자열이 소스에 한 번도 나오지 않음(직접 확인). 에이전트 응답은 `st.markdown()`으로 텍스트만 표시된다(`ai_data_analyst.py:116`) | 그 문구는 무시. 차트가 필요하면 별도로 시각화 코드를 직접 추가해야 함 |

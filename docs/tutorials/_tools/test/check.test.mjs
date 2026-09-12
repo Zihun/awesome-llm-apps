@@ -92,6 +92,16 @@ test("an svg wider than the column cap is reported", () => {
   assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
 });
 
+test("an unbalanced code span is reported outside a fence, but not inside one", () => {
+  const { repo, dayDir } = fixture({
+    readme: GOOD_README("정상: `x` `y`\n깨진: ``a` 하나\n```text\n펜스 안 홀수 백틱: `\n```\n"),
+  });
+  const problems = checkDay(dayDir, { repoRoot: repo });
+  const backtickProblems = problems.filter((p) => p.includes("백틱 짝"));
+  assert.equal(backtickProblems.length, 1, problems.join("\n"));
+  assert.ok(backtickProblems[0].includes("README.md:"), backtickProblems[0]);
+});
+
 test("a code excerpt that does not match its cited range is reported", () => {
   const good = GOOD_README("`app/main.py:1-2`\n\n```python\nprint(1)\nprint(2)\n```\n");
   const f1 = fixture({ readme: good });

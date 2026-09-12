@@ -984,6 +984,15 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
     }
   }
 
+  // (10) 코드 스팬 백틱 짝 맞추기 (표 안에서 특히 자주 깨진다)
+  let inFence = false;
+  md.split(/\r?\n/).forEach((line, i) => {
+    if (line.startsWith("```")) { inFence = !inFence; return; }
+    if (inFence) return;
+    const ticks = line.split("`").length - 1;
+    if (ticks % 2) problems.push(rel(`백틱 짝이 맞지 않아 코드 스팬이 깨짐: README.md:${i + 1}`));
+  });
+
   // (5) no mermaid
   if (/```mermaid/.test(md)) problems.push(rel("mermaid 코드 펜스 사용"));
 

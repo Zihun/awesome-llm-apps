@@ -24,7 +24,7 @@
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
 | 사용자 | 모델 선택, API 키 입력, 밈 아이디어 입력 | 코드 없음 (브라우저) |
-| Streamlit UI | 제목·모델 선택·키 입력·아이디어 입력·버튼 | `starter_ai_agents/ai_meme_generator_agent_browseruse/ai_meme_generator_agent.py:76-100`, `starter_ai_agents/ai_meme_generator_agent_browseruse/ai_meme_generator_agent.py:105-117` |
+| Streamlit UI | 제목·모델 선택·키 입력·아이디어 입력·버튼 | `starter_ai_agents/ai_meme_generator_agent_browseruse/ai_meme_generator_agent.py:72-100`, `starter_ai_agents/ai_meme_generator_agent_browseruse/ai_meme_generator_agent.py:105-117` |
 | 모델 선택 (generate_meme) | `model_choice`에 따라 4개 LLM 클라이언트 중 하나를 생성 | `starter_ai_agents/ai_meme_generator_agent_browseruse/ai_meme_generator_agent.py:6-33` |
 | browser-use Agent | 자연어 과제 설명을 실제 브라우저 조작(클릭·타이핑·스크린샷)으로 바꿔 실행 | `starter_ai_agents/ai_meme_generator_agent_browseruse/ai_meme_generator_agent.py:48-56` |
 | URL 추출 (정규식) | 에이전트의 최종 텍스트에서 imgflip 이미지 링크를 정규식으로 뽑아냄 | `starter_ai_agents/ai_meme_generator_agent_browseruse/ai_meme_generator_agent.py:58-66` |
@@ -194,7 +194,7 @@ ChatOpenAI gpt-4o
     history = await agent.run()
 ```
 
-`max_failures=25`는 browser-use 기본값(5, 설치된 `browser_use/agent/service.py`의 생성자 시그니처에서 확인)의 5배입니다 — 실제 웹사이트를 상대하는 만큼 재시도를 넉넉히 준 것으로 보입니다. `use_vision`은 Deepseek을 고르면 꺼지는데, 이 문서에서는 그 이유(비전 입력 미지원 여부)까지는 확인하지 못했습니다.
+`max_failures=25`는 browser-use 기본값의 5배입니다(기본값 5는 설치된 `browser_use/agent/service.py`의 `Agent.__init__` 시그니처를 소스로 확인한 것이며, 실행해서 본 것은 아닙니다) — 실제 웹사이트를 상대하는 만큼 재시도를 넉넉히 준 것으로 보입니다. `use_vision`은 Deepseek을 고르면 꺼지는데, 이 문서에서는 그 이유(비전 입력 미지원 여부)까지는 확인하지 못했습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -388,7 +388,7 @@ ST.ERROR: Error: expected string or bytes-like object, got 'NoneType'
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 모델·키·아이디어를 입력하고 "Generate Meme"을 누르면 `asyncio.run(generate_meme(...))`이 호출됩니다. `generate_meme`은 먼저 고른 모델의 클라이언트를 만들고, `task_description`과 함께 browser-use `Agent`를 만들어 `await agent.run()`을 호출합니다. 이 호출이 Day 1~6의 도구 호출 루프와 결정적으로 다른 지점입니다 — 에이전트는 REST API 하나를 부르는 대신, CDP로 연결된 실제 Chrome에서 imgflip.com의 스크린샷과 DOM 상태를 얻어 LLM에 보내고, LLM은 "검색창 클릭", "템플릿 선택", "텍스트 입력" 같은 다음 행동 하나를 돌려줍니다. 이 왕복이 과제 설명의 8단계를 따라 여러 차례 반복된 뒤(최대 `max_actions_per_step=5`씩 묶어, 최대 `max_failures=25`회까지 재시도), 에이전트는 마지막으로 이미지 링크가 담긴 텍스트를 답으로 냅니다. `generate_meme`은 이 텍스트에서 정규식으로 URL을 뽑아 Streamlit에 돌려주고, UI는 이를 `st.image()`로 미리보기합니다. 이 왕복 횟수와 실제 클릭 좌표까지는 키와 실제 브라우저 세션이 있어야 볼 수 있어, 이 문서에서는 소스 코드와 browser-use의 진단 도구로만 흐름을 확인했습니다.
+사용자가 모델·키·아이디어를 입력하고 "Generate Meme"을 누르면 `asyncio.run(generate_meme(...))`이 호출됩니다. `generate_meme`은 먼저 고른 모델의 클라이언트를 만들고, `task_description`과 함께 browser-use `Agent`를 만들어 `await agent.run()`을 호출합니다. 이 호출이 Day 1~6의 도구 호출 루프와 결정적으로 다른 지점입니다 — 설치된 소스(`browser_use/agent/service.py`, `browser-harness`의 `SKILL.md`)를 읽어 확인한 것이지 실제로 실행해서 본 것은 아니지만, 에이전트는 REST API 하나를 부르는 대신 CDP로 연결된 실제 Chrome에서 imgflip.com의 스크린샷과 DOM 상태를 얻어 LLM에 보내고, LLM은 한 단계당 최대 `max_actions_per_step=5`개까지 묶어 "검색창 클릭", "템플릿 선택", "텍스트 입력" 같은 다음 행동들을 돌려줍니다. 이 왕복이 과제 설명의 8단계를 따라 여러 차례 반복된 뒤(최대 `max_failures=25`회까지 재시도), 에이전트는 마지막으로 이미지 링크가 담긴 텍스트를 답으로 냅니다. `generate_meme`은 이 텍스트에서 정규식으로 URL을 뽑아 Streamlit에 돌려주고, UI는 이를 `st.image()`로 미리보기합니다. 이 스크린샷↔행동 왕복의 내부 동작 방식, 실제 왕복 횟수, 클릭 좌표는 모두 키와 실제 브라우저 세션이 있어야 직접 실행해 확인할 수 있어, 이 문서에서는 실행 대신 위 소스 파일과 `--doctor` 진단 도구로만 흐름을 확인했습니다.
 
 ## 실행 체크리스트
 
