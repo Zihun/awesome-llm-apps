@@ -417,4 +417,4 @@ ST.ERROR: Error: expected string or bytes-like object, got 'NoneType'
 
 ## 다음 날 예고
 
-Day 008 · 🩻 AI Medical Imaging Agent — X-ray·MRI·CT 같은 의료 영상을 업로드하면 소견을 설명해 주는 에이전트를 다룹니다.
+[Day 008 · 🩻 AI Medical Imaging Agent](../day008-ai-medical-imaging-agent/README.md) — X-ray·MRI·CT 같은 의료 영상을 업로드하면 소견을 설명해 주는 에이전트를 다룹니다.

@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: 의료 영상 에이전트 { class: ours }
+gemini: Gemini { class: ext }
+ddg: DuckDuckGoTools { class: ours }
+
+user -> ui: 이미지 업로드, 분석 버튼 클릭
+ui -> ui: 리사이즈 후 임시 파일 저장
+ui -> agent: run(query, images)
+agent -> gemini: 프롬프트 + 이미지 + 도구 스키마
+gemini -> agent: tool_call web_search (선택)
+agent -> ddg: 검색어
+ddg -> agent: 검색 결과
+agent -> gemini: 도구 결과
+gemini -> agent: 최종 소견 (markdown)
+agent -> ui: response.content
+ui -> user: 화면에 소견 표시

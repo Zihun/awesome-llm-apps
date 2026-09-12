@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: Multimodal Analyst { class: ours }
+gemini: Gemini { class: ext }
+
+user -> ui: 영상 업로드, 질문 입력, 버튼 클릭
+ui -> ui: 임시 mp4 파일로 저장
+ui -> agent: "run(prompt, videos=[video])"
+agent -> gemini: 프롬프트 + 영상 (도구 없음)
+gemini -> agent: 응답 (markdown)
+agent -> ui: result.content
+ui -> user: 화면에 표시
+ui -> ui: 임시 파일 삭제 (finally)

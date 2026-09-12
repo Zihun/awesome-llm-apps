@@ -1,0 +1,23 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+key: GOOGLE_API_KEY (session_state) { class: file }
+app: ai_medical_imaging.py {
+  ui: Streamlit UI (업로드 · 리사이즈 · 버튼) { class: ours }
+  tmp: temp_resized_image.png (임시 파일) { class: file }
+  agent: 의료 영상 에이전트 (Agent) { class: ours }
+  ddg: 웹 검색 도구 (DuckDuckGoTools) { class: ours }
+}
+gemini: Google Gemini API (gemini-2.5-pro) { class: ext }
+ddgapi: DuckDuckGo { class: ext }
+
+user -> app.ui: 이미지 업로드 + 버튼 클릭
+key -> app.agent: 인증
+app.ui -> app.tmp: PIL로 리사이즈 후 저장
+app.tmp -> app.agent: 파일 경로 (AgnoImage)
+app.agent -> gemini: 고정 진단 프롬프트 + 이미지 + 도구 스키마
+app.agent -> app.ddg
+app.ddg -> ddgapi: 검색어 (문헌·치료 프로토콜)
+gemini -> app.agent: 소견 (markdown)
+app.agent -> app.ui: response.content
