@@ -400,4 +400,4 @@ EXCEPTION TEXT: Error code: 401 - {'id': 'ozvKs5Z-2kFHot-a39b0db28ac4f3ef', 'err
 
 ## 다음 날 예고
 
-Day 006 · 📊 AI Data Analysis Agent — CSV 파일을 업로드하면 판다스 코드를 직접 짜서 분석하는 에이전트를 다룹니다.
+[Day 006 · 📊 AI Data Analysis Agent](../day006-ai-data-analysis-agent/README.md) — CSV 파일을 업로드하면 판다스 코드를 직접 짜서 분석하는 에이전트를 다룹니다.

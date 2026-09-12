@@ -1,0 +1,24 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+prep: preprocess_and_save { class: ours }
+duckdb: DuckDbTools { class: ours }
+agent: Agent (OpenAIChat) { class: ours }
+openai: OpenAI API { class: ext }
+
+user -> ui: 키 + 파일 업로드
+ui -> prep: 업로드 파일 객체
+prep -> ui: 임시 CSV 경로
+ui -> duckdb: load_local_csv_to_table(...)
+duckdb -> duckdb: CREATE TABLE uploaded_data
+user -> ui: 질문 + Submit Query
+ui -> agent: agent.run(질문)
+agent -> openai: 질문 + 도구 스키마
+openai -> agent: tool_call(SQL)
+agent -> duckdb: run_query(SQL)
+duckdb -> agent: 쿼리 결과
+agent -> openai: 도구 결과 재전송
+openai -> agent: 최종 답변
+agent -> ui: response.content
+ui -> user: 결과 표시

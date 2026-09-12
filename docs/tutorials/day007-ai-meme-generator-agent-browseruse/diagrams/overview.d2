@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+api_key: API 키 (사이드바 입력) { class: file }
+app: ai_meme_generator_agent.py {
+  ui: Streamlit UI { class: ours }
+  llm_select: 모델 선택 (generate_meme) { class: ours }
+  browseruse_agent: browser-use Agent { class: ours }
+  extract: URL 추출 (정규식) { class: ours }
+}
+llm_api: 선택한 LLM API (4종 중 1개) { class: ext }
+chrome: 실제 Chrome → imgflip.com (CDP) { class: ext }
+
+user -> app.ui: 모델 선택 + 키 + 밈 아이디어
+api_key -> app.llm_select: 생성자 인자
+app.ui -> app.llm_select: 선택한 모델 이름
+app.llm_select -> app.browseruse_agent: llm 객체 + task
+app.browseruse_agent -> chrome: CDP 연결 (필요하면 실행)
+chrome -> app.browseruse_agent: 스크린샷 · DOM 상태
+app.browseruse_agent -> llm_api: 상태 → 다음 행동 요청
+llm_api -> app.browseruse_agent: 다음 행동 또는 최종 텍스트
+app.browseruse_agent -> app.extract: history.final_result()
+app.extract -> app.ui: 밈 이미지 URL
+app.ui -> user: 밈 이미지 미리보기

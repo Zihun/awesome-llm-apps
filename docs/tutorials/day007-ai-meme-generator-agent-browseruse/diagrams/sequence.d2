@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: browser-use Agent { class: ours }
+chrome: 실제 Chrome (imgflip.com) { class: ext }
+llm: 선택한 LLM API { class: ext }
+
+user -> ui: 모델 + 키 + 밈 아이디어
+ui -> agent: generate_meme() → Agent(task, llm)
+agent -> chrome: CDP 연결 (필요하면 실행)
+chrome -> agent: 첫 페이지 상태
+agent -> llm: 스크린샷 + DOM 상태
+llm -> agent: 다음 행동 (예: 검색창 클릭)
+agent -> chrome: 행동 실행
+chrome -> agent: 갱신된 페이지 상태
+agent -> llm: (반복 후) 최종 결과 요청
+llm -> agent: 최종 텍스트 (이미지 링크 포함)
+agent -> ui: history.final_result()
+ui -> ui: 정규식으로 이미지 URL 추출
+ui -> user: 밈 이미지 미리보기
