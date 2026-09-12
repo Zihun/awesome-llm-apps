@@ -241,6 +241,8 @@ AuthenticationError
 Error code: 401 - {'id': 'ozvKFa4-2kFHot-a39b0ac629d2ea9b', 'error': {'message': 'Invalid API key provided. You can find your API key at https://api.together.ai/settings/api-keys.', 'type': 'invalid_r
 ```
 
+(`id` 값은 요청마다 무작위로 발급되는 것이라 실행마다 달라집니다.)
+
 이 예외는 `try/except` 없이 그대로 위로 튀어 오릅니다. 앱 코드에는 `run_llm`이나 `asyncio.gather`를 감싸는 예외 처리가 전혀 없다는 점을 Step 6에서 다시 확인합니다.
 
 ### Step 5. 집계자 모델과 프롬프트 구성
@@ -307,6 +309,8 @@ AuthenticationError
 Error code: 401 - {'id': 'ozvKUDo-2kFHot-a39b0bd08f6cf45e', 'error': {'message': 'Invalid API key provided. You can find your API key at https://api.together.ai/settings/api-keys.', 'type': 'invalid_r
 ```
 
+(`id` 값은 실행마다 달라집니다.)
+
 제안자 호출(Step 4)과 집계자 호출 모두 같은 종류의 인증 오류를 그대로 돌려받는다는 것을 알 수 있습니다 — 두 호출 다 같은 Together API를 향하기 때문입니다.
 
 ### Step 6. 실행과 결과 표시
@@ -361,7 +365,7 @@ EXCEPTION TYPE: AuthenticationError
 EXCEPTION TEXT: Error code: 401 - {'id': 'ozvKs5Z-2kFHot-a39b0db28ac4f3ef', 'error': {'message': 'Invalid API key provided. You can find your API key at https://api.together.ai/settings/api-keys.', 'type': 'invalid_r
 ```
 
-(`st.text_input`을 첫 호출엔 가짜 키를, 두 번째 호출엔 질문 문자열을 돌려주도록 바꿔치기하고, 화면 출력 계열 함수는 아무 것도 하지 않도록 비워 실제 `main()` 함수 객체를 그대로 호출했습니다. `except`로 감싼 것은 이 확인 스크립트이지, 리포 코드가 아닙니다 — 실제 앱이라면 이 지점에서 화면 전체가 멈춥니다.) 유효한 키가 있으면 이 자리에서 대신 4개의 `st.expander`와 실시간으로 채워지는 집계 응답이 표시됩니다.
+(`id` 값은 실행마다 달라집니다. `st.text_input`을 첫 호출엔 가짜 키를, 두 번째 호출엔 질문 문자열을 돌려주도록 바꿔치기하고, 화면 출력 계열 함수는 아무 것도 하지 않도록 비워 실제 `main()` 함수 객체를 그대로 호출했습니다. `except`로 감싼 것은 이 확인 스크립트이지, 리포 코드가 아닙니다 — 실제 앱이라면 이 지점에서 화면 전체가 멈춥니다.) 유효한 키가 있으면 이 자리에서 대신 4개의 `st.expander`와 실시간으로 채워지는 집계 응답이 표시됩니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -385,7 +389,7 @@ EXCEPTION TEXT: Error code: 401 - {'id': 'ozvKs5Z-2kFHot-a39b0db28ac4f3ef', 'err
 |---|---|---|
 | `import mixture-of-agents`가 `SyntaxError: invalid syntax`로 실패 | 파일명에 하이픈이 있어 파이썬의 유효한 식별자가 아니다(직접 확인) | `streamlit run mixture-of-agents.py`처럼 경로로 실행하거나, 파이썬에서 내용을 확인해야 한다면 `runpy.run_path("mixture-of-agents.py")` 사용 |
 | Together 키가 잘못되면 친절한 오류 메시지 대신 화면 전체가 처리되지 않은 예외로 멈춤(`AuthenticationError`, HTTP 401) | 버튼 클릭부터 `asyncio.run(main())`까지 `try/except`가 전혀 없고, `asyncio.gather`도 `return_exceptions=True` 없이 호출돼 제안자·집계자 호출 5개 중 하나만 실패해도 예외가 그대로 위로 전파된다(직접 확인) | 유효한 Together 키인지 다시 확인. 코드를 고친다면 버튼 블록 전체를 `try/except`로 감싸는 것을 고려 |
-| `Together(api_key=...)`/`AsyncTogether(api_key=...)` 생성 자체는 아무 문자열로나 성공 | 두 클라이언트 모두 생성 시점에는 키를 검증하지 않는다(직접 확인) — 실제 검증은 `chat.completions.create()` 호출 시점에 서버가 응답할 때 일어남 | 클라이언트가 만들어졌다고 키가 유효하다고 착각하지 않기 |
+| 클라이언트 생성까지는 아무 오류 없이 성공해 키가 맞는 줄 알았는데, 정작 `run_llm`/집계 호출에서야 401 인증 오류가 남 | `Together`/`AsyncTogether`는 생성 시점에는 키를 검증하지 않는다(직접 확인, Step 3) — 실제 검증은 `chat.completions.create()` 호출 시점에 서버가 응답할 때 일어남 | 클라이언트 생성 성공을 키가 유효하다는 근거로 삼지 말고, Step 4·5의 방식대로 실제 호출까지 해봐야 함 |
 
 ## 더 해보기
 
