@@ -993,9 +993,14 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
     if (ticks % 2) problems.push(rel(`백틱 짝이 맞지 않아 코드 스팬이 깨짐: README.md:${i + 1}`));
   });
 
-  // (11) 경로 없는 줄 번호만 남은 인용
-  for (const m of md.matchAll(/`:(\d+(?:-\d+)?)`/g)) {
-    problems.push(rel(`인용에 파일 경로가 빠졌습니다: \`:${m[1]}\` — \`경로/파일.py:${m[1]}\` 형식으로 쓰세요`));
+  // (11) 경로 없는 줄 번호만 남은 인용. 펜스 밖에서, 같은 줄이 소스 파일을 언급할 때만
+  //      본다 — 파이썬 슬라이스(`:10`)나 시각 표기(`:30`)를 인용으로 오인하지 않기 위해서다.
+  const FILE_REF = /[A-Za-z0-9_.\-]+\.(?:py|ts|tsx|js|mjs|jsx|json|toml|md|txt|yml|yaml)\b/;
+  for (const line of stripFences(md).split(/\r?\n/)) {
+    if (!FILE_REF.test(line)) continue;
+    for (const m of line.matchAll(/`:(\d+(?:-\d+)?)`/g)) {
+      problems.push(rel(`인용에 파일 경로가 빠졌습니다: \`:${m[1]}\` — \`경로/파일.py:${m[1]}\` 형식으로 쓰세요`));
+    }
   }
 
   // (5) no mermaid

@@ -103,14 +103,34 @@ test("an unbalanced code span is reported outside a fence, but not inside one", 
 });
 
 test("a bare :N-M citation missing its file path is reported, a full path:N-M is not", () => {
-  const good = fixture({ readme: GOOD_README("정상 인용: `app/main.py:1-2`\n") });
-  assert.deepEqual(checkDay(good.dayDir, { repoRoot: good.repo }), [], "a full path citation triggers nothing");
-  const bad = fixture({ readme: GOOD_README("고아 인용: `:12-15`\n") });
-  const problems = checkDay(bad.dayDir, { repoRoot: bad.repo });
+  // Case 1: A line with file name and orphaned citation IS reported
+  const case1 = fixture({ readme: GOOD_README("파일 언급과 고아 인용: app/main.py `:12-15`\n") });
+  const problems1 = checkDay(case1.dayDir, { repoRoot: case1.repo });
   assert.ok(
-    problems.some((p) => p.includes("인용에 파일 경로가 빠졌습니다") && p.includes(":12-15")),
-    problems.join("\n")
+    problems1.some((p) => p.includes("인용에 파일 경로가 빠졌습니다") && p.includes(":12-15")),
+    `Case 1 (file + orphan) should report: ${problems1.join("\n")}`
   );
+
+  // Case 2: Same orphaned citation inside a fenced code block is NOT reported
+  const case2 = fixture({ readme: GOOD_README("```\napp/main.py `:12-15`\n```\n") });
+  const problems2 = checkDay(case2.dayDir, { repoRoot: case2.repo });
+  assert.ok(
+    !problems2.some((p) => p.includes("인용에 파일 경로가 빠졌습니다") && p.includes(":12-15")),
+    `Case 2 (fence) should not report: ${problems2.join("\n")}`
+  );
+
+  // Case 3: Python slice `:10` without file name is NOT reported
+  const case3 = fixture({ readme: GOOD_README("슬라이스 `:10`을 사용합니다\n") });
+  const problems3 = checkDay(case3.dayDir, { repoRoot: case3.repo });
+  assert.ok(
+    !problems3.some((p) => p.includes("인용에 파일 경로가 빠졌습니다")),
+    `Case 3 (slice, no file) should not report: ${problems3.join("\n")}`
+  );
+
+  // Case 4: Full citation `app/main.py:1-2` is NOT reported as orphaned
+  const case4 = fixture({ readme: GOOD_README("정상 인용: `app/main.py:1-2`\n") });
+  const problems4 = checkDay(case4.dayDir, { repoRoot: case4.repo });
+  assert.deepEqual(problems4, [], `Case 4 (full path) should pass`);
 });
 
 test("a code excerpt that does not match its cited range is reported", () => {
