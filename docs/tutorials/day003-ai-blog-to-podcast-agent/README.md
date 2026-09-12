@@ -346,4 +346,4 @@ headers: {...}, status_code: 401, body: {'detail': {'type': 'authentication_erro
 
 ## 다음 날 예고
 
-Day 004 · 🎵 AI Music Generator Agent — OpenAI GPT-4o와 ModelsLab API로 프롬프트에서 음악을 생성하는 에이전트를 만듭니다. (Day 004 폴더가 만들어지면 링크로 바뀝니다.)
+[Day 004 · 🎵 AI Music Generator Agent](../day004-ai-music-generator-agent/README.md) — OpenAI GPT-4o와 ModelsLab API로 프롬프트에서 음악을 생성하는 에이전트를 만듭니다.

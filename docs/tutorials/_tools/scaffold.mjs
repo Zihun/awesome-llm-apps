@@ -83,7 +83,9 @@ export function linkPreviousDay(prevDay, nextDay, root) {
   if (text.includes(`](../${folderName(nextDay)}/README.md)`)) return false;
   const idx = text.indexOf(label);
   if (idx < 0) return false;
-  const updated = text.slice(0, idx) + `[${label}](../${folderName(nextDay)}/README.md)` + text.slice(idx + label.length);
+  const linkedText = text.slice(0, idx) + `[${label}](../${folderName(nextDay)}/README.md)` + text.slice(idx + label.length);
+  const aside = ` (Day ${pad3(nextDay.day)} 폴더가 만들어지면 링크로 바뀝니다.)`;
+  const updated = linkedText.split(aside).join("");
   writeFileSync(readme, updated);
   return true;
 }

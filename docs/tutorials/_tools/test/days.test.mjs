@@ -48,5 +48,6 @@ test("scaffolding a day links the previous day's pointer", () => {
   assert.ok(!readFileSync(day1Readme, "utf8").includes(`(../${folderName(days[1])}/README.md)`), "day 1 starts unlinked");
   scaffoldDay(2, { root });
   assert.ok(readFileSync(day1Readme, "utf8").includes(`[Day 002 · ${days[1].title}](../${folderName(days[1])}/README.md)`), "day 1 now links day 2");
+  assert.ok(!readFileSync(day1Readme, "utf8").includes("링크로 바뀝니다"), "the stale aside is removed when the link goes live");
   assert.ok(!readFileSync(join(root, folderName(days[1]), "README.md"), "utf8").includes(`(../${folderName(days[2])}/README.md)`), "day 2 itself stays unlinked");
 });

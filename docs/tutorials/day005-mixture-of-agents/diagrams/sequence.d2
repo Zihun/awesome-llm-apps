@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+app: run_llm + main { class: ours }
+together: Together AI API { class: ext }
+
+user -> ui: Together 키 + 질문 입력
+ui -> app: Get Answer 클릭 → asyncio.run(main())
+app -> together: (병렬) Qwen2-72B-Instruct 호출, 질문만
+app -> together: (병렬) Qwen1.5-72B-Chat 호출, 질문만
+app -> together: (병렬) Mixtral-8x22B-Instruct 호출, 질문만 (제안자)
+app -> together: (병렬) dbrx-instruct 호출, 질문만
+together -> app: 응답 4개 (gather 완료)
+app -> user: 개별 응답 4개 표시 (expander)
+app -> together: Mixtral-8x22B-Instruct 재호출 (집계자, 응답 4개 이어붙임)
+together -> app: 스트리밍 응답 청크
+app -> user: 집계 응답 실시간 표시

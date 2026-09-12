@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: 음악 생성 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+modelslab: ModelsLab API { class: ext }
+
+user -> ui: 프롬프트 + 키 2종 입력
+ui -> agent: run(prompt) 호출
+agent -> openai: 프롬프트 + 도구 스키마
+openai -> agent: tool_call generate_media(prompt)
+agent -> modelslab: generate_media(prompt) 요청
+modelslab -> agent: 오디오 URL
+agent -> openai: 도구 결과
+openai -> agent: 최종 응답 텍스트
+agent -> ui: RunOutput (audio 포함)
+ui -> modelslab: GET 오디오 URL
+modelslab -> ui: mp3 바이트
+ui -> user: 재생·다운로드 화면

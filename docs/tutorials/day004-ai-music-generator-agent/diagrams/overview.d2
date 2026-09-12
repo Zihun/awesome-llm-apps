@@ -1,0 +1,23 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+keys: API 키 2종 (사이드바 입력) { class: file }
+app: music_generator_agent.py {
+  ui: Streamlit UI (프롬프트 입력) { class: ours }
+  agent: 음악 생성 에이전트 (Agent) { class: ours }
+  tool: 음악 생성 도구 (ModelsLabTools) { class: ours }
+  audio: 오디오 후처리 (다운로드·저장·재생) { class: ours }
+}
+openai: OpenAI API (gpt-4o) { class: ext }
+modelslab: ModelsLab API (music_gen) { class: ext }
+store: 로컬 저장소 (audio_generations/) { class: store }
+
+user -> app.ui: 프롬프트 입력
+keys -> app.agent: 생성자 인자로 전달
+app.ui -> app.agent: 실행 (Generate Music)
+app.agent -> openai: 프롬프트 + 도구 스키마
+app.agent -> app.tool: generate_media 호출
+app.tool -> modelslab: 음악 생성 요청
+app.agent -> app.audio: RunOutput (오디오 URL)
+app.audio -> store: mp3 파일 저장
+app.audio -> user: 재생·다운로드 화면

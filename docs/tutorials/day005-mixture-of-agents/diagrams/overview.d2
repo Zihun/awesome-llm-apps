@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+key: Together API 키 (본문 입력) { class: file }
+app: mixture-of-agents.py {
+  ui: Streamlit UI (질문 입력) { class: ours }
+  runllm: 제안자 병렬 호출 (run_llm) { class: ours }
+  main: 집계·표시 (main) { class: ours }
+}
+together: Together AI API {
+  m1: Qwen2-72B-Instruct { class: ext }
+  m2: Qwen1.5-72B-Chat { class: ext }
+  m3: Mixtral-8x22B-Instruct (제안자 + 집계자) { class: ext }
+  m4: dbrx-instruct { class: ext }
+}
+
+user -> app.ui: 질문 + 키 입력
+key -> app.runllm: 생성자 인자 + 환경변수
+app.ui -> app.runllm: 4개 병렬 호출 (Get Answer)
+app.runllm -> together.m1: 질문만 전달
+app.runllm -> together.m2: 질문만 전달
+app.runllm -> together.m3: 질문만 전달 (제안자로 호출)
+app.runllm -> together.m4: 질문만 전달
+app.runllm -> app.main: 응답 4개 (gather 결과)
+app.main -> together.m3: 응답 4개 이어붙여 재호출 (집계자로 호출)
+app.main -> user: 개별 응답 4개 + 집계 응답(스트리밍)
