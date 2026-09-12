@@ -190,7 +190,7 @@ IMPORTANT: Use the DuckDuckGo search tool to:
 Format your response using clear markdown headers and bullet points. Be concise yet thorough.
 ```
 
-이 `query`는 158줄 파일 중 37줄(58-94행)을 차지하는 하나의 긴 삼중따옴표 문자열로, 이미지 종류·주요 소견·진단·환자용 설명·참고 문헌 5개 섹션(`###` 헤더 5개, 직접 확인)을 강제합니다. Day 1·5·6·7은 모두 사용자가 그때그때 입력한 문장을 프롬프트에 실어 보냈지만, 이 앱은 업로드된 이미지만 바뀔 뿐 텍스트 프롬프트는 항상 이 문자열 그대로입니다 — 다른 것을 묻고 싶다면 코드를 직접 고쳐야 합니다. 5번 섹션은 `DuckDuckGoTools`를 쓰라고 대문자로 강조해 지시하지만, 실제로 도구를 호출할지는 Day 1과 마찬가지로 Gemini가 스스로 판단합니다.
+이 `query`는 157줄 파일 중 37줄(58-94행)을 차지하는 하나의 긴 삼중따옴표 문자열로, 이미지 종류·주요 소견·진단·환자용 설명·참고 문헌 5개 섹션(`###` 헤더 5개, 직접 확인)을 강제합니다. Day 1·5·6·7은 모두 사용자가 그때그때 입력한 문장을 프롬프트에 실어 보냈지만, 이 앱은 업로드된 이미지만 바뀔 뿐 텍스트 프롬프트는 항상 이 문자열 그대로입니다 — 다른 것을 묻고 싶다면 코드를 직접 고쳐야 합니다. 5번 섹션은 `DuckDuckGoTools`를 쓰라고 대문자로 강조해 지시하지만, 실제로 도구를 호출할지는 Day 1과 마찬가지로 Gemini가 스스로 판단합니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -371,7 +371,7 @@ content: {
 | `from agno.tools.duckduckgo import DuckDuckGoTools` 시 ``ImportError: `ddgs` not installed. Please install using `pip install ddgs` `` | Day 1과 원인이 같다 — `agno.tools.duckduckgo`가 내부적으로 `ddgs`를 가져오는데 `requirements.txt`는 `duckduckgo-search`만 설치한다(`day001-xai-finance-agent/README.md` 문제 해결 참고) | `uv pip install ddgs` 실행 |
 | 업로더가 `dicom`도 받는다고 안내하지만, 실제 DICOM 바이트열을 열면 `PIL.UnidentifiedImageError: cannot identify image file ...` | Pillow에는 DICOM 디코더가 없다 — `PILImage.registered_extensions()`에 `.dcm`·`.dicom` 항목이 없음(직접 확인) | 실제 DICOM 파일이라면 `pydicom` 등으로 먼저 PNG/JPG로 변환한 뒤 업로드 |
 | 분석을 여러 번 실행해도 `temp_resized_image.png` 하나만 계속 덮어써지고 지워지지 않음 | `tempfile` 모듈을 쓰지 않고 고정 파일명을 앱 실행 폴더에 그대로 저장하며, 정리 코드가 없다(소스로 확인: `unlink`·`os.remove`·`tempfile` 검색 결과 0건) | 필요하면 분석 후 직접 파일을 지우거나, `ai_medical_imaging.py:145` 뒤에 `os.remove(temp_path)`를 추가 |
-| 앱 자체 `README.md`의 Notes에 "Uses Gemini 2.0 Flash"라고 적혀 있음 | 실제 코드는 `gemini-2.5-pro`를 쓴다(`ai_medical_imaging.py:47`, 직접 확인) — 문서가 갱신되지 않음 | 그 문구는 무시하고 코드의 모델 이름을 기준으로 삼기 |
+| 앱 자체 `README.md`의 Notes에 "Uses Gemini 2.0 Flash"라고 적혀 있음 | 실제 코드는 `gemini-2.5-pro`를 쓴다(`ai_medical_imaging.py:47`, 소스로 확인) — 문서가 갱신되지 않음 | 그 문구는 무시하고 코드의 모델 이름을 기준으로 삼기 |
 
 ## 더 해보기
 

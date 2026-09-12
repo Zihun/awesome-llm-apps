@@ -102,6 +102,17 @@ test("an unbalanced code span is reported outside a fence, but not inside one", 
   assert.ok(backtickProblems[0].includes("README.md:"), backtickProblems[0]);
 });
 
+test("a bare :N-M citation missing its file path is reported, a full path:N-M is not", () => {
+  const good = fixture({ readme: GOOD_README("정상 인용: `app/main.py:1-2`\n") });
+  assert.deepEqual(checkDay(good.dayDir, { repoRoot: good.repo }), [], "a full path citation triggers nothing");
+  const bad = fixture({ readme: GOOD_README("고아 인용: `:12-15`\n") });
+  const problems = checkDay(bad.dayDir, { repoRoot: bad.repo });
+  assert.ok(
+    problems.some((p) => p.includes("인용에 파일 경로가 빠졌습니다") && p.includes(":12-15")),
+    problems.join("\n")
+  );
+});
+
 test("a code excerpt that does not match its cited range is reported", () => {
   const good = GOOD_README("`app/main.py:1-2`\n\n```python\nprint(1)\nprint(2)\n```\n");
   const f1 = fixture({ readme: good });

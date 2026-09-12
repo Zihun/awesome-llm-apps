@@ -993,6 +993,11 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
     if (ticks % 2) problems.push(rel(`백틱 짝이 맞지 않아 코드 스팬이 깨짐: README.md:${i + 1}`));
   });
 
+  // (11) 경로 없는 줄 번호만 남은 인용
+  for (const m of md.matchAll(/`:(\d+(?:-\d+)?)`/g)) {
+    problems.push(rel(`인용에 파일 경로가 빠졌습니다: \`:${m[1]}\` — \`경로/파일.py:${m[1]}\` 형식으로 쓰세요`));
+  }
+
   // (5) no mermaid
   if (/```mermaid/.test(md)) problems.push(rel("mermaid 코드 펜스 사용"));
 

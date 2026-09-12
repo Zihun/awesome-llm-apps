@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-이 폴더는 지금까지와 달리 진입점이 두 개입니다 — 영상을 분석하는 `multimodal_agent.py`(89줄)와 이미지를 분석하는 `multimodal_reasoning_agent.py`(76줄)입니다. 이 문서는 앱 자체 README가 유일하게 실행 명령으로 안내하는 `multimodal_agent.py`를 따라갑니다(Day 2의 `ai_scrapper.py`/`local_ai_scrapper.py`와 같은 선택 기준입니다) — `multimodal_reasoning_agent.py`는 앱 README 어디에도 등장하지 않습니다(직접 확인: "reasoning" 문자열이 앱 README에 한 번도 없음). 두 파일의 차이는 이름이 암시하는 것 이상입니다. `multimodal_agent.py`는 **영상**(mp4/mov/avi)을 `gemini-2.5-flash`로 분석하며 사용자 질문을 고정된 프롬프트 틀에 끼워 넣고, `multimodal_reasoning_agent.py`는 **이미지**를 더 무거운 추론 모델 `gemini-2.5-pro`로 분석하며 사용자가 입력한 임의의 과제 문장을 그대로 전달합니다 — 그리고 전체 로직이 `def main():` 안에 있고 `if __name__ == "__main__":`으로 감싸져 있어, 이 파일은 **모듈로 임포트해도 아무 코드도 실행되지 않습니다**(직접 확인: 임포트 시 bare 모드 경고 0줄, 아래 Step 2와 대비). Day 8과 같은 Gemini 스택을 쓰므로 설치 문제도 동일합니다 — `requirements.txt`의 `google-generativeai==0.8.3`은 여기서도 죽은 의존성이고 실제로는 `google-genai`가 필요합니다(직접 확인, 원인은 `day008-ai-medical-imaging-agent/README.md` 참고). 이 문서에서 가장 중요하게 확인한 사실은 따로 있습니다 — 앱 자체 README는 "Web research integration via DuckDuckGo"를 기능으로 내세우고 실행 시 프롬프트도 "web research"를 명시적으로 요청하지만, `multimodal_agent.py`의 `Agent(...)`에는 `tools`가 아예 없고(직접 확인: `agent.tools == []`) `Gemini(...)`의 내장 검색 플래그 `search`·`grounding`도 둘 다 기본값 `False`인 채 켜지지 않습니다(직접 확인). 즉 이 앱은 웹을 전혀 검색하지 못하며 "web research"는 Gemini에게 그렇게 해달라고 부탁하는 텍스트일 뿐입니다. 완성하면 영상을 올리고 질문을 입력해 Gemini의 답변을 받는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
+이 폴더는 지금까지와 달리 진입점이 두 개입니다 — 영상을 분석하는 `multimodal_agent.py`(90줄)와 이미지를 분석하는 `multimodal_reasoning_agent.py`(77줄)입니다. 이 문서는 앱 자체 README가 유일하게 실행 명령으로 안내하는 `multimodal_agent.py`를 따라갑니다(Day 2의 `ai_scrapper.py`/`local_ai_scrapper.py`와 같은 선택 기준입니다) — `multimodal_reasoning_agent.py`는 앱 README 어디에도 등장하지 않습니다(소스로 확인: `starter_ai_agents/multimodal_ai_agent/README.md`). 두 파일의 차이는 이름이 암시하는 것 이상입니다. `multimodal_agent.py`는 **영상**(mp4/mov/avi)을 `gemini-2.5-flash`로 분석하며 사용자 질문을 고정된 프롬프트 틀에 끼워 넣고, `multimodal_reasoning_agent.py`는 **이미지**를 더 무거운 추론 모델 `gemini-2.5-pro`로 분석하며 사용자가 입력한 임의의 과제 문장을 그대로 전달합니다 — 그리고 전체 로직이 `def main():` 안에 있고 `if __name__ == "__main__":`으로 감싸져 있어, 이 파일은 **모듈로 임포트해도 아무 코드도 실행되지 않습니다**(직접 확인: 임포트 시 bare 모드 경고 0줄, 아래 Step 2와 대비). Day 8과 같은 Gemini 스택을 쓰므로 설치 문제도 동일합니다 — `requirements.txt`의 `google-generativeai==0.8.3`은 여기서도 죽은 의존성이고 실제로는 `google-genai`가 필요합니다(직접 확인, 원인은 `day008-ai-medical-imaging-agent/README.md` 참고). 이 문서에서 가장 중요하게 확인한 사실은 따로 있습니다 — 앱 자체 README는 "Web research integration via DuckDuckGo"를 기능으로 내세우고 실행 시 프롬프트도 "web research"를 명시적으로 요청하지만, `multimodal_agent.py`의 `Agent(...)`에는 `tools`가 아예 없고(직접 확인: `agent.tools == []`) `Gemini(...)`의 내장 검색 플래그 `search`·`grounding`도 둘 다 기본값 `False`인 채 켜지지 않습니다(직접 확인). 즉 이 앱은 웹을 전혀 검색하지 못하며 "web research"는 Gemini에게 그렇게 해달라고 부탁하는 텍스트일 뿐입니다. 완성하면 영상을 올리고 질문을 입력해 Gemini의 답변을 받는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -22,7 +22,7 @@
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
 | 사용자 | 영상 업로드, 질문 입력, 버튼 클릭 | 코드 없음 (브라우저) |
-| Streamlit UI | 키 입력, 파일 업로더, 질문 입력창, 버튼 | `starter_ai_agents/multimodal_ai_agent/multimodal_agent.py:19-25`, `starter_ai_agents/multimodal_ai_agent/multimodal_agent.py:39-53` |
+| Streamlit UI | 키 입력, 파일 업로더, 질문 입력창, 버튼 | `starter_ai_agents/multimodal_ai_agent/multimodal_agent.py:19-25`, `starter_ai_agents/multimodal_ai_agent/multimodal_agent.py:39-55` |
 | 임시 영상 파일 (.mp4) | `tempfile`로 저장하고, 성공·실패와 무관하게 `finally`에서 삭제 | `starter_ai_agents/multimodal_ai_agent/multimodal_agent.py:43-45`, `starter_ai_agents/multimodal_ai_agent/multimodal_agent.py:77-78` |
 | Multimodal Analyst (Agent, 캐시됨) | 프롬프트와 영상을 모델에 전달 | `starter_ai_agents/multimodal_ai_agent/multimodal_agent.py:27-34` |
 | 모델 (Gemini, gemini-2.5-flash) | 영상+텍스트를 해석해 답변 작성 | `starter_ai_agents/multimodal_ai_agent/multimodal_agent.py:32` |
@@ -279,11 +279,11 @@ content: {
 |---|---|---|
 | `from agno.models.google import Gemini` 시 `ModuleNotFoundError: No module named 'google.genai'` | Day 8과 같은 원인 — `requirements.txt`의 `google-generativeai==0.8.3`은 죽은 의존성이고 agno 3.0.9는 `google-genai`만 가져온다(`day008-ai-medical-imaging-agent/README.md` 문제 해결 참고) | `uv pip install google-genai` 실행 |
 | 화면에 "web research"를 수행한다고 나오지만 실제 검색 결과나 출처 링크가 전혀 없음 | `Agent(...)`(`multimodal_agent.py:30-34`)에 `tools`가 없고 `Gemini(...)`도 `search`·`grounding`을 켜지 않는다(직접 확인: 둘 다 기본값 `False`) — 프롬프트의 "web research" 요청은 실행할 수단이 없는 지시일 뿐이다 | Gemini 자체 지식 기반 답변으로 이해하고, 실제 웹 검색이 필요하면 Day 1처럼 `DuckDuckGoTools()`를 `tools=[]`에 직접 추가 |
-| `multimodal_reasoning_agent.py`가 폴더에 있는데 실행법을 모르겠음 | 앱 자체 `README.md`가 이 파일을 전혀 언급하지 않는다(직접 확인) | `uv run streamlit run multimodal_reasoning_agent.py`로 직접 실행 |
+| `multimodal_reasoning_agent.py`가 폴더에 있는데 실행법을 모르겠음 | 앱 자체 `README.md`가 이 파일을 전혀 언급하지 않는다(소스로 확인: `starter_ai_agents/multimodal_ai_agent/README.md`) | `uv run streamlit run multimodal_reasoning_agent.py`로 직접 실행 |
 
 ## 더 해보기
 
-- `multimodal_reasoning_agent.py`를 직접 실행해 이미지+자유 추론 진입점을 시험해보기: `uv run streamlit run multimodal_reasoning_agent.py`. Day 8의 다섯 섹션 고정 프롬프트와 달리 `task_input`(`multimodal_reasoning_agent.py:52-54`)에 원하는 질문을 자유롭게 적을 수 있고 `gemini-2.5-pro`가 이를 처리하며, 파일 전체가 `if __name__ == "__main__":`(`:76-77`)로 감싸여 있어 임포트만으로는 아무 코드도 실행되지 않는다는 것을 이 문서에서 직접 확인했습니다(bare 모드 경고 0줄 — Step 2에서 확인한 `multimodal_agent.py`의 23줄과 대비)
+- `multimodal_reasoning_agent.py`를 직접 실행해 이미지+자유 추론 진입점을 시험해보기: `uv run streamlit run multimodal_reasoning_agent.py`. Day 8의 다섯 섹션 고정 프롬프트와 달리 `task_input`(`multimodal_reasoning_agent.py:52-54`)에 원하는 질문을 자유롭게 적을 수 있고 `gemini-2.5-pro`가 이를 처리하며, 파일 전체가 `if __name__ == "__main__":`(`multimodal_reasoning_agent.py:76-77`)로 감싸여 있어 임포트만으로는 아무 코드도 실행되지 않는다는 것을 이 문서에서 직접 확인했습니다(bare 모드 경고 0줄 — Step 2에서 확인한 `multimodal_agent.py`의 23줄과 대비)
 - `Gemini(id="gemini-2.5-flash", api_key=api_key)`에 `search=True`를 직접 추가해(`multimodal_agent.py:32`) 재시작한 뒤, 응답에 실제 검색 인용이 붙는지 비교해보기
 - `initialize_agent`(`multimodal_agent.py:27-34`)의 `@st.cache_resource`를 지운 뒤, 매 rerun마다 Gemini 클라이언트가 새로 생성되는지 로그로 비교해보기
 
