@@ -1,0 +1,27 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+key: GEMINI_API_KEY (session_state) { class: file }
+app: ai_breakup_recovery_agent.py {
+  ui: Streamlit 입력 폼 (사연+스크린샷) { class: ours }
+  init: 에이전트 초기화 (initialize_agents) { class: ours }
+  agents: 페르소나 에이전트 4개 {
+    therapist: Therapist Agent { class: ours }
+    closure: Closure Agent { class: ours }
+    routine: Routine Planner Agent { class: ours }
+    honesty: Brutal Honesty Agent { class: ours }
+  }
+}
+gemini: Gemini API (gemini-2.5-flash, 공유 클라이언트) { class: ext }
+duckduckgo: DuckDuckGo API { class: ext }
+
+user -> app.ui: 사연 텍스트 + 스크린샷 입력
+key -> app.init: 인증
+app.ui -> app.init: Get Recovery Plan 클릭
+app.init -> app.agents: 공유 Gemini 클라이언트로 4개 생성
+app.agents.therapist -> gemini: 순차 호출 1 (공감 프롬프트)
+app.agents.closure -> gemini: 순차 호출 2 (이별 편지 프롬프트)
+app.agents.routine -> gemini: 순차 호출 3 (7일 루틴 프롬프트)
+app.agents.honesty -> gemini: 순차 호출 4 (냉정한 피드백 프롬프트)
+app.agents.honesty -> duckduckgo: 필요 시 웹 검색
+app.agents -> user: 답변 4개를 순서대로 개별 표시 (합성 없음)

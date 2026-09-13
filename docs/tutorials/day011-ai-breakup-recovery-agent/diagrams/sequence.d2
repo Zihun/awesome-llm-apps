@@ -1,0 +1,26 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+app: 에이전트 로직 { class: ours }
+gemini: Gemini API { class: ext }
+duckduckgo: DuckDuckGo API { class: ext }
+
+user -> ui: 사연 + 스크린샷 + 키 입력
+ui -> app: 버튼 클릭 → initialize_agents
+app -> gemini: 호출1 Therapist(공감 프롬프트)
+gemini -> app: 응답1
+app -> user: Emotional Support 표시
+app -> gemini: 호출2 Closure(이별 편지 프롬프트)
+gemini -> app: 응답2
+app -> user: Finding Closure 표시
+app -> gemini: 호출3 Routine(7일 루틴 프롬프트)
+gemini -> app: 응답3
+app -> user: Recovery Plan 표시
+app -> gemini: 호출4 Honesty(피드백 프롬프트+도구)
+gemini -> app: tool_call web_search
+app -> duckduckgo: 검색어
+duckduckgo -> app: 검색 결과
+app -> gemini: 도구 결과 재전달
+gemini -> app: 최종 응답4
+app -> user: Honest Perspective 표시

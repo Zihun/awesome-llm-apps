@@ -547,4 +547,4 @@ Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'm
 
 ## 다음 날 예고
 
-Day 011 · ❤️‍🩹 AI Breakup Recovery Agent — 이별을 겪은 사용자에게 여러 에이전트가 각자 다른 방식으로 위로와 조언을 건네는 멀티 에이전트 앱을 다룹니다.
+[Day 011 · ❤️‍🩹 AI Breakup Recovery Agent](../day011-ai-breakup-recovery-agent/README.md) — 이별을 겪은 사용자에게 여러 에이전트가 각자 다른 방식으로 위로와 조언을 건네는 멀티 에이전트 앱을 다룹니다.
