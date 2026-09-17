@@ -1,3 +1,4 @@
 streamlit 
 scrapegraphai
 playwright
+langchain-google-genai
