@@ -23,10 +23,10 @@
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
 | 사용자 | 브라우저에서 OpenAI 키·모델·URL·추출 프롬프트 입력 | 코드 없음 (브라우저) |
-| Streamlit UI | 입력을 받고 SmartScraperGraph를 실행해 결과를 표시 | `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:6-27` |
-| 스크래핑 그래프 (SmartScraperGraph) | 페이지 로드 → 텍스트 정리 → LLM 추출까지 파이프라인 실행 | `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:30-38` |
+| Streamlit UI | 입력을 받고 SmartScraperGraph를 실행해 결과를 표시 | `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:17-45` |
+| 스크래핑 그래프 (SmartScraperGraph) | 페이지 로드 → 텍스트 정리 → LLM 추출까지 파이프라인 실행 | `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:48-83` |
 | 대상 웹사이트 | 실제로 스크래핑할 페이지 | 코드 없음 (외부 사이트) |
-| OpenAI API (gpt-4o / gpt-5) | 페이지 텍스트에서 프롬프트에 맞는 정보를 구조화해 추출 | 코드 없음 (외부 서비스). 모델 선택은 `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:13-17` |
+| OpenAI API (gpt-4o / gpt-5) | 페이지 텍스트에서 프롬프트에 맞는 정보를 구조화해 추출 | 코드 없음 (외부 서비스). 모델 선택은 `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:24-28` |
 
 ## 단계별 진행
 
@@ -67,14 +67,16 @@ ok
 
 **할 일.**
 
-`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:2-3`
+`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:5-6`
 
 ```python
 import streamlit as st
 from scrapegraphai.graphs import SmartScraperGraph
 ```
 
-`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:6-10`
+> 파일을 열어보면 이 두 줄 위아래에 `asyncio`·`sys` import와 `WindowsProactorEventLoopPolicy` 블록이 함께 들어있습니다(`ai_scrapper.py:2-14`). Windows에서만 필요한 코드이고 이유는 "[Windows에서 Playwright가 죽는 이유](#windows에서-playwright가-죽는-이유)"에서 다룹니다 — 지금은 넘어가도 됩니다.
+
+`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:17-21`
 
 ```python
 st.title("Web Scrapping AI Agent 🕵️‍♂️")
@@ -84,7 +86,7 @@ st.caption("This app allows you to scrape a website using OpenAI API")
 openai_access_token = st.text_input("OpenAI API Key", type="password")
 ```
 
-`st.text_input(..., type="password")`는 화면에는 입력값을 점으로 가리지만 평범한 파이썬 문자열 변수(`openai_access_token`)에 그대로 담깁니다. 이후 코드 전체가 `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:12`의 `if openai_access_token:` 안에 들어있다는 점이 이 파일의 구조를 이해하는 열쇠입니다 — 키를 넣기 전까지는 모델 선택도, URL 입력도, 스크래핑 버튼도 화면에 나타나지 않습니다.
+`st.text_input(..., type="password")`는 화면에는 입력값을 점으로 가리지만 평범한 파이썬 문자열 변수(`openai_access_token`)에 그대로 담깁니다. 이후 코드 전체가 `starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:23`의 `if openai_access_token:` 안에 들어있다는 점이 이 파일의 구조를 이해하는 열쇠입니다 — 키를 넣기 전까지는 모델 선택도, URL 입력도, 스크래핑 버튼도 화면에 나타나지 않습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -112,7 +114,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 
 **할 일.**
 
-`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:12-23`
+`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:23-41`
 
 ```python
 if openai_access_token:
@@ -126,10 +128,17 @@ if openai_access_token:
             "api_key": openai_access_token,
             "model": model,
         },
+        # Without this ScrapeGraphAI drops its own logger to WARNING
+        # (scrapegraphai/graphs/abstract_graph.py:84-89). Every progress line it
+        # writes -- `--- Executing FetchNode ---`, `Content scraped`,
+        # `--- Executing GenerateAnswerNode ---` -- is an INFO record, so the
+        # console stays completely silent while the graph runs and there is no way
+        # to tell how far it got or whether it failed.
+        "verbose": True,
     }
 ```
 
-`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:24-27`
+`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:42-45`
 
 ```python
     # Get the URL of the website to scrape
@@ -168,7 +177,7 @@ print(graph_config)
 
 **할 일.**
 
-`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:30-34`
+`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:48-52`
 
 ```python
     smart_scraper_graph = SmartScraperGraph(
@@ -206,16 +215,19 @@ SmartScraperGraph Extract the page title
 
 **할 일.**
 
-`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:35-38`
+`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:53-57`
 
 ```python
     # Scrape the website
     if st.button("Scrape"):
-        result = smart_scraper_graph.run()
+        with st.spinner("Fetching the page, then asking the model..."):
+            result = smart_scraper_graph.run()
         st.write(result)
 ```
 
 `.run()`은 (1) Playwright로 `source` URL을 로드하고 (2) 받아온 HTML을 텍스트로 정리해 (3) `prompt`와 함께 설정된 LLM에 보내는 세 단계를 순서대로 실행하고, 최종 결과를 돌려줍니다. 이 코드에는 `try/except`가 없으므로 도중에 예외가 나면 Streamlit이 화면에 빨간 트레이스백을 그대로 보여줍니다.
+
+그 뒤 `ai_scrapper.py:59-83`에는 **답이 엉뚱할 때 쓸 진단 블록**이 붙어 있습니다. `.run()`이 성공하면 `smart_scraper_graph.final_state`에 노드별 중간값이 그대로 남으므로, 가져온 HTML 길이와 모델에게 실제로 넘어간 텍스트(`parsed_doc`)의 길이·청크 수, 그 텍스트 미리보기, `get_execution_info()`의 노드별 시간·토큰 표를 펼쳐 볼 수 있습니다. 파싱된 텍스트가 0자에 가까우면 모델이 아니라 **입력**이 잘못된 것입니다 — 본문을 JavaScript로 그리는 페이지이거나 에러 페이지를 받아온 경우입니다. 반대로 `.run()`이 예외로 끝나면 scrapegraphai가 `final_state`를 채우지 않으므로 이 패널은 뜨지 않고, 그때는 콘솔 진행 로그와 Streamlit 트레이스백으로 어디서 멈췄는지 봅니다(직접 확인: 잘못된 키로 돌려 콘솔 4줄 + 401 트레이스백까지 확인).
 
 > **Windows 사용자는 여기서 (1)단계부터 막힙니다.** `streamlit run`이 바꿔놓은 asyncio 이벤트 루프 정책 때문에 Playwright가 드라이버 프로세스를 띄우지 못해 `NotImplementedError`가 납니다. 원인과 두 줄짜리 해법은 "[Windows에서 Playwright가 죽는 이유](#windows에서-playwright가-죽는-이유)"에 정리해 두었습니다 — 이 파일에도 그대로 적용됩니다.
 
@@ -318,7 +330,7 @@ gemini_api_key = st.text_input(
 
 맨 위의 `sys.platform == "win32"` 블록은 Gemini와 무관하게 **Windows에서 Streamlit으로 이 앱을 돌릴 때 반드시 필요한** 부분입니다. 자세한 내용은 바로 아래 "[Windows에서 Playwright가 죽는 이유](#windows에서-playwright가-죽는-이유)"에서 다룹니다.
 
-`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:35-50`
+`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:35-57`
 
 ```python
 if gemini_api_key:
@@ -336,10 +348,19 @@ if gemini_api_key:
             "model": f"google_genai/{model}",
             "model_tokens": MODEL_TOKENS[model],
         },
+        # Without this ScrapeGraphAI drops its own logger to WARNING
+        # (scrapegraphai/graphs/abstract_graph.py:84-89). Every progress line it
+        # writes -- `--- Executing FetchNode ---`, `Content scraped`,
+        # `--- Executing GenerateAnswerNode ---` -- is an INFO record, so the
+        # console stays completely silent while the graph runs and there is no way
+        # to tell how far it got or whether it failed.
+        "verbose": True,
     }
 ```
 
-`gemini_ai_scrapper.py:51-65`의 나머지(URL 입력 → 프롬프트 입력 → `SmartScraperGraph` 생성 → Scrape 버튼)는 `ai_scrapper.py`와 글자 그대로 같습니다. Step 4·5에서 설명한 내용이 그대로 적용됩니다.
+`"verbose": True`가 없으면 `abstract_graph.py:84-89`가 scrapegraphai 자신의 로거를 `WARNING`으로 내려버립니다. 진행 로그(`--- Executing Fetch Node ---`, `--- (Fetching HTML from: ...) ---`, `--- Executing ParseNode Node ---`, `--- Executing GenerateAnswer Node ---`)는 전부 INFO 레벨이라 통째로 사라지고, 그래프가 돌는 중인지 어디서 멈췄는지 콘솔만 봐서는 알 수 없습니다(직접 확인: 켜기 전 네 줄 모두 미출력 → 켠 뒤 모두 출력). 참고로 켜면 scrapegraphai의 이모지 배너까지 같이 나오는데, cp949 콘솔에서도 `✨`로 이스케이프될 뿐 죽지는 않습니다(직접 확인).
+
+`gemini_ai_scrapper.py:58-99`의 나머지(URL 입력 → 프롬프트 입력 → `SmartScraperGraph` 생성 → Scrape 버튼)는 `ai_scrapper.py`와 거의 같습니다. Step 4·5의 설명이 그대로 적용되고, Scrape 블록에만 진행 스피너와 진단 정보가 더 붙어 있습니다 — 가져온 HTML 길이, **모델에게 실제로 넘어간 텍스트**와 청크 수, 그리고 `get_execution_info()`의 노드별 시간·토큰 표입니다. 답이 엉뚱할 때는 모델을 의심하기 전에 이 숫자부터 봅니다. 파싱된 텍스트가 0자에 가깝다면 그 페이지는 본문을 JavaScript로 그리는 것이고, `loader_kwargs`로 넘어가는 `requires_js_support` 같은 옵션을 봐야 합니다(`abstract_graph.py:73`).
 
 `ai_scrapper.py`와의 차이를 표로 정리하면 이렇습니다.
 
@@ -389,7 +410,7 @@ if sys.platform == "win32":
 
 고친 뒤 브라우저에서 직접 확인한 결과: Playwright가 정상적으로 떠서 페이지를 8043자까지 파싱했고, 파이프라인은 `NotImplementedError` 없이 LLM 호출 단계까지 진행해 (일부러 넣은 잘못된 키 때문에) `400 API_KEY_INVALID`로 끝났습니다. 즉 실패 지점이 "브라우저를 못 띄움"에서 "키가 틀림"으로 옮겨졌습니다.
 
-> **`ai_scrapper.py`와 `local_ai_scrapper.py`도 같은 문제를 겪습니다.** 두 파일은 원본 저장소 코드 그대로 두었으므로, Windows에서 그쪽을 쓴다면 위 두 줄(`import asyncio`, `import sys` 포함)을 파일 맨 위에 직접 넣어야 합니다. macOS·Linux에서는 `sys.platform` 가드에 걸려 아무 일도 하지 않으므로 넣어도 무해합니다.
+> **`ai_scrapper.py`와 `local_ai_scrapper.py`도 같은 문제를 겪습니다.** 처음에는 두 파일을 원본 저장소 코드 그대로 두었지만, Windows에서 `streamlit run ai_scrapper.py`를 돌리면 이 에러를 그대로 만나므로 같은 블록(`import asyncio`, `import sys` 포함)을 두 파일 맨 위에도 넣어 두었습니다 — `ai_scrapper.py:2-14`, `local_ai_scrapper.py:2-14`. macOS·Linux에서는 `sys.platform` 가드에 걸려 아무 일도 하지 않으므로 무해합니다.
 
 ### 실행
 
@@ -487,20 +508,22 @@ Gemini 버전까지 해본다면:
 | "Scrape" 실행 시 `RuntimeError: Failed to scrape after 1 attempts: BrowserType.launch: Executable doesn't exist at ...\ms-playwright\chromium_headless_shell-1234\chrome-headless-shell-win64\chrome-headless-shell.exe`(폴더 번호 `1234`는 설치된 playwright 버전마다 다를 수 있음)와 함께 Playwright가 `playwright install` 실행을 안내하는 배너가 뜸 | `requirements.txt`의 `playwright`는 파이썬 바인딩만 설치하고, 실제 브라우저 실행 파일은 별도 다운로드가 필요하다. 앱 자체 README에 이 단계가 빠져 있어 재현되던 문제로, Step 1에 적은 대로 앱 README에도 이 명령을 추가해 두었다(직접 재현) | `uv run playwright install chromium` 실행 후 재시도 |
 | 위 에러 메시지를 콘솔에 출력하는 도중 `UnicodeEncodeError: 'cp949' codec can't encode character '╔'...`까지 추가로 발생해 진짜 원인이 가려짐 | Playwright의 안내 배너가 상자 그리기 유니코드 문자(╔ 등)를 쓰는데, 한국어 Windows의 기본 콘솔 코드페이지(cp949)가 이 문자를 인코딩하지 못한다(직접 확인, 출력을 파이프로 받을 때 재현됨) | 진짜 원인(`RuntimeError`, 브라우저 없음)은 이미 나온 뒤이므로 그 줄을 찾아 위 해결을 따른다. `PYTHONIOENCODING=utf-8` 환경변수를 설정하고 재실행하면 배너까지 깨지지 않고 보인다(직접 확인) |
 | "Scrape"를 눌러도 무한 대기 없이 바로 에러가 뜨고, 페이지 로드 자체는 된 것처럼 보임 | OpenAI 키가 없거나 잘못됨. `SmartScraperGraph` 생성 시점에는 키를 검증하지 않고, 실제 LLM 호출 시점(`.run()` 내부)에야 인증을 확인한다(직접 확인: 페이지는 167자를 정상 파싱한 뒤 LLM 단계에서 401로 실패) | 유효한 OpenAI 키를 앱 화면 입력창에 다시 입력 |
-| 예전 버전의 앱 README를 봤다면, "Getting Started"가 로컬 버전(`local_ai_scrapper.py`)을 쓸 때도 OpenAI 키가 필요한 것처럼 순서대로 안내 | 문서 구성 오류였다. `local_ai_scrapper.py`는 OpenAI를 전혀 쓰지 않고 `ollama/llama3.2`(`starter_ai_agents/web_scraping_ai_agent/local_ai_scrapper.py:12`)만 호출한다(직접 확인: 파일에 OpenAI 관련 import 없음) | 로컬 버전을 쓸 때는 OpenAI 키 없이 Ollama만 설치하면 된다. 현재 앱 README는 OpenAI·Gemini·로컬 세 갈래로 나눠 안내하도록 고쳐 두었다 |
+| Scrape를 눌러도 **콘솔에 아무 로그가 없어서** 도는 중인지, 멈춘 건지, 어디까지 갔는지 알 수 없음 | `graph_config`에 `"verbose": True`가 없으면 `abstract_graph.py:84-89`가 scrapegraphai 자신의 로거를 `WARNING`으로 내려버린다. 진행 로그 네 줄(`--- Executing Fetch Node ---`, `--- (Fetching HTML from: ...) ---`, `--- Executing ParseNode Node ---`, `--- Executing GenerateAnswer Node ---`)은 전부 INFO라 통째로 사라진다. 반면 에러는 `logger.error`라 원래 보이므로, **아무것도 안 나왔다는 건 에러 없이 끝까지 돌았다는 뜻**이다(직접 재현·수정: 켜기 전 0줄 → 켠 뒤 4줄) | `graph_config`에 `"verbose": True`를 넣는다 — 세 파일 모두에 적용해 두었다. 화면에서 보려면 Scrape 블록의 진단 패널을 펼친다(`ai_scrapper.py:59-83`). 켜면 scrapegraphai 이모지 배너까지 같이 나오지만 cp949 콘솔에서도 `✨`로 이스케이프될 뿐 죽지 않는다(직접 확인) |
+| 예전 버전의 앱 README를 봤다면, "Getting Started"가 로컬 버전(`local_ai_scrapper.py`)을 쓸 때도 OpenAI 키가 필요한 것처럼 순서대로 안내 | 문서 구성 오류였다. `local_ai_scrapper.py`는 OpenAI를 전혀 쓰지 않고 `ollama/llama3.2`(`starter_ai_agents/web_scraping_ai_agent/local_ai_scrapper.py:23`)만 호출한다(직접 확인: 파일에 OpenAI 관련 import 없음) | 로컬 버전을 쓸 때는 OpenAI 키 없이 Ollama만 설치하면 된다. 현재 앱 README는 OpenAI·Gemini·로컬 세 갈래로 나눠 안내하도록 고쳐 두었다 |
 | 앱 폴더에서 `uv venv`로 `.venv`를 만들고 `uv pip install -r requirements.txt`를 돌렸는데, 정작 `.venv/Lib/site-packages`에는 `_virtualenv.pth`만 있고 패키지가 하나도 없음. `uv run`은 뜬금없이 수십 개 패키지를 uninstall/install 함 | 이 저장소는 루트(`awesome-llm-apps/`)에 `pyproject.toml`과 `uv.lock`이 있어 uv가 여기를 프로젝트 루트로 인식한다. 앱 하위 폴더에서 실행해도 uv는 루트 프로젝트의 `.venv`를 대상으로 잡고, `uv run`은 그 환경을 `uv.lock`에 맞춰 동기화한다(직접 확인) | 하위 폴더의 venv를 확실히 쓰려면 `uv venv` 후 활성화하거나(`source .venv/Scripts/activate`) `.venv/Scripts/python.exe -m ...`로 직접 호출한다. 루트 `.venv`를 그냥 써도 무방하다 — `uv.lock`에 scrapegraphai·streamlit·playwright·langchain-google-genai가 모두 들어있다(직접 확인) |
-| **Windows에서** `streamlit run ...` 후 Scrape를 누르면 `NotImplementedError` + `RuntimeError: Failed to scrape after 1 attempts:` (뒤에 아무 이유도 붙지 않은 빈 메시지). 터미널에서 `python -c`로 같은 코드를 돌리면 멀쩡함 | `streamlit run`이 Tornado 호환을 위해 전역 asyncio 정책을 `WindowsSelectorEventLoopPolicy`로 바꾸는데(`streamlit/web/bootstrap.py:87-90`), Windows의 selector 루프는 서브프로세스를 만들지 못해 Playwright 드라이버가 뜨지 못한다(직접 재현·수정) | 스크립트 맨 위에 `if sys.platform == "win32": asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())`를 넣는다. `gemini_ai_scrapper.py:14-15`에는 이미 들어있고, `ai_scrapper.py`·`local_ai_scrapper.py`에는 직접 넣어야 한다. 자세한 설명은 "[Windows에서 Playwright가 죽는 이유](#windows에서-playwright가-죽는-이유)" |
-| Gemini 버전에서 `KeyError: 'model_provider'` (원인을 전혀 알려주지 않는 메시지) | 모델 문자열에 `google_genai/` 접두사가 없다. scrapegraphai는 `/`가 없으면 내장 `models_tokens` 표에서 공급자를 추론하는데, `gemini-3.6-flash`는 그 표에 없어 실패한다. 그러면 "지원하지 않는 공급자" `ValueError`를 만들려다 그 메시지 안의 `llm_params["model_provider"]`를 읽으며 `KeyError`가 먼저 터진다(직접 확인, scrapegraphai 2.2.4의 버그) | `"model": "google_genai/gemini-3.6-flash"`로 접두사를 붙인다 (`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:37`) |
+| **Windows에서** `streamlit run ...` 후 Scrape를 누르면 `NotImplementedError` + `RuntimeError: Failed to scrape after 1 attempts:` (뒤에 아무 이유도 붙지 않은 빈 메시지). 터미널에서 `python -c`로 같은 코드를 돌리면 멀쩡함 | `streamlit run`이 Tornado 호환을 위해 전역 asyncio 정책을 `WindowsSelectorEventLoopPolicy`로 바꾸는데(`streamlit/web/bootstrap.py:87-90`), Windows의 selector 루프는 서브프로세스를 만들지 못해 Playwright 드라이버가 뜨지 못한다(직접 재현·수정) | 스크립트 맨 위에 `if sys.platform == "win32": asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())`를 넣는다. 세 파일 모두에 이미 들어있다(`ai_scrapper.py:13-14`, `gemini_ai_scrapper.py:14-15`, `local_ai_scrapper.py:13-14`) — 이 에러가 다시 보인다면 그 블록이 지워졌는지 확인한다. 자세한 설명은 "[Windows에서 Playwright가 죽는 이유](#windows에서-playwright가-죽는-이유)" |
+| Gemini 버전에서 `KeyError: 'model_provider'` (원인을 전혀 알려주지 않는 메시지) | 모델 문자열에 `google_genai/` 접두사가 없다. scrapegraphai는 `/`가 없으면 내장 `models_tokens` 표에서 공급자를 추론하는데, `gemini-3.6-flash`는 그 표에 없어 실패한다. 그러면 "지원하지 않는 공급자" `ValueError`를 만들려다 그 메시지 안의 `llm_params["model_provider"]`를 읽으며 `KeyError`가 먼저 터진다(직접 확인, scrapegraphai 2.2.4의 버그) | `"model": "google_genai/gemini-3.6-flash"`로 접두사를 붙인다 (`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:47`) |
 | Gemini 버전에서 `ImportError` 또는 `Error instancing model: ...`이 나며 `ChatGoogleGenerativeAI`를 만들지 못함 | `langchain-google-genai`가 설치되지 않았다. scrapegraphai의 의존성에 포함되어 있지 않다(직접 확인) | `uv pip install langchain-google-genai` (또는 갱신된 `requirements.txt`로 재설치) |
-| Gemini 버전이 긴 페이지에서 앞부분만 보고 답하는 것 같은데 에러는 안 남 | `model_tokens`를 넘기지 않아 scrapegraphai가 조용히 8192 토큰으로 가정하고 본문을 잘라냈다. 경고는 로그에만 남고 예외는 발생하지 않는다(직접 확인: `model_token: 8192`, `model_tokens_defaulted: True`) | `graph_config["llm"]["model_tokens"]`에 실제 한도(gemini-3.6-flash는 1048576)를 명시한다 (`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:11-14`) |
+| Gemini 버전이 긴 페이지에서 앞부분만 보고 답하는 것 같은데 에러는 안 남 | `model_tokens`를 넘기지 않아 scrapegraphai가 조용히 8192 토큰으로 가정하고 본문을 잘라냈다. 경고는 로그에만 남고 예외는 발생하지 않는다(직접 확인: `model_token: 8192`, `model_tokens_defaulted: True`) | `graph_config["llm"]["model_tokens"]`에 실제 한도(gemini-3.6-flash는 1048576)를 명시한다 (`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:21-24`) |
+| 에러는 안 나고 끝까지 도는데 추출 결과가 얕거나 엉뚱함 | 먼저 진단 패널에서 **모델에게 넘어간 텍스트 길이**를 본다. 0자에 가까우면 본문을 JavaScript로 그리는 페이지이거나 에러 페이지를 받아온 것이다. 길이는 정상인데 결과가 나쁘다면, `model_tokens`가 청크 크기까지 결정한다는 점을 봐야 한다 — `smart_scraper_graph.py:113`이 `chunk_size`로 그대로 넘기고 `parse_node.py:197-198`이 약 838,860토큰으로 잡으므로, 페이지 전체가 **1청크**로 묶여 `generate_answer_node.py:182`의 단일 프롬프트 경로(`TEMPLATE_NO_CHUNKS`)만 타고 청크별 추출 후 병합하는 map-reduce 경로는 쓰이지 않는다(코드 확인. 이것이 실제 품질 저하의 원인인지는 **미검증**) | 진단 패널의 청크 수를 보면서 `model_tokens`를 낮춰(예: 32000) 청크가 2개 이상 되게 하고 결과를 비교한다. 단 너무 낮추면 8192 잘림 문제로 되돌아가므로 위 행과 함께 판단한다 |
 | Gemini 버전에서 `400 INVALID_ARGUMENT` / `API key not valid. Please pass a valid API key.` | Gemini 키가 없거나 잘못됐다. OpenAI 버전의 401과 같은 자리(LLM 호출 단계)에서 발생하며, 페이지 로드·파싱은 이미 성공한 뒤다(직접 확인) | https://aistudio.google.com/apikey 에서 발급한 키를 앱 화면에 다시 입력하거나 `GEMINI_API_KEY` 환경변수를 설정한다 |
 
 ## 더 해보기
 
-- `local_ai_scrapper.py`로 전환해 Ollama의 로컬 Llama 3.2로 완전히 무료로 돌려보기 (`ollama pull llama3.2`, `ollama pull nomic-embed-text` 필요, 설정은 `starter_ai_agents/web_scraping_ai_agent/local_ai_scrapper.py:10-22`)
-- `st.radio`의 모델 목록에 `"gpt-4o-mini"`를 추가해 더 저렴한 모델로 스크래핑해보기 (`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:15`)
+- `local_ai_scrapper.py`로 전환해 Ollama의 로컬 Llama 3.2로 완전히 무료로 돌려보기 (`ollama pull llama3.2`, `ollama pull nomic-embed-text` 필요, 설정은 `starter_ai_agents/web_scraping_ai_agent/local_ai_scrapper.py:21-33`)
+- `st.radio`의 모델 목록에 `"gpt-4o-mini"`를 추가해 더 저렴한 모델로 스크래핑해보기 (`starter_ai_agents/web_scraping_ai_agent/ai_scrapper.py:26`)
 - 여러 페이지를 한 번에 스크래핑하려면 `url`을 리스트로 바꾸고 `SmartScraperGraph`를 반복 생성하는 코드를 직접 추가해보기
-- `gemini_ai_scrapper.py`의 `MODEL_TOKENS`에 새 모델을 한 줄 추가해 라디오 선택지를 늘려보기 — 이 딕셔너리가 곧 화면의 선택지이므로(`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:28`) 모델 이름과 컨텍스트 한도만 알면 된다. 구글은 3.6 Flash 이후로도 Flash 계열을 계속 내고 있으니 [모델 목록 문서](https://ai.google.dev/gemini-api/docs/models)에서 최신 API ID와 입력 한도를 확인해 넣어보자
+- `gemini_ai_scrapper.py`의 `MODEL_TOKENS`에 새 모델을 한 줄 추가해 라디오 선택지를 늘려보기 — 이 딕셔너리가 곧 화면의 선택지이므로(`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:38`) 모델 이름과 컨텍스트 한도만 알면 된다. 구글은 3.6 Flash 이후로도 Flash 계열을 계속 내고 있으니 [모델 목록 문서](https://ai.google.dev/gemini-api/docs/models)에서 최신 API ID와 입력 한도를 확인해 넣어보자
 - 같은 URL·같은 프롬프트를 `ai_scrapper.py`(gpt-4o)와 `gemini_ai_scrapper.py`(gemini-3.6-flash)로 각각 돌려, 추출 결과의 구조와 누락 항목을 나란히 비교해보기
 
 ## 다음 날 예고
