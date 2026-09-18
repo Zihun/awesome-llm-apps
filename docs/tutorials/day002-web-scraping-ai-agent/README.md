@@ -331,7 +331,7 @@ gemini_api_key = st.text_input(
 
 맨 위의 `sys.platform == "win32"` 블록은 Gemini와 무관하게 **Windows에서 Streamlit으로 이 앱을 돌릴 때 반드시 필요한** 부분입니다. 자세한 내용은 바로 아래 "[Windows에서 Playwright가 죽는 이유](#windows에서-playwright가-죽는-이유)"에서 다룹니다.
 
-`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:35-65`
+`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:35-72`
 
 ```python
 if gemini_api_key:
@@ -356,6 +356,13 @@ if gemini_api_key:
             # so pin both. (ChatOpenAI, by contrast, sends no temperature at all.)
             "temperature": 0,
             "response_mime_type": "application/json",
+            # Gemini 3.x thinks by default, and thinking shares the response
+            # budget -- which is how a long extraction comes back truncated or
+            # hollow. Left unset, no ThinkingConfig is sent at all and the model's
+            # own default depth applies. `thinking_level` is the Gemini 3+ knob
+            # (`thinking_budget` is deprecated there, see langchain_google_genai
+            # chat_models.py:3058-3086); pulling a list off a page needs little of it.
+            "thinking_level": "low",
         },
         # Without this ScrapeGraphAI drops its own logger to WARNING
         # (scrapegraphai/graphs/abstract_graph.py:84-89). Every progress line it
@@ -369,7 +376,7 @@ if gemini_api_key:
 
 `"verbose": True`가 없으면 `abstract_graph.py:84-89`가 scrapegraphai 자신의 로거를 `WARNING`으로 내려버립니다. 진행 로그(`--- Executing Fetch Node ---`, `--- (Fetching HTML from: ...) ---`, `--- Executing ParseNode Node ---`, `--- Executing GenerateAnswer Node ---`)는 전부 INFO 레벨이라 통째로 사라지고, 그래프가 돌는 중인지 어디서 멈췄는지 콘솔만 봐서는 알 수 없습니다(직접 확인: 켜기 전 네 줄 모두 미출력 → 켠 뒤 모두 출력). 참고로 켜면 scrapegraphai의 이모지 배너까지 같이 나오는데, cp949 콘솔에서도 `✨`로 이스케이프될 뿐 죽지는 않습니다(직접 확인).
 
-`gemini_ai_scrapper.py:66-107`의 나머지(URL 입력 → 프롬프트 입력 → `SmartScraperGraph` 생성 → Scrape 버튼)는 `ai_scrapper.py`와 거의 같습니다. Step 4·5의 설명이 그대로 적용되고, Scrape 블록에만 진행 스피너와 진단 정보가 더 붙어 있습니다 — 가져온 HTML 길이, **모델에게 실제로 넘어간 텍스트**와 청크 수, 그리고 `get_execution_info()`의 노드별 시간·토큰 표입니다. 답이 엉뚱할 때는 모델을 의심하기 전에 이 숫자부터 봅니다. 파싱된 텍스트가 0자에 가깝다면 그 페이지는 본문을 JavaScript로 그리는 것이고, `loader_kwargs`로 넘어가는 `requires_js_support` 같은 옵션을 봐야 합니다(`abstract_graph.py:73`).
+`gemini_ai_scrapper.py:73-114`의 나머지(URL 입력 → 프롬프트 입력 → `SmartScraperGraph` 생성 → Scrape 버튼)는 `ai_scrapper.py`와 거의 같습니다. Step 4·5의 설명이 그대로 적용되고, Scrape 블록에만 진행 스피너와 진단 정보가 더 붙어 있습니다 — 가져온 HTML 길이, **모델에게 실제로 넘어간 텍스트**와 청크 수, 그리고 `get_execution_info()`의 노드별 시간·토큰 표입니다. 답이 엉뚱할 때는 모델을 의심하기 전에 이 숫자부터 봅니다. 파싱된 텍스트가 0자에 가깝다면 그 페이지는 본문을 JavaScript로 그리는 것이고, `loader_kwargs`로 넘어가는 `requires_js_support` 같은 옵션을 봐야 합니다(`abstract_graph.py:73`).
 
 `ai_scrapper.py`와의 차이를 표로 정리하면 이렇습니다.
 
@@ -525,7 +532,7 @@ Gemini 버전까지 해본다면:
 | Gemini 버전에서 `ImportError` 또는 `Error instancing model: ...`이 나며 `ChatGoogleGenerativeAI`를 만들지 못함 | `langchain-google-genai`가 설치되지 않았다. scrapegraphai의 의존성에 포함되어 있지 않다(직접 확인) | `uv pip install langchain-google-genai` (또는 갱신된 `requirements.txt`로 재설치) |
 | Gemini 버전이 긴 페이지에서 앞부분만 보고 답하는 것 같은데 에러는 안 남 | `model_tokens`를 넘기지 않아 scrapegraphai가 조용히 8192 토큰으로 가정하고 본문을 잘라냈다. 경고는 로그에만 남고 예외는 발생하지 않는다(직접 확인: `model_token: 8192`, `model_tokens_defaulted: True`) | `graph_config["llm"]["model_tokens"]`에 실제 한도(gemini-3.6-flash는 1048576)를 명시한다 (`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:21-24`) |
 | 에러는 안 나고 끝까지 도는데 추출 결과가 얕거나 엉뚱함 | 진단 패널에서 **모델에게 넘어간 텍스트 길이**부터 본다. 0자에 가까우면 LLM이 아니라 입력이 문제다 — 본문을 JavaScript로 그리는 페이지이거나 에러 페이지를 받아온 것이다. 길이가 정상이면 입력은 멀쩡하니 LLM 단계를 본다(아래 행) | 페이지가 JS 렌더링이면 `loader_kwargs`로 넘어가는 `requires_js_support`를 검토한다(`abstract_graph.py:73`) |
-| 같은 URL·프롬프트인데 `ai_scrapper.py`(OpenAI)는 잘 나오고 **`gemini_ai_scrapper.py`만 결과가 엉망** | 두 앱의 scrapegraphai 경로는 완전히 동일하다 — 둘 다 `schema`를 넘기지 않으므로 같은 `TolerantJsonOutputParser`와 같은 `TEMPLATE_NO_CHUNKS_MD` 프롬프트를 쓴다. 다른 것은 모델 객체와 `model_token` 값뿐이고, 거기서 셋이 갈린다(모두 직접 확인). ① scrapegraphai는 **JSON 출력을 Ollama에만 강제**한다(`generate_answer_node.py:63-67`이 `llm_model.format`을 설정) — 나머지 공급자는 프롬프트에서 *"```json으로 시작하지 마세요"* 하고 부탁만 받는다. Gemini는 자체 JSON 모드(`response_mime_type`)가 있는데도 연결돼 있지 않았다. ② `langchain-google-genai`의 `temperature` 기본값은 **0.7**인데 `ChatOpenAI`는 온도를 아예 보내지 않는다(모델 객체를 직접 찍어 확인). ③ `model_token`이 청크 수를 바꾸지만, 실제로 재보면 페이지 텍스트가 **약 30만 자를 넘어야** 갈린다 — 60만 자에서 gpt-4o(128k)는 3청크로 쪼개 map-reduce 경로를 타고 Gemini(1048576 선언)는 1청크 단일 프롬프트로 간다(직접 측정). 그 아래 크기에서는 둘 다 1청크라 청크는 원인이 될 수 없다 | `graph_config["llm"]`에 `"temperature": 0`과 `"response_mime_type": "application/json"`을 넣는다 — `gemini_ai_scrapper.py:55-56`에 적용해 두었다(두 값이 모델 객체에 실제로 꽂히는 것까지 확인. 다만 **답 품질이 실제로 개선되는지는 Gemini 키가 없어 미검증**). 그래도 이상하면 ⑴ 진단 패널의 청크 수를 보고 `model_tokens`를 128000 정도로 낮춰 OpenAI와 같은 청크 경로로 비교하고, ⑵ 라디오에서 `gemini-2.5-flash`로 바꿔 A/B 한다(`gemini-3.6-flash`는 scrapegraphai의 `models_tokens` 표에 없는 모델이라 한도를 직접 선언해 쓰는 중이다), ⑶ 그래도 형식이 흔들리면 `SmartScraperGraph(..., schema=...)`로 pydantic 스키마를 넘겨 `get_pydantic_output_parser` 경로를 타게 한다(`generate_answer_node.py:138-151`) |
+| 같은 URL·프롬프트인데 `ai_scrapper.py`(OpenAI)는 잘 나오고 **`gemini_ai_scrapper.py`만 결과가 엉망** | 두 앱의 scrapegraphai 경로는 완전히 동일하다 — 둘 다 `schema`를 넘기지 않으므로 같은 `TolerantJsonOutputParser`와 같은 `TEMPLATE_NO_CHUNKS_MD` 프롬프트를 쓴다. 다른 것은 모델 객체와 `model_token` 값뿐이고, 거기서 셋이 갈린다(모두 직접 확인). ① scrapegraphai는 **JSON 출력을 Ollama에만 강제**한다(`generate_answer_node.py:63-67`이 `llm_model.format`을 설정) — 나머지 공급자는 프롬프트에서 *"```json으로 시작하지 마세요"* 하고 부탁만 받는다. Gemini는 자체 JSON 모드(`response_mime_type`)가 있는데도 연결돼 있지 않았다. ② `langchain-google-genai`의 `temperature` 기본값은 **0.7**인데 `ChatOpenAI`는 온도를 아예 보내지 않는다(모델 객체를 직접 찍어 확인). ③ `model_token`이 청크 수를 바꾸지만, 실제로 재보면 페이지 텍스트가 **약 30만 자를 넘어야** 갈린다 — 60만 자에서 gpt-4o(128k)는 3청크로 쪼개 map-reduce 경로를 타고 Gemini(1048576 선언)는 1청크 단일 프롬프트로 간다(직접 측정). 그 아래 크기에서는 둘 다 1청크라 청크는 원인이 될 수 없다. ④ **Gemini 3.x는 thinking이 기본 동작**인데 아무 설정도 주지 않으면 `ThinkingConfig` 자체가 요청에 실리지 않아 모델 기본 깊이로 추론하고, 그 추론이 응답 예산을 함께 쓴다 — 긴 추출이 잘리거나 속 빈 답으로 돌아오는 경로다(`langchain_google_genai/chat_models.py:3058-3086`. Gemini 3+에서는 `thinking_budget`이 폐기되고 `thinking_level`이 우선한다) | `graph_config["llm"]`에 `"temperature": 0`, `"response_mime_type": "application/json"`, `"thinking_level": "low"` 셋을 넣는다 — `gemini_ai_scrapper.py:55-63`에 적용해 두었다. 앞의 둘은 모델 객체에 꽂히는 것을, 셋째는 실제 요청에 `ThinkingConfig(thinking_level=LOW)`로 실리는 것을 확인했고, 가짜 키 실행이 `API key not valid`에서만 멈추므로 요청 구성 자체는 정상이다. 다만 **답 품질이 실제로 좋아지는지는 Gemini 키가 없어 미검증**이다. 그래도 이상하면 ⑴ 진단 패널의 청크 수를 보며 `model_tokens`를 128000 정도로 낮춰 OpenAI와 같은 청크 경로로 비교하고, ⑵ 형식이 계속 흔들리면 `SmartScraperGraph(..., schema=...)`로 pydantic 스키마를 넘겨 `get_pydantic_output_parser` 경로를 타게 한다(`generate_answer_node.py:138-151`) |
 | Gemini 버전에서 `400 INVALID_ARGUMENT` / `API key not valid. Please pass a valid API key.` | Gemini 키가 없거나 잘못됐다. OpenAI 버전의 401과 같은 자리(LLM 호출 단계)에서 발생하며, 페이지 로드·파싱은 이미 성공한 뒤다(직접 확인) | https://aistudio.google.com/apikey 에서 발급한 키를 앱 화면에 다시 입력하거나 `GEMINI_API_KEY` 환경변수를 설정한다 |
 
 ## 더 해보기

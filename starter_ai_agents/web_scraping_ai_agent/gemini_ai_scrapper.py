@@ -54,6 +54,13 @@ if gemini_api_key:
             # so pin both. (ChatOpenAI, by contrast, sends no temperature at all.)
             "temperature": 0,
             "response_mime_type": "application/json",
+            # Gemini 3.x thinks by default, and thinking shares the response
+            # budget -- which is how a long extraction comes back truncated or
+            # hollow. Left unset, no ThinkingConfig is sent at all and the model's
+            # own default depth applies. `thinking_level` is the Gemini 3+ knob
+            # (`thinking_budget` is deprecated there, see langchain_google_genai
+            # chat_models.py:3058-3086); pulling a list off a page needs little of it.
+            "thinking_level": "low",
         },
         # Without this ScrapeGraphAI drops its own logger to WARNING
         # (scrapegraphai/graphs/abstract_graph.py:84-89). Every progress line it
