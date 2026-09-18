@@ -46,6 +46,14 @@ if gemini_api_key:
             # be present in `models_tokens` for the provider to be inferred.
             "model": f"google_genai/{model}",
             "model_tokens": MODEL_TOKENS[model],
+            # ScrapeGraphAI forces real JSON output only for Ollama
+            # (generate_answer_node.py:63-67 sets `llm_model.format`); every other
+            # provider is merely *asked* for JSON inside the prompt. Gemini has a
+            # native JSON mode that nothing wires up, and langchain-google-genai
+            # defaults `temperature` to 0.7 -- extraction is not a creative task,
+            # so pin both. (ChatOpenAI, by contrast, sends no temperature at all.)
+            "temperature": 0,
+            "response_mime_type": "application/json",
         },
         # Without this ScrapeGraphAI drops its own logger to WARNING
         # (scrapegraphai/graphs/abstract_graph.py:84-89). Every progress line it
