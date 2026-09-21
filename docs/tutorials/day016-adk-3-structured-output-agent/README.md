@@ -426,4 +426,4 @@ HTTP 상태는 404입니다. 점으로 구분된 각 조각이 `str.isidentifier
 
 ## 다음 날 예고
 
-Day 017 · Google ADK Crash Course · 4_tool_using_agent — 내장 도구·함수 도구·서드파티 도구(CrewAI·LangChain)·MCP 도구까지 네 갈래로 나뉜 도구 사용 에이전트를 다룹니다.
+[Day 017 · Google ADK Crash Course · 4_tool_using_agent](../day017-adk-4-tool-using-agent/README.md) — 내장 도구·함수 도구·서드파티 도구(CrewAI·LangChain)·MCP 도구까지 네 갈래로 나뉜 도구 사용 에이전트를 다룹니다.

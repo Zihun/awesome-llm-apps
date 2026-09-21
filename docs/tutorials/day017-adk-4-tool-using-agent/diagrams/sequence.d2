@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adk_web: adk web 서버 { class: ext }
+agent: root_agent (LlmAgent) { class: ours }
+mcp_server: MCP 서버 (별도 프로세스) { class: ext }
+gemini: Gemini API { class: ext }
+
+user -> adk_web: POST /run
+adk_web -> adk_web: 앱 이름이 유효한 식별자인지 검사
+adk_web -> agent: 검증 통과 시 동적 임포트
+agent -> mcp_server: (MCP면) stdio로 도구 목록 요청
+mcp_server -> agent: 도구 선언 반환
+agent -> gemini: instruction + 도구 선언으로 요청
+gemini -> agent: 도구 호출 필요 (예: read_file)
+agent -> mcp_server: 도구 실행 위임
+mcp_server -> agent: 실행 결과
+agent -> gemini: 결과를 담아 최종 응답 요청
+gemini -> adk_web: 최종 응답
+adk_web -> user: 응답 표시
