@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+triage: Triage Agent { class: ours }
+editor: Editor Agent { class: ours }
+openai: OpenAI API { class: ext }
+
+user -> ui: 주제 입력 후 Start Research
+ui -> triage: Runner.run 으로 조사 계획 요청
+triage -> openai: 계획 생성, 핸드오프 도구도 함께 제시됨
+openai -> triage: ResearchPlan 구조체
+triage -> ui: 계획을 st.json 으로 표시
+ui -> ui: 15초 동안 1초씩 사실 수집 여부 폴링
+ui -> editor: triage_result.to_input_list 를 입력으로 전달
+editor -> openai: 보고서 작성 요청
+openai -> editor: ResearchReport 구조체
+editor -> ui: session_state 에 저장
+ui -> user: 보고서 탭 표시와 마크다운 내려받기

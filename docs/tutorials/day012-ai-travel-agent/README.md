@@ -341,4 +341,4 @@ bytes: 592 | events: 3
 
 ## 다음 날 예고
 
-Day 013 · 🔍 OpenAI Research Agent — 검색과 요약을 스스로 반복하며 조사 보고서를 만드는 에이전트를 다룹니다.
+[Day 013 · 🔍 OpenAI Research Agent](../day013-openai-research-agent/README.md) — 검색과 요약을 스스로 반복하며 조사 보고서를 만드는 에이전트를 다룹니다.

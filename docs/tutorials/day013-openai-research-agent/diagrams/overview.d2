@@ -1,0 +1,27 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+env: OPENAI_API_KEY (환경변수 또는 .env) { class: file }
+app: research_agent.py {
+  sidebar: 사이드바 입력과 예시 주제 버튼 { class: ours }
+  triage: Triage Agent (output_type ResearchPlan) { class: ours }
+  research: Research Agent (WebSearchTool + save_important_fact) { class: ours }
+  editor: Editor Agent (output_type ResearchReport) { class: ours }
+  facts: st.session_state.collected_facts { class: store }
+  tabs: 탭 2개, 진행 과정과 보고서 { class: ours }
+}
+openai: OpenAI API (gpt-4o-mini) { class: ext }
+websearch: OpenAI 호스티드 웹 검색 { class: ext }
+
+user -> app.sidebar: 조사 주제 입력
+env -> app.triage: 인증
+app.sidebar -> app.triage: Start Research 클릭
+app.triage -> openai: 조사 계획 요청
+app.triage -> app.research: 핸드오프로 선언됨
+app.research -> websearch: 웹 검색
+app.research -> app.facts: save_important_fact 로 사실 적재
+app.triage -> app.editor: to_input_list 를 넘겨 코드가 직접 호출
+app.editor -> openai: 보고서 작성 요청
+app.editor -> app.tabs: ResearchReport 표시
+app.facts -> app.tabs: 수집된 사실 표시
+app.tabs -> user: 보고서 열람과 마크다운 내려받기

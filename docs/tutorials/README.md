@@ -49,7 +49,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 133일 일정
 
-진도: 12 / 133일 완료
+진도: 13 / 133일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -67,7 +67,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 010](day010-ai-x402-paying-agent/README.md) | 💸 AI x402 Paying Agent | [starter_ai_agents/ai_x402_paying_agent](../../starter_ai_agents/ai_x402_paying_agent/) |
 | ✅ | [Day 011](day011-ai-breakup-recovery-agent/README.md) | ❤️‍🩹 AI Breakup Recovery Agent | [starter_ai_agents/ai_breakup_recovery_agent](../../starter_ai_agents/ai_breakup_recovery_agent/) |
 | ✅ | [Day 012](day012-ai-travel-agent/README.md) | 🛫 AI Travel Agent (Local & Cloud) | [starter_ai_agents/ai_travel_agent](../../starter_ai_agents/ai_travel_agent/) |
-| ⬜ | Day 013 | 🔍 OpenAI Research Agent | [starter_ai_agents/openai_research_agent](../../starter_ai_agents/openai_research_agent/) |
+| ✅ | [Day 013](day013-openai-research-agent/README.md) | 🔍 OpenAI Research Agent | [starter_ai_agents/openai_research_agent](../../starter_ai_agents/openai_research_agent/) |
 
 ### 볼륨 2. 🧑‍🏫 Crash Courses (Day 14–34, 21일)
 
