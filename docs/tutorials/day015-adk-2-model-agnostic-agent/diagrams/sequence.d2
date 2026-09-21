@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adk_web: adk web 서버 { class: ext }
+agent: 선택된 root_agent (LlmAgent) { class: ours }
+tool: get_fun_fact { class: ours }
+openrouter: OpenRouter API { class: ext }
+
+user -> adk_web: POST /run (앱 이름, 세션ID, 메시지)
+adk_web -> adk_web: 앱 이름이 유효한 식별자인지 검사
+adk_web -> agent: 검증 통과 시 동적 임포트해 조회
+agent -> adk_web: model(LiteLlm)·instruction·tools 반환
+adk_web -> openrouter: openrouter/<제공자>/<모델>로 추론 요청
+openrouter -> adk_web: 도구 호출 요청 또는 최종 응답
+adk_web -> tool: (도구 호출 요청 시) get_fun_fact 실행
+tool -> adk_web: 무작위 사실 문자열
+adk_web -> openrouter: 도구 결과를 포함해 재요청
+openrouter -> adk_web: 최종 응답
+adk_web -> user: 응답 표시
