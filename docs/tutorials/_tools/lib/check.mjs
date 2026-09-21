@@ -6,6 +6,11 @@ import { folderName, PLACEHOLDER } from "./days.mjs";
 
 export const SVG_MAX_WIDTH = 1400;
 
+// 세로 상한. GitHub 본문에서 한 장이 화면을 통째로 먹지 않는 선이다. 시퀀스 그림은
+// 메시지 하나가 행 하나라 본래 길쭉하므로 따로 잡는다.
+export const SVG_MAX_HEIGHT = 700;
+export const SEQUENCE_MAX_HEIGHT = 1500;
+
 /** 임베드 폰트에 담긴 글자 목록. fonts/build.py가 쓴다. */
 let fontCoverage;
 export function coveredCharacters() {
@@ -77,6 +82,9 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
       }
       const width = Number(svgText.match(/<svg[^>]*\swidth="(\d+)"/)?.[1] ?? 0);
       if (width > SVG_MAX_WIDTH) problems.push(rel(`다이어그램이 본문 폭에서 읽히지 않음: diagrams/${f.replace(/\.d2$/, ".svg")} (${width}px, 상한 ${SVG_MAX_WIDTH}px) — direction: down으로 바꾸거나 노드를 컨테이너로 묶으세요`));
+      const height = Number(svgText.match(/<svg[^>]*\sheight="(\d+)"/)?.[1] ?? 0);
+      const heightCap = f.startsWith("sequence") ? SEQUENCE_MAX_HEIGHT : SVG_MAX_HEIGHT;
+      if (height > heightCap) problems.push(rel(`다이어그램이 세로로 너무 깁니다: diagrams/${f.replace(/\.d2$/, ".svg")} (${height}px, 상한 ${heightCap}px) — 관련된 것끼리 컨테이너로 묶고 루트에 grid-rows/grid-columns를 주세요. 안쪽 컨테이너의 direction은 엣지가 있으면 무시됩니다`));
     }
   }
 
