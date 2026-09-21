@@ -1,0 +1,23 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+researcher: Researcher { class: ours }
+planner: Planner { class: ours }
+openai: OpenAI API { class: ext }
+serpapi: SerpAPI { class: ext }
+
+user -> ui: 키 2개, 목적지, 일수
+ui -> researcher: Generate Itinerary 클릭
+researcher -> openai: 검색어 3개를 만들라는 지시
+openai -> researcher: search_google tool_call
+researcher -> serpapi: 검색어별 search_google 실행
+serpapi -> researcher: 검색 결과
+researcher -> openai: 결과를 붙여 재요청
+openai -> researcher: 상위 10건 요약
+researcher -> ui: Research completed 표시
+ui -> planner: 요약을 끼운 프롬프트
+planner -> openai: 일정 초안 요청, 도구 없음
+openai -> planner: 일정 텍스트
+planner -> ui: session_state 저장 후 표시
+ui -> user: generate_ics_content 결과를 .ics로 내려받기

@@ -1,0 +1,25 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+keys: OpenAI 키 + SerpAPI 키 (화면 입력) { class: file }
+app: travel_agent.py {
+  ui: Streamlit 입력 폼 (목적지, 일수) { class: ours }
+  researcher: Researcher Agent (SerpApiTools 보유) { class: ours }
+  planner: Planner Agent (도구 없음) { class: ours }
+  state: st.session_state.itinerary { class: store }
+  ics: generate_ics_content() { class: ours }
+}
+openai: OpenAI API (gpt-4o) { class: ext }
+serpapi: SerpAPI (search_google) { class: ext }
+
+user -> app.ui: 목적지와 일수 입력
+keys -> app.researcher: 인증
+keys -> app.planner: 인증
+app.ui -> app.researcher: Generate Itinerary 클릭
+app.researcher -> openai: 호출 1, 검색어 3개 생성 후 결과 분석
+app.researcher -> serpapi: search_google 도구 호출
+app.researcher -> app.planner: research_results.content 를 프롬프트에 삽입
+app.planner -> openai: 호출 2, 일정 초안 생성
+app.planner -> app.state: 일정 텍스트 저장
+app.state -> app.ics: 저장된 일정 텍스트
+app.ics -> user: travel_itinerary.ics 내려받기
