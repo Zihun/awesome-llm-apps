@@ -1,18 +1,46 @@
+# 에디토리얼 스킨. 색이 아니라 "모양"이 노드의 종류를 말하고, 강조색은 하나뿐이다.
+#
+#   모양   사람=사용자, 사각형=이 리포의 코드, 구름=외부 API, 원통=저장소, 문서=파일
+#   강조   주황 하나. "이번 Step에서 새로 붙는 부분"에만 쓴다. 두 번째 강조색은 두지 않는다.
+#   상태   -new 는 주황 테두리, -todo 는 흐린 회색 점선(아직 만들지 않았거나 이번 실행에서 거치지 않음)
+#
+# 토큰 값은 반투명 대신 paper(#F5F5F5) 위에 미리 섞은 불투명색이다 — D2가 알파를 다루는
+# 방식에 기대지 않으려는 것이고, 겹친 도형끼리 색이 새지 않는다.
+#
+#   paper #F5F5F5   ink #2D3142   muted #4F5D75   soft #7A8399
+#   rule  #BFC0C0   accent #EB6C36 / tint #F4EAE6
+#   ink@0.02 #F1F1F1   ink@0.03 #EFEFF0   ink@0.05 #EBEBEC   ink@0.20 #CDCED1   ink@0.30 #B9BABF
+#
+# 본문 글자는 12px이다. 한글은 12px 아래로 내려가면 뭉개진다 — 라벨이 길어 안 맞으면
+# 글자를 줄이지 말고 라벨을 줄인다.
+
 direction: right
+
+# 노드와 연결선은 글롭이 따로 논다 — 연결선 라벨은 아래 줄이 없으면 16px로 남는다.
+# 플러그인 규칙에서도 한국어 화살표 라벨은 모노 8px가 아니라 12px sans로 내려온다.
+**.style.font-size: 12
+*.style.font-size: 12
+(** -> **)[*].style.font-size: 12
+(* -> *)[*].style.font-size: 12
+
 classes: {
-  person: { shape: person; style.fill: "#FEF3C7"; style.stroke: "#B45309" }
-  person-new: { shape: person; style.fill: "#FEF3C7"; style.stroke: "#F97316"; style.stroke-width: 4 }
-  person-todo: { shape: person; style.fill: "#FEF3C7"; style.stroke: "#B45309"; style.opacity: 0.35; style.stroke-dash: 3 }
-  ours: { style.fill: "#DBEAFE"; style.stroke: "#1D4ED8"; style.font-color: "#1E3A8A" }
-  ours-new: { style.fill: "#DBEAFE"; style.stroke: "#F97316"; style.stroke-width: 4; style.font-color: "#1E3A8A" }
-  ours-todo: { style.fill: "#DBEAFE"; style.stroke: "#1D4ED8"; style.font-color: "#1E3A8A"; style.opacity: 0.35; style.stroke-dash: 3 }
-  ext: { shape: cloud; style.fill: "#F3F4F6"; style.stroke: "#6B7280" }
-  ext-new: { shape: cloud; style.fill: "#F3F4F6"; style.stroke: "#F97316"; style.stroke-width: 4 }
-  ext-todo: { shape: cloud; style.fill: "#F3F4F6"; style.stroke: "#6B7280"; style.opacity: 0.35; style.stroke-dash: 3 }
-  store: { shape: cylinder; style.fill: "#DCFCE7"; style.stroke: "#15803D" }
-  store-new: { shape: cylinder; style.fill: "#DCFCE7"; style.stroke: "#F97316"; style.stroke-width: 4 }
-  store-todo: { shape: cylinder; style.fill: "#DCFCE7"; style.stroke: "#15803D"; style.opacity: 0.35; style.stroke-dash: 3 }
-  file: { shape: page; style.fill: "#FFFFFF"; style.stroke: "#6B7280" }
-  file-new: { shape: page; style.fill: "#FFFFFF"; style.stroke: "#F97316"; style.stroke-width: 4 }
-  file-todo: { shape: page; style.fill: "#FFFFFF"; style.stroke: "#6B7280"; style.opacity: 0.35; style.stroke-dash: 3 }
+  person: { shape: person; style.fill: "#E4E6E8"; style.stroke: "#7A8399"; style.font-color: "#2D3142" }
+  person-new: { shape: person; style.fill: "#F4EAE6"; style.stroke: "#EB6C36"; style.stroke-width: 2; style.font-color: "#2D3142" }
+  person-todo: { shape: person; style.fill: "#F1F1F1"; style.stroke: "#CDCED1"; style.stroke-dash: 3; style.font-color: "#7A8399" }
+
+  ours: { style.fill: "#FFFFFF"; style.stroke: "#2D3142"; style.font-color: "#2D3142"; style.border-radius: 6 }
+  ours-new: { style.fill: "#F4EAE6"; style.stroke: "#EB6C36"; style.stroke-width: 2; style.font-color: "#2D3142"; style.border-radius: 6 }
+  ours-todo: { style.fill: "#F1F1F1"; style.stroke: "#CDCED1"; style.stroke-dash: 3; style.font-color: "#7A8399"; style.border-radius: 6 }
+
+  ext: { shape: cloud; style.fill: "#EFEFF0"; style.stroke: "#B9BABF"; style.font-color: "#4F5D75" }
+  ext-new: { shape: cloud; style.fill: "#F4EAE6"; style.stroke: "#EB6C36"; style.stroke-width: 2; style.font-color: "#2D3142" }
+  ext-todo: { shape: cloud; style.fill: "#F1F1F1"; style.stroke: "#CDCED1"; style.stroke-dash: 3; style.font-color: "#7A8399" }
+
+  store: { shape: cylinder; style.fill: "#EBEBEC"; style.stroke: "#4F5D75"; style.font-color: "#2D3142" }
+  store-new: { shape: cylinder; style.fill: "#F4EAE6"; style.stroke: "#EB6C36"; style.stroke-width: 2; style.font-color: "#2D3142" }
+  store-todo: { shape: cylinder; style.fill: "#F1F1F1"; style.stroke: "#CDCED1"; style.stroke-dash: 3; style.font-color: "#7A8399" }
+
+  file: { shape: page; style.fill: "#FFFFFF"; style.stroke: "#BFC0C0"; style.font-color: "#4F5D75" }
+  file-new: { shape: page; style.fill: "#F4EAE6"; style.stroke: "#EB6C36"; style.stroke-width: 2; style.font-color: "#2D3142" }
+  file-todo: { shape: page; style.fill: "#F1F1F1"; style.stroke: "#CDCED1"; style.stroke-dash: 3; style.font-color: "#7A8399" }
 }
