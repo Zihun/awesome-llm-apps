@@ -1,10 +1,14 @@
 # Day 012 · 🛫 AI Travel Agent (Local & Cloud)
 
-> 볼륨 1 🌱 Starter AI Agents · 난이도 ★★☆ · 예상 소요 70분 · API 비용 대략 일정 1건에 GPT-4o 호출 2회 + SerpAPI 검색 몇 건, 수백 원 이하 (OpenAI·SerpAPI 요금표 기준, 대략치 — 키가 없어 실제 과금은 확인 못함) · 원본 앱: `starter_ai_agents/ai_travel_agent`
+> 볼륨 1 🌱 Starter AI Agents · 난이도 ★★☆ · 예상 소요 60분 · API 비용 대략 일정 1회 생성에 gpt-4o 호출 2회 + SerpAPI 검색 3회, 요금표 기준 수백 원대 (키가 없어 실제 과금은 확인 못함) · 원본 앱: `starter_ai_agents/ai_travel_agent`
 
 ## 오늘 만들 것
 
-오늘은 서로 다른 곳에서 모델이 도는 진입점 두 개를 가진 앱을 다룹니다. `travel_agent.py`(158줄)는 OpenAI GPT-4o를 화면에서 입력받은 키로 호출하는 클라우드 버전이고, `local_travel_agent.py`(154줄)는 같은 화면·같은 두 에이전트·같은 도구를 그대로 두고 모델만 로컬 Ollama의 Llama 3.2로 바꿔치기한 버전입니다. 두 파일을 줄 단위로 비교하면(직접 확인, Step 7) 실제로 달라지는 곳은 임포트 한 줄, 제목·설명 문구, 키 입력 개수(2개 → 1개), 그리고 에이전트 생성 코드의 `model=` 줄 두 곳뿐입니다 — 도구, 지시문, 출력 처리(캘린더 변환, 다운로드 버튼)는 완전히 동일합니다. 이 리포에서 로컬에 떠 있는 모델 서버를 처음 등장시키는 앱이기도 합니다. 앱 자체 `README.MD`(대문자 확장자로 저장돼 있습니다)도 `travel_agent.py`를 먼저 안내하므로, 이 문서는 그 순서를 따라 클라우드 버전을 중심으로 진행하고 로컬 버전은 소스로만 확인하는 전용 Step 7에서 다룹니다. 검색으로 후보를 모으는 **Researcher**와 그것으로 일정을 짜는 **Planner**, 두 에이전트가 순서대로 이어지는 2단계 파이프라인이라는 점도 지금까지의 단일 에이전트 앱들과 다르고, 완성된 일정을 `.ics` 캘린더 파일로 내려받는 기능(`generate_ics_content`)은 이 시리즈에서 처음 등장하는 출력 형식입니다. 완성하면 목적지와 여행 일수를 입력해 리서치→일정 생성이 이어지는 화면과, 그 결과를 캘린더 앱으로 가져갈 수 있는 다운로드 버튼을 로컬에서 확인하게 됩니다. 아래는 완성된 아키텍처입니다.
+이번 튜토리얼은 **에이전트 둘을 파이프라인으로 잇는** Streamlit 앱입니다. Day 11이 같은 모델을 네 페르소나로 네 번 부르고 그 답을 합성 없이 나열했다면, 이 앱은 둘뿐인 에이전트를 순서대로 부르되 **앞 에이전트의 출력을 뒤 에이전트의 입력에 문자열로 끼워 넣습니다** — Researcher가 웹을 뒤져 만든 요약이 Planner의 프롬프트 안에 `Research Results:` 줄로 박혀 들어갑니다. 둘의 역할 분담은 프롬프트가 아니라 **도구 보유 여부**로 갈립니다. Researcher만 `SerpApiTools`를 들고 있고 Planner는 도구가 없어서, Planner는 검색을 할 수 없고 오직 넘겨받은 텍스트만 보고 일정을 씁니다(직접 확인: `planner tools: []`).
+
+폴더에는 진입점이 둘 있습니다 — gpt-4o를 쓰는 `travel_agent.py`(158줄, 마지막 줄에 개행이 없어 `wc -l`은 157로 셉니다)와 로컬 Ollama를 쓰는 `local_travel_agent.py`(154줄, 역시 개행 없음)입니다. 두 파일은 모델 한 줄과 키 입력창 개수만 다르고 나머지는 사실상 같습니다. 다만 "로컬"이라는 이름과 달리 로컬 버전도 **SerpAPI 키는 그대로 필요합니다** — 앱 자체 README의 "without sending data to external APIs"라는 설명과 어긋나는 지점이라 "문제 해결"에 따로 정리했습니다.
+
+Day 1~11에 없던 새 요소도 하나 있습니다. 생성된 일정 텍스트를 정규식으로 `Day N` 단위로 쪼개 **`.ics` 캘린더 파일로 내려받는** 순수 파이썬 함수 `generate_ics_content()`입니다. LLM도 네트워크도 타지 않는 코드라 키 없이 그대로 실행해 검증할 수 있었고, 실제로 돌려 본 결과와 거기서 발견한 규격 위반까지 아래에 적었습니다. 완성하면 목적지와 일수를 넣어 일정을 받고 그 일정을 캘린더 앱으로 가져갈 수 있는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,30 +16,29 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| OpenAI API 키 | `travel_agent.py`에서 Researcher·Planner 두 에이전트의 모델(GPT-4o) 호출 인증. 환경변수가 아니라 앱 화면의 입력창에 직접 붙여넣는다 | https://platform.openai.com/ 가입 후 발급 |
-| SerpAPI 키 | 두 진입점 모두에서 Researcher의 검색 도구(SerpApiTools)가 구글 검색 결과를 가져오는 데 씀. 마찬가지로 화면 입력창에 붙여넣는다 | https://serpapi.com/ 가입 후 발급 |
-| (선택) Ollama | 키 없이 로컬 Llama 3.2로 돌리고 싶다면(`local_travel_agent.py`) 필요. 이 문서의 기본 경로에는 필요 없고 Step 7에서 소스로만 다룬다 | https://ollama.com/ 설치 후 `ollama pull llama3.2` |
+| OpenAI API 키 | `travel_agent.py`의 두 에이전트가 쓰는 gpt-4o 호출 인증. 환경변수가 아니라 화면 입력창에 붙여넣는다 | https://platform.openai.com/ 가입 후 발급 |
+| SerpAPI 키 | Researcher가 `search_google` 도구로 실제 웹 검색을 할 때 쓴다. **클라우드·로컬 두 버전 모두 필요** | https://serpapi.com/ 가입 후 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| 인터넷 연결 | OpenAI·SerpAPI 접속 | 별도 설치 없음 |
+| (선택) Ollama | `local_travel_agent.py`로 LLM만 로컬에서 돌리고 싶을 때 필요 | https://ollama.com/ 설치 후 `ollama pull llama3.2` |
 
 ## 아키텍처 한눈에 보기
 
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
-| 사용자 | 브라우저에서 키·목적지·여행 일수 입력 | 코드 없음 (브라우저) |
-| Streamlit UI | 키 입력을 받고 게이트를 열어 나머지 입력·버튼·결과를 표시 | `starter_ai_agents/ai_travel_agent/travel_agent.py:61-75` |
-| 리서처 에이전트 (Researcher) | 목적지·일수로 검색어를 만들고 SerpApiTools로 웹을 검색해 관련 결과를 정리 | `starter_ai_agents/ai_travel_agent/travel_agent.py:76-95` |
-| 플래너 에이전트 (Planner) | 리서치 결과를 받아 일자별 draft 일정을 작성 | `starter_ai_agents/ai_travel_agent/travel_agent.py:96-115` |
-| 검색 도구 (SerpApiTools) | `search_google` 함수 하나를 Researcher에 노출 | `starter_ai_agents/ai_travel_agent/travel_agent.py:93` |
-| 모델 (OpenAI GPT-4o / Ollama llama3.2) | 실제 추론 수행. 어느 쪽을 쓰는지는 진입점 파일이 결정 | `starter_ai_agents/ai_travel_agent/travel_agent.py:79`, `starter_ai_agents/ai_travel_agent/local_travel_agent.py:77` |
-| 캘린더 변환 (`generate_ics_content`) | 완성된 일정 텍스트를 정규식으로 날짜별로 쪼개 ICS 캘린더 파일로 변환 | `starter_ai_agents/ai_travel_agent/travel_agent.py:12-59` |
-| 외부 API (OpenAI, SerpAPI) | LLM 추론과 구글 검색 결과를 제공하는 서드파티 서비스 | 코드 없음 (외부 서비스) |
+| 사용자 | 브라우저에서 키 2개, 목적지, 일수 입력 | 코드 없음 (브라우저) |
+| Streamlit UI | 입력을 받고 버튼 클릭에 두 에이전트를 순서대로 실행 | `starter_ai_agents/ai_travel_agent/travel_agent.py:61-73` |
+| Researcher Agent | 검색어 3개를 만들고 SerpAPI로 검색해 상위 10건을 요약 | `starter_ai_agents/ai_travel_agent/travel_agent.py:76-95` |
+| Planner Agent | 넘겨받은 요약만 보고 일정 초안을 작성 (도구 없음) | `starter_ai_agents/ai_travel_agent/travel_agent.py:96-115` |
+| 일정 저장소 | 생성된 일정을 리런 사이에 유지 | `starter_ai_agents/ai_travel_agent/travel_agent.py:143` |
+| ICS 변환기 | 일정 텍스트를 `Day N` 단위 종일 일정으로 쪼개 `.ics` 생성 | `starter_ai_agents/ai_travel_agent/travel_agent.py:12-59` |
+| OpenAI API (gpt-4o) | 검색어 생성·결과 분석·일정 작성 | 코드 없음 (외부 서비스) |
+| SerpAPI | 실제 웹 검색 수행 | 코드 없음 (외부 서비스) |
 
 ## 단계별 진행
 
 ### Step 1. 환경 만들기
 
-**목적.** 이 앱이 실제로 요구하는 의존성 6개를 설치해 보고, `requirements.txt`에 최근 추가된 `ollama` 줄이 지금은 클린 설치를 통과시키는지, 그리고 낯선 이름의 `icalendar`가 실제로 쓰이는 패키지인지를 직접 확인합니다. OpenAI·SerpAPI 키는 이 단계에서 미리 발급만 해 두면 됩니다 — 둘 다 환경변수가 아니라 Step 2의 화면 입력창에 넣습니다.
+**목적.** 의존성을 설치하고, `requirements.txt`에 적혀 있지만 이 저장소 루트 환경에는 빠져 있는 두 패키지를 미리 확인합니다.
 
 **할 일.**
 
@@ -45,67 +48,39 @@ uv venv
 uv pip install -r requirements.txt
 ```
 
-(pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.)
+`requirements.txt`는 6줄(`streamlit`, `agno>=2.2.10`, `openai`, `ollama`, `google-search-results`, `icalendar`)이고 마지막 줄에 개행이 없습니다. 버전이 고정된 것은 `agno>=2.2.10` 하나뿐이며, 이 문서를 쓰며 확인했을 때 실제로 설치된 것은 **agno 2.3.2**였습니다(직접 확인).
 
-`starter_ai_agents/ai_travel_agent/requirements.txt:1-6`
-
-```text
-streamlit 
-agno>=2.2.10
-openai
-ollama
-google-search-results
-icalendar
-```
-
-여섯 줄 다 버전 고정이 없고(`agno`만 하한선 `>=2.2.10`), 이 문서를 작성하며 설치했을 때 실제로 받아진 버전은 아래 확인에 그대로 적었습니다. `google-search-results`는 이름만 봐서는 낯설지만, 실제로 임포트되는 모듈 이름은 `serpapi`입니다 — 설치된 `agno/tools/serpapi.py`를 열어 보면 ``try: import serpapi except ImportError: raise ImportError("`google-search-results` not installed.")``로 이 관계가 그대로 드러납니다(소스로 확인, 이 파일은 리포가 아니라 설치된 패키지 안에 있어 줄 번호를 인용하지 않았습니다). `icalendar`도 이름과 달리 안 쓰이는 패키지가 아닙니다 — 두 진입점 모두 파일 맨 위에서 `from icalendar import Calendar, Event`를 가져와 `generate_ics_content`(Step 6) 안에서 실제로 씁니다(직접 확인, Step 6). `ollama` 줄은 커밋 `da8bdb1`("add ollama to requirements for local_travel_agent")에서 추가됐습니다(직접 확인: `git show da8bdb1`로 diff를 그대로 봄) — 커밋 메시지 자체가 "클린 설치 후 `local_travel_agent.py`를 실행하면 `ImportError`가 난다"고 밝히고 있어, 이 한 줄이 빠졌던 버전은 실제로 동작하지 않았을 것입니다(그 이전 버전을 직접 재현하지는 않았습니다). 지금 버전은 두 진입점의 임포트가 모두 통과합니다(직접 확인, 아래).
+여기서 이 저장소 특유의 함정을 짚습니다. 루트(`awesome-llm-apps/`)에 `pyproject.toml`과 `uv.lock`이 있어 uv는 그쪽을 프로젝트 루트로 봅니다(Day 2의 "문제 해결"에 자세히 적어 두었습니다). 그래서 루트 `.venv`를 그대로 쓰면 `agno`·`openai`·`ollama`·`streamlit`은 이미 들어 있지만 **`google-search-results`와 `icalendar`는 빠져 있습니다** — 직접 확인한 결과 두 패키지 모두 `PackageNotFoundError`였고, `uv pip install google-search-results icalendar`로 각각 2.4.2와 7.3.0을 받아 해결했습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
-**확인.**
+**확인.** 앱이 쓰는 import 여섯 줄을 그대로 실행해 봅니다.
 
 ```bash
-uv run python -m py_compile travel_agent.py local_travel_agent.py && echo compiled
-```
-
-```
-compiled
-```
-
-```bash
-uv run python -c "from agno.agent import Agent; from agno.tools.serpapi import SerpApiTools; from agno.models.openai import OpenAIChat; from agno.models.ollama import Ollama; from icalendar import Calendar, Event; import streamlit as st; print('ok')"
+uv run python -c "
+from agno.agent import Agent
+from agno.run.agent import RunOutput
+from agno.tools.serpapi import SerpApiTools
+from agno.models.openai import OpenAIChat
+from agno.models.ollama import Ollama
+from icalendar import Calendar, Event
+print('ok')
+"
 ```
 
 ```
 ok
 ```
 
-```bash
-uv run python -c "
-import importlib.metadata as im
-for pkg in ['agno', 'streamlit', 'openai', 'ollama', 'google-search-results', 'icalendar']:
-    print(pkg, im.version(pkg))
-"
-```
+Day 1·8·11과 달리 이번에는 여섯 줄이 한 번에 통과했습니다(직접 확인). 단 위의 두 패키지를 설치하기 **전**이라면 `from agno.tools.serpapi import SerpApiTools`에서 ``ImportError: `google-search-results` not installed.``이 납니다 — agno가 `agno/tools/serpapi.py` 맨 위에서 `import serpapi`를 try로 감싸고 그 메시지로 바꿔 던지기 때문입니다.
 
-직접 확인한 출력(Python 3.12 throwaway venv, 버전 고정이 없으므로 여러분이 설치하는 시점에는 다를 수 있습니다):
+### Step 2. 키 두 개와 세션 상태
 
-```
-agno 3.0.10
-streamlit 1.64.0
-openai 3.16.2
-ollama 0.6.2
-google-search-results 2.4.2
-icalendar 7.3.0
-```
-
-### Step 2. Streamlit 뼈대와 두 키 입력
-
-**목적.** 제목·설명과 두 키 입력창을 만들고, 이 앱은 Day 2·5와 달리 키가 없을 때 보여줄 안내 문구가 아예 없다는 것을 확인합니다.
+**목적.** 이 앱이 키를 **두 개** 받는다는 점과, 생성된 일정을 리런 사이에 살려 두는 `st.session_state`를 봅니다.
 
 **할 일.**
 
-`starter_ai_agents/ai_travel_agent/travel_agent.py:61-75`
+`starter_ai_agents/ai_travel_agent/travel_agent.py:61-73`
 
 ```python
 # Set up the Streamlit app
@@ -121,15 +96,15 @@ openai_api_key = st.text_input("Enter OpenAI API Key to access GPT-4o", type="pa
 
 # Get SerpAPI key from the user
 serp_api_key = st.text_input("Enter Serp API Key for Search functionality", type="password")
-
-if openai_api_key and serp_api_key:
 ```
 
-`if openai_api_key and serp_api_key:` 가드가 76행부터 파일 끝(158행)까지를 통째로 감쌉니다 — Day 2의 `ai_scrapper.py`와 같은 구조입니다. 다른 점은 가드 뒤에 아무것도 없다는 것입니다: 파일 전체에서 유일한 `else`는 `generate_ics_content`의 날짜-분기 로직(`starter_ai_agents/ai_travel_agent/travel_agent.py:42`)뿐이고, 이 키 가드에는 대응하는 `else`가 없습니다(소스로 확인, grep 결과). Day 2·5가 `st.warning("...")`으로 키 없음을 알리는 것과 달리, 이 앱은 키를 하나만 넣거나 둘 다 비워 두면 제목·설명·입력창 두 개만 보이고 화면이 그냥 조용히 멈춥니다.
+Day 2·11의 앱은 키 하나만 받았지만 여기는 둘이고, 이후 코드 전체가 `if openai_api_key and serp_api_key:`(75행) 안에 들어 있어 **둘 다** 넣기 전에는 목적지 입력창조차 나타나지 않습니다.
+
+`st.session_state`가 등장하는 이유는 Streamlit의 리런 모델 때문입니다. 버튼을 누르거나 입력이 바뀔 때마다 스크립트가 처음부터 다시 실행되므로, 일정을 평범한 지역 변수에 담아 두면 다음 리런에서 사라집니다. 66-67행이 첫 실행에서만 `None`으로 초기화하고 143행이 생성된 일정을 여기에 넣어 두는 덕분에, 일정 생성 후 리런이 일어나도 내려받기 버튼이 유지됩니다(148행의 `if st.session_state.itinerary:`).
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-**확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
+**확인.** 서버를 띄우고 응답을 확인합니다.
 
 ```bash
 uv run streamlit run travel_agent.py --server.headless true
@@ -145,17 +120,16 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 200
 ```
 
-(HTTP 200은 직접 확인. 제목·설명·키 입력창 두 개만 보이고 그 아래는 비어 있으리라는 것은 위 `if` 가드 구조로 추론한 것이며, 화면을 직접 열어 확인하지는 못했습니다.)
+### Step 3. 도구를 가진 에이전트와 갖지 않은 에이전트
 
-### Step 3. 리서처 에이전트와 검색 도구
-
-**목적.** Researcher가 실제로 어떤 모델·도구·지시문으로 만들어지는지 객체 수준에서 확인합니다.
+**목적.** 두 에이전트의 차이가 프롬프트가 아니라 도구 보유 여부에 있다는 것을 확인합니다.
 
 **할 일.**
 
-`starter_ai_agents/ai_travel_agent/travel_agent.py:76-95`
+`starter_ai_agents/ai_travel_agent/travel_agent.py:75-95`
 
 ```python
+if openai_api_key and serp_api_key:
     researcher = Agent(
         name="Researcher",
         role="Searches for travel destinations, activities, and accommodations based on user preferences",
@@ -178,108 +152,42 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
     )
 ```
 
-`role`과 `description`은 이 에이전트가 무엇을 하는 존재인지 알려주는 자기소개이고, `instructions` 4줄이 실제 절차(검색어 3개 생성 → 각각 검색 → 결과 10개로 추림)를 강제합니다. `tools=[SerpApiTools(api_key=serp_api_key)]`가 이 단계의 핵심입니다 — `SerpApiTools()`는 기본값(`enable_search_google=True`, `enable_search_youtube=False`)으로 만들면 `search_google` 함수 하나만 노출합니다(직접 확인, 아래). `add_datetime_to_context=True`는 "다음 달", "이번 주말" 같은 상대적 표현을 오늘 날짜 기준으로 해석하도록 현재 시각을 컨텍스트에 넣어 줍니다.
+핵심은 `tools=[SerpApiTools(api_key=serp_api_key)]`(93행) 한 줄입니다. 이 줄이 있어서 Researcher는 Day 1의 도구 호출 루프를 그대로 탑니다 — 모델이 `search_google` tool_call을 돌려주면 agno가 로컬에서 SerpAPI를 실제로 호출하고, 결과를 다시 모델에 보내 최종 요약을 받습니다. `SerpApiTools`가 실제로 노출하는 도구는 `search_google`과 `search_youtube` 둘이고 기본값은 구글만 켜져 있습니다(`enable_search_google=True`, `enable_search_youtube=False`, 직접 확인). 지시문 87행이 부르는 이름도 정확히 `search_google`이라 서로 맞습니다.
+
+반면 Planner(96-115행)에는 `tools=` 인자 자체가 없습니다. 그래서 Planner는 검색을 할 수 없고, Step 4에서 문자열로 받은 검색 요약만 근거로 일정을 씁니다. "사실을 지어내지 말라"(112행)는 지시문이 붙어 있지만 이를 강제할 수단은 없습니다.
+
+한 가지 더 — `SerpApiTools(api_key=...)`에 키를 주지 않으면 환경변수 `SERP_API_KEY`를 찾고, 그마저 없으면 예외 대신 `No Serpapi API key provided` 경고만 남기고 넘어갑니다(소스로 확인). 즉 키가 비어도 객체 생성은 성공하고 실제 검색 단계에서야 실패합니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.**
+**확인.** 두 에이전트의 도구 보유 여부를 직접 찍어 봅니다. 모델은 키가 필요 없는 로컬 Ollama로 두고 도구만 비교합니다.
 
 ```bash
 uv run python -c "
+from agno.agent import Agent
+from agno.models.ollama import Ollama
 from agno.tools.serpapi import SerpApiTools
-print(sorted(SerpApiTools(api_key='fake-key-not-real').functions))
+r = Agent(name='Researcher', model=Ollama(id='llama3.2'), tools=[SerpApiTools(api_key='dummy')])
+p = Agent(name='Planner', model=Ollama(id='llama3.2'))
+print('researcher tools:', [type(t).__name__ for t in (r.tools or [])])
+print('planner tools:', p.tools)
 "
 ```
 
 ```
-['search_google']
+researcher tools: ['SerpApiTools']
+planner tools: []
 ```
 
-```bash
-uv run python -c "
-from agno.models.openai import OpenAIChat
-m = OpenAIChat(id='gpt-4o', api_key='fake-key-not-real')
-print(m.id, m.provider)
-"
-```
+### Step 4. 두 번의 순차 호출과 문자열로 이어지는 파이프라인
 
-```
-gpt-4o OpenAI
-```
-
-(두 확인 모두 네트워크를 타지 않고 성공합니다 — 키 검증은 실제 호출 시점에 일어납니다, Step 5에서 확인.)
-
-### Step 4. 플래너 에이전트
-
-**목적.** Planner가 Researcher와 무엇이 다른지 — 도구가 없고 지시문이 더 많다는 것 — 를 확인합니다.
+**목적.** 앞 에이전트의 출력이 뒤 에이전트의 프롬프트에 어떻게 들어가는지 봅니다.
 
 **할 일.**
 
-`starter_ai_agents/ai_travel_agent/travel_agent.py:96-115`
+`starter_ai_agents/ai_travel_agent/travel_agent.py:123-144`
 
 ```python
-    planner = Agent(
-        name="Planner",
-        role="Generates a draft itinerary based on user preferences and research results",
-        model=OpenAIChat(id="gpt-4o", api_key=openai_api_key),
-        description=dedent(
-            """\
-        You are a senior travel planner. Given a travel destination, the number of days the user wants to travel for, and a list of research results,
-        your goal is to generate a draft itinerary that meets the user's needs and preferences.
-        """
-        ),
-        instructions=[
-            "Given a travel destination, the number of days the user wants to travel for, and a list of research results, generate a draft itinerary that includes suggested activities and accommodations.",
-            "Ensure the itinerary is well-structured, informative, and engaging.",
-            "Ensure you provide a nuanced and balanced itinerary, quoting facts where possible.",
-            "Remember: the quality of the itinerary is important.",
-            "Focus on clarity, coherence, and overall quality.",
-            "Never make up facts or plagiarize. Always provide proper attribution.",
-        ],
-        add_datetime_to_context=True,
-    )
-```
-
-Planner는 같은 모델(`OpenAIChat(id="gpt-4o", ...)`, 같은 `openai_api_key`)을 다시 쓰지만 `tools` 인자가 아예 없습니다 — 검색은 Researcher만 하고, Planner는 넘겨받은 텍스트만으로 판단합니다. 지시문은 6줄로 Researcher보다 많고, 사실 왜곡·표절 금지("Never make up facts or plagiarize")를 명시한다는 점이 Researcher의 지시문에는 없던 내용입니다.
-
-![Step 4까지의 구성](diagrams/step4.svg)
-
-**확인.** 두 에이전트를 실제로 만들어 도구·지시문 개수를 비교합니다. `st.text_input`을 가짜 키를 돌려주는 함수로 바꿔치기해 76행의 게이트를 연 뒤 파일을 경로로 실행합니다(Day 5와 같은 방식).
-
-```bash
-uv run python -c "
-import streamlit as st
-st.text_input = lambda *a, **k: 'fake-key-not-real'
-import runpy
-ns = runpy.run_path('travel_agent.py')
-r, p = ns['researcher'], ns['planner']
-print('researcher tools:', [type(t).__name__ for t in r.tools], 'instructions:', len(r.instructions))
-print('planner tools:', p.tools, 'instructions:', len(p.instructions))
-"
-```
-
-직접 확인한 출력:
-
-```
-researcher tools: ['SerpApiTools'] instructions: 4
-planner tools: [] instructions: 6
-```
-
-### Step 5. 실행 파이프라인 (리서치 → 플래닝)
-
-**목적.** "Generate Itinerary"를 누르면 두 에이전트가 어떤 프롬프트로 이어지는지, 그리고 키가 잘못됐을 때 화면에 실제로 무엇이 뜨는지 확인합니다.
-
-**할 일.**
-
-`starter_ai_agents/ai_travel_agent/travel_agent.py:117-144`
-
-```python
-    # Input fields for the user's destination and the number of days they want to travel for
-    destination = st.text_input("Where do you want to go?")
-    num_days = st.number_input("How many days do you want to travel for?", min_value=1, max_value=30, value=7)
-
-    col1, col2 = st.columns(2)
-
     with col1:
         if st.button("Generate Itinerary"):
             with st.spinner("Researching your destination..."):
@@ -288,14 +196,14 @@ planner tools: [] instructions: 6
 
                 # Show research progress
                 st.write(" Research completed")
-                
+
             with st.spinner("Creating your personalized itinerary..."):
                 # Pass research results to planner
                 prompt = f"""
                 Destination: {destination}
                 Duration: {num_days} days
                 Research Results: {research_results.content}
-                
+
                 Please create a detailed itinerary based on this research.
                 """
                 response: RunOutput = planner.run(prompt, stream=False)
@@ -304,36 +212,38 @@ planner tools: [] instructions: 6
                 st.write(response.content)
 ```
 
-버튼을 누르면 `researcher.run(...)`이 먼저 끝나야 `research_results.content`가 생기고, 이 텍스트가 그대로 `prompt` f-string에 박혀 `planner.run(prompt, ...)`으로 넘어갑니다 — Day 1의 도구 호출 루프와 달리 정해진 순서 두 단계짜리 파이프라인입니다. 이 블록에는 `try/except`도, `research_results.status`를 확인하는 코드도 없습니다(소스로 확인: 두 파일 전체에 `status`·`try`·`except` 문자열이 0건). agno의 `Agent.run()`은 인증 실패 시 예외 대신 `RunStatus.error`와 오류 문구를 `content`에 담아 정상 반환하므로(Day 8·11과 같은 패턴), 이 코드는 그 오류 문구를 진짜 리서치 결과인 양 그대로 Planner에 넘기고, Planner 호출도 같은 키로 실패해 같은 종류의 오류 문구를 반환하면 그것이 다시 "완성된 일정"으로 화면에 표시됩니다.
+두 호출 모두 `stream=False`라 블로킹입니다. 그래서 화면에는 `st.spinner`의 문구만 바뀌며 통째로 기다리게 됩니다 — 토큰이 흐르는 모습은 보이지 않습니다.
 
-![Step 5까지의 구성](diagrams/step5.svg)
+이 앱의 구조적 요점은 137행입니다. Researcher의 결과를 객체로 넘기는 것이 아니라 `{research_results.content}`로 **f-string에 문자열 보간**해서 Planner의 프롬프트 한가운데에 박아 넣습니다. agno의 팀이나 세션 공유 기능을 전혀 쓰지 않는, 가장 단순한 형태의 에이전트 연결입니다. 장점은 읽기 쉽다는 것이고, 단점은 Researcher의 출력이 길어지면 그대로 Planner의 입력 토큰이 된다는 것 — 중간에 자르거나 요약하는 단계가 없습니다.
 
-**확인.** 키가 없어 실제 화면은 재현하지 못했습니다. 대신 잘못된 키로 Researcher를 직접 호출해 무엇이 반환되는지 확인합니다.
+`RunOutput`은 agno가 `.run()`에서 돌려주는 객체이고, 이 앱이 쓰는 것은 `.content` 하나뿐입니다. 로컬 Ollama로 Planner만 떼어 실제로 돌려 본 결과 `.content`의 타입은 `str`이었고 16.6초 만에 `Day 1:` 형식의 일정 텍스트가 돌아왔습니다(직접 확인). 이 형식이 Step 5의 정규식과 맞물립니다.
+
+![Step 4까지의 구성](diagrams/step4.svg)
+
+**확인.** 두 키가 없어도 파이프라인의 뒷단인 Planner만 로컬 모델로 재현할 수 있습니다.
 
 ```bash
 uv run python -c "
-import streamlit as st
-st.text_input = lambda *a, **k: 'sk-invalid-not-real'
-import runpy
-ns = runpy.run_path('travel_agent.py')
-result = ns['researcher'].run('Research Paris for a 3 day trip', stream=False)
-print('status:', result.status)
-print('content:', str(result.content)[:200])
+from agno.agent import Agent
+from agno.models.ollama import Ollama
+planner = Agent(name='Planner', model=Ollama(id='llama3.2'),
+                instructions=['Label each day exactly as Day N:', 'One short line per day.'])
+out = planner.run('Destination: Busan. Duration: 3 days. Create a short itinerary.', stream=False)
+print(type(out.content).__name__)
+print(out.content[:200])
 "
 ```
 
-직접 확인한 출력:
-
 ```
-status: RunStatus.error
-content: Incorrect API key provided: sk-inval*******real. You can find your API key at https://platform.openai.com/account/api-keys.
+str
+Day 1: Arrival in Busan, check-in to hotel, visit Busan Tower for panoramic views of the city, and explore the nearby Busan International Market.
+
+Day 2: Visit the Haedong Yonggungsa Temple, a seaside
 ```
 
-실제 화면에서도 이 문자열이 그대로 다음 단계로 흘러 결국 일정처럼 표시됩니다 — 위에서 설명한 흐름 그대로입니다.
+### Step 5. 일정 텍스트를 캘린더 파일로
 
-### Step 6. 캘린더 내보내기 (.ics 다운로드)
-
-**목적.** 완성된 일정 텍스트를 실제 캘린더 파일로 바꾸는 `generate_ics_content`의 날짜 분리 로직을 보고, 직접 실행해 결과를 확인합니다.
+**목적.** LLM이 쓴 자유 서식 텍스트를 정규식으로 쪼개 `.ics`로 만드는 과정을 봅니다. 이 단계는 키도 네트워크도 필요 없습니다.
 
 **할 일.**
 
@@ -345,20 +255,19 @@ content: Incorrect API key provided: sk-inval*******real. You can find your API 
     days = day_pattern.findall(plan_text)
 ```
 
-`starter_ai_agents/ai_travel_agent/travel_agent.py:42-57`
+`starter_ai_agents/ai_travel_agent/travel_agent.py:43-57`
 
 ```python
-    else:
         # Process each day
         for day_num, day_content in days:
             day_num = int(day_num)
             current_date = start_date + timedelta(days=day_num - 1)
-            
+
             # Create a single event for the entire day
             event = Event()
             event.add('summary', f"Day {day_num} Itinerary")
             event.add('description', day_content.strip())
-            
+
             # Make it an all-day event
             event.add('dtstart', current_date.date())
             event.add('dtend', current_date.date())
@@ -366,138 +275,70 @@ content: Incorrect API key provided: sk-inval*******real. You can find your API 
             cal.add_component(event)
 ```
 
-정규식 `Day (\d+)[:\s]+(.*?)(?=Day \d+|$)`는 Planner가 만든 자유 텍스트에서 "Day 1", "Day 2" 같은 표기를 찾아 그 뒤 내용을 다음 "Day N"이 나오기 전까지 통째로 묶습니다. 매칭되는 날이 하나도 없으면 34-41행의 분기가 전체 텍스트를 하루짜리 이벤트 하나로 담고, 매칭되면 위 42-57행처럼 날짜별로 `Event()`를 만들어 `start_date`(기본값 오늘)에 `day_num - 1`일을 더한 날짜를 종일 일정으로 붙입니다. 이 함수는 Streamlit 위젯을 전혀 쓰지 않는 순수 함수라 화면 밖에서도 그대로 실행해 볼 수 있습니다.
+정규식은 `Day` 뒤의 숫자를 1번 그룹으로, 다음 `Day N`이 나오기 전까지의 본문을 2번 그룹으로 잡습니다. `re.DOTALL`이 있어 본문에 줄바꿈이 들어가도 그대로 이어 붙습니다. `Day N` 패턴이 하나도 없으면 34-41행 분기로 빠져 전체 텍스트를 **한 건의 종일 일정**으로 만듭니다 — LLM이 형식을 지키지 않아도 파일은 나오되 하루짜리가 됩니다(직접 확인).
 
-![Step 6까지의 구성](diagrams/step6.svg)
+날짜는 `start_date + timedelta(days=day_num - 1)`로 계산합니다. `start_date` 기본값은 오늘이고(27-28행) Streamlit 쪽에서는 인자를 주지 않으므로(150행) **일정은 항상 오늘부터 시작합니다**. 실제 여행 날짜를 고르는 입력은 앱에 없습니다.
 
-**확인.**
+![Step 5까지의 구성](diagrams/step5.svg)
 
-```bash
-uv run python -c "
-import travel_agent as m
-from datetime import datetime
-sample = '''Day 1: Arrive in Paris and check into hotel. Visit Eiffel Tower in the evening.
-Day 2: Louvre Museum in the morning, Seine river cruise in the afternoon.
-Day 3: Day trip to Versailles.'''
-print(m.generate_ics_content(sample, start_date=datetime(2026, 10, 1)).decode('utf-8'))
-"
-```
-
-직접 확인한 출력(발췌, `DTSTAMP`는 실행 시각이라 매번 달라짐):
-
-```
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//AI Travel Planner//github.com//
-BEGIN:VEVENT
-SUMMARY:Day 1 Itinerary
-DTSTART;VALUE=DATE:20261001
-DTEND;VALUE=DATE:20261001
-DTSTAMP:20260921T135130Z
-DESCRIPTION:Arrive in Paris and check into hotel. Visit Eiffel Tower in th
- e evening.
-END:VEVENT
-```
-
-(전체 출력은 Day 2·Day 3 이벤트까지 이어서 3개입니다. `DESCRIPTION` 줄이 자동으로 접히는 것은 이 코드가 아니라 `icalendar` 라이브러리의 ICS 인코딩 규칙입니다.)
-
-### Step 7. 로컬 버전(Ollama)으로 전환
-
-**목적.** `local_travel_agent.py`가 클라우드 버전과 정확히 어디서만 다른지 diff로 확인하고, Ollama 백엔드가 문제없이 만들어지는 지점까지만 확인한 뒤, 왜 이 문서가 더 나아가지 않는지 밝힙니다.
-
-**할 일.**
-
-`starter_ai_agents/ai_travel_agent/local_travel_agent.py:62-73`
-
-```python
-# Set up the Streamlit app
-st.title("AI Travel Planner using Llama-3.2 ")
-st.caption("Plan your next adventure with AI Travel Planner by researching and planning a personalized itinerary on autopilot using local Llama-3")
-
-# Initialize session state to store the generated itinerary
-if 'itinerary' not in st.session_state:
-    st.session_state.itinerary = None
-
-# Get SerpAPI key from the user
-serp_api_key = st.text_input("Enter Serp API Key for Search functionality", type="password")
-
-if serp_api_key:
-```
-
-Step 2의 15줄짜리 게이트(OpenAI 키 + SerpAPI 키)와 비교하면 OpenAI 키 입력 두 줄이 통째로 빠지고 가드도 `if serp_api_key:`로 줄어든 12줄입니다 — 클라우드 버전보다 입력창이 하나 적습니다. 나머지 차이는 두 파일을 직접 diff해 전부 확인했습니다.
-
-```bash
-diff -u travel_agent.py local_travel_agent.py
-```
-
-직접 확인한 출력(요약 — import문, 제목·설명 문구, 키 가드, `model=` 줄 두 곳, 그리고 사소한 공백·주석 차이 외에는 변경분이 없습니다):
-
-```
--from agno.models.openai import OpenAIChat
-+from agno.models.ollama import Ollama
-...
--        model=OpenAIChat(id="gpt-4o", api_key=openai_api_key),
-+        model=Ollama(id="llama3.2"),
-...
--        model=OpenAIChat(id="gpt-4o", api_key=openai_api_key),
-+        model=Ollama(id="llama3.2"),
-```
-
-Researcher·Planner의 `role`·`description`·`instructions`·`tools`(SerpApiTools는 로컬 버전에도 그대로 있습니다) 블록에는 diff가 단 한 줄도 없습니다 — 정말로 모델 두 줄만 바뀝니다. `generate_ics_content`와 다운로드 버튼(Step 6)도 두 파일에서 100% 동일합니다. `Ollama(id="llama3.2")`는 서버 없이도 객체 생성 자체는 성공합니다(아래 확인) — 다만 이 문서는 여기까지만 실행합니다. 실제로 `.run()`을 호출하려면 Ollama 서버가 기본 포트(11434)에서 떠 있고 `llama3.2` 모델이 미리 받아져 있어야 하는데, 이 환경에는 그중 아무것도 없고 이 작업 범위 밖이라 설치하지 않았습니다. 끝까지 실행하려면 https://ollama.com 설치 후 아래를 실행하면 됩니다(이 문서는 실행하지 않습니다).
-
-```bash
-ollama pull llama3.2
-uv run streamlit run local_travel_agent.py
-```
-
-![Step 7까지의 구성](diagrams/step7.svg)
-
-**확인.** 서버 없이 성공하는 지점(모델 객체 생성)까지만 직접 실행합니다.
+**확인.** 앱의 함수를 그대로 불러 3일짜리 일정을 변환해 봅니다.
 
 ```bash
 uv run python -c "
-from agno.models.ollama import Ollama
-o = Ollama(id='llama3.2')
-print(o.id, o.provider)
+import sys, datetime
+sys.path.insert(0, 'starter_ai_agents/ai_travel_agent')
+import travel_agent
+plan = 'Day 1: Arrive in Busan.\nDay 2: Gamcheon Culture Village.\nDay 3: Day trip to Tongyeong.'
+ics = travel_agent.generate_ics_content(plan, start_date=datetime.datetime(2026, 5, 1))
+print('bytes:', len(ics), '| events:', ics.decode().count('BEGIN:VEVENT'))
+print([l for l in ics.decode().splitlines() if l.startswith(('SUMMARY','DTSTART','DTEND'))])
 "
 ```
 
 ```
-llama3.2 Ollama
+bytes: 592 | events: 3
+['SUMMARY:Day 1 Itinerary', 'DTSTART;VALUE=DATE:20260501', 'DTEND;VALUE=DATE:20260501', 'SUMMARY:Day 2 Itinerary', 'DTSTART;VALUE=DATE:20260502', 'DTEND;VALUE=DATE:20260502', 'SUMMARY:Day 3 Itinerary', 'DTSTART;VALUE=DATE:20260503', 'DTEND;VALUE=DATE:20260503']
 ```
+
+세 건이 하루씩 밀려 만들어지는 것까지 직접 확인했습니다. 다만 `DTEND`가 `DTSTART`와 **같은 날짜**라는 점은 짚고 갈 문제입니다 — "문제 해결"에 적었습니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 목적지·여행 일수를 입력하고 "Generate Itinerary"를 누르면(Step 5), UI는 `researcher.run(...)`을 호출합니다. Researcher는 지시문과 `search_google` 도구 스키마를 OpenAI에 보내고(Step 3), OpenAI가 `tool_call`로 검색어를 돌려주면 Researcher가 실제로 SerpAPI를 호출해 결과를 받은 뒤 다시 OpenAI에 넘겨 최종 리서치 텍스트를 완성합니다 — Day 1에서 본 도구 호출 왕복과 같은 구조입니다. 이 텍스트가 `research_results.content`로 UI에 돌아오면, UI는 목적지·일수와 함께 그대로 Planner의 프롬프트에 박아 두 번째 `run(...)`을 호출합니다(Step 4·5). Planner는 도구 없이 OpenAI만으로 완성된 일정을 만들어 돌려주고, UI는 이를 화면에 표시하는 동시에 `st.session_state.itinerary`에 저장해 `generate_ics_content`(Step 6)로 넘길 수 있게 합니다. 로컬 버전(Step 7)에서는 이 그림의 OpenAI 자리에 Ollama가 들어갈 뿐, 요청이 흐르는 순서와 두 번의 `run()` 호출 구조는 동일합니다. 이 시퀀스는 각 구간을 Step 1~6에서 개별적으로 직접 실행해 확인한 것을 이어붙인 것이며, 유효한 키가 없어 처음부터 끝까지 한 번에 흐르는 것을 실제로 보지는 못했습니다.
+키 두 개를 넣고 목적지와 일수를 채운 뒤 "Generate Itinerary"를 누르면, 먼저 Researcher가 gpt-4o에게 "검색어 3개를 만들고 각각 검색해 상위 10건을 뽑아라"는 지시와 함께 목적지를 보냅니다. 모델이 `search_google` tool_call을 돌려주면 agno가 로컬에서 SerpAPI를 실제로 호출하고 결과를 다시 모델에 넣어 요약을 받습니다 — Day 1에서 본 도구 호출 루프와 같은 구조이며, 검색어가 3개면 이 왕복이 여러 번 일어납니다. 요약이 끝나면 화면에는 "Research completed"만 찍히고, 그 요약 텍스트가 곧바로 Planner의 프롬프트에 문자열로 삽입됩니다. Planner는 도구가 없으므로 추가 검색 없이 단 한 번의 gpt-4o 호출로 일정을 씁니다. 결과는 `st.session_state.itinerary`에 담겨 화면에 표시되고 이후 리런에서도 살아남아 오른쪽 열의 내려받기 버튼이 유지됩니다. 버튼을 누르는 순간에는 LLM이 다시 불리지 않고, 저장된 텍스트가 `generate_ics_content()`를 통해 `.ics` 바이트로 변환될 뿐입니다.
+
+이 흐름 중 **ICS 변환과 Planner 호출은 직접 실행해 확인했고**(각각 Step 5·Step 4의 확인), Researcher의 SerpAPI 왕복과 gpt-4o 호출은 두 키가 없어 실행하지 못했습니다 — 코드와 agno의 `serpapi` 도구 구현을 읽고 정리한 것입니다.
 
 ## 실행 체크리스트
 
-- [ ] OpenAI API 키와 SerpAPI 키를 발급받아 두었다 (둘 다 화면 입력창에 붙여넣는 용도, 환경변수 아님)
-- [ ] `uv venv && uv pip install -r requirements.txt`로 6개 의존성을 설치했다
-- [ ] `uv run python -m py_compile travel_agent.py local_travel_agent.py`로 두 진입점이 모두 컴파일되는 것을 확인했다
-- [ ] `uv run streamlit run travel_agent.py`로 서버를 띄우고 `http://localhost:8501`에서 HTTP 200을 확인했다
-- [ ] Researcher(`SerpApiTools` 1개, 지시문 4개)와 Planner(도구 없음, 지시문 6개)의 실제 구성을 코드로 확인했다
-- [ ] 잘못된 키로 `researcher.run()`을 호출하면 예외 대신 `RunStatus.error`와 오류 문자열이 반환된다는 것을 확인했다
-- [ ] `generate_ics_content`를 직접 실행해 "Day N" 패턴이 날짜별 이벤트로 쪼개지는 것을 확인했다
-- [ ] `local_travel_agent.py`가 클라우드 버전과 모델·안내 문구·키 개수에서만 다르다는 것을 diff로 확인했다 (실제 Ollama 실행은 하지 않음)
+- [ ] OpenAI 키와 SerpAPI 키를 각각 발급받아 두었다 (로컬 버전도 SerpAPI 키는 필요)
+- [ ] `uv pip install -r requirements.txt` 후, 루트 `.venv`를 쓴다면 `google-search-results`와 `icalendar`가 실제로 설치됐는지 확인했다
+- [ ] `uv run streamlit run travel_agent.py`로 서버를 띄우고 `http://localhost:8501`에서 화면을 확인했다
+- [ ] 키를 **둘 다** 넣어야 목적지 입력창이 나타나는 것을 확인했다
+- [ ] Researcher만 `tools=[SerpApiTools(...)]`를 갖고 Planner는 도구가 없다는 것을 확인했다
+- [ ] 일정 생성 후 내려받기 버튼이 나타나고, 내려받은 파일에 `Day N` 수만큼 `VEVENT`가 들어 있는 것을 확인했다
+- [ ] (선택) `ollama pull llama3.2` 후 `uv run streamlit run local_travel_agent.py`로 LLM만 로컬로 돌려 보았다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 키를 하나만 넣거나 둘 다 비워 둬도 화면에 아무 경고 없이 제목·입력창만 보이고 멈춰 있음 | `if openai_api_key and serp_api_key:` 가드에 대응하는 `else`가 파일 전체에 없다(소스로 확인 — 유일한 `else`는 `generate_ics_content`의 날짜-분기용, `starter_ai_agents/ai_travel_agent/travel_agent.py:42`) | Day 2·5처럼 경고 문구를 기다리지 말고, 두 입력창을 모두 채우면 나머지 화면이 나타남 |
-| 키가 잘못됐는데 예외로 화면이 멈추는 대신 "Incorrect API key..." 같은 문구가 리서치 결과·최종 일정인 것처럼 화면에 그대로 표시됨 | 두 파일 모두 `research_results.status`나 `try/except`를 확인하지 않는다(직접 확인, Step 5) — agno `Agent.run()`은 인증 실패를 예외 대신 `RunStatus.error`로 반환하고 이 코드는 그 값을 그대로 다음 단계에 넘긴다 | 화면에 뜬 텍스트가 일정처럼 안 보이고 "API key" 같은 문구를 담고 있다면 오류이니 키를 다시 확인 |
-| 리눅스(대소문자 구분 파일시스템)에서 `cat starter_ai_agents/ai_travel_agent/README.md`가 "No such file or directory" | 이 앱 폴더의 안내 파일은 `README.md`가 아니라 `README.MD`(대문자 확장자)로 저장돼 있다(소스로 확인, 폴더 목록) | 정확한 대소문자로 `README.MD`를 참조. Windows·macOS 기본 파일시스템은 대소문자를 구분하지 않아 이 문제가 드러나지 않을 수 있음 |
-| 앱 자체 `README.MD`가 로컬 버전을 "without sending data to external APIs"라고 설명 | 검색 도구(SerpApiTools)는 두 진입점에서 완전히 동일하게 SerpAPI라는 외부 클라우드 서비스를 호출한다(소스로 확인: `starter_ai_agents/ai_travel_agent/local_travel_agent.py:91`이 `starter_ai_agents/ai_travel_agent/travel_agent.py:93`과 동일) — 로컬로 도는 것은 LLM 추론뿐이고 검색어는 여전히 SerpAPI로 나간다 | 완전한 오프라인 동작이 필요하면 검색 도구도 로컬 대안으로 바꿔야 함(이 문서 범위 밖) |
+| `from agno.tools.serpapi import SerpApiTools`에서 ``ImportError: `google-search-results` not installed.`` | `agno/tools/serpapi.py`가 맨 위에서 `import serpapi`를 try로 감싸고 실패 시 이 메시지로 바꿔 던진다. 이 저장소는 루트 `uv.lock` 환경을 쓰게 되는데 거기에 이 패키지가 없다(직접 확인: 설치 전 `PackageNotFoundError`) | `uv pip install google-search-results` (직접 확인 시 2.4.2 설치로 해결) |
+| `from icalendar import Calendar, Event`에서 `ModuleNotFoundError` | 위와 같은 이유로 루트 환경에 `icalendar`가 없다(직접 확인) | `uv pip install icalendar` (직접 확인 시 7.3.0) |
+| 키를 넣어도 목적지·일수 입력창이 안 보임 | 75행의 가드가 `if openai_api_key and serp_api_key:`라 두 키가 모두 채워져야 그 아래가 그려진다 | 두 입력창을 모두 채운다. 로컬 버전은 SerpAPI 키 하나만 요구한다(`local_travel_agent.py:73`) |
+| 앱 자체 README가 로컬 버전을 "without sending data to external APIs"라고 설명 | 실제로는 `local_travel_agent.py:71`이 SerpAPI 키를 받고 91행이 `SerpApiTools`를 Researcher에 붙인다 — 로컬인 것은 **LLM 추론뿐**이고 검색어는 그대로 SerpAPI로 나간다(소스로 확인) | 완전한 오프라인이 목적이라면 Researcher의 도구를 로컬 검색으로 바꾸거나 Researcher 단계를 빼야 한다 |
+| 내려받은 `.ics`를 캘린더 앱에 넣었는데 일정이 안 보이거나 이상하게 표시됨 | 54-55행이 `dtstart`와 `dtend`에 같은 날짜를 넣는다(직접 확인: `DTSTART;VALUE=DATE:20260501`과 `DTEND;VALUE=DATE:20260501`). RFC 5545에서 날짜형 `DTEND`는 비포함이라 종일 일정 하루를 표현하려면 다음 날이어야 한다 | `event.add('dtend', (current_date + timedelta(days=1)).date())`로 고친다. 실제 캘린더 앱에서의 표시 차이는 확인하지 못했고, 규격과 생성된 바이트까지만 확인했다 |
+| 일정이 하루짜리 한 건으로만 만들어짐 | LLM 응답에 `Day N` 패턴이 없으면 34-41행 분기로 빠져 전체를 한 건의 종일 일정으로 만든다(직접 확인: 패턴 없는 텍스트로 `VEVENT` 1건) | 프롬프트에 각 날을 정확히 `Day N:`으로 시작하라는 지시를 추가한다. Step 4의 확인에서 로컬 모델에도 같은 지시를 줘서 형식을 맞췄다 |
+| 일정 날짜가 실제 여행일과 다름 | `start_date` 기본값이 오늘이고(27-28행) Streamlit 호출부(150행)가 인자를 주지 않아 항상 오늘부터 시작한다 | 출발일을 받는 `st.date_input`을 추가해 `generate_ics_content(..., start_date=...)`로 넘긴다 |
 
 ## 더 해보기
 
-- Researcher의 `tools=[SerpApiTools(api_key=serp_api_key)]`(`starter_ai_agents/ai_travel_agent/travel_agent.py:93`)에 `enable_search_youtube=True`를 추가해 도구를 2개로 늘리고, Step 3의 확인 명령으로 `functions` 목록이 어떻게 늘어나는지 다시 확인해보기
-- 실행 파이프라인(`starter_ai_agents/ai_travel_agent/travel_agent.py:117-144`)을 `try/except`로 감싸 `research_results.status`가 오류일 때는 Planner를 아예 호출하지 않고 `st.error()`로 안내하도록 고쳐, Step 5에서 확인한 "오류가 일정처럼 보이는" 문제를 직접 고쳐보기
-- `generate_ics_content`의 정규식(`starter_ai_agents/ai_travel_agent/travel_agent.py:31`)을 손봐 "1일차"처럼 다른 표기도 인식하게 만들고, Step 6의 확인 명령으로 직접 실행해 결과가 달라지는지 비교해보기
+- 출발일을 고르는 `st.date_input`을 추가하고 150행의 호출에 `start_date`로 넘겨, 일정이 오늘이 아니라 실제 출발일부터 만들어지게 고쳐보기
+- `dtend`를 하루 뒤로 바꾼 뒤 구글 캘린더에 실제로 가져와 표시가 어떻게 달라지는지 확인해보기
+- Researcher의 출력을 Planner 프롬프트에 통째로 넣는 137행을, 길이를 재서 일정 길이 이상이면 잘라내거나 요약하는 단계로 바꿔보고 토큰 사용량을 비교해보기
+- `local_travel_agent.py`의 `Ollama(id="llama3.2")`(77행)를 `gemma3:12b`나 `qwen3:8b` 같은 더 큰 로컬 모델로 바꿔, 같은 프롬프트에서 `Day N` 형식을 얼마나 안정적으로 지키는지 비교해보기
 
 ## 다음 날 예고
 
-Day 013 · 🔍 OpenAI Research Agent — 트리아지·리서치·편집 세 에이전트가 협업해 주제 하나를 조사하고 출처를 갖춘 보고서로 정리하는 앱을 다룹니다.
+[Day 013 · 🔍 OpenAI Research Agent](../day013-openai-research-agent/README.md) — 검색과 요약을 스스로 반복하며 조사 보고서를 만드는 에이전트를 다룹니다.
