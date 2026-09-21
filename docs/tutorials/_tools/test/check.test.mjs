@@ -76,7 +76,7 @@ test("broken image link, stale svg, bad code ref, mermaid and placeholder are re
   }
 });
 
-test("checkRoadmap requires 133 rows and existing link targets", () => {
+test("checkRoadmap requires one row per day and existing link targets", () => {
   const days = loadDays();
   const root = mkdtempSync(join(tmpdir(), "tut-roadmap-check-"));
   mkdirSync(join(root, folderName(days[0])), { recursive: true });
@@ -87,7 +87,7 @@ test("checkRoadmap requires 133 rows and existing link targets", () => {
   assert.equal(problems.length, 1, problems.join("\n"));
   assert.ok(problems[0].includes(folderName(days[1])));
   writeFileSync(join(root, "README.md"), `# r\n${rows.split("\n").slice(0, 10).join("\n")}\n`);
-  assert.ok(checkRoadmap(join(root, "README.md"), days, root).some((p) => p.includes("133")));
+  assert.ok(checkRoadmap(join(root, "README.md"), days, root).some((p) => p.includes(String(days.length))));
 });
 
 test("a code ref one line past the end of a newline-terminated file is reported", () => {
@@ -96,14 +96,22 @@ test("a code ref one line past the end of a newline-terminated file is reported"
   assert.ok(problems.some((p) => p.includes("app/main.py:1-3") && p.includes("파일은 2줄")), problems.join("\n"));
 });
 
-test("an svg wider than the column cap is reported", () => {
+test("an svg over either cap is reported", () => {
   const { repo, dayDir } = fixture();
   const d2 = join(dayDir, "diagrams", "overview.d2");
   const hash = sourceHash(inlineImports(d2));
-  writeFileSync(join(dayDir, "diagrams", "overview.svg"), embedHash('<svg width="3030" height="349"></svg>', hash));
-  const problems = checkDay(dayDir, { repoRoot: repo });
-  assert.ok(problems.some((p) => p.includes("3030px") && p.includes("1400px")), problems.join("\n"));
-  writeFileSync(join(dayDir, "diagrams", "overview.svg"), embedHash('<svg width="1400" height="900"></svg>', hash));
+  const write = (svg) => writeFileSync(join(dayDir, "diagrams", "overview.svg"), embedHash(svg, hash));
+
+  write('<svg width="3030" height="349"></svg>');
+  const wide = checkDay(dayDir, { repoRoot: repo });
+  assert.ok(wide.some((p) => p.includes("3030px") && p.includes("1400px")), wide.join("\n"));
+
+  // 세로가 길면 폭이 멀쩡해도 한 장이 본문을 통째로 먹는다.
+  write('<svg width="800" height="1384"></svg>');
+  const tall = checkDay(dayDir, { repoRoot: repo });
+  assert.ok(tall.some((p) => p.includes("1384px") && p.includes("700px")), tall.join("\n"));
+
+  write('<svg width="1400" height="700"></svg>');
   assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
 });
 

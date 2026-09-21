@@ -1,4 +1,4 @@
-# awesome-llm-apps 133일 튜토리얼
+# awesome-llm-apps <!-- TOTAL -->일 튜토리얼
 
 이 리포에 있는 앱을 하루에 하나씩, 처음부터 끝까지 따라 만드는 시리즈입니다. 하루 분량은 60~90분이고, 매 일차는 완성 아키텍처와 각 단계의 시스템 구성을 D2 다이어그램으로 보여 줍니다. 순서는 학습 난이도 순이며 볼륨 안에서는 작은 앱부터 갑니다.
 
@@ -51,6 +51,6 @@ uv run --no-project python <엔트리 파일>
 
 README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링크만 남깁니다: [Openwork](https://github.com/accomplish-ai/coworker), [OpenSource Voice Dictation Agent](https://github.com/akshayaggarwal/wispr-flow-clone).
 
-## 133일 일정
+## <!-- TOTAL -->일 일정
 
 <!-- DAYS -->

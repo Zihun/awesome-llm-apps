@@ -10,7 +10,7 @@
 
 - README 목록 116개 항목 중 외부 리포 링크 2개(Openwork, OpenSource Voice Dictation Agent)는 코드가 이 리포에 없으므로 제외한다. 로드맵에 링크만 남긴다.
 - AI Agent Framework Crash Course 2개는 레슨 단위로 풀어 21일(Google ADK 10, OpenAI Agents SDK 11)로 다룬다.
-- 합계 **133일**. 전체 일정은 부록 A에 있다.
+- 합계 **164일**. 전체 일정은 부록 A에 있다. (2026-09-21에 133일에서 확장: 업스트림이 더한 앱 2개와, 상위 README에 실리지 않아 최초 계획에서 빠졌던 앱 29개. Day 1–21은 이미 작성되어 번호를 고정했으므로 추가분은 22일차 이후에만 들어간다.)
 
 **대상 독자.** Python 기초와 터미널 사용이 가능하고, LLM 앱 개발은 처음인 개발자. Node.js가 필요한 볼륨(Generative UI)은 해당 일차에서 설치부터 안내한다.
 
@@ -43,7 +43,7 @@ docs/tutorials/
 │   ├── render.mjs                # **/diagrams/*.d2 → 같은 이름 .svg
 │   ├── check.mjs                 # 문서·다이어그램 정합성 검사
 │   ├── theme.d2                  # 공통 색·도형 클래스
-│   ├── days.json                 # 133일 일정 데이터(부록 A와 동일). 로드맵·스캐폴딩의 원천
+│   ├── days.json                 # 전체 일정 데이터(부록 A의 원천). 로드맵·스캐폴딩이 여기서 읽는다
 │   ├── scaffold.mjs              # dayNNN-slug/ 폴더와 README 골격, diagrams/ 생성
 │   ├── roadmap.mjs               # roadmap.template.md + days.json + 진도 → README.md 생성
 │   ├── roadmap.template.md       # 로드맵의 고정 본문(소개, 공통 사전 준비). <!-- DAYS --> 자리에 표가 들어감
@@ -59,7 +59,7 @@ docs/tutorials/
 └── day002-… (총 133개 폴더)
 ```
 
-- 폴더 이름은 `day` + 3자리 일차 + `-` + 슬러그. 슬러그는 원본 앱 폴더명을 소문자·하이픈으로 바꾼 것이며, Generative UI 볼륨은 `genui-` 접두사를 붙여 같은 이름의 Python 앱과 구분한다. 크래시 코스는 `adk-N-…`, `openai-sdk-N-…` 형식이다. 전체 목록은 부록 A에 고정되어 있고, 한 번 커밋된 일차 번호와 폴더명은 바꾸지 않는다(링크 안정성).
+- 폴더 이름은 `day` + 3자리 일차 + `-` + 슬러그. 슬러그는 원본 앱 폴더명을 소문자·하이픈으로 바꾼 것이며, Generative UI 볼륨은 `genui-` 접두사를 붙여 같은 이름의 Python 앱과 구분한다. 크래시 코스는 `adk-N-…`, `openai-sdk-N-…` 형식이다. 전체 목록은 부록 A에 고정되어 있고(원천은 `days.json`), 한 번 커밋된 일차 번호와 폴더명은 바꾸지 않는다(링크 안정성).
 - `node_modules/`는 이미 `.gitignore`에 있다. `_tools/package-lock.json`은 커밋한다.
 
 ## 4. 하루 문서 템플릿
@@ -254,24 +254,25 @@ docs/tutorials/
 | D2 렌더러 프로세스가 끝나지 않아 자동화가 멈춤 | 렌더 스크립트는 `process.exit`, 테스트는 `--test-force-exit`, 출력은 파이프 대신 파일로 |
 | API 비용 | 문서에 대략치를 적고 로컬 모델 대안이 있는 앱은 함께 안내 |
 
-## 부록 A. 133일 전체 일정
+## 부록 A. 전체 일정 (164일)
 
 일차 번호와 폴더명은 여기서 고정한다. 코드 규모는 정렬 근거로 쓴 `.py/.ts/.tsx/.js/.jsx` 줄 수 합계다.
+이 표는 `docs/tutorials/_tools/days.json`에서 생성한다 — 둘이 어긋나면 `days.json`이 옳다.
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 001 | 📊 xAI Finance Agent | `starter_ai_agents/xai_finance_agent` | `day001-xai-finance-agent` | 24 |
-| 002 | 🕸️ Web Scraping AI Agent | `starter_ai_agents/web_scraping_ai_agent` | `day002-web-scraping-ai-agent` | 76 |
-| 003 | 🎙️ AI Blog to Podcast Agent | `starter_ai_agents/ai_blog_to_podcast_agent` | `day003-ai-blog-to-podcast-agent` | 87 |
-| 004 | 🎵 AI Music Generator Agent | `starter_ai_agents/ai_music_generator_agent` | `day004-ai-music-generator-agent` | 94 |
+| 001 | 📊 xAI Finance Agent | `starter_ai_agents/xai_finance_agent` | `day001-xai-finance-agent` | 134 |
+| 002 | 🕸️ Web Scraping AI Agent | `starter_ai_agents/web_scraping_ai_agent` | `day002-web-scraping-ai-agent` | 272 |
+| 003 | 🎙️ AI Blog to Podcast Agent | `starter_ai_agents/ai_blog_to_podcast_agent` | `day003-ai-blog-to-podcast-agent` | 86 |
+| 004 | 🎵 AI Music Generator Agent | `starter_ai_agents/ai_music_generator_agent` | `day004-ai-music-generator-agent` | 93 |
 | 005 | 🔄 Mixture of Agents | `starter_ai_agents/mixture_of_agents` | `day005-mixture-of-agents` | 103 |
 | 006 | 📊 AI Data Analysis Agent | `starter_ai_agents/ai_data_analysis_agent` | `day006-ai-data-analysis-agent` | 121 |
-| 007 | 😂 AI Meme Generator Agent (Browser) | `starter_ai_agents/ai_meme_generator_agent_browseruse` | `day007-ai-meme-generator-agent-browseruse` | 139 |
-| 008 | 🩻 AI Medical Imaging Agent | `starter_ai_agents/ai_medical_imaging_agent` | `day008-ai-medical-imaging-agent` | 158 |
+| 007 | 😂 AI Meme Generator Agent (Browser) | `starter_ai_agents/ai_meme_generator_agent_browseruse` | `day007-ai-meme-generator-agent-browseruse` | 138 |
+| 008 | 🩻 AI Medical Imaging Agent | `starter_ai_agents/ai_medical_imaging_agent` | `day008-ai-medical-imaging-agent` | 157 |
 | 009 | ✨ Gemini Multimodal Agent | `starter_ai_agents/multimodal_ai_agent` | `day009-multimodal-ai-agent` | 167 |
-| 010 | 💸 AI x402 Paying Agent | `starter_ai_agents/ai_x402_paying_agent` | `day010-ai-x402-paying-agent` | 257 |
+| 010 | 💸 AI x402 Paying Agent | `starter_ai_agents/ai_x402_paying_agent` | `day010-ai-x402-paying-agent` | 255 |
 | 011 | ❤️‍🩹 AI Breakup Recovery Agent | `starter_ai_agents/ai_breakup_recovery_agent` | `day011-ai-breakup-recovery-agent` | 282 |
 | 012 | 🛫 AI Travel Agent (Local & Cloud) | `starter_ai_agents/ai_travel_agent` | `day012-ai-travel-agent` | 312 |
 | 013 | 🔍 OpenAI Research Agent | `starter_ai_agents/openai_research_agent` | `day013-openai-research-agent` | 331 |
@@ -281,187 +282,233 @@ docs/tutorials/
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
 | 014 | Google ADK Crash Course · 1_starter_agent | `ai_agent_framework_crash_course/google_adk_crash_course/1_starter_agent` | `day014-adk-1-starter-agent` | 27 |
-| 015 | Google ADK Crash Course · 2_model_agnostic_agent | `ai_agent_framework_crash_course/google_adk_crash_course/2_model_agnostic_agent` | `day015-adk-2-model-agnostic-agent` | 78 |
-| 016 | Google ADK Crash Course · 3_structured_output_agent | `ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent` | `day016-adk-3-structured-output-agent` | 78 |
+| 015 | Google ADK Crash Course · 2_model_agnostic_agent | `ai_agent_framework_crash_course/google_adk_crash_course/2_model_agnostic_agent` | `day015-adk-2-model-agnostic-agent` | 76 |
+| 016 | Google ADK Crash Course · 3_structured_output_agent | `ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent` | `day016-adk-3-structured-output-agent` | 77 |
 | 017 | Google ADK Crash Course · 4_tool_using_agent | `ai_agent_framework_crash_course/google_adk_crash_course/4_tool_using_agent` | `day017-adk-4-tool-using-agent` | 1367 |
 | 018 | Google ADK Crash Course · 5_memory_agent | `ai_agent_framework_crash_course/google_adk_crash_course/5_memory_agent` | `day018-adk-5-memory-agent` | 276 |
 | 019 | Google ADK Crash Course · 6_callbacks | `ai_agent_framework_crash_course/google_adk_crash_course/6_callbacks` | `day019-adk-6-callbacks` | 890 |
-| 020 | Google ADK Crash Course · 7_plugins | `ai_agent_framework_crash_course/google_adk_crash_course/7_plugins` | `day020-adk-7-plugins` | 171 |
+| 020 | Google ADK Crash Course · 7_plugins | `ai_agent_framework_crash_course/google_adk_crash_course/7_plugins` | `day020-adk-7-plugins` | 169 |
 | 021 | Google ADK Crash Course · 8_simple_multi_agent | `ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent` | `day021-adk-8-simple-multi-agent` | 88 |
-| 022 | Google ADK Crash Course · 9_multi_agent_patterns | `ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns` | `day022-adk-9-multi-agent-patterns` | 751 |
-| 023 | Google ADK Crash Course · adk_yaml_examples | `ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples` | `day023-adk-10-adk-yaml-examples` | 2 |
-| 024 | OpenAI Agents SDK Crash Course · 1_starter_agent | `ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent` | `day024-openai-sdk-1-starter-agent` | 218 |
-| 025 | OpenAI Agents SDK Crash Course · 2_structured_output_agent | `ai_agent_framework_crash_course/openai_sdk_crash_course/2_structured_output_agent` | `day025-openai-sdk-2-structured-output-agent` | 603 |
-| 026 | OpenAI Agents SDK Crash Course · 3_tool_using_agent | `ai_agent_framework_crash_course/openai_sdk_crash_course/3_tool_using_agent` | `day026-openai-sdk-3-tool-using-agent` | 414 |
-| 027 | OpenAI Agents SDK Crash Course · 4_running_agents | `ai_agent_framework_crash_course/openai_sdk_crash_course/4_running_agents` | `day027-openai-sdk-4-running-agents` | 1031 |
-| 028 | OpenAI Agents SDK Crash Course · 5_context_management | `ai_agent_framework_crash_course/openai_sdk_crash_course/5_context_management` | `day028-openai-sdk-5-context-management` | 84 |
-| 029 | OpenAI Agents SDK Crash Course · 6_guardrails_validation | `ai_agent_framework_crash_course/openai_sdk_crash_course/6_guardrails_validation` | `day029-openai-sdk-6-guardrails-validation` | 158 |
-| 030 | OpenAI Agents SDK Crash Course · 7_sessions | `ai_agent_framework_crash_course/openai_sdk_crash_course/7_sessions` | `day030-openai-sdk-7-sessions` | 911 |
-| 031 | OpenAI Agents SDK Crash Course · 8_handoffs_delegation | `ai_agent_framework_crash_course/openai_sdk_crash_course/8_handoffs_delegation` | `day031-openai-sdk-8-handoffs-delegation` | 308 |
-| 032 | OpenAI Agents SDK Crash Course · 9_multi_agent_orchestration | `ai_agent_framework_crash_course/openai_sdk_crash_course/9_multi_agent_orchestration` | `day032-openai-sdk-9-multi-agent-orchestration` | 890 |
-| 033 | OpenAI Agents SDK Crash Course · 10_tracing_observability | `ai_agent_framework_crash_course/openai_sdk_crash_course/10_tracing_observability` | `day033-openai-sdk-10-tracing-observability` | 648 |
-| 034 | OpenAI Agents SDK Crash Course · 11_voice | `ai_agent_framework_crash_course/openai_sdk_crash_course/11_voice` | `day034-openai-sdk-11-voice` | 1065 |
+| 022 | Google ADK Crash Course · 9_multi_agent_patterns | `ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns` | `day022-adk-9-multi-agent-patterns` | 745 |
+| 023 | Google ADK Crash Course · adk_yaml_examples | `ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples` | `day023-adk-10-adk-yaml-examples` | 1 |
+| 024 | OpenAI Agents SDK Crash Course · 1_starter_agent | `ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent` | `day024-openai-sdk-1-starter-agent` | 215 |
+| 025 | OpenAI Agents SDK Crash Course · 2_structured_output_agent | `ai_agent_framework_crash_course/openai_sdk_crash_course/2_structured_output_agent` | `day025-openai-sdk-2-structured-output-agent` | 597 |
+| 026 | OpenAI Agents SDK Crash Course · 3_tool_using_agent | `ai_agent_framework_crash_course/openai_sdk_crash_course/3_tool_using_agent` | `day026-openai-sdk-3-tool-using-agent` | 405 |
+| 027 | OpenAI Agents SDK Crash Course · 4_running_agents | `ai_agent_framework_crash_course/openai_sdk_crash_course/4_running_agents` | `day027-openai-sdk-4-running-agents` | 1022 |
+| 028 | OpenAI Agents SDK Crash Course · 5_context_management | `ai_agent_framework_crash_course/openai_sdk_crash_course/5_context_management` | `day028-openai-sdk-5-context-management` | 83 |
+| 029 | OpenAI Agents SDK Crash Course · 6_guardrails_validation | `ai_agent_framework_crash_course/openai_sdk_crash_course/6_guardrails_validation` | `day029-openai-sdk-6-guardrails-validation` | 157 |
+| 030 | OpenAI Agents SDK Crash Course · 7_sessions | `ai_agent_framework_crash_course/openai_sdk_crash_course/7_sessions` | `day030-openai-sdk-7-sessions` | 904 |
+| 031 | OpenAI Agents SDK Crash Course · 8_handoffs_delegation | `ai_agent_framework_crash_course/openai_sdk_crash_course/8_handoffs_delegation` | `day031-openai-sdk-8-handoffs-delegation` | 302 |
+| 032 | OpenAI Agents SDK Crash Course · 9_multi_agent_orchestration | `ai_agent_framework_crash_course/openai_sdk_crash_course/9_multi_agent_orchestration` | `day032-openai-sdk-9-multi-agent-orchestration` | 884 |
+| 033 | OpenAI Agents SDK Crash Course · 10_tracing_observability | `ai_agent_framework_crash_course/openai_sdk_crash_course/10_tracing_observability` | `day033-openai-sdk-10-tracing-observability` | 642 |
+| 034 | OpenAI Agents SDK Crash Course · 11_voice | `ai_agent_framework_crash_course/openai_sdk_crash_course/11_voice` | `day034-openai-sdk-11-voice` | 1056 |
 
-### 볼륨 3. 💬 Chat with X (Day 35–40, 6일)
-
-| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
-|---|---|---|---|---|
-| 035 | 📝 Chat with Substack | `advanced_llm_apps/chat_with_X_tutorials/chat_with_substack` | `day035-chat-with-substack` | 42 |
-| 036 | 📚 Chat with Research Papers (ArXiv) (GPT & Llama3) | `advanced_llm_apps/chat_with_X_tutorials/chat_with_research_papers` | `day036-chat-with-research-papers` | 54 |
-| 037 | 💬 Chat with GitHub (GPT & Llama3) | `advanced_llm_apps/chat_with_X_tutorials/chat_with_github` | `day037-chat-with-github` | 108 |
-| 038 | 📄 Chat with PDF (GPT & Llama3) | `advanced_llm_apps/chat_with_X_tutorials/chat_with_pdf` | `day038-chat-with-pdf` | 148 |
-| 039 | 📽️ Chat with YouTube Videos | `advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos` | `day039-chat-with-youtube-videos` | 354 |
-| 040 | 📨 Chat with Gmail | `advanced_llm_apps/chat_with_X_tutorials/chat_with_gmail` | `day040-chat-with-gmail` | 40 |
-
-### 볼륨 4. 📀 RAG (Day 41–61, 21일)
+### 볼륨 3. 🌱 Starter AI Agents (추가분) (Day 35–38, 4일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 041 | 🦙 Local RAG Agent | `rag_tutorials/local_rag_agent` | `day041-local-rag-agent` | 43 |
-| 042 | 🔄 Llama 3.1 Local RAG | `rag_tutorials/llama3.1_local_rag` | `day042-llama3.1-local-rag` | 81 |
-| 043 | 🔍 Autonomous RAG | `rag_tutorials/autonomous_rag` | `day043-autonomous-rag` | 145 |
-| 044 | 🔥 Agentic RAG with Embedding Gemma | `rag_tutorials/agentic_rag_embedding_gemma` | `day044-agentic-rag-embedding-gemma` | 152 |
-| 045 | 🧩 RAG-as-a-Service | `rag_tutorials/rag-as-a-service` | `day045-rag-as-a-service` | 190 |
-| 046 | ⛓️ Basic RAG Chain | `rag_tutorials/rag_chain` | `day046-rag-chain` | 200 |
-| 047 | 👀 Hybrid Search RAG (Cloud) | `rag_tutorials/hybrid_search_rag` | `day047-hybrid-search-rag` | 215 |
-| 048 | 🧐 Agentic RAG with Reasoning | `rag_tutorials/agentic_rag_with_reasoning` | `day048-agentic-rag-with-reasoning` | 251 |
-| 049 | 🖥️ Local Hybrid Search RAG | `rag_tutorials/local_hybrid_search_rag` | `day049-local-hybrid-search-rag` | 258 |
-| 050 | 🩺 RAG Failure Diagnostics Clinic | `rag_tutorials/rag_failure_diagnostics_clinic` | `day050-rag-failure-diagnostics-clinic` | 300 |
-| 051 | ✨ RAG Agent with Cohere | `rag_tutorials/rag_agent_cohere` | `day051-rag-agent-cohere` | 320 |
-| 052 | 🔄 Contextual AI RAG Agent | `rag_tutorials/contextualai_rag_agent` | `day052-contextualai-rag-agent` | 329 |
-| 053 | 📰 AI Blog Search (RAG) | `rag_tutorials/ai_blog_search` | `day053-ai-blog-search` | 383 |
-| 054 | 📠 RAG with Database Routing | `rag_tutorials/rag_database_routing` | `day054-rag-database-routing` | 388 |
-| 055 | 🔄 Corrective RAG (CRAG) | `rag_tutorials/corrective_rag` | `day055-corrective-rag` | 469 |
-| 056 | 🤔 Gemini Agentic RAG | `rag_tutorials/gemini_agentic_rag` | `day056-gemini-agentic-rag` | 473 |
-| 057 | 🕸️ Knowledge Graph RAG with Citations | `rag_tutorials/knowledge_graph_rag_citations` | `day057-knowledge-graph-rag-citations` | 525 |
-| 058 | 🐋 Deepseek Local RAG Agent | `rag_tutorials/deepseek_local_rag_agent` | `day058-deepseek-local-rag-agent` | 526 |
-| 059 | 🖼️ Vision RAG | `rag_tutorials/vision_rag` | `day059-vision-rag` | 554 |
-| 060 | 📎 Typed Agentic RAG with Pydantic AI | `rag_tutorials/agentic_typed_rag_pydanticai` | `day060-agentic-typed-rag-pydanticai` | 1229 |
-| 061 | 🧬 Multimodal Agentic RAG | `rag_tutorials/multimodal_agentic_rag` | `day061-multimodal-agentic-rag` | 1618 |
+| 035 | 📊 AI Data Visualization Agent | `starter_ai_agents/ai_data_visualisation_agent` | `day035-ai-data-visualisation-agent` | 182 |
+| 036 | 🛡️ Life Insurance Coverage Advisor Agent | `starter_ai_agents/ai_life_insurance_advisor_agent` | `day036-ai-life-insurance-advisor-agent` | 414 |
+| 037 | AI Reasoning Agent | `starter_ai_agents/ai_reasoning_agent` | `day037-ai-reasoning-agent` | 31 |
+| 038 | 📈 AI Startup Trend Analysis Agent | `starter_ai_agents/ai_startup_trend_analysis_agent` | `day038-ai-startup-trend-analysis-agent` | 78 |
 
-### 볼륨 5. 💾 LLM Apps with Memory (Day 62–67, 6일)
+### 볼륨 4. 💬 Chat with X (Day 39–46, 8일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 062 | 💬 Llama3 Stateful Chat | `advanced_llm_apps/llm_apps_with_memory_tutorials/llama3_stateful_chat` | `day062-llama3-stateful-chat` | 38 |
-| 063 | 💾 AI ArXiv Agent with Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory` | `day063-ai-arxiv-agent-memory` | 65 |
-| 064 | 📝 LLM App with Personalized Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory` | `day064-llm-app-personalized-memory` | 75 |
-| 065 | 🧠 Multi-LLM Application with Shared Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory` | `day065-multi-llm-memory` | 94 |
-| 066 | 🛩️ AI Travel Agent with Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/ai_travel_agent_memory` | `day066-ai-travel-agent-memory` | 102 |
-| 067 | 🗄️ Local ChatGPT Clone with Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory` | `day067-local-chatgpt-with-memory` | 137 |
+| 039 | 📝 Chat with Substack | `advanced_llm_apps/chat_with_X_tutorials/chat_with_substack` | `day039-chat-with-substack` | 41 |
+| 040 | 📚 Chat with Research Papers (ArXiv) (GPT & Llama3) | `advanced_llm_apps/chat_with_X_tutorials/chat_with_research_papers` | `day040-chat-with-research-papers` | 54 |
+| 041 | 💬 Chat with GitHub (GPT & Llama3) | `advanced_llm_apps/chat_with_X_tutorials/chat_with_github` | `day041-chat-with-github` | 108 |
+| 042 | 📄 Chat with PDF (GPT & Llama3) | `advanced_llm_apps/chat_with_X_tutorials/chat_with_pdf` | `day042-chat-with-pdf` | 148 |
+| 043 | 📽️ Chat with YouTube Videos | `advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos` | `day043-chat-with-youtube-videos` | 354 |
+| 044 | 📨 Chat with Gmail | `advanced_llm_apps/chat_with_X_tutorials/chat_with_gmail` | `day044-chat-with-gmail` | 40 |
+| 045 | Streaming AI Chatbot | `advanced_llm_apps/chat_with_X_tutorials/streaming_ai_chatbot` | `day045-streaming-ai-chatbot` | 199 |
+| 046 | ✨ The Magician IA Reader: AI-Powered NLP & Tarot Insights ✨ | `advanced_llm_apps/chat-with-tarots` | `day046-chat-with-tarots` | 216 |
 
-### 볼륨 6. 🚀 Advanced AI Agents (Day 68–88, 21일)
-
-| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
-|---|---|---|---|---|
-| 068 | 📈 AI Investment Agent | `advanced_ai_agents/single_agent_apps/ai_investment_agent` | `day068-ai-investment-agent` | 28 |
-| 069 | 🎬 AI Movie Production Agent | `advanced_ai_agents/single_agent_apps/ai_movie_production_agent` | `day069-ai-movie-production-agent` | 85 |
-| 070 | 🧬 AI Self-Evolving Agent | `advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent` | `day070-ai-self-evolving-agent` | 87 |
-| 071 | 🗞️ AI Journalist Agent | `advanced_ai_agents/single_agent_apps/ai_journalist_agent` | `day071-ai-journalist-agent` | 92 |
-| 072 | 🔬 AI Research Planner & Executor (Google Interactions API) | `advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api` | `day072-research-agent-gemini-interaction-api` | 103 |
-| 073 | 🔍 AI Deep Research Agent | `advanced_ai_agents/single_agent_apps/ai_deep_research_agent` | `day073-ai-deep-research-agent` | 185 |
-| 074 | 📑 AI Meeting Agent | `advanced_ai_agents/single_agent_apps/ai_meeting_agent` | `day074-ai-meeting-agent` | 186 |
-| 075 | 🧠 AI Mental Wellbeing Agent | `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent` | `day075-ai-mental-wellbeing-agent` | 227 |
-| 076 | 🏋️‍♂️ AI Health & Fitness Agent | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent` | `day076-ai-health-fitness-agent` | 245 |
-| 077 | 🏗️ AI System Architect Agent | `advanced_ai_agents/single_agent_apps/ai_system_architect_r1` | `day077-ai-system-architect-r1` | 318 |
-| 078 | 🤝 AI Consultant Agent | `advanced_ai_agents/single_agent_apps/ai_consultant_agent` | `day078-ai-consultant-agent` | 320 |
-| 079 | 🚀 AI Product Launch Intelligence Agent | `advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent` | `day079-product-launch-intelligence-agent` | 484 |
-| 080 | 🛡️ Trust-Gated Multi-Agent Research Team | `advanced_ai_agents/multi_agent_apps/trust_gated_agent_team` | `day080-trust-gated-agent-team` | 652 |
-| 081 | 👨🏻‍💼 AI Sales Intelligence Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team` | `day081-ai-sales-intelligence-agent-team` | 659 |
-| 082 | 📊 AI VC Due Diligence Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team` | `day082-ai-vc-due-diligence-agent-team` | 674 |
-| 083 | 🔍 AI Fraud Investigation Agent | `advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent` | `day083-ai-fraud-investigation-agent` | 936 |
-| 084 | 💰 AI Financial Coach Agent | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent` | `day084-ai-financial-coach-agent` | 968 |
-| 085 | 🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro | `advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent` | `day085-ai-home-renovation-agent` | 1077 |
-| 086 | 🧠 DevPulse AI - Multi-Agent Signal Intelligence | `advanced_ai_agents/multi_agent_apps/devpulse_ai` | `day086-devpulse-ai` | 1532 |
-| 087 | 📡 Earnings Call Analyst Agent | `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent` | `day087-earnings-call-analyst-agent` | 2286 |
-| 088 | 🎧 AI Social Media News and Podcast Agent | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents` | `day088-ai-news-and-podcast-agents` | 32594 |
-
-### 볼륨 7. 🤝 Multi-agent Teams (Day 89–101, 13일)
+### 볼륨 5. 📀 RAG (Day 47–70, 24일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 089 | 💲 AI Finance Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team` | `day089-ai-finance-agent-team` | 45 |
-| 090 | 👨‍🏫 AI Teaching Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team` | `day090-ai-teaching-agent-team` | 208 |
-| 091 | ✨ Multimodal Design Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team` | `day091-multimodal-design-agent-team` | 264 |
-| 092 | 💻 Multimodal Coding Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team` | `day092-multimodal-coding-agent-team` | 283 |
-| 093 | 🎨 AI Game Design Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team` | `day093-ai-game-design-agent-team` | 291 |
-| 094 | 🧲 AI Competitor Intelligence Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team` | `day094-ai-competitor-intelligence-agent-team` | 343 |
-| 095 | 👨‍💼 AI Services Agency (CrewAI) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency` | `day095-ai-services-agency` | 370 |
-| 096 | 🧭 AG2 Adaptive Research Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team` | `day096-ag2-adaptive-research-team` | 406 |
-| 097 | 💼 AI Recruitment Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team` | `day097-ai-recruitment-agent-team` | 522 |
-| 098 | 👨‍⚖️ AI Legal Agent Team (Cloud & Local) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team` | `day098-ai-legal-agent-team` | 665 |
-| 099 | 🎨 🍌 Multimodal UI/UX Feedback Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_uiux_feedback_agent_team` | `day099-multimodal-uiux-feedback-agent-team` | 837 |
-| 100 | 🏠 AI Real Estate Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team` | `day100-ai-real-estate-agent-team` | 1665 |
-| 101 | 🌏 AI Travel Planner Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team` | `day101-ai-travel-planner-agent-team` | 8134 |
+| 047 | 🦙 Local RAG Agent | `rag_tutorials/local_rag_agent` | `day047-local-rag-agent` | 42 |
+| 048 | 🔄 Llama 3.1 Local RAG | `rag_tutorials/llama3.1_local_rag` | `day048-llama3.1-local-rag` | 80 |
+| 049 | 🔍 Autonomous RAG | `rag_tutorials/autonomous_rag` | `day049-autonomous-rag` | 144 |
+| 050 | 🔥 Agentic RAG with Embedding Gemma | `rag_tutorials/agentic_rag_embedding_gemma` | `day050-agentic-rag-embedding-gemma` | 151 |
+| 051 | 🧩 RAG-as-a-Service | `rag_tutorials/rag-as-a-service` | `day051-rag-as-a-service` | 190 |
+| 052 | ⛓️ Basic RAG Chain | `rag_tutorials/rag_chain` | `day052-rag-chain` | 200 |
+| 053 | 👀 Hybrid Search RAG (Cloud) | `rag_tutorials/hybrid_search_rag` | `day053-hybrid-search-rag` | 215 |
+| 054 | 🧐 Agentic RAG with Reasoning | `rag_tutorials/agentic_rag_with_reasoning` | `day054-agentic-rag-with-reasoning` | 251 |
+| 055 | 🖥️ Local Hybrid Search RAG | `rag_tutorials/local_hybrid_search_rag` | `day055-local-hybrid-search-rag` | 257 |
+| 056 | 🩺 RAG Failure Diagnostics Clinic | `rag_tutorials/rag_failure_diagnostics_clinic` | `day056-rag-failure-diagnostics-clinic` | 299 |
+| 057 | ✨ RAG Agent with Cohere | `rag_tutorials/rag_agent_cohere` | `day057-rag-agent-cohere` | 319 |
+| 058 | 🔄 Contextual AI RAG Agent | `rag_tutorials/contextualai_rag_agent` | `day058-contextualai-rag-agent` | 328 |
+| 059 | 📰 AI Blog Search (RAG) | `rag_tutorials/ai_blog_search` | `day059-ai-blog-search` | 383 |
+| 060 | 📠 RAG with Database Routing | `rag_tutorials/rag_database_routing` | `day060-rag-database-routing` | 387 |
+| 061 | 🔄 Corrective RAG (CRAG) | `rag_tutorials/corrective_rag` | `day061-corrective-rag` | 468 |
+| 062 | 🤔 Gemini Agentic RAG | `rag_tutorials/gemini_agentic_rag` | `day062-gemini-agentic-rag` | 476 |
+| 063 | 🕸️ Knowledge Graph RAG with Citations | `rag_tutorials/knowledge_graph_rag_citations` | `day063-knowledge-graph-rag-citations` | 524 |
+| 064 | 🐋 Deepseek Local RAG Agent | `rag_tutorials/deepseek_local_rag_agent` | `day064-deepseek-local-rag-agent` | 526 |
+| 065 | 🖼️ Vision RAG | `rag_tutorials/vision_rag` | `day065-vision-rag` | 554 |
+| 066 | 📎 Typed Agentic RAG with Pydantic AI | `rag_tutorials/agentic_typed_rag_pydanticai` | `day066-agentic-typed-rag-pydanticai` | 1225 |
+| 067 | 🧬 Multimodal Agentic RAG | `rag_tutorials/multimodal_agentic_rag` | `day067-multimodal-agentic-rag` | 1609 |
+| 068 | 🧠 Agentic RAG with GPT-5 | `rag_tutorials/agentic_rag_gpt5` | `day068-agentic-rag-gpt5` | 217 |
+| 069 | 🧠 Math Tutor Agent – Agentic RAG with Feedback Loop | `rag_tutorials/agentic_rag_math_agent` | `day069-agentic-rag-math-agent` | 505 |
+| 070 | 🐋 Qwen 3 Local RAG Reasoning Agent | `rag_tutorials/qwen_local_rag` | `day070-qwen-local-rag` | 522 |
 
-### 볼륨 8. ♾️ MCP AI Agents (Day 102–107, 6일)
-
-| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
-|---|---|---|---|---|
-| 102 | 📑 Notion MCP Agent | `mcp_ai_agents/notion_mcp_agent` | `day102-notion-mcp-agent` | 124 |
-| 103 | 🐙 GitHub MCP Agent | `mcp_ai_agents/github_mcp_agent` | `day103-github-mcp-agent` | 151 |
-| 104 | ♾️ Browser MCP Agent | `mcp_ai_agents/browser_mcp_agent` | `day104-browser-mcp-agent` | 181 |
-| 105 | 🔌 OpenAI Remote MCP Tool Bridge | `mcp_ai_agents/openai_remote_mcp_bridge` | `day105-openai-remote-mcp-bridge` | 270 |
-| 106 | 🌍 AI Travel Planner MCP Agent | `mcp_ai_agents/ai_travel_planner_mcp_agent_team` | `day106-ai-travel-planner-mcp-agent-team` | 321 |
-| 107 | 🔀 Multi-MCP Agent Router | `mcp_ai_agents/multi_mcp_agent_router` | `day107-multi-mcp-agent-router` | 372 |
-
-### 볼륨 9. 🎮 Autonomous Game-Playing (Day 108–110, 3일)
-
-| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
-|---|---|---|---|---|
-| 108 | ♜ AI Chess Agent | `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent` | `day108-ai-chess-agent` | 249 |
-| 109 | 🎮 AI 3D Pygame Agent | `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_3dpygame_r1` | `day109-ai-3dpygame-r1` | 273 |
-| 110 | 🎲 AI Tic-Tac-Toe Agent | `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent` | `day110-ai-tic-tac-toe-agent` | 893 |
-
-### 볼륨 10. 🗣️ Voice AI Agents (Day 111–114, 4일)
+### 볼륨 6. 💾 LLM Apps with Memory (Day 71–77, 7일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 111 | 📞 Customer Support Voice Agent | `voice_ai_agents/customer_support_voice_agent` | `day111-customer-support-voice-agent` | 393 |
-| 112 | 🔊 Voice RAG Agent (OpenAI SDK) | `voice_ai_agents/voice_rag_openaisdk` | `day112-voice-rag-openaisdk` | 401 |
-| 113 | 🗣️ AI Audio Tour Agent | `voice_ai_agents/ai_audio_tour_agent` | `day113-ai-audio-tour-agent` | 697 |
-| 114 | 🛡️ Insurance Claim Live Agent Team | `voice_ai_agents/insurance_claim_live_agent_team` | `day114-insurance-claim-live-agent-team` | 2663 |
+| 071 | 💬 Llama3 Stateful Chat | `advanced_llm_apps/llm_apps_with_memory_tutorials/llama3_stateful_chat` | `day071-llama3-stateful-chat` | 37 |
+| 072 | 💾 AI ArXiv Agent with Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory` | `day072-ai-arxiv-agent-memory` | 65 |
+| 073 | 📝 LLM App with Personalized Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory` | `day073-llm-app-personalized-memory` | 75 |
+| 074 | 🧠 Multi-LLM Application with Shared Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory` | `day074-multi-llm-memory` | 94 |
+| 075 | 🛩️ AI Travel Agent with Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/ai_travel_agent_memory` | `day075-ai-travel-agent-memory` | 101 |
+| 076 | 🗄️ Local ChatGPT Clone with Memory | `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory` | `day076-local-chatgpt-with-memory` | 137 |
+| 077 | 🎯 AI Career Coach with Memory (ADK Multi-Agent) | `advanced_llm_apps/llm_apps_with_memory_tutorials/adk_career_coach_agent_memory` | `day077-adk-career-coach-agent-memory` | 312 |
 
-### 볼륨 11. 🖼️ Generative UI (Day 115–121, 7일)
-
-| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
-|---|---|---|---|---|
-| 115 | 🔍 AI Deep Research Agent | `generative_ui_agents/ai-deep-research-agent` | `day115-genui-deep-research-agent` | 1617 |
-| 116 | 🪙 AI Financial Coach Agent | `generative_ui_agents/ai-financial-coach-agent` | `day116-genui-financial-coach-agent` | 1857 |
-| 117 | 🗂️ Generative UI Starter Project | `generative_ui_agents/generative-ui-starter-project` | `day117-genui-generative-ui-starter-project` | 2935 |
-| 118 | 📊 AI Dashboard Canvas Agent | `generative_ui_agents/ai-dashboard-canvas-agent` | `day118-genui-dashboard-canvas-agent` | 3171 |
-| 119 | ✈️ MCP Apps Generative UI Showcase | `generative_ui_agents/mcp-apps-generative-ui-showcase` | `day119-genui-mcp-apps-generative-ui-showcase` | 4364 |
-| 120 | 🛠️ AI MCP App Builder | `generative_ui_agents/ai-mcp-app-builder` | `day120-genui-mcp-app-builder` | 7176 |
-| 121 | 🎛️ AI Shadcn Component Generator | `generative_ui_agents/ai-shadcn-component-generator` | `day121-genui-shadcn-component-generator` | 7682 |
-
-### 볼륨 12. 🛰️ Always-on Agents (Day 122–123, 2일)
+### 볼륨 7. 🚀 Advanced AI Agents (Day 78–111, 34일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 122 | 📰 Always-on Hacker News Briefing Agent | `always_on_agents/always_on_hn_briefing_agent` | `day122-always-on-hn-briefing-agent` | 890 |
-| 123 | 📡 Release Radar Agent | `always_on_agents/release_radar_agent` | `day123-release-radar-agent` | 1292 |
+| 078 | 📈 AI Investment Agent | `advanced_ai_agents/single_agent_apps/ai_investment_agent` | `day078-ai-investment-agent` | 27 |
+| 079 | 🎬 AI Movie Production Agent | `advanced_ai_agents/single_agent_apps/ai_movie_production_agent` | `day079-ai-movie-production-agent` | 85 |
+| 080 | 🧬 AI Self-Evolving Agent | `advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent` | `day080-ai-self-evolving-agent` | 86 |
+| 081 | 🗞️ AI Journalist Agent | `advanced_ai_agents/single_agent_apps/ai_journalist_agent` | `day081-ai-journalist-agent` | 92 |
+| 082 | 🔬 AI Research Planner & Executor (Google Interactions API) | `advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api` | `day082-research-agent-gemini-interaction-api` | 103 |
+| 083 | 🔍 AI Deep Research Agent | `advanced_ai_agents/single_agent_apps/ai_deep_research_agent` | `day083-ai-deep-research-agent` | 185 |
+| 084 | 📑 AI Meeting Agent | `advanced_ai_agents/single_agent_apps/ai_meeting_agent` | `day084-ai-meeting-agent` | 186 |
+| 085 | 🧠 AI Mental Wellbeing Agent | `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent` | `day085-ai-mental-wellbeing-agent` | 226 |
+| 086 | 🏋️‍♂️ AI Health & Fitness Agent | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent` | `day086-ai-health-fitness-agent` | 245 |
+| 087 | 🏗️ AI System Architect Agent | `advanced_ai_agents/single_agent_apps/ai_system_architect_r1` | `day087-ai-system-architect-r1` | 318 |
+| 088 | 🤝 AI Consultant Agent | `advanced_ai_agents/single_agent_apps/ai_consultant_agent` | `day088-ai-consultant-agent` | 320 |
+| 089 | 🚀 AI Product Launch Intelligence Agent | `advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent` | `day089-product-launch-intelligence-agent` | 483 |
+| 090 | 🛡️ Trust-Gated Multi-Agent Research Team | `advanced_ai_agents/multi_agent_apps/trust_gated_agent_team` | `day090-trust-gated-agent-team` | 651 |
+| 091 | 👨🏻‍💼 AI Sales Intelligence Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team` | `day091-ai-sales-intelligence-agent-team` | 656 |
+| 092 | 📊 AI VC Due Diligence Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team` | `day092-ai-vc-due-diligence-agent-team` | 671 |
+| 093 | 🔍 AI Fraud Investigation Agent | `advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent` | `day093-ai-fraud-investigation-agent` | 935 |
+| 094 | 💰 AI Financial Coach Agent | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent` | `day094-ai-financial-coach-agent` | 968 |
+| 095 | 🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro | `advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent` | `day095-ai-home-renovation-agent` | 1076 |
+| 096 | 🧠 DevPulse AI - Multi-Agent Signal Intelligence | `advanced_ai_agents/multi_agent_apps/devpulse_ai` | `day096-devpulse-ai` | 1519 |
+| 097 | 📡 Earnings Call Analyst Agent | `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent` | `day097-earnings-call-analyst-agent` | 2277 |
+| 098 | 🎧 AI Social Media News and Podcast Agent | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents` | `day098-ai-news-and-podcast-agents` | 32492 |
+| 099 | 🛡️ AI Agent Governance - Policy-Based Sandboxing | `advanced_ai_agents/single_agent_apps/ai_agent_governance` | `day099-ai-agent-governance` | 613 |
+| 100 | 🛒 AI Customer Support Agent with Memory | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent` | `day100-ai-customer-support-agent` | 206 |
+| 101 | 🚀 AI Email GTM Reachout Agent | `advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent` | `day101-ai-email-gtm-reachout-agent` | 1097 |
+| 102 | 💰 AI Personal Finance Planner | `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent` | `day102-ai-personal-finance-agent` | 68 |
+| 103 | 🍽️ AI Recipe & Meal Planning Agent | `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent` | `day103-ai-recipe-meal-planning-agent` | 376 |
+| 104 | 🔥 AI Startup Insight with Firecrawl FIRE-1 Agent | `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent` | `day104-ai-startup-insight-fire1-agent` | 267 |
+| 105 | 🌍 AQI Analysis Agent | `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent` | `day105-ai-aqi-analysis-agent` | 539 |
+| 106 | ⚡ Codebase Migration & Refactor Planner (LangGraph) | `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent` | `day106-ai-codebase-migration-agent` | 1007 |
+| 107 | 🔍 AI Domain Deep Research Agent | `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent` | `day107-ai-domain-deep-research-agent` | 273 |
+| 108 | Requirements | `advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent` | `day108-ai-email-gtm-outreach-agent` | 360 |
+| 109 | AI Speech Trainer Agent | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent` | `day109-ai-speech-trainer-agent` | 908 |
+| 110 | 📰 Multi-Agent AI Researcher | `advanced_ai_agents/multi_agent_apps/multi_agent_researcher` | `day110-multi-agent-researcher` | 125 |
+| 111 | 🤝 Multi-Agent Trust Layer - Secure Agent-to-Agent Communication | `advanced_ai_agents/multi_agent_apps/multi_agent_trust_layer` | `day111-multi-agent-trust-layer` | 793 |
 
-### 볼륨 13. 🎯 LLM Optimization (Day 124–125, 2일)
+### 볼륨 8. 🤝 Multi-agent Teams (Day 112–126, 15일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 124 | 🧠 Headroom Context Optimization | `advanced_llm_apps/llm_optimization_tools/headroom_context_optimization` | `day124-headroom-context-optimization` | 204 |
-| 125 | 🎯 Toonify Token Optimization | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization` | `day125-toonify-token-optimization` | 700 |
+| 112 | 💲 AI Finance Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team` | `day112-ai-finance-agent-team` | 45 |
+| 113 | 👨‍🏫 AI Teaching Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team` | `day113-ai-teaching-agent-team` | 207 |
+| 114 | ✨ Multimodal Design Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team` | `day114-multimodal-design-agent-team` | 264 |
+| 115 | 💻 Multimodal Coding Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team` | `day115-multimodal-coding-agent-team` | 282 |
+| 116 | 🎨 AI Game Design Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team` | `day116-ai-game-design-agent-team` | 290 |
+| 117 | 🧲 AI Competitor Intelligence Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team` | `day117-ai-competitor-intelligence-agent-team` | 343 |
+| 118 | 👨‍💼 AI Services Agency (CrewAI) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency` | `day118-ai-services-agency` | 369 |
+| 119 | 🧭 AG2 Adaptive Research Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team` | `day119-ag2-adaptive-research-team` | 402 |
+| 120 | 💼 AI Recruitment Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team` | `day120-ai-recruitment-agent-team` | 522 |
+| 121 | 👨‍⚖️ AI Legal Agent Team (Cloud & Local) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team` | `day121-ai-legal-agent-team` | 664 |
+| 122 | 🎨 🍌 Multimodal UI/UX Feedback Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_uiux_feedback_agent_team` | `day122-multimodal-uiux-feedback-agent-team` | 834 |
+| 123 | 🏠 AI Real Estate Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team` | `day123-ai-real-estate-agent-team` | 1665 |
+| 124 | 🌏 AI Travel Planner Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team` | `day124-ai-travel-planner-agent-team` | 8081 |
+| 125 | 🔍 AI SEO Audit Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_seo_audit_team` | `day125-ai-seo-audit-team` | 357 |
+| 126 | ⚖️ LLM Panel Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/llm_panel_agent_team` | `day126-llm-panel-agent-team` | 267 |
 
-### 볼륨 14. 🔧 LLM Fine-tuning (Day 126–127, 2일)
+### 볼륨 9. ♾️ MCP AI Agents (Day 127–133, 7일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 126 | 🦙 Llama 3.2 Fine-tuning | `advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning` | `day126-llama3.2-finetuning` | 63 |
-| 127 | 🦥 Gemma 3 Fine-tuning | `advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning` | `day127-gemma3-finetuning` | 91 |
+| 127 | 📑 Notion MCP Agent | `mcp_ai_agents/notion_mcp_agent` | `day127-notion-mcp-agent` | 124 |
+| 128 | 🐙 GitHub MCP Agent | `mcp_ai_agents/github_mcp_agent` | `day128-github-mcp-agent` | 150 |
+| 129 | ♾️ Browser MCP Agent | `mcp_ai_agents/browser_mcp_agent` | `day129-browser-mcp-agent` | 180 |
+| 130 | 🔌 OpenAI Remote MCP Tool Bridge | `mcp_ai_agents/openai_remote_mcp_bridge` | `day130-openai-remote-mcp-bridge` | 269 |
+| 131 | 🌍 AI Travel Planner MCP Agent | `mcp_ai_agents/ai_travel_planner_mcp_agent_team` | `day131-ai-travel-planner-mcp-agent-team` | 320 |
+| 132 | 🔀 Multi-MCP Agent Router | `mcp_ai_agents/multi_mcp_agent_router` | `day132-multi-mcp-agent-router` | 371 |
+| 133 | 🚀 Multi-MCP Intelligent Assistant | `mcp_ai_agents/multi_mcp_agent` | `day133-multi-mcp-agent` | 158 |
 
-### 볼륨 15. 🧩 Agent Skills (Day 128–133, 6일)
+### 볼륨 10. 🎮 Autonomous Game-Playing (Day 134–136, 3일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 128 | 🧠 Advisor Orchestrator Worker | `agent_skills/advisor-orchestrator-worker` | `day128-advisor-orchestrator-worker` | 0 |
-| 129 | 🏺 Commit Archaeologist | `agent_skills/commit-archaeologist` | `day129-commit-archaeologist` | 389 |
-| 130 | 🩺 Dependency Doctor | `agent_skills/dependency-doctor` | `day130-dependency-doctor` | 486 |
-| 131 | 🔭 Scope Creep Detector | `agent_skills/scope-creep-detector` | `day131-scope-creep-detector` | 529 |
-| 132 | ⚰️ Project Graveyard | `agent_skills/project-graveyard` | `day132-project-graveyard` | 556 |
-| 133 | ♾️ Self-Improving Agent Skills | `agent_skills/self-improving-agent-skills` | `day133-self-improving-agent-skills` | 2421 |
+| 134 | ♜ AI Chess Agent | `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent` | `day134-ai-chess-agent` | 249 |
+| 135 | 🎮 AI 3D Pygame Agent | `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_3dpygame_r1` | `day135-ai-3dpygame-r1` | 272 |
+| 136 | 🎲 AI Tic-Tac-Toe Agent | `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent` | `day136-ai-tic-tac-toe-agent` | 890 |
+
+### 볼륨 11. 🗣️ Voice AI Agents (Day 137–140, 4일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 137 | 📞 Customer Support Voice Agent | `voice_ai_agents/customer_support_voice_agent` | `day137-customer-support-voice-agent` | 393 |
+| 138 | 🔊 Voice RAG Agent (OpenAI SDK) | `voice_ai_agents/voice_rag_openaisdk` | `day138-voice-rag-openaisdk` | 401 |
+| 139 | 🗣️ AI Audio Tour Agent | `voice_ai_agents/ai_audio_tour_agent` | `day139-ai-audio-tour-agent` | 695 |
+| 140 | 🛡️ Insurance Claim Live Agent Team | `voice_ai_agents/insurance_claim_live_agent_team` | `day140-insurance-claim-live-agent-team` | 4033 |
+
+### 볼륨 12. 🖼️ Generative UI (Day 141–147, 7일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 141 | 🔍 AI Deep Research Agent | `generative_ui_agents/ai-deep-research-agent` | `day141-genui-deep-research-agent` | 1606 |
+| 142 | 🪙 AI Financial Coach Agent | `generative_ui_agents/ai-financial-coach-agent` | `day142-genui-financial-coach-agent` | 1846 |
+| 143 | 🗂️ Generative UI Starter Project | `generative_ui_agents/generative-ui-starter-project` | `day143-genui-generative-ui-starter-project` | 2896 |
+| 144 | 📊 AI Dashboard Canvas Agent | `generative_ui_agents/ai-dashboard-canvas-agent` | `day144-genui-dashboard-canvas-agent` | 3124 |
+| 145 | ✈️ MCP Apps Generative UI Showcase | `generative_ui_agents/mcp-apps-generative-ui-showcase` | `day145-genui-mcp-apps-generative-ui-showcase` | 4352 |
+| 146 | 🛠️ AI MCP App Builder | `generative_ui_agents/ai-mcp-app-builder` | `day146-genui-mcp-app-builder` | 7122 |
+| 147 | 🎛️ AI Shadcn Component Generator | `generative_ui_agents/ai-shadcn-component-generator` | `day147-genui-shadcn-component-generator` | 7598 |
+
+### 볼륨 13. 🛰️ Always-on Agents (Day 148–149, 2일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 148 | 📰 Always-on Hacker News Briefing Agent | `always_on_agents/always_on_hn_briefing_agent` | `day148-always-on-hn-briefing-agent` | 883 |
+| 149 | 📡 Release Radar Agent | `always_on_agents/release_radar_agent` | `day149-release-radar-agent` | 1283 |
+
+### 볼륨 14. 🎯 LLM Optimization (Day 150–151, 2일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 150 | 🧠 Headroom Context Optimization | `advanced_llm_apps/llm_optimization_tools/headroom_context_optimization` | `day150-headroom-context-optimization` | 203 |
+| 151 | 🎯 Toonify Token Optimization | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization` | `day151-toonify-token-optimization` | 697 |
+
+### 볼륨 15. 🔧 LLM Fine-tuning (Day 152–153, 2일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 152 | 🦙 Llama 3.2 Fine-tuning | `advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning` | `day152-llama3.2-finetuning` | 63 |
+| 153 | 🦥 Gemma 3 Fine-tuning | `advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning` | `day153-gemma3-finetuning` | 90 |
+
+### 볼륨 16. 🧩 Agent Skills (Day 154–159, 6일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 154 | 🧠 Advisor Orchestrator Worker | `agent_skills/advisor-orchestrator-worker` | `day154-advisor-orchestrator-worker` | 0 |
+| 155 | 🏺 Commit Archaeologist | `agent_skills/commit-archaeologist` | `day155-commit-archaeologist` | 388 |
+| 156 | 🩺 Dependency Doctor | `agent_skills/dependency-doctor` | `day156-dependency-doctor` | 485 |
+| 157 | 🔭 Scope Creep Detector | `agent_skills/scope-creep-detector` | `day157-scope-creep-detector` | 528 |
+| 158 | ⚰️ Project Graveyard | `agent_skills/project-graveyard` | `day158-project-graveyard` | 555 |
+| 159 | ♾️ Self-Improving Agent Skills | `agent_skills/self-improving-agent-skills` | `day159-self-improving-agent-skills` | 2421 |
+
+### 볼륨 17. 🔎 AI 브라우저 도구 (Day 160–160, 1일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 160 | 🪡 Needle - A New Way to Find | `advanced_llm_apps/needle` | `day160-needle` | 1545 |
+
+### 볼륨 18. 🧪 기타 LLM 앱 (Day 161–164, 4일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 161 | 🔄 GPT-OSS Advanced Critique & Improvement Loop | `advanced_llm_apps/gpt_oss_critique_improvement_loop` | `day161-gpt-oss-critique-improvement-loop` | 228 |
+| 162 | 📄 Resume & Job Matcher | `advanced_llm_apps/resume_job_matcher` | `day162-resume-job-matcher` | 93 |
+| 163 | ThinkPath Chatbot  🧠 | `advanced_llm_apps/thinkpath_chatbot_app` | `day163-thinkpath-chatbot-app` | 348 |
+| 164 | Cursor Ai Experiments | `advanced_llm_apps/cursor_ai_experiments` | `day164-cursor-ai-experiments` | 323 |

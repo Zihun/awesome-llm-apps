@@ -25,7 +25,7 @@ export function renderRoadmap(days, root, template) {
     const dayCell = exists ? `[Day ${pad3(d.day)}](${folder}/README.md)` : `Day ${pad3(d.day)}`;
     out += `| ${isDayDone(d, root) ? "✅" : "⬜"} | ${dayCell} | ${d.title} | [${d.path}](../../${d.path}/) |\n`;
   }
-  return template.replace("<!-- DAYS -->", out);
+  return template.replaceAll("<!-- TOTAL -->", String(days.length)).replace("<!-- DAYS -->", out);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

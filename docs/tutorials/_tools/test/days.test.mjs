@@ -6,11 +6,10 @@ import { join } from "node:path";
 import { loadDays, folderName, pad3, REPO_ROOT } from "../lib/days.mjs";
 import { readmeSkeleton, scaffoldDay } from "../scaffold.mjs";
 
-test("days.json has 133 consecutive days with unique folders and existing app paths", () => {
+test("days.json is consecutive with unique folders and existing app paths", () => {
   const days = loadDays();
-  assert.equal(days.length, 133);
   days.forEach((d, i) => assert.equal(d.day, i + 1));
-  assert.equal(new Set(days.map(folderName)).size, 133);
+  assert.equal(new Set(days.map(folderName)).size, days.length);
   for (const d of days) assert.ok(existsSync(join(REPO_ROOT, d.path)), `missing app dir: ${d.path}`);
   assert.equal(folderName(days[0]), "day001-xai-finance-agent");
   assert.equal(pad3(7), "007");
