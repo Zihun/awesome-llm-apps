@@ -445,8 +445,8 @@ markdown call count: 7
 
 ## 더 해보기
 
-- `initialize_agents`(16-81행)에 `@st.cache_resource`를 붙여, 버튼을 여러 번 눌러도 공유 모델과 4개 에이전트를 매번 새로 만들지 않도록 고쳐보기(Day 9의 `initialize_agent`와 비교)
-- 4개의 `.run()` 호출(196·217·238·259행)을 Day 5처럼 비동기로 바꿔 동시에 실행되게 만들어보고, 전체 대기 시간이 얼마나 줄어드는지 비교해보기
+- `initialize_agents`(`starter_ai_agents/ai_breakup_recovery_agent/ai_breakup_recovery_agent.py:16-81`)에 `@st.cache_resource`를 붙여, 버튼을 여러 번 눌러도 공유 모델과 4개 에이전트를 매번 새로 만들지 않도록 고쳐보기(Day 9의 `initialize_agent`와 비교)
+- 4개의 `.run()` 호출(`starter_ai_agents/ai_breakup_recovery_agent/ai_breakup_recovery_agent.py:196-259`)을 Day 5처럼 비동기로 바꿔 동시에 실행되게 만들어보고, 전체 대기 시간이 얼마나 줄어드는지 비교해보기
 - 네 응답을 다 받은 뒤 Day 5의 집계자처럼 다섯 번째 Gemini 호출로 "네 관점을 한 문단으로 종합해줘"를 요청하는 단계를 추가해보기
 
 ## 다음 날 예고

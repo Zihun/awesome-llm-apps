@@ -1003,6 +1003,20 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
     }
   }
 
+  // (12) 더 해보기의 줄 번호 인용은 백틱 안에 경로까지 들어가야 한다. 서술문 속
+  //      "29행의 …"는 정상이므로 이 절에서만 본다.
+  const howToLines = md.split(/\r?\n/);
+  const moreStart = howToLines.findIndex((l) => l.startsWith("## 더 해보기"));
+  if (moreStart >= 0) {
+    let moreEnd = howToLines.findIndex((l, i) => i > moreStart && l.startsWith("## "));
+    if (moreEnd < 0) moreEnd = howToLines.length;
+    for (let i = moreStart + 1; i < moreEnd; i++) {
+      const bare = howToLines[i].replace(/`[^`]*`/g, "");
+      const hit = bare.match(/\d+(?:[-·]\d+)*행/);
+      if (hit) problems.push(rel(`더 해보기의 줄 번호 인용에 백틱과 경로가 없음: README.md:${i + 1} (${hit[0]})`));
+    }
+  }
+
   // (5) no mermaid
   if (/```mermaid/.test(md)) problems.push(rel("mermaid 코드 펜스 사용"));
 

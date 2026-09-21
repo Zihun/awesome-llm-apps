@@ -141,3 +141,35 @@ test("a code excerpt that does not match its cited range is reported", () => {
   const f2 = fixture({ readme: bad });
   assert.ok(checkDay(f2.dayDir, { repoRoot: f2.repo }).some((p) => p.includes("코드 발췌가 인용한 줄 범위와 다름")), "a trimmed excerpt is reported");
 });
+
+test("더 해보기 section bare line citations are detected", () => {
+  // Case 1: A 더 해보기 bullet with bare (16-81행) IS reported
+  const case1 = fixture({
+    readme: GOOD_README().replace("## 더 해보기", "## 더 해보기\n\n- `initialize_agents`(16-81행)에 수정을 붙이기"),
+  });
+  const problems1 = checkDay(case1.dayDir, { repoRoot: case1.repo });
+  assert.ok(
+    problems1.some((p) => p.includes("더 해보기의 줄 번호 인용에 백틱과 경로가 없음") && p.includes("16-81행")),
+    `Case 1 (bare in 더 해보기) should report: ${problems1.join("\n")}`
+  );
+
+  // Case 2: The same bullet with full backticked citation is NOT reported
+  const case2 = fixture({
+    readme: GOOD_README().replace("## 더 해보기", "## 더 해보기\n\n- `initialize_agents`(`app/main.py:16-81`)에 수정을 붙이기"),
+  });
+  const problems2 = checkDay(case2.dayDir, { repoRoot: case2.repo });
+  assert.ok(
+    !problems2.some((p) => p.includes("더 해보기의 줄 번호 인용에 백틱과 경로가 없음")),
+    `Case 2 (full citation) should not report: ${problems2.join("\n")}`
+  );
+
+  // Case 3: A bare line number in ordinary prose (outside 더 해보기) is NOT reported
+  const case3 = fixture({
+    readme: GOOD_README("29행의 코드를 보면 주목할 점이 있습니다.\n\n## 더 해보기\n\n- 수정하기"),
+  });
+  const problems3 = checkDay(case3.dayDir, { repoRoot: case3.repo });
+  assert.ok(
+    !problems3.some((p) => p.includes("더 해보기의 줄 번호 인용에 백틱과 경로가 없음")),
+    `Case 3 (bare in prose, not in 더 해보기) should not report: ${problems3.join("\n")}`
+  );
+});
