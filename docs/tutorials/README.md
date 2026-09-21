@@ -53,7 +53,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 20 / 164일 완료
+진도: 21 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -84,7 +84,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 018](day018-adk-5-memory-agent/README.md) | Google ADK Crash Course · 5_memory_agent | [ai_agent_framework_crash_course/google_adk_crash_course/5_memory_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/5_memory_agent/) |
 | ✅ | [Day 019](day019-adk-6-callbacks/README.md) | Google ADK Crash Course · 6_callbacks | [ai_agent_framework_crash_course/google_adk_crash_course/6_callbacks](../../ai_agent_framework_crash_course/google_adk_crash_course/6_callbacks/) |
 | ✅ | [Day 020](day020-adk-7-plugins/README.md) | Google ADK Crash Course · 7_plugins | [ai_agent_framework_crash_course/google_adk_crash_course/7_plugins](../../ai_agent_framework_crash_course/google_adk_crash_course/7_plugins/) |
-| ⬜ | [Day 021](day021-adk-8-simple-multi-agent/README.md) | Google ADK Crash Course · 8_simple_multi_agent | [ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent/) |
+| ✅ | [Day 021](day021-adk-8-simple-multi-agent/README.md) | Google ADK Crash Course · 8_simple_multi_agent | [ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent/) |
 | ⬜ | Day 022 | Google ADK Crash Course · 9_multi_agent_patterns | [ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns](../../ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns/) |
 | ⬜ | Day 023 | Google ADK Crash Course · adk_yaml_examples | [ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples](../../ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/) |
 | ⬜ | Day 024 | OpenAI Agents SDK Crash Course · 1_starter_agent | [ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent](../../ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent/) |

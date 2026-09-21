@@ -715,4 +715,4 @@ exit=1
 
 ## 다음 날 예고
 
-Day 021 · Google ADK Crash Course · 8_simple_multi_agent — 코디네이터 에이전트가 리서치·요약·비평 세 개의 하위 에이전트에 순서대로 위임하는 가장 단순한 멀티 에이전트 구성을 다룹니다.
+[Day 021 · Google ADK Crash Course · 8_simple_multi_agent](../day021-adk-8-simple-multi-agent/README.md) — 코디네이터 에이전트가 리서치·요약·비평 세 개의 하위 에이전트에 순서대로 위임하는 가장 단순한 멀티 에이전트 구성을 다룹니다.
