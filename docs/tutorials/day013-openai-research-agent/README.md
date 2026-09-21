@@ -306,4 +306,4 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 
 ## 다음 날 예고
 
-Day 014 · Google ADK Crash Course · 1_starter_agent — 볼륨 2로 넘어가 구글의 Agent Development Kit을 처음부터 훑습니다.
+[Day 014 · Google ADK Crash Course · 1_starter_agent](../day014-adk-1-starter-agent/README.md) — 볼륨 2로 넘어가 구글의 Agent Development Kit을 처음부터 훑습니다.

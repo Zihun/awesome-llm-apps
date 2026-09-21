@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adk_web: adk web 서버 { class: ext }
+agent: root_agent (LlmAgent) { class: ours }
+gemini: Gemini API { class: ext }
+
+user -> adk_web: POST /run (세션ID, 메시지)
+adk_web -> agent: 임포트해 둔 root_agent 조회 (인프로세스 호출)
+agent -> adk_web: model·instruction 반환
+adk_web -> gemini: 대화 이력과 instruction으로 추론 요청
+gemini -> adk_web: 생성된 응답
+adk_web -> user: 응답 표시
