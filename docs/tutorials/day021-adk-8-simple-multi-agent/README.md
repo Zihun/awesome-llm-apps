@@ -503,4 +503,4 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 ## 다음 날 예고
 
-Day 022 · Google ADK Crash Course · 9_multi_agent_patterns — `SequentialAgent`·`LoopAgent`·`ParallelAgent`처럼 전환에 기대지 않고 실행 순서 자체를 구조로 강제하는 워크플로 에이전트를 다룹니다.
+[Day 022 · Google ADK Crash Course · 9_multi_agent_patterns](../day022-adk-9-multi-agent-patterns/README.md) — `SequentialAgent`·`LoopAgent`·`ParallelAgent`처럼 전환에 기대지 않고 실행 순서 자체를 구조로 강제하는 워크플로 에이전트를 다룹니다.
