@@ -236,4 +236,12 @@ test("a bare uv run line is reported; the same line with --no-project is not; a 
     !problems4.some((p) => p.includes("uv run에 --no-project가 없어 루트 환경이 쓰입니다")),
     `Case 4 (mid-sentence mention outside fence) should not report: ${problems4.join("\n")}`
   );
+
+  // Case 5: An env-var-prefixed `uv run ...` command (no --no-project) inside bash fence IS reported
+  const case5 = fixture({ readme: GOOD_README("```bash\nOPENAI_API_KEY=sk-not-a-real-key uv run python -c \"print(1)\"\n```\n") });
+  const problems5 = checkDay(case5.dayDir, { repoRoot: case5.repo });
+  assert.ok(
+    problems5.some((p) => p.includes("uv run에 --no-project가 없어 루트 환경이 쓰입니다")),
+    `Case 5 (env-var-prefixed uv run in bash fence) should report: ${problems5.join("\n")}`
+  );
 });

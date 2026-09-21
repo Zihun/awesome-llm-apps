@@ -523,10 +523,15 @@ with open(sample_file_path, "w") as f:
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** ADK나 Gemini를 거치지 않고, `MCPToolset.get_tools()`만 직접 호출해 별도 프로세스가 진짜로 뜨는지 확인합니다.
+**확인.** ADK나 Gemini를 거치지 않고, `MCPToolset.get_tools()`만 직접 호출해 별도 프로세스가 진짜로 뜨는지 확인합니다. `agent.py`·`__init__.py`를 위에서 설명한 대로 리포 밖 임시 폴더에 복사합니다 — 이 사본에는 `.venv`가 없으므로, 복사 전에 이 레슨의 인터프리터 경로를 변수에 저장해 두고 `--python`으로 직접 넘깁니다.
 
 ```bash
-uv run --no-project python -c "
+LESSON_PY="$(pwd)/.venv/Scripts/python.exe"
+mkdir -p "$TEMP/day017-mcp-experiment/filesystem_agent"
+cp 4_4_mcp_tools/filesystem_agent/agent.py "$TEMP/day017-mcp-experiment/filesystem_agent/"
+cp 4_4_mcp_tools/filesystem_agent/__init__.py "$TEMP/day017-mcp-experiment/filesystem_agent/"
+cd "$TEMP/day017-mcp-experiment"
+uv run --no-project --python "$LESSON_PY" python -c "
 import asyncio
 from filesystem_agent.agent import root_agent
 
@@ -541,7 +546,7 @@ asyncio.run(main())
 "
 ```
 
-(리포 밖으로 복사한 사본 폴더에서, 그 폴더를 작업 디렉터리로 실행합니다.)
+(리포 밖으로 복사한 사본 폴더에서, 그 폴더를 작업 디렉터리로 실행합니다. 가상환경 자체는 복사하지 않고 `--python`으로 이 레슨의 인터프리터만 가리킵니다 — Windows 콘솔 스크립트는 절대경로를 담고 있어 가상환경을 옮기면 깨지기 쉽습니다. Windows PowerShell에서는 `$LESSON_PY = "$PWD\.venv\Scripts\python.exe"`처럼 할당하고, `$TEMP` 대신 `$env:TEMP`를 씁니다.)
 
 ```
 Secure MCP Filesystem Server running on stdio
@@ -568,17 +573,18 @@ TOOL: write_file
 
 **목적.** 네 가지 도구 갈래가 정말로 `adk web` 하나에 동시에 얹히는지 확인하고, MCP 에이전트의 `/run`이 실패할 때 그 순서가 어떻게 되는지 — Gemini 키 확인이 먼저인지, MCP 서버 연결이 먼저인지 — 를 직접 실행으로 가려냅니다. Firecrawl 에이전트는 유료 API 앞에 있어 이 마지막 실행에서 제외한 이유도 설명합니다.
 
-**할 일.** 리포를 건드리지 않도록, `4_tool_using_agent` 전체를 리포 밖 임시 폴더로 복사한 뒤 그 사본에서 띄웁니다(Step 5와 같은 이유 — `filesystem_agent`가 그 안에 있습니다).
+**할 일.** 리포를 건드리지 않도록, `4_tool_using_agent` 전체를 리포 밖 임시 폴더로 복사한 뒤 그 사본에서 띄웁니다(Step 5와 같은 이유 — `filesystem_agent`가 그 안에 있습니다). 이 사본에도 `.venv`가 없으므로, 복사 전에 저장해 둔 이 레슨의 인터프리터 경로를 다시 `--python`으로 넘깁니다(가상환경 자체는 복사하지 않습니다).
 
 ```bash
+LESSON_PY="$(pwd)/.venv/Scripts/python.exe"
 mkdir -p "$TEMP/day017-adk-web-test"
 cp -r 4_1_builtin_tools 4_2_function_tools 4_3_thirdparty_tools 4_4_mcp_tools "$TEMP/day017-adk-web-test/"
 cd "$TEMP/day017-adk-web-test"
-uv run --no-project adk telemetry disable
-uv run --no-project adk web --port 8993 --no_use_local_storage .
+uv run --no-project --python "$LESSON_PY" adk telemetry disable
+uv run --no-project --python "$LESSON_PY" adk web --port 8993 --no_use_local_storage .
 ```
 
-(Windows PowerShell은 `$TEMP` 대신 `$env:TEMP`를 씁니다. `adk telemetry disable`과 최초 실행 시 동의 프롬프트는 Day 14에서 이미 확인했습니다.)
+(Windows PowerShell은 `$TEMP` 대신 `$env:TEMP`를 쓰고, 변수 할당은 `$LESSON_PY = "$PWD\.venv\Scripts\python.exe"`처럼 `$`와 공백이 필요합니다. `adk telemetry disable`과 최초 실행 시 동의 프롬프트는 Day 14에서 이미 확인했습니다.)
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -592,11 +598,11 @@ curl.exe -s http://127.0.0.1:8993/list-apps
 ["4_1_builtin_tools.code_exec_agent","4_1_builtin_tools.search_agent","4_2_function_tools.calculator_agent","4_2_function_tools.utility_agent","4_3_thirdparty_tools.crewai_agent","4_3_thirdparty_tools.langchain_agent","4_4_mcp_tools.filesystem_agent","4_4_mcp_tools.firecrawl_agent"]
 ```
 
-여덟 에이전트, 즉 네 갈래 전부가 하나의 `adk web`에 동시에 잡힙니다. 이 이름들은 전부 숫자로 시작하는 조각(`4_1_builtin_tools` 등)을 포함하므로, Day 15·16에서 이미 확인한 것과 같은 이유로 `/run`은 앱 이름 검사에서 HTTP 404로 막힙니다(재확인은 생략합니다). 이 검사를 우회해 실제로 무엇이 먼저 실패하는지 보려면, `4_4_mcp_tools` 폴더 **안에서** 다시 띄워 폴더 이름 자체를 유효한 식별자(`filesystem_agent`)로 만들면 됩니다.
+여덟 에이전트, 즉 네 갈래 전부가 하나의 `adk web`에 동시에 잡힙니다. 이 이름들은 전부 숫자로 시작하는 조각(`4_1_builtin_tools` 등)을 포함하므로, Day 15·16에서 이미 확인한 것과 같은 이유로 `/run`은 앱 이름 검사에서 HTTP 404로 막힙니다(재확인은 생략합니다). 이 검사를 우회해 실제로 무엇이 먼저 실패하는지 보려면, `4_4_mcp_tools` 폴더 **안에서** 다시 띄워 폴더 이름 자체를 유효한 식별자(`filesystem_agent`)로 만들면 됩니다. `$LESSON_PY`는 위에서 정의한 값을 그대로 재사용합니다.
 
 ```bash
 cd "$TEMP/day017-adk-web-test/4_4_mcp_tools"
-uv run --no-project adk web --port 8994 --no_use_local_storage .
+uv run --no-project --python "$LESSON_PY" adk web --port 8994 --no_use_local_storage .
 ```
 
 ```bash

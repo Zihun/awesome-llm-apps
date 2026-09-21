@@ -366,17 +366,18 @@ HTTP 상태는 404입니다. google-adk 2.9.2 소스를 보면(`google/adk/cli/u
 
 **목적.** Step 6의 벽이 코드 로직이 아니라 정말 "이름" 하나 때문임을 증명하고, 그 벽을 넘으면 남는 진짜 마지막 경계 — `OPENROUTER_API_KEY` — 를 확인합니다.
 
-**할 일.** 리포 파일은 건드리지 않고, 리포 밖 임시 폴더에 `agent.py`·`__init__.py`를 내용 그대로 복사한 뒤 폴더 이름만 유효한 식별자로 바꿉니다(Day 14 Step 3와 같은 방식의 외부 실험).
+**할 일.** 리포 파일은 건드리지 않고, 리포 밖 임시 폴더에 `agent.py`·`__init__.py`를 내용 그대로 복사한 뒤 폴더 이름만 유효한 식별자로 바꿉니다(Day 14 Step 3와 같은 방식의 외부 실험). `$TEMP`는 이 리포와 조상 디렉터리를 공유하지 않아 `uv run --no-project`가 찾을 환경이 전혀 없으므로, 복사 전에 이 레슨의 인터프리터 경로를 변수에 저장해 두고 `--python`으로 직접 넘깁니다(가상환경 자체는 복사하지 않습니다 — Windows 콘솔 스크립트는 절대경로를 담고 있어 옮기면 깨지기 쉽습니다).
 
 ```bash
+LESSON_PY="$(pwd)/.venv/Scripts/python.exe"
 mkdir -p "$TEMP/day015-experiment/openai_adk_agent"
 cp 2_1_openai_adk_agent/agent.py "$TEMP/day015-experiment/openai_adk_agent/"
 cp 2_1_openai_adk_agent/__init__.py "$TEMP/day015-experiment/openai_adk_agent/"
 cd "$TEMP/day015-experiment"
-uv run --no-project adk web --port 8989 --no_use_local_storage .
+uv run --no-project --python "$LESSON_PY" adk web --port 8989 --no_use_local_storage .
 ```
 
-(Linux·macOS에서는 `$TEMP` 대신 `/tmp` 등 원하는 임시 경로를 쓰면 됩니다.)
+(Linux·macOS에서는 `$TEMP` 대신 `/tmp` 등 원하는 임시 경로를 쓰고, `.venv/Scripts/python.exe`는 `.venv/bin/python`이 됩니다. Windows PowerShell에서는 변수 할당이 `$LESSON_PY = "$PWD\.venv\Scripts\python.exe"`처럼 `$`와 공백이 필요하고, `$TEMP` 대신 `$env:TEMP`를 씁니다.)
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 

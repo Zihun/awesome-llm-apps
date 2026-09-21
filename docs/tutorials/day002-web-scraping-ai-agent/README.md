@@ -1,6 +1,6 @@
 # Day 002 · 🕸️ Web Scraping AI Agent
 
-> 볼륨 1 🌱 Starter AI Agents · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 스크래핑 10건에 수백 원 이하 (OpenAI 요금표 기준, 대략치 — 키가 없어 실제 과금은 확인 못함) · 원본 앱: `starter_ai_agents/web_scraping_ai_agent`
+> 볼륨 1 🌱 Starter AI Agents · 난이도 ★☆☆ · 예상 소요 120분(Gemini 변형까지 별도 절로 통째로 다루어 다른 스타터 에이전트 날보다 깁니다) · API 비용 대략 스크래핑 10건에 수백 원 이하 (OpenAI 요금표 기준, 대략치 — 키가 없어 실제 과금은 확인 못함) · 원본 앱: `starter_ai_agents/web_scraping_ai_agent`
 
 ## 오늘 만들 것
 

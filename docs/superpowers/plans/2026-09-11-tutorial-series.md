@@ -1034,7 +1034,7 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
       return;
     }
     if (!["bash", "sh", "powershell"].includes(shellFence)) return;
-    if (/^\s*uv run\s/.test(line) && !line.includes("--no-project")) {
+    if (/(?:^|\s)uv run\s/.test(line) && !line.includes("--no-project")) {
       problems.push(rel(`uv run에 --no-project가 없어 루트 환경이 쓰입니다: README.md:${i + 1}`));
     }
   });

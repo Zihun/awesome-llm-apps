@@ -1,6 +1,6 @@
 # Day 019 · Google ADK Crash Course · 6_callbacks
 
-> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ · 예상 소요 90분 · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/6_callbacks`
+> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ · 예상 소요 110분(세 하위 레슨의 콜백 쌍과 가로채기까지 모두 다루어 다른 크래시 코스 날보다 깁니다) · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/6_callbacks`
 
 ## 오늘 만들 것
 
