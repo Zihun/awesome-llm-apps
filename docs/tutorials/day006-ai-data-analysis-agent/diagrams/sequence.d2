@@ -10,8 +10,7 @@ openai: OpenAI API { class: ext }
 user -> ui: 키 + 파일 업로드
 ui -> prep: 업로드 파일 객체
 prep -> ui: 임시 CSV 경로
-ui -> duckdb: load_local_csv_to_table(...)
-duckdb -> duckdb: CREATE TABLE uploaded_data
+ui -> duckdb: load_local_csv_to_table(...) → CREATE TABLE uploaded_data
 user -> ui: 질문 + Submit Query
 ui -> agent: agent.run(질문)
 agent -> openai: 질문 + 도구 스키마

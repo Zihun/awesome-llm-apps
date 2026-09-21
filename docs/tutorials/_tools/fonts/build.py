@@ -37,10 +37,24 @@ ASCII = "".join(chr(c) for c in range(0x20, 0x7F))
 
 
 def used_characters() -> set[str]:
-    """모든 .d2 소스에 실제로 등장하는 문자. 주석과 문법 기호까지 포함해 넉넉하게 잡는다."""
+    """서브셋에 담을 문자.
+
+    다이어그램이 쓰는 글자만 담으면 글꼴이 글을 제약하게 된다 — 실제로 Day 015에서
+    라벨에 쓰려던 `원`이 서브셋에 없어 작성자가 단어를 바꿨다. 순서가 거꾸로다.
+    그래서 `.d2`뿐 아니라 각 일차 README의 한국어 산문까지 긁는다. 21일치 본문이
+    쓴 음절이 앞으로 붙을 라벨의 어휘를 사실상 덮으며, 늘어나는 용량은 굽는 폰트
+    한 종당 약 90KB뿐이다(출력 SVG는 D2가 다시 추려 담으므로 그대로다).
+    """
     chars = set(ASCII)
-    for path in sorted(TUTORIALS.glob("day*/diagrams/*.d2")) + sorted(HERE.glob("*.d2")):
-        chars |= set(path.read_text(encoding="utf-8"))
+    sources = (
+        sorted(TUTORIALS.glob("day*/diagrams/*.d2"))
+        + sorted(HERE.glob("*.d2"))
+        + sorted(TUTORIALS.glob("day*/README.md"))
+        + [TUTORIALS / "README.md"]
+    )
+    for path in sources:
+        if path.exists():
+            chars |= set(path.read_text(encoding="utf-8"))
     return chars
 
 

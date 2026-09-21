@@ -1,16 +1,17 @@
 ...@../../_tools/theme
 direction: down
+grid-columns: 2
 
 user: 사용자 (브라우저) { class: person }
 
 s1: 5_1_in_memory_conversation_agent/ {
-  direction: down
+  grid-rows: 2
   app: Streamlit UI (app.py) { class: ours }
   agent: LlmAgent + Runner (agent.py) { class: ours }
 }
 
 s2: 5_2_persistent_conversation_agent/ {
-  direction: down
+  grid-rows: 2
   app: Streamlit UI (app.py) { class: ours }
   agent: LlmAgent + Runner (agent.py) { class: ours }
 }

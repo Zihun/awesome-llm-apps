@@ -1,29 +1,43 @@
 ...@../../_tools/theme
 direction: down
+grid-columns: 2
 
-user: 사용자 (브라우저) { class: person }
-agents: 2_model_agnostic_agent/ {
-  direction: down
-  pkg1: 2_1_openai_adk_agent/ {
-    agent: root_agent (agent.py) { class: ours }
-  }
-  pkg2: 2_2_anthropic_adk_agent/ {
-    agent: root_agent (agent.py) { class: ours }
-  }
+front: "요청 진입/응답" {
+  class: ours
+  grid-columns: 2
+
+  user: 사용자 (브라우저) { class: person }
+  adk_web: adk web 서버 { class: ext }
 }
-tool: get_fun_fact 도구 { class: ours }
-env: API 키 (.env, OPENROUTER_API_KEY) { class: file }
-adk_web: adk web 서버 { class: ext }
+
+openai_path: 2_1_openai_adk_agent/ {
+  class: ours
+  agent: root_agent (agent.py) { class: ours }
+}
+
+anthropic_path: 2_2_anthropic_adk_agent/ {
+  class: ours
+  agent: root_agent (agent.py) { class: ours }
+}
+
+shared: "공통 요소" {
+  class: ours
+  grid-columns: 2
+
+  env: API 키 (.env) { class: file }
+  tool: get_fun_fact 도구 { class: ours }
+}
+
 openrouter: 모델 게이트웨이 (OpenRouter API) { class: ext }
 
-user -> adk_web: 채팅 메시지 (POST /run)
-adk_web -> agents.pkg1.agent: 이름 검증 후 동적 임포트
-adk_web -> agents.pkg2.agent: 마찬가지
-env -> agents.pkg1.agent: OPENROUTER_API_KEY
-env -> agents.pkg2.agent: 마찬가지
-agents.pkg1.agent -> tool: tools 파라미터로 연결
-agents.pkg2.agent -> tool: tools 파라미터로 연결
-agents.pkg1.agent -> openrouter: openrouter/openai/gpt-4o 요청
-agents.pkg2.agent -> openrouter: openrouter/anthropic/claude-sonnet-4 요청
-openrouter -> adk_web: 생성된 응답
-adk_web -> user: 응답 표시
+front.user -> front.adk_web: 채팅 메시지 (POST /run)
+front.adk_web -> openai_path.agent: 이름 검증 후 동적 임포트
+front.adk_web -> anthropic_path.agent: 마찬가지
+shared.env -> openai_path.agent: OPENROUTER_API_KEY
+shared.env -> anthropic_path.agent: 마찬가지
+openai_path.agent -> shared.tool: tools 파라미터로 연결
+anthropic_path.agent -> shared.tool: tools 파라미터로 연결
+openai_path.agent -> openrouter: openrouter/openai/gpt-4o 요청
+anthropic_path.agent -> openrouter: openrouter/anthropic/claude-sonnet-4 요청
+openrouter -> front.adk_web: 생성된 응답
+front.adk_web -> front.user: 응답 표시

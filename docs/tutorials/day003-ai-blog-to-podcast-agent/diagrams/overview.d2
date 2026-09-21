@@ -1,12 +1,15 @@
 ...@../../_tools/theme
 direction: down
+grid-columns: 3
+
 user: 사용자 { class: person }
 keys: API 키 3종 (사이드바 입력) { class: file }
 app: blog_to_podcast_agent.py {
-  ui: Streamlit UI (URL 입력) { class: ours }
-  agent: 요약 에이전트 (Agent) { class: ours }
-  fc: 스크래핑 도구 (FirecrawlTools) { class: ours }
-  tts: TTS 클라이언트 (ElevenLabs) { class: ours }
+  grid-columns: 2
+  ui: Streamlit UI { class: ours }
+  agent: 요약 에이전트 { class: ours }
+  fc: 스크래핑 도구 { class: ours }
+  tts: TTS 클라이언트 { class: ours }
 }
 openai: OpenAI API (gpt-4o) { class: ext }
 firecrawl: Firecrawl API { class: ext }

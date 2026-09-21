@@ -1,13 +1,17 @@
 ...@../../_tools/theme
 direction: down
+grid-rows: 2
+
 user: 사용자 { class: person }
 key: Together API 키 (본문 입력) { class: file }
 app: mixture-of-agents.py {
+  grid-columns: 2
   ui: Streamlit UI (질문 입력) { class: ours }
   runllm: 제안자 병렬 호출 (run_llm) { class: ours }
   main: 집계·표시 (main) { class: ours }
 }
 together: Together AI API {
+  grid-columns: 2
   m1: Qwen2-72B-Instruct { class: ext }
   m2: Qwen1.5-72B-Chat { class: ext }
   m3: Mixtral-8x22B-Instruct (제안자 + 집계자) { class: ext }

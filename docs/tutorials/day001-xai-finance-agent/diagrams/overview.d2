@@ -1,15 +1,18 @@
 ...@../../_tools/theme
 direction: down
+grid-columns: 3
+
 user: 사용자 { class: person }
+plane: 컨트롤 플레인 { class: ext }
 key: XAI_API_KEY (환경변수) { class: file }
 app: xai_finance_agent.py {
-  os: AgentOS 서버 (FastAPI, :7777) { class: ours }
-  agent: 금융 에이전트 (Agent) { class: ours }
-  ddg: 웹 검색 도구 (DuckDuckGoTools) { class: ours }
-  yf: 주가 도구 (YFinanceTools) { class: ours }
+  grid-columns: 2
+  os: AgentOS 서버 { class: ours }
+  agent: 금융 에이전트 { class: ours }
+  ddg: 웹 검색 도구 { class: ours }
+  yf: 주가 도구 { class: ours }
 }
-plane: AgentOS 컨트롤 플레인 (os.agno.com) { class: ext }
-grok: xAI Grok (grok-4-1-fast) { class: ext }
+grok: xAI Grok { class: ext }
 ddgapi: DuckDuckGo { class: ext }
 yahoo: Yahoo Finance { class: ext }
 

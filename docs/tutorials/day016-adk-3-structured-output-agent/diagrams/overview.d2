@@ -1,29 +1,42 @@
 ...@../../_tools/theme
 direction: down
+grid-columns: 2
 
-user: 사용자 (브라우저) { class: person }
+front: "요청 진입/응답" {
+  class: ours
+  grid-columns: 2
+
+  user: 사용자 (브라우저) { class: person }
+  adk_web: adk web 서버 { class: ext }
+}
+
 pkg1: customer_support_agent/ {
-  direction: down
+  class: ours
+  grid-columns: 2
+
   agent: root_agent { class: ours }
   schema: SupportTicket 스키마 { class: ours }
 }
+
 pkg2: email_generator_agent/ {
-  direction: down
+  class: ours
+  grid-columns: 2
+
   agent: root_agent { class: ours }
   schema: EmailContent 스키마 { class: ours }
 }
+
 env: API 키 (.env) { class: file }
-adk_web: adk web 서버 { class: ext }
 gemini: Gemini API { class: ext }
 
-user -> adk_web: POST /run
-adk_web -> pkg1.agent: 이름 검증 후 동적 임포트
-adk_web -> pkg2.agent: 마찬가지
+front.user -> front.adk_web: POST /run
+front.adk_web -> pkg1.agent: 이름 검증 후 동적 임포트
+front.adk_web -> pkg2.agent: 마찬가지
 pkg1.agent -> pkg1.schema: output_schema로 지정
 pkg2.agent -> pkg2.schema: output_schema로 지정
 env -> pkg1.agent: GOOGLE_API_KEY
 env -> pkg2.agent: 마찬가지
 pkg1.agent -> gemini: response_schema 요청
 pkg2.agent -> gemini: response_schema 요청
-gemini -> adk_web: JSON 결과
-adk_web -> user: 결과 표시
+gemini -> front.adk_web: JSON 결과
+front.adk_web -> front.user: 결과 표시

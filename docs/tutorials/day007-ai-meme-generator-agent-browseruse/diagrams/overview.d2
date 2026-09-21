@@ -1,8 +1,11 @@
 ...@../../_tools/theme
 direction: down
+grid-rows: 2
+
 user: 사용자 { class: person }
 api_key: API 키 (사이드바 입력) { class: file }
 app: ai_meme_generator_agent.py {
+  grid-columns: 2
   ui: Streamlit UI { class: ours }
   llm_select: 모델 선택 (generate_meme) { class: ours }
   browseruse_agent: browser-use Agent { class: ours }

@@ -1,15 +1,18 @@
 ...@../../_tools/theme
 direction: down
+grid-rows: 2
+
 user: 사용자 { class: person }
-openai_key: OpenAI API 키 (사이드바 입력) { class: file }
+openai_key: OpenAI API 키 { class: file }
 app: ai_data_analyst.py {
-  ui: Streamlit UI (업로드 · 질문 입력) { class: ours }
+  grid-columns: 2
+  ui: Streamlit UI { class: ours }
   preprocess: 전처리 (preprocess_and_save) { class: ours }
   duckdb_tools: DuckDB 도구 (DuckDbTools) { class: ours }
   pandas_tools: Pandas 도구 (PandasTools) { class: ours }
-  agent: 데이터 분석 에이전트 (Agent) { class: ours }
+  agent: 데이터 분석 에이전트 { class: ours }
 }
-duckdb_db: DuckDB 테이블 uploaded_data (인메모리) { class: store }
+duckdb_db: DuckDB 테이블 (uploaded_data) { class: store }
 openai: OpenAI API (gpt-4o) { class: ext }
 
 user -> app.ui: CSV/Excel 업로드 + 질문 입력
