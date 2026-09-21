@@ -456,7 +456,7 @@ async def paid_fetch(url: str, private_key: str, max_price_usdc: Decimal) -> str
 
 `paid_fetch`는 `build_paying_client`가 돌려주는 클라이언트로 URL 하나를 `GET`할 뿐입니다 — 첫 요청이 402로 돌아오면(Step 3에서 본 그 응답), 클라이언트 내부의 전송 계층이 자동으로 Step 5의 서명을 만들어 **같은 URL에 결제 헤더를 얹어 재시도**합니다. 이 재시도는 구매자가 직접 파실리테이터에 접속하는 것이 아니라 판매자에게만 다시 보내는 것이고, 서명을 검증해 Base Sepolia에 정산을 제출하는 것은 판매자 프로세스 안의 미들웨어입니다(설치된 x402 패키지 소스로 확인) — 구매자와 파실리테이터 사이에는 직접 연결이 없습니다. `run_agent`의 `while True` 루프는 agno의 `Agent.run()`이 감춰 왔던 도구 호출 왕복을 그대로 드러냅니다: Claude가 `tool_use`를 돌려주지 않으면(131행) 텍스트를 출력하고 끝나고, `tool_use`면 `paid_fetch`를 호출해 결과를 `tool_result`로 묶어 다시 `messages`에 넣고 루프 맨 위로 돌아갑니다(150행, 별도 인용 생략). 여기서 도구 호출 하나마다 `try/except`(145-146행)로 감싸 실패를 `Error: ...` 문자열로 바꿔 Claude에게 넘긴다는 점이 중요합니다 — 반면 168-174행의 `--direct` 분기에는 이런 보호가 없어, `paid_fetch`가 실패하면(예산 상한 초과, 잔액 부족 등) 예외가 그대로 터미널까지 올라갑니다.
 
-정리하면, `X402_PRIVATE_KEY`에 실제 테스트 USDC가 있으면 이 코드는 정말로 서명·정산까지 마칩니다. 이 문서는 파우셋에서 자금을 받지 않았으므로 결제 헤더를 얹은 재시도와 `run_agent`의 실제 Claude 호출은 실행하지 않았고, 대신 클라이언트 조립(Step 5)·결제 없는 402 왕복(Step 3)·두 진입점의 방어 로직만 실제로 실행해 확인했습니다. 트랜잭션 해시나 잔액은 만들어 내지 않았으므로 이 문서 어디에도 없습니다.
+정리하면, 결제 없는 앞부분(402까지)과 서명이 실린 재시도부터 정산까지의 전체 흐름은 아래 시퀀스 섹션에서 확인합니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -533,9 +533,9 @@ Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'm
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `SELLER_ADDRESS`를 설정하지 않고 `uv run python -c "import seller"`나 `uvicorn seller:app`을 실행하면 `Set SELLER_ADDRESS to an EVM address that should receive the (testnet) payments.` 메시지와 함께 즉시 종료(exit 1) | `seller.py:28-29`의 모듈 최상단 가드가 임포트 시점에 바로 `sys.exit`를 호출한다(직접 확인) | 받을 주소(자금 불필요)를 `export SELLER_ADDRESS=0x...`(PowerShell `$env:SELLER_ADDRESS="0x..."`)로 설정 후 재실행 |
-| `x402_paying_agent.py`를 질문과 함께 실행하든 `--direct <URL>`로 실행하든 `X402_PRIVATE_KEY`가 없으면 똑같이 `Set X402_PRIVATE_KEY to a wallet private key ...` 메시지와 함께 종료 | `main()`의 개인키 검사(163-165행)가 `args.direct` 분기보다 먼저 실행되어, "지갑만 있으면 되는" `--direct` 모드도 예외 없이 이 검사를 통과해야 한다(직접 확인) | 자금 유무와 무관하게 `X402_PRIVATE_KEY`에 유효한 형식의 개인키를 설정. 실제 결제까지 성공하려면 그 지갑에 테스트 USDC가 있어야 함(이 문서는 여기까지 실행하지 않음) |
-| 전체 에이전트 모드(질문 실행)에서 `ANTHROPIC_API_KEY`가 없으면 `Set ANTHROPIC_API_KEY (or use --direct <URL> for the no-LLM payment demo).` 메시지와 함께 종료 | 178-179행이 `args.direct`가 없을 때만 이 검사를 추가로 실행한다(직접 확인) — `anthropic.Anthropic()` 자체는 키 없이도 생성에 성공하지만(직접 확인) 이 앱은 그보다 먼저 걸러 낸다 | `--direct <URL>`로 결제 흐름만 볼 것이 아니라면 `export ANTHROPIC_API_KEY=...` 설정 |
+| `SELLER_ADDRESS`를 설정하지 않고 `uv run python -c "import seller"`나 `uvicorn seller:app`을 실행하면 `Set SELLER_ADDRESS to an EVM address that should receive the (testnet) payments.` 메시지와 함께 즉시 종료(exit 1) | `starter_ai_agents/ai_x402_paying_agent/seller.py:28-29`의 모듈 최상단 가드가 임포트 시점에 바로 `sys.exit`를 호출한다(직접 확인) | 받을 주소(자금 불필요)를 `export SELLER_ADDRESS=0x...`(PowerShell `$env:SELLER_ADDRESS="0x..."`)로 설정 후 재실행 |
+| `x402_paying_agent.py`를 질문과 함께 실행하든 `--direct <URL>`로 실행하든 `X402_PRIVATE_KEY`가 없으면 똑같이 `Set X402_PRIVATE_KEY to a wallet private key ...` 메시지와 함께 종료 | `main()`의 개인키 검사(163-165행)가 `args.direct` 분기보다 먼저 실행되어, "지갑만 있으면 되는" `--direct` 모드도 예외 없이 이 검사를 통과해야 한다(직접 확인) | 유효한 형식의 개인키를 `export X402_PRIVATE_KEY=0x...`(PowerShell `$env:X402_PRIVATE_KEY="0x..."`)로 설정. 실제 결제까지 성공하려면 그 지갑에 테스트 USDC가 있어야 함(이 문서는 여기까지 실행하지 않음) |
+| 전체 에이전트 모드(질문 실행)에서 `ANTHROPIC_API_KEY`가 없으면 `Set ANTHROPIC_API_KEY (or use --direct <URL> for the no-LLM payment demo).` 메시지와 함께 종료 | 178-179행이 `args.direct`가 없을 때만 이 검사를 추가로 실행한다(직접 확인) — `anthropic.Anthropic()` 자체는 키 없이도 생성에 성공하지만(직접 확인) 이 앱은 그보다 먼저 걸러 낸다 | `--direct <URL>`로 결제 흐름만 볼 것이 아니라면 `export ANTHROPIC_API_KEY=...`(PowerShell `$env:ANTHROPIC_API_KEY="..."`)로 설정 |
 | 로컬 판매자를 방금 띄우고 결제 없이 호출했을 뿐인데도 첫 요청이 느리거나, 방화벽·오프라인 환경에서는 402 대신 다른 오류가 옴 | `payment_middleware`는 기본값(`sync_facilitator_on_start=True`)으로 최초의 보호된 요청에서 실제로 x402.org 파실리테이터에 접속해 지원 스킴을 동기화한다(설치된 `x402` 패키지의 FastAPI 미들웨어 소스로 확인) — 이 문서를 쓴 환경은 인터넷이 있어 바로 성공했다(Step 3) | 인터넷 연결을 확인. 동기화가 실패하면 미들웨어가 502(`{"error": "..."}`)를 대신 돌려준다(소스로 확인, 재현하지 않음) |
 | `--direct` 모드에서 결제 자체가 실패하면(예산 상한 초과, 잔액 부족 등) 친절한 안내 대신 파이썬 트레이스백이 그대로 출력됨 | `main()`의 `--direct` 분기(168-174행)에는 `try/except`가 없다(직접 확인, 소스). 반면 전체 에이전트 모드의 도구 호출 루프(145-146행)는 같은 종류의 실패를 `try/except`로 잡아 `Error: ...` 문자열로 Claude에 돌려준다 | 화면에 파이썬 트레이스백이 뜨면 결제 자체(잔액 부족 등)를 의심하고, `--direct`를 스크립트에 쓴다면 호출부를 `try/except`로 감싸는 것을 고려 |
 
