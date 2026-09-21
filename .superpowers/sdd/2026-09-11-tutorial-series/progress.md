@@ -348,3 +348,16 @@ Task 8: Day 22 완료(caff1b0). 다이어그램 1048x326(상한 1200x700), 시�
   **내 전제가 틀렸고 구현자가 옳았다 — 원인까지 적어 둔다.** 나는 "9_2_loop_agent는 requirements.txt도 .env.example도 없다"고 원장과 브리프에 적었다. 실제로는 `.env.example`은 있고 `requirements.txt`만 없다. 최초 조사 때 `find`는 `.env.example`을 제대로 보여 줬는데, 그 뒤 `ls 9_2_loop_agent/`로 재확인하면서 `-a` 없이 돌려 숨김 파일을 못 봤고, 그 두 번째 관찰을 사실로 승격시켰다. 점으로 시작하는 파일을 다룰 때 `ls`는 `-a` 없이는 증거가 되지 못한다.
   구현자가 재현 가능하게 확인해 온 것들(컨트롤러가 재검증): (a) 설치된 google-adk 2.9.2에서 `SequentialAgent`/`LoopAgent`/`ParallelAgent` 세 클래스 모두 `@deprecated(... in favor of Workflow ...)`가 붙어 있다 — 즉 이 날의 주제 전체가 폐기 예정이다. (b) 세 하위 레슨의 어느 agent.py도 `root_agent`를 내보내지 않아 `adk web`으로는 아예 못 띄운다(폴더명이 파이썬 식별자가 아닌 문제와 별개의 두 번째 이유). 둘 다 직접 확인했다.
   구현자가 레슨 코드의 실제 결함으로 보고한 것: 커스텀 BaseAgent에서 `ctx.session.state[k]=v`로 직접 쓴 값은 `run_async` 한 번을 넘기지 못하고(오직 `EventActions.state_delta`만 남는다), ParallelAgent 레슨의 세 자식은 코드 주석과 레슨 README의 주장과 달리 `output_key=None`, `tools=[]`이다. 범위 밖이라 원본은 건드리지 않고 문서에만 적었다 — 옳은 처리다.
+
+## 2026-09-22 — 여기서 멈춤 (사용자: "오늘은 Day23까지만 하고 상태 저장")
+
+Day 23 완료(3234fb3). ADK 볼륨이 끝났다. 진도 23 / 164일. check 통과, 테스트 27/27.
+  Day 23 다이어그램 1071x347, 시퀀스 942x757 — 상한(1200x700 / 1400x1500) 여유 있음. 1525낱말 / 75분(20.3낱말·분).
+  **구현자의 핵심 발견을 컨트롤러가 소스로 재검증했다.** google-adk 2.9.2에서 `_BLOCKED_YAML_KEYS = frozenset({"args"})`이고(`agents/config_agent_utils.py:818`), `cli/fast_api.py:205`가 `_set_enforce_yaml_key_denylist(True)`를 호출한다. 기본값은 False라 파이썬에서 직접 로드하면 되지만, `adk web`은 켠다. 이 레슨의 `research_agent.yaml`은 MCP 설정에 `args:`를 두 번 쓴다 — 즉 **레슨이 스스로 권하는 `adk web`으로는 이 에이전트를 절대 못 띄운다.** 키가 있든 없든, 의존성 문제 이전에 404로 막힌다. 앞선 ADK 날들처럼 "키가 없어서" 막히는 게 아니라는 점이 이 날의 뒤집힌 전제다. 금지 목록의 사유가 "arbitrary code 실행"인데 이 YAML이 하는 일이 정확히 `npx -y firecrawl-mcp` 실행이라 앞뒤가 맞는다.
+  커밋 서명이 Sonnet으로 나갔다. 히스토리는 이미 Opus 11 / Sonnet 6으로 섞여 있었고, Sonnet 서브에이전트가 쓴 것을 Sonnet으로 적은 것이 오히려 정확하므로 고치지 않는다.
+
+### 다음 사람이 이어받을 지점
+- **다음 할 일: Day 24부터 30까지** (OpenAI Agents SDK 레슨 1~7). 볼륨 조사는 이 원장 위쪽 "Task 8: Surveyed Days 24-30"에 있다. 요약: 패키지는 `openai-agents`인데 import는 `from agents import ...`, 키는 `OPENAI_API_KEY` 하나, 모델은 gpt-4o-mini/gpt-4o. 함정 둘 — env 템플릿 이름이 `1_starter_agent`만 `.env.example`이고 나머지는 점 없는 `env.example`, 그리고 세 레슨(3,5,6)에 requirements.txt가 아예 없다. Day 27(`4_running_agents`)이 최대 난관으로 agent_runner.py가 686줄이다.
+- 다이어그램 규격이 2026-09-21에 크게 바뀌었다(에디토리얼 스킨, grid 배치, 한글 폰트 임베드, 상한 1200x700). 새 날을 맡길 때는 브리프에 "옛 날들의 다이어그램 스타일을 기억으로 베끼지 말 것"을 반드시 넣는다 — §5가 유일한 권위다.
+- 브리프에서 빼야 할 것: 작업 트리 LF 확인 의식(`core.autocrlf=true`라 무의미하다).
+- 아직 안 한 것: Day 19 이후 일차들에 대한 별도 리뷰 라운드(Days 19-23은 컨트롤러 검증만 받았고 리뷰어 에이전트는 붙이지 않았다).
