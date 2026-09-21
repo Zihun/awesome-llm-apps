@@ -803,4 +803,4 @@ FINAL: 'Fake final answer: 2 + 3 = 5'
 
 ## 다음 날 예고
 
-Day 020 · Google ADK Crash Course · 7_plugins — 오늘 익힌 콜백을 개별 에이전트가 아니라 `Runner`에 한 번만 등록해 그 아래 모든 에이전트·도구·모델 호출에 전역으로 적용하는 플러그인을 다룹니다.
+[Day 020 · Google ADK Crash Course · 7_plugins](../day020-adk-7-plugins/README.md) — 오늘 익힌 콜백을 개별 에이전트가 아니라 `Runner`에 한 번만 등록해 그 아래 모든 에이전트·도구·모델 호출에 전역으로 적용하는 플러그인을 다룹니다.
