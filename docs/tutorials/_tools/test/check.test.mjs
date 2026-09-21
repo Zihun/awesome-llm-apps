@@ -173,3 +173,33 @@ test("더 해보기 section bare line citations are detected", () => {
     `Case 3 (bare in prose, not in 더 해보기) should not report: ${problems3.join("\n")}`
   );
 });
+
+test("citations pointing outside the repo (.venv, site-packages) are reported; an ordinary repo citation is not", () => {
+  // Case 1: A `.venv/...` citation IS reported
+  const case1 = fixture({
+    readme: GOOD_README("설치된 패키지 코드(`.venv/Lib/site-packages/streamlit/web/bootstrap.py:87-90`)를 인용\n"),
+  });
+  const problems1 = checkDay(case1.dayDir, { repoRoot: case1.repo });
+  assert.ok(
+    problems1.some((p) => p.includes("저장소 밖을 가리키는 인용") && p.includes(".venv/Lib/site-packages/streamlit/web/bootstrap.py:87-90")),
+    `Case 1 (.venv citation) should report: ${problems1.join("\n")}`
+  );
+
+  // Case 2: A `site-packages/...` citation without a leading .venv/ IS reported
+  const case2 = fixture({
+    readme: GOOD_README("다른 site-packages 경로(`lib/site-packages/pkg/mod.py:12-15`)를 인용\n"),
+  });
+  const problems2 = checkDay(case2.dayDir, { repoRoot: case2.repo });
+  assert.ok(
+    problems2.some((p) => p.includes("저장소 밖을 가리키는 인용") && p.includes("lib/site-packages/pkg/mod.py:12-15")),
+    `Case 2 (site-packages citation) should report: ${problems2.join("\n")}`
+  );
+
+  // Case 3: An ordinary repo citation is NOT reported
+  const case3 = fixture({ readme: GOOD_README("정상 인용: `app/main.py:1-2`\n") });
+  const problems3 = checkDay(case3.dayDir, { repoRoot: case3.repo });
+  assert.ok(
+    !problems3.some((p) => p.includes("저장소 밖을 가리키는 인용")),
+    `Case 3 (ordinary repo citation) should not report: ${problems3.join("\n")}`
+  );
+});

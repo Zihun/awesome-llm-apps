@@ -1017,6 +1017,11 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
     }
   }
 
+  // (13) 저장소 밖(.venv, site-packages)을 가리키는 인용은 독자 환경에서 깨진다.
+  for (const m of stripFences(md).matchAll(/`((?:\.venv\/|[^`\s]*site-packages\/)[^`\s]*?):(\d+(?:-\d+)?)`/g)) {
+    problems.push(rel(`저장소 밖을 가리키는 인용: \`${m[1]}:${m[2]}\` — 서드파티 내부는 "소스로 확인"으로 적고 패키지와 버전을 밝히세요`));
+  }
+
   // (5) no mermaid
   if (/```mermaid/.test(md)) problems.push(rel("mermaid 코드 펜스 사용"));
 

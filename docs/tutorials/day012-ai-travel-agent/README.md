@@ -334,10 +334,10 @@ bytes: 592 | events: 3
 
 ## 더 해보기
 
-- 출발일을 고르는 `st.date_input`을 추가하고 150행의 호출에 `start_date`로 넘겨, 일정이 오늘이 아니라 실제 출발일부터 만들어지게 고쳐보기
+- 출발일을 고르는 `st.date_input`을 추가하고 `starter_ai_agents/ai_travel_agent/travel_agent.py:150`의 호출에 `start_date`로 넘겨, 일정이 오늘이 아니라 실제 출발일부터 만들어지게 고쳐보기
 - `dtend`를 하루 뒤로 바꾼 뒤 구글 캘린더에 실제로 가져와 표시가 어떻게 달라지는지 확인해보기
-- Researcher의 출력을 Planner 프롬프트에 통째로 넣는 137행을, 길이를 재서 일정 길이 이상이면 잘라내거나 요약하는 단계로 바꿔보고 토큰 사용량을 비교해보기
-- `local_travel_agent.py`의 `Ollama(id="llama3.2")`(77행)를 `gemma3:12b`나 `qwen3:8b` 같은 더 큰 로컬 모델로 바꿔, 같은 프롬프트에서 `Day N` 형식을 얼마나 안정적으로 지키는지 비교해보기
+- Researcher의 출력을 Planner 프롬프트에 통째로 넣는 `starter_ai_agents/ai_travel_agent/travel_agent.py:137`을, 길이를 재서 일정 길이 이상이면 잘라내거나 요약하는 단계로 바꿔보고 토큰 사용량을 비교해보기
+- `local_travel_agent.py`의 `Ollama(id="llama3.2")`(`starter_ai_agents/ai_travel_agent/local_travel_agent.py:77`)를 `gemma3:12b`나 `qwen3:8b` 같은 더 큰 로컬 모델로 바꿔, 같은 프롬프트에서 `Day N` 형식을 얼마나 안정적으로 지키는지 비교해보기
 
 ## 다음 날 예고
 

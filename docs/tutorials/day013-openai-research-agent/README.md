@@ -299,8 +299,8 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 
 ## 더 해보기
 
-- 184-233행 사이에 `Runner.run(research_agent, ...)`를 명시적으로 한 번 넣어, Triage의 계획에 담긴 `search_queries`를 실제로 Research Agent에 넘겨 보기. 그러면 `collected_facts`가 채워져 15초 루프가 비로소 의미를 갖는다
-- 215행의 `for i in range(15)`를 없애고, 대신 Research Agent 실행이 끝난 뒤에 사실 목록을 한 번만 그리도록 바꿔 전체 소요 시간이 얼마나 줄어드는지 비교해보기
+- `starter_ai_agents/openai_research_agent/research_agent.py:184-233` 사이에 `Runner.run(research_agent, ...)`를 명시적으로 한 번 넣어, Triage의 계획에 담긴 `search_queries`를 실제로 Research Agent에 넘겨 보기. 그러면 `collected_facts`가 채워져 15초 루프가 비로소 의미를 갖는다
+- `starter_ai_agents/openai_research_agent/research_agent.py:215`의 `for i in range(15)`를 없애고, 대신 Research Agent 실행이 끝난 뒤에 사실 목록을 한 번만 그리도록 바꿔 전체 소요 시간이 얼마나 줄어드는지 비교해보기
 - `ResearchReport`에 `confidence: float` 같은 필드를 추가하고, Editor의 지시문은 그대로 둔 채 `output_type`만 바꿨을 때 모델이 그 필드를 채우는지 확인해보기
 - `WebSearchTool()`을 Day 12의 `SerpApiTools`처럼 외부 검색 API로 바꿔, 호스티드 도구와 직접 붙인 도구의 차이를 비교해보기
 
