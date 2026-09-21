@@ -1,0 +1,23 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+researcher: 리서처 { class: ours }
+planner: 플래너 { class: ours }
+openai: OpenAI { class: ext }
+serpapi: SerpAPI { class: ext }
+
+user -> ui: 목적지+일수 입력, 실행 클릭
+ui -> researcher: run(리서치 요청)
+researcher -> openai: 메시지+도구 스키마
+openai -> researcher: tool_call: search_google
+researcher -> serpapi: search_google(검색어)
+serpapi -> researcher: 검색 결과
+researcher -> openai: 도구 결과
+openai -> researcher: 리서치 결과
+researcher -> ui: research_results.content
+ui -> planner: run(일정 요청)
+planner -> openai: 일정 프롬프트
+openai -> planner: 완성된 일정
+planner -> ui: response.content
+ui -> user: 화면 표시 + ICS 다운로드

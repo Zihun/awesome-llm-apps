@@ -451,4 +451,4 @@ markdown call count: 7
 
 ## 다음 날 예고
 
-Day 012 · 🛫 AI Travel Agent (Local & Cloud) — 로컬 모델과 클라우드 API 중 하나를 골라 여행 일정을 짜는 에이전트를 다룹니다.
+[Day 012 · 🛫 AI Travel Agent (Local & Cloud)](../day012-ai-travel-agent/README.md) — 로컬 모델과 클라우드 API 중 하나를 골라 여행 일정을 짜는 에이전트를 다룹니다.

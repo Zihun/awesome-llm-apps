@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: down
+user: 사용자 { class: person }
+keys: API 키 (OpenAI + SerpAPI) { class: file }
+app: travel_agent.py {
+  ui: Streamlit UI { class: ours }
+  researcher: 리서처 (Researcher) { class: ours }
+  planner: 플래너 (Planner) { class: ours }
+}
+backend: 모델 (교체 가능) {
+  openai: OpenAI GPT-4o { class: ext }
+  ollama: Ollama llama3.2 (로컬) { class: ext }
+}
+serpapi: SerpAPI { class: ext }
+ics: ICS 파일 (.ics) { class: file }
+
+user -> app.ui: 목적지 + 일수
+keys -> app.ui: 키 입력
+app.ui -> app.researcher: 실행
+app.researcher -> serpapi: 검색어
+app.researcher -> backend: 리서치 프롬프트
+app.researcher -> app.planner: 리서치 결과
+app.planner -> backend: 일정 프롬프트
+app.ui -> ics: 다운로드
