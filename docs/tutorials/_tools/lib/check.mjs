@@ -1,9 +1,19 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { inlineImports, sourceHash, readSvgHash } from "./d2.mjs";
 import { folderName, PLACEHOLDER } from "./days.mjs";
 
 export const SVG_MAX_WIDTH = 1400;
+
+/** 임베드 폰트에 담긴 글자 목록. fonts/build.py가 쓴다. */
+let fontCoverage;
+export function coveredCharacters() {
+  if (fontCoverage) return fontCoverage;
+  const path = resolve(dirname(fileURLToPath(import.meta.url)), "..", "fonts", "coverage.txt");
+  fontCoverage = existsSync(path) ? new Set(readFileSync(path, "utf8")) : null;
+  return fontCoverage;
+}
 
 export const REQUIRED_H2 = [
   "## 오늘 만들 것",
@@ -59,6 +69,12 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
       const expected = sourceHash(inlineImports(join(diagrams, f)));
       const svgText = readFileSync(svg, "utf8");
       if (readSvgHash(svgText) !== expected) problems.push(rel(`stale svg (다시 렌더 필요): diagrams/${f}`));
+      const covered = coveredCharacters();
+      if (covered) {
+        const missing = [...new Set(readFileSync(join(diagrams, f), "utf8"))]
+          .filter((c) => c.charCodeAt(0) > 0x7f && !covered.has(c));
+        if (missing.length) problems.push(rel(`임베드 폰트에 없는 글자 ${JSON.stringify(missing.join(""))}: diagrams/${f} — \`python fonts/build.py\` 후 \`npm run render -- --force\``));
+      }
       const width = Number(svgText.match(/<svg[^>]*\swidth="(\d+)"/)?.[1] ?? 0);
       if (width > SVG_MAX_WIDTH) problems.push(rel(`다이어그램이 본문 폭에서 읽히지 않음: diagrams/${f.replace(/\.d2$/, ".svg")} (${width}px, 상한 ${SVG_MAX_WIDTH}px) — direction: down으로 바꾸거나 노드를 컨테이너로 묶으세요`));
     }

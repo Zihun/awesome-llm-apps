@@ -7,6 +7,8 @@ import { checkDay, checkRoadmap, REQUIRED_H2 } from "../lib/check.mjs";
 import { inlineImports, sourceHash, embedHash } from "../lib/d2.mjs";
 import { loadDays, folderName } from "../lib/days.mjs";
 
+const DEFAULT_D2 = "...@../../_tools/theme\na -> b\n";
+
 const GOOD_README = (extra = "") => `# Day 001 · 테스트
 
 > 볼륨 1 · 난이도 ★☆☆
@@ -16,7 +18,7 @@ ${REQUIRED_H2.map((h) => `${h}\n\n본문 \`app/main.py:1-2\`\n`).join("\n")}
 ${extra}
 `;
 
-function fixture({ readme = GOOD_README(), svgHash } = {}) {
+function fixture({ readme = GOOD_README(), svgHash, d2Source = DEFAULT_D2 } = {}) {
   const repo = mkdtempSync(join(tmpdir(), "tut-check-"));
   mkdirSync(join(repo, "app"));
   writeFileSync(join(repo, "app", "main.py"), "print(1)\nprint(2)\n");
@@ -27,7 +29,7 @@ function fixture({ readme = GOOD_README(), svgHash } = {}) {
   mkdirSync(join(dayDir, "diagrams"), { recursive: true });
   writeFileSync(join(dayDir, "README.md"), readme);
   const d2 = join(dayDir, "diagrams", "overview.d2");
-  writeFileSync(d2, "...@../../_tools/theme\na -> b\n");
+  writeFileSync(d2, d2Source);
   const hash = svgHash ?? sourceHash(inlineImports(d2));
   writeFileSync(join(dayDir, "diagrams", "overview.svg"), embedHash("<svg></svg>", hash));
   return { repo, tutorials, dayDir };
@@ -35,6 +37,19 @@ function fixture({ readme = GOOD_README(), svgHash } = {}) {
 
 test("a well-formed day passes", () => {
   const { repo, dayDir } = fixture();
+  assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
+});
+
+test("a diagram character the embedded font lacks is reported", () => {
+  // 뷁은 어느 일차에서도 쓰지 않으므로 fonts/coverage.txt에 없다. 폰트에 없는 글자를
+  // 그대로 두면 한글 폰트가 없는 독자에게 두부(□)로 보인다.
+  const { repo, dayDir } = fixture({ d2Source: "...@../../_tools/theme\nx: 뷁 { class: ours }\n" });
+  const problems = checkDay(dayDir, { repoRoot: repo });
+  assert.ok(problems.some((p) => p.includes("뷁") && p.includes("build.py")), problems.join("\n"));
+});
+
+test("Korean the font already covers passes", () => {
+  const { repo, dayDir } = fixture({ d2Source: "...@../../_tools/theme\nx: 사용자 { class: ours }\n" });
   assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
 });
 

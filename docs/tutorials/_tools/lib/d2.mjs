@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,13 +29,16 @@ export function fontOptions() {
   return (fonts ??= loadFonts());
 }
 
-/** 폰트가 바뀌면 이미 렌더된 SVG도 낡은 것이 된다. 해시에 섞어 재렌더를 강제한다. */
+/** 서체를 바꿀 때 손으로 올린다. 이 값이 바뀌면 전체가 다시 렌더된다. */
+export const FONT_VERSION = "notosans-kr-1";
+
+/** 폰트가 바뀌면 이미 렌더된 SVG도 낡은 것이 된다. 해시에 섞어 재렌더를 강제한다.
+ *  TTF 바이트가 아니라 글자 집합을 지문으로 쓴다 — fontTools는 같은 입력을 두 번 구워도
+ *  바이트가 달라지므로, 바이트를 섞으면 폰트를 다시 굽기만 해도 멀쩡한 SVG가 전부 stale이 된다. */
 export function fontFingerprint() {
-  const f = fontOptions();
-  return createHash("sha256")
-    .update(f.fontRegular + f.fontSemibold + f.fontBold, "utf8")
-    .digest("hex")
-    .slice(0, 16);
+  const coverage = resolve(FONT_DIR, "coverage.txt");
+  const chars = existsSync(coverage) ? readFileSync(coverage, "utf8") : "";
+  return createHash("sha256").update(`${FONT_VERSION}\n${chars}`, "utf8").digest("hex").slice(0, 16);
 }
 
 export const RENDER_OPTIONS = { layout: "elk", sketch: false, pad: 8, noXMLTag: true };

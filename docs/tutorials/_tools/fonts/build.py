@@ -60,6 +60,9 @@ def build(chars: set[str]) -> None:
         subsetter = subset.Subsetter(options=subset.Options(layout_features=["*"], notdef_outline=True))
         subsetter.populate(text=text)
         subsetter.subset(font)
+        # head 테이블의 타임스탬프를 고정한다. 그러지 않으면 같은 글자 집합을 다시 구워도
+        # 바이트가 달라지고, 폰트 지문이 바뀌어 멀쩡한 SVG 157장이 전부 stale로 잡힌다.
+        font["head"].created = font["head"].modified = 0
         out = HERE / f"NotoSansKR-{name}.ttf"
         font.save(out)
         print(f"  NotoSansKR-{name}.ttf: {out.stat().st_size:,} bytes")
@@ -71,6 +74,8 @@ def main() -> int:
     hangul = sorted(c for c in chars if "가" <= c <= "힣")
     print(f".d2 소스가 쓰는 문자 {len(chars)}자 (그중 한글 {len(hangul)}자)")
     build(chars)
+    # 어떤 글자가 들어갔는지 남긴다. check.mjs가 이 목록으로 "폰트에 없는 글자"를 잡는다.
+    (HERE / "coverage.txt").write_text("".join(sorted(chars)), encoding="utf-8", newline="\n")
     print("완료. 폰트가 바뀌었으므로 `npm run render -- --force`로 전체를 다시 렌더하세요.")
     return 0
 
