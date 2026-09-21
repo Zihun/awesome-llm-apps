@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+web: adk web (AgentLoader) { class: ext }
+root: root_agent.yaml { class: file }
+research: research_agent.yaml { class: file }
+
+user -> web: 메시지 (POST /run)
+web -> root: from_config 로 로드
+root -> research: sub_agents: config_path 로 재귀 로드
+research -> research: tools 목록에서 args 키 검사
+research -> web: ValueError (Blocked key 'args')
+web -> user: HTTP 404

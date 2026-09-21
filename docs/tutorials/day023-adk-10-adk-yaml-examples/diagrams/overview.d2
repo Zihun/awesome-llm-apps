@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 3
+grid-columns: 3
+
+user: 사용자 { class: person }
+web: ADK Web UI (adk web) { class: ext }
+env: 환경 변수 (.env.example) { class: file }
+
+root: 코디네이터 (root_agent.yaml) { class: file }
+research: 리서치 에이전트 (research_agent.yaml) { class: file }
+summary: 요약 에이전트 (summary_agent.yaml) { class: file }
+
+gemini: Gemini API (gemini-3-flash-preview) { class: ext }
+mcp: Firecrawl MCP 서버 (npx firecrawl-mcp) { class: ext }
+cloud: Firecrawl 클라우드 (firecrawl.dev) { class: ext }
+
+user -> web: 메시지
+web -> root: 로드 (from_config)
+root -> research: sub_agents: config_path
+root -> summary: sub_agents: config_path
+research -> mcp: MCPToolset (npx 프로세스)
+mcp -> cloud: firecrawl_scrape / firecrawl_search
+root -> gemini: 모델 호출
+research -> gemini: 모델 호출
+summary -> gemini: 모델 호출

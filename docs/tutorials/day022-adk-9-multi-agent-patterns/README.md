@@ -641,4 +641,4 @@ exit=1
 
 ## 다음 날 예고
 
-Day 023 · Google ADK Crash Course · adk_yaml_examples — 에이전트를 파이썬 코드가 아니라 `root_agent.yaml` 같은 YAML 설정 파일로 선언하는 방식을 다룹니다.
+[Day 023 · Google ADK Crash Course · adk_yaml_examples](../day023-adk-10-adk-yaml-examples/README.md) — 에이전트를 파이썬 코드가 아니라 `root_agent.yaml` 같은 YAML 설정 파일로 선언하는 방식을 다룹니다.
