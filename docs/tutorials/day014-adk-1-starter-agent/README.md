@@ -163,7 +163,7 @@ creative_writing_agent
 **할 일.** `1_starter_agent` 폴더(즉 `creative_writing_agent`의 부모 폴더)에서 실행합니다.
 
 ```bash
-uv run adk web --port 8987 .
+uv run adk web --port 8987 --no_use_local_storage .
 ```
 
 `adk` 계열 명령을 이 컴퓨터에서 처음 실행하면 텔레메트리 수집 동의를 묻는 프롬프트가 먼저 뜨고, 답하기 전까지는 서버가 시작되지 않습니다 — 문제 해결에 정리했습니다. 서버가 뜨면 ADK는 `.` 아래 하위 폴더를 스캔해 `creative_writing_agent`를 찾아 임포트해 두고, FastAPI 앱과 채팅 웹 UI를 같은 프로세스에서 서비스합니다. 이 앱 어디에도 `uvicorn.run`이나 `app = FastAPI()` 같은 코드가 없다는 점이 볼륨 1과의 핵심 차이입니다 — 서버는 전적으로 `google-adk` 패키지가 제공합니다.
@@ -273,4 +273,4 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8987/run -H "C
 
 ## 다음 날 예고
 
-Day 015 · Google ADK Crash Course · 2_model_agnostic_agent — OpenRouter API 키 하나로 OpenAI·Anthropic 모델을 갈아 끼우는 두 개의 에이전트를 비교합니다.
+[Day 015 · Google ADK Crash Course · 2_model_agnostic_agent](../day015-adk-2-model-agnostic-agent/README.md) — OpenRouter API 키 하나로 OpenAI·Anthropic 모델을 갈아 끼우는 두 개의 에이전트를 비교합니다.
