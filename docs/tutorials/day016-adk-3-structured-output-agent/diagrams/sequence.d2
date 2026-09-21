@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adk_web: adk web 서버 { class: ext }
+agent: 선택된 root_agent (LlmAgent) { class: ours }
+gemini: Gemini API (google-genai Client) { class: ext }
+
+user -> adk_web: POST /run (앱 이름, 세션ID, 메시지)
+adk_web -> adk_web: 앱 이름이 유효한 식별자·점(.) 경로인지 검사
+adk_web -> agent: 검증 통과 시 동적 임포트해 조회
+agent -> adk_web: instruction·output_schema(예: SupportTicket) 반환
+adk_web -> gemini: response_schema + response_mime_type=application/json으로 요청
+gemini -> adk_web: 스키마에 맞춘 JSON 텍스트 (키 없으면 클라이언트 생성 단계에서 예외)
+adk_web -> agent: validate_schema로 재검증 후 output_key에 저장
+agent -> adk_web: 세션 상태 갱신
+adk_web -> user: 구조화된 JSON 표시

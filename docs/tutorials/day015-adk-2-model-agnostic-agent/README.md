@@ -462,4 +462,4 @@ curl.exe -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8989/run -
 
 ## 다음 날 예고
 
-Day 016 · Google ADK Crash Course · 3_structured_output_agent — Pydantic 스키마로 출력 형식을 강제하는 고객 지원 티켓·이메일 생성 에이전트 두 개를 다룹니다.
+[Day 016 · Google ADK Crash Course · 3_structured_output_agent](../day016-adk-3-structured-output-agent/README.md) — Pydantic 스키마로 출력 형식을 강제하는 고객 지원 티켓·이메일 생성 에이전트 두 개를 다룹니다.
