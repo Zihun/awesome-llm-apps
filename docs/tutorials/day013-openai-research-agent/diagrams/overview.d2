@@ -15,14 +15,14 @@ app: research_agent.py {
 }
 
 input: "입력" {
-  class: ours
+  class: group
   grid-columns: 2
   user: 사용자 { class: person }
   env: OPENAI_API_KEY { class: file }
 }
 
 external: "외부 API" {
-  class: ours
+  class: group
   grid-columns: 2
   openai: OpenAI (gpt-4o-mini) { class: ext }
   websearch: 호스티드 웹 검색 { class: ext }

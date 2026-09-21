@@ -19,14 +19,14 @@ app: ai_breakup_recovery_agent.py {
 }
 
 input: "입력" {
-  class: ours
+  class: group
   grid-columns: 2
   user: 사용자 { class: person }
   key: GEMINI_API_KEY { class: file }
 }
 
 external: "외부 API" {
-  class: ours
+  class: group
   grid-columns: 2
   gemini: Gemini (gemini-2.5-flash) { class: ext }
   duckduckgo: DuckDuckGo { class: ext }

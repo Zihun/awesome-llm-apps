@@ -3,7 +3,7 @@ direction: down
 grid-rows: 2
 
 input: "입력" {
-  class: ours
+  class: group
   grid-columns: 2
   user: 사용자 { class: person }
   keys: OpenAI 키 + SerpAPI 키 { class: file }
@@ -21,7 +21,7 @@ app: travel_agent.py {
 }
 
 external: "외부 API" {
-  class: ours
+  class: group
   grid-columns: 1
   openai: OpenAI (gpt-4o) { class: ext }
   serpapi: SerpAPI (search_google) { class: ext }

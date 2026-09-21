@@ -3,7 +3,7 @@ direction: down
 grid-rows: 2
 
 input: "입력" {
-  class: ours
+  class: group
   grid-columns: 2
   user: 사용자 { class: person }
   key: GOOGLE_API_KEY { class: file }
@@ -20,7 +20,7 @@ app: ai_medical_imaging.py {
 }
 
 external: "외부 API" {
-  class: ours
+  class: group
   grid-columns: 1
   gemini: Gemini (gemini-2.5-pro) { class: ext }
   ddgapi: DuckDuckGo { class: ext }
