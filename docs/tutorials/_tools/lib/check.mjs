@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 import { inlineImports, sourceHash, readSvgHash } from "./d2.mjs";
 import { folderName, PLACEHOLDER } from "./days.mjs";
 
-export const SVG_MAX_WIDTH = 1400;
+// 폭 상한. 본문이 그림을 축소하면 12px 글자가 그만큼 작아지고 한글이 먼저 뭉개진다.
+// 시퀀스 그림은 배우가 가로로 늘어서므로 따로 잡는다.
+export const SVG_MAX_WIDTH = 1200;
+export const SEQUENCE_MAX_WIDTH = 1400;
 
 // 세로 상한. GitHub 본문에서 한 장이 화면을 통째로 먹지 않는 선이다. 시퀀스 그림은
 // 메시지 하나가 행 하나라 본래 길쭉하므로 따로 잡는다.
@@ -81,7 +84,8 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
         if (missing.length) problems.push(rel(`임베드 폰트에 없는 글자 ${JSON.stringify(missing.join(""))}: diagrams/${f} — \`python fonts/build.py\` 후 \`npm run render -- --force\``));
       }
       const width = Number(svgText.match(/<svg[^>]*\swidth="(\d+)"/)?.[1] ?? 0);
-      if (width > SVG_MAX_WIDTH) problems.push(rel(`다이어그램이 본문 폭에서 읽히지 않음: diagrams/${f.replace(/\.d2$/, ".svg")} (${width}px, 상한 ${SVG_MAX_WIDTH}px) — direction: down으로 바꾸거나 노드를 컨테이너로 묶으세요`));
+      const widthCap = f.startsWith("sequence") ? SEQUENCE_MAX_WIDTH : SVG_MAX_WIDTH;
+      if (width > widthCap) problems.push(rel(`다이어그램이 본문 폭에서 읽히지 않음: diagrams/${f.replace(/\.d2$/, ".svg")} (${width}px, 상한 ${widthCap}px) — grid-columns를 줄여 줄을 나누세요. 라벨이 긴 상자를 가로로 여러 개 세우면 폭이 금세 넘칩니다`));
       const height = Number(svgText.match(/<svg[^>]*\sheight="(\d+)"/)?.[1] ?? 0);
       const heightCap = f.startsWith("sequence") ? SEQUENCE_MAX_HEIGHT : SVG_MAX_HEIGHT;
       if (height > heightCap) problems.push(rel(`다이어그램이 세로로 너무 깁니다: diagrams/${f.replace(/\.d2$/, ".svg")} (${height}px, 상한 ${heightCap}px) — 관련된 것끼리 컨테이너로 묶고 루트에 grid-rows/grid-columns를 주세요. 안쪽 컨테이너의 direction은 엣지가 있으면 무시됩니다`));
