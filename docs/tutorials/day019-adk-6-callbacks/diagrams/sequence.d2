@@ -1,0 +1,25 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: app.py { class: ours }
+agent: agent.py { class: ours }
+model: 모델 계층 { class: ours }
+gemini: Gemini API { class: ext }
+tool: 도구 계층 { class: ours }
+toolfn: calculator_tool { class: ours }
+
+user -> ui: 메시지
+ui -> agent: run_agent()
+agent -> model: before_agent
+model -> gemini: before_model
+gemini -> model: 함수 호출
+model -> tool: after_model
+tool -> toolfn: before_tool
+toolfn -> tool: 결과
+tool -> model: after_tool
+model -> gemini: before_model (재요청)
+gemini -> model: 최종 응답
+model -> agent: after_model
+agent -> ui: after_agent
+ui -> user: 표시

@@ -1,0 +1,30 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+ui: Streamlit UI (app.py) { class: ours }
+
+agent_scope: "에이전트 실행 범위\nbefore/after_agent_callback" {
+  class: ours
+  direction: down
+
+  model_scope: "모델 호출 범위\nbefore/after_model_callback" {
+    class: ours
+    direction: down
+
+    gemini: Gemini API (gemini-3-flash-preview) { class: ext }
+
+    tool_scope: "도구 실행 범위\nbefore/after_tool_callback" {
+      class: ours
+      tool_fn: 계산기 도구 (calculator_tool) { class: ours }
+    }
+  }
+}
+
+user -> ui: 채팅 메시지
+ui -> agent_scope: run_agent(message)
+agent_scope.model_scope -> agent_scope.model_scope.gemini: 모델 요청
+agent_scope.model_scope.gemini -> agent_scope.model_scope.tool_scope.tool_fn: 함수 호출 응답이면 위임
+agent_scope.model_scope.tool_scope.tool_fn -> agent_scope.model_scope.gemini: 결과를 담아 재요청
+agent_scope.model_scope.gemini -> ui: 최종 텍스트
+ui -> user: 화면에 표시

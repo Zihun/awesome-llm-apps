@@ -436,4 +436,4 @@ Step 3에서 `InMemorySessionService`는 같은 실험에서 `None`을 돌려줬
 
 ## 다음 날 예고
 
-Day 019 · Google ADK Crash Course · 6_callbacks — 에이전트 생명주기·LLM 요청·도구 실행 세 지점에 콜백을 붙여 실행 중간에 관찰하고 개입하는 법을 다룹니다.
+[Day 019 · Google ADK Crash Course · 6_callbacks](../day019-adk-6-callbacks/README.md) — 에이전트 생명주기·LLM 요청·도구 실행 세 지점에 콜백을 붙여 실행 중간에 관찰하고 개입하는 법을 다룹니다.
