@@ -657,4 +657,4 @@ ValueError: No API key was provided. Please pass a valid API key.
 
 ## 다음 날 예고
 
-Day 018 · Google ADK Crash Course · 5_memory_agent — 세션을 넘어 정보를 기억하는 메모리 서비스를 에이전트에 붙이는 법을 다룹니다.
+[Day 018 · Google ADK Crash Course · 5_memory_agent](../day018-adk-5-memory-agent/README.md) — 세션을 넘어 정보를 기억하는 메모리 서비스를 에이전트에 붙이는 법을 다룹니다.

@@ -49,7 +49,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 133일 일정
 
-진도: 17 / 133일 완료
+진도: 18 / 133일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -77,7 +77,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 015](day015-adk-2-model-agnostic-agent/README.md) | Google ADK Crash Course · 2_model_agnostic_agent | [ai_agent_framework_crash_course/google_adk_crash_course/2_model_agnostic_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/2_model_agnostic_agent/) |
 | ✅ | [Day 016](day016-adk-3-structured-output-agent/README.md) | Google ADK Crash Course · 3_structured_output_agent | [ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent/) |
 | ✅ | [Day 017](day017-adk-4-tool-using-agent/README.md) | Google ADK Crash Course · 4_tool_using_agent | [ai_agent_framework_crash_course/google_adk_crash_course/4_tool_using_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/4_tool_using_agent/) |
-| ⬜ | Day 018 | Google ADK Crash Course · 5_memory_agent | [ai_agent_framework_crash_course/google_adk_crash_course/5_memory_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/5_memory_agent/) |
+| ✅ | [Day 018](day018-adk-5-memory-agent/README.md) | Google ADK Crash Course · 5_memory_agent | [ai_agent_framework_crash_course/google_adk_crash_course/5_memory_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/5_memory_agent/) |
 | ⬜ | Day 019 | Google ADK Crash Course · 6_callbacks | [ai_agent_framework_crash_course/google_adk_crash_course/6_callbacks](../../ai_agent_framework_crash_course/google_adk_crash_course/6_callbacks/) |
 | ⬜ | Day 020 | Google ADK Crash Course · 7_plugins | [ai_agent_framework_crash_course/google_adk_crash_course/7_plugins](../../ai_agent_framework_crash_course/google_adk_crash_course/7_plugins/) |
 | ⬜ | Day 021 | Google ADK Crash Course · 8_simple_multi_agent | [ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent](../../ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent/) |

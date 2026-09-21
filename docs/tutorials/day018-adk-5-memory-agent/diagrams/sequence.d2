@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+app: app.py { class: ours }
+agent: chat()+Runner (agent.py) { class: ours }
+sess: SessionService { class: ours }
+gemini: Gemini API { class: ext }
+
+user -> app: 메시지 입력
+app -> agent: chat(user_id, message)
+agent -> sess: get_session, 없으면 create_session
+sess -> agent: Session(state)
+agent -> gemini: run_async 모델 요청
+gemini -> agent: 키 없으면 예외 (내부에서 처리)
+agent -> sess: append_event로 상태 갱신
+agent -> app: response_text
+app -> user: 화면에 표시

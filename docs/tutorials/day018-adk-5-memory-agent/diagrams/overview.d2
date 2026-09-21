@@ -1,0 +1,27 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+
+s1: 5_1_in_memory_conversation_agent/ {
+  direction: down
+  app: Streamlit UI (app.py) { class: ours }
+  agent: LlmAgent + Runner (agent.py) { class: ours }
+}
+
+s2: 5_2_persistent_conversation_agent/ {
+  direction: down
+  app: Streamlit UI (app.py) { class: ours }
+  agent: LlmAgent + Runner (agent.py) { class: ours }
+}
+
+db: sessions.db (SQLite 파일) { class: store }
+gemini: Gemini API (gemini-3-flash-preview) { class: ext }
+
+user -> s1.app: 채팅 메시지
+user -> s2.app: 채팅 메시지
+s1.app -> s1.agent: chat(user_id, message)
+s2.app -> s2.agent: chat(user_id, message)
+s1.agent -> gemini: Runner.run_async 모델 요청
+s2.agent -> gemini: Runner.run_async 모델 요청
+s2.agent -> db: get_session·create_session (SQLAlchemy)
