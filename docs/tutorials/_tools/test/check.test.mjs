@@ -203,3 +203,29 @@ test("citations pointing outside the repo (.venv, site-packages) are reported; a
     `Case 3 (ordinary repo citation) should not report: ${problems3.join("\n")}`
   );
 });
+
+test("a bare uv run line is reported; the same line with --no-project is not; a mid-sentence mention is not", () => {
+  // Case 1: A bare `uv run ...` command line IS reported
+  const case1 = fixture({ readme: GOOD_README("```bash\nuv run python -c \"print(1)\"\n```\n") });
+  const problems1 = checkDay(case1.dayDir, { repoRoot: case1.repo });
+  assert.ok(
+    problems1.some((p) => p.includes("uv run에 --no-project가 없어 루트 환경이 쓰입니다")),
+    `Case 1 (bare uv run) should report: ${problems1.join("\n")}`
+  );
+
+  // Case 2: The same line with --no-project is NOT reported
+  const case2 = fixture({ readme: GOOD_README("```bash\nuv run --no-project python -c \"print(1)\"\n```\n") });
+  const problems2 = checkDay(case2.dayDir, { repoRoot: case2.repo });
+  assert.ok(
+    !problems2.some((p) => p.includes("uv run에 --no-project가 없어 루트 환경이 쓰입니다")),
+    `Case 2 (--no-project present) should not report: ${problems2.join("\n")}`
+  );
+
+  // Case 3: A mid-sentence mention of uv run (not at the start of the line) is NOT reported
+  const case3 = fixture({ readme: GOOD_README("이 저장소에서는 uv run이 루트 환경을 씁니다.\n") });
+  const problems3 = checkDay(case3.dayDir, { repoRoot: case3.repo });
+  assert.ok(
+    !problems3.some((p) => p.includes("uv run에 --no-project가 없어 루트 환경이 쓰입니다")),
+    `Case 3 (mid-sentence mention) should not report: ${problems3.join("\n")}`
+  );
+});

@@ -45,6 +45,8 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다. `uv venv`가 만든 가상환경에는 pip이 없어 레슨이 안내하는 `pip install`이 그대로는 실패한다는 것은 Day 14의 문제 해결에서 이미 확인했으므로, 위 명령은 처음부터 `uv pip install`을 씁니다.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `requirements.txt`는 두 하위 폴더 모두 2줄이고 내용이 완전히 같습니다(직접 확인: `diff` 종료 코드 0).
 
 `ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent/3_1_customer_support_ticket_agent/requirements.txt:1-2`
@@ -71,7 +73,7 @@ GOOGLE_API_KEY="your-api-key"
 **확인.**
 
 ```bash
-uv run python -c "import google.adk, pydantic; print(google.adk.__version__, pydantic.VERSION)"
+uv run --no-project python -c "import google.adk, pydantic; print(google.adk.__version__, pydantic.VERSION)"
 ```
 
 ```
@@ -127,7 +129,7 @@ root_agent = LlmAgent(
 **확인.**
 
 ```bash
-uv run python -c "from email_generator_agent.agent import root_agent, EmailContent; print(root_agent.output_schema is EmailContent, '|', root_agent.output_key)"
+uv run --no-project python -c "from email_generator_agent.agent import root_agent, EmailContent; print(root_agent.output_schema is EmailContent, '|', root_agent.output_key)"
 ```
 
 ```
@@ -219,7 +221,7 @@ self.config.response_mime_type = "application/json"
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from customer_support_agent.agent import SupportTicket
 from google.genai._transformers import t_schema
 print(t_schema(None, SupportTicket).model_dump_json(indent=2, exclude_none=True))
@@ -299,7 +301,7 @@ print(t_schema(None, SupportTicket).model_dump_json(indent=2, exclude_none=True)
 
 ```bash
 cd ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent/3_1_customer_support_ticket_agent
-uv run adk web --port 8990 --no_use_local_storage .
+uv run --no-project adk web --port 8990 --no_use_local_storage .
 ```
 
 이 폴더 이름(`3_1_customer_support_ticket_agent`) 자체는 숫자로 시작하지만, `adk web`에게 넘긴 경로가 바로 이 폴더이므로 스캔 대상은 그 **안**의 하위 폴더 하나, 즉 `customer_support_agent/`뿐입니다 — 유효한 식별자입니다. `3_2_email_agent`도 같은 방식으로 자신의 폴더 안에서 띄우면 `email_generator_agent`만 스캔됩니다.
@@ -352,7 +354,7 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 ```bash
 cd ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent
-uv run adk web --port 8992 --no_use_local_storage .
+uv run --no-project adk web --port 8992 --no_use_local_storage .
 ```
 
 `adk web`은 `web=True`일 때 `NestedAgentLoader`라는 로더를 쓰는데(소스로 확인, google-adk 2.9.2의 `google/adk/cli/fast_api.py`), 이 로더는 하위 폴더를 최대 5단계까지 재귀적으로 훑어 `agent.py`가 있는 폴더를 모두 찾고 상대 경로 구분자를 점(`.`)으로 바꿔 이름 짓습니다(소스로 확인, `google/adk/cli/utils/_nested_agent_loader.py`). 그 결과 두 에이전트는 각각 `3_1_customer_support_ticket_agent.customer_support_agent`, `3_2_email_agent.email_generator_agent`라는 점 포함 이름으로 잡힙니다.

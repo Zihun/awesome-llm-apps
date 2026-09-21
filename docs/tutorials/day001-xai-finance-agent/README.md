@@ -44,6 +44,8 @@ uv pip install ddgs openai fastapi python-multipart uvicorn
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pip install ddgs openai fastapi python-multipart uvicorn`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 두 번째 설치 명령이 필요한 이유를 미리 짚습니다. `requirements.txt`는 `agno`, `duckduckgo-search`, `yfinance`만 나열하지만, 코드가 실제로 쓰는 `agno.tools.duckduckgo` 모듈은 내부적으로 `duckduckgo-search`가 아니라 `ddgs`라는 별도 패키지를 가져오고, xAI 모델과 AgentOS도 각각 `openai`, `fastapi`·`python-multipart`·`uvicorn`을 추가로 요구합니다 — 다섯 개 모두 직접 하나씩 설치해 가며 확인한 사실입니다. 이 명령 없이 `requirements.txt`만 설치하면 이후 단계에서 순서대로 다른 `ModuleNotFoundError`/`ImportError`를 만나게 되며, 정확한 증상과 원인은 "문제 해결"에 정리했습니다. 참고로 `requirements.txt`의 `agno>=2.2.10`은 버전 상한이 없어서, 이 문서를 작성하며 설치했을 때는 **agno 3.0.9**가 받아졌습니다. 여러분이 설치한 시점의 최신 버전이 다르면 이후 확인 명령의 출력도 조금 다를 수 있습니다.
 
 키는 셸에 환경변수로 둡니다.
@@ -63,7 +65,7 @@ $env:XAI_API_KEY="여러분의-키"
 **확인.**
 
 ```bash
-uv run python -c "import agno; print('ok')"
+uv run --no-project python -c "import agno; print('ok')"
 ```
 
 ```
@@ -100,7 +102,7 @@ agent = Agent(
 **확인.**
 
 ```bash
-uv run python -c "from agno.models.xai import xAI; m = xAI(id='grok-4-1-fast'); print(m.id, m.provider)"
+uv run --no-project python -c "from agno.models.xai import xAI; m = xAI(id='grok-4-1-fast'); print(m.id, m.provider)"
 ```
 
 ```
@@ -133,7 +135,7 @@ from agno.tools.duckduckgo import DuckDuckGoTools
 **확인.**
 
 ```bash
-uv run python -c "from agno.tools.yfinance import YFinanceTools; print(sorted(YFinanceTools().functions))"
+uv run --no-project python -c "from agno.tools.yfinance import YFinanceTools; print(sorted(YFinanceTools().functions))"
 ```
 
 ```
@@ -162,7 +164,7 @@ uv run python -c "from agno.tools.yfinance import YFinanceTools; print(sorted(YF
 **확인.**
 
 ```bash
-uv run python -c "import xai_finance_agent as m; print(m.agent.name, len(m.agent.tools))"
+uv run --no-project python -c "import xai_finance_agent as m; print(m.agent.name, len(m.agent.tools))"
 ```
 
 ```
@@ -200,7 +202,7 @@ if __name__ == "__main__":
 **확인.** `XAI_API_KEY` 없이도 서버 자체는 뜹니다(직접 실행해 확인). 앱 폴더에서:
 
 ```bash
-uv run python xai_finance_agent.py
+uv run --no-project python xai_finance_agent.py
 ```
 
 직접 확인한 로그(발췌):
@@ -235,7 +237,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs
 **확인.** 키가 없어 이 단계의 최종 화면은 재현하지 못했습니다. 대신 같은 경로를 키 없이 직접 호출해 실제로 무슨 일이 일어나는지 확인합니다.
 
 ```bash
-uv run python -c "import xai_finance_agent as m; m.agent.run('hello')"
+uv run --no-project python -c "import xai_finance_agent as m; m.agent.run('hello')"
 ```
 
 파이썬 예외가 밖으로 튀어나오지 않고, 터미널에

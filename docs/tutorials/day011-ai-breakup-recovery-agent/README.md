@@ -44,6 +44,8 @@ uv pip install -r requirements.txt
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `starter_ai_agents/ai_breakup_recovery_agent/requirements.txt:1-5`
 
 ```text
@@ -67,7 +69,7 @@ uv pip install -U google-genai ddgs
 **확인.**
 
 ```bash
-uv run python -c "from agno.models.google import Gemini; from agno.tools.duckduckgo import DuckDuckGoTools; print('ok')"
+uv run --no-project python -c "from agno.models.google import Gemini; from agno.tools.duckduckgo import DuckDuckGoTools; print('ok')"
 ```
 
 ```
@@ -118,7 +120,7 @@ with st.sidebar:
 **확인.** 앱 폴더에서 모듈을 직접 임포트해 초기 상태를 확인합니다.
 
 ```bash
-uv run python -c "import ai_breakup_recovery_agent as m; print(repr(m.st.session_state.api_key_input))"
+uv run --no-project python -c "import ai_breakup_recovery_agent as m; print(repr(m.st.session_state.api_key_input))"
 ```
 
 Streamlit이 bare 모드 경고를 56줄 함께 출력하지만(무시해도 됨, 이 문서에서는 생략), 마지막 줄은 직접 확인한 아래 내용입니다.
@@ -176,7 +178,7 @@ def initialize_agents(api_key: str) -> tuple[Agent, Agent, Agent, Agent]:
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import logging; logging.disable(logging.WARNING)
 import ai_breakup_recovery_agent as m
 agents = m.initialize_agents('fake-key-not-real')
@@ -226,7 +228,7 @@ tools per agent: [0, 0, 0, 1]
 **확인.**
 
 ```bash
-uv run python -c "from agno.tools.duckduckgo import DuckDuckGoTools; print(sorted(DuckDuckGoTools().functions))"
+uv run --no-project python -c "from agno.tools.duckduckgo import DuckDuckGoTools; print(sorted(DuckDuckGoTools().functions))"
 ```
 
 ```
@@ -297,7 +299,7 @@ with col2:
 **확인.** 임시 경로 규칙만 따로 재현합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import tempfile, os
 temp_dir = tempfile.gettempdir()
 temp_path = os.path.join(temp_dir, f'temp_{\"chat1.png\"}')
@@ -376,7 +378,7 @@ Closure(206-223행)·Routine Planner(227-244행)·Brutal Honesty(248-265행)는 
 **확인.** 실제 화면은 키가 없어 재현하지 못했습니다. 대신 `st.*` 호출을 가짜 함수로 바꿔치기하고 파일 전체를 `runpy`로 실행해, 진짜 버튼 핸들러가 끝까지 도는지 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import sys; sys.stdout.reconfigure(encoding='utf-8')
 import logging; logging.disable(logging.WARNING)
 import contextlib, runpy

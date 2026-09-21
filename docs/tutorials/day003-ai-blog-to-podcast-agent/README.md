@@ -44,6 +44,8 @@ uv pip install -r requirements.txt
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 Day 1·2와 달리 이 앱은 `requirements.txt`(`agno>=2.2.10`, `streamlit>=1.40.2`, `openai>=1.102.0`, `requests`, `firecrawl-py>=4.6.0`, `elevenlabs>=1.0.0`)만 설치해도 이후 모든 import가 성공합니다(직접 확인 — 추가 설치 불필요). 이 문서를 작성하며 설치했을 때는 **agno 3.0.9**, **firecrawl-py 4.42.0**, **elevenlabs 2.68.0**이 받아졌습니다.
 
 OpenAI·Firecrawl·ElevenLabs 키 세 개를 미리 발급받아 두세요 — 이 앱은 세 키를 모두 사이드바 입력창에 붙여넣어야 버튼이 눌립니다(Step 2에서 확인합니다).
@@ -53,7 +55,7 @@ OpenAI·Firecrawl·ElevenLabs 키 세 개를 미리 발급받아 두세요 — �
 **확인.**
 
 ```bash
-uv run python -c "from agno.agent import Agent; from agno.models.openai import OpenAIChat; from agno.tools.firecrawl import FirecrawlTools; from elevenlabs import ElevenLabs; print('ok')"
+uv run --no-project python -c "from agno.agent import Agent; from agno.models.openai import OpenAIChat; from agno.tools.firecrawl import FirecrawlTools; from elevenlabs import ElevenLabs; print('ok')"
 ```
 
 ```
@@ -105,7 +107,7 @@ if st.button("🎙️ Generate Podcast", disabled=not all([openai_key, elevenlab
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run streamlit run blog_to_podcast_agent.py --server.headless true
+uv run --no-project streamlit run blog_to_podcast_agent.py --server.headless true
 ```
 
 다른 터미널에서:
@@ -147,7 +149,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.models.openai import OpenAIChat
 m = OpenAIChat(id='gpt-4o')
 print(m.id, m.api_key)
@@ -183,13 +185,13 @@ gpt-4o None
 
 ```bash
 # macOS/Linux, Git Bash
-FIRECRAWL_API_KEY=dummy uv run python -c "from agno.tools.firecrawl import FirecrawlTools; print(sorted(FirecrawlTools().functions))"
+FIRECRAWL_API_KEY=dummy uv run --no-project python -c "from agno.tools.firecrawl import FirecrawlTools; print(sorted(FirecrawlTools().functions))"
 ```
 
 ```powershell
 # Windows PowerShell
 $env:FIRECRAWL_API_KEY="dummy"
-uv run python -c "from agno.tools.firecrawl import FirecrawlTools; print(sorted(FirecrawlTools().functions))"
+uv run --no-project python -c "from agno.tools.firecrawl import FirecrawlTools; print(sorted(FirecrawlTools().functions))"
 ```
 
 ```
@@ -217,7 +219,7 @@ agno의 `agent.run()`은 Day 1에서 확인했듯 실패해도 파이썬 예외�
 **확인.** 키가 없어 화면의 최종 요약은 재현하지 못했습니다. 대신 같은 호출을 잘못된 키로 직접 실행해 반환값을 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import os
 os.environ['OPENAI_API_KEY'] = 'sk-invalid'
 os.environ['FIRECRAWL_API_KEY'] = 'fc-invalid'
@@ -294,7 +296,7 @@ content: Incorrect API key provided: sk-invalid. You can find your API key at ht
 **확인.** 키가 없어 실제 오디오는 재현하지 못했습니다. 대신 유효하지 않은 ElevenLabs 키로 같은 호출을 실행해 실제로 어떤 예외가 나는지 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from elevenlabs import ElevenLabs
 client = ElevenLabs(api_key='invalid-test-key')
 try:

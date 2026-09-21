@@ -24,8 +24,10 @@
 cd <원본 앱 폴더>
 uv venv
 uv pip install -r requirements.txt
-uv run python <엔트리 파일>
+uv run --no-project python <엔트리 파일>
 ```
+
+이 저장소는 루트에도 `pyproject.toml`과 `uv.lock`이 있어, `--no-project` 없이 `uv run`을 쓰면 방금 만든 앱 폴더의 환경이 아니라 루트 환경이 쓰입니다 — 각 일차의 확인 명령이 모두 이 플래그를 붙이는 이유입니다.
 
 리포 루트의 공용 환경(`uv sync --all-extras`)을 쓰는 방법은 [UV_MIGRATION_GUIDE.md](../../UV_MIGRATION_GUIDE.md)에 있습니다. 앱마다 의존성 버전이 달라 충돌할 수 있으므로, 튜토리얼의 확인 명령은 모두 독립 가상환경 기준으로 검증했습니다.
 

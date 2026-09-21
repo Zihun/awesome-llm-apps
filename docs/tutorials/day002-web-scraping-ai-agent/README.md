@@ -40,7 +40,7 @@
 cd starter_ai_agents/web_scraping_ai_agent
 uv venv
 uv pip install -r requirements.txt
-uv run playwright install chromium
+uv run --no-project playwright install chromium
 ```
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && playwright install chromium`.)
@@ -54,7 +54,7 @@ OpenAI 키는 이 단계에서 당장 쓰지 않습니다. 이 앱은 키를 환
 **확인.**
 
 ```bash
-uv run python -c "from scrapegraphai.graphs import SmartScraperGraph; print('ok')"
+uv run --no-project python -c "from scrapegraphai.graphs import SmartScraperGraph; print('ok')"
 ```
 
 ```
@@ -93,7 +93,7 @@ openai_access_token = st.text_input("OpenAI API Key", type="password")
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run streamlit run ai_scrapper.py --server.headless true
+uv run --no-project streamlit run ai_scrapper.py --server.headless true
 ```
 
 다른 터미널에서:
@@ -154,7 +154,7 @@ if openai_access_token:
 **확인.** 이 코드가 실제로 만드는 딕셔너리 구조를 그대로 재현해봅니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 openai_access_token = 'sk-...'
 model = 'gpt-4o'
 graph_config = {
@@ -195,7 +195,7 @@ print(graph_config)
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from scrapegraphai.graphs import SmartScraperGraph
 g = SmartScraperGraph(
     prompt='Extract the page title',
@@ -237,7 +237,7 @@ SmartScraperGraph Extract the page title
 **확인.** 키가 없어 화면의 최종 결과는 재현하지 못했습니다. 대신 같은 파이프라인을 유효하지 않은 키로 직접 호출해, 실제로 어디서 멈추는지 확인합니다(Step 1에서 `playwright install chromium`을 마쳤다는 전제입니다).
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from scrapegraphai.graphs import SmartScraperGraph
 smart_scraper_graph = SmartScraperGraph(
     prompt='Extract the page title',
@@ -521,12 +521,12 @@ Gemini 버전까지 해본다면:
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| "Scrape" 실행 시 `RuntimeError: Failed to scrape after 1 attempts: BrowserType.launch: Executable doesn't exist at ...\ms-playwright\chromium_headless_shell-1234\chrome-headless-shell-win64\chrome-headless-shell.exe`(폴더 번호 `1234`는 설치된 playwright 버전마다 다를 수 있음)와 함께 Playwright가 `playwright install` 실행을 안내하는 배너가 뜸 | `requirements.txt`의 `playwright`는 파이썬 바인딩만 설치하고, 실제 브라우저 실행 파일은 별도 다운로드가 필요하다. 앱 자체 README에 이 단계가 빠져 있어 재현되던 문제로, Step 1에 적은 대로 앱 README에도 이 명령을 추가해 두었다(직접 재현) | `uv run playwright install chromium` 실행 후 재시도 |
+| "Scrape" 실행 시 `RuntimeError: Failed to scrape after 1 attempts: BrowserType.launch: Executable doesn't exist at ...\ms-playwright\chromium_headless_shell-1234\chrome-headless-shell-win64\chrome-headless-shell.exe`(폴더 번호 `1234`는 설치된 playwright 버전마다 다를 수 있음)와 함께 Playwright가 `playwright install` 실행을 안내하는 배너가 뜸 | `requirements.txt`의 `playwright`는 파이썬 바인딩만 설치하고, 실제 브라우저 실행 파일은 별도 다운로드가 필요하다. 앱 자체 README에 이 단계가 빠져 있어 재현되던 문제로, Step 1에 적은 대로 앱 README에도 이 명령을 추가해 두었다(직접 재현) | `uv run --no-project playwright install chromium` 실행 후 재시도 |
 | 위 에러 메시지를 콘솔에 출력하는 도중 `UnicodeEncodeError: 'cp949' codec can't encode character '╔'...`까지 추가로 발생해 진짜 원인이 가려짐 | Playwright의 안내 배너가 상자 그리기 유니코드 문자(╔ 등)를 쓰는데, 한국어 Windows의 기본 콘솔 코드페이지(cp949)가 이 문자를 인코딩하지 못한다(직접 확인, 출력을 파이프로 받을 때 재현됨) | 진짜 원인(`RuntimeError`, 브라우저 없음)은 이미 나온 뒤이므로 그 줄을 찾아 위 해결을 따른다. `PYTHONIOENCODING=utf-8` 환경변수를 설정하고 재실행하면 배너까지 깨지지 않고 보인다(직접 확인) |
 | "Scrape"를 눌러도 무한 대기 없이 바로 에러가 뜨고, 페이지 로드 자체는 된 것처럼 보임 | OpenAI 키가 없거나 잘못됨. `SmartScraperGraph` 생성 시점에는 키를 검증하지 않고, 실제 LLM 호출 시점(`.run()` 내부)에야 인증을 확인한다(직접 확인: 페이지는 167자를 정상 파싱한 뒤 LLM 단계에서 401로 실패) | 유효한 OpenAI 키를 앱 화면 입력창에 다시 입력 |
 | Scrape를 눌러도 **콘솔에 아무 로그가 없어서** 도는 중인지, 멈춘 건지, 어디까지 갔는지 알 수 없음 | `graph_config`에 `"verbose": True`가 없으면 `abstract_graph.py:84-89`가 scrapegraphai 자신의 로거를 `WARNING`으로 내려버린다. 진행 로그 네 줄(`--- Executing Fetch Node ---`, `--- (Fetching HTML from: ...) ---`, `--- Executing ParseNode Node ---`, `--- Executing GenerateAnswer Node ---`)은 전부 INFO라 통째로 사라진다. 반면 에러는 `logger.error`라 원래 보이므로, **아무것도 안 나왔다는 건 에러 없이 끝까지 돌았다는 뜻**이다(직접 재현·수정: 켜기 전 0줄 → 켠 뒤 4줄) | `graph_config`에 `"verbose": True`를 넣는다 — 세 파일 모두에 적용해 두었다. 화면에서 보려면 Scrape 블록의 진단 패널을 펼친다(`ai_scrapper.py:59-83`). 켜면 scrapegraphai 이모지 배너까지 같이 나오지만 cp949 콘솔에서도 `✨`로 이스케이프될 뿐 죽지 않는다(직접 확인) |
 | 예전 버전의 앱 README를 봤다면, "Getting Started"가 로컬 버전(`local_ai_scrapper.py`)을 쓸 때도 OpenAI 키가 필요한 것처럼 순서대로 안내 | 문서 구성 오류였다. `local_ai_scrapper.py`는 OpenAI를 전혀 쓰지 않고 `ollama/llama3.2`(`starter_ai_agents/web_scraping_ai_agent/local_ai_scrapper.py:23`)만 호출한다(직접 확인: 파일에 OpenAI 관련 import 없음) | 로컬 버전을 쓸 때는 OpenAI 키 없이 Ollama만 설치하면 된다. 현재 앱 README는 OpenAI·Gemini·로컬 세 갈래로 나눠 안내하도록 고쳐 두었다 |
-| 앱 폴더에서 `uv venv`로 `.venv`를 만들고 `uv pip install -r requirements.txt`를 돌렸는데, 정작 `.venv/Lib/site-packages`에는 `_virtualenv.pth`만 있고 패키지가 하나도 없음. `uv run`은 뜬금없이 수십 개 패키지를 uninstall/install 함 | 이 저장소는 루트(`awesome-llm-apps/`)에 `pyproject.toml`과 `uv.lock`이 있어 uv가 여기를 프로젝트 루트로 인식한다. 앱 하위 폴더에서 실행해도 uv는 루트 프로젝트의 `.venv`를 대상으로 잡고, `uv run`은 그 환경을 `uv.lock`에 맞춰 동기화한다(직접 확인) | 하위 폴더의 venv를 확실히 쓰려면 `uv venv` 후 활성화하거나(`source .venv/Scripts/activate`) `.venv/Scripts/python.exe -m ...`로 직접 호출한다. 루트 `.venv`를 그냥 써도 무방하다 — `uv.lock`에 scrapegraphai·streamlit·playwright·langchain-google-genai가 모두 들어있다(직접 확인) |
+| 앱 폴더에서 `uv venv`로 `.venv`를 만들고 `uv pip install -r requirements.txt`를 돌렸는데, 정작 `.venv/Lib/site-packages`에는 `_virtualenv.pth`만 있고 패키지가 하나도 없음. `uv run`은 뜬금없이 수십 개 패키지를 uninstall/install 함 | 이 저장소는 루트(`awesome-llm-apps/`)에 `pyproject.toml`과 `uv.lock`이 있어 uv가 여기를 프로젝트 루트로 인식한다. 앱 하위 폴더에서 실행해도 uv는 루트 프로젝트의 `.venv`를 대상으로 잡고, `uv run`은 그 환경을 `uv.lock`에 맞춰 동기화한다(직접 확인) | 하위 폴더의 venv를 확실히 쓰려면 `uv run`에 `--no-project`를 붙이거나(이 문서의 나머지 명령은 모두 이렇게 한다), `uv venv` 후 활성화하거나(`source .venv/Scripts/activate`) `.venv/Scripts/python.exe -m ...`로 직접 호출한다. 루트 `.venv`를 그냥 써도 무방하다 — `uv.lock`에 scrapegraphai·streamlit·playwright·langchain-google-genai가 모두 들어있다(직접 확인) |
 | **Windows에서** `streamlit run ...` 후 Scrape를 누르면 `NotImplementedError` + `RuntimeError: Failed to scrape after 1 attempts:` (뒤에 아무 이유도 붙지 않은 빈 메시지). 터미널에서 `python -c`로 같은 코드를 돌리면 멀쩡함 | `streamlit run`이 Tornado 호환을 위해 전역 asyncio 정책을 `WindowsSelectorEventLoopPolicy`로 바꾸는데(streamlit 1.51.0의 `streamlit/web/bootstrap.py` 87-90행, 소스로 확인), Windows의 selector 루프는 서브프로세스를 만들지 못해 Playwright 드라이버가 뜨지 못한다(직접 재현·수정) | 스크립트 맨 위에 `if sys.platform == "win32": asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())`를 넣는다. 세 파일 모두에 이미 들어있다(`ai_scrapper.py:13-14`, `gemini_ai_scrapper.py:14-15`, `local_ai_scrapper.py:13-14`) — 이 에러가 다시 보인다면 그 블록이 지워졌는지 확인한다. 자세한 설명은 "[Windows에서 Playwright가 죽는 이유](#windows에서-playwright가-죽는-이유)" |
 | Gemini 버전에서 `KeyError: 'model_provider'` (원인을 전혀 알려주지 않는 메시지) | 모델 문자열에 `google_genai/` 접두사가 없다. scrapegraphai는 `/`가 없으면 내장 `models_tokens` 표에서 공급자를 추론하는데, `gemini-3.6-flash`는 그 표에 없어 실패한다. 그러면 "지원하지 않는 공급자" `ValueError`를 만들려다 그 메시지 안의 `llm_params["model_provider"]`를 읽으며 `KeyError`가 먼저 터진다(직접 확인, scrapegraphai 2.2.4의 버그) | `"model": "google_genai/gemini-3.6-flash"`로 접두사를 붙인다 (`starter_ai_agents/web_scraping_ai_agent/gemini_ai_scrapper.py:47`) |
 | Gemini 버전에서 `ImportError` 또는 `Error instancing model: ...`이 나며 `ChatGoogleGenerativeAI`를 만들지 못함 | `langchain-google-genai`가 설치되지 않았다. scrapegraphai의 의존성에 포함되어 있지 않다(직접 확인) | `uv pip install langchain-google-genai` (또는 갱신된 `requirements.txt`로 재설치) |

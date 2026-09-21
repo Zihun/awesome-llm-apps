@@ -1022,6 +1022,14 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
     problems.push(rel(`저장소 밖을 가리키는 인용: \`${m[1]}:${m[2]}\` — 서드파티 내부는 "소스로 확인"으로 적고 패키지와 버전을 밝히세요`));
   }
 
+  // (14) 이 저장소는 루트에 pyproject.toml이 있어 uv가 루트를 프로젝트로 본다.
+  //      --no-project 없이 uv run을 쓰면 독자가 만든 앱 폴더 환경이 아니라 루트 환경이 쓰인다.
+  md.split(/\r?\n/).forEach((line, i) => {
+    if (/^\s*uv run\s/.test(line) && !line.includes("--no-project")) {
+      problems.push(rel(`uv run에 --no-project가 없어 루트 환경이 쓰입니다: README.md:${i + 1}`));
+    }
+  });
+
   // (5) no mermaid
   if (/```mermaid/.test(md)) problems.push(rel("mermaid 코드 펜스 사용"));
 

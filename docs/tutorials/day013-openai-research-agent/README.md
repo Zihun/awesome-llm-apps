@@ -58,14 +58,14 @@ uv pip install -r requirements.txt
 
 `requirements.txt`는 5줄(`openai-agents`, `openai`, `streamlit`, `pydantic`, `python-dotenv`)이고 마지막 줄에 개행이 없습니다. 버전 고정은 하나도 없습니다.
 
-여기서 주의할 점이 둘 있습니다. 첫째, **설치하는 패키지 이름은 `openai-agents`인데 코드에서 가져오는 이름은 `agents`입니다**(8행). 이름이 달라서 `pip install agents`로 잘못 설치하면 전혀 다른 패키지가 들어옵니다. 둘째, 이 저장소 루트 `.venv`에는 `openai-agents`가 들어 있지 않습니다(직접 확인: `PackageNotFoundError`). 이 문서를 쓰며 별도 가상환경에 설치해 확인한 버전은 **openai-agents 0.22.3, openai 3.16.2, pydantic 2.13.5**였습니다.
+여기서 주의할 점이 둘 있습니다. 첫째, **설치하는 패키지 이름은 `openai-agents`인데 코드에서 가져오는 이름은 `agents`입니다**(8행). 이름이 달라서 `pip install agents`로 잘못 설치하면 전혀 다른 패키지가 들어옵니다. 둘째, 이 저장소 루트 `.venv`에는 `openai-agents`가 들어 있지 않습니다(직접 확인: `PackageNotFoundError`). 이 문서를 쓰며 별도 가상환경에 설치해 확인한 버전은 **openai-agents 0.22.3, openai 3.16.2, pydantic 2.13.5**였습니다. 다만 아래 `uv run` 명령에는 모두 `--no-project`를 붙여 방금 만든 로컬 가상환경을 쓰게 했으므로, 이 문제는 실제로 만나지 않습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
 **확인.** 앱이 8-15행에서 가져오는 여섯 이름을 그대로 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agents import Agent, Runner, WebSearchTool, function_tool, handoff, trace
 print('ok')
 "
@@ -116,7 +116,7 @@ class ResearchReport(BaseModel):
 **확인.** 두 모델의 필드를 직접 찍어 봅니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from pydantic import BaseModel
 class ResearchPlan(BaseModel):
     topic: str
@@ -170,7 +170,7 @@ triage_agent = Agent(
 **확인.** 세 에이전트의 성격을 객체에서 직접 읽습니다. 구성 단계는 네트워크를 타지 않으므로 가짜 키로도 됩니다.
 
 ```bash
-OPENAI_API_KEY=sk-not-a-real-key uv run python -c "
+OPENAI_API_KEY=sk-not-a-real-key uv run --no-project python -c "
 import sys
 sys.path.insert(0, 'starter_ai_agents/openai_research_agent')
 import research_agent as ra
@@ -226,7 +226,7 @@ editor_agent | output_type: ResearchReport | tools: [] | handoffs: []
 **확인.** 폴링 루프가 실제로 15초를 소비한다는 것만 따로 재현해 봅니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import asyncio, time
 async def poll():
     for i in range(15):
@@ -254,7 +254,7 @@ t0 = time.time(); asyncio.run(poll()); print(f'{time.time()-t0:.1f}s')
 **확인.** 서버를 띄웁니다. 키가 없으면 30-33행의 가드에 걸려 오류 문구만 보이는 것까지가 정상 동작입니다.
 
 ```bash
-OPENAI_API_KEY=sk-not-a-real-key uv run streamlit run research_agent.py --server.headless true
+OPENAI_API_KEY=sk-not-a-real-key uv run --no-project streamlit run research_agent.py --server.headless true
 ```
 
 ```bash

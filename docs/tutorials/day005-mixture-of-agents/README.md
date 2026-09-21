@@ -42,6 +42,8 @@ uv pip install -r requirements.txt
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `requirements.txt`는 `streamlit`과 `together` 두 줄뿐이고 지금까지 중 가장 느슨하게 버전 고정이 전혀 없습니다. 이 문서를 작성하며 설치했을 때는 **streamlit 1.63.0**, **together 2.33.2**가 받아졌습니다(직접 확인). 이 두 줄만으로 파일이 쓰는 모든 import가 성공합니다(추가 설치 불필요).
 
 이 폴더에는 앱 자체 `README.md`가 없습니다. 그리고 엔트리 파일 이름 `mixture-of-agents.py`는 하이픈이 들어 있어 파이썬 식별자 규칙에 어긋납니다 — `import mixture-of-agents`는 `SyntaxError`입니다(직접 확인). `streamlit run`은 파일을 경로로 실행하므로 이 문제와 무관하지만, 이 문서의 나머지 확인 명령처럼 파일 내부 값을 파이썬에서 직접 들여다보려면 `runpy.run_path("mixture-of-agents.py")`로 파일을 경로째로 실행해 결과 네임스페이스를 얻는 방식을 씁니다.
@@ -51,7 +53,7 @@ uv pip install -r requirements.txt
 **확인.**
 
 ```bash
-uv run python -m py_compile mixture-of-agents.py && echo compiled
+uv run --no-project python -m py_compile mixture-of-agents.py && echo compiled
 ```
 
 ```
@@ -59,7 +61,7 @@ compiled
 ```
 
 ```bash
-uv run python -c "import streamlit as st; import asyncio; import os; from together import AsyncTogether, Together; print('ok')"
+uv run --no-project python -c "import streamlit as st; import asyncio; import os; from together import AsyncTogether, Together; print('ok')"
 ```
 
 ```
@@ -107,7 +109,7 @@ Day 1~4와 달리 이 키는 사이드바가 아니라 본문에 있는 `st.text
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run streamlit run mixture-of-agents.py --server.headless true
+uv run --no-project streamlit run mixture-of-agents.py --server.headless true
 ```
 
 다른 터미널에서:
@@ -157,7 +159,7 @@ if together_api_key:
 **확인.** 하이픈이 든 파일명을 `runpy`로 우회해서, 두 리스트가 실제로 겹치는지 파일 자체에서 직접 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import logging
 logging.disable(logging.WARNING)
 import streamlit as st
@@ -214,7 +216,7 @@ True
 **확인.** 키가 없어 실제 응답은 재현하지 못했습니다. 대신 `run_llm`과 같은 호출을 유효하지 않은 키로 직접 실행해, 제안자 호출 하나가 실패하면 무엇이 돌아오는지 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import asyncio
 from together import AsyncTogether
 async_client = AsyncTogether(api_key='test-invalid-key')
@@ -280,7 +282,7 @@ Error code: 401 - {'id': 'ozvKFa4-2kFHot-a39b0ac629d2ea9b', 'error': {'message':
 **확인.** 키가 없어 실제 스트리밍 응답은 재현하지 못했습니다. 대신 같은 호출을 유효하지 않은 키와 가짜 응답 2개로 직접 실행해 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from together import Together
 client = Together(api_key='test-invalid-key')
 aggregator_system_prompt = 'You have been provided with a set of responses from various open-source models to the latest user query.'
@@ -336,7 +338,7 @@ Error code: 401 - {'id': 'ozvKUDo-2kFHot-a39b0bd08f6cf45e', 'error': {'message':
 **확인.** 실제 화면은 키가 없어 재현하지 못했습니다. 대신 `mixture-of-agents.py`를 `runpy`로 직접 실행해 `main()` 전체를 유효하지 않은 키로 호출하고, 정말 예외가 그대로 튀어나오는지 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import logging
 logging.disable(logging.WARNING)
 import streamlit as st

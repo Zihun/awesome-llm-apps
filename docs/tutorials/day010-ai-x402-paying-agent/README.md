@@ -51,6 +51,8 @@ uv pip install -r requirements.txt
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `starter_ai_agents/ai_x402_paying_agent/requirements.txt:1-6`
 
 ```text
@@ -69,7 +71,7 @@ uvicorn==0.52.4
 **확인.**
 
 ```bash
-uv run python -m py_compile seller.py x402_paying_agent.py && echo compiled
+uv run --no-project python -m py_compile seller.py x402_paying_agent.py && echo compiled
 ```
 
 ```
@@ -77,7 +79,7 @@ compiled
 ```
 
 ```bash
-uv run python -c "import anthropic; print(anthropic.__version__)"
+uv run --no-project python -c "import anthropic; print(anthropic.__version__)"
 ```
 
 ```
@@ -139,7 +141,7 @@ app.middleware("http")(payment_middleware(ROUTES, server))
 **확인.** `SELLER_ADDRESS`를 설정하지 않은 상태에서 모듈을 임포트만 해 봅니다.
 
 ```bash
-uv run python -c "import seller"
+uv run --no-project python -c "import seller"
 ```
 
 ```
@@ -194,7 +196,7 @@ def dice(sides: int = 20):
 **확인.** 자금 없는 주소를 판매자 주소로 쓰고, 결제 헤더 없이 호출합니다.
 
 ```bash
-uv run python -c "from eth_account import Account; a = Account.create(); print(a.address)"
+uv run --no-project python -c "from eth_account import Account; a = Account.create(); print(a.address)"
 ```
 
 직접 확인한 출력(주소는 실행마다 무작위로 새로 생성되며, 아래는 실제로 나온 값입니다):
@@ -205,7 +207,7 @@ uv run python -c "from eth_account import Account; a = Account.create(); print(a
 
 ```bash
 export SELLER_ADDRESS="0x3B70C3F31AbE6eA6d49C1e7DAe32DB5491C13269"
-uv run uvicorn seller:app --port 4021
+uv run --no-project uvicorn seller:app --port 4021
 ```
 
 (PowerShell: `$env:SELLER_ADDRESS="0x3B70C3F31AbE6eA6d49C1e7DAe32DB5491C13269"`)
@@ -314,7 +316,7 @@ Claude가 아는 가격은 딱 두 군데뿐입니다 — `DEMO_ENDPOINTS`에 �
 **확인.**
 
 ```bash
-uv run python -c "import x402_paying_agent as m; print([t['name'] for t in m.TOOLS]); print(m.SELLER)"
+uv run --no-project python -c "import x402_paying_agent as m; print([t['name'] for t in m.TOOLS]); print(m.SELLER)"
 ```
 
 ```
@@ -362,7 +364,7 @@ def build_paying_client(private_key: str, max_price_usdc: Decimal) -> httpx.Asyn
 **확인.** 실제 요청은 보내지 않고, 클라이언트 조립까지만 직접 실행합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from eth_account import Account
 from decimal import Decimal
 import x402_paying_agent as m
@@ -463,7 +465,7 @@ async def paid_fetch(url: str, private_key: str, max_price_usdc: Decimal) -> str
 **확인.**
 
 ```bash
-uv run python x402_paying_agent.py --help
+uv run --no-project python x402_paying_agent.py --help
 ```
 
 ```
@@ -481,7 +483,7 @@ options:
 ```
 
 ```bash
-uv run python x402_paying_agent.py
+uv run --no-project python x402_paying_agent.py
 ```
 
 ```
@@ -493,7 +495,7 @@ Set X402_PRIVATE_KEY to a wallet private key holding testnet USDC on Base Sepoli
 `run_agent`의 첫 호출이 키가 틀렸을 때 실제로 무엇을 돌려주는지, 같은 호출을 직접 실행해 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import anthropic
 client = anthropic.Anthropic(api_key='fake-key-not-real')
 try:

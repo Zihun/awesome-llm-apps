@@ -46,6 +46,8 @@ uv pip install -U openai
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pip install -U openai`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 세 번째 설치 명령이 핵심입니다. `requirements.txt`는 `openai==1.58.1`로 고정하지만 `agno>=2.2.10`은 상한이 없어 최신 agno(이 문서를 쓰며 설치했을 때는 **agno 3.0.9**)를 받아오고, 이 버전의 `agno.models.openai`는 OpenAI의 Responses API 타입(`openai.types.responses`)을 임포트합니다 — 1.58.1에는 이 모듈이 없습니다(직접 확인). 그 결과 `from agno.models.openai import OpenAIChat`가 `ImportError`로 실패하며, 정확한 예외 문구는 "문제 해결"에 있습니다. `uv pip install -U openai`로 갱신하면(이 문서를 쓰며 설치했을 때는 **openai 3.13.0**) 해결됩니다. 나머지 패키지 중 `numpy==1.26.4`는 Python 3.12에는 사전 빌드된 wheel이 있어 순식간에 설치되지만, Python 3.13용 wheel은 PyPI에 없어 uv가 소스 배포판을 내려받아 로컬에서 직접 빌드합니다(uv 캐시에 `cp313` wheel이 방금 만들어진 것으로 직접 확인) — 실패하지는 않지만 몇 분 더 걸립니다. 이 문서의 나머지 확인은 모두 Python 3.12 가상환경에서 실행했습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
@@ -53,7 +55,7 @@ uv pip install -U openai
 **확인.**
 
 ```bash
-uv run python -c "import agno; print('ok')"
+uv run --no-project python -c "import agno; print('ok')"
 ```
 
 ```
@@ -114,7 +116,7 @@ with st.sidebar:
 **확인.** 먼저 서버 자체가 키 없이도 뜨는지 봅니다.
 
 ```bash
-uv run streamlit run ai_data_analyst.py --server.headless true
+uv run --no-project streamlit run ai_data_analyst.py --server.headless true
 ```
 
 다른 터미널에서:
@@ -130,7 +132,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 다음으로 `preprocess_and_save`를 실제 파일 대신 이름만 흉내 낸 메모리 버퍼로 직접 호출해, 반환되는 컬럼과 타입을 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import io
 from ai_data_analyst import preprocess_and_save
 buf = io.BytesIO(b'name,age,score\nAlice,30,88.5\nBob,25,92.1\n')
@@ -174,7 +176,7 @@ Streamlit이 bare 모드 경고를 여러 줄 함께 출력하지만(무시해�
 **확인.** Step 2의 전처리 결과를 이어서 DuckDB에 적재하고, 실제로 쿼리되는지, 그리고 메모리 DB인지 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import io
 from ai_data_analyst import preprocess_and_save
 from agno.tools.duckdb import DuckDbTools
@@ -230,7 +232,7 @@ from agno.tools.pandas import PandasTools
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.models.openai import OpenAIChat
 from agno.tools.duckdb import DuckDbTools
 from agno.tools.pandas import PandasTools
@@ -270,7 +272,7 @@ gpt-4o OpenAI
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.tools.duckdb import DuckDbTools
@@ -328,7 +330,7 @@ None 2 True
 **확인.** 실제 화면은 키가 없어 재현하지 못했습니다. 대신 Step 5의 에이전트를 유효하지 않은 키로 그대로 실행합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.tools.duckdb import DuckDbTools

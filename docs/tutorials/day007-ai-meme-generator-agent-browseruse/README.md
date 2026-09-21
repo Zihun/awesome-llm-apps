@@ -46,6 +46,8 @@ uv sync
 
 (pip을 쓴다면 `pip install -r requirements.txt`이지만, 아래 이유로 `uv sync`를 권합니다.)
 
+이 저장소는 루트에도 `pyproject.toml`이 있지만, 이 앱은 자기 `pyproject.toml`·`uv.lock`을 따로 가지고 있어 `uv run`이 이미 이 폴더의 환경을 올바로 씁니다(직접 확인 — 저장소 루트로 올라가지 않음). 그래도 시리즈 전체와 명령 형태를 맞추기 위해 이후 `uv run` 명령에도 `--no-project`를 붙였습니다.
+
 `pyproject.toml`은 `requires-python = "==3.11.*"`로 **정확히 3.11**만 허용하고, `.python-version`도 `3.11`입니다. `uv sync`는 이 둘과 `uv.lock`을 함께 읽어 Python 3.11 가상환경(`.venv`)을 만들고 잠긴 버전 그대로 설치합니다(로컬에 3.11이 없으면 uv가 자동으로 내려받음). 반면 `requirements.txt`(`streamlit`, `browser-use==0.13.8` 두 줄뿐)를 아무 버전에 `uv pip install -r requirements.txt`로 설치하면 `==3.11.*` 제약이 전혀 적용되지 않아 — 직접 확인한 바로 **Python 3.12에서도 그냥 설치되고 잘 임포트됩니다** — 다만 `uv.lock`이 고정한 것과 다른 버전(예: streamlit)이 잡힐 수 있습니다. 이 문서의 나머지 확인은 모두 `uv sync`가 만든 Python 3.11 환경에서 실행했습니다.
 
 앱 `README.md`의 "Running with uv" 절은 그다음으로 `uv run playwright install --with-deps`를 안내합니다. 실행해 보면:
@@ -58,7 +60,7 @@ error: Failed to spawn: `playwright`
 `uv.lock`을 직접 확인하면 `browser-use`(0.13.8)의 의존성 목록에 `playwright`가 아예 없고, 대신 `browser-harness`·`cdp-use`라는 패키지가 있습니다. 즉 이 버전의 browser-use는 Playwright로 브라우저를 내려받아 관리하던 예전 방식을 버리고, CDP로 **여러분의 로컬 Chrome에 직접 연결**하는 방식으로 바뀌었습니다 — 별도 설치 명령의 필요 여부를 `browser-use` 자체의 진단 도구로 확인합니다.
 
 ```bash
-uv run browser-use --doctor
+uv run --no-project browser-use --doctor
 ```
 
 이 문서를 쓴 컴퓨터에서 직접 확인한 출력(실행 환경마다, 특히 Chrome이 이미 떠 있는지에 따라 달라짐):
@@ -82,7 +84,7 @@ browser-harness doctor
 **확인.**
 
 ```bash
-uv run python -c "import browser_use; print('ok')"
+uv run --no-project python -c "import browser_use; print('ok')"
 ```
 
 ```
@@ -135,7 +137,7 @@ Deepseek은 전용 클라이언트가 아니라 `ChatOpenAI`에 `base_url`만 �
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from browser_use import ChatAnthropic, ChatOpenAI, ChatGoogle
 claude = ChatAnthropic(model='claude-sonnet-4-5', api_key='fake', temperature=0.3)
 deepseek = ChatOpenAI(base_url='https://api.deepseek.com/v1', model='deepseek-chat', api_key='fake', temperature=0.3, reasoning_effort=None)
@@ -201,7 +203,7 @@ ChatOpenAI gpt-4o
 **확인.** `agent.run()`은 실제 Chrome을 조작하므로 실행하지 않습니다. 대신 `Agent(...)` 생성까지만 직접 실행해, 이 시점에는 브라우저에 전혀 연결하지 않는다는 것을 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from browser_use import Agent, ChatOpenAI
 llm = ChatOpenAI(model='gpt-4o', api_key='fake-key-not-real', temperature=0.0)
 agent = Agent(task='say hello', llm=llm, max_actions_per_step=5, max_failures=25, use_vision=True)
@@ -244,7 +246,7 @@ BrowserSession
 **확인.** 세 가지 입력(정상 텍스트, 링크 없는 텍스트, `None`)으로 이 로직만 직접 실행합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import re
 ok = 'Here is your meme: https://imgflip.com/i/abc123 enjoy!'
 m = re.search(r'https://imgflip\.com/i/(\w+)', ok)
@@ -303,7 +305,7 @@ TypeError expected string or bytes-like object, got 'NoneType'
 **확인.**
 
 ```bash
-uv run streamlit run ai_meme_generator_agent.py --server.headless true
+uv run --no-project streamlit run ai_meme_generator_agent.py --server.headless true
 ```
 
 다른 터미널에서:
@@ -349,7 +351,7 @@ Step 4에서 본 `TypeError`가 실제로 발생하면 이 `except`가 그대로
 **확인.** 실제 브라우저 실행 없이, `generate_meme`을 Step 4의 실패 상황을 그대로 반환하는 함수로 바꿔 끼워 `main()`의 버튼 처리 로직만 실행합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import logging
 logging.disable(logging.WARNING)
 import streamlit as st
@@ -404,7 +406,7 @@ ST.ERROR: Error: expected string or bytes-like object, got 'NoneType'
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 앱 README의 안내대로 `uv run playwright install --with-deps`를 실행하면 ``error: Failed to spawn: `playwright` `` / `Caused by: program not found` | `pyproject.toml`이 고정한 browser-use==0.13.8은 Playwright에 의존하지 않는다(직접 확인: `uv.lock`에 `playwright` 패키지 없음) — 대신 `browser-harness`가 CDP로 로컬 Chrome에 직접 연결한다 | 이 설치 단계를 건너뛰고, 대신 Google Chrome이 설치돼 있는지만 확인. 연결 상태는 `uv run browser-use --doctor`로 진단 |
+| 앱 README의 안내대로 `uv run playwright install --with-deps`를 실행하면 ``error: Failed to spawn: `playwright` `` / `Caused by: program not found` | `pyproject.toml`이 고정한 browser-use==0.13.8은 Playwright에 의존하지 않는다(직접 확인: `uv.lock`에 `playwright` 패키지 없음) — 대신 `browser-harness`가 CDP로 로컬 Chrome에 직접 연결한다 | 이 설치 단계를 건너뛰고, 대신 Google Chrome이 설치돼 있는지만 확인. 연결 상태는 `uv run --no-project browser-use --doctor`로 진단 |
 | `uv sync --python 3.12`처럼 다른 버전을 지정하면 ``error: The requested interpreter resolved to Python 3.12.10, which is incompatible with the project's Python requirement: `==3.11.*` `` | `pyproject.toml`의 `requires-python = "==3.11.*"`를 `uv sync`가 엄격히 검사한다(직접 확인) — 단, 이 검사는 `uv sync`/`uv run` 같은 프로젝트 인식 명령에만 적용되고, `uv pip install -r requirements.txt`는 이 제약과 무관하게 아무 Python에나 설치된다(직접 확인: 3.12에서도 설치·임포트 성공) | `--python` 지정 없이 `uv sync`만 실행(로컬에 3.11이 없으면 uv가 자동 설치) |
 | 밈 생성이 실패하면 "밈 생성 실패" 대신 `Error: expected string or bytes-like object, got 'NoneType'`처럼 원인을 알기 어려운 오류가 표시됨 | `history.final_result()`가 `None`을 반환할 수 있는데(browser-use 소스에 `-> None | str`로 명시, 직접 확인) `ai_meme_generator_agent.py:62`의 `re.search(패턴, final_result)`가 `None`을 그대로 받으면 `TypeError`가 나고, 이를 감싸는 `except Exception`(`ai_meme_generator_agent.py:133`)이 이 예외 문구를 그대로 화면에 띄운다(직접 확인, Step 6) | 화면의 오류 문구가 이 패턴이면 실제로는 "에이전트가 끝내 답을 못 찾음"으로 이해하고 다른 프롬프트로 재시도 |
 | 앱 README의 Features에는 "Claude 3.5 Sonnet"이라 적혀 있지만 실제로는 다른 모델이 호출됨 | 코드는 `model="claude-sonnet-4-5"`를 쓴다(`ai_meme_generator_agent.py:10`, 직접 확인) — README가 갱신되지 않음. Gemini 선택지도 README의 기능 목록·필요 키 목록 어디에도 없지만 코드에는 있다(직접 확인) | README 문구는 무시하고 코드의 모델 이름을 기준으로 삼기 |

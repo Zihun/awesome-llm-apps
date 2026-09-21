@@ -50,14 +50,14 @@ uv pip install -r requirements.txt
 
 `requirements.txt`는 6줄(`streamlit`, `agno>=2.2.10`, `openai`, `ollama`, `google-search-results`, `icalendar`)이고 마지막 줄에 개행이 없습니다. 버전이 고정된 것은 `agno>=2.2.10` 하나뿐이며, 이 문서를 쓰며 확인했을 때 실제로 설치된 것은 **agno 2.3.2**였습니다(직접 확인).
 
-여기서 이 저장소 특유의 함정을 짚습니다. 루트(`awesome-llm-apps/`)에 `pyproject.toml`과 `uv.lock`이 있어 uv는 그쪽을 프로젝트 루트로 봅니다(Day 2의 "문제 해결"에 자세히 적어 두었습니다). 그래서 루트 `.venv`를 그대로 쓰면 `agno`·`openai`·`ollama`·`streamlit`은 이미 들어 있지만 **`google-search-results`와 `icalendar`는 빠져 있습니다** — 직접 확인한 결과 두 패키지 모두 `PackageNotFoundError`였고, `uv pip install google-search-results icalendar`로 각각 2.4.2와 7.3.0을 받아 해결했습니다.
+여기서 이 저장소 특유의 함정을 짚습니다. 루트(`awesome-llm-apps/`)에 `pyproject.toml`과 `uv.lock`이 있어 uv는 그쪽을 프로젝트 루트로 봅니다(Day 2의 "문제 해결"에 자세히 적어 두었습니다). 그래서 루트 `.venv`를 그대로 쓰면 `agno`·`openai`·`ollama`·`streamlit`은 이미 들어 있지만 **`google-search-results`와 `icalendar`는 빠져 있습니다** — 직접 확인한 결과 두 패키지 모두 `PackageNotFoundError`였고, `uv pip install google-search-results icalendar`로 각각 2.4.2와 7.3.0을 받아 해결했습니다. 다만 아래 `uv run` 명령에는 모두 `--no-project`를 붙여 애초에 루트가 아니라 방금 만든 로컬 가상환경을 쓰게 했으므로, 이 두 패키지는 이미 위 `uv pip install -r requirements.txt` 한 번으로 갖춰져 있어 실제로는 이 문제를 만나지 않습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
 **확인.** 앱이 쓰는 import 여섯 줄을 그대로 실행해 봅니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.run.agent import RunOutput
 from agno.tools.serpapi import SerpApiTools
@@ -107,7 +107,7 @@ Day 2·11의 앱은 키 하나만 받았지만 여기는 둘이고, 이후 코�
 **확인.** 서버를 띄우고 응답을 확인합니다.
 
 ```bash
-uv run streamlit run travel_agent.py --server.headless true
+uv run --no-project streamlit run travel_agent.py --server.headless true
 ```
 
 다른 터미널에서:
@@ -163,7 +163,7 @@ if openai_api_key and serp_api_key:
 **확인.** 두 에이전트의 도구 보유 여부를 직접 찍어 봅니다. 모델은 키가 필요 없는 로컬 Ollama로 두고 도구만 비교합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.ollama import Ollama
 from agno.tools.serpapi import SerpApiTools
@@ -223,7 +223,7 @@ planner tools: []
 **확인.** 두 키가 없어도 파이프라인의 뒷단인 Planner만 로컬 모델로 재현할 수 있습니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.ollama import Ollama
 planner = Agent(name='Planner', model=Ollama(id='llama3.2'),
@@ -284,7 +284,7 @@ Day 2: Visit the Haedong Yonggungsa Temple, a seaside
 **확인.** 앱의 함수를 그대로 불러 3일짜리 일정을 변환해 봅니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import sys, datetime
 sys.path.insert(0, 'starter_ai_agents/ai_travel_agent')
 import travel_agent

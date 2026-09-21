@@ -45,6 +45,8 @@ uv pip install google-genai
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pip install google-genai`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `requirements.txt`(`agno>=2.2.10`, `google-generativeai==0.8.3`, `streamlit==1.40.2`)는 Day 8과 Gemini 관련 두 줄이 정확히 같습니다. 실제로 설치하면 여기서도 agno 3.0.9를 받아 같은 문제가 그대로 재현됩니다 — `from agno.models.google import Gemini`가 `ModuleNotFoundError: No module named 'google.genai'`로 실패합니다(직접 확인). 원인과 배경은 Day 8 Step 1에서 이미 다뤘으므로 반복하지 않고, 위 네 번째 명령으로 바로 해결합니다. 이 앱은 Day 8과 달리 `duckduckgo-search`/`ddgs`를 아예 설치하지 않는데, 뒤에서 보듯 실제로 검색 도구를 쓰지 않기 때문입니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
@@ -52,7 +54,7 @@ uv pip install google-genai
 **확인.**
 
 ```bash
-uv run python -c "from agno.models.google import Gemini; print('ok')"
+uv run --no-project python -c "from agno.models.google import Gemini; print('ok')"
 ```
 
 ```
@@ -91,7 +93,7 @@ if gemini_api_key:
 **확인.** 앱 폴더에서 모듈을 직접 임포트해, 키를 입력하지 않은 초기 상태를 확인합니다.
 
 ```bash
-uv run python -c "import multimodal_agent as m; print(repr(m.gemini_api_key))"
+uv run --no-project python -c "import multimodal_agent as m; print(repr(m.gemini_api_key))"
 ```
 
 Streamlit이 bare 모드 경고를 23줄 함께 출력하지만(무시해도 됨, 이 문서에서는 생략), 마지막 줄은 직접 확인한 아래 내용입니다.
@@ -126,7 +128,7 @@ def initialize_agent(api_key):
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.google import Gemini
 m = Gemini(id='gemini-2.5-flash', api_key='fake-key-not-real')
@@ -175,7 +177,7 @@ tools: []
 **확인.** 위 로직만 따로 재현해, 저장과 삭제가 실제로 일어나는지 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import tempfile, os
 from pathlib import Path
 with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
@@ -230,7 +232,7 @@ False
 **확인.** 실제 화면은 키가 없어 재현하지 못했습니다. 대신 Step 3의 에이전트를 유효하지 않은 키와 존재하지 않는 영상 경로로 그대로 실행합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.google import Gemini
 from agno.media import Video
@@ -279,11 +281,11 @@ content: {
 |---|---|---|
 | `from agno.models.google import Gemini` 시 `ModuleNotFoundError: No module named 'google.genai'` | Day 8과 같은 원인 — `requirements.txt`의 `google-generativeai==0.8.3`은 죽은 의존성이고 agno 3.0.9는 `google-genai`만 가져온다(`day008-ai-medical-imaging-agent/README.md` 문제 해결 참고) | `uv pip install google-genai` 실행 |
 | 화면에 "web research"를 수행한다고 나오지만 실제 검색 결과나 출처 링크가 전혀 없음 | `Agent(...)`(`multimodal_agent.py:30-34`)에 `tools`가 없고 `Gemini(...)`도 `search`·`grounding`을 켜지 않는다(직접 확인: 둘 다 기본값 `False`) — 프롬프트의 "web research" 요청은 실행할 수단이 없는 지시일 뿐이다 | Gemini 자체 지식 기반 답변으로 이해하고, 실제 웹 검색이 필요하면 Day 1처럼 `DuckDuckGoTools()`를 `tools=[]`에 직접 추가 |
-| `multimodal_reasoning_agent.py`가 폴더에 있는데 실행법을 모르겠음 | 앱 자체 `README.md`가 이 파일을 전혀 언급하지 않는다(소스로 확인: `starter_ai_agents/multimodal_ai_agent/README.md`) | `uv run streamlit run multimodal_reasoning_agent.py`로 직접 실행 |
+| `multimodal_reasoning_agent.py`가 폴더에 있는데 실행법을 모르겠음 | 앱 자체 `README.md`가 이 파일을 전혀 언급하지 않는다(소스로 확인: `starter_ai_agents/multimodal_ai_agent/README.md`) | `uv run --no-project streamlit run multimodal_reasoning_agent.py`로 직접 실행 |
 
 ## 더 해보기
 
-- `multimodal_reasoning_agent.py`를 직접 실행해 이미지+자유 추론 진입점을 시험해보기: `uv run streamlit run multimodal_reasoning_agent.py`. Day 8의 다섯 섹션 고정 프롬프트와 달리 `task_input`(`multimodal_reasoning_agent.py:52-54`)에 원하는 질문을 자유롭게 적을 수 있고 `gemini-2.5-pro`가 이를 처리하며, 파일 전체가 `if __name__ == "__main__":`(`multimodal_reasoning_agent.py:76-77`)로 감싸여 있어 임포트만으로는 아무 코드도 실행되지 않는다는 것을 이 문서에서 직접 확인했습니다(bare 모드 경고 0줄 — Step 2에서 확인한 `multimodal_agent.py`의 23줄과 대비)
+- `multimodal_reasoning_agent.py`를 직접 실행해 이미지+자유 추론 진입점을 시험해보기: `uv run --no-project streamlit run multimodal_reasoning_agent.py`. Day 8의 다섯 섹션 고정 프롬프트와 달리 `task_input`(`multimodal_reasoning_agent.py:52-54`)에 원하는 질문을 자유롭게 적을 수 있고 `gemini-2.5-pro`가 이를 처리하며, 파일 전체가 `if __name__ == "__main__":`(`multimodal_reasoning_agent.py:76-77`)로 감싸여 있어 임포트만으로는 아무 코드도 실행되지 않는다는 것을 이 문서에서 직접 확인했습니다(bare 모드 경고 0줄 — Step 2에서 확인한 `multimodal_agent.py`의 23줄과 대비)
 - `Gemini(id="gemini-2.5-flash", api_key=api_key)`에 `search=True`를 직접 추가해(`multimodal_agent.py:32`) 재시작한 뒤, 응답에 실제 검색 인용이 붙는지 비교해보기
 - `initialize_agent`(`multimodal_agent.py:27-34`)의 `@st.cache_resource`를 지운 뒤, 매 rerun마다 Gemini 클라이언트가 새로 생성되는지 로그로 비교해보기
 

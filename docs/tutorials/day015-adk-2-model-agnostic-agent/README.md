@@ -43,6 +43,8 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다. `uv venv`가 만든 가상환경에는 pip이 없어 `pip install`이 바로 실패한다는 것은 Day 14에서 이미 확인했으므로, 위 명령은 처음부터 `uv pip install`을 씁니다.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `requirements.txt`는 3줄입니다(마지막 줄에 개행이 없어 `wc -l`은 2로 셉니다).
 
 `ai_agent_framework_crash_course/google_adk_crash_course/2_model_agnostic_agent/requirements.txt:1-3`
@@ -70,7 +72,7 @@ OPENROUTER_API_KEY="your-api-key"
 **확인.**
 
 ```bash
-uv run python -c "import google.adk, litellm, dotenv; print(google.adk.__version__)"
+uv run --no-project python -c "import google.adk, litellm, dotenv; print(google.adk.__version__)"
 ```
 
 ```
@@ -116,7 +118,7 @@ root_agent = Agent(
 **확인.**
 
 ```bash
-uv run python -c "from google.adk.agents import Agent, LlmAgent; print(Agent is LlmAgent)"
+uv run --no-project python -c "from google.adk.agents import Agent, LlmAgent; print(Agent is LlmAgent)"
 ```
 
 ```
@@ -126,7 +128,7 @@ True
 `2_1_openai_adk_agent` 폴더 이름은 숫자로 시작해 보통의 `import` 문으로는 불러올 수 없습니다 — 이유와 실제 실행 결과는 Step 5·6에서 다룹니다. 지금은 `importlib`로 우회해 실제 값을 확인합니다(`2_model_agnostic_agent` 폴더에서 실행).
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import sys; sys.path.insert(0, '.')
 import importlib
 m = importlib.import_module('2_1_openai_adk_agent.agent')
@@ -177,7 +179,7 @@ def get_fun_fact():
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import sys; sys.path.insert(0, '.')
 import importlib
 m = importlib.import_module('2_1_openai_adk_agent.agent')
@@ -270,7 +272,7 @@ Day 14의 `creative_writing_agent/__init__.py`는 `from .agent import root_agent
 폴더 이름 `2_1_openai_adk_agent`는 숫자로 시작해 파이썬의 유효한 식별자가 아닙니다. 보통의 `import` 문은 이 자리에서 바로 실패합니다.
 
 ```bash
-uv run python -c "import 2_1_openai_adk_agent"
+uv run --no-project python -c "import 2_1_openai_adk_agent"
 ```
 
 직접 확인한 출력입니다.
@@ -289,7 +291,7 @@ SyntaxError: invalid decimal literal
 **확인.** `__init__.py`의 노출 방식 차이를 값으로 직접 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import sys; sys.path.insert(0, '.')
 import importlib
 m = importlib.import_module('2_1_openai_adk_agent')
@@ -313,7 +315,7 @@ AttributeError: module '2_1_openai_adk_agent' has no attribute 'root_agent'
 **할 일.** `2_model_agnostic_agent` 폴더(두 에이전트 폴더의 부모)에서 실행합니다.
 
 ```bash
-uv run adk web --port 8988 --no_use_local_storage .
+uv run --no-project adk web --port 8988 --no_use_local_storage .
 ```
 
 `adk web --help`가 설명하는 디렉터리 탐색 규칙과 최초 실행 시 텔레메트리 동의 절차는 Day 14에서 이미 확인했으므로 그대로 적용됩니다.
@@ -371,7 +373,7 @@ mkdir -p "$TEMP/day015-experiment/openai_adk_agent"
 cp 2_1_openai_adk_agent/agent.py "$TEMP/day015-experiment/openai_adk_agent/"
 cp 2_1_openai_adk_agent/__init__.py "$TEMP/day015-experiment/openai_adk_agent/"
 cd "$TEMP/day015-experiment"
-uv run adk web --port 8989 --no_use_local_storage .
+uv run --no-project adk web --port 8989 --no_use_local_storage .
 ```
 
 (Linux·macOS에서는 `$TEMP` 대신 `/tmp` 등 원하는 임시 경로를 쓰면 됩니다.)

@@ -43,6 +43,8 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `requirements.txt`는 18바이트, 단 한 줄입니다.
 
 `ai_agent_framework_crash_course/google_adk_crash_course/1_starter_agent/requirements.txt:1-1`
@@ -68,7 +70,7 @@ GOOGLE_API_KEY="your-api-key"
 **확인.**
 
 ```bash
-uv run python -c "import google.adk; print(google.adk.__version__)"
+uv run --no-project python -c "import google.adk; print(google.adk.__version__)"
 ```
 
 ```
@@ -121,7 +123,7 @@ root_agent = LlmAgent(
 **확인.**
 
 ```bash
-uv run python -c "from creative_writing_agent.agent import root_agent; print(root_agent.name, '|', root_agent.model, '|', type(root_agent).__name__)"
+uv run --no-project python -c "from creative_writing_agent.agent import root_agent; print(root_agent.name, '|', root_agent.model, '|', type(root_agent).__name__)"
 ```
 
 ```
@@ -149,7 +151,7 @@ from .agent import root_agent
 **확인.**
 
 ```bash
-uv run python -c "import creative_writing_agent as m; print(m.root_agent.name)"
+uv run --no-project python -c "import creative_writing_agent as m; print(m.root_agent.name)"
 ```
 
 ```
@@ -163,7 +165,7 @@ creative_writing_agent
 **할 일.** `1_starter_agent` 폴더(즉 `creative_writing_agent`의 부모 폴더)에서 실행합니다.
 
 ```bash
-uv run adk web --port 8987 --no_use_local_storage .
+uv run --no-project adk web --port 8987 --no_use_local_storage .
 ```
 
 `adk` 계열 명령을 이 컴퓨터에서 처음 실행하면 텔레메트리 수집 동의를 묻는 프롬프트가 먼저 뜨고, 답하기 전까지는 서버가 시작되지 않습니다 — 문제 해결에 정리했습니다. 서버가 뜨면 ADK는 `.` 아래 하위 폴더를 스캔해 `creative_writing_agent`를 찾아 임포트해 두고, FastAPI 앱과 채팅 웹 UI를 같은 프로세스에서 서비스합니다. 이 앱 어디에도 `uvicorn.run`이나 `app = FastAPI()` 같은 코드가 없다는 점이 볼륨 1과의 핵심 차이입니다 — 서버는 전적으로 `google-adk` 패키지가 제공합니다.

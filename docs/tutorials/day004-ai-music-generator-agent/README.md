@@ -45,6 +45,8 @@ uv pip install -r requirements.txt
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 Day 1과 달리 이 앱은 `requirements.txt`(`agno>=2.2.10`, `Requests==2.32.3`, `streamlit==1.44.1`, `openai==2.8.1`)만 설치해도 파일이 쓰는 모든 모듈의 import가 성공합니다(직접 확인 — 추가 설치 불필요). `agno`는 버전 상한이 없어서, 이 문서를 작성하며 설치했을 때는 **agno 3.0.9**가 받아졌습니다 — Day 1에서도 같은 일이 있었습니다. 다만 이번에는 받아지는 버전이 무엇이든 Step 3에서 실제 문제가 하나 남아 있으니 미리 염두에 두세요.
 
 두 키는 이 단계에서 당장 쓰지 않습니다. Day 2·3처럼 환경변수가 아니라 Step 2에서 볼 Streamlit 사이드바 입력창에 직접 붙여넣는 방식이라, 앱을 띄운 뒤에 입력해도 됩니다. 미리 두 사이트에서 발급받아 두세요.
@@ -54,7 +56,7 @@ Day 1과 달리 이 앱은 `requirements.txt`(`agno>=2.2.10`, `Requests==2.32.3`
 **확인.**
 
 ```bash
-uv run python -c "import os; from uuid import uuid4; import requests; from agno.agent import Agent; from agno.run.agent import RunOutput; from agno.models.openai import OpenAIChat; from agno.tools.models_labs import FileType, ModelsLabTools; from agno.utils.log import logger; import streamlit as st; print('ok')"
+uv run --no-project python -c "import os; from uuid import uuid4; import requests; from agno.agent import Agent; from agno.run.agent import RunOutput; from agno.models.openai import OpenAIChat; from agno.tools.models_labs import FileType, ModelsLabTools; from agno.utils.log import logger; import streamlit as st; print('ok')"
 ```
 
 ```
@@ -101,7 +103,7 @@ else:
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run streamlit run music_generator_agent.py --server.headless true
+uv run --no-project streamlit run music_generator_agent.py --server.headless true
 ```
 
 다른 터미널에서:
@@ -144,7 +146,7 @@ from agno.models.openai import OpenAIChat
 **확인.** 리포 코드를 그대로 재현해 직접 실행해봅니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 agent = Agent(
@@ -188,7 +190,7 @@ from agno.tools.models_labs import FileType, ModelsLabTools
 **확인 (키가 아예 없을 때).**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.tools.models_labs import FileType, ModelsLabTools
 t = ModelsLabTools(api_key=None, wait_for_completion=True, file_type=FileType.MP3)
 print(sorted(t.functions))
@@ -209,7 +211,7 @@ Please set the MODELS_LAB_API_KEY
 **확인 (키는 있지만 유효하지 않을 때).**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.tools.models_labs import FileType, ModelsLabTools
 t = ModelsLabTools(api_key='invalid-test-key', wait_for_completion=False, file_type=FileType.MP3)
 result = t.generate_media('Generate a 10 second classical music piece')
@@ -255,7 +257,7 @@ Error: Invalid API Key. Get API key from: https://modelslab.com/dashboard/api-ke
 **확인.** 아래는 리포 코드를 그대로 실행한 것이 아니라, Step 3에서 본 `agent_id`만 `id`로 바꿔 나머지 설정(모델·도구·description·instructions·markdown·debug_mode)이 모두 정상 조립되는지 따로 검증한 것입니다(문제를 한 곳으로 좁히기 위함).
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.tools.models_labs import FileType, ModelsLabTools
@@ -312,7 +314,7 @@ ModelsLab Music Agent 1 7
 **확인.** Step 5에서 만든, `id`로 고친 에이전트에 실제로 `run()`을 호출해 다음 단계에서 무엇을 받는지 봅니다(가짜 OpenAI 키 사용).
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.tools.models_labs import FileType, ModelsLabTools
@@ -412,7 +414,7 @@ Day 1·3와 같은 패턴대로 `status=RunStatus.error`, `music.audio`는 `None
 **확인.** 유효한 오디오 URL이 있어야 실행되는 `response.ok`/`Content-Type` 검증까지는 키가 없어 도달하지 못했습니다. 대신 파일 시스템에 관련된 부분 — 폴더 생성과 파일명 생성 — 만 코드 그대로 실행해 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import os
 from uuid import uuid4
 save_dir = 'audio_generations'

@@ -46,6 +46,8 @@ uv pip install google-genai ddgs
 
 (pip을 쓴다면 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pip install google-genai ddgs`.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `requirements.txt`의 다섯 줄(`streamlit==1.40.2`, `agno>=2.2.10`, `Pillow==10.0.0`, `duckduckgo-search>=6.4.2,<9`, `google-generativeai==0.8.3`)은 Python 3.12에 오류 없이 설치됩니다 — 2023년에 나온 `Pillow==10.0.0`도 Python 3.12에서 별다른 오류나 빌드 지연 없이 설치되었습니다(직접 확인). 문제는 설치가 끝난 **뒤**입니다. `agno>=2.2.10`은 상한이 없어 이 문서를 쓰며 설치했을 때 **agno 3.0.9**(Day 1·6과 같은 버전)를 받았는데, 이 버전의 `agno.models.google.Gemini`는 내부적으로 `google.genai`(신규 SDK)의 타입을 가져오며 이 패키지는 `requirements.txt`에 없습니다. 대신 설치된 것은 Google이 이미 폐기(deprecated)를 선언한 옛 SDK `google-generativeai==0.8.3`뿐이라, `from agno.models.google import Gemini`를 실행하는 순간 `ModuleNotFoundError: No module named 'google.genai'`에 이어 ``ImportError: `google-genai` not installed. Please install it using `pip install google-genai` ``가 그대로 발생합니다(직접 확인). 설치된 agno 패키지 전체에서 "generativeai" 문자열을 검색해도 한 건도 나오지 않아(소스로 확인), `google-generativeai==0.8.3`은 이 버전의 agno에서는 완전히 죽은 의존성입니다. 두 번째 문제는 Day 1과 원인이 정확히 같습니다 — `agno.tools.duckduckgo`가 `ddgs` 패키지를 요구하는데 `requirements.txt`는 `duckduckgo-search`만 설치하므로 같은 `ImportError`가 남습니다(`day001-xai-finance-agent/README.md` 문제 해결 참고, 원인이 동일해 여기서는 다시 재현하지 않습니다). 위 네 번째 명령으로 두 패키지를 마저 설치합니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
@@ -53,7 +55,7 @@ uv pip install google-genai ddgs
 **확인.**
 
 ```bash
-uv run python -c "from agno.models.google import Gemini; from agno.tools.duckduckgo import DuckDuckGoTools; print('ok')"
+uv run --no-project python -c "from agno.models.google import Gemini; from agno.tools.duckduckgo import DuckDuckGoTools; print('ok')"
 ```
 
 ```
@@ -99,7 +101,7 @@ if "GOOGLE_API_KEY" not in st.session_state:
 **확인.** 앱 폴더에서 모듈을 직접 임포트해, 키를 입력하지 않은 초기 상태를 확인합니다.
 
 ```bash
-uv run python -c "import ai_medical_imaging as m; print(m.st.session_state.GOOGLE_API_KEY, m.medical_agent)"
+uv run --no-project python -c "import ai_medical_imaging as m; print(m.st.session_state.GOOGLE_API_KEY, m.medical_agent)"
 ```
 
 Streamlit이 bare 모드 경고를 44줄 함께 출력하지만(무시해도 됨, 이 문서에서는 생략), 마지막 줄은 직접 확인한 아래 내용입니다.
@@ -143,7 +145,7 @@ if not medical_agent:
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.google import Gemini
 from agno.tools.duckduckgo import DuckDuckGoTools
@@ -197,7 +199,7 @@ Format your response using clear markdown headers and bullet points. Be concise 
 **확인.**
 
 ```bash
-uv run python -c "import ai_medical_imaging as m; print(m.query.count('###'), 'DuckDuckGo' in m.query)"
+uv run --no-project python -c "import ai_medical_imaging as m; print(m.query.count('###'), 'DuckDuckGo' in m.query)"
 ```
 
 ```
@@ -239,7 +241,7 @@ with upload_container:
 **확인.** 먼저 128바이트 프리앰블과 `DICM` 매직 헤더만 있는 최소 DICOM 흉내 파일로 직접 열어봅니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from PIL import Image as PILImage
 import io
 buf = io.BytesIO(b'\x00' * 128 + b'DICM' + b'\x00' * 100)
@@ -262,7 +264,7 @@ None None
 `registered_extensions()`에 `.dcm`·`.dicom` 둘 다 없다는 것은 Pillow가 이 확장자용 플러그인을 하나도 등록하지 않았다는 뜻입니다 — 실제 방사선 장비가 내보내는 DICOM 파일을 그대로 올리면 이 지점에서 예외로 멈춥니다. 이어서 정상적인 이미지로 리사이즈 로직만 따로 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from PIL import Image as PILImage
 img = PILImage.new('RGB', (800, 400), color='red')
 width, height = img.size
@@ -315,7 +317,7 @@ print(resized.size)
 **확인.** 실제 화면은 키가 없어 재현하지 못했습니다. 대신 Step 3의 에이전트를 유효하지 않은 키로 그대로 실행합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from agno.agent import Agent
 from agno.models.google import Gemini
 from agno.tools.duckduckgo import DuckDuckGoTools

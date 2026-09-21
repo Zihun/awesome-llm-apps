@@ -61,6 +61,8 @@ uv pip install -r 4_4_mcp_tools/requirements.txt
 
 (pip 대안과 `uv venv`가 만든 가상환경엔 pip이 없다는 점은 Day 14에서 이미 확인했으므로 위 명령은 처음부터 `uv pip install`을 씁니다.)
 
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+
 `4_4_mcp_tools/requirements.txt`는 10줄입니다.
 
 `ai_agent_framework_crash_course/google_adk_crash_course/4_tool_using_agent/4_4_mcp_tools/requirements.txt:1-10`
@@ -85,7 +87,7 @@ firecrawl-py>=1.0.0
 **확인.**
 
 ```bash
-uv run python -c "import google.adk, mcp, firecrawl, bs4, html2text, dotenv; import importlib.metadata as md; print('google-adk', google.adk.__version__); print('mcp', md.version('mcp')); print('firecrawl-py', md.version('firecrawl-py'))"
+uv run --no-project python -c "import google.adk, mcp, firecrawl, bs4, html2text, dotenv; import importlib.metadata as md; print('google-adk', google.adk.__version__); print('mcp', md.version('mcp')); print('firecrawl-py', md.version('firecrawl-py'))"
 ```
 
 ```
@@ -135,7 +137,7 @@ root_agent = LlmAgent(
 **확인.**
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from google.adk.tools import google_search
 from code_exec_agent.agent import root_agent as code_agent
 print('google_search:', type(google_search).__name__)
@@ -153,7 +155,7 @@ code_exec_agent.code_executor: BuiltInCodeExecutor
 ```
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from google.adk.agents import LlmAgent
 from google.adk.tools import google_search
 def my_tool(x: str) -> dict:
@@ -312,7 +314,7 @@ def hash_text(text: str, algorithm: str = "sha256") -> Dict[str, Union[str, Dict
 **확인.** 두 함수를 직접 호출해 구조화된 반환값을 봅니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from tools import calculate_basic_math, calculate_statistics
 print(calculate_basic_math('2 + 3 * 4'))
 print(calculate_statistics([1,2,3,4,5]))
@@ -331,7 +333,7 @@ print(calculate_statistics([1,2,3,4,5]))
 이어서 `hash_text`의 실제 스키마를 뽑아 기본값 주장을 검증합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 from google.adk.tools import FunctionTool
 from tools import hash_text
 t = FunctionTool(hash_text)
@@ -434,7 +436,7 @@ ValidationError: 1 validation error for DirectorySearchTool
 
 ```bash
 uv pip install ddgs
-uv run python -c "
+uv run --no-project python -c "
 from agent import root_agent
 print([type(t).__name__ for t in root_agent.tools])
 "
@@ -449,7 +451,7 @@ print([type(t).__name__ for t in root_agent.tools])
 세 CrewAI 도구를 개별적으로 생성해 어느 것이 `OPENAI_API_KEY` 없이도 되는지 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import os
 os.environ.pop('OPENAI_API_KEY', None)
 from crewai_tools import ScrapeWebsiteTool, DirectorySearchTool, FileReadTool
@@ -524,7 +526,7 @@ with open(sample_file_path, "w") as f:
 **확인.** ADK나 Gemini를 거치지 않고, `MCPToolset.get_tools()`만 직접 호출해 별도 프로세스가 진짜로 뜨는지 확인합니다.
 
 ```bash
-uv run python -c "
+uv run --no-project python -c "
 import asyncio
 from filesystem_agent.agent import root_agent
 
@@ -572,8 +574,8 @@ TOOL: write_file
 mkdir -p "$TEMP/day017-adk-web-test"
 cp -r 4_1_builtin_tools 4_2_function_tools 4_3_thirdparty_tools 4_4_mcp_tools "$TEMP/day017-adk-web-test/"
 cd "$TEMP/day017-adk-web-test"
-uv run adk telemetry disable
-uv run adk web --port 8993 --no_use_local_storage .
+uv run --no-project adk telemetry disable
+uv run --no-project adk web --port 8993 --no_use_local_storage .
 ```
 
 (Windows PowerShell은 `$TEMP` 대신 `$env:TEMP`를 씁니다. `adk telemetry disable`과 최초 실행 시 동의 프롬프트는 Day 14에서 이미 확인했습니다.)
@@ -594,7 +596,7 @@ curl.exe -s http://127.0.0.1:8993/list-apps
 
 ```bash
 cd "$TEMP/day017-adk-web-test/4_4_mcp_tools"
-uv run adk web --port 8994 --no_use_local_storage .
+uv run --no-project adk web --port 8994 --no_use_local_storage .
 ```
 
 ```bash
