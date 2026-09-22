@@ -109,7 +109,7 @@ pydantic.errors.PydanticSchemaGenerationError: Unable to generate pydantic-core 
 
 `litellm`은 raglite가 `litellm>=1.47.1`이라는 느슨한 하한만 걸어 둔 전이 의존성이라 오늘은 1.102.0이 풀립니다 — `pydantic==2.10.1`이라는 정확한 고정 하나가, 이 앱이 이름조차 모르는 라이브러리의 최신 버전과 부딪혀 깨지는 셈입니다. `pydantic`을 최신(2.13.5)으로 올리는 것 자체는 직접 확인했습니다 — 다만 그 뒤 `from raglite import ...`가 끝까지 통과하는지는 이 컴퓨터에서 재확인하지 못했습니다: 이 문서를 쓰는 동안 다른 일차 작성자들과 자원을 나눠 쓰는 상태라, spaCy·scikit-learn·litellm을 한 번에 끌어오는 이 import 사슬이 8분을 넘겨도 끝나지 않았습니다(같은 시간에 `import litellm` 하나만 떼어 실행해도 마찬가지였고, `python -X importtime`으로 보면 표준 라이브러리 모듈 하나 부르는 데도 0.5초 안팎이 걸릴 만큼 이 컴퓨터 자체가 그 시점에 느렸습니다). 그래서 아래 Step 2·4·5의 "확인"은 실행 결과가 아니라 해당 함수의 소스를 그대로 인용하고 손으로 계산한 값입니다 — 명령 자체는 그대로 적어 두었으니 여유 있는 환경에서 재현해 보시기 바랍니다.
 
-spaCy 모델도 이 자리에서 미리 받아 둡니다 — 앱 자체 README의 "Install spaCy Model" 단계와 정확히 같은 wheel이고, raglite의 문장 분리 함수가 이 모델이 없으면 무조건 실패합니다(Step 4에서 직접 확인):
+spaCy 모델도 이 자리에서 미리 받아 둡니다 — 앱 자체 README의 "Install spaCy Model" 단계와 정확히 같은 wheel이고, raglite의 문장 분리 함수가 이 모델이 없으면 무조건 실패합니다(Step 4에서 소스로 확인):
 
 ```bash
 uv pip install "https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl"
