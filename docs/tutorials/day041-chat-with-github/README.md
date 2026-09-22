@@ -80,13 +80,16 @@ uv pip install -r requirements.txt
 
 ```
 Resolved 150 packages in 77ms
-Installed 2 packages in 704ms
+Installed 150 packages
+ ...
  + embedchain==0.1.128
+ ...
  + streamlit==1.64.0
+ ...
 warning: The package `embedchain==0.1.128` does not have an extra named `github`
 ```
 
-(직접 확인, 두 명령 모두.) 이번엔 설치가 끝나지만 마지막 줄이 문제입니다 — **`github` 익스트라가 이 버전에는 없습니다.** PyPI에 올라온 과거 배포본들의 메타데이터를 직접 비교해보면 `embedchain[github]`은 0.1.60부터 0.1.116까지는 `PyGithub<2.0.0,>=1.59.1`과 `gitpython<4.0.0,>=3.1.38`을 끌어왔지만, 0.1.117(2024년 중순)부터는 이 익스트라 자체가 메타데이터에서 완전히 사라졌습니다(직접 확인, PyPI JSON API로 0.1.110~0.1.128 사이 버전들의 `requires_dist`를 비교). uv·pip는 존재하지 않는 익스트라 이름을 만나면 경고만 내고 나머지를 설치하므로, `embedchain`은 깔리지만 GitHub 접근에 필요한 `PyGithub`는 빠집니다. `GithubLoader`를 실제로 만들어보면 이 사실이 바로 드러납니다(직접 확인):
+(직접 확인, 두 명령 모두 — 설치된 150줄 중 이 절이 짚는 둘만 남기고 `...`로 줄였고, 걸리는 시간은 실행마다 다릅니다. 앞서 3.12에서 받아 둔 것이 캐시에 남아 있어도 3.11용 wheel은 다시 받으므로 150개가 그대로 설치됩니다.) 이번엔 설치가 끝나지만 마지막 줄이 문제입니다 — **`github` 익스트라가 이 버전에는 없습니다.** PyPI에 올라온 과거 배포본들의 메타데이터를 직접 비교해보면 `embedchain[github]`은 0.1.60부터 0.1.116까지는 `PyGithub<2.0.0,>=1.59.1`과 `gitpython<4.0.0,>=3.1.38`을 끌어왔지만, 0.1.117(2024년 중순)부터는 이 익스트라 자체가 메타데이터에서 완전히 사라졌습니다(직접 확인, PyPI JSON API로 0.1.110~0.1.128 사이 버전들의 `requires_dist`를 비교). uv·pip는 존재하지 않는 익스트라 이름을 만나면 경고만 내고 나머지를 설치하므로, `embedchain`은 깔리지만 GitHub 접근에 필요한 `PyGithub`는 빠집니다. `GithubLoader`를 실제로 만들어보면 이 사실이 바로 드러납니다(직접 확인):
 
 ```bash
 uv run --no-project python -c "

@@ -66,7 +66,7 @@ Resolved 150 packages in 1.20s
         depends on `chromadb` (v0.5.23) which depends on `chroma-hnswlib`
 ```
 
-원인을 PyPI 파일 목록에서 직접 확인했습니다: `chroma-hnswlib` 0.7.6 정식 릴리스는 Windows용 사전 빌드 wheel을 `cp37`부터 `cp311`까지만 올려두었고 `cp312`·`cp313`은 하나도 없습니다(바로 앞 선판 `0.7.6a1`~`a9`에는 `cp312` wheel이 있었지만 정식 `0.7.6`에서는 빠졌습니다). `chromadb==0.5.23`은 이 버전을 범위가 아니라 `chroma-hnswlib==0.7.6`으로 정확히 못박아서(직접 확인: `chroma-hnswlib==0.7.5`를 강제 지정하면 uv가 "unsatisfiable"라며 거부합니다) 다른 버전으로 비켜갈 수도 없습니다. 결국 Python 3.12 이상인 Windows에서 이 두 줄을 설치하려면 Visual Studio C++ 빌드 도구로 소스를 직접 컴파일해야 하는데, 이 컴퓨터에는 그것이 없습니다.
+원인을 PyPI 파일 목록에서 직접 확인했습니다: `chroma-hnswlib` 0.7.6 정식 릴리스는 Windows용 사전 빌드 wheel을 `cp37`부터 `cp311`까지만 올려두었고 `cp312`·`cp313`은 하나도 없습니다(바로 앞 선판 `0.7.6a1`~`a9`에는 Windows용 `cp312` wheel이 있었지만 정식 `0.7.6`에서는 그것만 빠졌습니다 — macOS·Linux용 `cp312` wheel은 정식 릴리스에도 있습니다). `chromadb==0.5.23`은 이 버전을 범위가 아니라 `chroma-hnswlib==0.7.6`으로 정확히 못박아서(직접 확인: `chroma-hnswlib==0.7.5`를 강제 지정하면 uv가 "unsatisfiable"라며 거부합니다) 다른 버전으로 비켜갈 수도 없습니다. 결국 Python 3.12 이상인 Windows에서 이 두 줄을 설치하려면 Visual Studio C++ 빌드 도구로 소스를 직접 컴파일해야 하는데, 이 컴퓨터에는 그것이 없습니다.
 
 Python 3.11로 다시 만들면 사전 빌드 wheel이 있어 그대로 설치됩니다.
 

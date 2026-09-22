@@ -13,7 +13,7 @@
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
 | Ollama | `chat_pdf_llama3.py`/`chat_pdf_llama3.2.py`가 붙는 로컬 LLM·임베딩 데몬(`http://localhost:11434`) | https://ollama.com 에서 설치, 백그라운드 데몬으로 상시 실행됨 |
-| `llama3.2:latest` 모델 | 오늘 기준으로 삼는 버전이 쓰는 모델 — 3.21B 파라미터, 다운로드 2.0GB, RAM 권장 최소 8GB 미만이면 충분(ollama.com·ollama 공식 문서로 확인) | `ollama pull llama3.2:latest` (이 문서는 받지 않고 크기만 확인) |
+| `llama3.2:latest` 모델 | 오늘 기준으로 삼는 버전이 쓰는 모델 — 3.21B 파라미터, 다운로드 2.0GB(ollama.com 라이브러리 페이지로 확인). RAM은 Ollama 공식 문서가 7B→8GB·13B→16GB·33B→32GB 세 구간만 말하고 3B 구간은 말하지 않습니다 — 7B가 8GB이니 그 아래일 것이라는 외삽입니다(미확인) | `ollama pull llama3.2:latest` (이 문서는 받지 않고 크기만 확인) |
 | (선택) OpenAI API 키 | `chat_pdf.py`(호스팅 경로)를 시험해 볼 때만 필요. 화면 입력창에 직접 붙여넣는다(환경변수 아님) | https://platform.openai.com 가입 후 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고. **Python 3.11 이하로 가상환경을 만들 것** — 이유는 Step 1 |
 
@@ -66,7 +66,7 @@ uv venv --python 3.11
 uv pip install -r requirements.txt
 ```
 
-이번엔 152개 패키지가 설치됩니다(직접 확인) — `streamlit` 세 글자짜리 요구가 `langchain` 계열 전체(`langchain`, `langchain-community`, `langchain-openai`, `langchain-text-splitters` 등), `chromadb`, `mem0ai`, `qdrant-client`, `kubernetes`, `onnxruntime`, `pypdf`, `openai`, `tiktoken`을 한꺼번에 끌어옵니다. 여기까지는 `chat_pdf.py`(OpenAI 경로)를 임포트하는 데 충분합니다. 로컬 두 변형은 하나가 더 필요합니다 — `embedchain/llm/ollama.py`와 `embedchain/embedder/ollama.py`가 각각 `from ollama import Client`를 시도하는데, 이 패키지는 `requirements.txt`에 없고 다른 152개 중 누구도 끌어오지 않습니다(직접 확인). 설치 없이 로컬 변형을 임포트하면:
+이번엔 151개 패키지가 설치됩니다(직접 확인) — `streamlit` 세 글자짜리 요구가 `langchain` 계열 전체(`langchain`, `langchain-community`, `langchain-openai`, `langchain-text-splitters` 등), `chromadb`, `mem0ai`, `qdrant-client`, `kubernetes`, `onnxruntime`, `pypdf`, `openai`, `tiktoken`을 한꺼번에 끌어옵니다. 여기까지는 `chat_pdf.py`(OpenAI 경로)를 임포트하는 데 충분합니다. 로컬 두 변형은 하나가 더 필요합니다 — `embedchain/llm/ollama.py`와 `embedchain/embedder/ollama.py`가 각각 `from ollama import Client`를 시도하는데, 이 패키지는 `requirements.txt`에 없고 다른 152개 중 누구도 끌어오지 않습니다(직접 확인). 설치 없이 로컬 변형을 임포트하면:
 
 ```bash
 uv run --no-project python -c "
@@ -85,7 +85,7 @@ ImportError: Ollama requires extra dependencies. Install with `pip install ollam
 uv pip install ollama
 ```
 
-이 한 줄로 153개가 됩니다(직접 확인, `ollama==0.6.2` 추가). 이 패키지가 로컬 변형에 실제로 어떤 함정을 남기는지는 Step 5에서 다룹니다.
+이 한 줄로 152개가 됩니다(직접 확인, `ollama==0.6.2` 추가). 이 패키지가 로컬 변형에 실제로 어떤 함정을 남기는지는 Step 5에서 다룹니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -243,7 +243,7 @@ print('메타데이터:', info['metadata'][0])
 메타데이터: {'producer': 'PyPDF', 'creator': 'PyPDF', 'creationdate': '', 'source': 'day042-test.pdf', 'total_pages': 1, 'page': 0, 'page_label': '1', 'url': 'day042-test.pdf', 'data_type': 'pdf_file', 'doc_id': 'default-app-id--...', 'app_id': 'default-app-id', 'hash': '...'}
 ```
 
-(직접 확인. `dry_run=True`는 App 생성에 가짜 OpenAI 키를 요구하지만 — 생성자는 키를 검증하지 않습니다(다른 날들과 동일 패턴) — 이 청킹 단계 자체는 네트워크를 전혀 쓰지 않습니다. 텍스트 한 문장짜리 PDF라 청크가 1개뿐입니다.)
+(직접 확인. `dry_run=True`는 App 생성에 가짜 OpenAI 키를 요구하지만 — 생성자는 키를 검증하지 않습니다(다른 날들과 동일 패턴) — 이 청킹 단계 자체는 모델 API를 부르지 않습니다. 다만 "네트워크를 전혀 건드리지 않는다"고 하면 사실이 아닙니다 — embedchain은 App을 만들 때 익명 사용 통계를 PostHog로 보냅니다(`embedchain/telemetry/posthog.py`의 `AnonymousTelemetry`, 기본값 `enabled=True`, 소스로 확인). 이 전송은 posthog 로거를 일부러 꺼 두어 화면에 아무 흔적도 남기지 않습니다. 끄려면 `EC_TELEMETRY=false`를 환경변수로 두고 실행합니다. 텍스트 한 문장짜리 PDF라 청크가 1개뿐입니다.)
 
 ### Step 5. 임베딩과 벡터 저장 — Chroma
 
@@ -426,7 +426,7 @@ PDF를 올리면 UI는 `PyPDFLoader`로 페이지별 텍스트를 뽑고 청크�
 
 ## 실행 체크리스트
 
-- [ ] `uv venv --python 3.11`로(3.12/3.13이 아니라) 가상환경을 만들고 `uv pip install -r requirements.txt`로 152개 패키지를 설치했다
+- [ ] `uv venv --python 3.11`로(3.12/3.13이 아니라) 가상환경을 만들고 `uv pip install -r requirements.txt`로 151개 패키지를 설치했다
 - [ ] 로컬 변형을 쓸 것이라면 `uv pip install ollama`를 추가로 설치했다
 - [ ] `chat_pdf.py`/`chat_pdf_llama3.py`/`chat_pdf_llama3.2.py`의 `embedchain_bot()`이 각각 무엇을 다르게 설정하는지 코드로 비교했다
 - [ ] 손으로 만든 PDF로 로더·청커가 실제로 청크 1개를 만들어낸다는 것을 `dry_run=True`로 확인했다

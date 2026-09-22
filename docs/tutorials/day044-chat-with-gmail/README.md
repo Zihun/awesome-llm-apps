@@ -71,7 +71,7 @@ Resolved 164 packages in 1.71s
         depends on `chromadb` (v0.5.23) which depends on `chroma-hnswlib`
 ```
 
-`embedchain`만 쓰는 Day 039는 150개 패키지를 끌어왔지만 `[gmail]` extra가 붙은 이 앱은 **164개**를 끌어옵니다(직접 확인). 차이는 `google-api-python-client`, `google-auth`, `google-auth-httplib2`, `google-auth-oauthlib`, `google-api-core`, `googleapis-common-protos`, `oauthlib`, `requests-oauthlib`, `pywin32` 등 Google OAuth·API 클라이언트 스택입니다(직접 확인: 설치된 패키지 목록 대조 — Substack 앱에는 이 중 어느 것도 필요하지 않습니다).
+`embedchain`만 쓰는 Day 039는 150개 패키지를 끌어왔지만 `[gmail]` extra가 붙은 이 앱은 **164개**를 끌어옵니다(직접 확인). 차이는 정확히 14개이고(직접 확인: Day 039의 150개 집합과 이 164개 집합의 차집합), 그중 다섯 개가 Google OAuth·API 클라이언트 스택입니다 — `google-api-python-client`, `google-auth`, `google-auth-httplib2`, `google-auth-oauthlib`, `google-api-core`. 나머지 아홉 개는 그 다섯이 끌고 오는 것들입니다(`httplib2`, `uritemplate`, `proto-plus`, `pyasn1`, `pyasn1-modules`, `cffi`, `cryptography`, `pycparser`, `pyparsing`). 이름이 Google이나 OAuth를 닮았다고 차이인 것은 아닙니다 — `googleapis-common-protos`·`oauthlib`·`requests-oauthlib`·`pywin32`는 익스트라 없는 평범한 `embedchain` 150개 집합에 이미 들어 있어서, Day 039의 Substack 앱에도 똑같이 깔려 있습니다(직접 확인).
 
 Python 3.11로 다시 만들면 그대로 설치됩니다.
 
