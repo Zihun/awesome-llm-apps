@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+pipeline: static/streamed 코드 { class: ours }
+tts_api: OpenAI API (STT·Chat·TTS) { class: ext }
+rt_code: realtime/agent.py { class: ours }
+rt_api: OpenAI Realtime API { class: ext }
+
+user -> pipeline: 오디오 녹음/청크
+pipeline -> tts_api: 1) STT 호출 (gpt-4o-transcribe)
+tts_api -> pipeline: 텍스트 전사
+pipeline -> tts_api: 2) Runner.run_streamed (gpt-4o-mini)
+tts_api -> pipeline: 응답 텍스트
+pipeline -> tts_api: 3) TTS 호출 (gpt-4o-mini-tts)
+tts_api -> pipeline: 오디오 스트림
+pipeline -> user: 스피커 재생
+
+user -> rt_code: (예제엔 send_audio 호출 없음)
+rt_code -> rt_api: 지속 WebSocket 연결
+rt_api -> rt_code: 오디오·transcript 이벤트
+rt_code -> user: 이벤트를 print만 함
