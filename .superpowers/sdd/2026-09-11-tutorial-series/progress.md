@@ -5,6 +5,35 @@ Workspace: .superpowers/sdd/2026-09-11-tutorial-series/
 Branch: main, working tree D:\ws-llm\awesome-llm-apps (no worktree)
 Started: 2026-09-11, BASE for Task 1 = 1c91855
 
+
+## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
+
+**목표**: Day 150까지 작성. 진도는 `cd docs/tutorials/_tools && npm run roadmap`의 `진도:` 줄이 사실이고,
+작성이 끝난 일차 목록은 `npm run words`가 보여 준다(스캐폴드만 된 날은 빠진다). 폴더는 Day 150까지 이미 다 만들어져 있다.
+
+**사용자가 정한 운영 파라미터 (2026-09-22)**
+
+| 항목 | 값 |
+|---|---|
+| 동시 실행 | **4개**. 다섯이 되면 Sonnet 세션 한도에 걸린다(오늘 실제로 걸렸다) |
+| 한도에 걸렸을 때 | 새로 띄우지 말고 `SendMessage`로 **재개**한다. 1단계 산출물이 디스크에 남아 손실이 거의 없다 |
+| 작성 방식 | 하루 단위 2단계. 1단계에서 조사·실행·다이어그램까지 끝내되 **산문은 한 줄도 쓰지 않고**, 2단계에서 한 번에 쓴다 |
+| 리뷰어 | **10일치마다** 한 번. 큰 볼륨(RAG 24일, Advanced 34일)은 나눠 붙인다 |
+| 푸시 | **볼륨이 끝날 때마다** 자동. 검증과 리뷰를 마친 묶음만 |
+| 보고 | **볼륨마다 한 번**. 배치마다 끊고 보고하지 않는다 |
+| 질문 | 중간에 끊고 묻지 않는다. 가정을 세워 진행하고 보고 때 밝힌다 |
+
+**브리프에 반드시 넣을 것** (전부 실제 사고에서 나온 규칙)
+
+- 경로 지정 커밋 `git commit -F - -- <그 날 폴더>`, **`git reset` 절대 금지** — 남의 커밋을 고아로 만든다
+- `npm run scaffold`·`roadmap`·`fonts/build.py` 금지. `render`/`check`는 반드시 `dayNNN` 인자와 함께
+- **레슨별 사실만 주고 볼륨 일반화는 주지 않는다**("소스에서 직접 찾아내라"). grep 집계를 공통 축으로 승격시켰다가 일곱 날을 틀리게 만들었다
+- 분량은 `npm run words -- dayNNN`으로 재고, **대역에 맞추려고 내용을 깎거나 채우지 않는다**
+- 한도에 걸려 멈추면 어디까지 했는지 남길 것
+- 이 머신에는 실제 마이크와 살아 있는 네트워크가 있다. 장치를 열거나 외부로 나가는 코드는 실행하지 말고 소스로 읽는다. 큰 로컬 모델은 받지 않는다
+
+---
+
 Ruling: implement directly on `main` without a worktree — the user chose "main에 볼륨마다 커밋, 푸시는 요청 시에만" when approving spec §2/§7 (design Q&A, 2026-09-11) — cost if wrong: commits land on main without a branch gate; each is revertable with git.
 Ruling: stop after Task 6 (Day 1) and wait for the user's review — spec §7 step 2 and plan Task 6 Step 9 mandate it — cost if wrong: one pause.
 Ruling: never push — spec §7 step 5 (push only on request) — cost if wrong: none.
@@ -356,7 +385,7 @@ Day 23 완료(3234fb3). ADK 볼륨이 끝났다. 진도 23 / 164일. check 통�
   **구현자의 핵심 발견을 컨트롤러가 소스로 재검증했다.** google-adk 2.9.2에서 `_BLOCKED_YAML_KEYS = frozenset({"args"})`이고(`agents/config_agent_utils.py:818`), `cli/fast_api.py:205`가 `_set_enforce_yaml_key_denylist(True)`를 호출한다. 기본값은 False라 파이썬에서 직접 로드하면 되지만, `adk web`은 켠다. 이 레슨의 `research_agent.yaml`은 MCP 설정에 `args:`를 두 번 쓴다 — 즉 **레슨이 스스로 권하는 `adk web`으로는 이 에이전트를 절대 못 띄운다.** 키가 있든 없든, 의존성 문제 이전에 404로 막힌다. 앞선 ADK 날들처럼 "키가 없어서" 막히는 게 아니라는 점이 이 날의 뒤집힌 전제다. 금지 목록의 사유가 "arbitrary code 실행"인데 이 YAML이 하는 일이 정확히 `npx -y firecrawl-mcp` 실행이라 앞뒤가 맞는다.
   커밋 서명이 Sonnet으로 나갔다. 히스토리는 이미 Opus 11 / Sonnet 6으로 섞여 있었고, Sonnet 서브에이전트가 쓴 것을 Sonnet으로 적은 것이 오히려 정확하므로 고치지 않는다.
 
-### 다음 사람이 이어받을 지점
+### (2026-09-22 시점의 옛 핸드오프 — 위의 ▶ 재개 지점이 최신이다)
 - **다음 할 일: Day 24부터 30까지** (OpenAI Agents SDK 레슨 1~7). 볼륨 조사는 이 원장 위쪽 "Task 8: Surveyed Days 24-30"에 있다. 요약: 패키지는 `openai-agents`인데 import는 `from agents import ...`, 키는 `OPENAI_API_KEY` 하나, 모델은 gpt-4o-mini/gpt-4o. 함정 둘 — env 템플릿 이름이 `1_starter_agent`만 `.env.example`이고 나머지는 점 없는 `env.example`, 그리고 세 레슨(3,5,6)에 requirements.txt가 아예 없다. Day 27(`4_running_agents`)이 최대 난관으로 agent_runner.py가 686줄이다.
 - 다이어그램 규격이 2026-09-21에 크게 바뀌었다(에디토리얼 스킨, grid 배치, 한글 폰트 임베드, 상한 1200x700). 새 날을 맡길 때는 브리프에 "옛 날들의 다이어그램 스타일을 기억으로 베끼지 말 것"을 반드시 넣는다 — §5가 유일한 권위다.
 - 브리프에서 빼야 할 것: 작업 트리 LF 확인 의식(`core.autocrlf=true`라 무의미하다).
