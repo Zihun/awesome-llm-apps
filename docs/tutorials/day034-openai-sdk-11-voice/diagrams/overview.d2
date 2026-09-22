@@ -1,27 +1,30 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 3
+grid-columns: 2
 
-user: 사용자 (마이크·스피커) { class: person }
+entry: "진입" {
+  class: group
+  user: 사용자 (마이크·스피커) { class: person }
+}
 
 rt: "realtime/" {
   class: group
   grid-columns: 2
   agent: RealtimeAgent·Session { class: ours }
-  api: Realtime API (WebSocket) { class: ext }
+  api: Realtime API { class: ext }
 }
 
 vp: "static/ · streamed/" {
   class: group
-  grid-columns: 4
+  grid-columns: 2
   static_agent: static/agent.py { class: ours }
-  streamed_agent: streamed/agent.py { class: ours }
-  io: sounddevice I/O (util.py) { class: ours }
   models: STT·Chat·TTS 세 모델 { class: ext }
+  io: sounddevice I/O (util.py) { class: ours }
+  streamed_agent: streamed/agent.py { class: ours }
 }
 
-user -> rt.agent: 오디오 바이트
-user -> vp.io: 마이크 입력·스피커 출력
+entry.user -> rt.agent: 오디오 바이트
+entry.user -> vp: 마이크 입력·스피커 출력
 rt.agent -> rt.api: 세션 연결
 vp.static_agent -> vp.io: 녹음 1회·재생
 vp.streamed_agent -> vp.io: 연속 녹음·재생

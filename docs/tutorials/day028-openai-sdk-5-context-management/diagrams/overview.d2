@@ -9,8 +9,6 @@ front: "실행 준비" {
   ctx: 컨텍스트 객체 (UserInfo) { class: ours }
 }
 
-agent: 컨텍스트 인식 에이전트 (root_agent) { class: ours }
-
 back: "실행과 호출 대상" {
   class: group
   grid-columns: 3
@@ -18,6 +16,8 @@ back: "실행과 호출 대상" {
   runner: 실행 엔진 (Runner) { class: ours }
   openai: OpenAI API { class: ext }
 }
+
+agent: 컨텍스트 인식 에이전트 (root_agent) { class: ours }
 
 front.user -> back.runner: Runner.run(agent, msg, context=ctx)
 front.ctx -> back.runner: context 인자로 전달

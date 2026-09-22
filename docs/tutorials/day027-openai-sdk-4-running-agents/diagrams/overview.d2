@@ -20,18 +20,14 @@ lessons: "4개 서브 레슨" {
 
 runtime: "실행 계층" {
   class: group
-  grid-columns: 2
+  grid-columns: 3
   store: 저장소 (SQLiteSession) { class: store }
-  streamresult: 핸들 (RunResultStreaming) { class: file }
+  streamresult: 스트리밍 핸들 { class: file }
   api: OpenAI API { class: ext }
 }
 
 access.user -> access.ui: 데모 선택
 access.user -> lessons: 터미널 직접 실행
-access.ui -> runtime.api: 세 실행 메서드
-access.ui -> runtime.store: 대화 이력
-lessons.ex -> runtime.api: run·run_sync·run_streamed
-lessons.conv -> runtime.store: 대화 이력
-lessons.cfg -> runtime.api: RunConfig 설정
-lessons.stream -> runtime.streamresult: 반환값
+access -> runtime: 세 실행 메서드 · 대화 이력
+lessons -> runtime: run 계열 호출 · 대화 이력 · RunConfig 설정 · 스트리밍 반환값
 runtime.streamresult -> runtime.api: stream_events() 순회

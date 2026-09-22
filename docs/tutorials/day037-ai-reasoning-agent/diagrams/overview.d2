@@ -21,6 +21,6 @@ paths: "호스팅 vs 로컬 경로" {
 prep.reqs -> paths.script: 설치
 prep.reqs -> paths.webapp: 설치
 prep.user -> paths.script: 질문 실행 (CLI)
-prep.user -> paths.webapp: 채팅 메시지 (브라우저)
+prep -> paths.webapp: 채팅 메시지 (브라우저)
 paths.script -> paths.openai: 채팅 완성 요청
 paths.webapp -> paths.ollama: 채팅 완성 요청
