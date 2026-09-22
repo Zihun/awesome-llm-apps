@@ -1,0 +1,25 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 3
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 3
+  user: 사용자 { class: person }
+  ui: Streamlit UI (autorag.py) { class: ours }
+  pdf: 업로드 PDF { class: file }
+}
+
+agent_box: AutoRAG 에이전트 (auto_rag_agent) { class: ours }
+
+backend: "외부 연동" {
+  class: group
+  grid-columns: 4
+  openai: OpenAI API (GPT-4o-mini · 임베딩) { class: ext }
+  ddg: DuckDuckGo 웹 검색 { class: ext }
+  docs: auto_rag_docs (:5532) { class: store }
+  sess: auto_rag_storage (:5532) { class: store }
+}
+
+front -> agent_box: PDF · 질문 텍스트
+agent_box -> backend: 모델·검색 호출 · 벡터/세션 읽고쓰기

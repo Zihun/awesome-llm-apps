@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: AutoRAG 에이전트 { class: ours }
+kb: pgvector 지식 베이스 { class: store }
+ddg: DuckDuckGo { class: ext }
+openai: OpenAI API { class: ext }
+
+user -> ui: 키 + 질문
+ui -> agent: query_assistant(질문)
+agent -> kb: search_knowledge_base(질문)
+kb -> agent: 문서 조각 또는 빈 결과
+agent -> ddg: web_search(질문) (모델이 고를 때만)
+ddg -> agent: 검색 결과 JSON
+agent -> openai: 응답 생성 요청
+openai -> agent: RunOutput(content, status)
+agent -> ui: RunOutput 그대로 반환
+ui -> user: 반복 시도 중 TypeError
