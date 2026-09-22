@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+raglite: raglite { class: ours }
+openai: OpenAI 임베딩 API { class: ext }
+cohere: Cohere Rerank API { class: ext }
+claude: Anthropic Claude API { class: ext }
+
+user -> ui: 질문 입력
+ui -> raglite: perform_search(질문) — 존재 확인용
+raglite -> openai: 질의 임베딩 요청
+openai -> raglite: 임베딩 벡터
+raglite -> raglite: DB 벡터·키워드 검색 후 RRF 병합
+raglite -> cohere: 재순위 요청 (1차)
+cohere -> raglite: 재정렬된 청크
+ui -> raglite: rag(질문) — 검색 전체 재실행
+raglite -> claude: 스트리밍 생성 요청 (opus)
+claude -> raglite: 토큰 스트림
+raglite -> ui: 토큰 스트림
+ui -> user: 화면에 답변 표시

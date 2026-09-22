@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+grid-columns: 2
+
+query: 질의 텍스트 { class: file }
+
+branches: "두 순위 목록" {
+  class: group
+  grid-rows: 2
+  kw: 키워드 검색 (BM25) { class: ours }
+  vec: 벡터 검색 (ANN) { class: ours }
+}
+
+merge: RRF 병합 (k=60) { class: ours }
+result: 상위 청크 { class: file }
+
+query -> branches: 질의
+branches -> merge: chunk_id별 순위
+merge -> result: 1/(k+순위) 합산 정렬
