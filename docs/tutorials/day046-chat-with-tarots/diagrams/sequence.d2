@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: 스트림릿 UI (app.py) { class: ours }
+select: 무작위 선택 (generate_random_draw) { class: ours }
+build: 프롬프트 조립 (prepare_prompt_input) { class: ours }
+llm: 로컬 LLM (phi4 · Ollama) { class: store }
+
+user -> ui: 카드 수 · 질문 입력 후 버튼 클릭
+ui -> select: generate_random_draw(num_cards, 카드 이름 목록)
+select -> ui: 뽑힌 카드(이름 · 역방향 여부)
+ui -> build: prepare_prompt_input(cards, context)
+build -> ui: card_details · symbolism 텍스트
+ui -> llm: analyzer.invoke() → 완성된 프롬프트
+llm -> ui: 해석 텍스트 (AIMessage.content)
+ui -> user: 카드 이미지 + 해석 표시
