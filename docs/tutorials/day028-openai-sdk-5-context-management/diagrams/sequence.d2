@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 실행자 { class: person }
+runner: Runner { class: ours }
+agent: root_agent { class: ours }
+tools: 컨텍스트 인식 도구 { class: ours }
+ctx: UserInfo 컨텍스트 { class: ours }
+openai: OpenAI API { class: ext }
+
+user -> runner: Runner.run(agent, message, context=ctx)
+runner -> agent: 실행 시작
+agent -> openai: 모델 호출 (instructions + 대화 이력만 전송)
+openai -> agent: 도구 호출 결정
+agent -> tools: on_invoke_tool(wrapper, args)
+tools -> ctx: wrapper.context 읽기/쓰기
+tools -> agent: 도구 결과 문자열
+agent -> openai: 결과 포함 재호출
+openai -> agent: 최종 응답 텍스트
+agent -> runner: RunResult
+runner -> user: result.final_output / 변경된 ctx
