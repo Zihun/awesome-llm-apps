@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+proc: 파이썬 프로세스 { class: ours }
+orchestrator: Translation Orchestrator { class: ours }
+openai: OpenAI API { class: ext }
+sub: 번역 에이전트 (중첩) { class: ours }
+
+user -> proc: 실행 명령 + 입력 텍스트
+proc -> orchestrator: Runner.run_sync(root_agent, 입력)
+orchestrator -> openai: 메시지 + 도구 스키마 3개 (input: string)
+openai -> orchestrator: function_call translate_to_spanish
+orchestrator -> sub: as_tool 실행 (중첩 Runner·새 대화)
+sub -> openai: 자체 모델 호출 (지시문: 스페인어로 번역)
+openai -> sub: 번역된 텍스트
+sub -> orchestrator: function_response (마지막 텍스트만)
+orchestrator -> openai: 함수 응답을 포함해 재요청
+openai -> orchestrator: 최종 텍스트
+orchestrator -> proc: RunResult.final_output
+proc -> user: 출력 표시
