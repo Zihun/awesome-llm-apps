@@ -174,7 +174,7 @@ def embedchain_bot(db_path, api_key):
     )
 ```
 
-`llm`은 모델명(`gpt-4-turbo`)과 온도(0.5)를 명시하지만 `embedder`는 `api_key`만 주고 모델명을 적지 않았습니다. 이 함수를 파일에서 직접 꺼내(`runpy.run_path`) 가짜 키로 호출해 무엇으로 채워지는지 확인합니다 — `App.from_config()`는 로컬에서 Chroma 클라이언트를 여는 것뿐이라 네트워크 호출이 없습니다.
+`llm`은 모델명(`gpt-4-turbo`)과 온도(0.5)를 명시하지만 `embedder`는 `api_key`만 주고 모델명을 적지 않았습니다. 이 함수를 파일에서 직접 꺼내(`runpy.run_path`) 가짜 키로 호출해 무엇으로 채워지는지 확인합니다 — `App.from_config()`는 모델 API를 부르지 않습니다. 다만 "네트워크를 전혀 건드리지 않는다"고 하면 사실이 아닙니다 — embedchain은 App을 만들 때 익명 사용 통계를 PostHog로 보냅니다(`embedchain/telemetry/posthog.py`의 `AnonymousTelemetry`, 기본값 `enabled=True`). 이 전송은 posthog 로거를 일부러 꺼 두어 화면에 아무 흔적도 남기지 않습니다. 끄려면 `EC_TELEMETRY=false`를 환경변수로 두고 실행합니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -235,7 +235,7 @@ class GmailReader:
     SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 ```
 
-Google의 Gmail API 범위 문서는 이 범위를 "Read all resources and their metadata—no write operations."라고 정의하고, 동의 화면에 표시되는 설명은 "View your email messages and settings."입니다(Gmail API 문서로 확인, 2026-09-22). 이 범위만으로는 메일을 보내지도(`gmail.send`), 수정하지도(`gmail.modify`), 라벨을 바꾸지도(`gmail.labels`), 완전히 삭제하지도(`https://mail.google.com/`) 못합니다 — 읽기만 가능합니다.
+Google 문서가 이 범위에 대해 규정하는 것은 읽기 전용이라는 점입니다 — 보내기·수정·라벨 변경·삭제는 포함되지 않습니다. 동의 화면에 실제로 표시되는 문구는 "View your email messages and settings."입니다(Gmail API 문서로 확인, 2026-09-22). 이 범위만으로는 메일을 보내지도(`gmail.send`), 수정하지도(`gmail.modify`), 라벨을 바꾸지도(`gmail.labels`), 완전히 삭제하지도(`https://mail.google.com/`) 못합니다 — 읽기만 가능합니다.
 
 인증 절차는 다음과 같습니다(`_get_credentials()`, 소스로 확인). 먼저 작업 디렉터리에 `credentials.json`이 있는지 확인하고, 없으면 즉시 예외를 던집니다 — 아래 **확인**에서 이 예외를 직접 재현합니다. 이 파일은 독자가 https://console.cloud.google.com/ 에서 프로젝트를 만들고 "Gmail API"를 사용 설정한 뒤, OAuth 동의 화면을 구성하고 OAuth 클라이언트 ID(데스크톱 앱)를 발급받아 JSON으로 내려받아야 얻을 수 있습니다(앱 자체 `README.md`가 이 절차를 안내합니다). `credentials.json`이 있으면 같은 디렉터리의 `token.json`을 읽어 유효한지 확인하고, 없거나 만료됐으면 `InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES).run_local_server(port=8080)`을 실행합니다 — 로컬에 임시 HTTP 서버를 열고 기본 브라우저로 Google 동의 화면을 띄워, 승인 후 `localhost:8080`으로 돌아오는 인가 코드를 받습니다. 승인이 끝나면 발급된 토큰을 `creds.to_json()`으로 직렬화해 **작업 디렉터리에 `token.json`이라는 평문 JSON 파일로 새로 씁니다**(`open("token.json", "w")`, 소스로 확인). 이후 재실행에서는 이 파일이 있고 유효하면(또는 `refresh_token`으로 조용히 갱신되면) 브라우저 동의 없이 재사용됩니다 — 동의 자체는 보통 한 번만 일어나지만, 실제 메일 조회(Step 5)는 그렇지 않다는 것을 Step 7에서 실험으로 확인합니다.
 

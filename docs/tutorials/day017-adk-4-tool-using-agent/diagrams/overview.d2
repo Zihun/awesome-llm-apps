@@ -1,27 +1,35 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 4
+grid-rows: 2
 
-user: 사용자 (브라우저) { class: person }
-adk_web: adk web 서버 { class: ext }
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 (브라우저) { class: person }
+  adk_web: adk web 서버 { class: ext }
+}
 
-builtin: 내장 도구 (4_1) { class: ours }
-func: 함수 도구 (4_2) { class: ours }
-thirdparty: 서드파티 도구 (4_3) { class: ours }
-mcp: MCP 도구 (4_4) { class: ours }
+back: "모델·서버" {
+  class: group
+  grid-columns: 2
+  gemini: Gemini API { class: ext }
+  mcp_server: MCP 서버 (별도 프로세스) { class: ext }
+}
 
-gemini: Gemini API { class: ext }
-mcp_server: MCP 서버 (별도 프로세스) { class: ext }
+tools: "네 가지 도구 방식" {
+  class: group
+  grid-columns: 4
+  builtin: 내장 도구 (4_1) { class: ours }
+  func: 함수 도구 (4_2) { class: ours }
+  thirdparty: 서드파티 도구 (4_3) { class: ours }
+  mcp: MCP 도구 (4_4) { class: ours }
+}
 
-user -> adk_web: POST /run
-adk_web -> builtin: 동적 임포트
-adk_web -> func: 마찬가지
-adk_web -> thirdparty: 마찬가지
-adk_web -> mcp: 마찬가지
-builtin -> gemini: 서버 쪽에서 실행
-func -> gemini: 직접 쓴 함수 호출
-thirdparty -> gemini: 감싼 외부 함수 호출
-mcp -> gemini: 도구 선언 포함 요청
-mcp -> mcp_server: stdio로 위임
-gemini -> adk_web: 응답
-adk_web -> user: 응답 표시
+front.user -> front.adk_web: POST /run
+front -> tools: 동적 임포트
+tools.builtin -> back.gemini: 서버 쪽에서 실행 → 응답
+tools.func -> back.gemini: 직접 쓴 함수 호출 → 응답
+tools.thirdparty -> back.gemini: 감싼 외부 함수 호출 → 응답
+tools.mcp -> back.gemini: 도구 선언 포함 요청 → 응답
+tools.mcp -> back.mcp_server: stdio로 위임
+front.adk_web -> front.user: 응답 표시

@@ -194,7 +194,7 @@ def embedchain_bot(db_path: str, api_key: str) -> App:
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 가짜 키로 App을 만들어 실제 설정값을 직접 확인합니다 — `App.from_config()`는 로컬에서 Chroma 클라이언트를 여는 것뿐이라 네트워크 호출이 없습니다.
+**확인.** 가짜 키로 App을 만들어 실제 설정값을 직접 확인합니다 — `App.from_config()`는 모델 API를 부르지 않습니다. 다만 "네트워크를 전혀 건드리지 않는다"고 하면 사실이 아닙니다 — embedchain은 App을 만들 때 익명 사용 통계를 PostHog로 보냅니다(`embedchain/telemetry/posthog.py`의 `AnonymousTelemetry`, 기본값 `enabled=True`). 이 전송은 posthog 로거를 일부러 꺼 두어 화면에 아무 흔적도 남기지 않습니다. 끄려면 `EC_TELEMETRY=false`를 환경변수로 두고 실행합니다.
 
 ```bash
 uv run --no-project python -c "

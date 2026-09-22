@@ -9,24 +9,26 @@ front: "브라우저 쪽" {
   ui: ADK Web UI (adk web) { class: ext }
 }
 
-coordinator: 코디네이터 (multi_agent_researcher) { class: ours }
-
-team: "코디네이터가 다루는 대상" {
+core: "코디네이터" {
   class: group
   grid-columns: 2
-  research: 리서치 에이전트 (research_agent) { class: ours }
-  summarizer: 요약 에이전트 (summarizer_agent) { class: ours }
-  critic: 비평 에이전트 (critic_agent) { class: ours }
+  coordinator: 코디네이터 (multi_agent_researcher) { class: ours }
   gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 }
 
+agents: "코디네이터가 다루는 하위 에이전트" {
+  class: group
+  grid-columns: 3
+  research: 리서치 에이전트 (research_agent) { class: ours }
+  summarizer: 요약 에이전트 (summarizer_agent) { class: ours }
+  critic: 비평 에이전트 (critic_agent) { class: ours }
+}
+
 front.user -> front.ui: 연구 주제
-front.ui -> coordinator: root_agent 실행
-coordinator -> team.research: 도구 호출 후 응답 대기
-coordinator -> team.summarizer: transfer_to_agent (복귀 없음)
-coordinator -> team.critic: transfer_to_agent (복귀 없음)
-team.summarizer -> team.critic: 동료 간 transfer_to_agent
-team.research -> team.gemini: 모델 호출
-coordinator -> team.gemini: 모델 호출
-team.summarizer -> team.gemini: 모델 호출
-team.critic -> team.gemini: 모델 호출
+front.ui -> core.coordinator: root_agent 실행
+core.coordinator -> agents.research: 도구 호출 후 응답 대기
+core.coordinator -> agents.summarizer: transfer_to_agent (복귀 없음)
+core.coordinator -> agents.critic: transfer_to_agent (복귀 없음)
+agents.summarizer -> agents.critic: 동료 간 transfer_to_agent
+agents -> core.gemini: 모델 호출
+core.coordinator -> core.gemini: 모델 호출

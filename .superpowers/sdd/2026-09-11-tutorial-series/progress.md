@@ -445,3 +445,11 @@ Task 8: Days 28·29·30·31 완료(d7a4036, 1b7aa61, ea75863, 33c7163). Days 32-
   같이 고친 것: Day 030이 "이 볼륨에서 처음으로 대화 기록을 다룬다"고 했으나 Day 027 Step 4가 이미 다루었다 — 가리키도록 고쳤다.
   남긴 것(사소, 거짓 아님): Day 029·033이 직접 확인 출력 블록에서 `skipping trace export` 줄을 말없이 잘라냈다. 리뷰어가 "cosmetic, nothing false"로 분류했고 다른 날들은 유지하거나 생략을 밝힌다. 다음 손댈 때 함께 정리한다.
   리뷰어가 깨끗하다고 확인한 것: 열한 날 모두 0.22.3을 일관되게 고정, 상위/하위 중복 주장은 각자 자기 레슨에 대해 정확하며 아무도 일반화하지 않음, Day 034의 "실행 못 한 것" 정직성은 재현으로 통과.
+
+## 2026-09-23 (2) — Chat with X 볼륨 리뷰 결과와 조치
+
+재현 다섯 건 전부 맞음(embedchain의 Python 3.11 제약, 질문마다 재적재와 Day 043의 수리, Day 041의 토큰 투입 불가와 사라진 extra, Day 043의 FIX_SUMMARY 대 requirements 불일치, Day 044의 OAuth 범위·토큰 경로·취소 불가).
+  **가장 심각한 발견 — 세 날이 쓴 안전성 주장이 거짓이었다.** Days 039·043·044가 똑같이 "`App.from_config()`는 로컬에서 Chroma 클라이언트를 여는 것뿐이라 네트워크 호출이 없습니다"라고 적었다. 컨트롤러가 PyPI 휠(embedchain 0.1.128)을 받아 직접 확인했다: `embedchain/telemetry/posthog.py`의 `AnonymousTelemetry`가 기본 `enabled=True`로 PostHog 프로젝트 키를 하드코딩해 갖고 있고, `EC_TELEMETRY`가 `1/true/yes`가 아닌 값으로 설정될 때만 꺼진다. 그리고 **posthog 로거를 일부러 disabled 처리**해 화면에 아무 흔적도 남기지 않는다 — 세 작성자가 "네트워크 호출 없음"으로 결론 낸 이유가 바로 이 침묵이다. 셋 다 고쳤다: 모델 API는 안 부르지만 통계는 나간다는 것, 끄는 법(`EC_TELEMETRY=false`)까지.
+  Day 044의 범위 설명에서 `"Read all resources and their metadata—no write operations."`를 Google 문서 직접 인용처럼 적었는데 리뷰어가 오늘 그 페이지에서 찾지 못했다. 인용 형식을 걷어내고 뜻만 남겼다. 동의 화면 문구(`View your email messages and settings.`)는 축자 확인되어 그대로 뒀다.
+  **리뷰어의 허위 양성 하나**: "Day 042의 준비 표는 3.11인데 Step 1은 3.12를 친다"는 지적은 틀렸다. 그 `--python 3.12`는 **실패를 보여 주는 의도된 시연**이고 바로 뒤에 Visual Studio 오류 출력이 온다. 고치지 않았다 — 리뷰 지적도 확인 없이 받아들이지 않는다.
+  남긴 것(사소): Day 043의 청커 기본값 수치 누락(300/0), 패키지 수 ±1, Day 046의 "여섯 번"(실제 다섯), Day 043의 난이도 표기. 다음에 그 날들을 손댈 때 함께 정리한다.

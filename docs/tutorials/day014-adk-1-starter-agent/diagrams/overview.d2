@@ -1,20 +1,28 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
+grid-columns: 2
 
-user: 사용자 (브라우저) { class: person }
+config: "환경·모델" {
+  class: group
+  grid-columns: 2
+  env: API 키 설정 (.env) { class: file }
+  gemini: Gemini API (gemini-3-flash-preview) { class: ext }
+}
+front: "브라우저·서버" {
+  class: group
+  grid-columns: 2
+  user: 사용자 (브라우저) { class: person }
+  adk_web: adk web 서버 (ADK CLI 개발 서버) { class: ext }
+}
 pkg: creative_writing_agent/ (에이전트 패키지) {
   init: 패키지 진입점 (__init__.py) { class: ours }
   agent: 창작 에이전트 정의 (agent.py, root_agent) { class: ours }
 }
-env: API 키 설정 (.env) { class: file }
-adk_web: adk web 서버 (ADK CLI 개발 서버) { class: ext }
-gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
-user -> adk_web: 채팅 메시지 (POST /run)
-adk_web -> pkg.init: 시작 시 디렉터리 스캔 후 임포트
+front.user -> front.adk_web: 채팅 메시지 (POST /run)
+front.adk_web -> pkg.init: 시작 시 디렉터리 스캔 후 임포트
 pkg.init -> pkg.agent: root_agent 재노출
-env -> adk_web: GOOGLE_API_KEY 등 (요청 시점에 읽음)
-adk_web -> gemini: instruction과 대화 이력으로 추론 요청
-gemini -> adk_web: 생성된 응답
-adk_web -> user: 응답 표시
+config.env -> front: GOOGLE_API_KEY 등 (요청 시점에 읽음)
+front -> config.gemini: instruction과 대화 이력으로 추론 요청
+config.gemini -> front: 생성된 응답
+front.adk_web -> front.user: 응답 표시

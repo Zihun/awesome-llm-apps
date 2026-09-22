@@ -1,26 +1,41 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 3
+grid-rows: 3
 
-user: 사용자 { class: person }
-app: Streamlit 앱 (레슨별 app.py) { class: ours }
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  app: Streamlit 앱 (레슨별 app.py) { class: ours }
+}
+
+lanes: "세 가지 실행 패턴" {
+  class: group
+  grid-columns: 3
+
+  seq_lane: {
+    seq_shell: SequentialAgent (9_1) { class: ours }
+    seq_children: LlmAgent 4개 (순차) { class: ours }
+  }
+  loop_lane: {
+    loop_shell: LoopAgent (9_2) { class: ours }
+    loop_children: "LlmAgent 1 + BaseAgent 2 (반복)" { class: ours }
+  }
+  par_lane: {
+    par_shell: ParallelAgent (9_3) { class: ours }
+    par_children: LlmAgent 3개 (동시) { class: ours }
+  }
+}
+
 gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
-seq_shell: SequentialAgent (business_intelligence_team) { class: ours }
-loop_shell: LoopAgent (spec_refinement_loop) { class: ours }
-par_shell: ParallelAgent (market_snapshot_team) { class: ours }
-
-seq_children: 9_1: LlmAgent 4개, for문 순서대로 { class: ours }
-loop_children: 9_2: LlmAgent 1 + BaseAgent 2, while문 반복 { class: ours }
-par_children: 9_3: LlmAgent 3개, 브랜치로 동시 실행 { class: ours }
-
-user -> app: 주제 입력
-app -> seq_shell: run_async (9_1)
-app -> loop_shell: run_async (9_2)
-app -> par_shell: run_async (9_3)
-seq_shell -> seq_children: 한 번에 하나씩
-loop_shell -> loop_children: 매 반복마다
-par_shell -> par_children: 동시에
-seq_children -> gemini: 모델 호출
-loop_children -> gemini: 모델 호출
-par_children -> gemini: 모델 호출
+front.user -> front.app: 주제 입력
+front.app -> lanes.seq_lane.seq_shell: run_async (9_1)
+front.app -> lanes.loop_lane.loop_shell: run_async (9_2)
+front.app -> lanes.par_lane.par_shell: run_async (9_3)
+lanes.seq_lane.seq_shell -> lanes.seq_lane.seq_children: 한 번에 하나씩
+lanes.loop_lane.loop_shell -> lanes.loop_lane.loop_children: 매 반복마다
+lanes.par_lane.par_shell -> lanes.par_lane.par_children: 동시에
+lanes.seq_lane.seq_children -> gemini: 모델 호출
+lanes.loop_lane.loop_children -> gemini: 모델 호출
+lanes.par_lane.par_children -> gemini: 모델 호출

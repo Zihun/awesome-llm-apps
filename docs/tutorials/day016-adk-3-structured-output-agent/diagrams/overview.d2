@@ -26,17 +26,21 @@ pkg2: email_generator_agent/ {
   schema: EmailContent 스키마 { class: ours }
 }
 
-env: API 키 (.env) { class: file }
-gemini: Gemini API { class: ext }
+config: "환경·모델" {
+  class: group
+  grid-columns: 2
+
+  env: API 키 (.env) { class: file }
+  gemini: Gemini API { class: ext }
+}
 
 front.user -> front.adk_web: POST /run
-front.adk_web -> pkg1.agent: 이름 검증 후 동적 임포트
-front.adk_web -> pkg2.agent: 마찬가지
+front -> pkg1: 이름 검증 후 동적 임포트
+front -> pkg2: 마찬가지
 pkg1.agent -> pkg1.schema: output_schema로 지정
 pkg2.agent -> pkg2.schema: output_schema로 지정
-env -> pkg1.agent: GOOGLE_API_KEY
-env -> pkg2.agent: 마찬가지
-pkg1.agent -> gemini: response_schema 요청
-pkg2.agent -> gemini: response_schema 요청
-gemini -> front.adk_web: JSON 결과
+config -> pkg1: GOOGLE_API_KEY
+config -> pkg2: 마찬가지
+pkg1 -> config: response_schema 요청 → JSON 결과
+pkg2 -> config: response_schema 요청 → JSON 결과
 front.adk_web -> front.user: 결과 표시

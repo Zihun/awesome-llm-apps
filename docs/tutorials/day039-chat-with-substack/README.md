@@ -167,7 +167,7 @@ def embedchain_bot(db_path, api_key):
 
 `llm`은 모델명(`gpt-4-turbo`)과 온도(0.5)를 명시하지만, `embedder`는 `api_key`만 주고 모델명을 적지 않았습니다. `vectordb`도 `dir` 하나만 줍니다. embedchain 0.1.128의 `embedchain/embedder/openai.py`(소스로 확인)는 `config.model`이 비어 있으면 `text-embedding-ada-002`로 채웁니다.
 
-이 세 provider가 실제로 무엇으로 굳어지는지, 가짜 키로 App을 만들어 직접 확인합니다 — `App.from_config()`는 로컬에서 Chroma 클라이언트를 여는 것뿐이라 네트워크 호출이 없습니다.
+이 세 provider가 실제로 무엇으로 굳어지는지, 가짜 키로 App을 만들어 직접 확인합니다 — `App.from_config()`는 모델 API를 부르지 않습니다. 다만 "네트워크를 전혀 건드리지 않는다"고 하면 사실이 아닙니다 — embedchain은 App을 만들 때 익명 사용 통계를 PostHog로 보냅니다(`embedchain/telemetry/posthog.py`의 `AnonymousTelemetry`, 기본값 `enabled=True`). 이 전송은 posthog 로거를 일부러 꺼 두어 화면에 아무 흔적도 남기지 않습니다. 끄려면 `EC_TELEMETRY=false`를 환경변수로 두고 실행합니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 

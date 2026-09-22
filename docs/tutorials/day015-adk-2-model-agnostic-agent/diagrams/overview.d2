@@ -31,13 +31,13 @@ shared: "공통 요소" {
 openrouter: 모델 게이트웨이 (OpenRouter API) { class: ext }
 
 front.user -> front.adk_web: 채팅 메시지 (POST /run)
-front.adk_web -> openai_path.agent: 이름 검증 후 동적 임포트
-front.adk_web -> anthropic_path.agent: 마찬가지
-shared.env -> openai_path.agent: OPENROUTER_API_KEY
-shared.env -> anthropic_path.agent: 마찬가지
-openai_path.agent -> shared.tool: tools 파라미터로 연결
-anthropic_path.agent -> shared.tool: tools 파라미터로 연결
-openai_path.agent -> openrouter: openrouter/openai/gpt-4o 요청
-anthropic_path.agent -> openrouter: openrouter/anthropic/claude-sonnet-4 요청
-openrouter -> front.adk_web: 생성된 응답
+front -> openai_path: 이름 검증 후 동적 임포트
+front -> anthropic_path: 마찬가지
+shared -> openai_path: OPENROUTER_API_KEY
+shared -> anthropic_path: 마찬가지
+openai_path -> shared: tools 파라미터로 연결
+anthropic_path -> shared: tools 파라미터로 연결
+openai_path -> openrouter: openrouter/openai/gpt-4o 요청
+anthropic_path -> openrouter: openrouter/anthropic/claude-sonnet-4 요청
+openrouter -> front: 생성된 응답
 front.adk_web -> front.user: 응답 표시
