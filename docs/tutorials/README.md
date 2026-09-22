@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 52 / 164일 완료
+진도: 53 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -133,7 +133,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 050](day050-agentic-rag-embedding-gemma/README.md) | 🔥 Agentic RAG with Embedding Gemma | [rag_tutorials/agentic_rag_embedding_gemma](../../rag_tutorials/agentic_rag_embedding_gemma/) |
 | ✅ | [Day 051](day051-rag-as-a-service/README.md) | 🧩 RAG-as-a-Service | [rag_tutorials/rag-as-a-service](../../rag_tutorials/rag-as-a-service/) |
 | ✅ | [Day 052](day052-rag-chain/README.md) | ⛓️ Basic RAG Chain | [rag_tutorials/rag_chain](../../rag_tutorials/rag_chain/) |
-| ⬜ | [Day 053](day053-hybrid-search-rag/README.md) | 👀 Hybrid Search RAG (Cloud) | [rag_tutorials/hybrid_search_rag](../../rag_tutorials/hybrid_search_rag/) |
+| ✅ | [Day 053](day053-hybrid-search-rag/README.md) | 👀 Hybrid Search RAG (Cloud) | [rag_tutorials/hybrid_search_rag](../../rag_tutorials/hybrid_search_rag/) |
 | ⬜ | [Day 054](day054-agentic-rag-with-reasoning/README.md) | 🧐 Agentic RAG with Reasoning | [rag_tutorials/agentic_rag_with_reasoning](../../rag_tutorials/agentic_rag_with_reasoning/) |
 | ⬜ | [Day 055](day055-local-hybrid-search-rag/README.md) | 🖥️ Local Hybrid Search RAG | [rag_tutorials/local_hybrid_search_rag](../../rag_tutorials/local_hybrid_search_rag/) |
 | ⬜ | [Day 056](day056-rag-failure-diagnostics-clinic/README.md) | 🩺 RAG Failure Diagnostics Clinic | [rag_tutorials/rag_failure_diagnostics_clinic](../../rag_tutorials/rag_failure_diagnostics_clinic/) |
