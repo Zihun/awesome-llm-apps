@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 3
+
+user: 사용자 { class: person }
+
+handlers: "Motia 스텝 (steps/)" {
+  class: group
+  grid-columns: 2
+  api: ChatApi (chat-api.step.ts) { class: ours }
+  ai: AiResponse (ai-response.step.ts) { class: ours }
+}
+
+back: "저장소·외부 API" {
+  class: group
+  grid-columns: 2
+  store: conversation 스트림 (파일 저장) { class: store }
+  openai: OpenAI API (gpt-4o-mini) { class: ext }
+}
+
+user -> handlers.api: POST /chat
+handlers.api -> back.store: 사용자 메시지 저장
+handlers.api -> handlers.ai: chat-message 이벤트
+handlers.ai -> back.store: 토큰 조각마다 갱신
+handlers.ai -> back.openai: 스트리밍 호출
+back.store -> user: WebSocket 실시간 푸시

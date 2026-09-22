@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+api: ChatApi { class: ours }
+store: conversation 스트림 { class: store }
+ai: AiResponse { class: ours }
+openai: OpenAI API { class: ext }
+
+user -> api: POST /chat (message)
+api -> store: set() 사용자 메시지 (status completed)
+api -> store: set() assistant 자리표시자 (status created)
+api -> user: HTTP 200 (message "", status created)
+api -> ai: chat-message 이벤트 발행 (비동기)
+ai -> store: set() status streaming으로 갱신
+ai -> openai: chat.completions.create(stream true)
+openai -> ai: 토큰 조각 (delta.content, 스트림 끝까지 반복)
+ai -> store: set() 누적된 message 갱신 (반복)
+store -> user: WebSocket 푸시 (반복)
+openai -> ai: 스트림 종료
+ai -> store: set() 최종 message (status completed)
+store -> user: WebSocket 푸시 (최종)
