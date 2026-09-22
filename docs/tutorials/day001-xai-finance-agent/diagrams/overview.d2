@@ -20,6 +20,6 @@ user -> plane: 브라우저에서 질문
 plane -> app.os: HTTP 요청
 app.os -> app.agent: run(message)
 key -> app.agent: 인증
-app.agent -> grok: 메시지 + 도구 스키마
+app -> grok: 메시지 + 도구 스키마
 app.agent -> app.ddg -> ddgapi: 검색어
 app.agent -> app.yf -> yahoo: 티커 (예: AAPL)

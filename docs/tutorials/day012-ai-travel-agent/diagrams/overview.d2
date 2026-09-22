@@ -28,13 +28,12 @@ external: "외부 API" {
 }
 
 input.user -> app.ui: 목적지와 일수 입력
-input.keys -> app.researcher: 인증
-input.keys -> app.planner: 인증
+input.keys -> app: 인증 (researcher, planner)
 app.ui -> app.researcher: Generate Itinerary 클릭
-app.researcher -> external.openai: 호출 1, 검색어 3개 생성 후 결과 분석
+app -> external.openai: 호출 1, 검색어 3개 생성 후 결과 분석 (researcher)
 app.researcher -> external.serpapi: search_google 도구 호출
 app.researcher -> app.planner: research_results.content 를 프롬프트에 삽입
-app.planner -> external.openai: 호출 2, 일정 초안 생성
+app -> external.openai: 호출 2, 일정 초안 생성 (planner)
 app.planner -> app.state: 일정 텍스트 저장
 app.state -> app.ics: 저장된 일정 텍스트
-app.ics -> input.user: travel_itinerary.ics 내려받기
+app -> input.user: travel_itinerary.ics 내려받기 (ics)

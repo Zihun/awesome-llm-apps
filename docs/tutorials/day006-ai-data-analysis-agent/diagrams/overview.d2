@@ -2,27 +2,31 @@
 direction: down
 grid-rows: 2
 
-user: 사용자 { class: person }
-openai_key: OpenAI API 키 { class: file }
-app: ai_data_analyst.py {
+input: "입력" {
+  class: group
   grid-columns: 2
+  user: 사용자 { class: person }
+  openai_key: OpenAI API 키 { class: file }
+}
+app: ai_data_analyst.py {
+  grid-rows: 3
   ui: Streamlit UI { class: ours }
   preprocess: 전처리 (preprocess_and_save) { class: ours }
+  agent: 데이터 분석 에이전트 { class: ours }
   duckdb_tools: DuckDB 도구 (DuckDbTools) { class: ours }
   pandas_tools: Pandas 도구 (PandasTools) { class: ours }
-  agent: 데이터 분석 에이전트 { class: ours }
 }
 duckdb_db: DuckDB 테이블 (uploaded_data) { class: store }
 openai: OpenAI API (gpt-4o) { class: ext }
 
-user -> app.ui: CSV/Excel 업로드 + 질문 입력
-openai_key -> app.agent: 생성자 인자 (api_key)
+input -> app.ui: CSV/Excel 업로드 + 질문 입력 (user)
+input -> app: 생성자 인자 (api_key, agent로)
 app.ui -> app.preprocess: 업로드 파일 객체
 app.preprocess -> app.duckdb_tools: 전처리된 임시 CSV 경로
-app.duckdb_tools -> duckdb_db: CREATE OR REPLACE TABLE uploaded_data
+app -> duckdb_db: CREATE OR REPLACE TABLE uploaded_data (duckdb_tools)
 app.ui -> app.agent: 질문 텍스트 (Submit Query)
-app.agent -> openai: 질문 + 도구 스키마
-openai -> app.agent: 답변 또는 tool_call
-app.agent -> duckdb_db: SQL 쿼리 실행 (도구 호출)
+app -> openai: 질문 + 도구 스키마 (agent)
+openai -> app: 답변 또는 tool_call (agent)
+app -> duckdb_db: SQL 쿼리 실행 (agent, 도구 호출)
 app.agent -> app.pandas_tools: 데이터프레임 연산 (도구 호출)
-app.agent -> user: 최종 답변 (markdown)
+app.agent -> app.ui: 최종 답변 표시 (markdown)

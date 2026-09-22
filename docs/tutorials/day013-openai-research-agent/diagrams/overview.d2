@@ -28,15 +28,15 @@ external: "외부 API" {
   websearch: 호스티드 웹 검색 { class: ext }
 }
 
-input.user -> app.sidebar: 조사 주제 입력
+input.user -> app: 조사 주제 입력 (sidebar로)
 input.env -> app.triage: 인증
 app.sidebar -> app.triage: Start Research 클릭
 app.triage -> external.openai: 조사 계획 요청
 app.triage -> app.research: 핸드오프로 선언됨
-app.research -> external.websearch: 웹 검색
+app -> external.websearch: 웹 검색 (research)
 app.research -> app.facts: save_important_fact 로 사실 적재
 app.triage -> app.editor: to_input_list 를 넘겨 코드가 직접 호출
 app.editor -> external.openai: 보고서 작성 요청
 app.editor -> app.tabs: ResearchReport 표시
 app.facts -> app.tabs: 수집된 사실 표시
-app.tabs -> input.user: 보고서 열람과 마크다운 내려받기
+app -> input.user: 보고서 열람과 마크다운 내려받기 (tabs)

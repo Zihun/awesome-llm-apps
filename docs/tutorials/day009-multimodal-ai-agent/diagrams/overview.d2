@@ -1,6 +1,6 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
+grid-rows: 3
 
 input: "입력" {
   class: group
@@ -21,9 +21,9 @@ app: multimodal_agent.py {
 gemini: Gemini (gemini-2.5-flash) { class: ext }
 
 input.user -> app.ui: 영상 업로드 + 질문 + 버튼 클릭
-input.key -> app.agent: 인증
+input.key -> app: 인증 (agent)
 app.ui -> app.tmp: tempfile로 저장
 app.tmp -> app.agent: 파일 경로 (Video)
-app.agent -> gemini: 프롬프트 + 영상 (도구 없음)
-gemini -> app.agent: 응답 (markdown)
+app -> gemini: 프롬프트 + 영상 (agent, 도구 없음)
+gemini -> app: 응답 (agent, markdown)
 app.agent -> app.ui: result.content
