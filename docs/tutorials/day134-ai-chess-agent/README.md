@@ -1,6 +1,6 @@
-# Day 040 · 📚 Chat with Research Papers (ArXiv) (GPT & Llama3)
+# Day 134 · ♜ AI Chess Agent
 
-> 볼륨 4 💬 Chat with X · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_research_papers`
+> 볼륨 10 🎮 Autonomous Game-Playing · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent`
 
 ## 오늘 만들 것
 
@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-[Day 041 · 💬 Chat with GitHub (GPT & Llama3)](../day041-chat-with-github/README.md) — (작성 필요)
+[Day 135 · 🎮 AI 3D Pygame Agent](../day135-ai-3dpygame-r1/README.md) — (작성 필요)

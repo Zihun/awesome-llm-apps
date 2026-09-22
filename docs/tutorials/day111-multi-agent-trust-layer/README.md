@@ -1,6 +1,6 @@
-# Day 040 · 📚 Chat with Research Papers (ArXiv) (GPT & Llama3)
+# Day 111 · 🤝 Multi-Agent Trust Layer - Secure Agent-to-Agent Communication
 
-> 볼륨 4 💬 Chat with X · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_research_papers`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_ai_agents/multi_agent_apps/multi_agent_trust_layer`
 
 ## 오늘 만들 것
 
@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-[Day 041 · 💬 Chat with GitHub (GPT & Llama3)](../day041-chat-with-github/README.md) — (작성 필요)
+[Day 112 · 💲 AI Finance Agent Team](../day112-ai-finance-agent-team/README.md) — (작성 필요)

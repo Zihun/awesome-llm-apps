@@ -1,6 +1,6 @@
-# Day 040 · 📚 Chat with Research Papers (ArXiv) (GPT & Llama3)
+# Day 150 · 🧠 Headroom Context Optimization
 
-> 볼륨 4 💬 Chat with X · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_research_papers`
+> 볼륨 14 🎯 LLM Optimization · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_llm_apps/llm_optimization_tools/headroom_context_optimization`
 
 ## 오늘 만들 것
 
@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-[Day 041 · 💬 Chat with GitHub (GPT & Llama3)](../day041-chat-with-github/README.md) — (작성 필요)
+Day 151 · 🎯 Toonify Token Optimization — (작성 필요)

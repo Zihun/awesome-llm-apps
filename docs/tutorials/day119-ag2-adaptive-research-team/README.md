@@ -1,6 +1,6 @@
-# Day 040 · 📚 Chat with Research Papers (ArXiv) (GPT & Llama3)
+# Day 119 · 🧭 AG2 Adaptive Research Team
 
-> 볼륨 4 💬 Chat with X · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_research_papers`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team`
 
 ## 오늘 만들 것
 
@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-[Day 041 · 💬 Chat with GitHub (GPT & Llama3)](../day041-chat-with-github/README.md) — (작성 필요)
+[Day 120 · 💼 AI Recruitment Agent Team](../day120-ai-recruitment-agent-team/README.md) — (작성 필요)
