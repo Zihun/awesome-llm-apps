@@ -1,0 +1,23 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: 채팅 UI { class: ours }
+file: PDF 파일 { class: file }
+store: 벡터 저장소 (Chroma) { class: store }
+provider: 임베딩·LLM 제공자 { class: ext }
+
+user -> ui: PDF 업로드
+ui -> file: 텍스트 추출 (페이지별)
+file -> ui: 정제된 텍스트 + 청크 분할
+ui -> provider: 청크 임베딩 요청
+provider -> ui: 임베딩 벡터
+ui -> store: 청크 + 벡터 저장
+user -> ui: 질문 입력
+ui -> provider: 질문 임베딩 요청
+provider -> ui: 질문 벡터
+ui -> store: 유사도 검색
+store -> ui: 관련 청크 N개
+ui -> provider: 질문 + 청크로 답변 생성 요청
+provider -> ui: 답변 텍스트
+ui -> user: 답변 표시
