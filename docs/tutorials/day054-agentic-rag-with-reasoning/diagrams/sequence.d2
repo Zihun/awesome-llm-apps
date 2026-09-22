@@ -1,0 +1,24 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: Agent (rag_reasoning_agent.py) { class: ours }
+gemini: Gemini API { class: ext }
+openai: OpenAI API { class: ext }
+store: LanceDB { class: store }
+
+user -> ui: 질문 입력 · 실행 버튼
+ui -> agent: agent.run(query, stream=True, stream_events=True)
+agent -> gemini: 완성 요청 (도구 스키마 포함)
+gemini -> agent: think 도구 호출 (title·thought·action)
+agent -> ui: reasoning_content 델타 (🧠 패널)
+gemini -> agent: search_knowledge_base 도구 호출 (질의)
+agent -> openai: 질의 임베딩 요청
+openai -> agent: 질의 벡터
+agent -> store: 벡터 유사도 검색
+store -> agent: 청크 텍스트
+agent -> gemini: 도구 결과 전달
+gemini -> agent: 최종 답변 + 인용
+agent -> ui: content · citations 델타 (💡 패널)
+ui -> user: 화면 표시

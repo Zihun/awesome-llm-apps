@@ -1,0 +1,23 @@
+...@../../_tools/theme
+direction: down
+
+req: "요청 경로" {
+  class: group
+  grid-columns: 4
+  user: 사용자 { class: person }
+  ui: Streamlit UI (rag_reasoning_agent.py) { class: ours }
+  agent: RAG 에이전트 (Agent) { class: ours }
+  reasoning: 추론 도구 (ReasoningTools) { class: ours }
+}
+
+infra: "저장소와 외부 API" {
+  class: group
+  grid-columns: 3
+  gemini: Gemini (생성) { class: ext }
+  openai: OpenAI (임베딩) { class: ext }
+  store: LanceDB (agno_docs) { class: store }
+}
+
+req.user -> req.ui: 질문
+req -> infra: 질의 임베딩 · 벡터 검색 · 답변 생성
+infra.openai -> infra.store: 질의 벡터
