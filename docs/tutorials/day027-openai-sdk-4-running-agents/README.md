@@ -12,7 +12,7 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| OpenAI API 키 (`OPENAI_API_KEY`) | Day 024가 이미 소개한 키. `gpt-4o-mini`·`gpt-4o` 호출에 필요하지만, 이 문서는 키 없이 실행 방법·설정·예외 경계만 확인합니다 | https://platform.openai.com/api-keys 에서 발급 (이 실습에서는 생략 가능) |
+| OpenAI API 키 (`OPENAI_API_KEY`) | Day 024가 이미 소개한 키. 모델 호출에 필요하지만, 이 문서는 키 없이 실행 방법·설정·예외 경계만 확인합니다 | https://platform.openai.com/api-keys 에서 발급 (이 실습에서는 생략 가능) |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | 인터넷 연결 | PyPI에서 `openai-agents`·`streamlit` 설치 | 별도 설치 없음 |
 
@@ -28,7 +28,7 @@
 | 스트리밍 이벤트 (`4_4_streaming_events/agent.py`) | `run_streamed()` 이벤트 처리 예제 4개 (README·env.example 없음, 전부 같은 버그) | `ai_agent_framework_crash_course/openai_sdk_crash_course/4_running_agents/4_4_streaming_events/agent.py:1-200` |
 | 세션 저장소 (`SQLiteSession`) | 대화 이력 저장 — 이름과 달리 기본값은 메모리, `db_path` 지정 시만 파일 | 코드 없음 (openai-agents 0.22.3 소스로 확인) |
 | 스트리밍 핸들 (`RunResultStreaming`) | `run_streamed()`의 반환값 자체. `.stream_events()`로만 순회 가능 | 코드 없음 (openai-agents 0.22.3 소스로 확인) |
-| OpenAI API (`gpt-4o-mini` · `gpt-4o`) | 실제 추론 수행. 키가 없으면 클라이언트 생성 시점에 곧바로 예외 | 코드 없음 (외부 서비스) |
+| OpenAI API (`gpt-4o`) | 실제 추론 수행. 키가 없으면 클라이언트 생성 시점에 곧바로 예외 | 코드 없음 (외부 서비스) |
 
 ## 단계별 진행
 

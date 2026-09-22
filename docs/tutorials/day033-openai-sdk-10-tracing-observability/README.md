@@ -53,7 +53,7 @@ streamlit>=1.28.0
 python-dotenv>=1.0.0
 ```
 
-패키지 이름 `openai-agents`와 실제 임포트 이름 `agents`가 다르다는 것, 키는 `OPENAI_API_KEY`, 모델은 `gpt-4o-mini`/`gpt-4o`라는 것은 Day 024가 이미 정리했으므로 여기서는 되풀이하지 않습니다. 이 레슨의 `env.example`(점 없음)은 세 곳(최상위, `10_1_default_tracing/`, `10_2_custom_tracing/`) 모두 바이트 단위로 같습니다(직접 확인, `diff` 세 쌍 모두 종료 코드 0) — Day 024가 본 두 템플릿의 플레이스홀더 불일치가 이 레슨에는 없습니다.
+패키지 이름 `openai-agents`와 실제 임포트 이름 `agents`가 다르다는 것, 키는 `OPENAI_API_KEY`라는 것은 Day 024가 이미 정리했으므로 여기서는 되풀이하지 않습니다. 모델은 이 레슨이 지정하지 않아 SDK 기본값으로 풀립니다 — 그 기본값이 실제로 무엇인지는 Day 024가 확인해 두었습니다. 이 레슨의 `env.example`(점 없음)은 세 곳(최상위, `10_1_default_tracing/`, `10_2_custom_tracing/`) 모두 바이트 단위로 같습니다(직접 확인, `diff` 세 쌍 모두 종료 코드 0) — Day 024가 본 두 템플릿의 플레이스홀더 불일치가 이 레슨에는 없습니다.
 
 `ai_agent_framework_crash_course/openai_sdk_crash_course/10_tracing_observability/env.example:1`
 
