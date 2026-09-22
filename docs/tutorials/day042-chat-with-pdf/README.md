@@ -58,7 +58,7 @@ help: `chroma-hnswlib` (v0.7.6) was included because `embedchain` (v0.1.128)
       depends on `chromadb` (v0.5.23) which depends on `chroma-hnswlib`
 ```
 
-원인은 agno의 익스트라 누락(Day 038)과는 다른 종류입니다 — PyPI가 실제로 올려 둔 `chroma-hnswlib` 0.7.6의 휠 목록(직접 확인, PyPI JSON API)에 `cp312-win_amd64`가 아예 없고 `cp313`은 어떤 OS용으로도 없습니다(`cp37`~`cp311`의 win_amd64는 모두 있음). 그래서 pip/uv가 소스 빌드로 넘어가고, 이 컴퓨터에는 그 C++ 확장을 컴파일할 Visual Studio 빌드 도구가 없어 실패합니다. 세 번째 줄인 `streamlit-chat`은 이 문제와 무관합니다 — PyPI 메타데이터로 확인하면 `streamlit>=0.63`만 요구하는 순수 파이썬 패키지라 네이티브 빌드가 전혀 없고, 막히는 지점은 오직 `embedchain → chromadb → chroma-hnswlib`입니다. 해결은 가상환경을 3.11 이하로 만드는 것입니다.
+원인은 agno의 익스트라 누락(Day 038)과는 다른 종류입니다 — PyPI가 실제로 올려 둔 `chroma-hnswlib` 0.7.6의 휠 목록(직접 확인, PyPI JSON API)에 `cp312-win_amd64`가 아예 없고 `cp313`은 어떤 OS용으로도 없습니다(`cp37`~`cp311`의 win_amd64는 모두 있음). 그래서 pip/uv가 소스 빌드로 넘어가고, 거기서 `Unable to find a compatible Visual Studio installation`으로 멈춥니다. 이 메시지는 빌드 도구가 없다는 뜻처럼 읽히지만 사실이 아닙니다 — 이 컴퓨터에는 MSVC가 두 벌 깔려 있고, setuptools가 그것을 읽어 들이는 단계에서 깨집니다([Day 039](../day039-chat-with-substack/README.md) Step 1에 그 경위를 자세히 적었습니다). 어느 쪽이든 우회로는 같습니다. 세 번째 줄인 `streamlit-chat`은 이 문제와 무관합니다 — PyPI 메타데이터로 확인하면 `streamlit>=0.63`만 요구하는 순수 파이썬 패키지라 네이티브 빌드가 전혀 없고, 막히는 지점은 오직 `embedchain → chromadb → chroma-hnswlib`입니다. 해결은 가상환경을 3.11 이하로 만드는 것입니다.
 
 ```bash
 rm -rf .venv
