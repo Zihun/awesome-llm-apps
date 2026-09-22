@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 46 / 164일 완료
+진도: 52 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -127,12 +127,12 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 047](day047-local-rag-agent/README.md) | 🦙 Local RAG Agent | [rag_tutorials/local_rag_agent](../../rag_tutorials/local_rag_agent/) |
-| ⬜ | [Day 048](day048-llama3.1-local-rag/README.md) | 🔄 Llama 3.1 Local RAG | [rag_tutorials/llama3.1_local_rag](../../rag_tutorials/llama3.1_local_rag/) |
-| ⬜ | [Day 049](day049-autonomous-rag/README.md) | 🔍 Autonomous RAG | [rag_tutorials/autonomous_rag](../../rag_tutorials/autonomous_rag/) |
-| ⬜ | [Day 050](day050-agentic-rag-embedding-gemma/README.md) | 🔥 Agentic RAG with Embedding Gemma | [rag_tutorials/agentic_rag_embedding_gemma](../../rag_tutorials/agentic_rag_embedding_gemma/) |
-| ⬜ | [Day 051](day051-rag-as-a-service/README.md) | 🧩 RAG-as-a-Service | [rag_tutorials/rag-as-a-service](../../rag_tutorials/rag-as-a-service/) |
-| ⬜ | [Day 052](day052-rag-chain/README.md) | ⛓️ Basic RAG Chain | [rag_tutorials/rag_chain](../../rag_tutorials/rag_chain/) |
+| ✅ | [Day 047](day047-local-rag-agent/README.md) | 🦙 Local RAG Agent | [rag_tutorials/local_rag_agent](../../rag_tutorials/local_rag_agent/) |
+| ✅ | [Day 048](day048-llama3.1-local-rag/README.md) | 🔄 Llama 3.1 Local RAG | [rag_tutorials/llama3.1_local_rag](../../rag_tutorials/llama3.1_local_rag/) |
+| ✅ | [Day 049](day049-autonomous-rag/README.md) | 🔍 Autonomous RAG | [rag_tutorials/autonomous_rag](../../rag_tutorials/autonomous_rag/) |
+| ✅ | [Day 050](day050-agentic-rag-embedding-gemma/README.md) | 🔥 Agentic RAG with Embedding Gemma | [rag_tutorials/agentic_rag_embedding_gemma](../../rag_tutorials/agentic_rag_embedding_gemma/) |
+| ✅ | [Day 051](day051-rag-as-a-service/README.md) | 🧩 RAG-as-a-Service | [rag_tutorials/rag-as-a-service](../../rag_tutorials/rag-as-a-service/) |
+| ✅ | [Day 052](day052-rag-chain/README.md) | ⛓️ Basic RAG Chain | [rag_tutorials/rag_chain](../../rag_tutorials/rag_chain/) |
 | ⬜ | [Day 053](day053-hybrid-search-rag/README.md) | 👀 Hybrid Search RAG (Cloud) | [rag_tutorials/hybrid_search_rag](../../rag_tutorials/hybrid_search_rag/) |
 | ⬜ | [Day 054](day054-agentic-rag-with-reasoning/README.md) | 🧐 Agentic RAG with Reasoning | [rag_tutorials/agentic_rag_with_reasoning](../../rag_tutorials/agentic_rag_with_reasoning/) |
 | ⬜ | [Day 055](day055-local-hybrid-search-rag/README.md) | 🖥️ Local Hybrid Search RAG | [rag_tutorials/local_hybrid_search_rag](../../rag_tutorials/local_hybrid_search_rag/) |
