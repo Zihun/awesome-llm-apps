@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+ui: Streamlit 앱 { class: ours }
+agent: 어드바이저 에이전트 { class: ours }
+e2b: E2B 샌드박스 { class: ext }
+firecrawl: Firecrawl API { class: ext }
+openai: OpenAI API { class: ext }
+
+user -> ui: 프로필 입력 후 제출
+ui -> agent: get_agent() 호출 (캐시)
+agent -> e2b: Sandbox.create() (생성자 안에서 즉시)
+e2b -> agent: 샌드박스 준비 완료
+ui -> agent: run(client_profile JSON)
+agent -> e2b: run_python_code (커버리지 계산)
+e2b -> agent: coverage_amount 등 JSON
+agent -> firecrawl: search_web (지역별 상품 검색)
+firecrawl -> agent: 검색 결과
+agent -> openai: 추론 (도구 결과 종합)
+openai -> agent: 최종 JSON 텍스트
+agent -> ui: response.content
+ui -> user: 커버리지 · 계산 과정 · 상품 목록 표시
