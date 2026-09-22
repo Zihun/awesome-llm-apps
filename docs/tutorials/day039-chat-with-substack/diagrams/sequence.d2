@@ -1,0 +1,25 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+app: embedchain App { class: ours }
+substack: Substack { class: ext }
+embed_api: OpenAI 임베딩 API { class: ext }
+store: Chroma { class: store }
+chat_api: OpenAI Chat API { class: ext }
+
+user -> ui: 키 + URL 입력
+ui -> app: embedchain_bot() 생성
+ui -> app: add(url, data_type='substack')
+app -> substack: sitemap.xml + 게시글 페이지 요청
+substack -> app: 제목·본문 HTML
+app -> embed_api: 청크 임베딩 요청
+embed_api -> app: 임베딩 벡터
+app -> store: 임베딩 저장
+user -> ui: 질문 입력
+ui -> app: query(질문)
+app -> store: 유사도 검색 → 청크 3개
+app -> chat_api: 컨텍스트 + 질문 프롬프트
+chat_api -> app: 답변 텍스트
+ui -> user: st.write(result) 표시

@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: right
+grid-columns: 2
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: Streamlit UI (chat_substack.py) { class: ours }
+}
+
+local: "로컬 프로세스" {
+  class: group
+  grid-columns: 2
+  app: embedchain App (embedchain_bot) { class: ours }
+  store: Chroma 벡터 저장소 { class: store }
+}
+
+external: "외부 서비스" {
+  class: group
+  grid-rows: 3
+  substack: Substack 뉴스레터 { class: ext }
+  embed_api: OpenAI 임베딩 API { class: ext }
+  chat_api: OpenAI Chat API { class: ext }
+}
+
+front.user -> front.ui: 키·URL·질문 입력
+front.ui -> local.app: embedchain_bot() 생성
+local.app -> local.store: 청크 저장·유사도 검색
+local.app -> external.substack: 사이트맵·글 본문 요청
+local.app -> external.embed_api: 텍스트 임베딩 요청
+local.app -> external.chat_api: 답변 생성 요청
