@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 2
+
+prep: "준비물" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  reqs: requirements.txt (agno ollama fastapi uvicorn) { class: file }
+}
+
+paths: "호스팅 vs 로컬 경로" {
+  class: group
+  grid-columns: 2
+  script: 추론 비교 스크립트 (reasoning_agent.py) { class: ours }
+  openai: OpenAI API (gpt-4o-mini·gpt-4o) { class: ext }
+  webapp: Playground 웹 서버 (local_ai_reasoning_agent.py) { class: ours }
+  ollama: Ollama 데몬 (qwq:32b) { class: store }
+}
+
+prep.reqs -> paths.script: 설치
+prep.reqs -> paths.webapp: 설치
+prep.user -> paths.script: 질문 실행 (CLI)
+prep.user -> paths.webapp: 채팅 메시지 (브라우저)
+paths.script -> paths.openai: 채팅 완성 요청
+paths.webapp -> paths.ollama: 채팅 완성 요청

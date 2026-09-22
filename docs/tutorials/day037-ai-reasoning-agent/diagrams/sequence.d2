@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+hosted: reasoning_agent.py { class: ours }
+openai: OpenAI API { class: ext }
+local: local_ai_reasoning_agent.py { class: ours }
+ollama: Ollama 데몬 { class: store }
+
+user -> hosted: 실행 (python reasoning_agent.py)
+hosted -> openai: 채팅 완성 요청 (regular_agent, gpt-4o-mini)
+openai -> hosted: 응답 스트림
+hosted -> openai: 채팅 완성 요청 (reasoning_agent, gpt-4o + reasoning)
+openai -> hosted: 추론 과정 + 최종 응답
+hosted -> user: 콘솔에 두 응답 비교 출력
+user -> local: 채팅 메시지 (브라우저 Playground UI)
+local -> ollama: 채팅 완성 요청 (qwq:32b)
+ollama -> local: think 태그 포함 응답
+local -> user: 브라우저에 표시
