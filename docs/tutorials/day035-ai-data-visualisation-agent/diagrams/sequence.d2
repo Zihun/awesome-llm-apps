@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+proc: 스트림릿 프로세스 (main) { class: ours }
+e2b: E2B 샌드박스 { class: ext }
+together: Together AI { class: ext }
+
+user -> proc: CSV 업로드 + 키 2개 + 질문, Analyze 클릭
+proc -> e2b: Sandbox(api_key=...) 생성 (POST /sandboxes)
+e2b -> proc: 샌드박스 준비 완료 (sandbox_id)
+proc -> e2b: files.write(경로, CSV 바이트) — upload_dataset
+e2b -> proc: 파일 쓰기 완료
+proc -> together: chat.completions.create(시스템 프롬프트 + 질문)
+together -> proc: 코드가 담긴 응답 텍스트
+proc -> proc: match_code_blocks로 코드 추출 (로컬 정규식)
+proc -> e2b: run_code(추출된 코드) — POST /execute
+e2b -> proc: stdout·stderr·Result 목록 (스트리밍)
+proc -> e2b: 샌드박스 종료 (with 블록 종료 시 kill())
+proc -> user: 이미지·표·텍스트로 렌더링
