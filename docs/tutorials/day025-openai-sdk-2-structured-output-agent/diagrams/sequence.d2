@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+script: 최상위 스크립트 (support_ticket_agent.py) { class: ours }
+runner: Runner (openai-agents) { class: ours }
+api: OpenAI API (Responses API) { class: ext }
+
+user -> script: 실행 + 불만 텍스트
+script -> script: OPENAI_API_KEY 확인 (cp949 콘솔이면 여기서 UnicodeEncodeError)
+script -> runner: Runner.run_sync(agent, text)
+runner -> runner: output_type → strict JSON 스키마 생성
+runner -> runner: 클라이언트 조회 (키 없으면 OpenAIError)
+runner -> api: responses.create(text.format=json_schema)
+api -> runner: 스키마에 맞춘 JSON
+runner -> runner: validate_json → Pydantic 객체
+runner -> script: RunResult.final_output
+script -> user: 필드별로 정리해 출력
