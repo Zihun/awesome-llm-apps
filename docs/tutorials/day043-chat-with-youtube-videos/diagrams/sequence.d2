@@ -1,0 +1,24 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+app: embedchain App { class: ours }
+transcript: YouTube 자막 API { class: ext }
+embed_api: OpenAI 임베딩 API { class: ext }
+chroma: Chroma { class: store }
+chat_api: OpenAI Chat API { class: ext }
+
+user -> ui: 키 + 영상 URL 입력
+ui -> transcript: 자막 요청 (video_id)
+transcript -> ui: 자막 텍스트
+ui -> app: add(transcript, data_type="text")
+app -> embed_api: 청크 임베딩 요청
+embed_api -> app: 임베딩 벡터
+app -> chroma: 임베딩 저장
+user -> ui: 질문 입력
+ui -> app: chat(질문)
+app -> chroma: 유사도 검색 → 청크
+app -> chat_api: 기록 + 컨텍스트 + 질문 프롬프트
+chat_api -> app: 답변 텍스트
+ui -> user: 답변 + 대화 이력 표시
