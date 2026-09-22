@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+entry: 실행 스크립트 { class: ours }
+provider: TraceProvider { class: ours }
+default_proc: 기본 처리기 { class: ours }
+custom_proc: 로컬 처리기 { class: ours }
+backend: OpenAI Traces 백엔드 { class: ext }
+
+user -> entry: python agent.py 실행
+entry -> provider: Runner.run() 시작
+provider -> default_proc: 스팬 이벤트 통지
+provider -> custom_proc: 스팬 이벤트 통지 (등록 시)
+custom_proc -> entry: 로컬에서 즉시 확인
+default_proc -> backend: 배치 전송 시도 (키 없으면 생략)
+entry -> user: 표준출력 (+대시보드 링크)

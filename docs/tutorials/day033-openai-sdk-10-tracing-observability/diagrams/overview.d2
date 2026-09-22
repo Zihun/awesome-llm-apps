@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 2
+
+exec: "실행" {
+  class: group
+  grid-columns: 2
+  user: 사용자 (터미널) { class: person }
+  entry: 실행 스크립트 (Agent + Runner) { class: ours }
+}
+
+paths: "스팬이 가는 곳" {
+  class: group
+  grid-columns: 2
+  backend: OpenAI Traces 백엔드 (traces/ingest) { class: ext }
+  custom: 로컬 처리기 (TracingProcessor) { class: ours }
+}
+
+exec.entry -> paths.backend: 기본 처리기가 배치 전송 (키 필요)
+exec.entry -> paths.custom: 등록하면 병행 수신 (네트워크 없음)
