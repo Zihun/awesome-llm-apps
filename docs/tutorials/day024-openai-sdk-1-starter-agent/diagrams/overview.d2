@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 3
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  app: 스트림릿 UI (app.py) { class: ours }
+}
+
+pkg: 패키지 진입점 (1_personal_assistant_agent) { class: ours }
+
+back: "실행과 호출 대상" {
+  class: group
+  grid-columns: 2
+  runner: 실행 엔진 (Runner) { class: ours }
+  openai: OpenAI API { class: ext }
+}
+
+front.user -> front.app: 채팅 메시지
+front.app -> back.runner: run_sync/run/run_streamed
+pkg -> back.runner: 함수 직접 호출
+back.runner -> back.openai: 모델 호출 (기본값 해석 포함)

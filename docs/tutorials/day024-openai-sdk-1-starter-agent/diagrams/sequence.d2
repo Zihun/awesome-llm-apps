@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+app: app.py { class: ours }
+runner: Runner { class: ours }
+openai: OpenAI API { class: ext }
+
+user -> app: 채팅 메시지
+app -> runner: Runner.run_sync(agent, prompt)
+runner -> runner: model 미지정 -> get_default_model()
+runner -> openai: 클라이언트 생성 후 모델 호출
+openai -> runner: 응답 텍스트
+runner -> app: result.final_output
+app -> user: 화면 표시
