@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI (agent_runner.py) { class: ours }
+api: OpenAI API { class: ext }
+
+user -> ui: 메시지 + 실행 방법 선택
+ui -> api: run() · run_sync() · run_streamed() 중 하나로 호출
+api -> ui: (스트리밍이면) AgentUpdatedStreamEvent 먼저 도착
+api -> ui: OPENAI_API_KEY 없음 -> openai.OpenAIError
+ui -> user: except Exception -> st.error()로 표시
