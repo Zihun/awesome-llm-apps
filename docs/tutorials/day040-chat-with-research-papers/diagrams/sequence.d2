@@ -1,0 +1,25 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+hosted: 호스팅 스크립트 { class: ours }
+openai: OpenAI API { class: ext }
+tool: ArxivTools { class: ours }
+arxiv: arXiv { class: ext }
+local: 로컬 스크립트 { class: ours }
+ollama: Ollama 데몬 { class: ours }
+
+user -> hosted: 키 입력 + 검색어
+hosted -> openai: 채팅 완성 요청
+openai -> hosted: tool_call 요청
+hosted -> tool: search_arxiv_and_return_articles(query)
+tool -> arxiv: 검색 요청
+arxiv -> tool: 초록·메타데이터 JSON
+tool -> hosted: 함수 결과 반환
+hosted -> openai: 함수 결과 재전송
+openai -> hosted: 최종 응답 텍스트
+hosted -> user: st.write(response.content)
+user -> local: 검색어만 입력
+local -> ollama: 채팅 완성 요청
+ollama -> local: 최종 응답 텍스트
+local -> user: st.write(response.content)
