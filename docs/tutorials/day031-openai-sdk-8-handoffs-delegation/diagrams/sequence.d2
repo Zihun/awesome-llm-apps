@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+triage: 트리아지 (root_agent) { class: ours }
+openai: OpenAI API { class: ext }
+billing: 빌링 (billing_agent) { class: ours }
+
+user -> triage: 환불 요청 문의 (Runner.run)
+triage -> openai: 모델 호출 (도구 목록에 transfer_to_billing_agent 포함)
+openai -> triage: function_call transfer_to_billing_agent 반환 (인자 없음)
+triage -> billing: 제어와 대화 이력 전체 이전 (복귀 없음)
+billing -> openai: 모델 호출 (billing_agent 자신의 지시문)
+openai -> billing: 최종 텍스트
+billing -> user: 최종 응답 (author=Billing Agent)

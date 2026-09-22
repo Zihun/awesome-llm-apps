@@ -1,0 +1,33 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 4
+
+user: 사용자 { class: person }
+
+basic: "8_1_basic_handoffs" {
+  class: group
+  grid-columns: 3
+  triage: 트리아지 (root_agent) { class: ours }
+  billing: 빌링 (billing_agent) { class: ours }
+  technical: 기술지원 (technical_agent) { class: ours }
+}
+
+advanced: "8_2_advanced_handoffs" {
+  class: group
+  grid-columns: 2
+  triage2: 고급 트리아지 (root_agent) { class: ours }
+  escalation: 에스컬레이션 (escalation_agent) { class: ours }
+}
+
+openai: OpenAI API { class: ext }
+
+user -> basic.triage: 문의
+user -> advanced.triage2: 문의
+basic.triage -> basic.billing: handoffs 목록 등록 (복귀 없음)
+basic.triage -> basic.technical: handoffs 목록 등록 (복귀 없음)
+advanced.triage2 -> advanced.escalation: handoff 함수로 등록 (복귀 없음)
+basic.triage -> openai: 모델 호출
+basic.billing -> openai: 모델 호출
+basic.technical -> openai: 모델 호출
+advanced.triage2 -> openai: 모델 호출
+advanced.escalation -> openai: 모델 호출
