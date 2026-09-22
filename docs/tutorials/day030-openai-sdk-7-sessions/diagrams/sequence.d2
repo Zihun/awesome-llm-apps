@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+script: 서브 레슨 스크립트 (agent.py) { class: ours }
+session: SQLiteSession { class: store }
+openai: OpenAI API { class: ext }
+
+user -> script: 메시지 입력
+script -> session: get_items() 이전 기록 조회
+session -> script: 이전 대화 항목 목록
+script -> openai: Runner.run(agent, 메시지, session=session)
+openai -> script: 응답 텍스트 (또는 실패)
+script -> session: add_items() 새 항목 저장
+script -> user: result.final_output

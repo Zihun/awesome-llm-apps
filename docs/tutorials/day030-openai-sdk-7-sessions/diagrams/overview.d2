@@ -1,0 +1,34 @@
+...@../../_tools/theme
+direction: right
+grid-columns: 3
+
+user: 사용자 { class: person }
+
+impls: "실행되는 코드" {
+  class: group
+  grid-rows: 4
+  app: 독립 UI (streamlit_sessions_app.py) { class: ours }
+  s1: 기본 세션 (7_1_basic_sessions) { class: ours }
+  s2: 메모리 연산 (7_2_memory_operations) { class: ours }
+  s3: 다중 세션 (7_3_multi_sessions) { class: ours }
+}
+
+back: "저장·호출 대상" {
+  class: group
+  grid-rows: 2
+  store: 세션 저장소 (SQLiteSession) { class: store }
+  openai: OpenAI API { class: ext }
+}
+
+user -> impls.app: 브라우저 접속
+user -> impls.s1: 터미널 실행
+user -> impls.s2: 터미널 실행
+user -> impls.s3: 터미널 실행
+impls.app -> back.store: 세션 읽기·쓰기
+impls.s1 -> back.store: 세션 읽기·쓰기
+impls.s2 -> back.store: 세션 읽기·쓰기
+impls.s3 -> back.store: 세션 읽기·쓰기
+impls.app -> back.openai: 모델 호출
+impls.s1 -> back.openai: 모델 호출
+impls.s2 -> back.openai: 모델 호출
+impls.s3 -> back.openai: 모델 호출
