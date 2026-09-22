@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+protected: 보호 대상 에이전트 { class: ours }
+input_check: 입력 가드레일 { class: ours }
+output_check: 출력 가드레일 { class: ours }
+openai: OpenAI API { class: ext }
+
+user -> protected: 질문
+protected -> input_check: 원본 입력 전달
+input_check -> openai: 분류 요청
+openai -> input_check: MathHomeworkCheck
+input_check -> protected: 트립 여부(거짓)
+protected -> openai: 실제 응답 생성 요청
+openai -> protected: AgentResponse
+protected -> output_check: 생성된 응답 전달
+output_check -> openai: 안전 검사 요청
+openai -> output_check: ContentSafetyCheck
+output_check -> protected: 트립 여부(거짓)
+protected -> user: 최종 응답
