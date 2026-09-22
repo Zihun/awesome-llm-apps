@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+pipeline: RAGPipeline { class: ours }
+ragie: Ragie API { class: ext }
+claude: Claude API { class: ext }
+
+user -> ui: 질문 입력
+ui -> pipeline: process_query(query)
+pipeline -> ragie: POST /retrievals
+ragie -> pipeline: scored_chunks (청크 텍스트)
+pipeline -> claude: messages.create (프롬프트+질문)
+claude -> pipeline: 답변 텍스트
+pipeline -> ui: 답변 문자열
+ui -> user: 화면 표시

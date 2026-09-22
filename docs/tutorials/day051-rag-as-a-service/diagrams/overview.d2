@@ -1,0 +1,27 @@
+...@../../_tools/theme
+direction: down
+grid-columns: 2
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: Streamlit UI (rag_app.py) { class: ours }
+}
+
+pipeline: "RAGPipeline (rag_app.py)" {
+  class: group
+  grid-columns: 2
+  ragie_calls: 업로드·검색 호출 { class: ours }
+  gen_call: 프롬프트 조립·생성 호출 { class: ours }
+}
+
+services: "외부 서비스 (모두 호스팅형)" {
+  class: group
+  grid-columns: 2
+  ragie: Ragie (문서 저장·검색) { class: ext }
+  anthropic: Claude API (Anthropic) { class: ext }
+}
+
+front -> pipeline: 문서 URL · 질문
+pipeline -> services: 업로드 · 검색 · 생성 요청 → 답변
