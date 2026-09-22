@@ -1,0 +1,29 @@
+...@../../_tools/theme
+direction: right
+grid-columns: 2
+
+models: "로컬 모델 (Ollama)" {
+  class: group
+  grid-columns: 2
+  embed: "EmbeddingGemma (임베딩)" { class: ours }
+  chat: "Llama 3.2 (채팅)" { class: ours }
+}
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: "Streamlit 앱 (Agent 포함)" { class: ours }
+}
+
+kb: "지식 베이스" {
+  class: group
+  grid-columns: 2
+  pdf: "2503.11486v1.pdf (커밋됨)" { class: file }
+  store: "LanceDB recipes 테이블 (커밋됨)" { class: store }
+}
+
+front -> models: 질문 텍스트
+models -> front: 스트리밍 답변
+models -> kb: 임베딩 저장·검색
+kb -> models: 유사 청크

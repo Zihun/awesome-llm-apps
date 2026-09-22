@@ -1,0 +1,23 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "Streamlit UI" { class: ours }
+agent: "Agno Agent" { class: ours }
+embed: EmbeddingGemma { class: ours }
+store: LanceDB { class: store }
+chat: "Llama 3.2" { class: ours }
+telemetry: "Agno 사용 통계 API" { class: ext }
+
+user -> ui: 질문 입력 후 Get Answer 클릭
+ui -> agent: agent.run(query, stream=True)
+agent -> chat: 도구 스키마 포함 1차 요청
+chat -> agent: 검색 도구 호출 요청
+agent -> embed: 질문 임베딩 요청
+embed -> agent: 768차원 벡터
+agent -> store: 벡터 유사도 검색 (상위 10개)
+store -> agent: 관련 청크 텍스트
+agent -> chat: 청크 결과 포함 2차 요청
+chat -> agent: 토큰 스트림
+agent -> ui: 토큰마다 누적 표시
+agent -> telemetry: 실행 메타데이터 전송 시도 (백그라운드, 실패해도 무시)
