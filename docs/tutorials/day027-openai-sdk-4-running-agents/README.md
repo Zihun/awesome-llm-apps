@@ -1,6 +1,6 @@
 # Day 027 · OpenAI Agents SDK Crash Course · 4_running_agents
 
-> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ ⚠ · 예상 소요 130분(하위 레슨 4개 + 686줄짜리 이 볼륨 최대 파일 + 실제로 재현되는 스트리밍 버그까지 다루어 다른 크래시 코스 날보다 깁니다) · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않습니다) · 원본 앱: `ai_agent_framework_crash_course/openai_sdk_crash_course/4_running_agents`
+> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ ⚠ · 예상 소요 105분(읽을 분량이 많아서가 아니라 하위 레슨 네 폴더를 각각 세워 돌려 보고 스트리밍 버그까지 재현하기 때문입니다 — 손이 가는 시간이 읽는 시간보다 긴 날입니다) · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않습니다) · 원본 앱: `ai_agent_framework_crash_course/openai_sdk_crash_course/4_running_agents`
 
 ## 오늘 만들 것
 
