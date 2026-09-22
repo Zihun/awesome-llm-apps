@@ -55,7 +55,28 @@ def used_characters() -> set[str]:
     for path in sources:
         if path.exists():
             chars |= set(path.read_text(encoding="utf-8"))
-    return chars
+    return chars | common_syllables()
+
+
+def common_syllables() -> set[str]:
+    """이미 쓴 글자만 담으면 아직 안 쓴 날이 글자 하나에 막힌다.
+
+    여러 날을 동시에 쓸 때는 그 한 글자가 남의 작업까지 멈춰 세운다 — 폰트를 다시
+    구우면 글자 집합이 바뀌고, 그러면 다른 날의 멀쩡한 SVG까지 전부 낡은 것이 되기
+    때문이다. 그래서 쓰지 않은 음절도 미리 넉넉히 담는다.
+
+    현대 한글 11,172자를 다 넣으면 굽는 폰트가 종당 2.4MB가 된다. 대신 초성 19 x
+    중성 21 에 자주 쓰는 받침 여덟(없음 ㄱ ㄴ ㄹ ㅁ ㅂ ㅅ ㅇ)을 곱한 3,192자만
+    생성한다 — 종당 685KB로, 일상적인 한국어는 사실상 다 덮인다. 출력 SVG는 D2가
+    쓰인 글자만 다시 추려 담으므로 이 선택에 영향받지 않는다.
+    """
+    finals = (0, 1, 4, 8, 16, 17, 21, 22)
+    return {
+        chr(0xAC00 + (initial * 21 + medial) * 28 + final)
+        for initial in range(19)
+        for medial in range(21)
+        for final in finals
+    }
 
 
 def ensure_source() -> None:

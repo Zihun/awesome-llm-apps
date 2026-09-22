@@ -388,4 +388,4 @@ configurations because it can execute arbitrary code.
 
 ## 다음 날 예고
 
-Day 024 · OpenAI Agents SDK Crash Course · 1_starter_agent — Google ADK 크래시 코스를 마치고, OpenAI Agents SDK의 가장 작은 단위부터 다시 시작합니다.
+[Day 024 · OpenAI Agents SDK Crash Course · 1_starter_agent](../day024-openai-sdk-1-starter-agent/README.md) — Google ADK 크래시 코스를 마치고, OpenAI Agents SDK의 가장 작은 단위부터 다시 시작합니다.
