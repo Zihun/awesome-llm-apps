@@ -6,24 +6,26 @@ front: "브라우저 쪽" {
   class: group
   grid-columns: 2
   user: 사용자 { class: person }
-  app: Streamlit 앱 (레슨별 app.py) { class: ours }
+  app: Streamlit 앱 { class: ours }
 }
 
-lanes: "세 가지 실행 패턴" {
+lanes: "세 실행 패턴" {
   class: group
-  grid-columns: 3
 
   seq_lane: {
-    seq_shell: SequentialAgent (9_1) { class: ours }
-    seq_children: LlmAgent 4개 (순차) { class: ours }
+    grid-columns: 2
+    seq_shell: Seq { class: ours }
+    seq_children: LLM4개 { class: ours }
   }
   loop_lane: {
-    loop_shell: LoopAgent (9_2) { class: ours }
-    loop_children: "LlmAgent 1 + BaseAgent 2 (반복)" { class: ours }
+    grid-columns: 2
+    loop_shell: Loop { class: ours }
+    loop_children: "LLM1+Base2" { class: ours }
   }
   par_lane: {
-    par_shell: ParallelAgent (9_3) { class: ours }
-    par_children: LlmAgent 3개 (동시) { class: ours }
+    grid-columns: 2
+    par_shell: Parallel { class: ours }
+    par_children: LLM3개 { class: ours }
   }
 }
 

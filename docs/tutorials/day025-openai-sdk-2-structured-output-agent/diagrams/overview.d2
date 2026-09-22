@@ -1,10 +1,13 @@
 ...@../../_tools/theme
 direction: down
 grid-rows: 3
-grid-columns: 2
 
-user: 사용자 (터미널) { class: person }
-env: 환경 파일 (.env) { class: file }
+front: "입력" {
+  class: group
+  grid-columns: 2
+  user: 사용자 (터미널) { class: person }
+  env: 환경 파일 (.env) { class: file }
+}
 
 duo: "같은 스키마, 두 벌" {
   class: group
@@ -17,10 +20,9 @@ sdk: Agent·Runner (openai-agents) { class: ours }
 strict_schema: strict JSON 스키마 변환 { class: ours }
 openai_api: OpenAI API (Responses API) { class: ext }
 
-user -> duo.script: 실행 (python 스크립트명)
-env -> duo.script: OPENAI_API_KEY
+front.user -> duo.script: 실행 (python 스크립트명)
+front.env -> duo.script: OPENAI_API_KEY
 duo.script -> duo.nested: 같은 스키마, 다른 자리
 duo.script -> sdk: output_type=SupportTicket
 sdk -> strict_schema: TypeAdapter → ensure_strict_json_schema
-strict_schema -> openai_api: response_format (json_schema, strict)
-openai_api -> duo.script: 구조화된 JSON 응답
+strict_schema -> openai_api: response_format (json_schema, strict) → 구조화된 JSON 응답

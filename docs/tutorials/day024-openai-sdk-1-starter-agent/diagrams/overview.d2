@@ -1,6 +1,6 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 3
+grid-rows: 2
 
 front: "브라우저 쪽" {
   class: group
@@ -19,6 +19,6 @@ back: "실행과 호출 대상" {
 }
 
 front.user -> front.app: 채팅 메시지
-front.app -> back.runner: run_sync/run/run_streamed
-pkg -> back.runner: 함수 직접 호출
+front.app -> back: run_sync/run/run_streamed
+pkg -> back: 함수 직접 호출
 back.runner -> back.openai: 모델 호출 (기본값 해석 포함)

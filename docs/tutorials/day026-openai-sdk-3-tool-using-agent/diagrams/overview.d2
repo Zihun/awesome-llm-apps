@@ -1,12 +1,11 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 3
 
 user: 실행자 (python 직접 실행) { class: person }
 
 programs: "다섯 개의 독립 진입점" {
   class: group
-  grid-columns: 3
+  grid-columns: 5
   calc: calculator_agent.py { class: ours }
   fn: 함수 도구 (3_1) { class: ours }
   builtin: 내장 도구 (3_2) { class: ours }
@@ -16,11 +15,7 @@ programs: "다섯 개의 독립 진입점" {
 
 openai: OpenAI API (Responses/Chat Completions) { class: ext }
 
-user -> programs.calc: 실행
-user -> programs.fn: 실행
-user -> programs.builtin: 실행
-user -> programs.basic: 실행
-user -> programs.advanced: 실행
+user -> programs: 실행
 programs.calc -> openai: 함수 호출 결정
 programs.fn -> openai: 함수 호출 결정
 programs.builtin -> openai: 웹 검색·코드 실행 (서버 실행)
