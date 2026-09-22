@@ -5,6 +5,7 @@
   "scripts": {
     "render": "node render.mjs",
     "check": "node check.mjs",
+    "words": "node words.mjs",
     "scaffold": "node scaffold.mjs",
     "roadmap": "node roadmap.mjs",
     "test": "node --test --test-force-exit"
