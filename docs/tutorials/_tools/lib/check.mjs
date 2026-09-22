@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { inlineImports, sourceHash, readSvgHash } from "./d2.mjs";
+import { edgeCrossings, stretchedIcons, ICON_MAX_HEIGHT } from "./edges.mjs";
 import { folderName, PLACEHOLDER } from "./days.mjs";
 
 // 폭 상한. 본문이 그림을 축소하면 12px 글자가 그만큼 작아지고 한글이 먼저 뭉개진다.
@@ -86,6 +87,15 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
       const width = Number(svgText.match(/<svg[^>]*\swidth="(\d+)"/)?.[1] ?? 0);
       const widthCap = f.startsWith("sequence") ? SEQUENCE_MAX_WIDTH : SVG_MAX_WIDTH;
       if (width > widthCap) problems.push(rel(`다이어그램이 본문 폭에서 읽히지 않음: diagrams/${f.replace(/\.d2$/, ".svg")} (${width}px, 상한 ${widthCap}px) — grid-columns를 줄여 줄을 나누세요. 라벨이 긴 상자를 가로로 여러 개 세우면 폭이 금세 넘칩니다`));
+      // (17) 연결선이 남의 도형을 가로지르면 그림이 읽히지 않는다. 그리드는 엣지를 보지 않고
+      //      자리를 정하고 그 위에 직선을 긋기 때문에, 멀리 떨어진 칸을 이으면 사이를 관통한다.
+      //      고치는 법은 엣지를 컨테이너 수준으로 올리는 것이다(§5).
+      const crossings = edgeCrossings(svgText);
+      if (crossings) problems.push(rel(`연결선이 다른 도형을 가로지릅니다: diagrams/${f.replace(/\.d2$/, ".svg")} (${crossings}곳) — 자식 하나하나를 가리키는 대신 묶음끼리 잇도록 엣지를 컨테이너 수준으로 올리세요`));
+      // (18) 종횡비를 지키는 아이콘이 그리드 칸을 혼자 쓰면 통째로 늘어난다.
+      for (const icon of stretchedIcons(svgText)) {
+        problems.push(rel(`아이콘이 칸에 맞춰 늘어났습니다: diagrams/${f.replace(/\.d2$/, ".svg")}의 ${icon.kind} ${icon.width}x${icon.height} (높이 상한 ${ICON_MAX_HEIGHT}px) — 그리드 칸을 혼자 쓰지 말고 형제와 함께 컨테이너에 넣으세요`));
+      }
       const height = Number(svgText.match(/<svg[^>]*\sheight="(\d+)"/)?.[1] ?? 0);
       const heightCap = f.startsWith("sequence") ? SEQUENCE_MAX_HEIGHT : SVG_MAX_HEIGHT;
       if (height > heightCap) problems.push(rel(`다이어그램이 세로로 너무 깁니다: diagrams/${f.replace(/\.d2$/, ".svg")} (${height}px, 상한 ${heightCap}px) — 관련된 것끼리 컨테이너로 묶고 루트에 grid-rows/grid-columns를 주세요. 안쪽 컨테이너의 direction은 엣지가 있으면 무시됩니다`));
