@@ -26,11 +26,9 @@ work: "ArxivTools가 하는 일" {
   pdf: 다운로드된 PDF { class: file }
 }
 
-prep.user -> paths.hosted: API 키 + 검색어
-prep.user -> paths.local: 검색어만
+prep -> paths: 호스팅은 API 키 + 검색어, 로컬은 검색어만
 paths.hosted -> paths.openai: 채팅 완성 요청
 paths.local -> paths.ollama: 채팅 완성 요청
-paths.hosted -> work.tool: 도구 호출
-paths.local -> work.tool: 도구 호출
+paths -> work: 두 경로 모두 같은 도구를 호출
 work.tool -> work.arxiv: 검색 / PDF 다운로드
-work.tool -> work.pdf: 페이지별 텍스트 추출
+work.arxiv -> work.pdf: 페이지별 텍스트 추출

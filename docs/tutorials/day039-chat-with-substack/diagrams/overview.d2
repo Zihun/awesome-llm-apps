@@ -27,6 +27,4 @@ external: "외부 서비스" {
 front.user -> front.ui: 키·URL·질문 입력
 front.ui -> local.app: embedchain_bot() 생성
 local.app -> local.store: 청크 저장·유사도 검색
-local.app -> external.substack: 사이트맵·글 본문 요청
-local.app -> external.embed_api: 텍스트 임베딩 요청
-local.app -> external.chat_api: 답변 생성 요청
+local -> external: 사이트맵·본문 요청 → 임베딩 → 답변 생성

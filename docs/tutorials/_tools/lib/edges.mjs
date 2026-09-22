@@ -137,24 +137,32 @@ export function edgeCrossings(svg) {
   return crossings;
 }
 
-/** 아이콘 도형(사람·구름·원통·문서)의 높이 상한.
- *  그리드는 칸 크기를 줄맞춤하는데, 종횡비를 지키는 도형이 칸을 혼자 쓰면 통째로 늘어난다 —
- *  Day 031의 사람 아이콘이 761x761까지 커졌다. 같은 그림에서 형제와 짝지어 넣으면 64x63이다.
- *  **폭은 재지 않는다.** 라벨이 길면 구름이 옆으로 넓어지는 것이 정상이고(예: 358x79),
- *  늘어남의 증상은 높이 쪽에만 나타난다. 사각형은 애초에 이 상한의 대상이 아니다. */
+/** 아이콘 도형의 자연 크기 상한.
+ *
+ *  그리드는 칸 크기를 줄맞춤하고, 종횡비를 지키는 도형은 칸을 채우려고 늘어난다. 늘어남은
+ *  두 방향으로 나타난다 — Day 031의 사람은 761x761로 **정사각형인 채 거대해졌고**, Day 045의
+ *  사람은 643x64로 **그림 폭을 가로질러 납작해졌다**. 둘 다 같은 원인이고 둘 다 막아야 한다.
+ *
+ *  다만 도형마다 자연스러운 모양이 다르다. 사람은 대체로 정사각형이다(정상값 64x63). 구름·
+ *  원통·문서는 라벨을 담느라 옆으로 넓어지는 것이 정상이어서(예: 358x79) 폭을 재면 멀쩡한
+ *  것까지 걸린다. 그래서 **사람만 폭과 높이를 함께 보고, 나머지는 높이만 본다.**
+ *  (2026-09-23: 처음에는 높이만 봤다가 Day 045의 643x64를 놓쳤다.) */
 export const ICON_MAX_HEIGHT = 200;
+export const PERSON_MAX_WIDTH = 200;
 
 const ICON_RE =
   /<g class="[A-Za-z0-9+/=]+ ((?:person|ext|store|file)[\w-]*)">\s*<g class="shape"\s*>\s*(<(?:path|polygon)[^>]*>)/g;
 
-/** 상한을 넘은 아이콘 도형 목록. */
 export function stretchedIcons(svg, maxHeight = ICON_MAX_HEIGHT) {
   const out = [];
   for (const m of svg.matchAll(ICON_RE)) {
     const b = boxOf(m[2]);
     if (!b) continue;
+    const kind = m[1].split("-")[0];
+    const w = Math.round(b.x2 - b.x1);
     const h = Math.round(b.y2 - b.y1);
-    if (h > maxHeight) out.push({ kind: m[1].split("-")[0], width: Math.round(b.x2 - b.x1), height: h });
+    const tooWide = kind === "person" && w > PERSON_MAX_WIDTH;
+    if (h > maxHeight || tooWide) out.push({ kind, width: w, height: h });
   }
   return out;
 }

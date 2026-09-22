@@ -1,26 +1,28 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 3
+grid-columns: 2
 
-user: 사용자 { class: person }
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  browser: 웹 UI { class: ext }
+}
 
 handlers: "Motia 스텝 (steps/)" {
   class: group
   grid-columns: 2
-  api: ChatApi (chat-api.step.ts) { class: ours }
-  ai: AiResponse (ai-response.step.ts) { class: ours }
+  api: ChatApi 스텝 { class: ours }
+  ai: AiResponse 스텝 { class: ours }
 }
 
 back: "저장소·외부 API" {
   class: group
   grid-columns: 2
-  store: conversation 스트림 (파일 저장) { class: store }
-  openai: OpenAI API (gpt-4o-mini) { class: ext }
+  store: conversation 스트림 { class: store }
+  openai: OpenAI API { class: ext }
 }
 
-user -> handlers.api: POST /chat
-handlers.api -> back.store: 사용자 메시지 저장
+front -> handlers: POST /chat
 handlers.api -> handlers.ai: chat-message 이벤트
-handlers.ai -> back.store: 토큰 조각마다 갱신
-handlers.ai -> back.openai: 스트리밍 호출
-back.store -> user: WebSocket 실시간 푸시
+handlers -> back: 메시지 저장 · 토큰마다 갱신 · 스트리밍 호출 (갱신은 WebSocket으로 브라우저에 푸시)

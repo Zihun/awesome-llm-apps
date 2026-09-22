@@ -35,9 +35,6 @@ external: "외부 서비스" {
 front.user -> front.ui: 키 입력·질문
 front.ui -> local.app: embedchain_bot() 생성
 local.app -> local.store: 청크 저장·유사도 검색
-local.app -> auth.cred: 자격 증명 파일 확인
-auth.cred -> external.google: 동의 요청 (최초 1회)
-external.google -> auth.token: 토큰 저장
-local.app -> external.gmail: 메일 조회 (토큰 사용)
-local.app -> external.embed_api: 텍스트 임베딩 요청
-local.app -> external.chat_api: 답변 생성 요청
+local -> auth: 자격 증명 파일 확인
+auth -> external: 동의 요청 (최초 1회) → 토큰 저장
+local -> external: 메일 조회(토큰) → 임베딩 → 답변 생성

@@ -53,6 +53,18 @@ test("an icon stretched by its grid cell is reported, but a wide one is not", ()
   assert.equal(stretchedIcons(svgOf(wide)).length, 0);
 });
 
+// Day 045는 사람 아이콘이 643x64로 그림 폭을 가로질러 납작해졌는데, 높이만 재던
+// 첫 규칙은 이것을 통과시켰다. 사람은 대체로 정사각형이므로 폭도 함께 본다.
+test("a person smeared across the diagram is reported", () => {
+  const flat = [{ cls: "person", tag: '<path d="M 0 0 H 640 V 64 H 0 Z" />' }];
+  assert.equal(stretchedIcons(svgOf(flat)).length, 1);
+});
+
+test("a wide cloud is still allowed", () => {
+  const cloud = [{ cls: "ext", tag: '<path d="M 0 0 H 430 V 79 H 0 Z" />' }];
+  assert.equal(stretchedIcons(svgOf(cloud)).length, 0);
+});
+
 test("rectangles are never counted as stretched icons", () => {
   const rect = [{ cls: "ours", tag: '<rect x="0" y="0" width="400" height="300" />' }];
   assert.equal(stretchedIcons(svgOf(rect)).length, 0);
