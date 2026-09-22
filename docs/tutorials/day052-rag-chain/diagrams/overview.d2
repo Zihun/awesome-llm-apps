@@ -1,0 +1,28 @@
+...@../../_tools/theme
+grid-columns: 2
+
+local: "이 컴퓨터에서 도는 부분" {
+  class: group
+  grid-columns: 2
+  tokenizer: 로컬 토크나이저 (mpnet) { class: store }
+  ingest: PDF 로더·분할 { class: ours }
+  chain: RAG 체인 { class: ours }
+  vstore: Chroma 저장소 { class: store }
+}
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: Streamlit UI { class: ours }
+}
+
+cloud: Gemini API (임베딩·채팅) { class: ext }
+
+front -> local: 질문 · PDF 업로드
+local -> front: 답변 텍스트
+local -> cloud: 임베딩 + 생성 요청
+cloud -> local: 벡터 · 생성된 답변
+local.tokenizer -> local.ingest: 토큰 수 세기
+local.ingest -> local.vstore: 청크 저장
+local.vstore -> local.chain: 유사도 검색
