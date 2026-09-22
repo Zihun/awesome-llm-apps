@@ -1,0 +1,36 @@
+...@../../_tools/theme
+direction: right
+grid-columns: 2
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: "Streamlit 앱 (local_main.py)" { class: ours }
+}
+
+search: "RAGLite 검색" {
+  class: group
+  grid-columns: 2
+  hybrid: "하이브리드 검색 (키워드+벡터, RRF)" { class: ours }
+  rerank: "재순위화 (FlashRank)" { class: ours }
+}
+
+models: "로컬 모델 (llama-cpp-python)" {
+  class: group
+  grid-columns: 2
+  embed: "임베더 (GGUF)" { class: ours }
+  llm: "LLM (GGUF)" { class: ours }
+}
+
+data: "저장소" {
+  class: group
+  grid-columns: 2
+  doc: "업로드 PDF" { class: file }
+  db: "SQLite / PostgreSQL" { class: store }
+}
+
+front -> search: 질문 · 문서 텍스트
+search -> models: 임베딩 요청
+search -> data: 검색 · 삽입
+models -> front: 스트리밍 답변
