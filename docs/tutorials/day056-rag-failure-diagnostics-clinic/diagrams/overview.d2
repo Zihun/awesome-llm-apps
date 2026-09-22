@@ -1,0 +1,14 @@
+...@../../_tools/theme
+
+user: 사용자 { class: person }
+patterns: "실패 패턴 12종" { class: ours }
+cli: "CLI 스크립트" { class: ours }
+api: "OpenAI 호환 API" { class: ext }
+report: "rag_failure_report.json" { class: file }
+
+user -> cli: 키 + 버그 설명
+patterns -> cli: 12개 정의
+cli -> api: 프롬프트 + 버그 설명
+api -> cli: 마크다운 진단
+cli -> report: JSON 저장
+cli -> user: 콘솔 출력
