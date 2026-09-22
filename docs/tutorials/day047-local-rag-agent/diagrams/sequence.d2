@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+os: AgentOS { class: ours }
+agent: Local RAG Agent { class: ours }
+chat: 채팅 모델 (llama3.2) { class: ours }
+embed: 임베딩 모델 (openhermes) { class: ours }
+qdrant: Qdrant (thai-recipe-index) { class: store }
+
+user -> os: 질문 (브라우저)
+os -> agent: run(질문)
+agent -> chat: 채팅 완성 요청 (도구 스키마 포함)
+chat -> agent: tool_call search_knowledge_base(query)
+agent -> embed: 질의 임베딩 요청
+embed -> agent: 4096차원 벡터
+agent -> qdrant: 벡터 검색 (top-k)
+qdrant -> agent: 청크 텍스트 목록
+agent -> chat: 함수 결과 재전송
+chat -> agent: 최종 응답 텍스트
+agent -> os: RunOutput.content
+os -> user: 화면에 표시
