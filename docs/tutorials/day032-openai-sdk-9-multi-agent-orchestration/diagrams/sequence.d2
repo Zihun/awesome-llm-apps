@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 실행자 { class: person }
+proc: 파이썬 프로세스 { class: ours }
+spanish: spanish_agent { class: ours }
+picker: translation_picker { class: ours }
+openai: OpenAI API { class: ext }
+
+user -> proc: python parallel_execution.py
+proc -> spanish: asyncio.gather로 3건 동시 발사
+spanish -> openai: 모델 호출 1/3
+spanish -> openai: 모델 호출 2/3
+spanish -> openai: 모델 호출 3/3
+openai -> spanish: 번역 3건 (완료 순서 무관)
+spanish -> proc: gather 반환 (가장 늦은 1건이 끝나야 반환, res_1..3은 제출 순서)
+proc -> picker: Runner.run(translation_picker, 번역 3건)
+picker -> openai: 모델 호출 (게이트 뒤 1건)
+openai -> picker: 선택된 번역 + 이유
+picker -> proc: best_translation.final_output
+proc -> user: 콘솔 출력

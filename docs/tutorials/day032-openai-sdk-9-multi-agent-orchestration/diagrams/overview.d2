@@ -1,0 +1,30 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 3
+
+user: 실행자 (python 직접 실행) { class: person }
+
+p1: "9_1_parallel_execution" {
+  class: group
+  grid-columns: 2
+  spanish: 번역 에이전트 (spanish_agent) { class: ours }
+  picker: 선택·합성 에이전트 { class: ours }
+}
+
+p2: "9_2_agents_as_tools" {
+  class: group
+  grid-columns: 2
+  orchestrator: 콘텐츠 오케스트레이터 { class: ours }
+  tools: 연구·작성·편집 에이전트 (도구) { class: ours }
+}
+
+openai: OpenAI API { class: ext }
+
+user -> p1.spanish: python parallel_execution.py
+user -> p2.orchestrator: python agents_as_tools.py
+p1.spanish -> p1.picker: asyncio.gather 3건 완료 후
+p2.orchestrator -> p2.tools: 함수 도구 호출 (순서대로)
+p1.spanish -> openai: 모델 호출 (동시 3건)
+p1.picker -> openai: 모델 호출 (1건)
+p2.orchestrator -> openai: 모델 호출 (매 턴)
+p2.tools -> openai: 중첩 Runner의 모델 호출
