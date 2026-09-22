@@ -1,0 +1,43 @@
+...@../../_tools/theme
+direction: right
+grid-columns: 2
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: Streamlit UI (chat_gmail.py) { class: ours }
+}
+
+local: "로컬 프로세스" {
+  class: group
+  grid-columns: 2
+  app: embedchain App (embedchain_bot) { class: ours }
+  store: Chroma 벡터 저장소 { class: store }
+}
+
+auth: "인증 자료 (로컬 디스크)" {
+  class: group
+  grid-columns: 2
+  cred: credentials.json { class: file }
+  token: token.json { class: file }
+}
+
+external: "외부 서비스" {
+  class: group
+  grid-columns: 2
+  google: Google 동의 화면 { class: ext }
+  gmail: Gmail API { class: ext }
+  embed_api: OpenAI 임베딩 API { class: ext }
+  chat_api: OpenAI Chat API { class: ext }
+}
+
+front.user -> front.ui: 키 입력·질문
+front.ui -> local.app: embedchain_bot() 생성
+local.app -> local.store: 청크 저장·유사도 검색
+local.app -> auth.cred: 자격 증명 파일 확인
+auth.cred -> external.google: 동의 요청 (최초 1회)
+external.google -> auth.token: 토큰 저장
+local.app -> external.gmail: 메일 조회 (토큰 사용)
+local.app -> external.embed_api: 텍스트 임베딩 요청
+local.app -> external.chat_api: 답변 생성 요청
