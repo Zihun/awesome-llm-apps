@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+collector: News Collector { class: ours }
+summarizer: Summary Writer { class: ours }
+analyzer: Trend Analyzer { class: ours }
+gemini: Gemini API { class: ext }
+
+user -> ui: 주제 + 키 입력 후 클릭
+ui -> collector: news_collector.run(topic)
+collector -> gemini: 모델 호출 (DuckDuckGo 검색 도구 포함)
+gemini -> collector: 응답 텍스트
+ui -> summarizer: summary_writer.run(articles)
+summarizer -> gemini: 모델 호출 (Newspaper4k 도구로 본문 조회)
+gemini -> summarizer: 응답 텍스트
+ui -> analyzer: trend_analyzer.run(summaries)
+analyzer -> gemini: 모델 호출 (도구 없음)
+gemini -> analyzer: 응답 텍스트
+ui -> user: st.write(analysis) 표시

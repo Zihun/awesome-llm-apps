@@ -1,0 +1,36 @@
+...@../../_tools/theme
+direction: down
+grid-rows: 3
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: Streamlit UI (startup_trends_agent.py) { class: ours }
+}
+
+agents: "순서대로 호출되는 에이전트 3개" {
+  class: group
+  grid-columns: 3
+  collector: 뉴스 수집 (News Collector) { class: ours }
+  summarizer: 요약 작성 (Summary Writer) { class: ours }
+  analyzer: 트렌드 분석 (Trend Analyzer) { class: ours }
+}
+
+svc: "외부 서비스" {
+  class: group
+  grid-columns: 3
+  duckduckgo: DuckDuckGo 검색 (ddgs) { class: ext }
+  article: 기사 원문 (대상 웹페이지) { class: ext }
+  gemini: Gemini API (gemini-2.5-flash) { class: ext }
+}
+
+front.user -> front.ui: 주제 + Google API 키
+front.ui -> agents.collector: 1) 실행
+front.ui -> agents.summarizer: 2) 실행
+front.ui -> agents.analyzer: 3) 실행
+agents.collector -> svc.duckduckgo: 검색 호출
+agents.collector -> svc.gemini: 모델 호출
+agents.summarizer -> svc.article: 본문 요청
+agents.summarizer -> svc.gemini: 모델 호출
+agents.analyzer -> svc.gemini: 모델 호출
