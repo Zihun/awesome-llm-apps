@@ -1,10 +1,10 @@
 # Day 054 · 🧐 Agentic RAG with Reasoning
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 75분 · API 비용 대략 Gemini 2.5 Flash 생성 + OpenAI 텍스트 임베딩, 둘 다 토큰 단위 종량제라 사실상 무료에 가까움(정확한 값은 키가 없어 확인 못함 — 게다가 Step 3에서 보듯 오늘의 agno로는 코드가 두 호출 중 어느 쪽에도 닿지 못합니다) · 원본 앱: `rag_tutorials/agentic_rag_with_reasoning`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 90분(agno 텔레메트리·Streamlit 외부 IP 조회 등 나가는 네트워크를 짚는 절이 늘어 있습니다) · API 비용 대략 Gemini 2.5 Flash 생성 + OpenAI 텍스트 임베딩, 둘 다 토큰 단위 종량제라 사실상 무료에 가까움(정확한 값은 키가 없어 확인 못함 — 게다가 Step 3에서 보듯 오늘의 agno로는 코드가 두 호출 중 어느 쪽에도 닿지 못합니다) · 원본 앱: `rag_tutorials/agentic_rag_with_reasoning`
 
 ## 오늘 만들 것
 
-Day 047이 이름 붙인 RAG 파이프라인 — 문서 → 청크 → 임베딩 → 저장소 → 질의 → 검색 → 답변 — 을 오늘은 두 회사가 나눠 맡습니다. 이 앱의 임포트 6개(`rag_tutorials/agentic_rag_with_reasoning/rag_reasoning_agent.py:1-9`, Step 1)가 그 분업을 그대로 보여줍니다: `Gemini(id="gemini-2.5-flash", ...)`가 최종 답변을 생성하고 `OpenAIEmbedder(...)`가 청크와 질의 텍스트를 벡터로 바꾸며, 저장소는 서버가 아니라 이 컴퓨터 로컬 디렉터리에 파일로 남는 LanceDB(임베디드)입니다. 제목의 "Reasoning"이 실제로 더하는 것은 `tools=[ReasoningTools(add_instructions=True)]` 한 줄인데, agno 소스를 따라가 보면 이것은 감춰진 사고 능력이 아니라 `think`·`analyze`라는 평범한 파이썬 함수 두 개를 모델이 부를 수 있는 도구로 등록하는 것뿐이고(소스로 확인, `agno/tools/reasoning.py`), 화면의 "🧠 Reasoning Process" 패널이 보여주는 `reasoning_content`도 — 앱 자신의 README가 "실시간으로 보여주는 사고 과정"이라 표현하는 것과 달리 — Gemini의 별도 사고 채널이 아니라 모델이 그 두 도구를 호출할 때 스스로 써낸 인수(title·thought·action·confidence)를 그대로 정리한 텍스트입니다(소스로 확인, `agno/agent/_response.py`) — Gemini의 진짜 thought summary를 받으려면 `include_thoughts=True` 같은 별도 설정이 필요한데 이 앱은 주지 않습니다. `requirements.txt` 5줄(`streamlit`, `agno>=2.2.10`, `lancedb`, `openai`, `python-dotenv`, 마지막 줄에 개행 없음)을 오늘 설치하면 agno 3.0.10으로 풀리는데(직접 확인, Day 047·051과 같은 버전), 정작 이 파일이 쓰는 `from agno.models.google import Gemini`를 실행하면 `google-genai`가 없다는 `ImportError`로 멈춥니다 — 다섯 줄 중 어디에도 이 패키지가 없습니다(직접 확인, Step 1). 이 하나를 더 설치해 임포트를 전부 통과시켜도, 키 두 개를 다 넣고 URL을 지식 베이스에 넣으려는 순간 `knowledge.add_content(url=url)`(`rag_tutorials/agentic_rag_with_reasoning/rag_reasoning_agent.py:100`)가 `AttributeError`로 멈춥니다 — Day 047이 다른 앱에서 이미 겪은 것과 같은 이유로, 이 메서드는 오늘의 agno에서 `insert`로 이름이 바뀌었습니다(직접 확인). 즉 유효한 키가 둘 다 있어도 이 코드는 Gemini에도 OpenAI에도 닿지 못한 채 멈춥니다. 완성하면(코드를 고치지 않는 한 실제로는 볼 수 없습니다) 왼쪽엔 추론 기록이, 오른쪽엔 답변과 출처가 나란히 스트리밍되는 화면을 보게 됩니다. 아래는 완성된 아키텍처입니다.
+문서를 청크로 나눠 임베딩하고 저장소에 넣은 뒤, 질문이 오면 같은 방식으로 검색해 답을 만드는 흐름 — Day 047부터 이 볼륨이 반복해 온 것 — 을 오늘은 두 회사가 나눠 맡습니다. 이 앱의 임포트 6개(`rag_tutorials/agentic_rag_with_reasoning/rag_reasoning_agent.py:1-9`, Step 1)가 그 분업을 그대로 보여줍니다: `Gemini(id="gemini-2.5-flash", ...)`가 최종 답변을 생성하고 `OpenAIEmbedder(...)`가 청크와 질의 텍스트를 벡터로 바꾸며, 저장소는 서버가 아니라 이 컴퓨터 로컬 디렉터리에 파일로 남는 LanceDB(임베디드)입니다. 제목의 "Reasoning"이 실제로 더하는 것은 `tools=[ReasoningTools(add_instructions=True)]` 한 줄인데, agno 소스를 따라가 보면 이것은 감춰진 사고 능력이 아니라 `think`·`analyze`라는 평범한 파이썬 함수 두 개를 모델이 부를 수 있는 도구로 등록하는 것뿐이고(소스로 확인, `agno/tools/reasoning.py`), 화면의 "🧠 Reasoning Process" 패널이 보여주는 `reasoning_content`도 — 앱 자신의 README가 "실시간으로 보여주는 사고 과정"이라 표현하는 것과 달리 — Gemini의 별도 사고 채널이 아니라 모델이 그 두 도구를 호출할 때 스스로 써낸 인수(title·thought·action·confidence)를 그대로 정리한 텍스트입니다(소스로 확인, `agno/agent/_response.py`) — Gemini의 진짜 thought summary를 받으려면 `include_thoughts=True` 같은 별도 설정이 필요한데 이 앱은 주지 않습니다. `requirements.txt` 5줄(`streamlit`, `agno>=2.2.10`, `lancedb`, `openai`, `python-dotenv`, 마지막 줄에 개행 없음)을 오늘 설치하면 agno 3.0.10으로 풀리는데(직접 확인, Day 047·051과 같은 버전), 정작 이 파일이 쓰는 `from agno.models.google import Gemini`를 실행하면 `google-genai`가 없다는 `ImportError`로 멈춥니다 — 다섯 줄 중 어디에도 이 패키지가 없습니다(직접 확인, Step 1). 이 하나를 더 설치해 임포트를 전부 통과시켜도, 키 두 개를 다 넣고 URL을 지식 베이스에 넣으려는 순간 `knowledge.add_content(url=url)`(`rag_tutorials/agentic_rag_with_reasoning/rag_reasoning_agent.py:100`)가 `AttributeError`로 멈춥니다 — Day 047이 다른 앱에서 이미 겪은 것과 같은 이유로, 이 메서드는 오늘의 agno에서 `insert`로 이름이 바뀌었습니다(직접 확인). 즉 유효한 키가 둘 다 있어도 이 코드는 Gemini에도 OpenAI에도 닿지 못한 채 멈춥니다. 완성하면(코드를 고치지 않는 한 실제로는 볼 수 없습니다) 왼쪽엔 추론 기록이, 오른쪽엔 답변과 출처가 나란히 스트리밍되는 화면을 보게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -15,7 +15,7 @@ Day 047이 이름 붙인 RAG 파이프라인 — 문서 → 청크 → 임베딩
 | Google API 키 | `Gemini` 생성 모델 인증 | https://aistudio.google.com/apikey 가입 후 발급 |
 | OpenAI API 키 | `OpenAIEmbedder`의 텍스트 임베딩 인증(지식 적재·질의 검색 모두에 쓰임) | https://platform.openai.com 가입 후 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| 인터넷 연결 | PyPI 설치, (키가 있다면) Gemini·OpenAI 호출 — 기본 지식 소스 URL 자체는 Step 3의 버그 때문에 이 문서에서 실제로 가져오지 않음 | 별도 설치 없음 |
+| 인터넷 연결 | PyPI 설치, (키가 있다면) Gemini·OpenAI 호출 — 기본 지식 소스 URL 자체는 Step 3의 버그 때문에 이 문서에서 실제로 가져오지 않음. `agent.run()`마다 agno가 익명 사용 통계를 자체 API(`os-api.agno.com`)로 전송을 시도하는 것도 별개로 있음(Day 050과 같은 agno 3.0.10, 소스로 확인) | 별도 설치 없음 |
 
 ## 아키텍처 한눈에 보기
 
@@ -46,7 +46,7 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
 
-이 저장소는 루트에 `pyproject.toml`과 `uv.lock`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. 바로 `uv venv`를 실행하면 uv가 관리하는 CPython 3.13.3을 그대로 받습니다(직접 확인) — 이 컴퓨터에서 `py` 런처가 가리키는 시스템 기본값은 3.14.3입니다(직접 확인, Day 051이 같은 날 확인한 것과 같은 값).
+이 저장소는 루트에 `pyproject.toml`과 `uv.lock`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. 바로 `uv venv`를 실행하면 uv가 관리하는 CPython 3.13.3을 그대로 받습니다(직접 확인) — 이 값은 uv가 캐시해 둔 버전이라 기기마다 다를 수 있으므로, `py` 런처 등 시스템 기본값에 기대지 말고 `uv venv --python 3.13`처럼 명시하는 편이 안전합니다.
 
 `rag_tutorials/agentic_rag_with_reasoning/requirements.txt:1-5`
 
@@ -466,13 +466,13 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 200
 ```
 
-(PowerShell이면 `curl` 대신: `(Invoke-WebRequest -Uri http://localhost:8501 -UseBasicParsing).StatusCode`. HTTP 200은 직접 확인. 다만 이 명령이 "네트워크 없음"은 아닙니다 — Streamlit은 `browser.gatherUsageStats`가 기본값 `True`라 사용 통계를 자체 서버로 보내려 시도합니다(소스로 확인, `streamlit/config.py`), 이 앱의 API 키와는 무관하게 `streamlit run`을 실행하는 순간부터입니다.)
+(PowerShell이면 `curl` 대신: `(Invoke-WebRequest -Uri http://localhost:8501 -UseBasicParsing).StatusCode`. HTTP 200은 직접 확인. 다만 이 명령이 "네트워크 없음"은 아닙니다 — 다만 그 원인은 흔히 말하는 사용 통계 쪽이 아닙니다. `browser.gatherUsageStats`(기본값 `True`)는 옵션 정의일 뿐이고, 실제 전송 주소 `data.streamlit.io/metrics.json`은 프런트엔드 JS 번들 안에 있어 **브라우저가 화면을 열 때** 나가지, `curl`처럼 헤드리스로 서버만 두드릴 때는 나가지 않습니다(소스로 확인 — 이 문자열은 `streamlit/static/` 번들에만 있고 파이썬 쪽 코드에는 없습니다). 이 명령으로 실제 나가는 것은 헤드리스 기동 자체가 시도하는 외부 IP 조회입니다 — `net_util.py`가 `checkip.amazonaws.com`에 접속해 이 컴퓨터의 외부 IP를 알아내려 합니다(소스로 확인, `streamlit/net_util.py`·`streamlit/web/bootstrap.py`). 이 앱의 API 키와는 무관하게 `streamlit run`을 실행하는 순간부터입니다.)
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 Step 3의 `add_content` 버그가 고쳐졌다고 가정하고, 소스를 따라가며 이어붙인 의도된 흐름입니다 — 키가 없을뿐더러 지식 베이스 자체를 채울 수 없어 처음부터 끝까지 한 번에 재현하지는 못했습니다. 사용자가 질문을 입력하고 실행 버튼을 누르면 `agent.run(query, stream=True, stream_events=True)`가 호출되고, 에이전트는 도구 스키마(`think`·`analyze`·`search_knowledge_base`)를 포함해 Gemini에 완성을 요청합니다. Gemini가 먼저 `think`를 호출하면 그 인수가 Step 4에서 본 것처럼 정리되어 "🧠 Reasoning Process" 패널에 스트리밍되고, 이어서 `search_knowledge_base`를 호출하기로 판단하면 에이전트는 로컬에서 두 단계를 밟습니다 — 질의 텍스트를 OpenAI에 보내 벡터를 받고, 그 벡터로 LanceDB를 로컬 검색해 청크 원문을 얻습니다(이 왕복만 OpenAI로 나가고, 검색 자체는 이 컴퓨터 안에서 끝납니다). 청크 텍스트가 도구 결과로 Gemini에 돌아가면 Gemini는 그것을 근거로 최종 답변과 출처를 만들고, 답변 텍스트와 인용은 "💡 답변" 패널에 스트리밍됩니다. 지식 소스의 원문(적재 시점)과 사용자의 질문(질의 시점) 모두 결국 OpenAI로 한 번씩 나가고, 검색된 청크 원문은 Gemini로도 나갑니다 — 벡터 자체만 이 컴퓨터에 남습니다.
+이 그림은 Step 3의 `add_content` 버그가 고쳐졌다고 가정하고, 소스를 따라가며 이어붙인 의도된 흐름입니다 — 키가 없을뿐더러 지식 베이스 자체를 채울 수 없어 처음부터 끝까지 한 번에 재현하지는 못했습니다. 사용자가 질문을 입력하고 실행 버튼을 누르면 `agent.run(query, stream=True, stream_events=True)`가 호출되고, 에이전트는 도구 스키마(`think`·`analyze`·`search_knowledge_base`)를 포함해 Gemini에 완성을 요청합니다. Gemini가 먼저 `think`를 호출하면 그 인수가 Step 4에서 본 것처럼 정리되어 "🧠 Reasoning Process" 패널에 스트리밍되고, 이어서 `search_knowledge_base`를 호출하기로 판단하면 에이전트는 로컬에서 두 단계를 밟습니다 — 질의 텍스트를 OpenAI에 보내 벡터를 받고, 그 벡터로 LanceDB를 로컬 검색해 청크 원문을 얻습니다(이 왕복만 OpenAI로 나가고, 검색 자체는 이 컴퓨터 안에서 끝납니다). 청크 텍스트가 도구 결과로 Gemini에 돌아가면 Gemini는 그것을 근거로 최종 답변과 출처를 만들고, 답변 텍스트와 인용은 "💡 답변" 패널에 스트리밍됩니다. 지식 소스의 원문(적재 시점)과 사용자의 질문(질의 시점) 모두 결국 OpenAI로 한 번씩 나가고, 검색된 청크 원문은 Gemini로도 나갑니다 — 벡터 자체만 이 컴퓨터에 남습니다. 여기에 이 그림이 안 그리는 나감이 하나 더 있습니다 — `agent.run()`이 끝날 때마다(스트리밍 여부와 무관하게) agno가 에이전트 id·모델 provider/이름·도구·지식 베이스 사용 여부 같은 익명 메타데이터를 자체 API(`https://os-api.agno.com`)로 전송을 시도합니다(소스로 확인, `agno/agent/_run.py`의 `log_agent_telemetry()` 호출과 `agno/agent/_telemetry.py`의 전송 필드, `agno/api/settings.py`의 URL — Day 050이 같은 agno 3.0.10에서 이미 확인한 것과 같습니다). 끄려면 `Agent(telemetry=False)`나 환경변수 `AGNO_TELEMETRY=false`를 씁니다. 참고로 Step 3의 "네트워크 요청 없이"는 이 텔레메트리와 무관하게 맞습니다 — `Knowledge`·`LanceDb` 생성까지는 `agent.run()` 자체가 아직 호출되지 않아 시도 0건이었습니다(직접 확인).
 
 ## 실행 체크리스트
 
@@ -488,7 +488,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `from agno.models.google import Gemini`가 `ImportError: \`google-genai\` not installed`로 실패 | `requirements.txt` 5줄에 `google-genai`가 없음(직접 확인, Step 1) | `uv pip install google-genai` |
+| `from agno.models.google import Gemini`가 ``ImportError: `google-genai` not installed``로 실패 | `requirements.txt` 5줄에 `google-genai`가 없음(직접 확인, Step 1) | `uv pip install google-genai` |
 | 키를 둘 다 넣어도 지식 베이스 로딩 중 `AttributeError: 'Knowledge' object has no attribute 'add_content'`로 화면이 멈춤 | agno 3.0.10에서 메서드 이름이 `insert`로 바뀜(Day 047과 같은 원인, 직접 확인, Step 3) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침 — 직접 재현하려면 `add_content(url=url)`을 `insert(url=url)`로 바꿔 호출 |
 | 키를 하나만 넣으면 화면이 안내 문구만 보여주고 그대로 멈춘 것처럼 보임 | `if google_key and openai_key:` 게이트가 둘 다 있어야 아래 블록 전체를 실행함(직접 확인, Step 2) | 두 키 모두 입력 |
 | 앱을 실행할 때마다 지식 베이스가 다시 로딩되거나 이전 데이터를 못 찾음 | `uri="tmp/lancedb"`가 실행 위치 기준 상대 경로라, 다른 디렉터리에서 실행하면 매번 새 위치에 생김(소스로 확인, Step 3) | 항상 `rag_tutorials/agentic_rag_with_reasoning` 폴더에서 실행 |
@@ -501,4 +501,4 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 
 ## 다음 날 예고
 
-[Day 055 · 🖥️ Local Hybrid Search RAG](../day055-local-hybrid-search-rag/README.md) — RAGLite와 llama-cpp-python으로 생성과 임베딩 모두 로컬 GGUF 모델로 돌리고, 하이브리드 검색과 FlashRank 재순위화까지 붙인 완전 로컬 RAG를 다룹니다.
+[Day 055 · 🖥️ Local Hybrid Search RAG](../day055-local-hybrid-search-rag/README.md) — RAGLite와 llama-cpp-python으로 생성과 임베딩 모두 로컬 GGUF 모델로 돌리고, 하이브리드 검색과 FlashRank 재순위화까지 붙인 RAG를 다룹니다. 추론은 로컬이지만, import 시점에 FlashRank 모델과 litellm 비용표를 내려받는 등 완전히 오프라인은 아닙니다.

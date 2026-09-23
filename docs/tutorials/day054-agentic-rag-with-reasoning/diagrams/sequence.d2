@@ -5,8 +5,8 @@ user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 agent: Agent (rag_reasoning_agent.py) { class: ours }
 gemini: Gemini API { class: ext }
-openai: OpenAI API { class: ext }
 store: LanceDB { class: store }
+openai: OpenAI API { class: ext }
 
 user -> ui: 질문 입력 · 실행 버튼
 ui -> agent: agent.run(query, stream=True, stream_events=True)
