@@ -1,10 +1,10 @@
 # Day 023 · Google ADK Crash Course · adk_yaml_examples
 
-> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ ⚠ · 예상 소요 75분(파이썬 코드는 한 줄도 없지만, 그 대신 프레임워크 자신의 YAML 로더·의존성·보안 가드 네 곳을 소스로 따라가는 데 시간을 씁니다 — 다른 크래시 코스 날보다는 짧습니다) · API 비용 $0 (API 키 없이 진행 — 실제 Gemini·Firecrawl 호출은 하지 않았습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples`
+> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ ⚠ · 예상 소요 80분(파이썬 코드는 한 줄도 없지만, 그 대신 프레임워크 자신의 YAML 로더·의존성·보안 가드 네 곳을 소스로 따라가는 데 시간을 씁니다 — 바로 앞 Day 022(95분)보다는 짧습니다) · API 비용 $0 (API 키 없이 진행 — 실제 Gemini·Firecrawl 호출은 하지 않았습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples`
 
 ## 오늘 만들 것
 
-오늘로 Google ADK 크래시 코스가 끝납니다 — Day 024부터는 OpenAI Agents SDK로 넘어갑니다. Day 014~022의 아홉 레슨은 전부 `LlmAgent(...)`를 파이썬으로 호출했지만, 오늘의 `multi_agent_web_research_team`엔 `.py` 파일이 하나도 없습니다. 코디네이터·리서치·요약 세 에이전트가 `root_agent.yaml`·`research_agent.yaml`·`summary_agent.yaml`로만 선언되어 있고, 유일한 파이썬 파일인 `__init__.py`는 개행 한 바이트가 전부입니다(직접 확인). 이건 Day 014가 `adk web --help`에서 읽고 지나간 문장 — 에이전트 폴더는 `agent.py`·`__init__.py`·`root_agent.yaml` 중 하나만 있으면 된다 — 의 세 번째 갈래이자, 그 문서가 찾아보기로 남겨 둔 숙제입니다. 조합 방식은 Day 021의 `sub_agents=`와 같은 매커니즘이지만 파이썬 객체 대신 `config_path`라는 파일 참조로 이뤄집니다 — `root_agent.yaml`이 나머지 둘을 가리키기만 하면 google-adk가 재귀적으로 읽어 조립합니다. 리서치 에이전트는 Day 017의 `MCPToolset`으로 `npx firecrawl-mcp`를 셸아웃하는데, 이 도구 선언 하나가 오늘의 무게중심입니다: `mcp` 패키지가 `requirements.txt`에도 google-adk의 의존성에도 없고, google-adk 2.9.2는 YAML로 선언된 로컬 프로세스 실행을 기본 거부하며, 이 레슨이 권장하는 `adk web` 자신은 도구 설정의 표준 표기법인 `args:` 키를 통째로 차단합니다. 그래서 오늘은 두 질문을 가릅니다 — "YAML만으로 에이전트 셋을 엮는 조합이 되는가"(됩니다, Step 3)와 "이 레슨이 그 위에서 의도한 대로 실행까지 가는가"(가지 않습니다, Step 4~5). 이 YAML 로더 전체가 google-adk 소스에서 `@experimental`로 표시돼 있다는 것이 이 결과를 설명합니다.
+오늘로 Google ADK 크래시 코스가 끝납니다 — Day 024부터는 OpenAI Agents SDK로 넘어갑니다. Day 014~022의 아홉 레슨은 전부 `LlmAgent(...)`를 파이썬으로 호출했지만, 오늘의 `multi_agent_web_research_team`엔 `.py` 파일이 하나도 없습니다. 코디네이터·리서치·요약 세 에이전트가 `root_agent.yaml`·`research_agent.yaml`·`summary_agent.yaml`로만 선언되어 있고, 유일한 파이썬 파일인 `__init__.py`는 개행 한 바이트가 전부입니다(직접 확인). 이건 Day 014가 `adk web --help`에서 읽고 지나간 문장 — 에이전트 폴더는 `agent.py`·`__init__.py`·`root_agent.yaml` 중 하나만 있으면 된다 — 의 세 번째 갈래이자, 그 문서가 찾아보기로 남겨 둔 숙제입니다. 조합 방식은 Day 021의 `sub_agents=`와 같은 매커니즘이지만 파이썬 객체 대신 `config_path`라는 파일 참조로 이뤄집니다 — `root_agent.yaml`이 나머지 둘을 가리키기만 하면 google-adk가 재귀적으로 읽어 조립합니다. 리서치 에이전트는 Day 017의 `MCPToolset`으로 `npx firecrawl-mcp`를 셸아웃하는데, 이 도구 선언 하나가 오늘의 무게중심입니다: `mcp` 패키지가 `requirements.txt`에도 google-adk의 의존성에도 없고, google-adk 2.9.2는 YAML로 선언된 로컬 프로세스 실행을 기본 거부하며, 이 레슨이 권장하는 `adk web` 자신은 도구 설정의 표준 표기법인 `args:` 키를 통째로 차단합니다. 그래서 오늘은 두 질문을 가릅니다 — "YAML만으로 에이전트 셋을 엮는 조합이 되는가"(됩니다, Step 3)와 "이 레슨이 그 위에서 의도한 대로 실행까지 가는가"(가지 않습니다, Step 4~5). 이 결과를 만드는 것은 두 개의 별도 보안 장치(차단 키 `args`, stdio MCP 옵트인)이고, 이 YAML 로더 전체가 google-adk 2.9.2 소스에서 이미 폐기 예고(deprecated) 상태라는 것은 그와는 별개의 사실입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -138,27 +138,30 @@ xxd multi_agent_web_researcher/__init__.py
 
 ```powershell
 Get-ChildItem multi_agent_web_researcher -File | Select-Object Name
-Get-Content multi_agent_web_researcher\root_agent.yaml, multi_agent_web_researcher\research_agent.yaml, multi_agent_web_researcher\summary_agent.yaml, multi_agent_web_researcher\.env.example | Measure-Object -Line
+foreach ($f in "root_agent.yaml", "research_agent.yaml", "summary_agent.yaml", ".env.example", "__init__.py") {
+  "{0} {1}" -f (Get-Content "multi_agent_web_researcher\$f").Count, $f
+}
 Format-Hex multi_agent_web_researcher\__init__.py
 ```
 
 ```
 multi_agent_web_researcher/.env.example
-multi_agent_web_researcher/__init__.py
 multi_agent_web_researcher/research_agent.yaml
 multi_agent_web_researcher/root_agent.yaml
 multi_agent_web_researcher/summary_agent.yaml
+multi_agent_web_researcher/__init__.py
   22 multi_agent_web_researcher/root_agent.yaml
   32 multi_agent_web_researcher/research_agent.yaml
   22 multi_agent_web_researcher/summary_agent.yaml
   12 multi_agent_web_researcher/.env.example
    1 multi_agent_web_researcher/__init__.py
+  89 total
 00000000: 0a                                       .
 ```
 
 (직접 확인 — `agent.py`가 어디에도 없습니다. `wc -l`은 트레일링 개행이 없는 `root_agent.yaml`·`research_agent.yaml`을 하나씩 적게 세는데, Day 019~022와 같은 종류의 어긋남입니다 — 실제 줄 수는 각각 23·33이고, 트레일링 개행이 있는 `.env.example`·`summary_agent.yaml`은 12·22 그대로 맞습니다. `__init__.py`는 `wc -l`이 1을 보고하지만 파일 전체가 개행 문자 한 바이트(`0a`)뿐입니다 — `from .agent import root_agent` 같은 재노출 코드가 원천적으로 없습니다.)
 
-Day 014는 `adk web --help`의 "agent.py, __init__.py, or root_agent.yaml" 한 문장을 확인했지만, 그 문서가 실제로 밟은 것은 `agent.py` 갈래뿐이었습니다. google-adk 2.9.2 소스로 확인하면(`google/adk/cli/utils/agent_loader.py`) 이 "OR"는 순서가 있는 폴백 사슬입니다: ① `multi_agent_web_researcher`를 패키지로 임포트해 `root_agent` 속성이 있는지 보고, ② 없으면 `multi_agent_web_researcher.agent` 서브모듈을 임포트해 같은 것을 보고, ③ 그것도 없으면 `multi_agent_web_researcher/root_agent.yaml`을 `config_agent_utils.from_config`로 읽습니다. 이 폴더는 ①에서 패키지 임포트 자체는 성공하지만(1바이트짜리 `__init__.py`도 유효한 모듈입니다) `root_agent` 속성이 없어 통과하지 못하고, ②는 애초에 `agent.py`가 없어 실패하며, 결국 ③에서만 성공합니다. `from_config`를 감싼 이 YAML 갈래 전체엔 `@experimental` 데코레이터가 붙어 있습니다(소스로 확인, `google/adk/agents/config_agent_utils.py`) — Day 014가 찾아보기로 남겨 둔 세 번째 갈래는 이 버전에서도 여전히 실험적 기능입니다.
+Day 014는 `adk web --help`의 "agent.py, __init__.py, or root_agent.yaml" 한 문장을 확인했지만, 그 문서가 실제로 밟은 것은 `agent.py` 갈래뿐이었습니다. google-adk 2.9.2 소스로 확인하면(`google/adk/cli/utils/agent_loader.py` — `adk web`이 실제로 쓰는 `_nested_agent_loader.py`의 `NestedAgentLoader`도 같은 순서로 폴백합니다) 이 "OR"는 순서가 있는 폴백 사슬입니다: ① `multi_agent_web_researcher`를 패키지로 임포트해 `root_agent` 속성이 있는지 보고, ② 없으면 `multi_agent_web_researcher.agent` 서브모듈을 임포트해 같은 것을 보고, ③ 그것도 없으면 `multi_agent_web_researcher/root_agent.yaml`을 `config_agent_utils.from_config`로 읽습니다. 이 폴더는 ①에서 패키지 임포트 자체는 성공하지만(1바이트짜리 `__init__.py`도 유효한 모듈입니다) `root_agent` 속성이 없어 통과하지 못하고, ②는 애초에 `agent.py`가 없어 실패하며, 결국 ③에서만 성공합니다. `from_config`를 감싼 이 YAML 갈래 전체엔 `@experimental` 데코레이터가 붙어 있습니다(소스로 확인, `google/adk/agents/config_agent_utils.py`) — Day 014가 찾아보기로 남겨 둔 세 번째 갈래는 이 버전에서도 여전히 실험적 기능입니다. 더 나아가 `LlmAgent`·`SequentialAgent` 등 여러 클래스의 `config_type` 독스트링은 "DEPRECATED … will be removed in a future version, along with the AgentConfig YAML loader"라고 적어(소스로 확인 — `google/adk/agents/base_agent.py`의 `BaseAgent.config_type`, `google/adk/agents/sequential_agent.py`의 같은 필드 등) 이 로더 자체가 폐기 예고 상태임을 밝힙니다 — Step 5가 보여줄 차단(`args` 키, stdio MCP 옵트인)은 이 폐기 예고와는 별개의, 임의 코드 실행을 막으려는 보안 장치입니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -259,7 +262,7 @@ tools:
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** 먼저 `npx firecrawl-mcp` 자신이 키 없이 뜨는지를 Day 017과 같은 방식으로 직접 봅니다. 첫 실행은 패키지를 내려받느라 30초 이상 걸릴 수 있습니다.
+**확인.** 먼저 `npx firecrawl-mcp` 자신이 키 없이 뜨는지, Day 017이 피했던 바로 그 firecrawl 서버를 이번엔 도구 조회 없이 기동 메시지만 보는 선에서 직접 봅니다. 첫 실행은 패키지를 내려받느라 30초 이상 걸릴 수 있습니다.
 
 ```bash
 npx -y firecrawl-mcp </dev/null
@@ -295,11 +298,12 @@ $env:ADK_ALLOW_CONFIG_STDIO_MCP_SERVERS="1"; uv run --no-project python -c "<위
 ```
 
 ```
+StdioServerParameters is not recommended. Please use StdioConnectionParams.
 web_research_coordinator -> ['research_agent', 'summary_agent']
 env: {'FIRECRAWL_API_KEY': '${FIRECRAWL_API_KEY}'}
 ```
 
-(직접 확인 — `mcp`와 옵트인을 모두 갖추면 세 에이전트 전체가 오프라인으로, 키 없이 조립됩니다. 그런데 `env`에 실제로 들어간 값은 `${FIRECRAWL_API_KEY}`라는 글자 그대로입니다 — PyYAML의 `safe_load`도, google-adk의 설정 로더도, `mcp` SDK의 `stdio_client`도 이 문자열을 셸 변수처럼 치환하지 않습니다(소스로 확인, `mcp` 2.2.0의 `client/stdio` 모듈은 `os.environ`에서 고정된 이름 목록만 상속할 뿐입니다). 즉 `.env`에 진짜 키를 넣어도, 이 YAML을 고치지 않는 한 `npx` 프로세스가 실제로 받는 값은 이 플레이스홀더 문자열입니다. `mcp`를 설치한 뒤 옵트인 없이 이 명령을 돌리면 `ValueError: Stdio MCP servers are not allowed in agent configs: ...`가 대신 납니다(`mcp`가 아예 없으면 옵트인 여부와 무관하게 여전히 `ModuleNotFoundError`입니다, 직접 확인) — 문제 해결에 정리했습니다.)
+(직접 확인 — 첫 줄의 `StdioServerParameters is not recommended` 경고는 Day 017이 이미 다룬 것과 같은 폐기 예고이고 실행에는 영향이 없습니다. `mcp`와 옵트인을 모두 갖추면 세 에이전트 전체가 오프라인으로, 키 없이 조립됩니다. 그런데 `env`에 실제로 들어간 값은 `${FIRECRAWL_API_KEY}`라는 글자 그대로입니다 — PyYAML의 `safe_load`도, google-adk의 설정 로더도, `mcp` SDK의 `stdio_client`도 이 문자열을 셸 변수처럼 치환하지 않습니다(소스로 확인, `mcp` 2.2.0의 `client/stdio` 모듈은 `os.environ`에서 고정된 이름 목록만 상속할 뿐입니다). 즉 `.env`에 진짜 키를 넣어도, 이 YAML을 고치지 않는 한 `npx` 프로세스가 실제로 받는 값은 이 플레이스홀더 문자열입니다. `mcp`를 설치한 뒤 옵트인 없이 이 명령을 돌리면 `ValueError: Stdio MCP servers are not allowed in agent configs: ...`가 대신 납니다(`mcp`가 아예 없으면 옵트인 여부와 무관하게 여전히 `ModuleNotFoundError`입니다, 직접 확인) — 문제 해결에 정리했습니다.)
 
 ### Step 5. `adk web`으로 실행하기 — 프레임워크가 자기 예제를 거절하는 지점
 
@@ -345,13 +349,13 @@ curl.exe -s -X POST http://127.0.0.1:8989/run -H "Content-Type: application/json
 
 (직접 확인 — `curl`이 응답에 줄바꿈을 넣지 않아 세 응답이 원래 한 줄씩 붙어 나오지만 위는 읽기 쉽게 줄을 나눴습니다. `lastUpdateTime`은 실행마다 다른 타임스탬프입니다. `/list-apps`는 폴더 이름만 보고 내용을 확인하지 않으므로 통과하지만(Day 014~022와 같은 얕은 조회), `/run`은 HTTP 404이고 위 셋째 줄이 그 본문 그대로입니다(로컬 절대경로만 `…`로 줄였습니다 — 첫 경로는 한 번, `research_agent.yaml` 쪽 경로는 두 번 이스케이프된 백슬래시로 옵니다).)
 
-이건 Day 014~022가 키 없이 실행할 때마다 봤던 "`ValueError: No API key was provided`"(HTTP 500)와 전혀 다른 실패입니다 — Gemini도, MCP 서버도, `mcp` 패키지의 유무조차도 등장하지 않습니다. google-adk 2.9.2 소스로 확인하면(`google/adk/cli/fast_api.py`) `adk web`은 서버를 만들 때 `web=True`이면 `config_agent_utils._set_enforce_yaml_key_denylist(True)`를 호출해, YAML 어디든 `args`라는 이름의 키가 있으면 통째로 거부하도록 켭니다. 그런데 `args:`는 `ToolConfig` 스키마 자신이 문서화한, 인자가 필요한 모든 도구의 표준 표기법입니다(소스로 확인, `google/adk/tools/tool_configs.py`의 독스트링 — `AgentTool`도 같은 방식으로 `args:`를 씁니다). 즉 `adk web`은 MCP 도구만이 아니라 **인자가 있는 어떤 YAML 도구 선언도** 서비스하지 못합니다. `mcp`를 설치하고 `ADK_ALLOW_CONFIG_STDIO_MCP_SERVERS=1`을 켜도 이 벽은 그대로입니다 — 이 옵트인엔 대응하는 CLI 플래그가 없어, 이 레슨을 `adk web`으로 실행하는 한 피해 갈 방법이 없습니다.
+이건 키 문제까지 실제로 간 날들(Day 014·017·021 등)이 봤던 "`ValueError: No API key was provided`"(HTTP 500)와 전혀 다른 실패입니다(Day 015·016·022처럼 폴더 이름이 파이썬 식별자가 아니거나 `root_agent`가 없어 그전에 404로 막힌 날도 있어, "키 없이 실행하면 늘 이 오류"는 아닙니다) — — Gemini도, MCP 서버도, `mcp` 패키지의 유무조차도 등장하지 않습니다. google-adk 2.9.2 소스로 확인하면(`google/adk/cli/fast_api.py`) `adk web`은 서버를 만들 때 `web=True`이면 `config_agent_utils._set_enforce_yaml_key_denylist(True)`를 호출해, YAML 어디든 `args`라는 이름의 키가 있으면 통째로 거부하도록 켭니다. 그런데 `args:`는 `ToolConfig` 스키마 자신이 문서화한, 인자가 필요한 모든 도구의 표준 표기법입니다(소스로 확인, `google/adk/tools/tool_configs.py`의 독스트링 — `AgentTool`도 같은 방식으로 `args:`를 씁니다). 즉 `adk web`은 MCP 도구만이 아니라 **인자가 있는 어떤 YAML 도구 선언도** 서비스하지 못합니다. `mcp`를 설치하고 `ADK_ALLOW_CONFIG_STDIO_MCP_SERVERS=1`을 켜도 이 벽은 그대로입니다 — 이 옵트인엔 대응하는 CLI 플래그가 없어, 이 레슨을 `adk web`으로 실행하는 한 피해 갈 방법이 없습니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 메시지를 보내면 `adk web`은 `AgentLoader`로 `multi_agent_web_researcher`를 로드하려 합니다. Step 2의 폴백 사슬을 거쳐 `root_agent.yaml`에 도달한 `from_config`는 서브에이전트도 도구도 만들기 전에, YAML 트리 전체에서 차단된 키부터 찾습니다(Step 5). `sub_agents`를 따라 `research_agent.yaml`까지 내려간 순간 `tools:` 아래의 `args:`가 걸려 예외가 올라오고, `adk web`은 HTTP 404로 답합니다 — Gemini 요청도 조립되지 않고 `npx firecrawl-mcp`도 뜨지 않습니다. 이 차단만 없었다면 다음은 `mcp` 패키지 확인 → 옵트인 확인(Step 4) → `npx firecrawl-mcp` 기동 → 세 `LlmAgent`의 Gemini 호출 순이었을 것이고, 이 시퀀스는 실제로 일어난 차단 지점까지만 그립니다.
+사용자가 메시지를 보내면 `adk web`은 `AgentLoader`로 `multi_agent_web_researcher`를 로드하려 합니다. Step 2의 폴백 사슬을 거쳐 `root_agent.yaml`에 도달한 `from_config`는 그 파일을 읽자마자(서브에이전트도 도구도 만들기 전에) 그 파일 안의 차단된 키부터 찾고(Step 5), 문제가 없으면 `sub_agents`의 `config_path`마다 같은 검사를 다시 재귀 호출합니다. `research_agent.yaml`까지 내려간 순간 `tools:` 아래의 `args:`가 걸려 예외가 올라오고, `adk web`은 HTTP 404로 답합니다 — Gemini 요청도 조립되지 않고 `npx firecrawl-mcp`도 뜨지 않습니다. 이 차단만 없었다면 다음은 `mcp` 패키지 확인 → 옵트인 확인(Step 4) → `npx firecrawl-mcp` 기동 → 세 `LlmAgent`의 Gemini 호출 순이었을 것이고, 이 시퀀스는 실제로 일어난 차단 지점까지만 그립니다.
 
 ## 실행 체크리스트
 
