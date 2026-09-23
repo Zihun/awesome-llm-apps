@@ -1,10 +1,8 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
 
 front: "브라우저 쪽" {
   class: ours
-  grid-columns: 2
 
   user: 사용자 { class: person }
   ui: Streamlit UI (app.py) { class: ours }
@@ -15,7 +13,6 @@ agent_scope: "에이전트 실행 범위 (before/after_agent_callback)" {
 
   model_scope: "모델 호출 범위 (before/after_model_callback)" {
     class: ours
-    grid-columns: 2
 
     gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
@@ -26,8 +23,7 @@ agent_scope: "에이전트 실행 범위 (before/after_agent_callback)" {
   }
 }
 
-front.user -> front.ui: 채팅 메시지
-front.ui -> agent_scope: run_agent(message)
-agent_scope.model_scope.gemini -> agent_scope.model_scope.tool_scope.tool_fn: 함수 호출이면 위임
-agent_scope.model_scope.tool_scope.tool_fn -> agent_scope.model_scope.gemini: 결과를 담아 재요청
-agent_scope -> front.ui: 최종 텍스트
+front -> agent_scope: run_agent(message)
+agent_scope.model_scope.gemini -> agent_scope.model_scope.tool_scope: 함수 호출이면 위임
+agent_scope.model_scope.tool_scope -> agent_scope.model_scope.gemini: 결과를 담아 재요청
+agent_scope -> front: 최종 텍스트
