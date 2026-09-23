@@ -45,7 +45,7 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
 
-이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. `uv venv`는 이 환경의 기본값인 Python 3.13.3을 그대로 골랐습니다(직접 확인) — 이 컴퓨터의 시스템 Python(`python --version`, 3.13.12)과는 다른, uv 자체 관리 버전입니다.
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. `uv venv`는 이 환경의 기본값인 Python 3.13.3을 그대로 골랐습니다(직접 확인) — uv 자체가 캐시해 둔 버전이라 기기마다 다를 수 있으므로, 시스템 `python`이 잡는 버전에 기대지 말고 `uv venv --python 3.13`처럼 명시하는 편이 안전합니다.
 
 `rag_tutorials/rag_failure_diagnostics_clinic/requirements.txt:1`
 
@@ -111,7 +111,7 @@ PATTERNS = [
 | P11 | 설정/시크릿 드리프트 | 일치 | [Day 050](../day050-agentic-rag-embedding-gemma/README.md) 문제 해결: `uri="tmp/lancedb"`가 상대경로라 실행 위치(작업 디렉터리)에 따라 커밋된 테이블 대신 빈 테이블을 가리킴 |
 | P12 | 멀티테넌트/에이전트 간섭 | 증거 부족 | [Day 048](../day048-llama3.1-local-rag/README.md)이 확인한 "프로세스 전역 공유 컬렉션"은 한 세션의 반복 호출만 시험했을 뿐, 동시 세션 간섭을 그 날 본문이 직접 시험하지는 않음 |
 
-정리하면 12개 중 4개(P02·P04·P07·P11)는 근거가 뚜렷한 실제 결함과 맞고, 1개(P05)는 코드 구조로는 맞지만 관측된 사고는 아니며, 1개(P01)는 약한 정황일 뿐이고, 나머지 6개는 이 6일 분량에서 아직 등장하지 않았습니다 — 그중 P10은 이름과 증상이 비슷해 보여 가장 속기 쉬운 경우였습니다. 흥미로운 건 이 12개 어디에도 안 들어가는 결함도 6일 내내 반복됐다는 것입니다 — `agno`의 메서드 이름이 버전마다 바뀌는 것(Day 047·048·049) 같은 라이브러리 API 드리프트는 이 taxonomy에 자리가 없습니다.
+정리하면 12개 중 4개(P02·P04·P07·P11)는 근거가 뚜렷한 실제 결함과 맞고, 1개(P05)는 코드 구조로는 맞지만 관측된 사고는 아니며, 1개(P01)는 약한 정황일 뿐이고, 나머지 6개는 이 6일 분량에서 아직 등장하지 않았습니다 — 그중 P10은 이름과 증상이 비슷해 보여 가장 속기 쉬운 경우였습니다. 흥미로운 건 이 12개 어디에도 안 들어가는 결함도 6일 내내 반복됐다는 것입니다 — 라이브러리 API 드리프트(Day 047·049의 `agno` 메서드 이름 변경, Day 048의 `langchain.text_splitter` 모듈 경로 소실) 같은 것은 이 taxonomy에 자리가 없습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -255,7 +255,7 @@ def make_client_and_model():
     return client, model_name
 ```
 
-`OPENAI_API_KEY`가 비어 있으면 4번째 줄의 `getpass()`가 터미널을 막고 응답을 기다립니다 — 이건 `main()`이 패턴 메뉴를 보여주기도 전에 일어나는 일이라, 키 없는 독자는 메뉴를 보기도 전에 이 자리에서 멈춥니다. `OPENAI_BASE_URL`·`OPENAI_MODEL`이 없으면 각각 `"https://api.openai.com/v1"`·`"gpt-4o"`로 떨어집니다 — 이 리포지토리의 어떤 안내문에도 없고 소스에서만 확인되는 기본 모델 이름입니다. `OpenAI(api_key=..., base_url=...)` 생성자는 이 시점에 키를 검증하지 않습니다 — Day 005·048·051이 각자의 클라이언트에서 이미 확인한 것과 같은 패턴입니다.
+`OPENAI_API_KEY`가 비어 있으면 위 발췌의 5번째 줄(파일 175행)의 `getpass()`가 터미널을 막고 응답을 기다립니다 — 이건 `main()`이 패턴 메뉴를 보여주기도 전에 일어나는 일이라, 키 없는 독자는 메뉴를 보기도 전에 이 자리에서 멈춥니다. `OPENAI_BASE_URL`·`OPENAI_MODEL`이 없으면 각각 `"https://api.openai.com/v1"`·`"gpt-4o"`로 떨어집니다 — 이 리포지토리의 어떤 안내문에도 없고 소스에서만 확인되는 기본 모델 이름입니다. `OpenAI(api_key=..., base_url=...)` 생성자는 이 시점에 키를 검증하지 않습니다 — Day 005·048·051이 각자의 클라이언트에서 이미 확인한 것과 같은 패턴입니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -426,15 +426,15 @@ print('>>> blank choice + blank paste -> returns:', repr(bug_empty))
         print(f"\nCould not write report file: {exc}\n")
 ```
 
-여기까지 왔다는 것은 API 호출이 예외 없이 **성공**했다는 뜻일 뿐, 모델이 실제로 유효한 진단을 내놓았다는 뜻은 아닙니다 — `reply`의 내용은 전혀 검사하지 않고 그대로 `assistant_markdown`에 담아 `rag_failure_report.json`(현재 작업 디렉터리 기준 상대 경로, 소스로 확인)에 덮어씁니다. 그러니까 세 경우가 갈립니다: (1) 호출이 예외를 던지면 리포트 파일은 아예 생기지 않고, (2) 호출이 성공하고 모델이 규칙을 지킨 마크다운을 돌려주면 그 내용이 저장되며, (3) 호출은 성공했지만 모델이 형식을 어기거나 아예 거절 문구를 돌려줘도 그 거절 문구가 유효한 진단인 것처럼 그대로 저장됩니다 — Step 3에서 확인했듯 응답 형식을 강제하는 장치가 없기 때문입니다.
+여기까지 왔다는 것은 API 호출이 예외 없이 **성공**했다는 뜻일 뿐, 모델이 실제로 유효한 진단을 내놓았다는 뜻은 아닙니다 — `reply`의 내용은 전혀 검사하지 않고 그대로 `assistant_markdown`에 담아 `rag_failure_report.json`(현재 작업 디렉터리 기준 상대 경로, 소스로 확인)에 덮어씁니다. 그러니까 세 경우가 갈립니다: (1) 호출이 예외를 던지면 리포트 파일은 아예 생기지 않고, (2) 호출이 성공하고 모델이 규칙을 지킨 마크다운을 돌려주면 그 내용이 저장되며, (3) 호출은 성공했지만 모델이 형식을 어기거나 아예 거절 문구를 돌려줘도 그 거절 문구가 유효한 진단인 것처럼 그대로 저장됩니다 — (3)은 코드에 응답 내용을 검사하는 장치가 없다는 데서 나오는 결론이라 소스로 확인한 것이고, 아래 확인은 그 결론을 가짜 거절 문구로 직접 재현합니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 가짜 클라이언트 둘(정상 반환 / 예외 발생)로 `run_once()`를 그대로 실행해, 리포트 파일 생성 여부가 실제로 갈리는지 확인합니다.
+**확인.** 가짜 클라이언트 셋(정상 반환 / 거절 문구 반환 / 예외 발생)으로 `run_once()`를 그대로 실행해, 리포트 파일 생성 여부와 거절 문구가 그대로 저장되는지를 확인합니다.
 
 ```bash
 uv run --no-project python -c "
-import builtins, os
+import builtins, os, json
 import rag_failure_diagnostics_clinic as clinic
 
 def fake_input(answers):
@@ -452,6 +452,10 @@ class ClientOK:
     class chat:
         class completions:
             def create(**kw): return Completion('## Primary pattern\nP04\n...')
+class ClientRefuse:
+    class chat:
+        class completions:
+            def create(**kw): return Completion(\"I can't help classify that, sorry.\")
 class ClientFail:
     class chat:
         class completions:
@@ -460,20 +464,26 @@ class ClientFail:
 sp = clinic.build_system_prompt()
 BUG = \"My retriever returns yesterday's page content after I re-crawl the site.\"
 
-for name, client in [('success', ClientOK), ('failure', ClientFail)]:
+for name, client in [('success', ClientOK), ('refusal', ClientRefuse), ('failure', ClientFail)]:
     if os.path.exists('rag_failure_report.json'):
         os.remove('rag_failure_report.json')
     builtins.input = fake_input(['p', BUG, ''])
     clinic.run_once(client, 'gpt-4o-TEST', sp)
-    print(f'>>> {name}: report file exists = {os.path.exists(\"rag_failure_report.json\")}')
+    exists = os.path.exists('rag_failure_report.json')
+    saved = None
+    if exists:
+        saved = json.load(open('rag_failure_report.json', encoding='utf-8'))['assistant_markdown']
+    print(f'>>> {name}: report file exists = {exists}, saved text = {saved!r}')
 " 2>&1 | grep -E "^(>>>|Error while|Saved report)"
 ```
 
 ```
 Saved report to rag_failure_report.json
->>> success: report file exists = True
+>>> success: report file exists = True, saved text = '## Primary pattern\nP04\n...'
+Saved report to rag_failure_report.json
+>>> refusal: report file exists = True, saved text = "I can't help classify that, sorry."
 Error while calling the model: connection refused
->>> failure: report file exists = False
+>>> failure: report file exists = False, saved text = None
 ```
 
 (전체 출력에는 메뉴·버그 설명·모델 응답 전문도 함께 찍힙니다 — 위 `grep`은 판정에 필요한 줄만 추린 것입니다. PowerShell이면 `Select-String` 사용. 이 확인이 끝난 폴더에는 `rag_failure_report.json`이 남아 있을 수 있습니다 — `.gitignore:1`이 커밋을 막아 주지만 삭제는 직접 해야 합니다.)
@@ -492,13 +502,13 @@ Error while calling the model: connection refused
 - [ ] `OPENAI_MODEL`/`OPENAI_BASE_URL`이 없으면 각각 `"gpt-4o"`/`"https://api.openai.com/v1"`로 떨어진다는 것을 코드와 실행으로 확인했다
 - [ ] 키가 없으면 `getpass()`가 패턴 메뉴보다 먼저 터미널을 막는다는 것을 확인했다
 - [ ] 메뉴의 예시 선택·자유 붙여넣기·빈 입력 처리 경로를 모두 실행해봤다
-- [ ] 가짜 클라이언트로 성공·실패 두 경우를 실행해, 실패만 리포트 파일을 안 남긴다는 것을 확인했다
+- [ ] 가짜 클라이언트로 성공·거절·실패 세 경우를 실행해, 실패만 리포트 파일을 안 남기고 거절 문구도 성공 취급으로 그대로 저장된다는 것을 확인했다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 키 없이 스크립트를 그냥 실행했더니 메뉴도 안 뜨고 터미널이 그대로 멈춤 | `make_client_and_model()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:171-183`)의 `getpass()`가 패턴 메뉴가 뜨기 전에 먼저 실행되어 입력을 기다림(직접 확인, Step 4) | `OPENAI_API_KEY` 환경변수를 먼저 설정하거나, 이 문서처럼 함수만 따로 불러 키 없이 패턴을 확인 |
+| 키 없이 스크립트를 그냥 실행했더니 메뉴도 안 뜨고 터미널이 그대로 멈춤 | `make_client_and_model()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:171-183`)의 `getpass()`가 패턴 메뉴가 뜨기 전에 먼저 실행되어 입력을 기다림(직접 확인, Step 4) | `OPENAI_API_KEY`(필요하면 `OPENAI_BASE_URL`·`OPENAI_MODEL`도) 환경변수를 먼저 설정하거나, 이 문서처럼 함수만 따로 불러 키 없이 패턴을 확인. bash: `export OPENAI_API_KEY="sk-..."`, PowerShell: `$env:OPENAI_API_KEY="sk-..."` |
 | 두 번째 진단을 실행했더니 `rag_failure_report.json`에서 첫 번째 결과가 사라짐 | `run_once()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:277-280`)가 매번 같은 파일 이름을 `"w"` 모드로 열어 덮어씀 — 타임스탬프도 append 옵션도 없음(소스로 확인) | 여러 건을 남기려면 실행할 때마다 파일을 직접 복사하거나 이름을 바꿔 둘 것 |
 | 리포트 파일에 패턴 분류도 없이 애매한 텍스트만 저장됨 | `run_once()`는 모델 응답이 네 섹션을 갖췄는지, 패턴 id가 유효한지 전혀 검증하지 않고 받은 텍스트를 그대로 `assistant_markdown`에 저장함(직접 확인, Step 6 — 성공 응답이면 내용과 무관하게 저장됨) | 리포트를 곧이곧대로 믿지 말고 내용을 직접 읽고 판단. 검증 코드를 추가하려면 "더 해보기" 참고 |
 | 스크립트를 저장소 루트 등 다른 위치에서 실행했더니 `rag_failure_report.json`이 안 보임 | `open("rag_failure_report.json", ...)`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:278`)이 스크립트 위치가 아니라 현재 작업 디렉터리 기준 상대 경로임(소스로 확인) | 앱 자신의 안내대로 `cd rag_tutorials/rag_failure_diagnostics_clinic` 후 실행 |
