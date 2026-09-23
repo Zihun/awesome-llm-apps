@@ -1,10 +1,10 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자 { class: person }
+together: Together AI { class: ext }
 proc: 스트림릿 프로세스 (main) { class: ours }
 e2b: E2B 샌드박스 { class: ext }
-together: Together AI { class: ext }
+user: 사용자 { class: person }
 
 user -> proc: CSV 업로드 + 키 2개 + 질문, Analyze 클릭
 proc -> e2b: Sandbox(api_key=...) 생성 (POST /sandboxes)
