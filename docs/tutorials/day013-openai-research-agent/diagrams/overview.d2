@@ -1,15 +1,16 @@
 ...@../../_tools/theme
 direction: down
 
-app: research_agent.py {
+app: "research_agent.py (처리 순서 1~6)" {
   class: ours
+  grid-columns: 6
 
-  sidebar: 사이드바 입력 { class: ours }
-  triage: Triage Agent (ResearchPlan) { class: ours }
-  research: Research Agent (검색+사실저장) { class: ours }
-  editor: Editor Agent (ResearchReport) { class: ours }
-  facts: collected_facts { class: store }
-  tabs: 결과 탭 (진행 과정 · 보고서) { class: ours }
+  sidebar: "1. 사이드바 입력" { class: ours }
+  triage: "2. Triage Agent" { class: ours }
+  research: "3. Research Agent" { class: ours }
+  editor: "4. Editor Agent" { class: ours }
+  facts: "5. collected_facts" { class: store }
+  tabs: "6. 결과 탭" { class: ours }
 }
 
 input: "입력" {
@@ -24,15 +25,7 @@ external: "외부 API" {
   openai: OpenAI (gpt-4o-mini) { class: ext }
 }
 
-input.user -> app.sidebar: 조사 주제 입력
-input.env -> app.triage: 인증
-app.sidebar -> app.triage: Start Research 클릭
-app.triage -> external.openai: 조사 계획 요청
-app.triage -> app.research: 핸드오프로 선언됨
-app.research -> external.websearch: 웹 검색
-app.research -> app.facts: save_important_fact 로 사실 적재
-app.triage -> app.editor: to_input_list 를 넘겨 코드가 직접 호출
-app.editor -> external.openai: 보고서 작성 요청
-app.editor -> app.tabs: ResearchReport 표시
-app.facts -> app.tabs: 수집된 사실 표시
-app.tabs -> input.user: 보고서 열람과 마크다운 내려받기
+input -> app: 조사 주제·인증 입력, Start Research 클릭
+app -> external.openai: 조사 계획 요청 (triage) · 보고서 작성 요청 (editor)
+app -> external.websearch: 웹 검색 (research)
+app -> input.user: 보고서 열람과 마크다운 내려받기
