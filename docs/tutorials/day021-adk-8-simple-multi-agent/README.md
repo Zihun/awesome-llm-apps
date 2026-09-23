@@ -53,7 +53,7 @@ google-adk>=1.9.0
 python-dotenv>=1.1.1
 ```
 
-Day 014~020 중 가장 짧은 `requirements.txt`(두 줄)입니다. `wc -l`이 트레일링 개행 유무에 따라 어긋난다는 것은 Day 019·020에서 확인했으므로, 이 폴더 다섯 파일도 그대로 재봅니다.
+Day 018~020 중 가장 짧은 `requirements.txt`(두 줄)입니다 — 다만 크래시 코스 전체로 보면 Day 014·017의 `requirements.txt`가 한 줄로 더 짧습니다(직접 확인: `grep -c "" 1_starter_agent/requirements.txt`, `4_tool_using_agent/4_1_builtin_tools/requirements.txt`, `4_2_function_tools/requirements.txt` 모두 1). `wc -l`이 트레일링 개행 유무에 따라 어긋난다는 것은 Day 019·020에서 확인했으므로, 이 폴더 다섯 파일도 그대로 재봅니다.
 
 ```bash
 wc -l multi_agent_researcher/agent.py multi_agent_researcher/__init__.py multi_agent_researcher/.env.example README.md requirements.txt
@@ -63,8 +63,13 @@ done
 ```
 
 ```powershell
-Get-Content multi_agent_researcher/agent.py, multi_agent_researcher/__init__.py, multi_agent_researcher/.env.example, README.md, requirements.txt | Measure-Object -Line
+foreach ($f in "multi_agent_researcher/agent.py", "multi_agent_researcher/__init__.py", "multi_agent_researcher/.env.example", "README.md", "requirements.txt") {
+  "{0} {1}" -f (Get-Content $f).Count, $f
+  Format-Hex $f -Count 1 -Offset ((Get-Item $f).Length - 1)
+}
 ```
+
+(`Get-Content | Measure-Object -Line`은 다섯 파일 전체의 합계 하나만 내고 파일별 줄 수도 마지막 바이트도 보여 주지 못합니다 — 아래 출력과 같은 파일별 결과·개행 확인이 목적이라면 위처럼 파일마다 돌려야 합니다.)
 
 ```
   84 multi_agent_researcher/agent.py
@@ -72,6 +77,7 @@ Get-Content multi_agent_researcher/agent.py, multi_agent_researcher/__init__.py,
    2 multi_agent_researcher/.env.example
  128 README.md
    2 requirements.txt
+ 218 total
 00000000: 29                                       )
 00000000: 5d                                       ]
 00000000: 22                                       "
@@ -119,12 +125,14 @@ Select-String -Path multi_agent_researcher/agent.py -Pattern "__main__"
 ```
 
 ```
-.env.example  README.md  agent.py  requirements.txt
-exit=1
-exit=1
+multi_agent_researcher
+README.md
+requirements.txt
+app.py exit=0
+__main__ exit=1
 ```
 
-`app.py`는 어디에도 없고, `agent.py` 85줄에 `if __name__ == "__main__":`도 없습니다(직접 확인) — Day 018~020의 `agent.py`는 이 블록으로 스스로 실행됐지만, 오늘 파일은 `LlmAgent` 네 개를 선언만 합니다. `python agent.py`로 실행할 방법 자체가 없어, 유일한 진입점은 Day 014~017이 쓰던 `adk web`입니다.
+(`ls`는 `agent.py`·`.env.example`이 들어 있는 `multi_agent_researcher/` 하위 폴더까지는 보여 주지 않고, 점 파일도 감춥니다. `find`는 못 찾아도 종료 코드 0을 돌려주므로 `app.py exit=0`은 "찾았다"가 아니라 "탐색 자체는 정상 종료했다"는 뜻입니다 — 없음은 위 줄에 아무 파일명도 없다는 것으로 압니다. `grep`은 패턴을 못 찾으면 1을 돌려주므로 `__main__ exit=1`은 실제로 없다는 뜻이 맞습니다.) `app.py`는 어디에도 없고, `agent.py` 85줄에 `if __name__ == "__main__":`도 없습니다(직접 확인) — Day 018~020의 `agent.py`는 이 블록으로 스스로 실행됐지만, 오늘 파일은 `LlmAgent` 네 개를 선언만 합니다. `python agent.py`로 실행할 방법 자체가 없어, 유일한 진입점은 Day 014~017이 쓰던 `adk web`입니다.
 
 `ai_agent_framework_crash_course/google_adk_crash_course/8_simple_multi_agent/multi_agent_researcher/__init__.py:1-3`
 
@@ -147,7 +155,7 @@ __all__ = ['root_agent']
 └── .env                        # Environment variables (create this)
 ```
 
-실제 폴더에는 트리에 없는 `__init__.py`·`.env.example`이 있고, 트리의 `.env`는 만들기 전엔 없습니다(직접 확인) — Day 019·020과 같은 종류의 오류입니다. 더 중요한 건 `.env`를 만들어도 `agent.py`가 읽지 못한다는 점입니다: 다른 모든 `agent.py`(Day 018~020, 다음 날 `9_multi_agent_patterns`)는 맨 위에서 `load_dotenv()`를 호출하지만(`grep -rl load_dotenv`가 오늘 것만 빠뜨림, 직접 확인) 오늘 파일엔 그 두 줄이 없어, `.env` 로딩은 오직 `adk web`/`adk run`의 CLI에서만 일어납니다(소스로 확인, `google/adk/cli/utils/envs.py`의 `load_dotenv_for_agent`).
+실제 폴더에는 트리에 없는 `__init__.py`·`.env.example`이 있고, 트리의 `.env`는 만들기 전엔 없습니다(직접 확인) — Day 020과 같은 종류의 오류입니다(레슨 README가 실제 폴더 구성과 어긋남; Day 019가 찾은 것은 타입 힌트 쪽이라 종류가 다릅니다). 더 중요한 건 `.env`를 만들어도 `agent.py`가 읽지 못한다는 점입니다: 다른 모든 `agent.py`(Day 018~020, 다음 날 `9_multi_agent_patterns`)는 맨 위에서 `load_dotenv()`를 호출하지만(`grep -rl load_dotenv`가 오늘 것만 빠뜨림, 직접 확인) 오늘 파일엔 그 두 줄이 없어, `.env` 로딩은 오직 `adk web`/`adk run`의 CLI에서만 일어납니다(소스로 확인, `google/adk/cli/utils/envs.py`의 `load_dotenv_for_agent`).
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -451,18 +459,19 @@ curl -s -o /dev/null -w "list-apps 재확인: %{http_code}\n" http://127.0.0.1:8
 ```powershell
 curl.exe -s http://127.0.0.1:8995/list-apps
 curl.exe -s -X POST http://127.0.0.1:8995/apps/multi_agent_researcher/users/u1/sessions/s1 -H "Content-Type: application/json" -d "{}"
-curl.exe -s -o NUL -w "%{http_code}`n" -X POST http://127.0.0.1:8995/run -H "Content-Type: application/json" -d '{"appName":"multi_agent_researcher","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"research quantum computing"}]}}'
+'{"appName":"multi_agent_researcher","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"research quantum computing"}]}}' | Out-File -Encoding utf8 body.json
+curl.exe -s -o NUL -w "%{http_code}`n" -X POST http://127.0.0.1:8995/run -H "Content-Type: application/json" --data "@body.json"
 curl.exe -s -o NUL -w "list-apps 재확인: %{http_code}`n" http://127.0.0.1:8995/list-apps
 ```
 
+(PowerShell 5.1의 네이티브 인자 전달은 작은따옴표 문자열 안의 큰따옴표를 지워서 넘기는 것으로 문서화돼 있어(about_Parsing, `$PSNativeCommandArgumentPassing`), 위 `/run` 호출처럼 `-d '{"key":...}'`를 그대로 쓰면 서버가 `{key:...}`를 받아 문서의 500 대신 다른 응답이 올 수 있습니다 — 본문을 파일로 적어 `--data "@body.json"`으로 넘기면 5.1과 7.3+ 모두에서 안전합니다. 이 세션에서는 PowerShell을 실행할 수 없어 직접 확인하지 못했습니다.)
+
 ```
-["multi_agent_researcher"]
-{"id":"s1","appName":"multi_agent_researcher","userId":"u1","state":{},"events":[],"lastUpdateTime":1789996072.6136792}
-500
+["multi_agent_researcher"]{"id":"s1","appName":"multi_agent_researcher","userId":"u1","state":{},"events":[],"lastUpdateTime":1790134804.7464757}500
 list-apps 재확인: 200
 ```
 
-`/list-apps`는 `multi_agent_researcher`를 정확히 찾아냅니다. `/run`은 HTTP 500 "Internal Server Error"만 돌려주고 서버는 죽지 않습니다(직접 확인, `/list-apps` 재확인도 200) — Day 014가 단일 에이전트로 확인한 것과 같은 경계입니다(`google-genai`의 `Client` 생성자가 던진 `ValueError`를 ADK가 HTTP 500으로만 감쌈). 진짜 원인은 서버 터미널 로그에만 있습니다.
+(`curl` 응답에는 줄바꿈이 없어 첫 세 응답이 한 줄로 붙습니다 — 위는 읽기 쉽게 줄만 그대로 둔 실제 출력입니다. `lastUpdateTime`은 세션을 만들 때마다 달라집니다.) `/list-apps`는 `multi_agent_researcher`를 정확히 찾아냅니다. `/run`은 HTTP 500 "Internal Server Error"만 돌려주고 서버는 죽지 않습니다(직접 확인, `/list-apps` 재확인도 200) — Day 014가 단일 에이전트로 확인한 것과 같은 경계입니다(`google-genai`의 `Client` 생성자가 던진 `ValueError`를 ADK가 HTTP 500으로만 감쌈). 진짜 원인은 서버 터미널 로그에만 있습니다.
 
 ```
 ValueError: No API key was provided. Please pass a valid API key. Learn how to create an API key at https://ai.google.dev/gemini-api/docs/api-key.
@@ -474,7 +483,7 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 연구 주제를 보내면 `adk web`이 `root_agent`의 `run_async`를 시작합니다. 코디네이터의 첫 모델 호출엔 `research_agent`(도구)와 `transfer_to_agent`(전환)가 함께 실려 있습니다 — 모델이 `research_agent`를 부르면 `AgentTool`이 새 `Runner`로 조사를 끝까지 돌리고, 병합한 텍스트만 함수 응답으로 돌려줍니다. 코디네이터는 이 왕복 동안 같은 에이전트로 남아 다음 호출에선 `transfer_to_agent(agent_name="summarizer_agent")`를 선택합니다. 여기서부터는 왕복이 아니라 이관입니다 — 제어가 `summarizer_agent`로 넘어가고 코디네이터가 다시 불린다는 보장은 없습니다. `summarizer_agent`는 동료 `critic_agent`로 한 번 더 전환할 수 있고(부모 대신 동료를 고르는 것도 유효합니다), 마지막으로 응답한 에이전트의 텍스트가 그대로 사용자에게 갑니다. Step 5가 확인했듯, 이 사슬 중 하나라도 전환 없이 그냥 답하면 그 뒤는 전부 생략됩니다.
+사용자가 연구 주제를 보내면 `adk web`이 `root_agent`의 `run_async`를 시작합니다. 코디네이터의 첫 모델 호출엔 `research_agent`(도구)와 `transfer_to_agent`(전환)가 함께 실려 있습니다 — 모델이 `research_agent`를 부르면 `AgentTool`이 새 `Runner`로 조사를 끝까지 돌리고, 병합한 텍스트만 함수 응답으로 돌려줍니다. 코디네이터는 이 왕복 동안 같은 에이전트로 남아 다음 호출에선 `transfer_to_agent(agent_name="summarizer_agent")`를 선택합니다. 여기서부터는 왕복이 아니라 이관입니다 — 제어가 `summarizer_agent`로 넘어가고 코디네이터가 다시 불린다는 보장은 없습니다. `summarizer_agent`도 똑같이 자신의 모델 호출로 전환 여부를 정합니다 — 이번엔 동료 `critic_agent`로 한 번 더 전환할 수 있고(부모 대신 동료를 고르는 것도 유효합니다), 마지막으로 응답한 에이전트(이 시퀀스에서는 `critic_agent`)의 텍스트가 그대로 사용자에게 갑니다. Step 5가 확인했듯, 이 사슬 중 하나라도 전환 없이 그냥 답하면 그 뒤는 전부 생략됩니다.
 
 ## 실행 체크리스트
 
@@ -491,8 +500,8 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 레슨 README의 "Project Structure" 트리에 `__init__.py`·`.env.example`이 없고 없는 `.env`가 있음 | 레슨 자신의 README가 실제 폴더 구성과 다르다(직접 확인, Day 019·020과 같은 종류의 오류) | 실제 `ls`/`Get-ChildItem` 결과를 신뢰한다 |
-| `.env`에 실제 키를 넣어도 `agent.py`를 직접 임포트해 `Runner`를 돌리면 키가 반영되지 않음 | `agent.py`에 `load_dotenv()`가 없다 — 이 크래시 코스에서 유일한 예외(직접 확인, Step 2) | `adk web`/`adk run`으로 실행한다(둘 다 자체적으로 `.env`를 읽음). 직접 구동하려면 `load_dotenv()`를 호출하거나 환경변수를 export |
+| 레슨 README의 "Project Structure" 트리에 `__init__.py`·`.env.example`이 없고 없는 `.env`가 있음 | 레슨 자신의 README가 실제 폴더 구성과 다르다(직접 확인, Day 020과 같은 종류의 오류) | 실제 `ls`/`Get-ChildItem` 결과를 신뢰한다 |
+| `.env`에 실제 키를 넣어도 `agent.py`를 직접 임포트해 `Runner`를 돌리면 키가 반영되지 않음 | `agent.py`에 `load_dotenv()`가 없다 — Day 018~020·다음 날의 `agent.py`와 달리(직접 확인, Step 2). `adk web`으로만 돌리는 레슨 1~4의 `agent.py` 13개도 모두 `load_dotenv()`가 없어 이 폴더만의 예외는 아니다(직접 확인) | `adk web`/`adk run`으로 실행한다(둘 다 자체적으로 `.env`를 읽음). 직접 구동하려면 `load_dotenv()`를 호출하거나 환경변수를 export |
 | 키 없이 `/run`을 호출하면 응답 본문이 `Internal Server Error`뿐이고 원인이 안 보임 | `google-genai`의 `Client` 생성자가 던지는 `ValueError`를 `adk web`이 HTTP 500으로만 반환한다(Day 014와 같은 경계, 직접 확인) | 서버 터미널 로그에서 실제 예외를 확인하거나, `.env`에 유효한 키를 넣고 서버 재시작 |
 | 직접 `Runner`를 구동하면 `"App ... has no context_cache_config"` 경고가 뜸 | 전환마다 프롬프트가 캐시 없이 재전송된다는 뜻(Step 5 참고, 소스로 확인 `runners.py`의 `_warn_uncached_agent_transfer`) | 학습 목적에서는 무시해도 되지만, 실제 배포라면 `context_cache_config` 설정을 고려 |
 

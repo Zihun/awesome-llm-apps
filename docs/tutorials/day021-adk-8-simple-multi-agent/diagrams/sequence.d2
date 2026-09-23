@@ -3,23 +3,23 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 ui: adk web { class: ext }
-coordinator: multi_agent_researcher { class: ours }
 research: research_agent { class: ours }
+gemini: Gemini API { class: ext }
+coordinator: multi_agent_researcher { class: ours }
 summarizer: summarizer_agent { class: ours }
 critic: critic_agent { class: ours }
-gemini: Gemini API { class: ext }
 
 user -> ui: 연구 주제
 ui -> coordinator: run_async
 coordinator -> gemini: 모델 호출 (도구 목록에 research_agent·transfer_to_agent)
-gemini -> coordinator: function_call research_agent
+gemini -> coordinator: 함수 호출 research_agent
 coordinator -> research: AgentTool 실행 (중첩 Runner·새 세션)
 research -> gemini: 모델 호출
 gemini -> research: 최종 텍스트
 research -> coordinator: function_response (병합된 텍스트)
 coordinator -> gemini: 모델 호출 (조사 결과 포함)
-gemini -> coordinator: function_call transfer_to_agent(summarizer_agent)
+gemini -> coordinator: 함수 호출 transfer_to_agent(summarizer_agent)
 coordinator -> summarizer: 제어 이전 (복귀 없음)
-summarizer -> critic: 동료 간 제어 이전 (transfer_to_agent)
-critic -> ui: 최종 응답 (author=critic_agent)
+summarizer -> critic: 동료 간 transfer_to_agent (모델 결정)
+critic -> ui: 최종 응답
 ui -> user: 화면 표시
