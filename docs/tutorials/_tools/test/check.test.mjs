@@ -109,9 +109,9 @@ test("an svg over either cap is reported", () => {
   // 세로가 길면 폭이 멀쩡해도 한 장이 본문을 통째로 먹는다.
   write('<svg width="800" height="1384"></svg>');
   const tall = checkDay(dayDir, { repoRoot: repo });
-  assert.ok(tall.some((p) => p.includes("1384px") && p.includes("700px")), tall.join("\n"));
+  assert.ok(tall.some((p) => p.includes("1384px") && p.includes("1000px")), tall.join("\n"));
 
-  write('<svg width="1200" height="700"></svg>');
+  write('<svg width="1200" height="1000"></svg>');
   assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
 });
 

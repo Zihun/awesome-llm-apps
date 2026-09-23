@@ -82,10 +82,15 @@ export function pathPoints(d) {
   return pts;
 }
 
-/** 노드의 경계상자 목록. 컨테이너(다른 노드를 품는 것)는 빼고 잎만 돌려준다. */
+/** 노드의 경계상자 목록. 컨테이너(다른 노드를 품는 것)는 빼고 잎만 돌려준다.
+ *  클래스는 있을 수도 없을 수도 있다(D2는 클래스 없는 노드를 <g class="BASE64ID">로만
+ *  쓴다 — 2026-09-23 검사 20~23 작업 중 P1 검증 SVG에서 확인: class 없는 잎을 컨테이너로
+ *  오인해 라벨-도형 겹침을 놓쳤다). 실제 일차는 잎마다 항상 클래스를 붙이므로(person·ours·
+ *  ext·store·file) 이 완화가 실전 결과를 바꾸지 않는다 — 컨테이너는 자식을 갖고, 자식을
+ *  가지면 아래 contains 필터가 어차피 걸러낸다. */
 export function leafBoxes(svg) {
   const boxes = [];
-  const re = /<g class="[A-Za-z0-9+/=]+ [\w-]+">\s*<g class="shape"\s*>\s*(<(?:rect|ellipse|path|polygon)[^>]*>)/g;
+  const re = /<g class="[A-Za-z0-9+/=]+(?: [\w-]+)?">\s*<g class="shape"\s*>\s*(<(?:rect|ellipse|path|polygon)[^>]*>)/g;
   for (const m of svg.matchAll(re)) {
     const b = boxOf(m[1]);
     if (b) boxes.push(b);
@@ -162,7 +167,186 @@ export function stretchedIcons(svg, maxHeight = ICON_MAX_HEIGHT) {
     const w = Math.round(b.x2 - b.x1);
     const h = Math.round(b.y2 - b.y1);
     const tooWide = kind === "person" && w > PERSON_MAX_WIDTH;
-    if (h > maxHeight || tooWide) out.push({ kind, width: w, height: h });
+    const tooTall = h > maxHeight;
+    if (tooTall || tooWide) out.push({ kind, width: w, height: h, tooWide, tooTall });
+  }
+  return out;
+}
+
+// 화살표 규칙(검사 20~23) — 2026-09-23 사용자 지시: 화살표가 서로 겹치거나 글자에
+// 걸치면 안 되고, 곧게 그어서 그렇게 안 되면 꺾어야 한다. grid로 자리를 정한 층은 D2가
+// 칸 중심끼리 직선만 긋고 경로를 잡지 않으므로(§5), 네 검사 모두 걸리면 처방은 대개
+// "그 층을 ELK에 맡겨라"다. 실측(overview 57장): 화살표 382개 중 꺾인 것 3개, 비스듬한
+// 선 241개, 53장이 아래 네 검사 중 하나 이상에 걸린다. 같은 57장 중 5장을 ELK로만
+// 배치하자 넷 다 0이 됐다(레이아웃만 바꾸고 좌표는 손대지 않은 값 — 검증 근거).
+
+const decodeEntities = (s) =>
+  s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#34;/g, '"').replace(/&#39;/g, "'");
+
+/** 글자 하나의 대략적인 폭(px, 12px 글자 기준). 묶음 제목은 잎과 달리 <mask> 상자가
+ *  없으므로(마스크는 연결선 라벨만 가린다) 글자 수로 폭을 추정하는 수밖에 없다. */
+function charWidth(ch) {
+  if (/[ㄱ-힣一-鿿]/.test(ch)) return 12; // 한글·CJK
+  if (ch === " ") return 3.2;
+  if (/[()·,.:|/_-]/.test(ch)) return 4;
+  if (/[A-Z]/.test(ch)) return 7.8;
+  return 6.6; // 그 밖의 라틴·숫자
+}
+const textWidth = (text) => [...text].reduce((sum, ch) => sum + charWidth(ch), 0);
+
+/** 연결선 하나를 점의 나열(0.5px 이내로 붙은 점은 합친다)과 자기 라벨로 바꾼다.
+ *  라벨이 있으면 path 바로 뒤 <text x=… y=…>가 자기 것이다(그 사이에 다른 원소가 오지
+ *  않는다 — 실제 D2 마크업 확인). */
+function connectionsOf(svg) {
+  const re = /<path d="([^"]+)"[^>]*class="connection[^"]*"[^>]*\/>\s*(?:<text x="([^"]+)" y="([^"]+)"[^>]*>([^<]*)<\/text>)?/g;
+  const out = [];
+  for (const m of svg.matchAll(re)) {
+    const raw = pathPoints(m[1]);
+    const pts = raw.filter((p, i) => i === 0 || Math.hypot(p[0] - raw[i - 1][0], p[1] - raw[i - 1][1]) > 0.5);
+    const label = m[2] !== undefined ? { x: Number(m[2]), y: Number(m[3]), text: decodeEntities(m[4]) } : null;
+    out.push({ pts, label });
+  }
+  return out;
+}
+
+const segmentsOf = (pts) => pts.slice(1).map((p, i) => [pts[i], p]);
+
+/** <mask> 안 fill="black" 사각형 = 연결선 라벨 상자. D2 여백이 섞여 있어(실측: 글자 폭
+ *  63px "질문 텍스트"의 상자가 82px) 좌우 6px·상하 3px씩 안쪽으로 줄인다. */
+function labelBoxesOf(svg) {
+  const out = [];
+  for (const block of svg.matchAll(/<mask[^>]*>[\s\S]*?<\/mask>/g)) {
+    for (const m of block[0].matchAll(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)" fill="black"/g)) {
+      const [x, y, w, h] = [m[1], m[2], m[3], m[4]].map(Number);
+      out.push({ x1: x + 6, y1: y + 3, x2: x + w - 6, y2: y + h - 3 });
+    }
+  }
+  return out;
+}
+
+/** 잎이 아닌 도형(자식을 품는 컨테이너)의 제목 상자. 구조는 잎과 똑같다(도형 뒤에 바로
+ *  제목 <text>가 온다) — 그래서 leafBoxes에 없는 것만 컨테이너로 남긴다. */
+function containerTitleBoxes(svg) {
+  const leaves = leafBoxes(svg);
+  const isLeaf = (b) =>
+    leaves.some((o) => Math.abs(o.x1 - b.x1) < 0.5 && Math.abs(o.y1 - b.y1) < 0.5 && Math.abs(o.x2 - b.x2) < 0.5 && Math.abs(o.y2 - b.y2) < 0.5);
+  const re =
+    /<g class="[A-Za-z0-9+/=]+(?: [\w-]+)?">\s*<g class="shape"\s*>\s*(<(?:rect|ellipse|path|polygon)[^>]*>)\s*<\/g>\s*<text x="([^"]+)" y="([^"]+)"[^>]*>([^<]*)<\/text>/g;
+  const out = [];
+  for (const m of svg.matchAll(re)) {
+    const box = boxOf(m[1]);
+    if (!box || isLeaf(box)) continue;
+    const cx = Number(m[2]);
+    const baseline = Number(m[3]);
+    const w = textWidth(decodeEntities(m[4]));
+    out.push({ x1: cx - w / 2, x2: cx + w / 2, y1: baseline - 12, y2: baseline + 4 });
+  }
+  return out;
+}
+
+/** 라벨이 속한 상자를 찾는다: 그 <text>의 (x, y-4)를 담는 상자. 줄인 상자 그대로 대면
+ *  반올림에 걸려 자기 라벨을 "남의 것"으로 오판할 수 있어 살짝 넉넉하게(좌우 7px·
+ *  상하 4px) 잡는다 — 이 여유는 소유권 판정에만 쓰고, 다른 라벨과의 충돌 판정에는
+ *  줄인 상자를 그대로 쓴다. */
+function ownLabelBox(label, labelBoxes) {
+  if (!label) return null;
+  const px = label.x;
+  const py = label.y - 4;
+  return labelBoxes.find((b) => b.x1 - 7 < px && px < b.x2 + 7 && b.y1 - 4 < py && py < b.y2 + 4) ?? null;
+}
+
+/** 점이 상자 경계에서 pad px 안쪽에 있는지. 테두리를 스치는 것은 침범으로 치지 않는다. */
+const insideBy = (x, y, b, pad) => b.x1 + pad < x && x < b.x2 - pad && b.y1 + pad < y && y < b.y2 - pad;
+
+/** 두 상자가 겹치는지(면적이 0보다 큰지만 본다 — 스치는 것은 겹침이 아니다). */
+const boxesOverlap = (a, b) => Math.min(a.x2, b.x2) > Math.max(a.x1, b.x1) && Math.min(a.y2, b.y2) > Math.max(a.y1, b.y1);
+
+/** 두 선분이 같은 직선 위에서 겹치는 길이. seg1의 직선을 기준으로 seg2의 양 끝점이
+ *  2px 이내에 있어야("같은 선") 겹침을 잰다 — 그냥 교차하는 선(예: 수직으로 만나는 것)은
+ *  한쪽 끝이 반드시 멀리 떨어지므로 걸리지 않는다. */
+function collinearOverlap([a, b], [c, d]) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy);
+  if (len < 1) return 0;
+  const dist = (p) => Math.abs((p[0] - a[0]) * dy - (p[1] - a[1]) * dx) / len;
+  if (dist(c) > 2 || dist(d) > 2) return 0;
+  const t = (p) => ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len;
+  const lo = Math.max(0, Math.min(t(c), t(d)));
+  const hi = Math.min(len, Math.max(t(c), t(d)));
+  return Math.max(0, hi - lo);
+}
+
+/** 20. 서로 다른 두 연결선이 같은 직선 위에서 8px 넘게 겹치는 곳. */
+export function edgeOverlaps(svg) {
+  const edges = connectionsOf(svg);
+  const out = [];
+  for (let i = 0; i < edges.length; i++) {
+    const segsA = segmentsOf(edges[i].pts);
+    for (let j = i + 1; j < edges.length; j++) {
+      const segsB = segmentsOf(edges[j].pts);
+      let overlap = 0;
+      for (const s of segsA) for (const t of segsB) overlap = Math.max(overlap, collinearOverlap(s, t));
+      if (overlap > 8) out.push({ a: i, b: j, overlap: Math.round(overlap) });
+    }
+  }
+  return out;
+}
+
+/** 21. 선분이 남의 라벨이나 묶음 제목 위를 지나는 곳(경계에서 2px 안쪽). sequence의
+ *  수명선도 연결선 path라서 저절로 걸린다 — 라벨이 없으니 모든 라벨이 "남의 것"이다. */
+export function edgesThroughText(svg) {
+  const edges = connectionsOf(svg);
+  const labels = labelBoxesOf(svg);
+  const titles = containerTitleBoxes(svg);
+  const out = [];
+  for (const e of edges) {
+    const mine = ownLabelBox(e.label, labels);
+    const others = labels.filter((b) => b !== mine).concat(titles);
+    if (!others.length) continue;
+    const hit = segmentsOf(e.pts).some(([p, q]) =>
+      others.some((b) => {
+        for (let s = 1; s < 40; s++) {
+          const t = s / 40;
+          if (insideBy(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, b, 2)) return true;
+        }
+        return false;
+      })
+    );
+    if (hit) out.push({ label: e.label?.text ?? null });
+  }
+  return out;
+}
+
+/** 22. 줄인 라벨 상자가 잎 도형과 겹치거나(화살표가 라벨보다 짧아 라벨이 넘친 것),
+ *  줄인 라벨 상자 둘이 서로 겹치는 곳. */
+export function labelCollisions(svg) {
+  const labels = labelBoxesOf(svg);
+  const leaves = leafBoxes(svg);
+  const out = [];
+  for (const label of labels) {
+    if (leaves.some((leaf) => boxesOverlap(label, leaf))) out.push({ type: "shape" });
+  }
+  for (let i = 0; i < labels.length; i++) {
+    for (let j = i + 1; j < labels.length; j++) {
+      if (boxesOverlap(labels[i], labels[j])) out.push({ type: "label" });
+    }
+  }
+  return out;
+}
+
+/** 23. 길이 12px 넘는 선분 중 가로·세로 변화가 둘 다 1.5px를 넘는 것(비스듬한 선).
+ *  호출하는 쪽(check.mjs)이 sequence 그림에는 이 검사를 적용하지 않는다. */
+export function diagonalEdges(svg) {
+  const out = [];
+  for (const e of connectionsOf(svg)) {
+    for (const [p, q] of segmentsOf(e.pts)) {
+      const dx = Math.abs(q[0] - p[0]);
+      const dy = Math.abs(q[1] - p[1]);
+      if (dx > 1.5 && dy > 1.5 && Math.hypot(q[0] - p[0], q[1] - p[1]) > 12) {
+        out.push({ dx: Math.round(dx), dy: Math.round(dy) });
+      }
+    }
   }
   return out;
 }

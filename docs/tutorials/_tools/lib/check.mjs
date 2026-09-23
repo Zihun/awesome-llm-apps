@@ -2,7 +2,17 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { inlineImports, sourceHash, readSvgHash } from "./d2.mjs";
-import { edgeCrossings, stretchedIcons, ICON_MAX_HEIGHT } from "./edges.mjs";
+import {
+  edgeCrossings,
+  stretchedIcons,
+  ICON_MAX_HEIGHT,
+  PERSON_MAX_WIDTH,
+  edgeOverlaps,
+  edgesThroughText,
+  labelCollisions,
+  diagonalEdges,
+} from "./edges.mjs";
+import { revealProblems } from "./reveal.mjs";
 import { folderName, PLACEHOLDER } from "./days.mjs";
 
 // 폭 상한. 본문이 그림을 축소하면 12px 글자가 그만큼 작아지고 한글이 먼저 뭉개진다.
@@ -10,9 +20,10 @@ import { folderName, PLACEHOLDER } from "./days.mjs";
 export const SVG_MAX_WIDTH = 1200;
 export const SEQUENCE_MAX_WIDTH = 1400;
 
-// 세로 상한. GitHub 본문에서 한 장이 화면을 통째로 먹지 않는 선이다. 시퀀스 그림은
-// 메시지 하나가 행 하나라 본래 길쭉하므로 따로 잡는다.
-export const SVG_MAX_HEIGHT = 700;
+// 세로 상한. 꺾인 화살표를 쓰려면 그 층을 ELK에 맡겨야 하고, ELK는 층을 쌓아 그림을
+// 세로로 키운다(2026-09-23 실측 626~1396px) — 그래서 사용자가 700 대신 1000px을
+// 골랐다. 시퀀스 그림은 메시지 하나가 행 하나라 본래 길쭉하므로 따로 잡는다.
+export const SVG_MAX_HEIGHT = 1000;
 export const SEQUENCE_MAX_HEIGHT = 1500;
 
 /** 임베드 폰트에 담긴 글자 목록. fonts/build.py가 쓴다. */
@@ -89,17 +100,37 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
       if (width > widthCap) problems.push(rel(`다이어그램이 본문 폭에서 읽히지 않음: diagrams/${f.replace(/\.d2$/, ".svg")} (${width}px, 상한 ${widthCap}px) — grid-columns를 줄여 줄을 나누세요. 라벨이 긴 상자를 가로로 여러 개 세우면 폭이 금세 넘칩니다`));
       // (17) 연결선이 남의 도형을 가로지르면 그림이 읽히지 않는다. 그리드는 엣지를 보지 않고
       //      자리를 정하고 그 위에 직선을 긋기 때문에, 멀리 떨어진 칸을 이으면 사이를 관통한다.
-      //      고치는 법은 엣지를 컨테이너 수준으로 올리는 것이다(§5).
+      //      고치는 법은 그 층을 ELK에 맡기거나 엣지를 컨테이너 수준으로 올리는 것이다(§5).
       const crossings = edgeCrossings(svgText);
-      if (crossings) problems.push(rel(`연결선이 다른 도형을 가로지릅니다: diagrams/${f.replace(/\.d2$/, ".svg")} (${crossings}곳) — 자식 하나하나를 가리키는 대신 묶음끼리 잇도록 엣지를 컨테이너 수준으로 올리세요`));
-      // (18) 종횡비를 지키는 아이콘이 그리드 칸을 혼자 쓰면 통째로 늘어난다.
+      if (crossings) problems.push(rel(`연결선이 다른 도형을 가로지릅니다: diagrams/${f.replace(/\.d2$/, ".svg")} (${crossings}곳) — 그 층을 ELK에 맡겨 꺾어 돌아가게 하거나, 묶음끼리 잇도록 엣지를 컨테이너 수준으로 올리세요`));
+      // (18) 종횡비를 지키는 아이콘이 그리드 칸을 혼자 쓰면 통째로 늘어난다. 사람은 정사각형이
+      //      늘어나거나(높이) 그림 폭을 가로질러 납작해질(폭) 수 있어 둘 다 잰다.
       for (const icon of stretchedIcons(svgText)) {
-        problems.push(rel(`아이콘이 칸에 맞춰 늘어났습니다: diagrams/${f.replace(/\.d2$/, ".svg")}의 ${icon.kind} ${icon.width}x${icon.height} (높이 상한 ${ICON_MAX_HEIGHT}px) — 그리드 칸을 혼자 쓰지 말고 형제와 함께 컨테이너에 넣으세요`));
+        const caps = [];
+        if (icon.tooTall) caps.push(`높이 상한 ${ICON_MAX_HEIGHT}px`);
+        if (icon.tooWide) caps.push(`폭 상한 ${PERSON_MAX_WIDTH}px`);
+        problems.push(rel(`아이콘이 칸에 맞춰 늘어났습니다: diagrams/${f.replace(/\.d2$/, ".svg")}의 ${icon.kind} ${icon.width}x${icon.height} (${caps.join(", ")}) — 그리드 칸을 혼자 쓰지 말고 형제와 함께 컨테이너에 넣으세요`));
+      }
+      // (20~23) 화살표 규칙(2026-09-23 사용자 지시) — 화살표는 서로 겹치지 않고, 글자를
+      //         지나거나 라벨이 서로 얹히지 않으며, 곧게 그어서 안 되면 꺾는다(§5).
+      const svgName = f.replace(/\.d2$/, ".svg");
+      const overlaps = edgeOverlaps(svgText);
+      if (overlaps.length) problems.push(rel(`화살표가 다른 화살표와 같은 선을 나눠 씁니다: diagrams/${svgName} (${overlaps.length}곳) — 그 층의 grid를 걷고 ELK에 맡겨 꺾인 화살표로 떼어 놓으세요. grid 칸 사이 화살표는 항상 칸 중심끼리 직선입니다`));
+      const throughText = edgesThroughText(svgText);
+      if (throughText.length) problems.push(rel(`선이 글자를 지나갑니다: diagrams/${svgName} (${throughText.length}곳) — 화살표가 다른 라벨이나 묶음 제목을 지나지 않게 꺾어 돌리세요. sequence 그림이면 배우 순서를 바꾸거나 라벨을 줄이세요`));
+      const collisions = labelCollisions(svgText);
+      if (collisions.length) problems.push(rel(`라벨이 도형이나 다른 라벨에 얹혔습니다: diagrams/${svgName} (${collisions.length}곳) — 화살표가 라벨보다 짧아 라벨이 넘친 것입니다. ELK에 맡겨 선을 늘리거나 라벨을 줄이세요`));
+      if (!f.startsWith("sequence")) {
+        const diagonals = diagonalEdges(svgText);
+        if (diagonals.length) problems.push(rel(`비스듬한 화살표가 있습니다: diagrams/${svgName} (${diagonals.length}개) — 곧은 화살표는 수평·수직 한 줄일 때만 씁니다. grid 칸 사이 화살표는 꺾이지 않으므로 그 층을 ELK에 맡기세요`));
       }
       const height = Number(svgText.match(/<svg[^>]*\sheight="(\d+)"/)?.[1] ?? 0);
       const heightCap = f.startsWith("sequence") ? SEQUENCE_MAX_HEIGHT : SVG_MAX_HEIGHT;
-      if (height > heightCap) problems.push(rel(`다이어그램이 세로로 너무 깁니다: diagrams/${f.replace(/\.d2$/, ".svg")} (${height}px, 상한 ${heightCap}px) — 관련된 것끼리 컨테이너로 묶고 루트에 grid-rows/grid-columns를 주세요. 안쪽 컨테이너의 direction은 엣지가 있으면 무시됩니다`));
+      if (height > heightCap) problems.push(rel(`다이어그램이 세로로 너무 깁니다: diagrams/${svgName} (${height}px, 상한 ${heightCap}px) — 안쪽에 화살표가 없는 묶음만 grid로 좁히고, 노드와 라벨을 줄이세요`));
     }
+    // (19) 단계 공개 불변식 — step<N>.d2가 overview 배치를 그대로 가져와 클래스만
+    //      덧씌우므로, 경로를 잘못 짚으면 D2가 새 노드를 만들거나 -todo가 되살아난다.
+    for (const p of revealProblems(diagrams)) problems.push(rel(p));
   }
 
   // (4) code refs
