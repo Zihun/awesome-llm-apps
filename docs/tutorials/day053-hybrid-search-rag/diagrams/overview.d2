@@ -11,10 +11,10 @@ front: "사용자 쪽 화면" {
 
 pipeline: "raglite 파이프라인 (라이브러리)" {
   class: group
-  grid-columns: 2
-  insert: 문서 적재 (insert_document) { class: ext }
-  hybrid: 하이브리드 검색 (hybrid_search) { class: ext }
-  rerank: 재순위화 (rerank_chunks) { class: ext }
+  grid-columns: 3
+  insert: 문서 적재 { class: ext }
+  hybrid: 하이브리드 검색 { class: ext }
+  rerank: 재순위화 { class: ext }
 }
 
 db: raglite.sqlite (기본) { class: store }

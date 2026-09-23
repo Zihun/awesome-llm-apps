@@ -18,13 +18,7 @@ db -> search: 후보 청크 (RRF 융합)
 search -> rerank: 상위 10개 재정렬
 rerank -> search: 정렬된 청크
 search -> ui: 있음/없음만 판정에 사용
-ui -> search: rag() 내부 재검색 (20개 후보)
-search -> embed: 질의 임베딩 요청
-embed -> search: 질의 벡터
-search -> db: 키워드+벡터 검색
-db -> search: 후보 청크 (RRF 융합)
-search -> rerank: 재정렬
-rerank -> search: 정렬된 청크
+ui -> search: rag() 내부 재검색 — 임베딩·검색·재순위 반복 (20개 후보)
 search -> llm: 컨텍스트 + 프롬프트
 llm -> ui: 스트리밍 토큰
 ui -> user: 답변 표시

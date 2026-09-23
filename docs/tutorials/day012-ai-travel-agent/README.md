@@ -152,7 +152,7 @@ if openai_api_key and serp_api_key:
     )
 ```
 
-핵심은 `tools=[SerpApiTools(api_key=serp_api_key)]`(93행) 한 줄입니다. 이 줄이 있어서 Researcher는 Day 1의 도구 호출 루프를 그대로 탑니다 — 모델이 `search_google` tool_call을 돌려주면 agno가 로컬에서 SerpAPI를 실제로 호출하고, 결과를 다시 모델에 보내 최종 요약을 받습니다. `SerpApiTools`가 실제로 노출하는 도구는 `search_google`과 `search_youtube` 둘이고 기본값은 구글만 켜져 있습니다(`enable_search_google=True`, `enable_search_youtube=False`, 직접 확인). 지시문 87행이 부르는 이름도 정확히 `search_google`이라 서로 맞습니다.
+핵심은 `tools=[SerpApiTools(api_key=serp_api_key)]`(93행) 한 줄입니다. 이 줄이 있어서 Researcher는 Day 1의 도구 호출 루프를 그대로 탑니다 — 모델이 `search_google` tool_call을 돌려주면 agno가 로컬에서 SerpAPI를 실제로 호출하고, 결과를 다시 모델에 보내 최종 요약을 받습니다. `SerpApiTools`가 실제로 노출하는 도구는 `search_google`과 `search_youtube` 둘이고 기본값은 구글만 켜져 있습니다(`enable_search_google=True`, `enable_search_youtube=False`, 직접 확인). 지시문 89행이 부르는 이름도 정확히 `search_google`이라 서로 맞습니다.
 
 반면 Planner(96-115행)에는 `tools=` 인자 자체가 없습니다. 그래서 Planner는 검색을 할 수 없고, Step 4에서 문자열로 받은 검색 요약만 근거로 일정을 씁니다. "사실을 지어내지 말라"(112행)는 지시문이 붙어 있지만 이를 강제할 수단은 없습니다.
 

@@ -1,6 +1,6 @@
 # Day 013 · 🔍 OpenAI Research Agent
 
-> 볼륨 1 🌱 Starter AI Agents · 난이도 ★★★ · 예상 소요 70분 · API 비용 대략 조사 1회에 gpt-4o-mini 호출 2회 + 호스티드 웹 검색, 요금표 기준 수백 원 이하 (키가 없어 실제 과금은 확인 못함) · 원본 앱: `starter_ai_agents/openai_research_agent`
+> 볼륨 1 🌱 Starter AI Agents · 난이도 ★★★ · 예상 소요 70분(agno가 아닌 openai-agents SDK를 처음 배우는 데다 확인 명령이 5개 Step에 걸쳐 있어, 읽는 시간보다 손으로 돌려 보는 시간이 깁니다) · API 비용 대략 조사 1회에 gpt-4o-mini 호출 2회 + 호스티드 웹 검색, 요금표 기준 수백 원 이하 (키가 없어 실제 과금은 확인 못함) · 원본 앱: `starter_ai_agents/openai_research_agent`
 
 ## 오늘 만들 것
 

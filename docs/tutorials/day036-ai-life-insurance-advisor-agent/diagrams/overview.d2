@@ -1,34 +1,28 @@
 ...@../../_tools/theme
-direction: right
-grid-columns: 3
+direction: down
 
-entry: "진입" {
-  class: group
-  user: 사용자 { class: person }
-}
+user: 사용자 { class: person }
 
-app: life_insurance_advisor_agent.py {
+app: "앱 코드 4곳" {
   class: group
-  grid-columns: 2
   form: 프로필 입력 폼 { class: ours }
   sidebar: 사이드바 키 입력 { class: ours }
   render: 결과 렌더링 { class: ours }
   agent: 어드바이저 에이전트 (get_agent) { class: ours }
 }
 
-services: "외부 서비스 3곳" {
+services: "외부 서비스" {
   class: group
-  grid-rows: 3
   openai: OpenAI API (gpt-5-mini) { class: ext }
   e2b: E2B 코드 샌드박스 { class: ext }
   firecrawl: Firecrawl API { class: ext }
 }
 
-entry.user -> app.sidebar: API 키 3개
-entry.user -> app.form: 프로필 9개 항목
+user -> app.sidebar: API 키 3개
+user -> app.form: 프로필 9개 항목
 app.sidebar -> app.agent: 키로 초기화
 app.form -> app.agent: client_profile JSON
 app.agent -> services.openai: 추론 호출
 app.agent -> services.e2b: run_python_code
-app.agent -> services.firecrawl: search_web / crawl_website
-app.agent -> app.render: 에이전트 JSON 응답 → 사용자에게 커버리지 추천 표시
+app.agent -> services.firecrawl: 검색·크롤링
+app.agent -> app.render: 에이전트 JSON 응답

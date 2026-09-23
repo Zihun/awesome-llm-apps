@@ -13,7 +13,7 @@
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
 | Google AI Studio API 키 (`GOOGLE_API_KEY`) | 세 `LlmAgent` 전부의 `gemini-3-flash-preview` 호출에 필요. 이 문서는 키 없이 로더의 동작만 확인하며, Step 5가 확인하듯 실제로 이 키까지 도달하지도 않습니다 | https://aistudio.google.com/ 에서 발급 (이 실습에서는 생략) |
-| Firecrawl API 키 (`FIRECRAWL_API_KEY`) | `research_agent.yaml`의 MCP 도구가 참조. Step 4가 확인하듯 `firecrawl-mcp` 자신은 일부 도구를 키 없이도 서비스합니다 | https://firecrawl.dev 에서 발급 (이 실습에서는 발급하지 않습니다) |
+| Firecrawl API 키 (`FIRECRAWL_API_KEY`) | `research_agent.yaml`의 MCP 도구가 참조. `npx`를 단독 실행하면 `firecrawl-mcp` 자신은 일부 도구를 키 없이도 서비스하지만(Step 4), 이 YAML 그대로는 `env`에 빈 문자열이 아니라 `${FIRECRAWL_API_KEY}`라는 문자 그대로가 들어가 keyless 모드에 닿지 않습니다(Step 4) | https://firecrawl.dev 에서 발급 (이 실습에서는 발급하지 않습니다) |
 | Node.js / `npx` | `research_agent.yaml`이 `npx firecrawl-mcp`를 셸아웃. Day 017이 이미 다룬 요구사항을 그대로 물려받습니다 | https://nodejs.org/ 설치 후 `npx --version`으로 확인 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 참고 |
 
@@ -273,7 +273,7 @@ npx -y firecrawl-mcp < NUL
 No FIRECRAWL_API_KEY or FIRECRAWL_API_URL set — running in keyless mode. firecrawl_scrape and firecrawl_search are free (rate-limited per IP) against the Firecrawl cloud; other tools require an API key (get one free at https://firecrawl.dev).
 ```
 
-(직접 확인 — 종료 코드 0. `research_agent.yaml`의 지시문이 실제로 쓰라고 하는 도구는 정확히 `firecrawl_scrape`·`firecrawl_search` 둘뿐인데, 이 레슨 자신의 README(`ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/multi_agent_web_research_team/README.md:135-139`)는 `FIRECRAWL_API_KEY`를 "Required: Yes"라고 못박습니다 — `firecrawl-mcp` 서버 자신의 실제 동작과는 다릅니다. 이 확인은 `npx`를 리포 밖에서 단독 실행한 것이며, ADK의 `MCPToolset`을 통해 실제로 도구 목록을 조회하는 것은 Day 017과 같은 이유로 시도하지 않았습니다 — Firecrawl은 유료 서비스라 그 경로로도 실제 클라우드에 닿을 가능성을 배제할 수 없습니다.)
+(직접 확인 — 종료 코드 0. `research_agent.yaml`의 지시문이 실제로 쓰라고 하는 도구는 정확히 `firecrawl_scrape`·`firecrawl_search` 둘뿐인데, 이 레슨 자신의 README(`ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/multi_agent_web_research_team/README.md:135-139`)는 `FIRECRAWL_API_KEY`를 "Required: Yes"라고 못박습니다 — `npx`를 이렇게 단독 실행할 때의 `firecrawl-mcp` 동작과는 다릅니다. 이 대비는 `npx` 단독 실행에만 성립합니다: 이 레슨의 YAML 그대로 붙이면 `env`에 빈 문자열이 아니라 `${FIRECRAWL_API_KEY}`라는 글자 그대로가 들어가므로(Step 4 두 번째 확인) keyless 모드 자체에 닿지 않습니다 — 플레이스홀더가 이미 "키가 있다"로 읽혀 "env" 인증 모드로 뜹니다. 이 확인은 `npx`를 리포 밖에서 단독 실행한 것이며, ADK의 `MCPToolset`을 통해 실제로 도구 목록을 조회하는 것은 Day 017과 같은 이유로 시도하지 않았습니다 — Firecrawl은 유료 서비스라 그 경로로도 실제 클라우드에 닿을 가능성을 배제할 수 없습니다.)
 
 `requirements.txt`엔 없는 `mcp`를 추가로 설치하고 옵트인 변수를 켜면 어디까지 가는지도 확인했습니다(이 문서의 나머지 확인들과 달리, 레슨이 실제로 설치하라고 하는 범위를 넘습니다).
 
@@ -299,7 +299,7 @@ web_research_coordinator -> ['research_agent', 'summary_agent']
 env: {'FIRECRAWL_API_KEY': '${FIRECRAWL_API_KEY}'}
 ```
 
-(직접 확인 — `mcp`와 옵트인을 모두 갖추면 세 에이전트 전체가 오프라인으로, 키 없이 조립됩니다. 그런데 `env`에 실제로 들어간 값은 `${FIRECRAWL_API_KEY}`라는 글자 그대로입니다 — PyYAML의 `safe_load`도, google-adk의 설정 로더도, `mcp` SDK의 `stdio_client`도 이 문자열을 셸 변수처럼 치환하지 않습니다(소스로 확인, `mcp` 2.2.0의 `client/stdio` 모듈은 `os.environ`에서 고정된 이름 목록만 상속할 뿐입니다). 즉 `.env`에 진짜 키를 넣어도, 이 YAML을 고치지 않는 한 `npx` 프로세스가 실제로 받는 값은 이 플레이스홀더 문자열입니다. `mcp`를 설치하기 전엔 옵트인 없이 이 명령을 돌리면 `ValueError: Stdio MCP servers are not allowed in agent configs: ...`가 대신 납니다 — 문제 해결에 정리했습니다.)
+(직접 확인 — `mcp`와 옵트인을 모두 갖추면 세 에이전트 전체가 오프라인으로, 키 없이 조립됩니다. 그런데 `env`에 실제로 들어간 값은 `${FIRECRAWL_API_KEY}`라는 글자 그대로입니다 — PyYAML의 `safe_load`도, google-adk의 설정 로더도, `mcp` SDK의 `stdio_client`도 이 문자열을 셸 변수처럼 치환하지 않습니다(소스로 확인, `mcp` 2.2.0의 `client/stdio` 모듈은 `os.environ`에서 고정된 이름 목록만 상속할 뿐입니다). 즉 `.env`에 진짜 키를 넣어도, 이 YAML을 고치지 않는 한 `npx` 프로세스가 실제로 받는 값은 이 플레이스홀더 문자열입니다. `mcp`를 설치한 뒤 옵트인 없이 이 명령을 돌리면 `ValueError: Stdio MCP servers are not allowed in agent configs: ...`가 대신 납니다(`mcp`가 아예 없으면 옵트인 여부와 무관하게 여전히 `ModuleNotFoundError`입니다, 직접 확인) — 문제 해결에 정리했습니다.)
 
 ### Step 5. `adk web`으로 실행하기 — 프레임워크가 자기 예제를 거절하는 지점
 
@@ -323,30 +323,27 @@ uv run --no-project adk web --port 8989 --no_use_local_storage .
 **확인.** 다른 터미널에서 목록 조회, 세션 생성, 메시지 전송을 순서대로 해 봅니다.
 
 ```bash
-curl.exe -s http://127.0.0.1:8989/list-apps
-curl.exe -s -X POST http://127.0.0.1:8989/apps/multi_agent_web_researcher/users/u1/sessions/s1 -H "Content-Type: application/json" -d "{}"
-curl.exe -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8989/run -H "Content-Type: application/json" -d '{"appName":"multi_agent_web_researcher","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"hello"}]}}'
+curl -s http://127.0.0.1:8989/list-apps
+curl -s -X POST http://127.0.0.1:8989/apps/multi_agent_web_researcher/users/u1/sessions/s1 -H "Content-Type: application/json" -d "{}"
+curl -s -X POST http://127.0.0.1:8989/run -H "Content-Type: application/json" -d '{"appName":"multi_agent_web_researcher","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"hello"}]}}'
 ```
 
 ```powershell
 curl.exe -s http://127.0.0.1:8989/list-apps
 curl.exe -s -X POST http://127.0.0.1:8989/apps/multi_agent_web_researcher/users/u1/sessions/s1 -H "Content-Type: application/json" -d "{}"
-curl.exe -s -o NUL -w "%{http_code}`n" -X POST http://127.0.0.1:8989/run -H "Content-Type: application/json" -d '{"appName":"multi_agent_web_researcher","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"hello"}]}}'
+'{"appName":"multi_agent_web_researcher","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"hello"}]}}' | Out-File -Encoding utf8 body.json
+curl.exe -s -X POST http://127.0.0.1:8989/run -H "Content-Type: application/json" --data "@body.json"
 ```
+
+(PowerShell 5.1의 네이티브 인자 전달은 작은따옴표 문자열 안의 큰따옴표를 지워서 넘기는 것으로 문서화돼 있어(about_Parsing, `$PSNativeCommandArgumentPassing`), 마지막 줄의 `-d '{"key":...}'` 형태를 그대로 쓰면 서버가 다른 본문을 받을 수 있습니다 — 본문을 파일로 적어 `--data "@body.json"`으로 넘기면 5.1과 7.3+ 모두에서 안전합니다. 이 세션에서는 PowerShell을 실행할 수 없어 직접 확인하지 못했습니다.)
 
 ```
 ["multi_agent_web_researcher"]
 {"id":"s1","appName":"multi_agent_web_researcher","userId":"u1","state":{},"events":[],"lastUpdateTime":1790002140.18}
-404
+{"detail":"Fail to load '…\\root_agent.yaml' config. Blocked key 'args' found in '…\\\\research_agent.yaml'. The 'args' field is not allowed in agent configurations because it can execute arbitrary code."}
 ```
 
-(직접 확인 — `lastUpdateTime`은 실행마다 다른 타임스탬프입니다. `/list-apps`는 폴더 이름만 보고 내용을 확인하지 않으므로 통과하지만(Day 014~022와 같은 얕은 조회), `/run`은 404입니다. 서버가 돌려준 본문은 다음과 같습니다 — 로컬 절대경로만 생략했습니다.)
-
-```
-Fail to load '.../root_agent.yaml' config. Blocked key 'args' found in
-'.../research_agent.yaml'. The 'args' field is not allowed in agent
-configurations because it can execute arbitrary code.
-```
+(직접 확인 — `curl`이 응답에 줄바꿈을 넣지 않아 세 응답이 원래 한 줄씩 붙어 나오지만 위는 읽기 쉽게 줄을 나눴습니다. `lastUpdateTime`은 실행마다 다른 타임스탬프입니다. `/list-apps`는 폴더 이름만 보고 내용을 확인하지 않으므로 통과하지만(Day 014~022와 같은 얕은 조회), `/run`은 HTTP 404이고 위 셋째 줄이 그 본문 그대로입니다(로컬 절대경로만 `…`로 줄였습니다 — 첫 경로는 한 번, `research_agent.yaml` 쪽 경로는 두 번 이스케이프된 백슬래시로 옵니다).)
 
 이건 Day 014~022가 키 없이 실행할 때마다 봤던 "`ValueError: No API key was provided`"(HTTP 500)와 전혀 다른 실패입니다 — Gemini도, MCP 서버도, `mcp` 패키지의 유무조차도 등장하지 않습니다. google-adk 2.9.2 소스로 확인하면(`google/adk/cli/fast_api.py`) `adk web`은 서버를 만들 때 `web=True`이면 `config_agent_utils._set_enforce_yaml_key_denylist(True)`를 호출해, YAML 어디든 `args`라는 이름의 키가 있으면 통째로 거부하도록 켭니다. 그런데 `args:`는 `ToolConfig` 스키마 자신이 문서화한, 인자가 필요한 모든 도구의 표준 표기법입니다(소스로 확인, `google/adk/tools/tool_configs.py`의 독스트링 — `AgentTool`도 같은 방식으로 `args:`를 씁니다). 즉 `adk web`은 MCP 도구만이 아니라 **인자가 있는 어떤 YAML 도구 선언도** 서비스하지 못합니다. `mcp`를 설치하고 `ADK_ALLOW_CONFIG_STDIO_MCP_SERVERS=1`을 켜도 이 벽은 그대로입니다 — 이 옵트인엔 대응하는 CLI 플래그가 없어, 이 레슨을 `adk web`으로 실행하는 한 피해 갈 방법이 없습니다.
 
@@ -365,7 +362,7 @@ configurations because it can execute arbitrary code.
 - [ ] google-adk의 로더가 패키지 임포트 → `.agent` 서브모듈 → `root_agent.yaml` 순으로 폴백하며, 이 폴더에서는 세 번째만 성공한다는 것을 소스와 실행으로 확인했다
 - [ ] `summary_agent.yaml` 단독 로드가 성공해 YAML 조합 메커니즘 자체는 키 없이 동작한다는 것을 확인했다
 - [ ] `root_agent.yaml` 전체 로드는 `mcp` 패키지가 없어 `ModuleNotFoundError`로 멈춘다는 것을 확인했다
-- [ ] `npx firecrawl-mcp`가 키 없이도 `firecrawl_scrape`·`firecrawl_search`를 keyless 모드로 제공한다는 것을 직접 확인했다
+- [ ] `npx firecrawl-mcp`를 단독 실행하면 키 없이도 `firecrawl_scrape`·`firecrawl_search`를 keyless 모드로 제공하지만, 이 레슨의 YAML 그대로는 `env`에 빈 문자열이 아닌 플레이스홀더가 들어가 keyless 모드에 닿지 않는다는 것을 확인했다
 - [ ] google-adk가 YAML의 stdio MCP 서버 선언을 기본 차단하며, `ADK_ALLOW_CONFIG_STDIO_MCP_SERVERS=1`로만 우회된다는 것을 확인했다
 - [ ] `research_agent.yaml`의 `${FIRECRAWL_API_KEY}`가 어떤 로더에서도 치환되지 않고 문자 그대로 남는다는 것을 확인했다
 - [ ] `adk web`이 `args` 키를 가진 모든 도구 설정을 차단해 이 레슨을 `/run`에서 HTTP 404로 거부한다는 것을 직접 확인했다
@@ -382,7 +379,7 @@ configurations because it can execute arbitrary code.
 
 ## 더 해보기
 
-- `research_agent.yaml`의 `env: FIRECRAWL_API_KEY: "${FIRECRAWL_API_KEY}"`(`ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/multi_agent_web_research_team/multi_agent_web_researcher/research_agent.yaml:33`)를 사본에서 실제 문자열 값으로 바꿔, `npx firecrawl-mcp`가 그제서야 인증 모드로 뜨고 Step 4의 keyless 메시지가 사라지는지 확인해보기
+- `research_agent.yaml`의 `env: FIRECRAWL_API_KEY: "${FIRECRAWL_API_KEY}"`(`ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/multi_agent_web_research_team/multi_agent_web_researcher/research_agent.yaml:33`)는 이미 빈 문자열이 아니므로 지금 이대로도 keyless 모드가 아닙니다 — 사본을 두 벌 만들어, ① 이 `env:` 줄 자체를 지운 것(→ 진짜 keyless 메시지가 뜨는지)과 ② 실제 Firecrawl 키 문자열을 넣은 것(→ 인증 모드로 뜨는지)을 `npx firecrawl-mcp`로 비교해보기
 - `mcp` 설치와 `ADK_ALLOW_CONFIG_STDIO_MCP_SERVERS=1`을 갖춘 채로 `adk web` 대신 `adk run`(웹 UI를 거치지 않는 CLI 실행)으로 이 폴더를 띄워, `web=True`가 켜는 `args` 차단을 정말 피해 가는지, 그렇다면 다음엔 어디서 멈추는지 확인해보기
 - `root_agent.yaml`의 `sub_agents`(`ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/multi_agent_web_research_team/multi_agent_web_researcher/root_agent.yaml:22`)에 존재하지 않는 파일을 가리키는 `config_path`를 사본에 추가하거나, 상위 폴더로 나가는 `config_path: ../outside.yaml`을 넣어 Step 3의 경로 순회 방어가 정말로 막는지 확인해보기
 

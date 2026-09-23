@@ -9,18 +9,16 @@ front: "사용자 쪽 화면" {
 
 cloud: Gemini API (임베딩·채팅) { class: ext }
 
-local: "이 컴퓨터에서 도는 부분" {
+local: "이 컴퓨터에서 도는 부분 (처리 순서 1~4)" {
   class: group
-  tokenizer: 로컬 토크나이저 (mpnet) { class: ext }
-  ingest: PDF 로더·분할 { class: ours }
-  chain: RAG 체인 { class: ours }
-  vstore: Chroma 저장소 { class: store }
+  grid-columns: 4
+  tokenizer: "1. 로컬 토크나이저 (mpnet)" { class: ext }
+  ingest: "2. PDF 로더·분할" { class: ours }
+  vstore: "3. Chroma 저장소" { class: store }
+  chain: "4. RAG 체인" { class: ours }
 }
 
 front -> local: 질문 · PDF 업로드
 local -> front: 답변 텍스트
 local -> cloud: 임베딩 + 생성 요청
 cloud -> local: 벡터 · 생성된 답변
-local.tokenizer -> local.ingest: 토큰 수 세기
-local.ingest -> local.vstore: 청크 저장
-local.vstore -> local.chain: 유사도 검색
