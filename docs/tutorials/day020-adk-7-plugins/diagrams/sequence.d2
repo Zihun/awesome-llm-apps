@@ -4,9 +4,9 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: app.py { class: ours }
 plugin: SimplePlugin (전역) { class: ours }
-agent: LlmAgent 실행 { class: ours }
-gemini: Gemini API { class: ext }
 tool: calculator_tool { class: ours }
+gemini: Gemini API { class: ext }
+agent: LlmAgent 실행 { class: ours }
 
 user -> ui: 메시지 입력
 ui -> plugin: run_agent() 호출 → on_user_message_callback

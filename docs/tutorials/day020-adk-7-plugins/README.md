@@ -6,7 +6,7 @@
 
 Day 019는 `Runner`가 에이전트를 굴리는 동안 벌어지는 여섯 지점(에이전트·모델·도구 각각의 전/후)에 함수를 등록해 가로채는 법을 다뤘습니다. 오늘의 `7_plugins`는 그 여섯 지점을 다시 설명하지 않고, 등록 위치가 다른 두 번째 메커니즘을 더합니다. `SimplePlugin` 클래스가 개별 `LlmAgent`가 아니라 `InMemoryRunner(agent=agent, app_name=..., plugins=[SimplePlugin()])`의 `plugins=` 인자에 등록됩니다. Day 019의 콜백은 `LlmAgent` 인스턴스 하나에만 적용됐지만, 플러그인은 그 러너 아래 모든 에이전트·도구·모델 호출에 전역으로 적용됩니다 — 에이전트가 하나뿐인 오늘은 이 차이가 코드만으로 드러나지 않으므로, Step 5에서 플러그인을 하나 더 등록해야 "전역"의 실제 의미가 보입니다.
 
-이 폴더는 Day 015~019처럼 하위 레슨으로 나뉘지 않은 단일 레슨입니다 — `agent.py` 105줄, `app.py` 64줄(둘 다 마지막 줄에 개행이 있어 `wc -l`과 실제 줄 수가 같습니다), 200줄짜리 레슨 README, `requirements.txt` 한 장. 이 README는 도움이 되는 만큼 틀린 곳도 있습니다 — Day 019가 크래시 코스 최상위 README의 서술이 실제 코드와 어긋난다는 것을 찾아낸 것처럼, 이 레슨의 README도 프로젝트 구조표에 리포 어디에도 없는 파일(`plugin_example.py`)을 나열하고 에러 콜백의 억제 능력을 뭉뚱그려 서술합니다(둘 다 소스로 확인). 이 문서는 그런 주장을 소스와 직접 실행으로 하나씩 확인합니다.
+이 폴더는 Day 015~019처럼 하위 레슨으로 나뉘지 않은 단일 레슨입니다 — `agent.py` 105줄, `app.py` 64줄(둘 다 마지막 줄에 개행이 있어 `wc -l`과 실제 줄 수가 같습니다), 200줄짜리 레슨 README, `requirements.txt` 한 장. 이 README는 도움이 되는 만큼 틀린 곳도 있습니다 — Day 019가 레슨의 타입 힌트가 실제 요구 타입과 다르다는 것을 찾아낸 것처럼, 이 레슨의 README도 프로젝트 구조표에 리포 어디에도 없는 파일(`plugin_example.py`)을 나열하고 에러 콜백의 억제 능력을 뭉뚱그려 서술합니다(둘 다 소스로 확인). 이 문서는 그런 주장을 소스와 직접 실행으로 하나씩 확인합니다.
 
 오늘의 질문은 "플러그인이 콜백과 무엇이 다르고, 언제 어느 쪽을 쓰는가"입니다. 등록 위치(에이전트 vs 러너)와 범위(하나 vs 전부)가 답의 절반이고, 나머지는 실행 순서·가로채기 규칙·에러 처리에서 나옵니다. 마지막으로 키 없이 실행했을 때 Day 018처럼 삼켜지는지 Day 019처럼 종료 코드 1로 죽는지도 확인합니다.
 
@@ -25,7 +25,7 @@ Day 019는 `Runner`가 에이전트를 굴리는 동안 벌어지는 여섯 지�
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
 | 사용자 (브라우저) | 시나리오 3개 중 하나를 고르거나 메시지를 직접 입력 | 코드 없음 (외부 UI) |
-| Streamlit UI (`app.py`) | 선택된 시나리오 또는 직접 입력을 `run_agent()`에 전달 | `ai_agent_framework_crash_course/google_adk_crash_course/7_plugins/app.py:14-29` |
+| Streamlit UI (`app.py`) | 선택된 시나리오 또는 직접 입력을 `run_agent()`에 전달 | `ai_agent_framework_crash_course/google_adk_crash_course/7_plugins/app.py:14-44` |
 | `SimplePlugin` (`BasePlugin` 상속) | `InMemoryRunner`에 전역 등록되어 사용자 메시지·에이전트 시작·도구 시작·실행 종료를 관찰·수정 | `ai_agent_framework_crash_course/google_adk_crash_course/7_plugins/agent.py:21-48` |
 | `plugin_demo_agent` (`LlmAgent`) | 계산기 도구를 쓸 수 있는 단일 에이전트 | `ai_agent_framework_crash_course/google_adk_crash_course/7_plugins/agent.py:68-70` |
 | 계산기 도구 (`calculator_tool`) | 사칙연산을 수행하고 0으로 나누면 예외를 던짐 | `ai_agent_framework_crash_course/google_adk_crash_course/7_plugins/agent.py:54-62` |
@@ -70,7 +70,7 @@ uv run --no-project python -c "import importlib.metadata as md; print([r for r i
 google-genai>=2.19,<3
 ```
 
-`>=2.19,<3`이 레슨의 `>=1.28.0`을 완전히 포함하므로, 첫 줄을 지우고 나머지 세 줄만 설치해도 정확히 같은 `google-genai` 2.24.0이 설치됩니다(직접 확인 — 별도 가상환경에 비교).
+`>=2.19,<3`이 레슨의 `>=1.28.0`을 완전히 포함하므로, 첫 줄을 지우고 나머지 세 줄만 설치해도 설치 시점 기준 최신 2.x가 그대로 설치됩니다 — 첫 줄이 있든 없든 결과가 같다는 뜻입니다(직접 확인 — 별도 가상환경에 비교). 이 버전은 PyPI의 최신 릴리스를 따라가므로 이 문서를 처음 쓴 시점엔 2.24.0이었고, 2026-09-23 재확인 시점엔 2.25.0이었습니다(직접 확인) — 고정된 하한선(`>=2.19,<3`) 안에서 계속 올라갈 수 있는 값입니다.
 
 마지막 줄에 개행이 없는 파일은 `wc -l`이 실제보다 하나 적게 셉니다.
 
@@ -85,6 +85,7 @@ tail -c 1 requirements.txt | xxd | tail -1
  105 agent.py
   64 app.py
    3 requirements.txt
+ 172 total
 00000000: 0a                                       .
 00000000: 0a                                       .
 00000000: 31                                       1
@@ -106,12 +107,12 @@ uv run --no-project python -c "import google.adk, google.genai, importlib.metada
 
 ```
 google-adk 2.9.2
-google-genai 2.24.0
+google-genai 2.25.0
 streamlit 1.64.0
 python-dotenv 1.2.3
 ```
 
-(Python 3.12.10으로 확인했습니다 — `uv venv --python 3.12`로 만든 throwaway 가상환경 기준이며, 시스템 기본 Python은 3.13.3이었습니다.)
+(2026-09-23 재확인 기준 출력입니다 — `google-genai`만 설치 시점의 PyPI 최신판을 따라가므로 이 문서를 처음 쓴 시점엔 2.24.0이었습니다. 나머지 세 값은 고정됩니다. Python 3.12.10으로 확인했습니다 — `uv venv --python 3.12`로 만든 throwaway 가상환경 기준이며, 시스템 기본 Python은 3.13.3이었습니다.)
 
 ### Step 2. `SimplePlugin` 정의 — `BasePlugin`이 실제로 제공하는 것
 
@@ -185,7 +186,7 @@ print(len(hooks), sorted(hooks))
 15 ['after_agent_callback', 'after_model_callback', 'after_run_callback', 'after_tool_callback', 'before_agent_callback', 'before_model_callback', 'before_run_callback', 'before_tool_callback', 'close', 'on_agent_error_callback', 'on_event_callback', 'on_model_error_callback', 'on_run_error_callback', 'on_tool_error_callback', 'on_user_message_callback']
 ```
 
-15개 중 `SimplePlugin`은 4개만 구현하고 나머지는 기본 구현(`pass`, 항상 `None` 또는 아무 일도 하지 않음)을 그대로 씁니다. 레슨 자신의 README도 여덟 개만 나열하고 `close`·`on_agent_error_callback`·`on_run_error_callback`은 목록에서 빠뜨립니다 — 뒤 두 개는 Step 6에서 다룹니다.
+15개 중 `SimplePlugin`은 4개만 구현하고 나머지는 기본 구현(`pass`, 항상 `None` 또는 아무 일도 하지 않음)을 그대로 씁니다. 레슨 자신의 README도 여덟 줄에 열두 개를 나열하고 `close`·`on_agent_error_callback`·`on_run_error_callback`은 목록에서 빠뜨립니다(15−12=3, 직접 확인) — 뒤 두 개는 Step 6에서 다룹니다.
 
 폴더 구성도 README와 어긋납니다.
 
@@ -207,21 +208,21 @@ print(len(hooks), sorted(hooks))
 **확인.**
 
 ```bash
-find . -iname "plugin_example.py"; echo "exit=$?"
-ls
+test -e plugin_example.py && echo "있음" || echo "없음"
+ls -A
 ```
 
 ```powershell
-Get-ChildItem -Recurse -Filter "plugin_example.py"
-Get-ChildItem
+Test-Path plugin_example.py
+Get-ChildItem -Force
 ```
 
 ```
-exit=1
-.env.example  README.md  agent.py  app.py  requirements.txt
+없음
+.env.example  agent.py  app.py  README.md  requirements.txt
 ```
 
-(`find`는 아무것도 찾지 못해 종료 코드 1을 돌려주고, 실제 폴더에는 다섯 개 파일뿐입니다 — `plugin_example.py`는 없습니다.)
+(`find . -iname "plugin_example.py"; echo "exit=$?"`로도 확인해 봤지만, `find`는 못 찾아도 종료 코드 0을 돌려주므로 없음을 보여 주는 확인으로는 `test -e`가 더 명확합니다 — 직접 확인. `ls`는 점으로 시작하는 파일을 보여 주지 않아 `.env.example`이 빠지므로 `-A`를 붙였습니다. 실제 폴더에는 다섯 개 파일뿐입니다 — `plugin_example.py`는 없습니다.)
 
 ### Step 3. 등록과 범위 — `Runner(plugins=[...])`는 전역이다
 
@@ -270,10 +271,10 @@ InMemoryRunner
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.**
+**확인.** 아래 스크립트는 실제 `SimplePlugin`을 그대로 가져다 쓰므로 `on_user_message_callback`의 이모지 `print`도 함께 실행됩니다 — 표준출력이 파이프로 나가는 셸(Git Bash 등)에서는 `PYTHONIOENCODING=utf-8` 없이 실행하면 첫 훅에서 인코딩 오류가 나므로(자세한 원인은 Step 7 참고) 아래 명령에 이미 반영해 두었습니다.
 
 ```bash
-uv run --no-project python -c "
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import asyncio
 from typing import Optional
 import agent as real
@@ -328,11 +329,11 @@ async def main():
     print('real_plugin.agent_count:', real_plugin.agent_count, '/ tool_count:', real_plugin.tool_count)
 
 asyncio.run(main())
-"
+"; echo "exit=$?"
 ```
 
 ```powershell
-uv run --no-project python -c "<위와 같은 코드>"
+$env:PYTHONIOENCODING="utf-8"; uv run --no-project python -c "<위와 같은 코드>"; echo "exit=$LASTEXITCODE"
 ```
 
 ```
@@ -354,14 +355,14 @@ exit=0
 
 **목적.** 플러그인이 값을 반환하면 실제로 무엇을 건너뛰는지 — 등록순으로 뒤에 오는 다른 플러그인, 그리고 에이전트 자신의 콜백까지 — 를 확인하고, 플러그인 목록 안에서의 가로채기 판정 기준이 Day 019가 찾은 두 규칙(참값/`None` 아님) 중 무엇인지 소스로 밝힙니다.
 
-**할 일.** `google/adk/plugins/plugin_manager.py`의 `_run_callbacks`를 보면(소스로 확인) 플러그인 리스트는 훅 이름과 무관하게 항상 "`None`이 아닌 값이 나올 때까지"만 봅니다 — Day 019가 에이전트·모델 레벨에서 찾은 `_stop_on_truthy`가 아니라 도구 레벨의 `_stop_on_non_none`과 같은 규칙입니다. 그런데 `google/adk/agents/base_agent.py`의 `_handle_before_agent_callback`을 보면, 이 결과로 에이전트 자신의 콜백을 마저 실행할지 정하는 바깥 게이트는 다시 참값 기준입니다 — `Content`/`LlmResponse`는 사실상 항상 참이라 잘 안 드러나지만, 도구의 `dict` 반환값에서는 실제로 관찰됩니다(아래 두 번째 확인).
+**할 일.** `google/adk/plugins/plugin_manager.py`의 `_run_callbacks`를 보면(소스로 확인) 플러그인 리스트는 훅 이름과 무관하게 항상 "`None`이 아닌 값이 나올 때까지"만 봅니다 — Day 019가 에이전트·모델 레벨에서 찾은 `_stop_on_truthy`가 아니라 도구 레벨의 `_stop_on_non_none`과 같은 규칙입니다. 그런데 이 결과로 에이전트·도구 자신의 콜백을 마저 실행할지 정하는 "바깥 게이트"의 기준은 계층마다 다릅니다 — 에이전트 레벨(`google/adk/agents/base_agent.py`의 `_handle_before_agent_callback`, `if not before_agent_callback_content and callbacks:`)은 참값 기준이라 `Content`/`LlmResponse`가 사실상 항상 참이므로 잘 안 드러나지만, 도구 레벨(`google/adk/flows/llm_flows/_tool_caller.py`, `if function_response is None:`)은 `None` 기준입니다 — 아래 두 번째 확인의 `dict` 반환값(`{}`)이 실제로 보여 주는 것은 후자, 즉 도구 레벨의 `None` 게이트입니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** 등록순으로 앞에 놓은 플러그인이 `before_agent_callback`에서 값을 반환하면 무슨 일이 일어나는지입니다.
+**확인.** 등록순으로 앞에 놓은 플러그인이 `before_agent_callback`에서 값을 반환하면 무슨 일이 일어나는지입니다. 이 스크립트도 실제 `SimplePlugin`을 쓰므로 Step 4와 같은 이유로 `PYTHONIOENCODING=utf-8`이 필요합니다.
 
 ```bash
-uv run --no-project python -c "
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import asyncio
 import agent as real
 from google.adk.agents import LlmAgent
@@ -401,7 +402,7 @@ asyncio.run(main())
 ```
 
 ```powershell
-uv run --no-project python -c "<위와 같은 코드>"
+$env:PYTHONIOENCODING="utf-8"; uv run --no-project python -c "<위와 같은 코드>"
 ```
 
 ```
@@ -466,7 +467,7 @@ uv run --no-project python -c "<위와 같은 코드>"
 done (real calculator_tool body did NOT print if the skip worked)
 ```
 
-실제 `calculator_tool` 본문의 `print`(`🔧 [Tool] Calculator: add(...)`)가 한 번도 찍히지 않습니다 — `{}`는 falsy이지만 플러그인 매니저의 게이트는 `None`인지만 보므로 실제 도구 실행이 건너뛰어졌습니다. Day 019가 "더 해보기"로 남긴 질문(falsy·non-`None` 값도 건너뛰는가)에 대한 답이 플러그인 레벨에서도 "예"입니다.
+실제 `calculator_tool` 본문의 `print`(`🔧 [Tool] Calculator: add(...)`)가 한 번도 찍히지 않습니다 — `{}`는 falsy이지만, 실제 도구 실행을 막은 것은 플러그인 매니저가 아니라 `google/adk/flows/llm_flows/_tool_caller.py`가 넘겨받은 `function_response`를 두고 판단하는 도구 레벨 게이트입니다: 이 게이트는 falsy 여부가 아니라 `None`인지만 보므로(`if function_response is None:`), `None`이 아닌 `{}`가 반환되는 순간 실제 도구 호출(`tool_runner()`)을 건너뜁니다. Day 019가 "더 해보기"로 남긴 질문(falsy·non-`None` 값도 건너뛰는가)에 대한 답이 플러그인 레벨에서도 "예"입니다.
 
 ### Step 6. 에러 콜백 — 억제할 수 있는 것과 없는 것
 
@@ -498,14 +499,14 @@ if st.button("🚀 Run Test"):
 - **Error Handling**: Plugin error callbacks can suppress exceptions and provide fallbacks
 ```
 
-앞 두 줄은 소스와 일치합니다(`BasePlugin`의 클래스 독스트링이 "Plugins takes precedence over agent callbacks"라고 명시, 소스로 확인). 마지막 줄은 15개 훅을 뭉뚱그립니다 — `on_model_error_callback`·`on_tool_error_callback`은 대안 값으로 예외를 억제할 수 있지만, `on_agent_error_callback`·`on_run_error_callback`은 독스트링이 "notification-only... Plugins should NOT suppress the exception"이라고 못 박은 대로 알리기만 하고 항상 다시 던져집니다(둘 다 소스로 확인). `SimplePlugin`은 이 넷 중 어느 것도 구현하지 않으므로, "Error Handling" 시나리오가 예외 없이 보이는 것은 플러그인이 아니라 위 `app.py`의 평범한 `try/except` 덕분입니다.
+앞 두 줄은 소스와 일치합니다(`BasePlugin`의 클래스 독스트링이 "Plugins takes precedence over agent callbacks"라고 명시, 소스로 확인). 셋째 줄("Plugins are not supported by the ADK web interface")은 이 버전 기준으로 낡았습니다 — `adk web`에 `--extra_plugins` 옵션이 있고(직접 확인: `adk web --help`), 에이전트 로더는 `root_agent`보다 `App` 인스턴스인 `app`을 먼저 찾습니다(소스로 확인, `google/adk/cli/utils/agent_loader.py`의 `_load_from_module_or_package`, 128-133행) — `App`에 플러그인을 실어 `app`으로 내보내면 `adk web`도 플러그인을 쓸 수 있다는 뜻입니다. 마지막 줄은 15개 훅을 뭉뚱그립니다 — `on_model_error_callback`·`on_tool_error_callback`은 대안 값으로 예외를 억제할 수 있지만, `on_agent_error_callback`·`on_run_error_callback`은 독스트링이 "notification-only... Plugins should NOT suppress the exception"이라고 못 박은 대로 알리기만 하고 항상 다시 던져집니다(둘 다 소스로 확인). `SimplePlugin`은 이 넷 중 어느 것도 구현하지 않으므로, "Error Handling" 시나리오가 예외 없이 보이는 것은 플러그인이 아니라 위 `app.py`의 평범한 `try/except` 덕분입니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 먼저 리포 그대로(억제하는 에러 콜백 없음)일 때와, 에러 콜백을 실제로 구현한 별도 플러그인을 붙였을 때를 나란히 봅니다.
+**확인.** 먼저 리포 그대로(억제하는 에러 콜백 없음)일 때와, 에러 콜백을 실제로 구현한 별도 플러그인을 붙였을 때를 나란히 봅니다. 시나리오 A가 실제 `SimplePlugin`을 쓰므로 이번에도 `PYTHONIOENCODING=utf-8`이 필요합니다.
 
 ```bash
-uv run --no-project python -c "
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import asyncio
 from typing import Optional
 import agent as real
@@ -560,7 +561,7 @@ asyncio.run(scenario_b())
 ```
 
 ```powershell
-uv run --no-project python -c "<위와 같은 코드>"
+$env:PYTHONIOENCODING="utf-8"; uv run --no-project python -c "<위와 같은 코드>"
 ```
 
 ```
@@ -577,7 +578,7 @@ PROPAGATED UNCAUGHT: ValueError - Division by zero is not allowed
 run completed without raising - on_tool_error_callback supplied a fallback
 ```
 
-리포 그대로인 시나리오 A는 `ValueError`가 `runner.run_async` 밖으로 그대로 튀어나옵니다(직접 확인) — `app.py`의 `try/except`가 없었다면 화면까지 그대로 올라갔을 것입니다. `on_tool_error_callback`을 구현한 시나리오 B는 같은 예외가 대안 응답으로 바뀌어 정상 종료됩니다 — README의 억제 주장이 이 두 훅에는 맞습니다.
+(시나리오 A에서는 위 표준출력 블록 사이에 표준에러로 ADK가 남기는 `Node execution failed with exception` 트레이스백(`google.adk.workflow._errors.DynamicNodeFailError`로 끝남)이 수십 줄 함께 찍히지만, 스크립트 자신은 `except ValueError`로 잡아 정상 종료합니다 — 직접 확인. 시나리오 B는 예외가 `on_tool_error_callback`에서 이미 처리되므로 이 트레이스백이 없습니다.) 리포 그대로인 시나리오 A는 `ValueError`가 `runner.run_async` 밖으로 그대로 튀어나옵니다(직접 확인) — `app.py`의 `try/except`가 없었다면 화면까지 그대로 올라갔을 것입니다. `on_tool_error_callback`을 구현한 시나리오 B는 같은 예외가 대안 응답으로 바뀌어 정상 종료됩니다 — README의 억제 주장이 이 두 훅에는 맞습니다.
 
 이제 알리기만 하는 두 훅입니다.
 
@@ -627,7 +628,7 @@ uv run --no-project python -c "<위와 같은 코드>"
 STILL PROPAGATED: RuntimeError - deliberate crash inside a before_model_callback
 ```
 
-두 훅 다 실제로 호출되지만(에이전트 경계·러너 경계 각각에서 한 번씩, 소스로 확인 — `google/adk/agents/base_agent.py`·`google/adk/runners.py`의 `except` 블록) `RuntimeError`는 억제되지 않고 그대로 다시 던져집니다 — README의 "억제 가능" 주장은 15개 훅 전체가 아니라 일부에만 해당합니다.
+(이번에도 표준에러에 같은 `DynamicNodeFailError` 계열 트레이스백이 두 겹(에이전트 경계·러너 경계) 함께 찍히지만 스크립트는 `except RuntimeError`로 잡아 정상 종료합니다 — 직접 확인.) 두 훅 다 실제로 호출되지만(에이전트 경계·러너 경계 각각에서 한 번씩, 소스로 확인 — `google/adk/agents/base_agent.py`·`google/adk/runners.py`의 `except` 블록) `RuntimeError`는 억제되지 않고 그대로 다시 던져집니다 — README의 "억제 가능" 주장은 15개 훅 전체가 아니라 일부에만 해당합니다.
 
 ### Step 7. 키 없이 실제로 실행하면
 
@@ -659,6 +660,8 @@ uv run --no-project python agent.py; echo "exit=$LASTEXITCODE"
 RuntimeError: Error in plugin 'simple_plugin' during 'on_user_message_callback' callback: 'cp949' codec can't encode character '\U0001f50d' in position 0: illegal multibyte sequence
 exit=1
 ```
+
+(Git Bash처럼 표준출력이 파이프로 나가는 터미널 기준입니다. 진짜 Windows 콘솔인 PowerShell/Windows Terminal에서는 Python이 콘솔 API로 유니코드를 직접 쓰므로(PEP 528) 이 인코딩 실패가 나지 않고 곧장 API 키 오류로 넘어갈 수 있습니다 — 이 세션에서 PowerShell을 실행할 수 없어 직접 확인하지 못했습니다.)
 
 (직접 확인. 전체 트레이스백은 `google/adk/plugins/plugin_manager.py`의 `_run_callbacks`가 `raise RuntimeError(error_message) from e`로 끝납니다 — 마지막 줄만 발췌했습니다.) 이제 인코딩을 우회하고 진짜 경계까지 갑니다.
 
@@ -702,7 +705,7 @@ exit=1
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 키 없이 `uv run python agent.py`를 실행하면 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f50d'...`가 `RuntimeError: Error in plugin 'simple_plugin' during 'on_user_message_callback' callback: ...`로 감싸져서 먼저 멈춤 | 한국어 Windows 콘솔의 `cp949`가 이모지를 인코딩하지 못하는 것은 Day 019와 같은 원인이지만, 플러그인 훅에서 난 예외는 `PluginManager._run_callbacks`가 다시 `RuntimeError`로 포장한다(직접 확인, 소스로 확인 `google/adk/plugins/plugin_manager.py`) | `PYTHONIOENCODING=utf-8 uv run --no-project python agent.py`처럼 환경변수를 지정한다(PowerShell은 `$env:PYTHONIOENCODING="utf-8"`) |
+| 키 없이 `uv run python agent.py`를 실행하면 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f50d'...`가 `RuntimeError: Error in plugin 'simple_plugin' during 'on_user_message_callback' callback: ...`로 감싸져서 먼저 멈춤 | 표준출력이 파이프로 나가는 터미널(Git Bash 등)에서 `cp949`가 이모지를 인코딩하지 못하는 것은 Day 019와 같은 원인이지만, 플러그인 훅에서 난 예외는 `PluginManager._run_callbacks`가 다시 `RuntimeError`로 포장한다(직접 확인, 소스로 확인 `google/adk/plugins/plugin_manager.py`). 진짜 Windows 콘솔인 PowerShell/Windows Terminal은 PEP 528 덕에 유니코드를 콘솔 API로 직접 쓰므로 이 첫 실패가 나지 않을 수 있습니다(PowerShell을 실행할 수 없어 직접 확인은 못 했습니다 — Day 019도 같은 서술이라 함께 봐야 합니다) | `PYTHONIOENCODING=utf-8 uv run --no-project python agent.py`처럼 환경변수를 지정한다(PowerShell은 `$env:PYTHONIOENCODING="utf-8"`) |
 | 인코딩을 우회한 뒤 실행하면 조용히 빈 응답이 오는 대신 종료 코드 1로 스크립트 전체가 죽음 | `run_agent()`의 소비 루프가 `is_final_response()`에서 멈추지 않고 이벤트를 끝까지 다 받는다 — Day 019가 찾은 것과 같은 조건(직접 확인) | 표준에러에서 실제 예외를 확인한다. 조용한 실패를 원하면 `run_agent()` 호출부를 `try/except`로 감싼다 |
 | Streamlit 앱에서 "Error Handling" 시나리오(0으로 나누기)를 눌러도 화면이 깨지지 않고 `st.error(...)`로 안내됨 | 이것은 `SimplePlugin`의 에러 콜백 덕분이 아니다 — `SimplePlugin`은 `on_tool_error_callback`을 구현하지 않으므로 예외가 `run_agent()`까지 그대로 올라가고, `app.py`의 평범한 `try/except`가 잡을 뿐이다(직접 확인) | 플러그인이 정말로 에러를 처리하게 하려면 `on_tool_error_callback`을 직접 구현해야 한다(더 해보기 참고) |
 | 레슨 폴더에서 `plugin_example.py`를 찾을 수 없음 | 레슨 자신의 README(`Project Structure` 절)가 실제 폴더 구성과 다르다(직접 확인) | 무시하고 실제로 있는 `agent.py`·`app.py`·`requirements.txt`·`.env.example`만 참고한다 |
@@ -715,4 +718,4 @@ exit=1
 
 ## 다음 날 예고
 
-[Day 021 · Google ADK Crash Course · 8_simple_multi_agent](../day021-adk-8-simple-multi-agent/README.md) — 코디네이터 에이전트가 리서치·요약·비평 세 개의 하위 에이전트에 순서대로 위임하는 가장 단순한 멀티 에이전트 구성을 다룹니다.
+[Day 021 · Google ADK Crash Course · 8_simple_multi_agent](../day021-adk-8-simple-multi-agent/README.md) — 코디네이터 에이전트가 하위 에이전트 둘(`summarizer_agent`, `critic_agent`)과 에이전트 도구 하나(`AgentTool`로 감싼 `research_agent`)를 서로 다른 실행 방식으로 부리는 가장 단순한 멀티 에이전트 구성을 다룹니다.
