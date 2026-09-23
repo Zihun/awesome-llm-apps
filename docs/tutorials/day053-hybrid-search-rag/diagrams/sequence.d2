@@ -3,10 +3,10 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-raglite: raglite { class: ours }
-openai: OpenAI 임베딩 API { class: ext }
+raglite: raglite { class: ext }
 cohere: Cohere Rerank API { class: ext }
 claude: Anthropic Claude API { class: ext }
+openai: OpenAI 임베딩 API { class: ext }
 
 user -> ui: 질문 입력
 ui -> raglite: perform_search(질문) — 존재 확인용

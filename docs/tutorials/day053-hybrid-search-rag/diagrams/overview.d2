@@ -1,8 +1,7 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 2
 
-front: "브라우저 쪽" {
+front: "사용자 쪽 화면" {
   class: group
   grid-columns: 3
   user: 사용자 { class: person }
@@ -10,24 +9,25 @@ front: "브라우저 쪽" {
   pdf: 업로드 PDF { class: file }
 }
 
-pipeline: "raglite 파이프라인" {
+pipeline: "raglite 파이프라인 (라이브러리)" {
   class: group
-  grid-rows: 3
-  insert: 문서 적재 (insert_document) { class: ours }
-  hybrid: 하이브리드 검색 (raglite.hybrid_search) { class: ours }
-  rerank: 재순위화 (rerank_chunks) { class: ours }
+  grid-columns: 2
+  insert: 문서 적재 (insert_document) { class: ext }
+  hybrid: 하이브리드 검색 (hybrid_search) { class: ext }
+  rerank: 재순위화 (rerank_chunks) { class: ext }
 }
 
 db: raglite.sqlite (기본) { class: store }
 
 providers: "외부 API" {
   class: group
-  grid-rows: 3
+  grid-columns: 3
   openai: OpenAI 임베딩 API { class: ext }
   cohere: Cohere Rerank API { class: ext }
   claude: Anthropic Claude API { class: ext }
 }
 
 front -> pipeline: PDF 업로드 · 질문 텍스트
-pipeline -> db: 청크·임베딩 저장과 검색
-pipeline -> providers: 임베딩 · 재순위 · 생성 호출
+pipeline -> db: 저장과 검색
+pipeline -> providers: 임베딩·재순위·생성 호출
+front -> providers: 문맥 없을 때 직접 생성 (handle_fallback)

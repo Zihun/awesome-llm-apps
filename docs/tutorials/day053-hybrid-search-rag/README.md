@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-Day 047이 정한 RAG 파이프라인 이름 — 문서·청크·임베딩·저장소·질의·검색·답변 — 에 오늘 앱은 검색 자체를 두 갈래로 쪼갭니다. `raglite`라는 라이브러리가 벡터 검색(ANN 코사인 유사도)과 키워드 검색(SQLite는 FTS5의 진짜 BM25 함수, PostgreSQL은 `tsvector`·`ts_rank`)을 같은 청크 집합에 각각 최대 100개까지 따로 돌리고, 두 순위 목록을 **Reciprocal Rank Fusion**(`k=60`, `score += 1/(k+순위)`)으로 합칩니다 — "하이브리드"는 문자 그대로 이 병합을 가리킵니다(소스로 확인, raglite 0.2.1의 `_search.py`). 합쳐진 상위 후보는 그대로 쓰이지 않고 `rerankers` 패키지를 거쳐 Cohere의 `rerank-english-v3.0` 모델에 한 번 더 보내져 재정렬되는데, 이건 raglite의 기본값이 아닙니다 — raglite 자신의 기본 재순위기는 무료 로컬 ONNX 모델(FlashRank)이고, 이 앱이 `Reranker("cohere", ...)`를 명시해 무료 로컬 재순위를 유료 API 호출로 바꿔치기한 것입니다(소스로 확인, `raglite/_config.py`). 그런데 이 재순위 호출은 질문 하나당 정확히 두 번 일어납니다 — `perform_search()`가 검색 결과의 존재 여부만 확인하려고 하이브리드 검색과 재순위화를 한 번 돌리고, 결과가 있으면 `rag()`가 같은 과정을 처음부터 다시 실행하기 때문입니다(main.py와 raglite `_rag.py`를 대조해 소스로 확인). Day 049와 달리 벡터 저장소 기본값은 `sqlite:///raglite.sqlite`라는 로컬 파일이라 서버를 띄울 필요가 없습니다(`main.py:134`) — `psycopg2-binary`·`sqlalchemy`는 앱 자체 README가 권하는 Neon Postgres를 쓸 때만 실제로 쓰이는 선택지입니다. 문제는 서버가 아니라 설치 그 자체에 있습니다: 정확히 고정된 세 줄(`raglite==0.2.1`, `pydantic==2.10.1`, `rerankers==0.6.0`)은 오늘도 충돌 없이 풀리지만(직접 확인, 139개 패키지), `uv venv`가 기본으로 고르는 Python 3.13.3에서는 `spacy`가 끌어오는 `blis`가 Cython 컴파일 오류로 아예 설치되지 않고, Python 3.11로 바꿔 그 문제를 피해도 raglite 자신이 무조건 요구하는 `llama-cpp-python`(이 앱은 로컬 모델을 전혀 쓰지 않는데도, raglite의 기본 llm·embedder가 로컬 llama.cpp 모델이라 강제로 딸려옵니다)이 소스 빌드로 남으며, 그 둘을 모두 넘겨 설치를 성공시켜도 `pydantic==2.10.1`이 litellm(raglite가 이름조차 `requirements.txt`에 없이 끌어오는 전이 의존성)의 최신 버전이 쓰는 타입 표기를 처리하지 못해 `from raglite import ...` 자체가 `PydanticSchemaGenerationError`로 깨집니다(직접 확인). 공급자는 셋 — OpenAI(임베딩), Cohere(재순위), Anthropic(Claude, 생성) — 인데, 코드에 박힌 두 Claude 모델 ID `claude-3-opus-20240229`(주 답변)와 `claude-3-sonnet-20240229`(폴백 답변)는 각각 2026-01-05·2025-07-21에 이미 은퇴되어, 앞의 관문을 모두 통과해도 마지막 생성 단계에서 다시 막힙니다. 세 관문을 모두 넘기면 PDF를 올리고 질문할 때 하이브리드 검색이 찾은 문맥으로 Claude가 답하고, 문맥이 하나도 없으면 Claude를 문맥 없이 바로 불러 대신 답하는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
+오늘 앱은 RAG 파이프라인의 검색 단계를 두 갈래로 쪼갭니다. `raglite`라는 라이브러리가 벡터 검색(ANN 코사인 유사도)과 키워드 검색(SQLite는 FTS5의 진짜 BM25 함수, PostgreSQL은 `tsvector`·`ts_rank`)을 같은 청크 집합에 각각 최대 100개까지 따로 돌리고, 두 순위 목록을 **Reciprocal Rank Fusion**(`k=60`, `score += 1/(k+순위)`)으로 합칩니다 — "하이브리드"는 문자 그대로 이 병합을 가리킵니다(소스로 확인, raglite 0.2.1의 `_search.py`). 합쳐진 상위 후보는 그대로 쓰이지 않고 `rerankers` 패키지를 거쳐 Cohere의 `rerank-english-v3.0` 모델에 한 번 더 보내져 재정렬되는데, 이건 raglite의 기본값이 아닙니다 — raglite 자신의 기본 재순위기는 무료 로컬 ONNX 모델(FlashRank)이고, 이 앱이 `Reranker("cohere", ...)`를 명시해 무료 로컬 재순위를 유료 API 호출로 바꿔치기한 것입니다(소스로 확인, `raglite/_config.py`). 그런데 이 재순위 호출은 질문 하나당 정확히 두 번 일어납니다 — `perform_search()`가 검색 결과의 존재 여부만 확인하려고 하이브리드 검색과 재순위화를 한 번 돌리고, 결과가 있으면 `rag()`가 같은 과정을 처음부터 다시 실행하기 때문입니다(main.py와 raglite `_rag.py`를 대조해 소스로 확인). Day 049와 달리 벡터 저장소 기본값은 `sqlite:///raglite.sqlite`라는 로컬 파일이라 서버를 띄울 필요가 없습니다(`main.py:134`) — `sqlalchemy`는 SQLite든 Postgres든 항상 쓰이고(raglite가 모든 백엔드에서 SQLAlchemy `create_engine`으로 연결합니다, 소스로 확인), `psycopg2-binary`는 앱 자체 README가 권하는 `postgresql://` 형식 URL을 쓰더라도 실제로는 쓰이지 않습니다 — raglite가 드라이버가 없는 Postgres URL을 만나면 `psycopg2` 대신 `pg8000`으로 바꿔치기하기 때문입니다(소스로 확인, `raglite/_database.py`). 문제는 서버가 아니라 설치 그 자체에 있습니다: 정확히 고정된 세 줄(`raglite==0.2.1`, `pydantic==2.10.1`, `rerankers==0.6.0`)은 오늘도 충돌 없이 풀리지만(직접 확인, 139개 패키지), `uv venv`가 기본으로 고르는 Python 3.13.3에서는 `spacy`가 끌어오는 `blis`가 Cython 컴파일 오류로 아예 설치되지 않고, Python 3.11로 바꿔 그 문제를 피해도 raglite 자신이 무조건 요구하는 `llama-cpp-python`(이 앱은 로컬 모델을 전혀 쓰지 않는데도, raglite의 기본 llm·embedder가 로컬 llama.cpp 모델이라 강제로 딸려옵니다)이 소스 빌드로 남으며, 그 둘을 모두 넘겨 설치를 성공시켜도 관문이 하나 더 있습니다 — `pydantic==2.10.1`이 litellm(raglite가 이름조차 `requirements.txt`에 없이 끌어오는 전이 의존성)의 최신 버전이 쓰는 타입 표기를 처리하지 못해 `from raglite import ...` 자체가 `PydanticSchemaGenerationError`로 깨지고(직접 확인), `pydantic`을 올려 그것을 넘겨도 이번에는 numpy 2.x와 `thinc`(spaCy의 하위 의존성)의 사전 빌드 wheel이 ABI 단에서 부딪혀 `ValueError: numpy.dtype size changed`로 깨집니다(직접 확인) — `numpy<2`로 고정해야 네 번째 관문까지 넘습니다. 그렇게 넘긴 `import`는 그 자체로 네트워크를 탑니다: raglite의 기본 재순위기(FlashRank, 두 모델 약 195MB)를 처음 한 번 내려받고, litellm이 비용표를 매번 GitHub에서 가져오려 시도합니다(직접 확인, 아래 Step 1). 공급자는 셋 — OpenAI(임베딩), Cohere(재순위), Anthropic(Claude, 생성) — 인데, 코드에 박힌 두 Claude 모델 ID `claude-3-opus-20240229`(주 답변)와 `claude-3-sonnet-20240229`(폴백 답변)는 각각 2026-01-05·2025-07-21에 이미 은퇴되어, 앞의 관문을 모두 통과해도 마지막 생성 단계에서 다시 막힙니다. 세 관문을 모두 넘기면 PDF를 올리고 질문할 때 하이브리드 검색이 찾은 문맥으로 Claude가 답하고, 문맥이 하나도 없으면 Claude를 문맥 없이 바로 불러 대신 답하는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -107,7 +107,25 @@ EXITCODE:0
 pydantic.errors.PydanticSchemaGenerationError: Unable to generate pydantic-core schema for typing_extensions.ReadOnly[typing.Literal['input_audio_buffer.speech_started', 'input_audio_buffer.speech_stopped']]. Set `arbitrary_types_allowed=True` in the model_config to ignore this error or implement `__get_pydantic_core_schema__` on your type to fully support it.
 ```
 
-`litellm`은 raglite가 `litellm>=1.47.1`이라는 느슨한 하한만 걸어 둔 전이 의존성이라 오늘은 1.102.0이 풀립니다 — `pydantic==2.10.1`이라는 정확한 고정 하나가, 이 앱이 이름조차 모르는 라이브러리의 최신 버전과 부딪혀 깨지는 셈입니다. `pydantic`을 최신(2.13.5)으로 올리는 것 자체는 직접 확인했습니다 — 다만 그 뒤 `from raglite import ...`가 끝까지 통과하는지는 이 컴퓨터에서 재확인하지 못했습니다: 이 문서를 쓰는 동안 다른 일차 작성자들과 자원을 나눠 쓰는 상태라, spaCy·scikit-learn·litellm을 한 번에 끌어오는 이 import 사슬이 8분을 넘겨도 끝나지 않았습니다(같은 시간에 `import litellm` 하나만 떼어 실행해도 마찬가지였고, `python -X importtime`으로 보면 표준 라이브러리 모듈 하나 부르는 데도 0.5초 안팎이 걸릴 만큼 이 컴퓨터 자체가 그 시점에 느렸습니다). 그래서 아래 Step 2·4·5의 "확인"은 실행 결과가 아니라 해당 함수의 소스를 그대로 인용하고 손으로 계산한 값입니다 — 명령 자체는 그대로 적어 두었으니 여유 있는 환경에서 재현해 보시기 바랍니다.
+`litellm`은 raglite가 `litellm>=1.47.1`이라는 느슨한 하한만 걸어 둔 전이 의존성이라 오늘은 1.102.0이 풀립니다 — `pydantic==2.10.1`이라는 정확한 고정 하나가, 이 앱이 이름조차 모르는 라이브러리의 최신 버전과 부딪혀 깨지는 셈입니다. `pydantic`을 최신(2.13.5)으로 올리면 이 오류는 사라지지만, **네 번째 관문**이 바로 뒤에 있습니다 — `raglite/__init__.py`가 이어서 불러오는 `_insert.py` → `_split_sentences.py`가 `import spacy`를 실행하는데, `spacy`가 끌어오는 `thinc`의 사전 빌드 wheel은 numpy 1.x의 ABI로 컴파일돼 있어서, `pydantic` 업그레이드 과정에서(또는 애초에 고정되지 않은 `numpy` 하한 때문에) numpy 2.x가 함께 설치되면 곧바로 깨집니다. 직접 확인한 출력(맨 아래 줄):
+
+```
+ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
+```
+
+해결은 `numpy<2`로 고정하는 것입니다. 이 네 관문(Python 3.11 + CPU wheel 인덱스 + `pydantic` 업그레이드 + `numpy<2`)을 모두 넘기면 `from raglite import ...`는 실제로 성공합니다 — 직접 확인한 출력:
+
+```
+RAGLITE IMPORT OK
+```
+
+(약 7초 걸렸습니다. "8분을 넘겨도 끝나지 않았다"는 이전 관찰은 이 네 번째 관문 없이 numpy 2.x인 채로 매달려 있었을 가능성이 큽니다 — numpy 2.x 상태에서는 이 import가 **끝나지 않는 것**이 아니라 위 `ValueError`로 **곧바로 실패**하므로, 8분간 이어진 것은 그 앞뒤의 무거운 재시도·재해석 과정이었을 것으로 보이며 이 컴퓨터에서는 재현되지 않았습니다.) 이 import 자체가 이미 네트워크를 탄다는 것도 함께 확인했습니다 — `raglite/_cli.py`가 모듈 최상위에서 함수 기본값으로 `RAGLiteConfig()`를 세 번 만드는데, 그 기본 재순위기(FlashRank 영어·다국어 모델 둘, 처음 한 번 총 195MB)가 없으면 그 자리에서 내려받고, `litellm`은 매번 GitHub에서 비용표를 가져오려 시도합니다(네트워크 차단 환경에서 직접 확인, 아래 출력):
+
+```
+LiteLLM:WARNING: model cost map fetch attempt 1/3 failed (ConnectError fetching https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json: ...); retrying in 2.3s
+```
+
+아래 Step 2·4·5의 "확인"은 이제 실제 실행 결과입니다 — 다만 재현하려면 위 네 관문을 그대로 넘겨야 합니다.
 
 spaCy 모델도 이 자리에서 미리 받아 둡니다 — 앱 자체 README의 "Install spaCy Model" 단계와 정확히 같은 wheel이고, raglite의 문장 분리 함수가 이 모델이 없으면 무조건 실패합니다(Step 4에서 소스로 확인):
 
@@ -143,7 +161,13 @@ compiled
 uv run --no-project python -c "from raglite import RAGLiteConfig, insert_document, hybrid_search, retrieve_chunks, rerank_chunks, rag; print('RAGLITE IMPORT OK')"
 ```
 
-`pydantic`을 올리지 않은 이 상태에서는 위 명령이 그 오류로 실패한다는 것을 직접 확인했습니다. `pydantic`을 올린 뒤 같은 명령이 `RAGLITE IMPORT OK`까지 도달하는지는 재확인하려 했지만, 앞서 적었듯 이 컴퓨터에서는 이 import 사슬 자체가 8분을 넘겨도 끝나지 않아 결과를 담지 못했습니다.
+`pydantic`을 올리지 않은 이 상태에서는 위 명령이 그 오류로 실패한다는 것을 직접 확인했습니다. `uv pip install -U pydantic`으로 올린 뒤 같은 명령을 실행하면 이번에는 네 번째 관문의 `numpy.dtype size changed` 오류로 실패합니다(직접 확인). 마지막으로 `uv pip install "numpy<2"`까지 적용한 뒤 같은 명령을 실행하면:
+
+```
+RAGLITE IMPORT OK
+```
+
+이 통과합니다(직접 확인, 약 7초).
 
 ### Step 2. RAGLiteConfig — 세 공급자와, 기본값이 아닌 선택들
 
@@ -186,7 +210,7 @@ uv run --no-project python -c "from raglite import RAGLiteConfig, insert_documen
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-**확인.** 가짜 키로 `RAGLiteConfig`를 만들어, 네트워크 호출 없이 값이 그대로 들어가는지 확인하는 명령입니다(Step 1에서 적은 이유로 이 컴퓨터에서는 실행 결과를 담지 못했습니다 — `RAGLiteConfig`가 `@dataclass(frozen=True)`라 값을 그대로 저장만 한다는 것과 `reranker.model`이 `rerank-english-v3.0`이라는 것은 위 본문에서 이미 소스로 확인했으므로, 아래 값이 그대로 나와야 합니다).
+**확인.** 가짜 키로 `RAGLiteConfig`를 만들어, 값이 그대로 들어가는지 확인하는 명령입니다(Step 1의 네 관문을 넘긴 환경에서 직접 확인).
 
 ```bash
 uv run --no-project python -c "
@@ -208,9 +232,11 @@ print('reranker model:', cfg.reranker.model)
 "
 ```
 
-소스 기준으로 기대되는 값(직접 확인하지 못함):
+직접 확인한 출력(전부 — 생성자가 먼저 두 줄을 찍습니다):
 
 ```
+Auto-updated model_name to rerank-english-v3.0 for API provider cohere
+Loading APIRanker model rerank-english-v3.0 (this message can be suppressed by setting verbose=0)
 db_url: sqlite:///raglite.sqlite
 llm: claude-3-opus-20240229
 chunk_max_size: 2000
@@ -247,7 +273,7 @@ def main():
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 세 관문을 넘긴 환경에서 서버를 headless로 띄우는 명령입니다.
+**확인.** 네 관문을 넘긴 환경에서 서버를 headless로 띄우는 명령입니다.
 
 ```bash
 uv run --no-project streamlit run main.py --server.headless true
@@ -259,7 +285,27 @@ uv run --no-project streamlit run main.py --server.headless true
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 ```
 
-`main.py:4`의 `from raglite import ...`가 모듈 맨 위에 있어, `streamlit run`도 이 줄을 먼저 통과해야 화면을 띄웁니다 — 즉 Step 1의 import 확인과 같은 무게의 실행입니다. 이 컴퓨터에서는 같은 이유로 이 서버가 실제로 뜨는 것까지는 확인하지 못했습니다. 제목·사이드바 4입력·안내문만 보이고 업로더·채팅창은 아직 없으리라는 것은 `if st.session_state.my_config:` 가드 구조로 추론한 것입니다.
+```
+200
+```
+
+`main.py:4`의 `from raglite import ...`가 모듈 맨 위에 있어, `streamlit run`도 이 줄을 먼저 통과해야 화면을 띄웁니다 — 즉 Step 1의 import 확인과 같은 무게의 실행입니다. Streamlit의 `AppTest`로 `main.py`를 그대로 실행해 화면 요소를 직접 확인했습니다:
+
+```
+title: ['👀 RAG App with Hybrid Search', 'Configuration']
+sidebar text_input labels: ['OpenAI API Key', 'Anthropic API Key', 'Cohere API Key', 'Database URL']
+sidebar button labels: ['Save Configuration']
+info: ['Please configure your API keys and upload documents to get started.']
+```
+
+가짜 키 네 개를 넣고 "Save Configuration"을 누르면(생성자가 키를 검증하지 않으므로):
+
+```
+success: ['Configuration saved successfully!']
+file_uploader present: 1
+```
+
+`if st.session_state.my_config:` 가드대로, 업로더는 이때 처음 나타나고 채팅창(`documents_loaded` 이후)은 아직 없습니다.
 
 ### Step 4. 문서 업로드와 적재 — spaCy는 필수, 임베딩은 이중으로
 
@@ -308,7 +354,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** spaCy 모델이 없으면 정확히 어떤 예외로 멈추는지 확인하는 명령입니다(Step 1에서 적은 이유로 이 컴퓨터에서는 실행 결과를 담지 못했습니다 — 아래 마지막 줄은 `raglite/_split_sentences.py`에 적힌 예외 문구를 그대로 옮긴 것입니다, 소스로 확인).
+**확인.** spaCy 모델이 없으면 정확히 어떤 예외로 멈추는지 확인하는 명령입니다(직접 확인).
 
 ```bash
 uv run --no-project python -c "
@@ -317,19 +363,23 @@ split_sentences('First sentence. Second sentence.')
 "
 ```
 
-소스에 적힌 그대로의 마지막 줄(직접 확인하지 못함):
+직접 확인한 마지막 줄:
 
 ```
 ImportError: Please install `xx_sent_ud_sm` with `pip install https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl`.
 ```
 
-Step 1에서 받아 둔 모델이 있는 환경에서는 같은 함수가 통과해야 합니다 — 이 결과도 같은 이유로 실행하지 못했습니다.
+Step 1에서 받아 둔 모델이 있는 환경에서는 같은 함수가 통과합니다(직접 확인).
 
 ```bash
 uv run --no-project python -c "
 from raglite._split_sentences import split_sentences
 print(split_sentences('First sentence. Second sentence.'))
 "
+```
+
+```
+['First sentence. ', 'Second sentence.']
 ```
 
 ### Step 5. 하이브리드 검색 — RRF를 그대로 실행해보기
@@ -362,7 +412,7 @@ print(split_sentences('First sentence. Second sentence.'))
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** 실제 raglite 함수에 손으로 만든 두 순위를 넣어 보는 명령입니다(Step 1에서 적은 이유로 이 컴퓨터에서는 실행하지 못했습니다 — 대신 raglite 0.2.1의 `_search.py`에 적힌 `reciprocal_rank_fusion` 공식 그대로 손으로 계산했습니다).
+**확인.** 실제 raglite 함수에 손으로 만든 두 순위를 넣어 보는 명령입니다(직접 확인).
 
 ```bash
 uv run --no-project python -c "
@@ -373,16 +423,16 @@ for i, s in zip(ids, scores):
 "
 ```
 
-소스의 공식(`score += 1/(k + 순위)`, 목록에 없으면 순위 대신 그 목록의 길이)으로 손수 계산한 값(직접 확인하지 못함):
+직접 확인한 출력:
 
 ```
-a 0.03257
-b 0.03257
-c 0.03175
-d 0.03175
+b 0.03306
+a 0.03306
+d 0.032
+c 0.032
 ```
 
-(`a`는 첫 목록 0번·둘째 목록 1번이라 `1/(60+0) + 1/(60+1) = 0.03257`, `d`는 첫 목록에 없어 벌점으로 목록 길이 3을 받고 `1/(60+3) + 1/(60+2) = 0.03175`입니다. `a`·`b`, `c`·`d`는 각각 동점이라 그 안의 순서는 파이썬 딕셔너리·집합의 내부 순서에 따라 달라질 수 있습니다.)
+(`a`는 첫 목록 0번·둘째 목록 1번이라 `1/(60+0) + 1/(60+1) = 0.03306`, `c`는 첫 목록 2번·둘째 목록엔 없어 벌점으로 목록 길이 3을 받아 `1/(60+2) + 1/(60+3) = 0.032`입니다. `a`·`b`, `c`·`d`는 각각 동점이라 그 안의 순서는 파이썬 딕셔너리·집합의 내부 순서에 따라 달라질 수 있습니다 — 실행마다 `a`·`b`의 순서나 `c`·`d`의 순서가 바뀔 수 있다는 뜻이며, 값 자체는 바뀌지 않습니다.)
 
 ### Step 6. 재순위화와 폴백·생성 — 중복 호출과 은퇴된 모델 둘
 
@@ -449,17 +499,17 @@ curl -s -X POST https://api.cohere.ai/v1/rerank \
   -d '{"model":"rerank-english-v3.0","query":"test","documents":["a","b"]}'
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(`id`는 요청마다 무작위로 발급되어 실행마다 달라집니다):
 
 ```
-{"id":"de84c4b9-f48c-4ee6-bbff-a3be62072ccd","message":"Incorrect API key provided: ************-key. You can find your API key at https://dashboard.cohere.com/api-keys."}
+{"id":"...","message":"Incorrect API key provided: ************-key. You can find your API key at https://dashboard.cohere.com/api-keys."}
 ```
 
-(`id`는 요청마다 무작위로 발급되어 실행마다 달라집니다.) OpenAI 임베딩 엔드포인트도 같은 방식으로 도달 가능함을 확인했습니다(직접 확인, `https://api.openai.com/v1/embeddings`에 가짜 키로 `invalid_api_key` 오류). Anthropic 쪽은 가짜 키로는 모델 검증 이전에 인증에서 먼저 막혀(직접 확인, `authentication_error`) 은퇴 여부를 이 방식으로는 재현하지 못했습니다 — 은퇴 사실은 Anthropic 자신의 모델 카탈로그를 근거로 적은 것입니다.
+OpenAI 임베딩 엔드포인트도 같은 방식으로 도달 가능함을 확인했습니다(직접 확인, `https://api.openai.com/v1/embeddings`에 가짜 키로 `invalid_api_key` 오류). Anthropic 쪽은 가짜 키로는 모델 검증 이전에 인증에서 먼저 막혀(직접 확인, `authentication_error`) 은퇴 여부를 이 방식으로는 재현하지 못했습니다 — 은퇴 사실은 Anthropic 자신의 모델 카탈로그를 근거로 적은 것입니다.
 
 ### Step 7. 실행 — 어디까지 가는가
 
-**목적.** 지금 이대로, 세 관문을 넘긴 환경에서 실행하면 무엇이 성공하고 무엇이 키가 있어야 비로소 실패하는지 처음부터 끝까지 정리한다.
+**목적.** 지금 이대로, 네 관문을 넘긴 환경에서 실행하면 무엇이 성공하고 무엇이 키가 있어야 비로소 실패하는지 처음부터 끝까지 정리한다.
 
 **할 일.**
 
@@ -470,7 +520,7 @@ if __name__ == "__main__":
     main()
 ```
 
-정리하면: `py_compile`은 항상 통과(관문과 무관) → import는 Python 3.11 + CPU wheel 인덱스 + `pydantic` 업그레이드까지 마쳐야 통과(Step 1) → `streamlit run`은 그 상태에서 화면을 띄우고 가짜 키로도 "Save Configuration"까지 성공(Step 2·3, 생성자가 키를 검증하지 않으므로) → PDF 업로드는 spaCy 모델이 있어야 하고 OpenAI 임베딩을 실제로 호출하므로 유효한 키가 필요(Step 4) → 질문은 OpenAI·Cohere 호출까지는 유효한 키로 성공할 수 있지만(Step 5·6) → 마지막 Claude 생성 호출은 opus·sonnet 둘 다 은퇴된 모델이라 키가 아무리 유효해도 실패합니다(Step 6).
+정리하면: `py_compile`은 항상 통과(관문과 무관) → import는 Python 3.11 + CPU wheel 인덱스 + `pydantic` 업그레이드 + `numpy<2`까지 마쳐야 통과(Step 1) → `streamlit run`은 그 상태에서 화면을 띄우고 가짜 키로도 "Save Configuration"까지 성공(Step 2·3, 생성자가 키를 검증하지 않으므로) → PDF 업로드는 spaCy 모델이 있어야 하고 OpenAI 임베딩을 실제로 호출하므로 유효한 키가 필요(Step 4) → 질문은 OpenAI·Cohere 호출까지는 유효한 키로 성공할 수 있지만(Step 5·6) → 마지막 Claude 생성 호출은 opus·sonnet 둘 다 은퇴된 모델이라 키가 아무리 유효해도 실패합니다(Step 6).
 
 **그림.**
 
@@ -486,7 +536,7 @@ uv run --no-project python -m py_compile main.py && echo compiled
 compiled
 ```
 
-`streamlit run main.py`가 실제로 화면을 띄우는지는 Step 3와 같은 이유로 이 컴퓨터에서 확인하지 못했습니다 — `main.py:4`의 raglite import를 먼저 통과해야 하기 때문입니다.
+`streamlit run main.py`가 실제로 화면을 띄우는지는 Step 3에서 이미 `AppTest`로 직접 확인했습니다 — `main.py:4`의 raglite import를 먼저 통과해야 하는데, 네 관문을 넘긴 환경에서는 그 import가 성공하므로 화면이 뜹니다.
 
 ```bash
 uv run --no-project streamlit run main.py --server.headless true
@@ -504,7 +554,9 @@ uv run --no-project streamlit run main.py --server.headless true
 - [ ] `uv venv` 기본 Python(3.13.3)에서는 `spacy → thinc → blis` 체인이 Cython 컴파일 오류로 설치 자체가 실패한다는 것을 정확한 오류 문구로 확인했다
 - [ ] Python 3.11 + `llama-cpp-python` CPU wheel 인덱스로 설치를 끝까지 성공시켰다
 - [ ] 설치가 성공해도 `pydantic==2.10.1`이 litellm의 최신 타입 표기를 처리하지 못해 `from raglite import ...`가 `PydanticSchemaGenerationError`로 깨진다는 것을 확인했다
-- [ ] `db_url` 기본값이 로컬 SQLite 파일이라 Day 049와 달리 별도 서버가 필수는 아니라는 것을 이해했다
+- [ ] `pydantic`을 올려도 `numpy` 2.x와 `thinc`의 사전 빌드 wheel이 ABI 단에서 부딪혀 `ValueError: numpy.dtype size changed`가 나고, `numpy<2`까지 고정해야 `from raglite import ...`가 `RAGLITE IMPORT OK`까지 실제로 통과한다는 것을 확인했다
+- [ ] 그렇게 통과한 import 자체가 FlashRank 기본 재순위기(195MB, 첫 1회)와 litellm 비용표(매번, GitHub)를 내려받으려 한다는 것을 확인했다
+- [ ] `db_url` 기본값이 로컬 SQLite 파일이라 Day 049와 달리 별도 서버가 필수는 아니고, `sqlalchemy`는 항상 쓰이지만 `psycopg2-binary`는 raglite가 pg8000으로 바꿔치기해 실제로는 쓰이지 않는다는 것을 확인했다
 - [ ] `RAGLiteConfig`가 raglite 자신의 로컬 llama.cpp 기본값을 OpenAI·Claude·Cohere로 어떻게 덮어쓰는지 표로 정리했다
 - [ ] spaCy 모델(`xx_sent_ud_sm`, 4.1MiB)이 없으면 문서 업로드가 정확한 `ImportError`로 멈춘다는 것을 소스로 확인했다
 - [ ] `hybrid_search`가 벡터 검색(ANN)과 키워드 검색(BM25)을 각각 최대 100개까지 뽑아 RRF(k=60)로 병합한다는 것을 소스와 손 계산으로 확인했다
@@ -516,17 +568,18 @@ uv run --no-project streamlit run main.py --server.headless true
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `uv pip install -r requirements.txt`가 `blis`의 `Cython.Compiler.Errors.CompileError`로 실패 | `uv venv`가 기본으로 고르는 Python 3.13.3에는 `spacy → thinc → blis` 체인의 `blis==0.7.11`에 사전 빌드 wheel이 없어 소스 빌드에 들어가고, 그 Cython 소스가 오늘의 Cython 버전과 맞지 않음(직접 확인) | `uv venv --python 3.11`로 인터프리터를 바꾸기 |
-| 위를 고쳐도 `llama-cpp-python==0.3.35`가 `Building`에서 오래 멈춤 | raglite 0.2.1이 코어 의존성으로 `llama-cpp-python`을 무조건 요구하는데(이 앱은 로컬 모델을 쓰지 않음에도), PyPI에 범용 사전 빌드 wheel이 없어 CMake 소스 빌드로 들어감(소스로 확인) | `uv pip install --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu -r requirements.txt`로 CPU 전용 사전 빌드 wheel을 받기 |
-| 설치가 성공해도 `from raglite import RAGLiteConfig`가 `pydantic.errors.PydanticSchemaGenerationError`로 실패 | `pydantic==2.10.1`(정확한 고정)이 전이 의존성 `litellm`의 최신 버전(1.102.0)이 쓰는 `typing_extensions.ReadOnly[...]` 애노테이션의 스키마를 생성하지 못함(직접 확인) | 리포 코드는 고치지 않는 것이 방침 — 재현만 하려면 `uv pip install -U pydantic`으로 `pydantic`을 최신(2.13.5 등)으로 올리기 |
-| `insert_document(...)`가 `ImportError: Please install xx_sent_ud_sm ...`으로 실패 | raglite의 문장 분리 함수가 spaCy 모델 `xx_sent_ud_sm`을 무조건 요구하는데 별도로 설치하지 않음(소스로 확인) | `uv pip install "https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl"` |
+| `uv pip install -r requirements.txt`가 `blis`의 `Cython.Compiler.Errors.CompileError`로 실패 | `uv venv`가 기본으로 고르는 Python 3.13.3에는 `spacy → thinc → blis` 체인의 `blis==0.7.11`에 사전 빌드 wheel이 없어 소스 빌드에 들어가는데, `blis`가 격리 빌드 환경에 고정하는 `Cython<3.0`과 그 환경이 함께 받는 `numpy`(오늘은 2.5.3, 상한 없음)의 헤더가 서로 맞지 않음 — numpy 자신이 "`Build aborted: the NumPy Cython headers require Cython 3.0.0 or newer.`"로 빌드를 중단시킨다(직접 확인. Cython 3.x가 옛 문법을 거부하는 것이 아니라 numpy가 낡은 Cython을 거부하는 것) | `uv venv --python 3.11`로 인터프리터를 바꾸기 |
+| 위를 고쳐도 `llama-cpp-python==0.3.35`가 `Building`에서 오래 멈춤 | raglite 0.2.1이 코어 의존성으로 `llama-cpp-python`을 무조건 요구하는데(이 앱은 로컬 모델을 쓰지 않음에도), PyPI에는 범용 사전 빌드 wheel이 없어 CMake 소스 빌드로 들어감(소스로 확인) | `uv pip install --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu -r requirements.txt`로 CPU 전용 사전 빌드 wheel을 받기 |
+| 설치가 성공해도 `from raglite import RAGLiteConfig`가 `pydantic.errors.PydanticSchemaGenerationError`로 실패 | `pydantic==2.10.1`(정확한 고정)이 전이 의존성 `litellm`의 최신 버전(1.102.0)이 쓰는 `typing_extensions.ReadOnly[...]` 애노테이션의 스키마를 생성하지 못함(직접 확인) | `uv pip install -U pydantic`으로 `pydantic`을 최신(2.13.5 등)으로 올리기 |
+| `pydantic`을 올려도 이번엔 `ValueError: numpy.dtype size changed, may indicate binary incompatibility`로 실패 | `spacy`가 끌어오는 `thinc`의 사전 빌드 wheel이 numpy 1.x ABI로 컴파일돼 있는데, 오늘 풀리는 `numpy`는 2.x라 런타임에 서로 맞지 않음(직접 확인) | `uv pip install "numpy<2"`로 고정하기 — 이후 `from raglite import ...`가 `RAGLITE IMPORT OK`까지 통과한다(직접 확인, 약 7초) |
+| `insert_document(...)`가 `ImportError: Please install xx_sent_ud_sm ...`으로 실패 | raglite의 문장 분리 함수가 spaCy 모델 `xx_sent_ud_sm`을 무조건 요구하는데 별도로 설치하지 않음(직접 확인) | `uv pip install "https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl"` |
 | 유효한 세 키를 모두 넣고 질문해도 마지막 생성 단계에서 오류로 멈춤 | `claude-3-opus-20240229`·`claude-3-sonnet-20240229` 둘 다 Anthropic이 이미 은퇴시킨 모델 ID(각각 2026-01-05·2025-07-21) | 리포 코드는 고치지 않는 것이 방침 — 재현하려면 두 모델 ID를 현재 서비스 중인 ID로 바꿔야 함 |
 
 ## 더 해보기
 
 - `main.py:195-200`의 `rag(...)` 호출과 `main.py:93`의 `perform_search` 내부 `hybrid_search` 호출이 정말 별개의 검색인지, `raglite/_rag.py`의 `_contexts` 함수에 `print`를 끼워 넣어(리포 밖 사본에서) 실제로 두 번 실행되는지 직접 추적해보기
-- `reciprocal_rank_fusion`(Step 5에서 손 계산으로 확인한 함수)을 실제로 실행해보고, 세 번째 순위 목록을 추가해 세 갈래 검색으로 확장하면 병합 점수가 어떻게 달라지는지 실험해보기
-- `RAGLiteConfig`의 `reranker`를 Cohere 대신 raglite 기본값인 로컬 `FlashRankRanker`로 되돌리고(`rag_tutorials/hybrid_search_rag/main.py:53`), 네트워크 호출 없이 재순위화가 되는지 비교해보기
+- `reciprocal_rank_fusion`(Step 5에서 직접 실행해 확인한 함수)에 세 번째 순위 목록을 추가해 세 갈래 검색으로 확장하면 병합 점수가 어떻게 달라지는지 실험해보기
+- `RAGLiteConfig`의 `reranker`를 Cohere 대신 raglite 기본값인 로컬 `FlashRankRanker`로 되돌리고(`rag_tutorials/hybrid_search_rag/main.py:53`), 재정렬 자체(모델을 이미 받아 둔 뒤의 `.rank()` 호출)는 네트워크 없이 되는지, 첫 생성 때만 모델을 내려받는지 비교해보기
 
 ## 다음 날 예고
 
