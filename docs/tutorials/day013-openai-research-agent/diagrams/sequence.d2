@@ -3,8 +3,8 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 triage: Triage Agent { class: ours }
-editor: Editor Agent { class: ours }
 openai: OpenAI API { class: ext }
+editor: Editor Agent { class: ours }
 
 user -> ui: 주제 입력 후 Start Research
 ui -> triage: Runner.run 으로 조사 계획 요청

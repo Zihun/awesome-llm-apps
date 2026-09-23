@@ -1,10 +1,8 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
 
 app: research_agent.py {
   class: ours
-  grid-columns: 3
 
   sidebar: 사이드바 입력 { class: ours }
   triage: Triage Agent (ResearchPlan) { class: ours }
@@ -16,27 +14,25 @@ app: research_agent.py {
 
 input: "입력" {
   class: group
-  grid-columns: 2
   user: 사용자 { class: person }
   env: OPENAI_API_KEY { class: file }
 }
 
 external: "외부 API" {
   class: group
-  grid-columns: 2
-  openai: OpenAI (gpt-4o-mini) { class: ext }
   websearch: 호스티드 웹 검색 { class: ext }
+  openai: OpenAI (gpt-4o-mini) { class: ext }
 }
 
-input.user -> app: 조사 주제 입력 (sidebar로)
+input.user -> app.sidebar: 조사 주제 입력
 input.env -> app.triage: 인증
 app.sidebar -> app.triage: Start Research 클릭
 app.triage -> external.openai: 조사 계획 요청
 app.triage -> app.research: 핸드오프로 선언됨
-app -> external.websearch: 웹 검색 (research)
+app.research -> external.websearch: 웹 검색
 app.research -> app.facts: save_important_fact 로 사실 적재
 app.triage -> app.editor: to_input_list 를 넘겨 코드가 직접 호출
 app.editor -> external.openai: 보고서 작성 요청
 app.editor -> app.tabs: ResearchReport 표시
 app.facts -> app.tabs: 수집된 사실 표시
-app -> input.user: 보고서 열람과 마크다운 내려받기 (tabs)
+app.tabs -> input.user: 보고서 열람과 마크다운 내려받기
