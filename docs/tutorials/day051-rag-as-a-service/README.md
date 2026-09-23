@@ -1,10 +1,10 @@
 # Day 051 · 🧩 RAG-as-a-Service
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 70분 · API 비용 대략 Ragie 무료 티어 $0(문서 1,000페이지·검색 무제한) + Claude Sonnet 4.5 질문당 1센트 미만(대략치, 키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/rag-as-a-service`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 70분 · API 비용 대략 Ragie 무료 티어 $0(Developer 플랜, 문서·검색 각 1,000까지) + Claude Sonnet 4.5 질문당 1센트 미만(대략치, 키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/rag-as-a-service`
 
 ## 오늘 만들 것
 
-오늘은 지금까지의 RAG 볼륨과 정반대 방향을 봅니다. Day 048이 임베딩부터 벡터 저장소까지 전부 이 컴퓨터 안에서 돌렸다면, 오늘의 `rag_app.py`(190줄)는 그 전부를 남의 서비스에 맡깁니다. `requirements.txt` 세 줄 — `streamlit`, `anthropic`, `requests` — 에는 벡터 저장소도 임베딩 라이브러리도 문서 로더도 없습니다(직접 확인, Step 1). 이 볼륨의 다른 앱에서 `chromadb`나 `langchain`이 하던 일을 여기서는 `requests`가 대신하는데, 실제로 하는 일은 문서 URL 하나를 Ragie(ragie.ai)라는 호스팅형 RAG 서비스에 통째로 넘기는 것뿐입니다 — `POST /documents/url`로 문서를 보내면 Ragie가 그 문서를 가져와 알아서 쪼개고 임베딩하고 저장하고, `POST /retrievals`로 질문을 보내면 관련 청크 텍스트만 돌려줍니다. 이 코드가 실제로 하는 일은 그 두 호출과, 돌아온 청크를 시스템 프롬프트에 끼워 Anthropic Claude(`claude-sonnet-4-5`)에게 최종 답을 만들게 하는 것뿐입니다. 계정도 키도 둘이 필요합니다 — Ragie는 무료 티어(문서 1,000페이지까지, 검색은 무제한)로 시작할 수 있지만, 업로드한 문서는 이 컴퓨터가 아니라 Ragie 서버에 남고, 질문할 때마다 그 내용의 일부가 다시 Anthropic 서버로도 넘어갑니다. 두 서비스 모두 실제 키가 있어야 호출되므로, 이 문서의 확인은 대부분 네트워크 없이 코드를 직접 실행하거나 Ragie·Anthropic이 공개한 문서를 읽어 근거를 대는 방식입니다 — 그 과정에서 앱 자신의 README와 실제 코드가 서로 다른 말을 하는 지점을 세 군데 찾았습니다. 아래는 완성된 아키텍처입니다.
+오늘은 지금까지의 RAG 볼륨과 정반대 방향을 봅니다. Day 048이 임베딩부터 벡터 저장소까지 전부 이 컴퓨터 안에서 돌렸다면, 오늘의 `rag_app.py`(190줄)는 그 전부를 남의 서비스에 맡깁니다. `requirements.txt` 세 줄 — `streamlit`, `anthropic`, `requests` — 에는 벡터 저장소도 임베딩 라이브러리도 문서 로더도 없습니다(직접 확인, Step 1). 이 볼륨의 다른 앱에서 `chromadb`나 `langchain`이 하던 일을 여기서는 `requests`가 대신하는데, 실제로 하는 일은 문서 URL 하나를 Ragie(ragie.ai)라는 호스팅형 RAG 서비스에 통째로 넘기는 것뿐입니다 — `POST /documents/url`로 문서를 보내면 Ragie가 그 문서를 가져와 알아서 쪼개고 임베딩하고 저장하고, `POST /retrievals`로 질문을 보내면 관련 청크 텍스트만 돌려줍니다. 이 코드가 실제로 하는 일은 그 두 호출과, 돌아온 청크를 시스템 프롬프트에 끼워 Anthropic Claude(`claude-sonnet-4-5`)에게 최종 답을 만들게 하는 것뿐입니다. 계정도 키도 둘이 필요합니다 — Ragie는 무료 Developer 플랜(문서 1,000페이지·검색 1,000회까지)으로 시작할 수 있지만, 업로드한 문서는 이 컴퓨터가 아니라 Ragie 서버에 남고, 질문할 때마다 그 내용의 일부가 다시 Anthropic 서버로도 넘어갑니다. 두 서비스 모두 실제 키가 있어야 호출되므로, 이 문서의 확인은 대부분 네트워크 없이 코드를 직접 실행하거나 Ragie·Anthropic이 공개한 문서를 읽어 근거를 대는 방식입니다 — 그 과정에서 원본 앱 README 자신이 "50줄 미만"이라 적은 이 파일이 실제로는 190줄이라는 것, 그리고 코드가 Ragie의 공식 문서와 어긋나는 지점을 두 군데(Step 3의 `mode` 값, Step 4의 `filters` 필드명) 더 찾았습니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,7 +12,7 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| Ragie API 키 | 문서 업로드(URL)와 검색(retrievals) — 청크 분할·임베딩·벡터 저장·유사도 검색을 전부 대신 처리 | https://www.ragie.ai 가입 후 발급. Developer(무료) 플랜은 문서 1,000페이지까지, 검색은 무제한(ragie.ai/pricing, 2026-09-23 확인) |
+| Ragie API 키 | 문서 업로드(URL)와 검색(retrievals) — 청크 분할·임베딩·벡터 저장·유사도 검색을 전부 대신 처리 | https://www.ragie.ai 가입 후 발급. Developer(무료) 플랜은 문서 1,000페이지·검색 1,000회까지(ragie.ai/pricing, 2026-09-23 확인) |
 | Anthropic API 키 | 검색된 청크를 근거로 최종 답변 생성(`claude-sonnet-4-5`) | https://console.anthropic.com 가입 후 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | 인터넷 연결 | 두 서비스 모두 호스팅형이라 업로드·검색·생성 호출이 전부 외부로 나간다 | 별도 설치 없음. 사내망이면 `api.ragie.ai`·`api.anthropic.com` 접속 허용 필요 |
@@ -54,7 +54,7 @@ anthropic
 requests
 ```
 
-세 줄 다 버전 고정이 없습니다. 그리고 셋 중 어디에도 벡터 저장소(`chromadb` 같은), 임베딩 라이브러리, 문서 로더가 없습니다 — Day 047·048이 쓰던 `langchain`/`chromadb` 계열이 이 앱에는 통째로 빠져 있습니다. 이 문서를 쓰며 설치했을 때는 48개 패키지가 받아졌고(직접 확인), 그중 이 날의 이야기와 관련된 것만 추리면 **streamlit 1.64.0**, **anthropic 1.8.0**, **requests 2.34.2**입니다. `requests`가 그 자리를 메우는데, 뒤에서 보듯 실제로 하는 일은 임베딩이나 청크 분할이 아니라 Ragie 서버에 문서 URL과 질문을 실어 보내는 것뿐입니다.
+세 줄 다 버전 고정이 없습니다. 그리고 셋 중 어디에도 벡터 저장소(`chromadb` 같은), 임베딩 라이브러리, 문서 로더가 없습니다 — Day 048이 쓰던 `langchain`/`chromadb` 계열이 이 앱에는 통째로 빠져 있습니다. 이 문서를 쓰며 설치했을 때는 48개 패키지가 받아졌고(직접 확인), 그중 이 날의 이야기와 관련된 것만 추리면 **streamlit 1.64.0**, **anthropic 1.8.0**, **requests 2.34.2**입니다. `requests`가 그 자리를 메우는데, 뒤에서 보듯 실제로 하는 일은 임베딩이나 청크 분할이 아니라 Ragie 서버에 문서 URL과 질문을 실어 보내는 것뿐입니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -435,7 +435,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 문서를 이미 올린 뒤, 질문 하나가 흘러가는 경로만 그립니다 — 업로드(Step 3)는 "Submit API Keys"·"Upload Document" 버튼 뒤에 따로 있고 `document_uploaded` 플래그로 한 번만 일어나므로, 질문을 반복해도 다시 실행되지 않습니다(Day 048과 가장 다른 지점입니다). 질문을 입력하고 "Generate Response"를 누르면 `process_query(query)`가 호출되어 먼저 `retrieve_chunks()`가 Ragie의 `/retrievals`에 질문과 `filters`를 실어 보냅니다. Ragie는 청크 분할·임베딩·유사도 검색을 전부 자기 서버 안에서 마치고 관련 청크의 텍스트만 돌려줍니다 — 이 왕복 한 번 안에 이 볼륨의 다른 날들이 여러 스텝에 걸쳐 보여준 일(분할, 임베딩, 저장, 검색)이 전부 접혀 들어가 있습니다. 청크가 하나라도 돌아오면 `create_system_prompt()`가 "Ragie AI" 페르소나와 청크를 하나의 문자열로 합치고, `generate_response()`가 그 문자열을 시스템 프롬프트로 Claude(`claude-sonnet-4-5`)에 보내 답을 받습니다. 어느 한쪽 호출이라도 실패하면 `upload_document`·`retrieve_chunks` 모두 `response.ok`가 아닐 때 `Exception`을 직접 던지고(`rag_tutorials/rag-as-a-service/rag_app.py:42-43`, `rag_tutorials/rag-as-a-service/rag_app.py:69-70`), 이를 감싸는 `try/except`는 Streamlit 버튼 핸들러 쪽(`rag_tutorials/rag-as-a-service/rag_app.py:167-168`, `rag_tutorials/rag-as-a-service/rag_app.py:184-185`)에만 있어 화면에는 `st.error()`로 나타나지 총 죽지는 않습니다 — Day 005의 처리되지 않은 예외와 달리, 이 앱은 적어도 이 두 호출은 우아하게 실패합니다.
+이 그림은 문서를 이미 올린 뒤, 질문 하나가 흘러가는 경로만 그립니다 — 업로드(Step 3)는 "Submit API Keys"·"Upload Document" 버튼 뒤에 따로 있고 `document_uploaded` 플래그로 한 번만 일어나므로, 질문을 반복해도 다시 실행되지 않습니다(Day 048과 가장 다른 지점입니다). 질문을 입력하고 "Generate Response"를 누르면 `process_query(query)`가 호출되어 먼저 `retrieve_chunks()`가 Ragie의 `/retrievals`에 질문과 `filters`를 실어 보냅니다. Ragie는 청크 분할·임베딩·유사도 검색을 전부 자기 서버 안에서 마치고 관련 청크의 텍스트만 돌려줍니다 — 이 왕복 한 번 안에 이 볼륨의 다른 날들이 여러 스텝에 걸쳐 보여준 일(분할, 임베딩, 저장, 검색)이 전부 접혀 들어가 있습니다. 청크가 하나라도 돌아오면 `create_system_prompt()`가 "Ragie AI" 페르소나와 청크를 하나의 문자열로 합치고, `generate_response()`가 그 문자열을 시스템 프롬프트로 Claude(`claude-sonnet-4-5`)에 보내 답을 받습니다. 어느 한쪽 호출이라도 실패하면 `upload_document`·`retrieve_chunks` 모두 `response.ok`가 아닐 때 `Exception`을 직접 던지고(`rag_tutorials/rag-as-a-service/rag_app.py:42-43`, `rag_tutorials/rag-as-a-service/rag_app.py:69-70`), 이를 감싸는 `try/except`는 Streamlit 버튼 핸들러 쪽(`rag_tutorials/rag-as-a-service/rag_app.py:167-168`, `rag_tutorials/rag-as-a-service/rag_app.py:184-185`)에만 있어 화면에는 `st.error()`로 나타나지 앱이 통째로 죽지는 않습니다 — Day 005의 처리되지 않은 예외와 달리, 이 앱은 적어도 이 두 호출은 우아하게 실패합니다.
 
 ## 실행 체크리스트
 
@@ -452,10 +452,11 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| "Upload mode"에서 `accurate`를 고르면 이미지·표까지 더 잘 인식될 것으로 기대하게 됨(앱 자신의 README도 "fast and accurate document processing modes"라고 적음) | Ragie 공식 SDK 문서 기준 텍스트 문서의 `mode` 값은 `fast`/`hi_res`만 정의되어 있고 `accurate`는 문서화된 값이 아니다(소스로 확인, 2026-09-23) — `upload_document()`(`rag_tutorials/rag-as-a-service/rag_app.py:21-45`)는 이 값을 검증하지 않고 그대로 전송한다(직접 확인, Step 3) | 이미지·표까지 추출하려면 `accurate` 대신 `hi_res`를 선택 |
-| 문서를 올리고 질문해도 매번 "No relevant information found for your query."만 돌아올 가능성이 있음(계정이 없어 직접 재현은 못함) | `retrieve_chunks()`가 보내는 JSON 키는 `filters`(복수)인데(직접 확인, Step 4) Ragie 문서가 정의하는 필드명은 `filter`(단수)다(소스로 확인) — 게다가 `upload_document()`는 애초에 `metadata`를 전혀 보내지 않아 어떤 문서에도 `scope` 값이 없다(소스로 확인, Step 3·4) | 코드를 고친다면 `filters`를 `filter`로 바꾸고, 업로드 시 `metadata={"scope": "tutorial"}`을 함께 보내야 함 |
+| "Upload mode"에서 `accurate`를 고르면 실제로 어떻게 처리되는지 알 수 없음(계정이 없어 직접 재현은 못함) — 앱 자신의 README는 "fast and accurate document processing modes"라고 적어 이미지·표까지 더 잘 인식되리라 기대하게 만든다 | Ragie 공식 SDK 문서 기준 텍스트 문서의 `mode` 값은 `fast`/`hi_res`만 정의되어 있고 `accurate`는 문서화된 값이 아니다(소스로 확인, 2026-09-23) — `upload_document()`(`rag_tutorials/rag-as-a-service/rag_app.py:21-45`)는 이 값을 검증하지 않고 그대로 전송한다(직접 확인, Step 3) | 이미지·표까지 추출하려면 `accurate` 대신 `hi_res`를 선택 |
+| 문서를 올리고 질문했을 때 (a) 필터 없이 검색된 것처럼 다른 범위의 청크가 섞여 나오거나, (b) `Retrieval failed: 4xx`로 `st.error`가 뜸 — 계정이 없어 둘 중 실제로 무엇이 나는지는 재현하지 못함 | `retrieve_chunks()`가 보내는 JSON 키는 `filters`(복수)인데(직접 확인, Step 4) Ragie 문서가 정의하는 필드명은 `filter`(단수)다(소스로 확인) — Ragie가 모르는 키를 무시하면 (a), 거부하면 (b)가 된다. 게다가 `upload_document()`는 애초에 `metadata`를 전혀 보내지 않아 어떤 문서에도 `scope` 값이 없다(소스로 확인, Step 3·4) — 빈 결과("No relevant information found…")는 필터가 실제로 걸릴 때만 나온다 | 코드를 고친다면 `filters`를 `filter`로 바꾸고, 업로드 시 `metadata={"scope": "tutorial"}`을 함께 보내야 함 |
 | 두 키를 모두 입력하고 "Submit API Keys"를 눌러도 오류 없이 넘어갔는데, 정작 업로드·질의 단계에서야 인증 오류가 남 | `RAGPipeline.__init__`과 `Anthropic()` 생성자 모두 이 시점엔 키를 검증하지 않는다(직접 확인, Step 2) — 실제 검증은 Ragie·Anthropic에 첫 요청을 보낼 때 서버가 응답하며 일어남 | 클라이언트 생성 성공을 키가 유효하다는 근거로 삼지 말 것 |
 | 업로드 후 "Document uploaded and indexed successfully!"가 떠도 실제 인덱싱이 끝났는지는 알 수 없음 | `upload_document()`의 반환값을 호출부(`rag_tutorials/rag-as-a-service/rag_app.py:159-163`)가 아예 읽지 않고, 고정된 `time.sleep(5)`(`rag_tutorials/rag-as-a-service/rag_app.py:164`) 뒤 무조건 성공 처리한다(소스로 확인) — Ragie 응답에는 `status` 필드가 있지만 이 코드는 보지 않는다 | 큰 문서·`hi_res` 모드에서는 5초보다 오래 걸릴 수 있으니 업로드 직후 곧바로 질문하지 말고 잠시 기다려볼 것 |
+| `messages.create(model="claude-sonnet-4-5", ...)`가 어느 날부터 `not_found_error`로 실패함 | `claude-sonnet-4-5`(`claude-sonnet-4-5-20250929`)는 레거시로 분류되어 있고 2026-09-29 이전에는 퇴역하지 않는다고 명시되어 있을 뿐, 그 이후는 보장되지 않는다(Anthropic 모델 문서, 2026-09-23 확인) | 현재 세대 모델(`claude-sonnet-5`, 입력 $2/출력 $10 100만 토큰당)로 `model=` 값을 바꾸기 |
 
 ## 더 해보기
 
