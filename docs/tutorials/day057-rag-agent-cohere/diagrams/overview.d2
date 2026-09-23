@@ -1,0 +1,33 @@
+...@../../_tools/theme
+direction: down
+grid-columns: 2
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 3
+  user: 사용자 { class: person }
+  ui: Streamlit UI (rag_agent_cohere.py) { class: ours }
+  pdf: 업로드 PDF { class: file }
+}
+
+query: "질의 처리 (process_query)" {
+  class: group
+  grid-rows: 2
+  rag: RAG 체인 (문서 검색) { class: ours }
+  web: 웹 검색 에이전트 (LangGraph) { class: ours }
+}
+
+qdrant: Qdrant 컬렉션 (cohere_rag) { class: store }
+
+providers: "외부 서비스" {
+  class: group
+  grid-rows: 3
+  cohere: Cohere API (임베딩·채팅) { class: ext }
+  hub: LangChain Hub (프롬프트) { class: ext }
+  ddg: DuckDuckGo { class: ext }
+}
+
+front -> query: 질문 텍스트
+front -> qdrant: PDF 청크·임베딩 저장
+query -> qdrant: 유사 청크 검색
+query -> providers: 임베딩·생성·프롬프트·검색 호출

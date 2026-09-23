@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+query: 질문 { class: ours }
+check: "상위 10개 중 1개라도 score >= 0.7?" {
+  shape: diamond
+  style.font-size: 12
+  style.fill: "#F5F5F5"
+  style.stroke: "#2D3142"
+}
+rag: RAG 체인 (문서 기반 답변) { class: ours }
+web: 웹 검색 에이전트 (LangGraph) { class: ours }
+
+query -> check: similarity_score_threshold
+check -> rag: "예 - relevant_docs 비어있지 않음"
+check -> web: "아니오 - relevant_docs 빈 리스트"
