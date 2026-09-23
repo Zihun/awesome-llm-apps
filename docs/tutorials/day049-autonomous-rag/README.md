@@ -1,6 +1,6 @@
 # Day 049 · 🔍 Autonomous RAG
 
-> 볼륨 5 📀 RAG · 난이도 ★★★ ⚠ · 예상 소요 100분(agno 임포트 경로 5갈래를 하나하나 직접 실행해 확인하고, 뜨지 않은 DB에 실제로 접속을 시도해 타임아웃이 날 때까지 기다리는 데 손이 갑니다) · API 비용 대략 요청 1건에 GPT-4o-mini 채팅과 text-embedding-ada-002 임베딩 호출, 요금표 기준 $0.01 이하 (대략치 — 키가 없어 실제 과금은 확인 못했고, 오늘 코드는 임포트 단계에서부터 막혀 이 호출 자체에 이르지 못합니다) · 원본 앱: `rag_tutorials/autonomous_rag`
+> 볼륨 5 📀 RAG · 난이도 ★★★ ⚠ · 예상 소요 100분(셸 명령 블록 28개를 하나씩 돌리고, Windows에서는 뜨지 않은 DB 접속이 psycopg 기본값(주소당 130초)으로 두 주소를 기다려 약 4분 걸립니다) · API 비용 대략 요청 1건에 GPT-4o-mini 채팅과 text-embedding-ada-002 임베딩 호출, 요금표 기준 $0.01 이하 (대략치 — 키가 없어 실제 과금은 확인 못했고, 오늘 코드는 임포트 단계에서부터 막혀 이 호출 자체에 이르지 못합니다) · 원본 앱: `rag_tutorials/autonomous_rag`
 
 ## 오늘 만들 것
 
@@ -80,7 +80,7 @@ ModuleNotFoundError: No module named 'agno.document'
 DB_URL = "postgresql+psycopg://ai:ai@localhost:5532/ai"
 ```
 
-SQLAlchemy 접두어 `postgresql+psycopg`는 psycopg **3**(v2가 아님) 드라이버를 가리킵니다. `requirements.txt`의 `psycopg-binary`만 설치하면 이 드라이버가 잡힐 것 같지만, 실제로는 컴파일된 확장 모듈 `psycopg_binary`만 깔릴 뿐 SQLAlchemy가 실제로 `import`하는 `psycopg` 패키지 자체는 별도입니다(직접 확인, 아래). `SearchType`을 포함해 `agno.vectordb.pgvector`의 임포트 자체는 성공하므로(Step 4에서 다시 확인) 이 드라이버 이름을 SQLAlchemy가 찾아내는 것 자체는 문제가 없습니다.
+SQLAlchemy 접두어 `postgresql+psycopg`는 psycopg **3**(v2가 아님) 드라이버를 가리킵니다. `requirements.txt`의 `psycopg-binary`만 설치하면 이 드라이버가 잡힐 것 같지만, 실제로는 컴파일된 확장 모듈 `psycopg_binary`만 깔릴 뿐 SQLAlchemy가 실제로 `import`하는 `psycopg` 패키지 자체는 별도입니다(직접 확인, 아래). `SearchType`을 포함해 `agno.vectordb.pgvector`의 임포트 자체는 성공합니다(Step 4에서 다시 확인) — 다만 이 임포트는 SQLAlchemy가 실제로 `psycopg` 드라이버를 찾아내는지와는 무관합니다. 드라이버 이름은 `create_engine(...)`이 URL을 보고 그때 가서 찾으므로, `psycopg`가 없으면 임포트가 아니라 그 시점에 `ModuleNotFoundError`로 실패합니다(Step 4에서 직접 확인). 그래서 `uv pip install psycopg`가 필요합니다.
 
 ```bash
 uv run --no-project python -c "import psycopg"
@@ -302,7 +302,7 @@ uv run --no-project python -c "from agno.embedder.openai import OpenAIEmbedder"
 ModuleNotFoundError: No module named 'agno.embedder'
 ```
 
-`PgVector`를 (오늘 이름으로) 그냥 만들기만 하면 네트워크에 곧바로 손대지 않습니다 — `db_engine`과 `Session`을 지연 생성할 뿐입니다(직접 확인, 아래). DB가 실제로 필요해지는 시점은 `.create()`나 검색처럼 실제로 연결을 여는 메서드를 호출할 때입니다. 그 연결이 어떻게 실패하는지는 SQLAlchemy 엔진으로 직접 확인했습니다 — Postgres를 띄우지 않은 이 환경에서, `localhost:5532`에는 응답하는 것이 아무것도 없습니다.
+`PgVector`를 (오늘 이름으로) 그냥 만들기만 하면 네트워크에 곧바로 손대지 않습니다. `db_engine`과 `Session`은 사실 `__init__`에서 바로 만들어집니다(소스로 확인, `agno/vectordb/pgvector/pgvector.py`) — 지연되는 것은 이 둘의 생성이 아니라 SQLAlchemy의 `create_engine()`이 실제 소켓 연결은 열지 않는다는 점입니다. DB가 실제로 필요해지는 시점은 `.create()`나 검색처럼 실제로 연결을 여는 메서드를 호출할 때입니다. 그 연결이 어떻게 실패하는지는 SQLAlchemy 엔진으로 직접 확인했습니다 — Postgres를 띄우지 않은 이 환경에서, `localhost:5532`에는 응답하는 것이 아무것도 없습니다.
 
 ```bash
 uv run --no-project python -c "
@@ -324,7 +324,7 @@ engine.connect()
 "
 ```
 
-직접 확인한 출력(발췌, 곧바로 실패하지 않고 수십 초를 기다린 뒤 끝났습니다 — 정확한 대기 시간과 IPv6/IPv4 시도 여부는 환경마다 다를 수 있습니다):
+직접 확인한 출력(발췌 — 곧바로 실패하지 않고 이 PC에서는 **260.0초**(약 4분 20초) 뒤에 끝났습니다. psycopg 3.3.6의 기본 접속 타임아웃이 주소당 130초이고(`psycopg.conninfo._DEFAULT_CONNECT_TIMEOUT`, 소스로 확인), 아래처럼 `::1`과 `127.0.0.1` 두 주소를 순서대로 시도하기 때문입니다 — 해석되는 주소 개수가 다른 환경이면 시간도 달라집니다):
 
 ```
 sqlalchemy.exc.OperationalError: (psycopg.errors.ConnectionTimeout) connection timeout expired
@@ -332,6 +332,8 @@ Multiple connection attempts failed. All failures were:
 - host: 'localhost', port: 5532, hostaddr: '::1': connection timeout expired
 - host: 'localhost', port: 5532, hostaddr: '127.0.0.1': connection timeout expired
 ```
+
+"멈춘 줄 알았다"는 착각을 피하려면 `create_engine(..., connect_args={"connect_timeout": 5})`처럼 타임아웃을 짧게 주거나(약 10초로 끝납니다), Windows에서는 주소당 130초 × 2 ≈ 4분을 그냥 기다립니다.
 
 즉 이 앱이 오늘 자 agno로 임포트까지 전부 통과하도록 손을 본다 해도, `setup_assistant`가 실제로 문서를 검색하거나 저장하려는 순간 PostgreSQL이 응답하지 않으면 여기서 막힙니다 — Step 1의 사전 준비가 왜 필요한지를 보여주는 지점입니다.
 
@@ -422,8 +424,10 @@ functions on <class 'agno.knowledge.reader.pdf_reader.PDFReader'>
 uv run --no-project python -c "from agno.tools.duckduckgo import DuckDuckGoTools"
 ```
 
+직접 확인한 출력(마지막 줄 — `agno.tools.websearch`가 `except ImportError:`로 받아 다시 던지는 바깥쪽 예외입니다. 안쪽의 `ModuleNotFoundError: No module named 'ddgs'`는 그 위에 "During handling of the above exception…"으로 함께 찍힙니다):
+
 ```
-ModuleNotFoundError: No module named 'ddgs'
+ImportError: `ddgs` not installed. Please install using `pip install ddgs`
 ```
 
 ```bash
@@ -503,6 +507,8 @@ status: RunStatus.error
 content: Incorrect API key provided: sk-inval***********-123. You can find your API key at https://platform.openai.com/account/api-keys.
 ```
 
+(agno의 익명 사용 통계는 성공한 `agent.run()`마다 나갑니다 — Day 047 Step 5가 로컬 수신기로 직접 확인한 내용입니다. 방금 이 호출은 `RunStatus.error`이므로 실패한 실행이라 아무것도 보내지 않았고, 이 문서의 다른 명령들도 전부 이렇게 실패하는 실행이라 마찬가지입니다. 유효한 키로 고쳐 성공하는 순간부터는 보내며, 끄려면 `AGNO_TELEMETRY=false`입니다.)
+
 하지만 91번째 줄의 `query_assistant`는 이 `RunOutput`을 `.status`나 `.content`로 들여다보기 전에, `for delta in agent.run(question)`으로 **반복부터** 시도합니다. `RunOutput`은 반복 가능한 객체가 아니므로(직접 확인, 아래) 이 시도는 키가 맞든 틀리든 상관없이 곧장 `TypeError`로 끝납니다 — Day 038의 "틀린 키의 에러가 트렌드 분석 결과인 척 화면에 뜨는" 것과 달리, 이 앱은 유효한 키로도 질문마다 예외 없이 성공한 적이 없다는 뜻입니다.
 
 ```bash
@@ -561,11 +567,11 @@ iterable: False
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `from agno.document.reader.pdf_reader import PDFReader`, `from agno.knowledge.pdf_url import PDFUrlKnowledgeBase`, `from agno.embedder.openai import OpenAIEmbedder`, `from agno.storage.agent.postgres import PostgresAgentStorage`가 각각 `ModuleNotFoundError`로 실패 | agno 3.0.10에서 `agno.document`·`agno.embedder`·`agno.storage` 패키지가 통째로 없어지고 `agno.knowledge.pdf_url`도 사라졌다(직접 확인). 익스트라 설치로 고쳐지는 문제가 아니다 | 리포 코드를 고치지 않는 것이 이 시리즈의 방침이므로 그대로 둔다. 대응 클래스는 각각 `agno.knowledge.reader.pdf_reader.PDFReader`, `agno.knowledge.knowledge.Knowledge`, `agno.knowledge.embedder.openai.OpenAIEmbedder`, `agno.db.postgres.postgres.PostgresDb`다(agno 3.0.10 소스로 확인) |
-| `from agno.tools.duckduckgo import DuckDuckGoTools`에서 `ModuleNotFoundError: No module named 'ddgs'` | `agno.tools.duckduckgo`가 상속하는 `agno.tools.websearch`가 `requirements.txt`의 `duckduckgo-search`가 아니라 `ddgs`를 가져온다(agno 3.0.10 소스로 확인, Day 038과 동일한 원인) | `uv pip install ddgs` |
+| `from agno.tools.duckduckgo import DuckDuckGoTools`가 ``ImportError: `ddgs` not installed…``로 실패(안쪽 원인은 `ModuleNotFoundError: No module named 'ddgs'`, 직접 확인) | `agno.tools.duckduckgo`가 상속하는 `agno.tools.websearch`가 `requirements.txt`의 `duckduckgo-search`가 아니라 `ddgs`를 가져온다(agno 3.0.10 소스로 확인, Day 038과 동일한 원인) | `uv pip install ddgs` |
 | `import psycopg`가 `requirements.txt`의 `psycopg-binary` 설치만으로는 `ModuleNotFoundError`로 실패 | `psycopg-binary`는 컴파일된 확장 모듈 `psycopg_binary`만 제공하고, SQLAlchemy가 실제로 가져오는 `psycopg` 패키지 자신은 별도다(직접 확인) | `uv pip install psycopg` 추가 설치 |
-| `Agent(..., storage=..., knowledge_base=...)`가 `TypeError: unexpected keyword argument 'storage'`로 실패 | 오늘의 `Agent.__init__`은 `storage=`·`knowledge_base=`를 모른다 — 각각 `db=`·`knowledge=`로 이름이 바뀌었다(직접 확인) | 리포 코드는 고치지 않는다. 이름이 바뀐 것을 알고 넘어가면 됨 |
+| `Agent(..., storage=..., knowledge_base=...)`가 `TypeError: unexpected keyword argument 'storage'`로 실패 | 오늘의 `Agent.__init__`은 `storage=`·`knowledge_base=`를 모른다 — 각각 `db=`·`knowledge=`로 이름이 바뀌었다(직접 확인). 같은 `Agent(...)` 호출의 `show_tool_calls=True`(`rag_tutorials/autonomous_rag/autorag.py:55`)와 `PDFUrlKnowledgeBase(..., num_documents=3)`(`rag_tutorials/autonomous_rag/autorag.py:47`)도 각각 `TypeError`로 막힌다(직접 확인) — 오늘은 `Agent`에 그 인자가 없고, 문서 개수는 `Knowledge(max_results=...)`가 대신한다 | 리포 코드는 고치지 않는다. 이름이 바뀐 것을 알고 넘어가면 됨 |
 | `PgVector(..., collection="auto_rag_docs")`가 `TypeError: unexpected keyword argument 'collection'`로 실패 | 오늘의 `PgVector.__init__`은 `collection=` 대신 필수 인자 `table_name=`을 받는다(직접 확인) | 리포 코드는 고치지 않는다 |
-| 위 문제들을 모두 우회해 `Agent`를 만들어도, `agent.knowledge_base.load_documents(...)`가 `AttributeError: 'Agent' object has no attribute 'knowledge_base'`로 실패 | 오늘의 `Agent`는 지식 베이스를 `.knowledge` 속성에 저장한다(직접 확인) | 리포 코드는 고치지 않는다 |
+| 위 문제들을 모두 우회해 `Agent`를 만들어도, `agent.knowledge_base.load_documents(...)`가 `AttributeError: 'Agent' object has no attribute 'knowledge_base'`로 실패 | 오늘의 `Agent`는 지식 베이스를 `.knowledge` 속성에 저장한다(직접 확인). 속성 이름만 `.knowledge`로 고쳐도 끝이 아니다 — `load_documents`라는 메서드 자체가 오늘의 `Knowledge`에 없다(직접 확인, `insert`로 이름이 바뀜) | 리포 코드는 고치지 않는다 |
 | PostgreSQL 없이 지식 베이스나 저장소를 실제로 쓰려는 순간 `sqlalchemy.exc.OperationalError: (psycopg.errors.ConnectionTimeout) connection timeout expired` | `DB_URL`이 가리키는 `localhost:5532`에 아무 서버도 없다(직접 확인) | 앱 README의 Docker 명령 등으로 PostgreSQL + pgvector를 먼저 띄운다(이 문서는 실행하지 않았다) |
 | 유효한 키로 질문해도 "Get Answer"를 누르면 화면 전체가 처리되지 않은 예외로 멈춤(`TypeError: 'RunOutput' object is not iterable`) | `query_assistant`(`rag_tutorials/autonomous_rag/autorag.py:91`)가 스트리밍이 아닌 `agent.run()`의 반환값을 `for` 문으로 반복하려 하는데, `RunOutput`은 반복 가능한 객체가 아니다(직접 확인) — 키의 유효성과 무관하게 매번 발생한다 | 리포 코드는 고치지 않는다. 고친다면 `agent.run(question, stream=True)`로 바꾸거나, `.content`를 직접 읽도록 `query_assistant`를 다시 쓰는 것을 고려 |
 
