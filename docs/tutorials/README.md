@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 56 / 164일 완료
+진도: 57 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -137,7 +137,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 054](day054-agentic-rag-with-reasoning/README.md) | 🧐 Agentic RAG with Reasoning | [rag_tutorials/agentic_rag_with_reasoning](../../rag_tutorials/agentic_rag_with_reasoning/) |
 | ✅ | [Day 055](day055-local-hybrid-search-rag/README.md) | 🖥️ Local Hybrid Search RAG | [rag_tutorials/local_hybrid_search_rag](../../rag_tutorials/local_hybrid_search_rag/) |
 | ✅ | [Day 056](day056-rag-failure-diagnostics-clinic/README.md) | 🩺 RAG Failure Diagnostics Clinic | [rag_tutorials/rag_failure_diagnostics_clinic](../../rag_tutorials/rag_failure_diagnostics_clinic/) |
-| ⬜ | [Day 057](day057-rag-agent-cohere/README.md) | ✨ RAG Agent with Cohere | [rag_tutorials/rag_agent_cohere](../../rag_tutorials/rag_agent_cohere/) |
+| ✅ | [Day 057](day057-rag-agent-cohere/README.md) | ✨ RAG Agent with Cohere | [rag_tutorials/rag_agent_cohere](../../rag_tutorials/rag_agent_cohere/) |
 | ⬜ | [Day 058](day058-contextualai-rag-agent/README.md) | 🔄 Contextual AI RAG Agent | [rag_tutorials/contextualai_rag_agent](../../rag_tutorials/contextualai_rag_agent/) |
 | ⬜ | [Day 059](day059-ai-blog-search/README.md) | 📰 AI Blog Search (RAG) | [rag_tutorials/ai_blog_search](../../rag_tutorials/ai_blog_search/) |
 | ⬜ | [Day 060](day060-rag-database-routing/README.md) | 📠 RAG with Database Routing | [rag_tutorials/rag_database_routing](../../rag_tutorials/rag_database_routing/) |
