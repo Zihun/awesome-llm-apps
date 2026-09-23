@@ -72,3 +72,36 @@ test("a -todo node left in the last step is reported", () => {
   const problems = revealProblems(dir);
   assert.ok(problems.some((p) => p.includes("step2.svg") && p.includes("b")), problems.join("\n"));
 });
+
+// 넷째 불변식: step k에서 "-todo"였던 노드가 step k+1에서 "-todo"를 벗어나면 그 step에서
+// "-new"로 끝나야 한다 — 흐림 -> 평상 직행은 독자가 그 부품이 언제 붙었는지 볼 수 없게
+// 만드는 결함이고, 평상 -> "-new" 재강조는 관례이므로 이 불변식이 막지 않는다(§5).
+test("a node that goes from -todo straight to normal (skipping -new) is reported", () => {
+  const dir = diagramsDir({
+    "overview.svg": [["a", "ext"]],
+    "step1.svg": [["a", "ext-todo"]],
+    "step2.svg": [["a", "ext"]], // 흐림 -> 평상 직행: -new를 거치지 않았다
+  });
+  const problems = revealProblems(dir);
+  assert.deepEqual(problems, [
+    'diagrams/step2.svg: "a"가 step1에서 흐렸다가 주황(-new) 없이 바로 평상으로 나타납니다 — 처음 드러나는 단계에서는 -new로 표시하세요',
+  ]);
+});
+
+test("a node that goes from -todo to -new (first reveal marked orange) is not reported", () => {
+  const dir = diagramsDir({
+    "overview.svg": [["a", "ext"]],
+    "step1.svg": [["a", "ext-todo"]],
+    "step2.svg": [["a", "ext-new"]],
+  });
+  assert.deepEqual(revealProblems(dir), []);
+});
+
+test("a node that goes from -new to normal is not reported (already revealed; dropping emphasis is fine)", () => {
+  const dir = diagramsDir({
+    "overview.svg": [["a", "ext"]],
+    "step1.svg": [["a", "ext-new"]],
+    "step2.svg": [["a", "ext"]],
+  });
+  assert.deepEqual(revealProblems(dir), []);
+});
