@@ -1,12 +1,11 @@
 ...@../../_tools/theme
-direction: right
-grid-columns: 2
+direction: down
 
 models: "로컬 모델 (Ollama)" {
   class: group
   grid-columns: 2
-  embed: "EmbeddingGemma (임베딩)" { class: ours }
-  chat: "Llama 3.2 (채팅)" { class: ours }
+  embed: "EmbeddingGemma (임베딩, 로컬)" { class: ext }
+  chat: "Llama 3.2 (채팅, 로컬)" { class: ext }
 }
 
 front: "브라우저 쪽" {
@@ -25,5 +24,4 @@ kb: "지식 베이스" {
 
 front -> models: 질문 텍스트
 models -> front: 스트리밍 답변
-models -> kb: 임베딩 저장·검색
-kb -> models: 유사 청크
+models <-> kb: 임베딩 저장 · 유사 청크 검색

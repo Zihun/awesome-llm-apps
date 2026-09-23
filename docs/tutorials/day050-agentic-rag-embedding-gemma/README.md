@@ -1,10 +1,10 @@
 # Day 050 · 🔥 Agentic RAG with Embedding Gemma
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 85분 · API 비용 대략 무료(100% 로컬 — EmbeddingGemma·Llama 3.2 모두 이미 설치됨, 각각 622MB·2.0GB, 이 문서는 받지 않음) · 원본 앱: `rag_tutorials/agentic_rag_embedding_gemma`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 85분 · API 비용 대략 무료(모델 추론은 로컬 — EmbeddingGemma·Llama 3.2 모두 이미 설치됨, 각각 622MB·2.0GB, 이 문서는 받지 않음. 다만 agno·Streamlit 사용 통계가 나갑니다 — Step 5) · 원본 앱: `rag_tutorials/agentic_rag_embedding_gemma`
 
 ## 오늘 만들 것
 
-오늘은 PDF URL을 사이드바에 추가하면 그 내용에 대해 대화할 수 있는 로컬 Streamlit RAG 앱을 만듭니다. Day 047·048처럼 임베딩과 채팅을 각각 다른 로컬 모델에 맡기는데, 이번엔 그 분리가 코드에 뚜렷합니다 — 임베딩은 구글의 EmbeddingGemma(`embeddinggemma:latest`, agno의 `OllamaEmbedder`)가, 답변 생성은 메타의 Llama 3.2(`llama3.2:latest`, agno의 `Ollama`)가 맡고, 벡터는 agno의 `Knowledge`가 감싼 LanceDB에 저장됩니다. 이 151줄에서 가장 눈여겨볼 것은 코드 자체보다 저장소입니다 — 앱 폴더에는 실제 논문 PDF(`2503.11486v1.pdf`, DeepSeek 모델들의 기법을 리뷰하는 11쪽짜리 arXiv 논문)와 함께, 이미 벡터 11개가 채워진 LanceDB 테이블(`tmp/lancedb/recipes.lance/`)이 통째로 커밋되어 있습니다. 테이블 이름은 `recipes`지만 안에는 요리 이야기가 한 줄도 없습니다 — 확인해 보면 그 11개 벡터 전부가 바로 이 논문의 조각이고, `table_name="recipes"`·`uri="tmp/lancedb"`라는 조합 자체가 Agno 공식 문서의 LanceDB 예제(Thai 레시피 PDF를 싣는 바로 그 예제)를 그대로 가져온 흔적이라는 것도 드러납니다. 이 문서는 이 테이블이 앱을 그대로 실행했을 때 실제로 재사용된다는 것과, 그 결과 독자가 아무 콘텐츠도 넣지 않아도 이 논문에 대한 답을 받을 수 있다는 것을 직접 실행으로 증명합니다. 여기에 더해 `agno>=2.2.10`이 Day 037·038·047과 같은 이유로 오늘도 3.0.10으로 풀리면서 임포트 하나와 메서드 이름 하나가 깨져 있다는 것(간단히만 다루고 Day 047을 가리킵니다), `agent.run()`을 부를 때마다 Agno 자체 API로 익명 사용 통계 전송이 시도된다는 것, 그리고 Day 048과 정반대로 이 앱은 캐싱 덕분에 질문을 반복해도 지식 베이스를 다시 만들지 않는다는 것까지 함께 확인합니다. 완성하면 논문 내용에 대해 질문하고 스트리밍으로 답을 받는 화면을 보게 됩니다. 아래는 완성된 아키텍처입니다.
+오늘은 PDF URL을 사이드바에 추가하면 그 내용에 대해 대화할 수 있는 로컬 Streamlit RAG 앱을 만듭니다. Day 047처럼(048과는 달리 — 048은 채팅과 임베딩에 `llama3.1` 한 모델을 함께 씁니다) 임베딩과 채팅을 각각 다른 로컬 모델에 맡기는데, 이번엔 그 분리가 코드에 뚜렷합니다 — 임베딩은 구글의 EmbeddingGemma(`embeddinggemma:latest`, agno의 `OllamaEmbedder`)가, 답변 생성은 메타의 Llama 3.2(`llama3.2:latest`, agno의 `Ollama`)가 맡고, 벡터는 agno의 `Knowledge`가 감싼 LanceDB에 저장됩니다. 이 151줄에서 가장 눈여겨볼 것은 코드 자체보다 저장소입니다 — 앱 폴더에는 실제 논문 PDF(`2503.11486v1.pdf`, DeepSeek 모델들의 기법을 리뷰하는 11쪽짜리 arXiv 논문)와 함께, 이미 벡터 11개가 채워진 LanceDB 테이블(`tmp/lancedb/recipes.lance/`)이 통째로 커밋되어 있습니다. 테이블 이름은 `recipes`지만 안에는 요리 이야기가 한 줄도 없습니다 — 확인해 보면 그 11개 벡터 전부가 바로 이 논문의 조각이고, `table_name="recipes"`·`uri="tmp/lancedb"`라는 조합 자체가 Agno 공식 문서의 LanceDB 예제(Thai 레시피 PDF를 싣는 바로 그 예제)를 그대로 가져온 흔적이라는 것도 드러납니다. 이 문서는 커밋된 테이블이 그대로 열린다는 것(Step 3)과 그 벡터로 실제 검색이 된다는 것(Step 6, 다만 앱 자체가 아니라 `Knowledge`·`Agent`를 직접 만든 별도 스크립트로 확인합니다 — 지금 그대로의 앱은 43행에서 `AttributeError`로 멈춰 질문창에 이르지 못합니다, Step 4·6)까지 직접 실행으로 확인합니다. 여기에 더해 `agno>=2.2.10`이 Day 037·038·047과 같은 이유로 오늘도 3.0.10으로 풀리면서 임포트 하나와 메서드 이름 하나가 깨져 있다는 것(간단히만 다루고 Day 047을 가리킵니다), `agent.run()`을 부를 때마다 Agno 자체 API로 익명 사용 통계 전송이 시도된다는 것, 그리고 Day 048과 정반대로 이 앱은 캐싱 덕분에 질문을 반복해도 지식 베이스를 다시 만들지 않는다는 것까지 함께 확인합니다. 완성하면 논문 내용에 대해 질문하고 스트리밍으로 답을 받는 화면을 보게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -63,8 +63,10 @@ pypdf
 uv run --no-project python -c "from agno.models.ollama import Ollama"
 ```
 
+직접 확인한 출력(마지막 줄 — `agno.models.openai.chat`이 `except ImportError:`로 받아 다시 던지는 바깥쪽 예외입니다. Day 047 Step 1과 같은 사슬입니다):
+
 ```
-ModuleNotFoundError: No module named 'openai'
+ImportError: `openai` not installed. Please install using `pip install openai`
 ```
 
 ```bash
@@ -189,7 +191,7 @@ print('payload[0][:60]:', df['payload'].iloc[0][:60])
 
 ```
 row count: 11
-payload[0][:60]: {"name": "2503.11486v1.pdf", "meta_data": {"pa
+payload[0][:60]: {"name": "2503.11486v1.pdf", "meta_data": {"page": 1}, "cont
 ```
 
 (11개 행의 `payload` 전부가 `"name": "2503.11486v1.pdf"`를 담고 있습니다 — 직접 확인.) 그렇다면 왜 테이블 이름이 `recipes`일까요. Agno 공식 문서(docs.agno.com/knowledge/vector-stores/lancedb/overview)의 LanceDB 예제가 정확히 이 조합 — `LanceDb(table_name="recipes", uri="tmp/lancedb")` — 을 그대로 쓰고, 그 예제가 싣는 파일도 실제 Thai 레시피 PDF(`agno-public.s3.amazonaws.com/recipes/ThaiRecipes.pdf`)입니다. Day 047의 원본 앱도 같은 계열의 Thai 레시피 PDF를 씁니다. 이 앱은 그 공식 예제 코드를 그대로 가져오면서 PDF만 이 DeepSeek 논문으로 바꾸고 테이블 이름은 고치지 않은 것으로 보입니다 — `recipes`는 이 앱의 실제 내용과 무관한, 예제 코드의 흔적입니다.
@@ -211,9 +213,12 @@ print(r.pages[0].extract_text()[:60])
 "
 ```
 
+직접 확인한 출력(글자 그대로 — 굽은 따옴표이고, `[:60]`이 줄바꿈까지 넘어가 둘째 줄 저자명 앞부분이 함께 잘립니다):
+
 ```
 pages: 11
-A Review of DeepSeek Models' Key Innovative Techniques
+A Review of DeepSeek Models’ Key Innovative Techniques
+Cheng
 ```
 
 ### Step 4. 지식 적재 — add_content가 사라졌다
@@ -260,7 +265,7 @@ kb.add_content(path='no-such-file.pdf')
 ```
 has add_content: False
 has insert: True
-AttributeError: 'Knowledge' object has no attribute 'add_content'
+AttributeError: 'Knowledge' object has no attribute 'add_content'. Did you mean: 'aget_content'?
 ```
 
 ### Step 5. 채팅 모델·Agent 구성과 조용한 텔레메트리
@@ -288,7 +293,7 @@ agent = Agent(
 
 `search_knowledge=True`는 Day 047이 이미 확인한 대로 매 프롬프트에 검색 결과를 강제로 끼워넣는 것이 아니라, 모델이 스스로 호출 여부를 판단하는 도구(`search_knowledge_base`)를 등록할 뿐입니다 — 같은 메커니즘이라 여기서는 되풀이하지 않습니다. `Ollama(id="llama3.2:latest")`도 `OllamaEmbedder`처럼 생성 시점에는 네트워크를 타지 않습니다 — 존재하지 않는 포트(`127.0.0.1:1`)로 `host`를 지정해도 `Agent(...)` 생성 전체가 그대로 성공한다는 것으로 직접 확인했습니다(아래).
 
-그런데 `agent.run()`은 다릅니다. agno 3.0.10 소스를 읽어보면(`agno/agent/_run.py`, `agno/agent/_telemetry.py`) `run()`은 스트리밍 여부와 무관하게 끝날 때마다 `log_agent_telemetry()`를 부르고, 이 함수는 에이전트 id·모델 provider/이름·지식 베이스나 도구 사용 여부 같은 익명 메타데이터를 Agno 자체 API(`https://os-api.agno.com`, 기본 타임아웃 5초, `agno/api/settings.py`)로 전송을 시도합니다. 이 호출은 `try/except`로 감싸여 있어 실패해도 조용히 무시됩니다 — 즉 이 앱 화면의 "100% local"이라는 문구(`rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:101`)와 별개로, "Get Answer"를 누를 때마다 Agno 쪽으로 나가는 요청이 하나 더 있다는 뜻입니다. 이 요청 자체를 가로채 확인하지는 못했습니다 — 소스에 있는 호출 지점과 대상 URL로 확인한 것입니다(소스로 확인, 직접 네트워크를 캡처하지는 않았습니다). 끄려면 `Agent(telemetry=False)`를 넘기거나 환경변수 `AGNO_TELEMETRY=false`를 설정하면 됩니다(소스로 확인).
+그런데 `agent.run()`은 다릅니다. Day 047 Step 5가 로컬 수신기(`AGNO_API_RUNTIME=dev` + `localhost:7070`)로 이미 직접 확인한 그대로, agno 3.0.10은 `run()`이 **성공적으로** 끝날 때마다(스트리밍 여부와 무관, 실패한 실행은 보내지 않습니다) 에이전트 id·모델 provider/이름·지식 베이스나 도구 사용 여부 같은 익명 메타데이터를 Agno 자체 API로 전송을 시도합니다 — 백그라운드 큐+데몬 스레드라 `run()` 자체는 느려지지 않고, 실패해도 조용히 무시됩니다. 이 앱은 047과 달리 `AgentOS`를 쓰지 않으므로 그 시작 이벤트(`POST /telemetry/os`, 047에서는 `AGNO_TELEMETRY=false`만으로 안 꺼지던 바로 그것)는 애초에 없습니다 — 여기서는 `Agent(telemetry=False)`나 환경변수 `AGNO_TELEMETRY=false` 어느 쪽으로도 이 실행 이벤트 하나를 끌 수 있습니다(소스로 확인, `agno/agent/_telemetry.py`·`agno/agent/_init.py`). 이 앱 화면의 "100% local"이라는 문구(`rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:101`)는 이 사실과 모순됩니다 — "Get Answer"를 누를 때마다 Agno 쪽으로 나가는 요청이 하나 있습니다.
 
 **그림.**
 
@@ -412,25 +417,25 @@ print('답변 앞부분:', answer[:150])
 - [ ] 커밋된 `tmp/lancedb/recipes.lance/` 테이블에 이미 벡터 11개가 있고, 그 전부가 커밋된 `2503.11486v1.pdf`(레시피가 아니라 DeepSeek 리뷰 논문)의 조각이라는 것을 확인했다
 - [ ] `Knowledge(vector_db=LanceDb(...))`를 만들어도 이 테이블의 행 개수가 그대로라는 것 — 새로 만드는 게 아니라 재사용한다는 것 — 을 확인했다
 - [ ] `kb.add_content(...)`가 오늘의 agno에서 `AttributeError`로 실패하고 `insert`로 이름이 바뀌었다는 것을 확인했다
-- [ ] `Agent(...)` 생성자는 네트워크를 타지 않지만 `agent.run()`은 매번 Agno 자체 API로 통계 전송을 시도한다는 것을 소스로 확인했다
+- [ ] `Agent(...)` 생성자는 네트워크를 타지 않지만 `agent.run()`은 성공할 때마다 Agno 자체 API로 통계 전송을 시도한다는 것을 Day 047의 직접 확인으로 안다
 - [ ] `st.cache_resource`가 감싼 함수는 프로세스당 한 번만 실행되고 이후 호출은 같은 객체를 돌려받는다는 것을 직접 확인했다
-- [ ] 아무 콘텐츠도 추가하지 않은 채 논문 관련 질문을 실행해, 커밋된 벡터에서 실제로 검색되어 답이 만들어진다는 것을 확인했다
+- [ ] 앱 자체는 지금 그대로 43행에서 멈춰 질문창에 이르지 못한다는 것과, `Knowledge`·`Agent`를 직접 만든 별도 스크립트로는 아무 콘텐츠도 추가하지 않은 채 커밋된 벡터에서 실제로 검색되어 답이 만들어진다는 것을 확인했다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `from agno.models.ollama import Ollama`가 `ModuleNotFoundError: No module named 'openai'`로 실패 | agno 3.0.10의 `agno.models.ollama`가 쓰지 않는 `OllamaResponses`까지 함께 import해 `openai`를 요구함(Day 047과 같은 원인, 직접 확인) | `uv pip install openai` |
-| `kb.add_content(path=...)`/`kb.add_content(url=...)`가 `AttributeError: 'Knowledge' object has no attribute 'add_content'` | agno 3.0.10에서 메서드 이름이 `insert`로 바뀜(Day 047과 같은 원인, `path=`/`url=` 인자는 그대로, 직접 확인) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침 — 직접 재현하려면 `add_content(...)`를 `insert(...)`로 바꿔 호출 |
-| 저장소 루트 등 다른 위치에서 실행하면 질문에 아무 근거 없는 답이 나오거나 지식 베이스가 비어 보임 | `uri="tmp/lancedb"`(`rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:24`)가 `__file__` 기준이 아닌 상대 경로라 작업 디렉터리에 따라 커밋된 테이블 대신 새 빈 테이블을 가리킴(직접 확인, Step 3) | 앱 자체 README대로 `cd rag_tutorials/agentic_rag_embedding_gemma` 후 실행 |
-| 인터넷이 없는 환경에서 "Get Answer"가 매번 몇 초씩 눈에 띄게 느려짐 | `agent.run()`마다 Agno 사용 통계 API(`https://os-api.agno.com`)로 전송을 시도하고 기본 타임아웃이 5초라, 도달할 수 없는 네트워크에서는 그 시간이 매번 추가될 수 있음(소스로 확인, Step 5) | 끄려면 `Agent(telemetry=False)` 또는 환경변수 `AGNO_TELEMETRY=false` |
+| `from agno.models.ollama import Ollama`가 ``ImportError: `openai` not installed…``로 실패(안쪽 원인은 `ModuleNotFoundError: No module named 'openai'`, 직접 확인) | agno 3.0.10의 `agno.models.ollama`가 쓰지 않는 `OllamaResponses`까지 함께 import해 `openai`를 요구함(Day 047과 같은 원인, 직접 확인) | `uv pip install openai` |
+| `kb.add_content(path=...)`/`kb.add_content(url=...)`가 `AttributeError: 'Knowledge' object has no attribute 'add_content'. Did you mean: 'aget_content'?` | agno 3.0.10에서 메서드 이름이 `insert`로 바뀜(Day 047과 같은 원인, `path=`/`url=` 인자는 그대로, 직접 확인) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침 — 직접 재현하려면 `add_content(...)`를 `insert(...)`로 바꿔 호출 |
+| 저장소 루트 등 다른 위치에서 실행하면 지금 그대로는 43행에서 `AttributeError: 'Knowledge' object has no attribute 'add_content'`로 멈추고(질문창은 렌더되지 않음), 작업 디렉터리에 빈 `tmp/lancedb/recipes.lance`가 새로 생김. `add_content`→`insert`로 고친 뒤라면 69행 `st.image("google.png")`에서 `MediaFileStorageError: Error opening 'google.png'`로 멈춤(둘 다 직접 확인, Streamlit `AppTest`로 작업 디렉터리를 바꿔 재현) | `uri="tmp/lancedb"`(`rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:24`)가 `__file__` 기준이 아닌 상대 경로라 작업 디렉터리에 따라 커밋된 테이블 대신 새 빈 테이블을 가리킴(직접 확인, Step 3). `google.png` 등 이미지 경로도 마찬가지로 상대 경로다 | 앱 자체 README대로 `cd rag_tutorials/agentic_rag_embedding_gemma` 후 실행 |
+| agno 사용 통계 전송 자체를 끄고 싶음 | `agent.run()`이 성공할 때마다 나가는 요청이 있음(Step 5) — 전송은 백그라운드라 답이 느려지지는 않는다 | `Agent(telemetry=False)` 또는 환경변수 `AGNO_TELEMETRY=false`(PowerShell은 `$env:AGNO_TELEMETRY="false"`) |
 
 ## 더 해보기
 
-- `kb.add_content(...)`가 나오는 세 곳(`rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:43`, `rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:49`, `rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:85`)를 모두 `insert(...)`로 바꿔, 사이드바에서 실제로 새 PDF URL을 추가하고 `recipes` 테이블의 행 개수가 어떻게 늘어나는지 관찰해보기(늘어난 뒤에는 커밋하지 않도록 주의)
+- `kb.add_content(...)`가 나오는 세 곳(`rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:43`, `rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:49`, `rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:85`)를 모두 `insert(...)`로 바꿔 실행해보기. `insert`의 기본값 `upsert=True`가 경로 기준 content_hash로 중복을 걸러내므로, 커밋된 PDF만 다시 도는 첫 실행은 행 11개를 지우고 11개를 다시 넣어 **행 개수는 11 그대로**입니다(직접 확인 — 다만 `tmp/lancedb/recipes.lance/`에는 새 트랜잭션·매니페스트·삭제 마커 파일이 여러 개 생깁니다, 커밋하지 않도록 주의). 행 개수가 실제로 늘어나는 것은 사이드바에서 **새 PDF URL**을 추가할 때입니다 — 그때 `recipes` 테이블이 몇 행 늘어나는지 관찰해보기
 - `model=Ollama(id="llama3.2:latest")`(`rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:53`)를 이미 받아져 있는 더 큰 모델(`gemma3:12b` 등)로 바꿔, 같은 검색 결과에서 Step 6과 같은 질문에 대한 답변 품질이 어떻게 달라지는지 비교해보기
 - `Agent(...)`(`rag_tutorials/agentic_rag_embedding_gemma/agentic_rag_embeddinggemma.py:52-63`)에 `telemetry=False`를 추가해, Step 5에서 확인한 통계 전송 시도가 사라지는지 확인해보기
 
 ## 다음 날 예고
 
-[Day 051 · 🧩 RAG-as-a-Service](../day051-rag-as-a-service/README.md) — 로컬 모델과 커밋된 벡터 저장소 대신, Claude 3.5 Sonnet과 Ragie.ai라는 매니지드 서비스에 문서 처리와 검색을 통째로 맡기는 RAG를 다룹니다.
+[Day 051 · 🧩 RAG-as-a-Service](../day051-rag-as-a-service/README.md) — 로컬 모델과 커밋된 벡터 저장소 대신, Claude Sonnet 4.5와 Ragie.ai라는 매니지드 서비스에 문서 처리와 검색을 통째로 맡기는 RAG를 다룹니다.
