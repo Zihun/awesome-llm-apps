@@ -1,10 +1,10 @@
 # Day 047 · 🦙 Local RAG Agent
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 75분 · API 비용 무료(완전 로컬 — Qdrant는 Docker, Ollama는 데몬 자체가 무료. 다만 임베딩 모델 openhermes를 실제로 받으면 디스크 4.1GB 필요, Step 2에서 다룹니다) · 원본 앱: `rag_tutorials/local_rag_agent`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 90분(Step 5의 텔레메트리 사실을 로컬 수신기로 직접 재현하는 절차가 더해져 다른 RAG 날보다 깁니다) · API 비용 무료(모델 추론은 로컬 — Qdrant는 Docker, Ollama는 데몬 자체가 무료. 다만 네트워크를 아예 안 쓰는 것은 아닙니다: 앱이 뜰 때마다 PDF를 S3에서 받고, 채팅 화면은 로컬이 아니라 os.agno.com 컨트롤 플레인이며, agno가 익명 사용 통계를 보냅니다 — Step 5. 임베딩 모델 openhermes를 실제로 받으면 디스크 4.1GB 필요, Step 2에서 다룹니다) · 원본 앱: `rag_tutorials/local_rag_agent`
 
 ## 오늘 만들 것
 
-오늘부터 24일간 이어지는 "📀 RAG" 볼륨을 엽니다. 지난 볼륨에서 Day 040의 `chat_arxiv.py`는 앱 자체 README가 스스로를 "RAG application"이라 불렀지만 실제로는 검색-후-원문통째로-전달이었고, Day 046의 타로 앱은 임베딩도 유사도 검색도 없이 질문과 무관한 무작위 카드 선택이었습니다 — 둘 다 임베딩과 벡터 유사도 검색을 하지 않았습니다(각 날짜의 README로 확인). 오늘의 42줄은 다릅니다. 여기서 "검색"은 문자 그대로의 뜻으로 쓰입니다: `ThaiRecipes.pdf`가 pypdf로 텍스트가 되고, agno의 기본 청크 전략(5000자, 겹침 없음)으로 조각나고, 각 조각이 Ollama의 `openhermes` 모델을 거쳐 4096차원 벡터가 되어 Qdrant라는 별도 벡터 데이터베이스 서버에 원문 텍스트와 함께 저장됩니다. 질문이 들어오면 같은 임베딩 모델이 질문도 벡터로 바꾸고, Qdrant가 코사인 유사도로 가장 가까운 조각들을 찾아 돌려주며, 그 텍스트가 `llama3.2` 모델이 답을 만들 때 쓸 문맥이 됩니다. `requirements.txt` 단 4줄(`agno>=2.2.10`, `qdrant-client`, `ollama`, `pypdf`)이 이 볼륨 24일 내내 되풀이될 네 가지 역할 — 에이전트 프레임워크, 벡터 데이터베이스, 로컬 모델 실행기, 문서 리더 — 을 그대로 보여줍니다. Day 038이 똑같은 `agno>=2.2.10` 하한에서 겪은 일이 오늘도 반복됩니다: 실제로 설치하면 agno 3.0.10이 풀리고(직접 확인), `Ollama` 모델 클래스의 import 사슬이 여전히 `openai` 패키지를 요구하며(Day 037과 같은 원인), 웹 서빙 계층 전체가 `agno[os]` extra 뒤로 옮겨져 있습니다. 게다가 이 코드가 부르는 `knowledge_base.add_content(url=...)`라는 메서드 자체가 오늘의 agno에는 없습니다 — `insert`로 이름이 바뀌었습니다(직접 확인). Qdrant는 인프로세스 라이브러리가 아니라 `http://localhost:6333/`으로 접속하는 별도 서버 프로세스이고(소스로 확인 — `":memory:"`나 `path=` 같은 인프로세스 옵션이 있지만 이 코드는 쓰지 않습니다), 이 문서는 그 서버를 띄우지 않으므로 `Knowledge(vector_db=vector_db)`를 만드는 순간부터 연결 거부 오류로 멈춥니다(직접 확인) — 서버가 떠 있었더라도 바로 다음 줄의 이름-바뀐 메서드에서 다시 멈췄을 것입니다. 반대로 채팅 모델 `llama3.2`는 이미 이 컴퓨터에 받아져 있어(2.0GB) 실제로 호출해 "2 + 2 = 4."라는 답을 받았습니다(직접 확인) — 임베딩 모델 `openhermes`(7B, 4.1GB)는 받지 않았습니다. 완성하면 AgentOS가 띄우는 웹 UI에서 Thai 레시피에 대해 물어보는 화면을 보게 됩니다. 아래는 완성된 아키텍처입니다.
+오늘부터 24일간 이어지는 "📀 RAG" 볼륨을 엽니다. 지난 볼륨에서 Day 040의 `chat_arxiv.py`는 앱 자체 README가 스스로를 "RAG application"이라 불렀지만 실제로는 검색-후-원문통째로-전달이었고, Day 046의 타로 앱은 임베딩도 유사도 검색도 없이 질문과 무관한 무작위 카드 선택이었습니다 — 둘 다 임베딩과 벡터 유사도 검색을 하지 않았습니다(각 날짜의 README로 확인). 지난 볼륨의 039·042·043·044는 embedchain(Chroma)으로 이미 임베딩과 벡터 검색을 했지만, 그 단계는 라이브러리 안에 감춰져 있었습니다(046 README:180, 048 README가 042를 인용). 오늘의 42줄이 다른 점은 embedchain이 감춰 뒀던 단계를 코드에서 직접 보는 것입니다. 여기서 "검색"은 문자 그대로의 뜻으로 쓰입니다: `ThaiRecipes.pdf`가 pypdf로 텍스트가 되고, agno의 기본 청크 전략(5000자, 겹침 없음)으로 조각나고, 각 조각이 Ollama의 `openhermes` 모델을 거쳐 4096차원 벡터가 되어 Qdrant라는 별도 벡터 데이터베이스 서버에 원문 텍스트와 함께 저장됩니다. 질문이 들어오면 같은 임베딩 모델이 질문도 벡터로 바꾸고, Qdrant가 코사인 유사도로 가장 가까운 조각들을 찾아 돌려주며, 그 텍스트가 `llama3.2` 모델이 답을 만들 때 쓸 문맥이 됩니다. `requirements.txt` 단 4줄(`agno>=2.2.10`, `qdrant-client`, `ollama`, `pypdf`)이 이 볼륨 24일 내내 되풀이될 네 가지 역할 — 에이전트 프레임워크, 벡터 데이터베이스, 로컬 모델 실행기, 문서 리더 — 을 그대로 보여줍니다. Day 038이 똑같은 `agno>=2.2.10` 하한에서 겪은 일이 오늘도 반복됩니다: 실제로 설치하면 agno 3.0.10이 풀리고(직접 확인), `Ollama` 모델 클래스의 import 사슬이 여전히 `openai` 패키지를 요구하며(Day 037과 같은 원인), 웹 서빙 계층이 필요로 하는 `agno[os]` extra가 `requirements.txt`에 처음부터 빠져 있습니다 — 이 앱이 선언한 하한인 2.2.10에서도 `fastapi`는 이미 `os` extra 뒤에 있었으므로(직접 확인), 이건 버전 드리프트가 아니라 애초의 누락입니다. 게다가 이 코드가 부르는 `knowledge_base.add_content(url=...)`라는 메서드 자체가 오늘의 agno에는 없습니다 — `insert`로 이름이 바뀌었습니다(직접 확인). Qdrant는 인프로세스 라이브러리가 아니라 `http://localhost:6333/`으로 접속하는 별도 서버 프로세스이고(소스로 확인 — `":memory:"`나 `path=` 같은 인프로세스 옵션이 있지만 이 코드는 쓰지 않습니다), 이 문서는 그 서버를 띄우지 않으므로 `Knowledge(vector_db=vector_db)`를 만드는 순간부터 연결 거부 오류로 멈춥니다(직접 확인) — 서버가 떠 있었더라도 바로 다음 줄의 이름-바뀐 메서드에서 다시 멈췄을 것입니다. 반대로 채팅 모델 `llama3.2`는 이미 이 컴퓨터에 받아져 있어(2.0GB) 실제로 호출해 답을 받았습니다(직접 확인, "2 + 2 = 4." — 모델 출력이라 매번 문구가 다를 수 있는 비결정적 값입니다) — 임베딩 모델 `openhermes`(7B, 4.1GB)는 받지 않았습니다. 이 앱은 "완전 로컬"이 아닙니다 — 뜰 때마다 `ThaiRecipes.pdf`를 S3에서 받고, 채팅 화면은 로컬이 아니라 `os.agno.com`의 AgentOS 컨트롤 플레인이며, 성공한 실행마다 agno가 익명 사용 통계를 자체 API로 보냅니다(Step 5에서 직접 확인합니다). 완성하면 브라우저로 `https://os.agno.com`에 접속해 로컬 AgentOS(`http://localhost:7777`)를 연결하고 Thai 레시피에 대해 물어보는 화면을 보게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -15,18 +15,18 @@
 | Qdrant (Docker) | 벡터 저장소 서버, REST로 `http://localhost:6333/` 접속 | `docker pull qdrant/qdrant && docker run -p 6333:6333 qdrant/qdrant` (이 문서는 띄우지 않음) |
 | Ollama | `llama3.2`(채팅)·`openhermes`(임베딩) 두 로컬 모델을 서빙하는 데몬 | https://ollama.com/download 설치 후 `ollama pull llama3.2`(이미 있으면 생략)·`ollama pull openhermes`(이 문서는 받지 않음, 4.1GB) |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| 인터넷 연결 | PyPI 설치, ThaiRecipes.pdf 다운로드(공개 S3) | 별도 설치 없음 |
+| 인터넷 연결 | PyPI 설치, ThaiRecipes.pdf 다운로드(공개 S3), 채팅 화면 접속(`os.agno.com` 컨트롤 플레인), agno 사용 통계 전송(Step 5) | 별도 설치 없음 |
 
 ## 아키텍처 한눈에 보기
 
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
-| 사용자 | 브라우저로 AgentOS 웹 UI(포트 7777)에 접속해 질문 | 코드 없음 (브라우저) |
+| 사용자 / 컨트롤 플레인 | 브라우저에서 `os.agno.com` 컨트롤 플레인에 접속해 질문(로컬 AgentOS는 포트 7777) | 코드 없음 (외부 UI) |
 | AgentOS 웹 서버 | agent를 FastAPI 앱으로 감싸 웹으로 서빙 | `rag_tutorials/local_rag_agent/local_rag_agent.py:37-38`, `rag_tutorials/local_rag_agent/local_rag_agent.py:41-42` |
 | Local RAG Agent | `llama3.2` 모델과 지식 베이스를 묶은 agno `Agent`, 검색 도구 호출 여부를 스스로 판단 | `rag_tutorials/local_rag_agent/local_rag_agent.py:30-34` |
-| 채팅 모델 (llama3.2, Ollama) | 최종 답변 생성 | `rag_tutorials/local_rag_agent/local_rag_agent.py:32` |
-| 임베딩 모델 (openhermes, Ollama) | 청크·질의 텍스트를 4096차원 벡터로 변환 | `rag_tutorials/local_rag_agent/local_rag_agent.py:16` (기본 모델 id는 소스로 확인) |
-| ThaiRecipes.pdf | 지식 베이스에 적재되는 원본 문서(공개 S3 URL) | `rag_tutorials/local_rag_agent/local_rag_agent.py:25-27` |
+| 채팅 모델 (llama3.2, Ollama, 로컬) | 최종 답변 생성 | `rag_tutorials/local_rag_agent/local_rag_agent.py:32` |
+| 임베딩 모델 (openhermes, Ollama, 로컬) | 청크·질의 텍스트를 4096차원 벡터로 변환 | `rag_tutorials/local_rag_agent/local_rag_agent.py:16` (기본 모델 id는 소스로 확인) |
+| ThaiRecipes.pdf | 지식 베이스에 적재되는 원본 문서(공개 S3 URL, 뜰 때마다 다운로드) | `rag_tutorials/local_rag_agent/local_rag_agent.py:25-27` |
 | Qdrant (thai-recipe-index) | 청크 벡터와 원문 텍스트를 저장·검색하는 벡터 저장소 서버 | `rag_tutorials/local_rag_agent/local_rag_agent.py:13-17` |
 
 ## 단계별 진행
@@ -94,7 +94,22 @@ uv run --no-project python local_rag_agent.py
 ModuleNotFoundError: No module named 'fastapi'
 ```
 
-agno 3.0.10부터 `AgentOS`가 쓰는 웹 서빙 계층(`fastapi`·`uvicorn`·`python-multipart`·`websockets`·`sqlalchemy` 등)이 `agno[os]` extra 뒤로 옮겨졌습니다(소스로 확인 — `importlib.metadata.requires('agno')`로 본 `extra == "os"` 목록). 두 문제를 한 번에 해결하는 설치는 다음과 같습니다.
+`AgentOS`가 쓰는 웹 서빙 계층(`fastapi`·`uvicorn`·`python-multipart`·`websockets`·`sqlalchemy` 등)은 `agno[os]` extra 뒤에 있습니다(소스로 확인 — `importlib.metadata.requires('agno')`로 본 `extra == "os"` 목록). 이것은 3.0.10에서 새로 생긴 일이 아닙니다 — 이 앱이 선언한 하한인 agno 2.2.10만 별도로 설치해 확인해 보면, 그 버전에서도 이미 `fastapi`·`uvicorn`이 `os` extra 뒤에 있고 `python-multipart`만 무조건 의존성입니다(아래, 이 문서의 venv와는 다른 별도 환경). 즉 `requirements.txt`가 애초에 `agno[os]`를 빠뜨린 것이지, 버전이 올라가며 새로 깨진 것이 아닙니다.
+
+```bash
+python -c "
+import importlib.metadata as m
+print(sorted(r for r in m.requires('agno') if 'extra == \"os\"' in r))
+"
+```
+
+직접 확인한 출력(agno 2.2.10만 설치한 별도 가상환경):
+
+```
+['PyJWT; extra == "os"', 'fastapi; extra == "os"', 'uvicorn; extra == "os"']
+```
+
+`python-multipart`는 이 목록에 없습니다 — 2.2.10에서는 extra 없이 무조건 설치되는 의존성이었기 때문입니다(같은 방식으로 직접 확인). 3.0.10에서만 `python-multipart>=0.0.18; extra == "os"`로 옮겨졌습니다. 두 문제를 한 번에 해결하는 설치는 다음과 같습니다.
 
 ```bash
 uv pip install openai "agno[os]"
@@ -211,7 +226,7 @@ kb.add_content(url='https://phi-public.s3.amazonaws.com/recipes/ThaiRecipes.pdf'
 ```
 has add_content: False
 has insert: True
-AttributeError: 'Knowledge' object has no attribute 'add_content'
+AttributeError: 'Knowledge' object has no attribute 'add_content'. Did you mean: 'aget_content'?
 ```
 
 이어서 같은 공개 PDF를 실제로 내려받아, agno의 실제 리더·청크 클래스로 몇 조각이 되는지 확인합니다.
@@ -231,7 +246,7 @@ print('total chars:', sum(len(d.content) for d in docs))
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(발췌 — pypdf가 이 PDF에 박힌 CFF Type1 폰트마다 `fontTools is required to fully parse the encoding…` 경고를 stderr로 찍습니다. 이 문서를 쓰며 돌렸을 때 56줄이었습니다. 청크·문자 수에는 영향이 없습니다):
 
 ```
 bytes: 653471
@@ -240,7 +255,7 @@ chunks: 14
 total chars: 17443
 ```
 
-(이 PDF는 pypdf 기준 정확히 14페이지이고, 어느 페이지도 5000자를 넘지 않아 페이지 1개가 그대로 청크 1개가 됐습니다 — 우연히 1:1이 된 것이지, 청크가 항상 페이지 단위인 것은 아닙니다.)
+(이 PDF는 pypdf 기준 정확히 14페이지이고, 어느 페이지도 5000자를 넘지 않아 페이지 1개가 그대로 청크 1개가 됐습니다 — 우연히 1:1이 된 것이지, 청크가 항상 페이지 단위인 것은 아닙니다.) 위 명령은 `ThaiRecipes.pdf`를 현재 폴더(리포 클론 안)에 그대로 남깁니다 — 확인이 끝나면 `rm ThaiRecipes.pdf`로 지우거나, 애초에 임시 폴더에서 실행합니다.
 
 ### Step 4. 로컬 모델과 Agentic RAG — 강제 삽입이 아니라 도구 호출
 
@@ -278,7 +293,7 @@ print('content:', resp.content)
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(`content`는 모델이 그때그때 생성하는 텍스트라 문구가 매번 달라질 수 있는 비결정적 값입니다):
 
 ```
 status: RunStatus.completed
@@ -320,7 +335,62 @@ agent_os = AgentOS(agents=[agent])
 app = agent_os.get_app()
 ```
 
-`AgentOS`는 agent를 FastAPI 앱으로 감쌉니다. `get_app()`은 Step 1에서 따로 설치한 `agno[os]`의 `fastapi`·`python-multipart`가 없으면 `RuntimeError: Form data requires "python-multipart" to be installed`로 실패합니다(직접 확인) — 앱 자체 README가 안내하는 `http://localhost:7777`이라는 기본 포트도 `AgentOS.serve()`의 시그니처에 `port: int = 7777`로 그대로 박혀 있습니다(소스로 확인, `agno/os/app.py`).
+`AgentOS`는 agent를 FastAPI 앱으로 감쌉니다. `get_app()`은 `fastapi`는 있는데 `python-multipart`만 없으면 `RuntimeError: Form data requires "python-multipart" to be installed`로 실패합니다(소스로 확인 — 이 메시지는 `fastapi/dependencies/utils.py`에 있고, `fastapi` 자체가 없으면 이 코드에 이르기 전에 Step 1의 `ModuleNotFoundError: No module named 'fastapi'`로 먼저 막힙니다) — 앱 자체 README가 안내하는 `http://localhost:7777`이라는 기본 포트도 `AgentOS.serve()`의 시그니처에 `port: int = 7777`로 그대로 박혀 있습니다(소스로 확인, `agno/os/app.py`). `serve()`가 실제로 찍는 배너는 이 포트보다 `https://os.agno.com/`를 먼저 보여줍니다(소스로 확인, 같은 파일) — 브라우저로 여는 채팅 화면이 그쪽이라는 뜻이고, CORS 허용 목록에도 `https://os.agno.com`이 있습니다(`agno/os/settings.py`).
+
+**agno의 익명 사용 통계 — `AGNO_TELEMETRY=false`만으로는 다 꺼지지 않습니다.** agno 3.0.10은 이 지점부터 두 가지 통계를 자체 API로 보냅니다(소스로 확인, `agno/agent/_telemetry.py`·`agno/os/app.py`). `agent.run()`이 **성공**할 때마다 agent_id·모델 provider/이름·도구·지식 베이스 사용 여부를 담은 `POST /telemetry/runs`를 보내고(질문·문서 본문은 들어가지 않습니다 — Step 4의 "2 + 2 = 4" 호출도 성공했으므로 이미 한 번 보냈습니다), `AgentOS`가 실제로 서버로 뜨는 순간(`serve()` 또는 lifespan 시작)에는 에이전트 id 목록을 담은 `POST /telemetry/os`를 한 번 더 보냅니다. 둘 다 큐에 쌓여 데몬 스레드가 보내므로(`agno/api/api.py`) `run()`이나 서버 기동 자체는 느려지지 않고, 프로세스가 끝날 때만 최대 2초(`telemetry_shutdown_timeout`) 동안 큐를 비웁니다.
+
+끄는 방법이 **둘로 나뉜다**는 것이 중요합니다. `AGNO_TELEMETRY=false`(PowerShell은 `$env:AGNO_TELEMETRY="false"`)는 agent 쪽 전송(`POST /telemetry/runs`)만 끕니다(`agno/agent/_init.py`의 `set_telemetry`가 이 환경변수를 읽어 `agent.telemetry`를 덮어씀) — AgentOS 시작 이벤트는 이 환경변수를 아예 읽지 않고 생성자 인자 `AgentOS(..., telemetry: bool = True)`만 봅니다. 즉 `AGNO_TELEMETRY=false`를 걸어도 서버를 띄우는 순간 `POST /telemetry/os`는 그대로 나갑니다. 둘 다 끄려면 `AGNO_TELEMETRY=false`와 `AgentOS(agents=[agent], telemetry=False)`를 함께 써야 합니다.
+
+**직접 확인(로컬 수신기, `os-api.agno.com`에는 아무것도 보내지 않습니다).** agno는 환경변수 `AGNO_API_RUNTIME=dev`가 있으면 통계 주소를 `https://os-api.agno.com` 대신 `http://localhost:7070`으로 바꿉니다(소스로 확인, `agno/api/settings.py`). 이 포트에 표준 라이브러리만으로 받아 찍는 서버를 하나 띄우고, `AGNO_TELEMETRY=false`를 건 채로 이 앱 그대로의 `AgentOS`를 (Qdrant는 Step 3처럼 우회하고) `TestClient`로 기동해 봤습니다.
+
+다른 터미널에서 수신기를 띄웁니다.
+
+```bash
+cat > sink.py <<'PY'
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+class Sink(BaseHTTPRequestHandler):
+    def do_POST(self):
+        n = int(self.headers.get("content-length", 0))
+        print(self.command, self.path, "\n", self.rfile.read(n).decode())
+        self.send_response(200); self.end_headers()
+    def log_message(self, *a): pass
+ThreadingHTTPServer(("localhost", 7070), Sink).serve_forever()
+PY
+uv run --no-project python sink.py
+```
+
+이 터미널에서 Day 047 구성 그대로 `AGNO_TELEMETRY=false`를 걸고 기동합니다.
+
+```bash
+AGNO_API_RUNTIME=dev AGNO_TELEMETRY=false uv run --no-project python -c "
+import time
+from fastapi.testclient import TestClient
+from agno.agent import Agent
+from agno.knowledge.embedder.ollama import OllamaEmbedder
+from agno.knowledge.knowledge import Knowledge
+from agno.models.ollama import Ollama
+from agno.os import AgentOS
+from agno.vectordb.qdrant import Qdrant
+Qdrant.exists = lambda self: True
+vector_db = Qdrant(collection='thai-recipe-index', url='http://localhost:6333/', embedder=OllamaEmbedder())
+knowledge_base = Knowledge(vector_db=vector_db)
+agent = Agent(name='Local RAG Agent', model=Ollama(id='llama3.2'), knowledge=knowledge_base)
+agent_os = AgentOS(agents=[agent])
+app = agent_os.get_app()
+with TestClient(app) as c:
+    c.get('/')
+    time.sleep(1.5)
+"
+```
+
+직접 확인한 출력(수신기 쪽 — `AGNO_TELEMETRY=false`를 걸었는데도 도착합니다):
+
+```
+POST /telemetry/os
+ {"os_id":"...","data":{"agents":["local-rag-agent"],"teams":[],"workflows":[],"interfaces":null},"sdk_version":"3.0.10"}
+```
+
+같은 방법으로 `agent.run()` 쪽도 확인했습니다 — 기본값(성공한 실행)은 `POST /telemetry/runs`가 한 번 도착했고, `AGNO_TELEMETRY=false`를 걸면 이쪽은 0건이 됐습니다. `AgentOS(agents=[agent], telemetry=False)`로 바꾸면 `POST /telemetry/os`도 0건이 됐습니다(모두 직접 확인).
 
 **그림.**
 
@@ -386,7 +456,7 @@ qdrant_client.http.exceptions.ResponseHandlingException: [WinError 10061] 대상
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 브라우저로 AgentOS 웹 UI에 질문을 보내면, AgentOS는 그 요청을 Local RAG Agent에 위임합니다. Agent는 먼저 도구 스키마(그중 하나가 `search_knowledge_base`)를 포함해 채팅 모델(`llama3.2`)에 완성을 요청하고, 모델이 검색이 필요하다고 판단하면 도구 호출 요청으로 응답합니다. 이 지점에서 Agent는 로컬에서 두 단계를 밟습니다 — 질문 텍스트를 임베딩 모델(`openhermes`)에 보내 4096차원 벡터를 받고, 그 벡터로 Qdrant의 `thai-recipe-index` 컬렉션을 검색해 가장 가까운 청크들의 원문 텍스트를 돌려받습니다. 이 텍스트가 함수 결과로 채팅 모델에 다시 전달되면, 모델은 그 문맥을 근거로 최종 답변을 만들고, Agent와 AgentOS를 거쳐 사용자 화면에 표시됩니다. 이 그림은 모델이 검색 도구를 실제로 호출하기로 판단한 경우를 그린 것입니다 — `search_knowledge=True`는 도구를 등록할 뿐 호출을 강제하지 않으므로, 질문에 따라 모델이 도구 호출 없이 곧바로 답할 수도 있습니다(소스로 확인, Step 4). 이 시퀀스 전체는 Qdrant를 띄우지 않아 처음부터 끝까지 한 번에 재현하지는 못했고, 각 구간(임베딩 호출, 채팅 호출)을 Step 2·4에서 개별적으로 확인한 것을 이어붙인 것입니다.
+사용자가 브라우저로 `os.agno.com` 컨트롤 플레인에 질문을 보내면, 컨트롤 플레인이 그 요청을 로컬 AgentOS로 전달하고, AgentOS는 다시 Local RAG Agent에 위임합니다. Agent는 먼저 도구 스키마(그중 하나가 `search_knowledge_base`)를 포함해 채팅 모델(`llama3.2`)에 완성을 요청하고, 모델이 검색이 필요하다고 판단하면 도구 호출 요청으로 응답합니다. 이 지점에서 Agent는 로컬에서 두 단계를 밟습니다 — 질문 텍스트를 임베딩 모델(`openhermes`)에 보내 4096차원 벡터를 받고, 그 벡터로 Qdrant의 `thai-recipe-index` 컬렉션을 검색해 가장 가까운 청크들의 원문 텍스트를 돌려받습니다. 이 텍스트가 함수 결과로 채팅 모델에 다시 전달되면, 모델은 그 문맥을 근거로 최종 답변을 만들고, Agent → AgentOS → 컨트롤 플레인을 거쳐 사용자 화면에 표시됩니다. 이 그림은 모델이 검색 도구를 실제로 호출하기로 판단한 경우를 그린 것입니다 — `search_knowledge=True`는 도구를 등록할 뿐 호출을 강제하지 않으므로, 질문에 따라 모델이 도구 호출 없이 곧바로 답할 수도 있습니다(소스로 확인, Step 4). 이 시퀀스 전체는 Qdrant를 띄우지 않아 처음부터 끝까지 한 번에 재현하지는 못했고, 각 구간(임베딩 호출, 채팅 호출)을 Step 2·4에서 개별적으로 확인한 것을 이어붙인 것입니다.
 
 ## 실행 체크리스트
 
@@ -395,16 +465,17 @@ qdrant_client.http.exceptions.ResponseHandlingException: [WinError 10061] 대상
 - [ ] `OllamaEmbedder()`의 기본 모델이 `openhermes`(4096차원)라는 것을 직접 확인했다
 - [ ] `add_content`가 agno 3.0.10에서 `insert`로 이름이 바뀌었다는 것을 `AttributeError`로 확인했다
 - [ ] 실제 ThaiRecipes.pdf(14페이지)를 내려받아 agno의 기본 청크 전략이 청크 14개(총 17,443자)를 만든다는 것을 확인했다
-- [ ] 이미 받아져 있는 `llama3.2`로 실제 채팅 완성을 호출해 "2 + 2 = 4."를 받았다
+- [ ] 이미 받아져 있는 `llama3.2`로 실제 채팅 완성을 호출해 답을 받았다(내용은 비결정적)
 - [ ] `Agent(knowledge=...)`가 매 프롬프트에 문맥을 강제로 끼워넣는 대신, 모델이 스스로 `search_knowledge_base` 도구 호출 여부를 판단하는 Agentic RAG 방식이라는 것을 이해했다
 - [ ] `python local_rag_agent.py`를 그대로 실행하면 Qdrant 연결 단계에서 멈추고, Qdrant가 떠 있어도 그 다음 줄에서 다시 멈춘다는 것을 확인했다
+- [ ] 채팅 화면이 `localhost:7777`이 아니라 `os.agno.com` 컨트롤 플레인이라는 것과, 성공한 실행마다 agno가 통계를 보내며 `AGNO_TELEMETRY=false`로는 `AgentOS` 시작 이벤트까지 끄지 못한다는 것을 로컬 수신기로 직접 확인했다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `python local_rag_agent.py`가 `ImportError: openai not installed`로 실패 | agno 3.0.10의 `agno.models.ollama`가 OpenAI 호환 `OllamaResponses`를 함께 import해 `openai` 패키지를 요구함(Day 037과 같은 원인, 직접 확인) | `uv pip install openai` |
-| 위를 고쳐도 `from agno.os import AgentOS`에서 `ModuleNotFoundError: No module named 'fastapi'` | agno 3.0.10부터 웹 서빙 계층이 `agno[os]` extra로 분리됨(소스로 확인) | `uv pip install "agno[os]"`(또는 `openai`와 한 번에 `uv pip install openai "agno[os]"`) |
+| 위를 고쳐도 `from agno.os import AgentOS`에서 `ModuleNotFoundError: No module named 'fastapi'` | `requirements.txt`가 웹 서빙 계층에 필요한 `agno[os]` extra를 처음부터 빠뜨림 — 이 앱이 선언한 하한인 2.2.10에서도 `fastapi`는 이미 `os` extra 뒤에 있었다(직접 확인) | `uv pip install "agno[os]"`(또는 `openai`와 한 번에 `uv pip install openai "agno[os]"`) |
 | `knowledge_base.add_content(url=...)`가 `AttributeError: 'Knowledge' object has no attribute 'add_content'` | agno 3.0.10에서 메서드 이름이 `insert`로 바뀜(`url=` 인자는 그대로, 직접 확인) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침 — 직접 재현하려면 `add_content(...)`를 `insert(...)`로 바꿔 호출 |
 | `python local_rag_agent.py`를 그대로 실행하면 `qdrant_client.http.exceptions.ResponseHandlingException`(연결 거부)으로 멈춤 | `Knowledge(vector_db=...)` 생성 시점에 곧바로 `vector_db.exists()`로 Qdrant 연결을 확인하는데(소스로 확인) Qdrant 서버가 떠 있지 않음 | `docker run -p 6333:6333 qdrant/qdrant`로 먼저 띄우기(이 문서는 띄우지 않음) — 띄운 뒤에도 위 `add_content`/`insert` 문제는 남는다 |
 

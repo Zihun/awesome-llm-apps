@@ -2,15 +2,17 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
+plane: 컨트롤 플레인 { class: ext }
 os: AgentOS { class: ours }
 agent: Local RAG Agent { class: ours }
-chat: 채팅 모델 (llama3.2) { class: ours }
-embed: 임베딩 모델 (openhermes) { class: ours }
-qdrant: Qdrant (thai-recipe-index) { class: store }
+chat: 채팅 모델 (llama3.2) { class: ext }
+qdrant: Qdrant { class: store }
+embed: 임베딩 모델 (openhermes) { class: ext }
 
-user -> os: 질문 (브라우저)
+user -> plane: 질문 (브라우저)
+plane -> os: AgentOS로 전달
 os -> agent: run(질문)
-agent -> chat: 채팅 완성 요청 (도구 스키마 포함)
+agent -> chat: 채팅 완성 요청 (도구 포함)
 chat -> agent: tool_call search_knowledge_base(query)
 agent -> embed: 질의 임베딩 요청
 embed -> agent: 4096차원 벡터
@@ -19,4 +21,5 @@ qdrant -> agent: 청크 텍스트 목록
 agent -> chat: 함수 결과 재전송
 chat -> agent: 최종 응답 텍스트
 agent -> os: RunOutput.content
-os -> user: 화면에 표시
+os -> plane: 응답 전달
+plane -> user: 화면에 표시

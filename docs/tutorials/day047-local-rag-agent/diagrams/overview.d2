@@ -1,25 +1,20 @@
 ...@../../_tools/theme
 direction: down
 
-req: "요청 경로" {
-  class: group
-  grid-columns: 3
-  user: 사용자 { class: person }
-  os: AgentOS (7777) { class: ours }
-  agent: Local RAG Agent { class: ours }
-}
+user: 사용자 { class: person }
+plane: 컨트롤 플레인 { class: ext }
+os: AgentOS (7777) { class: ours }
+agent: Local RAG Agent { class: ours }
 
-infra: "로컬 인프라" {
-  class: group
-  grid-columns: 4
-  pdf: ThaiRecipes.pdf { class: file }
-  embed: 임베딩 모델 (openhermes) { class: ours }
-  qdrant: Qdrant (thai-recipe-index) { class: store }
-  chat: 채팅 모델 (llama3.2) { class: ours }
-}
+pdf: ThaiRecipes.pdf (S3) { class: file }
+embed: 임베딩 모델 (openhermes, 로컬) { class: ext }
+qdrant: Qdrant (thai-recipe-index) { class: store }
+chat: 채팅 모델 (llama3.2, 로컬) { class: ext }
 
-req.user -> req.os: 질문
-req.os -> req.agent: 실행 위임
-req -> infra: 채팅·임베딩 요청
-infra.pdf -> infra.embed: 청크 텍스트
-infra.embed -> infra.qdrant: 벡터 저장 · 검색
+user -> plane
+plane -> os
+os -> agent: 실행 위임
+agent -> chat: 채팅 요청
+agent -> qdrant: 검색 요청
+pdf -> embed: 청크 텍스트
+embed -> qdrant: 벡터 저장
