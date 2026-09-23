@@ -1,6 +1,6 @@
 # Day 022 · Google ADK Crash Course · 9_multi_agent_patterns
 
-> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ ⚠ · 예상 소요 105분(하위 레슨 세 개 각각의 `agent.py`와, `SequentialAgent`·`LoopAgent`·`ParallelAgent` 세 클래스의 google-adk 소스까지 모두 추적해 다른 크래시 코스 날보다 깁니다) · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않았습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns`
+> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ ⚠ · 예상 소요 95분(하위 레슨 세 개 각각의 `agent.py`와 `app.py`를 따로 띄워 보고, `SequentialAgent`·`LoopAgent`·`ParallelAgent` 세 클래스의 google-adk 소스까지 모두 추적하느라 손으로 돌려보는 시간이 깁니다) · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않았습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns`
 
 ## 오늘 만들 것
 
@@ -63,7 +63,7 @@ cd "9_2_loop agent"
 pip install -r ../9_1_sequential_agent/requirements.txt
 ```
 
-`9_2_loop_agent`의 실제 코드가 필요로 하는 것은 `9_1`과 완전히 같은 네 패키지(`google-adk`·`streamlit`·`python-dotenv`·`pydantic`, 소스로 확인 — `import` 구문이 겹칩니다)이므로 이 우회는 실제로 맞습니다. 이 문서도 같은 방식으로, `9_1`에서 만든 환경 하나를 세 폴더 모두에 재사용합니다(폴더 이름에 공백이 섞인 `"9_2_loop agent"`라는 README의 인용은 실제 폴더명 `9_2_loop_agent`와 다릅니다 — 밑줄입니다, 직접 확인).
+`9_2_loop_agent`의 실제 코드가 필요로 하는 것은 `9_1`과 겹치는 `import` 구문(`google-adk`·`streamlit`·`python-dotenv`, 소스로 확인)뿐이므로 이 우회는 실제로 맞습니다 — `pydantic`은 어느 `agent.py`·`app.py`도 직접 임포트하지 않고 `google-adk`가 끌어오는 의존성입니다(`requirements.txt`에 네 번째 줄로 올라 있는 이유이기도 합니다). 이 문서도 같은 방식으로, `9_1`에서 만든 환경 하나를 세 폴더 모두에 재사용합니다(폴더 이름에 공백이 섞인 `"9_2_loop agent"`라는 README의 인용은 실제 폴더명 `9_2_loop_agent`와 다릅니다 — 밑줄입니다, 직접 확인).
 
 이제 다섯 파일씩 세 벌, 총 열네 파일의 실제 줄 수를 봅니다. `wc -l`이 트레일링 개행 유무에 따라 어긋난다는 것은 Day 019~021에서 이미 확인했습니다.
 
@@ -87,15 +87,18 @@ Get-Content 9_1_sequential_agent\agent.py, 9_1_sequential_agent\app.py, 9_1_sequ
  146 9_1_sequential_agent/README.md
    4 9_1_sequential_agent/requirements.txt
    2 9_1_sequential_agent/.env.example
+ 421 total
  222 9_2_loop_agent/agent.py
   76 9_2_loop_agent/app.py
   87 9_2_loop_agent/README.md
    2 9_2_loop_agent/.env.example
+ 387 total
  116 9_3_parallel_agent/agent.py
   62 9_3_parallel_agent/app.py
   75 9_3_parallel_agent/README.md
    5 9_3_parallel_agent/requirements.txt
    2 9_3_parallel_agent/.env.example
+ 260 total
 00000000: 22                                       "
 00000000: 22                                       "
 00000000: 22                                       "
@@ -103,7 +106,7 @@ Get-Content 9_1_sequential_agent\agent.py, 9_1_sequential_agent\app.py, 9_1_sequ
 
 Day 021의 다섯 파일은 `agent.py`·`__init__.py`·`.env.example`이 나란히 개행 없이 끝나 `wc -l`이 전부 어긋났지만, 오늘은 다릅니다: `agent.py`·`app.py`·`README.md`·`requirements.txt` 열한 개는 마지막 바이트가 전부 개행(`0a`)이라 `wc -l` 숫자가 그대로 맞습니다(직접 확인, 위 표의 네 파일 종류는 모두 정확). 어긋나는 것은 `.env.example` 세 개뿐입니다 — 마지막 바이트가 개행이 아니라 `"`(`22`)라서 실제로는 표시된 2줄이 아니라 3줄입니다(`GOOGLE_API_KEY="your-api-key"`로 끝나고 개행이 없습니다).
 
-이 폴더는 `load_dotenv()` 호출 여부도 Day 021과 다릅니다. Day 021은 `8_simple_multi_agent`의 `agent.py`만 이 두 줄이 없는 이 크래시 코스의 유일한 예외라고 밝혔고, 오늘 폴더들은 다시 호출한다고 미리 적어 두었습니다 — 직접 확인해 보면 정확히 그렇습니다.
+이 폴더는 `load_dotenv()` 호출 여부도 Day 021과 다릅니다. Day 021은 `8_simple_multi_agent`의 `agent.py`가 Day 018~021 흐름 안에서 이 두 줄이 빠진 유일한 폴더라고 밝혔지만(레슨 1~4의 `agent.py` 13개도 마찬가지로 빠져 있어 크래시 코스 전체로 보면 예외가 아닙니다), 오늘 폴더들은 다시 호출한다고 미리 적어 두었습니다 — 직접 확인해 보면 정확히 그렇습니다.
 
 `ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns/9_1_sequential_agent/agent.py:1-13`
 
@@ -164,7 +167,7 @@ DeprecationWarning : LoopAgent is deprecated in favor of Workflow and will be re
 DeprecationWarning : ParallelAgent is deprecated in favor of Workflow and will be removed in a future version. Workflow cannot yet be used as an LlmAgent sub-agent.
 ```
 
-(직접 확인 — 버전은 Day 019~021과 같은 google-adk 2.9.2입니다. `warnings.simplefilter('always')`로 강제하지 않으면 파이썬 기본 필터가 `__main__` 바깥에서 발생한 `DeprecationWarning`을 조용히 삼키므로, 세 클래스를 그냥 임포트만 해서는 이 경고가 보이지 않습니다 — 세 `agent.py`를 평소처럼 실행하면 이 경고가 화면에 나타나지 않는 이유입니다.)
+(직접 확인 — 버전은 Day 019~021과 같은 google-adk 2.9.2입니다. 경고는 임포트 시점이 아니라 **인스턴스를 만드는 순간** 납니다(`typing_extensions.deprecated`가 `__init__`에 건 훅). `warnings.simplefilter('always')`로 강제하지 않으면 파이썬 기본 필터가 `__main__` **바깥**에서 난 것만 조용히 삼킵니다 — 세 `agent.py`는 모듈 최상단에서 바로 인스턴스를 만들므로, `python agent.py`로 직접 실행하면(그 파일 자신이 `__main__`이 되어) 경고가 화면에 그대로 나타납니다(직접 확인). 가려지는 것은 `streamlit run app.py`처럼 `app.py`가 `agent`를 **임포트**해서 쓸 때뿐입니다 — 그때는 인스턴스를 만드는 코드가 `__main__`이 아니라 `agent` 모듈 소속이기 때문입니다.)
 
 ### Step 2. `SequentialAgent` — 순서를 강제하는 것은 대화가 아니라 `for`문
 
@@ -268,7 +271,7 @@ implementation_planner before_model tools= []
 event author order: ['market_researcher', 'swot_analyzer', 'strategy_formulator', 'implementation_planner']
 ```
 
-(직접 확인 — 네 전환 대상이 전부 빈 리스트이고, `market_researcher`를 뺀 나머지는 도구가 하나도 없어 `transfer_to_agent`가 실릴 자리 자체가 없습니다. 이벤트 작성자 순서도 선언 순서와 정확히 같습니다.)
+(직접 확인 — 네 전환 대상이 전부 빈 리스트입니다. `_AgentTransferLlmRequestProcessor.run_async`는 전환 대상이 없으면 도구 목록과 무관하게 곧장 돌아가므로(`if not transfer_targets: return`, 소스로 확인 `agent_transfer.py:46-48`) `transfer_to_agent`가 실리지 않습니다 — Day 021 Step 5에서 도구가 하나도 없던 `summarizer_agent`도 전환 대상이 있을 때는 `['transfer_to_agent']`를 받았던 것과 대비됩니다. 이벤트 작성자 순서도 선언 순서와 정확히 같습니다.)
 
 ### Step 3. `LoopAgent` — 반복은 `while`문, 정지는 두 겹
 
@@ -346,7 +349,7 @@ spec_refinement_loop = LoopAgent(
 )
 ```
 
-google-adk 2.9.2 소스로 확인하면(`google/adk/agents/loop_agent.py`) `LoopAgent._run_async_impl`은 `while (max_iterations is None or times_looped < max_iterations)` 바깥 고리 안에 `self.sub_agents`를 순회하는 `for`문을 품고 있습니다 — 안쪽 `for`문 한 바퀴가 "반복 1회"이고, `SequentialAgent`와 완전히 같은 방식(같은 `ctx`로 끝까지 소비 후 다음으로)으로 세 자식을 순서대로 부릅니다. 매 자식의 이벤트마다 `event.actions.escalate`를 검사해 하나라도 참이면 `should_exit = True`로 그 바퀴를 즉시 끝내고 바깥 `while`도 빠져나갑니다. 정지 조건은 이렇게 **두 겹**입니다: 파이썬 레벨에서 `max_iterations=10`이 하드 캡으로 못박혀 있고(생성자 인자, 세션 상태와 무관), 그 안에서 `check_completion`이 세션의 `target_iterations`(UI 기본값 3, 1~20 슬라이더)나 `accepted` 플래그를 보고 소프트하게 `escalate`를 올립니다. 둘 중 먼저 오는 쪽이 이깁니다.
+google-adk 2.9.2 소스로 확인하면(`google/adk/agents/loop_agent.py`) `LoopAgent._run_async_impl`은 `while (max_iterations is None or times_looped < max_iterations)` 바깥 고리 안에 `self.sub_agents`를 순회하는 `for`문을 품고 있습니다 — 안쪽 `for`문 한 바퀴가 "반복 1회"이고, `SequentialAgent`와 완전히 같은 방식(같은 `ctx`로 끝까지 소비 후 다음으로)으로 세 자식을 순서대로 부릅니다. 매 자식의 이벤트마다 `event.actions.escalate`를 검사해 하나라도 참이면 `should_exit = True`로 그 바퀴를 즉시 끝내고 바깥 `while`도 빠져나갑니다. 정지 조건은 이렇게 **두 겹**입니다: 파이썬 레벨에서 `max_iterations=10`이 하드 캡으로 못박혀 있고(생성자 인자, 세션 상태와 무관), 그 안에서 `check_completion`이 세션의 `target_iterations`(UI 숫자 입력칸, 1~20 범위·기본값 3)나 `accepted` 플래그를 보고 소프트하게 `escalate`를 올립니다. 둘 중 먼저 오는 쪽이 이깁니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -409,7 +412,7 @@ uv run --no-project python -c "<위와 같은 코드>"
 ```
 A target_iterations=3           | passes: 3 | model calls: 3 | session.state: {'topic': 't', 'iteration': 0, 'target_iterations': 3, 'accepted': False}
 B accepted=True from the start  | passes: 1 | model calls: 1 | session.state: {'topic': 't', 'iteration': 0, 'target_iterations': 10, 'accepted': True}
-C target_iterations=15 (>max=10)| passes: 10 | model calls: 10 | session.state: {'topic': 't', 'iteration': 0, 'target_iterations': 15, 'accepted': False}
+C target_iterations=15 (>max=10) | passes: 10 | model calls: 10 | session.state: {'topic': 't', 'iteration': 0, 'target_iterations': 15, 'accepted': False}
 D run_async call #1 | passes: 3 | session.state: {'topic': 't', 'iteration': 0, 'target_iterations': 3, 'accepted': False}
 D run_async call #2 | passes: 3 | session.state: {'topic': 't', 'iteration': 0, 'target_iterations': 3, 'accepted': False}
 spec_refinement_loop.max_iterations = 10
@@ -525,7 +528,7 @@ final session.state: {'topic': 'AI support platforms'}
     }
 ```
 
-이 딕셔너리 키 이름(`market_trends` 등)은 세션에서 읽어 온 것이 아니라, 이 `return`문 자체가 파이썬 리터럴로 짓는 이름입니다 — 값은 이 함수가 병합 이벤트 스트림에서 `event.author`별로 직접 모은 `last_text_by_agent`에서 옵니다(Step 5의 `probe` 스크립트와 같은 방식). `ParallelAgent`가 실제로 제공하는 공유 채널(`session.state`)과, 이 앱이 실제로 쓰는 채널(`event.author` 버킷팅)은 이름만 비슷할 뿐 서로 다른 경로입니다.
+이 딕셔너리 키 이름(`market_trends` 등)은 세션에서 읽어 온 것이 아니라, 이 `return`문 자체가 파이썬 리터럴로 짓는 이름입니다 — 값은 이 함수가 병합 이벤트 스트림에서 `event.author`별로 직접 모은 `last_text_by_agent`에서 옵니다(바로 위 확인 스크립트와 같은 방식). `ParallelAgent`가 실제로 제공하는 공유 채널(`session.state`)과, 이 앱이 실제로 쓰는 채널(`event.author` 버킷팅)은 이름만 비슷할 뿐 서로 다른 경로입니다.
 
 ### Step 5. 실행하기 — API 키 없이 어디서, 어떻게 막히는가
 
@@ -538,7 +541,7 @@ cd ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_pattern
 uv run --no-project streamlit run app.py --server.headless true --server.port 8998
 ```
 
-다른 터미널에서:
+**확인.** 다른 터미널에서:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8998
@@ -556,7 +559,7 @@ uv run --no-project adk telemetry disable
 uv run --no-project adk web --port 8996 --no_use_local_storage .
 ```
 
-다른 터미널에서:
+**확인.** 다른 터미널에서:
 
 ```bash
 curl -s http://127.0.0.1:8996/list-apps
@@ -565,17 +568,21 @@ curl -s -X POST http://127.0.0.1:8996/run -H "Content-Type: application/json" -d
 
 ```powershell
 curl.exe -s http://127.0.0.1:8996/list-apps
-curl.exe -s -X POST http://127.0.0.1:8996/run -H "Content-Type: application/json" -d '{"appName":"9_1_sequential_agent","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"hello"}]}}'
+'{"appName":"9_1_sequential_agent","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"hello"}]}}' | Out-File -Encoding utf8 body.json
+curl.exe -s -X POST http://127.0.0.1:8996/run -H "Content-Type: application/json" --data "@body.json"
 ```
 
+(PowerShell 5.1의 네이티브 인자 전달은 작은따옴표 문자열 안의 큰따옴표를 지워서 넘기는 것으로 문서화돼 있어(about_Parsing, `$PSNativeCommandArgumentPassing`), `-d '{"key":...}'`를 그대로 쓰면 서버가 다른 본문을 받을 수 있습니다 — 본문을 파일로 적어 `--data "@body.json"`으로 넘기면 5.1과 7.3+ 모두에서 안전합니다. 이 세션에서는 PowerShell을 실행할 수 없어 직접 확인하지 못했습니다.)
+
 ```
-["9_1_sequential_agent","9_2_loop_agent","9_3_parallel_agent"]
-{"detail":"Invalid agent name: '9_1_sequential_agent'. Agent names must be valid Python identifiers or paths separated by dots (letters, digits, underscores, and dots)."}
+["9_1_sequential_agent","9_2_loop_agent","9_3_parallel_agent"]{"detail":"Invalid agent name: '9_1_sequential_agent'. Agent names must be valid Python identifiers or paths separated by dots (letters, digits, underscores, and dots)."}
 ```
 
-`/list-apps`는 폴더를 나열만 할 뿐 내용을 확인하지 않아 셋 다 뜨지만, `/run`은 HTTP 404로 막힙니다(직접 확인) — 폴더 이름이 숫자로 시작해 유효한 파이썬 식별자가 아니라는 것은 Day 015~017에서 이미 확인된 원인과 같습니다(재확인만 하고 원인 설명은 그쪽을 가리킵니다). 설령 폴더 이름을 고쳐 이 검사를 통과하더라도 한 겹이 더 있습니다: 세 `agent.py` 중 어느 것도 변수 이름을 `root_agent`로 쓰지 않습니다(`business_intelligence_team`·`spec_refinement_loop`·`market_snapshot_team`) — google-adk의 에이전트 로더는 정확히 `root_agent`(또는 `App` 인스턴스인 `app`)라는 이름만 찾으므로(소스로 확인, `google/adk/cli/utils/agent_loader.py`) 이름을 고쳐도 "No root_agent found" 오류가 이어집니다. 이 폴더들에 `app.py`가 딸려 있는 이유가 이걸로 설명됩니다 — `adk web`은 애초에 이 세 앱을 위한 진입점이 아닙니다.
+(`curl` 응답에는 줄바꿈이 없어 두 응답이 실제로는 한 줄로 붙습니다 — 위는 그대로 옮긴 실제 출력입니다.) `/list-apps`는 폴더를 나열만 할 뿐 내용을 확인하지 않아 셋 다 뜨지만, `/run`은 HTTP 404로 막힙니다(직접 확인) — 폴더 이름이 숫자로 시작해 유효한 파이썬 식별자가 아니라는 것은 Day 015~017에서 이미 확인된 원인과 같습니다(재확인만 하고 원인 설명은 그쪽을 가리킵니다). 설령 폴더 이름을 고쳐 이 검사를 통과하더라도 한 겹이 더 있습니다: 세 `agent.py` 중 어느 것도 변수 이름을 `root_agent`로 쓰지 않습니다(`business_intelligence_team`·`spec_refinement_loop`·`market_snapshot_team`) — google-adk의 에이전트 로더는 정확히 `root_agent`(또는 `App` 인스턴스인 `app`)라는 이름만 찾으므로(소스로 확인 — `adk web`이 실제로 쓰는 것은 `google/adk/cli/utils/_nested_agent_loader.py`의 `NestedAgentLoader`이고, `agent_loader.py`의 `AgentLoader`도 같은 이름 탐색·같은 오류 문구를 쓴다) 이름을 고쳐도 "No root_agent found" 오류가 이어집니다. 이 폴더들에 `app.py`가 딸려 있는 이유가 이걸로 설명됩니다 — `adk web`은 애초에 이 세 앱을 위한 진입점이 아닙니다.
 
 키 없이 Streamlit 버튼을 누르는 것과 같은 효과를 내려면 각 `agent.py`가 내보내는 async 함수를 직접 불러봅니다.
+
+**확인.**
 
 ```bash
 cd ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns/9_1_sequential_agent
@@ -614,7 +621,7 @@ exit=1
 
 - [ ] 세 `requirements.txt`(9_1·9_3만 존재, 내용 동일 네 줄) 중 `9_2_loop_agent`엔 파일 자체가 없고, 레슨 README가 `9_1`의 것을 재사용하도록 안내한다는 것을 확인했다
 - [ ] 열네 파일 중 `.env.example` 세 개만 트레일링 개행이 없어 실제 줄 수가 표시보다 하나 많다는 것을 바이트로 확인했다
-- [ ] 세 `agent.py` 모두 `load_dotenv()`를 호출해(Day 021의 유일한 예외와 다름) `.env`를 만들면 직접 임포트로도 키가 반영된다는 것을 소스로 확인했다
+- [ ] 세 `agent.py` 모두 `load_dotenv()`를 호출해(Day 018~021 흐름 안에서 8번 레슨만 빠졌던 것과 다름) `.env`를 만들면 직접 임포트로도 키가 반영된다는 것을 소스로 확인했다
 - [ ] `SequentialAgent`·`LoopAgent`·`ParallelAgent` 셋 다 이 버전에서 `DeprecationWarning`을 낸다는 것을 직접 확인했다
 - [ ] `SequentialAgent`의 네 자식이 전환 대상을 하나도 갖지 않아 순서를 어길 수 없다는 것을 `_get_transfer_targets`와 실행으로 확인했다
 - [ ] `LoopAgent`의 정지가 하드 캡(`max_iterations`)과 소프트 조건(`escalate`) 두 겹이며, 둘 중 먼저 오는 쪽이 이긴다는 것을 세 시나리오로 확인했다
@@ -630,8 +637,9 @@ exit=1
 | `9_2_loop_agent`에서 `uv pip install -r requirements.txt`가 파일을 찾지 못함 | 이 폴더엔 `requirements.txt`가 없다(직접 확인, 세 폴더 중 유일) | `uv pip install -r ../9_1_sequential_agent/requirements.txt`(레슨 README와 같은 방식)로 설치하거나, `9_1`에서 만든 환경을 그대로 재사용한다 |
 | `9_3_parallel_agent`를 실행해도 결과 화면에 기대한 것과 달리 `session.state`에서 값을 못 읽음 | 코드 주석과 README가 말하는 `output_key` 공유가 실제 코드엔 없다 — 세 자식 다 `output_key=None`, `tools=[]`(직접 확인) | `session.state`가 아니라 `gather_market_snapshot`이 반환하는 딕셔너리(`event.author` 기준으로 모음)를 읽는다 |
 | `spec_refinement_loop`를 같은 세션으로 두 번 돌려도 `iteration`이 이어지지 않고 매번 처음부터 다시 셈 | `IncrementIteration`이 `ctx.session.state`에 직접 대입할 뿐 이벤트에 `state_delta`를 싣지 않아 저장소에 반영되지 않는다(직접 확인, 소스로 확인 `in_memory_session_service.py`의 `append_event`) | 반복 안에서만 정확하면 되는 용도면 무시해도 되지만, 호출 경계를 넘겨 이어가려면 `EventActions(state_delta={"iteration": current_iteration})`를 함께 실어야 한다 |
-| `adk web .`로 이 폴더를 띄우면 `/list-apps`엔 세 이름이 다 뜨는데 `/run`이 전부 HTTP 404 | 폴더 이름이 숫자로 시작해 유효한 파이썬 식별자가 아니다(Day 015~017과 같은 원인). 이름을 고쳐도 `root_agent`라는 변수명을 쓰는 모듈이 하나도 없다(소스로 확인, `agent_loader.py`) | `adk web`을 쓰지 말고 각 폴더의 `streamlit run app.py`로 실행한다 |
-| 세 클래스를 그냥 써도 아무 경고가 안 보임 | 파이썬 기본 경고 필터가 `__main__` 바깥에서 난 `DeprecationWarning`을 표시하지 않는다(직접 확인) | `python -W always::DeprecationWarning` 또는 `warnings.simplefilter('always')`로 강제해야 보인다. 이 버전(2.9.2)에서는 정상 동작하므로 당장 코드를 바꿀 필요는 없다 |
+| `9_2` 화면의 "Run Metadata"가 몇 번을 돌려도 늘 `iterations: 0`·`stopped_reason: 'max_iterations_or_other'`로 보이고, 같은 세션에서 목표 반복 횟수를 바꿔도 반영되지 않음 | `iterate_spec_until_acceptance`(`agent.py:142-164, 212-219`)가 `run_async` 호출 **전에** 받아 둔 `session` 스냅숏에서 `current_iteration`을 읽는다 — 위 원인과 같은 이유로 실행 중 갱신은 이 스냅숏에 반영되지 않는다(소스로 확인) | 위와 같은 `state_delta` 수정을 하거나, 화면의 이 값은 참고용일 뿐 실제 반복 횟수가 아니라고 알고 넘어간다 |
+| `adk web .`로 이 폴더를 띄우면 `/list-apps`엔 세 이름이 다 뜨는데 `/run`이 전부 HTTP 404 | 폴더 이름이 숫자로 시작해 유효한 파이썬 식별자가 아니다(Day 015~017과 같은 원인). 이름을 고쳐도 `root_agent`라는 변수명을 쓰는 모듈이 하나도 없다(소스로 확인, `adk web`이 쓰는 `_nested_agent_loader.py`와 `agent_loader.py` 둘 다 같은 이름을 찾음) | `adk web`을 쓰지 말고 각 폴더의 `streamlit run app.py`로 실행한다 |
+| `streamlit run app.py`로 돌리면 세 클래스의 경고가 안 보임(`python agent.py`로 직접 돌리면 보임) | 경고는 인스턴스를 만드는 순간 나고, 파이썬 기본 필터는 `__main__`에서 난 것만 표시한다 — `app.py`가 `agent`를 임포트하는 Streamlit 실행에서는 그 인스턴스화 코드가 `__main__` 소속이 아니라서 가려진다(직접 확인) | `python -W always::DeprecationWarning` 또는 `warnings.simplefilter('always')`로 강제해야 보인다. 이 버전(2.9.2)에서는 정상 동작하므로 당장 코드를 바꿀 필요는 없다 |
 
 ## 더 해보기
 
