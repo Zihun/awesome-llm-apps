@@ -8,12 +8,19 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
-**진행 중 (2026-09-23 오전, 새 세션) — Task 11: 화살표 지침 + 미검토 22일 리뷰·수정 + 전 일차 화살표 보수. 지금 돌고 있는 넷이 끝나면 멈추고 보고한다 — 다음 범위는 사용자가 세션 한도를 보고 정한다.**
-사용자 지시: "화살표 포함해서 검사 안된것들 부터 검사 완료 수정 완료 진행해", 세로 상한은 "추천안대로"(1000px).
-작성(Day 58~)은 **이 일이 끝나도 사용자 지시 없이 재개하지 않는다.** 세부는 맨 아래 "2026-09-23 (4)" 절.
+**멈춤 지점 (2026-09-23 오후) — 사용자가 주간 한도 때문에 즉시 중단시켰다. 재개는 사용자 지시를 받고.**
 
-- Days 47~57 작성·커밋·푸시 완료(de15469), 목차 진도 57/164. Days 58·59·60은 스캐폴드 그대로.
-- Day 057은 작성자 보고서 없이 내가 대신 커밋했다(`ab02a56`) — Task 11b 리뷰(052~057 묶음)가 처음부터 검증한다.
+Task 11(화살표 지침 + 미검토 22일 리뷰·수정 + 전 일차 화살표 재배치) 진행 상황:
+- 끝남: 검사 19~23·세로 1000(82eb389, 97036b8, 리뷰 둘 다 승인). 미검토 22일 리뷰 전부(review-*.md 5개).
+- 수정·재배치 **커밋됨**(재검토 전): 020 021 022 035 047 048 049 050 051 053 054 056 057, 052·055는 1차분만.
+- **작업 트리에 미커밋 수정이 남은 날**(에이전트를 중간에 끊음 — 되돌리지 말고 이어서 할 것):
+  012 013 019(D1: 리뷰 반영 일부, 재배치 전) / 023(E1: README 출력 블록 수정 중) / 036(E2: 재배치 중, 글자 관통 남음) /
+  052 053 055(D3a 수정 1차: 세로 상한 맞추는 중 — 055는 통과 직전이었음).
+  각 묶음 보고서 task-11c-<D1|E1|E2|D3a>-report.md에 그때까지 한 일이 있다(멈춤 절은 못 썼다).
+- 안 한 것: 037·038(E2), 재검토 네 개 RR1 047~051(diff 준비됨: fix-RR1-047-051.diff) · RR2 052~057 · RR3 020~023 ·
+  RR4 012·013·019+035~038, F(이미 리뷰된 35일 화살표 재배치, 7묶음), G(전체 검증·푸시). 공통 지시서: task-11c-fix-brief.md,
+  task-11-relayout-brief.md, rereview-11c-brief.md, 대조 도구 diagram-inventory.mjs, diff 생성 mkfixdiff.sh.
+- **푸시 안 함.** origin/main보다 앞선 로컬 커밋이 있다(82eb389부터).
 
 **내가 저지른 것 (되풀이하지 말 것)**
 
@@ -533,3 +540,41 @@ Task 11b: 052~057 review DONE (ab9b251bd31f07739, opus, 55분) → review-052-05
 --- 2026-09-23 11:xx: 지금 돌던 넷 모두 끝. 사용자 지시대로 새 에이전트 없이 멈추고 보고한다. 다음 범위·루트 .venv 복구 방식·로컬 모델 클래스 관례는 사용자 결정 대기. ---
   리뷰 14일 합계: 13일 ❌, Critical 4 · Important 38 · Minor 72. 남은 미검토: 020~023, 035~038(8일).
   에이전트 실측(토큰·시간): 리뷰 sonnet 3일 38만/35분, opus 5일 56만/51분, opus 6일 64만/55분. 구현 sonnet 34만/37분.
+=== USER INSTRUCTION 2026-09-23: "추천 순서대로 해" — ① A(11a 태스크 리뷰)·B(검사 19 넷째 조건)·C(남은 리뷰 두 묶음) 동시 → D(리뷰 끝난 14일 수정+재배치)·E(C의 8일 수정) → F(이미 리뷰된 35일 재배치) → G(전체 검증·푸시). ② 루트 .venv는 추천 (a) `uv sync --locked`. ③ 로컬 모델은 `ext`. ===
+Ruling: ②를 그대로 실행하지 않는다 — 미리 보기(dry-run)로 보니 `uv sync --locked`는 103개를 지우고 5개를 설치한다(잠금 파일의 선택 extra까지 지움). 내가 추천하며 말한 "httpx2 같은 잠금 밖 패키지만 빠진다"와 다르다. `--all-extras`(정확히 잠금과 같게)는 잠금 밖 30개(playwright·yfinance·scrapegraphai·boto3 등)를 지우고 7개 버전 교정, `--all-extras --inexact`는 지우는 것 없이 7개 버전만 교정(pydantic 2.13.5→2.12.4 등). 사고 전 상태는 스냅숏이 없어 어느 쪽이 원래에 가까운지 모른다 — 사용자에게 세 가지를 숫자와 함께 다시 묻는다. 에이전트는 모두 스크래치 venv를 쓰므로 이 결정이 A~G를 막지 않는다 — 틀리면: 루트 환경 정리가 늦어질 뿐.
+Ruling: D의 묶음을 셋에서 다섯으로 나눈다 — D1 012·013·019 / D2a 047·049·050(텔레메트리 설명을 047이 맡고 049·050이 가리키므로 한 손에) / D2b 048·051 / D3a 052·053·055(raglite 막힘 순서 X5를 한 손에) / D3b 054·056·057. 동시 4개 한도에서 한 에이전트가 6일을 끌면 벽시계 시간이 길고 한도에 걸릴 때 잃는 것이 크다 — 틀리면: 에이전트 수만 늘고 총 작업량은 같다.
+Task 11a: task reviewer dispatched (sonnet, afd8aefc4b8ba507f) on review-de15469..82eb389.diff.
+Task 11e: implementer dispatched (sonnet, ab053f42826bd979b) at BASE c0a8939 — brief task-11e-brief.md, report task-11e-report.md.
+Task 11b: reviewers dispatched — 020~023 (opus, ad63c8729ea238cae) → review-020-023.md, 035~038 (sonnet, aecc8f88cfb463f36) → review-035-038.md.
+=== USER INSTRUCTION 2026-09-23: 루트 .venv는 "가 안으로" — `uv sync --locked --all-extras --inexact` ===
+  실행 완료: 7개를 잠금 버전으로(langchain-openai 1.6.2→1.0.3, langgraph 1.2.11→1.2.2, langgraph-sdk 0.4.4→0.3.6, orjson 3.12.0→3.11.4, pydantic 2.13.5→2.12.4, pydantic-core 2.46.5→2.41.5, tzdata 2026.4→2025.2), 지운 것 없음. 다시 dry-run → "Would make no changes". httpx2는 잠금 밖이라 돌아오지 않았다(사용자가 쓰면 따로 설치).
+Task 11e: implementer DONE (ab053f42826bd979b, sonnet, 11분·14만 토큰), commit 97036b8 — reveal.mjs 넷째 조건 + 테스트 3개 + 규격 §5 ext 행·로컬 모델 문단, §6 19번. 컨트롤러 확인: 47/47, 새 조건은 012·013·019·020·023에서 정확히 한 건씩. Task reviewer dispatched (sonnet) on review-c0a8939..97036b8.diff.
+Task 11e: review ✅ spec, quality Approved (a1a973a311b65a172) — 리뷰어가 읽기 전용 check로 5일 5건(012 step3 external.openai / 013 step3 external.openai / 019 step4 front.ui / 020 step3 runner.agent_scope / 023 step5 front.gemini)을 독립 재현.
+Task 11e: minor (deferred): lib/check.mjs:131-132 검사 19 호출부 주석이 넷째 조건을 언급하지 않는다(틀린 말은 아님).
+Task 11e: complete (commits c0a8939..97036b8, review clean)
+Task 11a: review ✅ spec, quality Approved (afd8aefc4b8ba507f, sonnet) — 전 코퍼스(~465 SVG)에 새 함수를 돌려 충돌·오탐 0, 기준 표본 수치(001: 관통 2, 005: 1, 나머지 0) 독립 재현, leafBoxes 완화는 2파일에서 숨은 잎을 새로 찾을 뿐 17번 0 유지.
+Task 11a: minor (deferred): containerTitleBoxes가 묶음 shape가 사각형 하나라고 가정(지금 1083개 전부 해당, 미래 복합 도형이면 미탐) — 주석 한 줄 가치.
+Task 11a: minor (deferred): 노드 그룹 정규식 앞부분이 reveal.mjs·leafBoxes·containerTitleBoxes 세 곳에 거의 같게 반복.
+Task 11a: minor (deferred): 검사 20~23이 파일마다 SVG를 각자 다시 파싱(지금 규모에선 1초 미만).
+Task 11a: complete (commits de15469..82eb389, review clean)
+Ruling: D를 C가 끝나기 전에 시작한다 — D는 A·B(검사 확정)에만 의존하고 C와는 무관하다. 사용자 파라미터(동시 4개) 안에서 빈 자리를 쓴다. Critical이 있는 묶음(D2a 047·049·050, D3a 052·053·055)부터 — 틀리면: 순서를 엄격히 읽는 경우와 벽시계 차이뿐.
+Task 11c: D2a (047·049·050) dispatched (sonnet, a84e72d86560fe4cf) at BASE 97036b8 → task-11c-D2a-report.md. D3a (052·053·055) dispatched (sonnet, a8eb20620400a649d) → task-11c-D3a-report.md. 남은 D: D3b 054·056·057, D2b 048·051, D1 012·013·019. E는 C 리뷰가 끝난 뒤.
+Task 11b: 035~038 review DONE (aecc8f88cfb463f36, sonnet, 26분·37만) → review-035-038.md. 035 ✅ / 036 ✅(M2) / 037 ❌(I1 M3) / 038 ✅(M1). 합계 C0 I1 M6. 036~038은 agno 3.0.10 — 로컬 주장이 없어 텔레메트리 누락은 Minor. 037-I1: 로컬 Ollama 모델을 store로 칠함 → ext.
+Ruling: E2(035~038 수정)는 D2a가 끝난 뒤에 띄운다 — 세 날의 텔레메트리 안내가 Day 047에 새로 쓰일 설명을 가리켜야 하는데, 그 위치는 D2a가 정한다 — 틀리면: E2가 조금 늦게 시작할 뿐.
+Task 11c: D3b (054·056·057) dispatched (sonnet) → task-11c-D3b-report.md.
+Task 11b: 020~023 review DONE (ad63c8729ea238cae, opus, 41분·47만) → review-020-023.md. 4일 모두 ❌: 020 C1 I3 M10 / 021 I2 M5 / 022 I1 M10 / 023 I3 M9 + 공통 M1(PowerShell 5.1의 curl.exe JSON 따옴표, 재현 못 함 — PowerShell 실행이 이 세션에서 거부됨). 020-C1: Step 4~6 확인 명령이 cp949 Git Bash에서 이모지 출력으로 죽고, 이유는 Step 7에서야 나온다.
+--- Task 11b 완료: 미검토 22일 전부 리뷰됨. 합계 18일 ❌ / 4일 ✅(035·036·038·056, Minor만) — Critical 5 · Important 48 · Minor 113. ---
+Task 11c: E1 (020~023) dispatched (sonnet) → task-11c-E1-report.md. 남은 D: D2b 048·051, D1 012·013·019. E2 035~038은 D2a 뒤.
+Task 11c: D3b DONE (ae93a93af8d7e72ad, sonnet, 56분·55만) — df70860 Day 054, 7df6bd8 Day 056, 1a284d7 Day 057. 컨트롤러 확인: 세 날 check 통과, 분당 낱말 054 19.6(75→90분) / 056 20.3 / 057 19.8(95→120분). 057-C1은 "코사인 0.7" → 정규화 0.7 = 코사인 0.4로 끝까지 재현해 고침. 반영 안 한 것 1: 054-M6(ReasoningTools를 ours로 칠하지 말라) — §5의 ours 정의가 "도구 함수"를 포함하고 Day 006·040도 agno 툴킷을 ours로 칠함, 근거는 보고서. 재검토 대기(자리 나면).
+Task 11c: D2b (048·051) dispatched (sonnet) → task-11c-D2b-report.md.
+=== USER 2026-09-23: "니가 해놓은거 아냐? openai 랑 gemini 확대시키면서?" → "살려내" ===
+  사용자 지적이 맞다: 루트 .venv의 잠금 밖 패키지(scrapegraphai·playwright·langchain-google-genai와 더 새로운 langchain-openai·pydantic)는 2026-09-17/18 웹 스크래퍼 작업(c17ba06 Gemini 스크레이퍼, c0115bd Windows Playwright, dbaf21b Gemini JSON, 611c08b Gemini 3.x 추론 깊이)이 일부러 설치한 것이다. 내 "가" 조치(잠금 버전으로 7개 교정)가 scrapegraphai의 하한(langchain-openai>=1.1.6, pydantic>=2.12.5)을 깨뜨렸다 — 잠금 밖 패키지가 왜 있는지 보지 않고 추천한 내 잘못.
+  복구: 7개를 가 이전 버전으로 재설치(langchain-openai 1.6.2, langgraph 1.2.11, langgraph-sdk 0.4.4, orjson 3.12.0, pydantic 2.13.5, pydantic-core 2.46.5, tzdata 2026.4) → crewai·crewai-core·crewai-cli가 pydantic<2.13을 요구해 충돌 3건 → 두 제약의 교집합 pydantic 2.12.5(pydantic-core 2.41.5)로 맞춤. `uv pip check` = "All installed packages are compatible", scrapegraphai·crewai 1.15.21·langchain-openai·langchain-google-genai·playwright·agno 2.3.2·streamlit import OK.
+  메모리: root-venv-extras(루트 .venv에 uv sync 금지, 바꾸기 전에 uv pip check, pydantic은 2.12.5가 crewai·scrapegraphai 교집합).
+Task 11c: D2a DONE (a84e72d86560fe4cf, sonnet, 82분·65만) — 872ac7f Day 047, e3b8b2f Day 049, 5645822 Day 050. 세 날 check 통과(컨트롤러 확인). 분당 낱말 047 20.2(75→90분) / 049 16.6(100분 유지 — 리뷰가 권한 대로 근거만 고침, 대역 밖이지만 근거 명시) / 050 19.7. 047-C1 텔레메트리는 로컬 수신기로 재현한 뒤 047 Step 5("agno의 익명 사용 통계")에 쓰고 049·050은 그리로 가리킴. 반영 안 한 것: 050-M6/I4(첫 실행에 11→22행) — 재현 안 됨(경로 기반 content_hash upsert로 11 유지), 실제 효과(새 manifest·transaction 파일)로 고쳐 씀. 재배치 중 "화살표 몇 개를 합치거나 줄였다" — 규칙("데이터가 다른 화살표는 합치지 않는다") 준수 여부를 재검토에서 확인할 것.
+Task 11c: E2 (035~038) dispatched (sonnet) → task-11c-E2-report.md. 남은 수정: D1 012·013·019. 재검토 대기: D3b, D2a.
+Task 11c: D3a DONE_WITH_CONCERNS (a8eb20620400a649d, sonnet, 99분·73만) — fef8e47 Day 052, 0905113 Day 053, 20e1b95 Day 055. 053·055 raglite 막힘 순서를 재현으로 확정해 두 날이 같은 네 관문 이야기를 하게 됨(C1 둘 해결), 리뷰 지적 중 틀린 것 없음. 화살표 규칙 0건. **세로 상한 미달**: 052 overview·step 1326px, 053 1087px, 055 1004px(+4) · sequence 1874px(상한 1500).
+Task 11c: D3a fix round 1/5 dispatched (resume a8eb20620400a649d) — (1) §5 "overview는 구조, 순서는 sequence": 처리 체인이 세로를 키우고 그 순서가 sequence에 이미 있으면, 체인을 한 묶음 안의 화살표 없는 grid + 단계 번호 라벨로 그리고 바깥 화살표는 묶음에(구조 관계는 모두 유지), (2) 055 sequence의 두 번째 재검색 6메시지는 노트/한 메시지로 반복을 표시하거나 extra-second-pass.d2로 분리, (3) 055 overview 4px은 라벨 한 줄.
+Task 11c: D2b DONE (ab939058b10921b64, sonnet, 39분·44만) — f777ccb Day 048, 8733ebe Day 051. 두 날 check 통과(컨트롤러 확인), 분당 낱말 048 19.1 / 051 19.6. 리뷰 지적 전부 재현 후 반영, 틀린 지적 없음. 판단 하나: Day 048의 `local` 묶음을 걷어냈다(047-M1처럼 외부 "web"이 로컬 묶음 안에 들어가는 잘못을 피하고, 세로 1000 안에 넣으려고) — 재검토에서 볼 것.
+Task 11c: D1 (012·013·019) dispatched (sonnet, a399b92e05f3d5ca8) → task-11c-D1-report.md. 이것으로 수정 묶음 일곱 모두 출발.
+Ruling: 재검토는 리뷰 결과 파일 단위로 묶는다 — RR1 047~051(D2a+D2b), RR2 052~057(D3a+D3b, D3a 수정 뒤), RR3 020~023(E1), RR4 012·013·019 + 035~038(D1+E2). 같은 리뷰 파일을 한 재검토자가 보면 날 사이 일관성(텔레메트리, raglite 순서)을 한 번에 확인한다 — 틀리면: 재검토 하나가 길어질 뿐.
