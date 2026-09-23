@@ -1,23 +1,21 @@
 ...@../../_tools/theme
-grid-columns: 2
+direction: down
 
-local: "이 컴퓨터에서 도는 부분" {
+front: "사용자 쪽 화면" {
   class: group
-  grid-columns: 2
-  tokenizer: 로컬 토크나이저 (mpnet) { class: store }
-  ingest: PDF 로더·분할 { class: ours }
-  chain: RAG 체인 { class: ours }
-  vstore: Chroma 저장소 { class: store }
-}
-
-front: "브라우저 쪽" {
-  class: group
-  grid-columns: 2
   user: 사용자 { class: person }
   ui: Streamlit UI { class: ours }
 }
 
 cloud: Gemini API (임베딩·채팅) { class: ext }
+
+local: "이 컴퓨터에서 도는 부분" {
+  class: group
+  tokenizer: 로컬 토크나이저 (mpnet) { class: ext }
+  ingest: PDF 로더·분할 { class: ours }
+  chain: RAG 체인 { class: ours }
+  vstore: Chroma 저장소 { class: store }
+}
 
 front -> local: 질문 · PDF 업로드
 local -> front: 답변 텍스트

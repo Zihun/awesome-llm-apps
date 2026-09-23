@@ -1,10 +1,10 @@
 # Day 052 · ⛓️ Basic RAG Chain
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 80분(torch·transformers를 포함한 139개 패키지 설치와 420MB 모델 다운로드가 읽는 시간보다 오래 걸립니다) · API 비용 대략 거의 무료(대략치 — 이 코드가 쓰는 두 모델 이름이 이미 서비스 종료 상태라 실제 호출 자체를 확인하지 못했다) · 원본 앱: `rag_tutorials/rag_chain`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 80분(torch를 포함한 139개 패키지 설치가 wheel만 약 350MB, `sentence-transformers` 모델이 약 420MB — 회선에 따라 다르지만 이 문서를 쓸 때는 모델 하나만 130초 걸렸다 — 이고, 앱을 실제로 띄워 화면을 확인하는 시간도 포함한다) · API 비용 대략 거의 무료(대략치 — 이 코드가 쓰는 두 모델 이름이 이미 서비스 종료 상태라 유효한 키로 실제 호출해도 과금 전에 실패한다) · 원본 앱: `rag_tutorials/rag_chain`
 
 ## 오늘 만들 것
 
-오늘은 PDF 연구 문서를 올려 두고 그 내용을 질문하는 약학 전용 Streamlit 앱 "PharmaQuery"를 만듭니다. `requirements.txt` 아홉 줄은 이 볼륨에서 지금까지 가장 길고, 그 구성 자체가 오늘의 핵심입니다 — 호스팅 모델 제공자(`langchain-google-genai`), 로컬 임베딩 라이브러리(`sentence-transformers`), 벡터 저장소(`chromadb`)가 한 파일 안에 같이 있습니다. 소스를 끝까지 따라가 보면 이 셋의 역할 배치는 이름만 보고 짐작하기 쉬운 그림과 다릅니다 — 청크를 실제 벡터로 바꾸는 임베딩 계산은 저장할 때도 검색할 때도 전부 Google Gemini API(클라우드)가 하고, `sentence-transformers`가 최초 실행 때 내려받는 420MB짜리 로컬 모델은 그 벡터를 전혀 만들지 않습니다. 이 모델은 PDF를 몇 토큰짜리 조각으로 자를지 세는 토크나이저로만 쓰입니다. 정리하면 로컬은 PDF 읽기·청크 분할·Chroma 디스크 저장을 맡고, 클라우드(Gemini, 키 하나)는 임베딩과 답변 생성을 둘 다 맡는 구조입니다. 코드를 따라가면서 모듈 최상위에서 만들어지는 임베딩 모델이 사이드바가 뜨기도 전에 API 키를 요구해 앱 자체가 시작되지 않는다는 것, `chunk_size=100`이라는 인자가 조용히 무시된다는 것, 그리고 이 코드가 쓰는 두 Gemini 모델 이름이 이미 서비스 종료 상태라는 것까지 하나씩 직접 확인합니다. 완성하면 PDF를 올리고 질문해 답을 얻는 화면을 로컬에서 띄우게 되지만, 질문을 몇 번을 반복해도 PDF 재처리(ingest)는 다시 일어나지 않는다는 것도 실측으로 확인합니다 — Day 048과 정반대입니다. 아래는 완성된 아키텍처입니다.
+오늘은 PDF 연구 문서를 올려 두고 그 내용을 질문하는 약학 전용 Streamlit 앱 "PharmaQuery"를 만듭니다. `requirements.txt` 아홉 줄은 Day 049(열 줄, `rag_tutorials/autonomous_rag/requirements.txt`) 다음으로 이 볼륨에서 길고, 그 구성 자체가 오늘의 핵심입니다 — 호스팅 모델 제공자(`langchain-google-genai`), 로컬 임베딩 라이브러리(`sentence-transformers`), 벡터 저장소(`chromadb`)가 한 파일 안에 같이 있습니다. 소스를 끝까지 따라가 보면 이 셋의 역할 배치는 이름만 보고 짐작하기 쉬운 그림과 다릅니다 — 청크를 실제 벡터로 바꾸는 임베딩 계산은 저장할 때도 검색할 때도 전부 Google Gemini API(클라우드)가 하고, `sentence-transformers`가 최초 실행 때 내려받는 420MB짜리 로컬 모델은 그 벡터를 전혀 만들지 않습니다. 이 모델은 PDF를 몇 토큰짜리 조각으로 자를지 세는 토크나이저로만 쓰입니다. 정리하면 로컬은 PDF 읽기·청크 분할·Chroma 디스크 저장을 맡고, 클라우드(Gemini, 키 하나)는 임베딩과 답변 생성을 둘 다 맡는 구조입니다. 코드를 따라가면서 모듈 최상위에서 만들어지는 임베딩 모델이 사이드바가 뜨기도 전에 API 키를 요구해 앱 자체가 시작되지 않는다는 것, `chunk_size=100`이라는 인자가 조용히 무시된다는 것, 그리고 이 코드가 쓰는 두 Gemini 모델 이름이 이미 서비스 종료 상태라는 것까지 하나씩 직접 확인합니다. 완성하면 PDF를 올리고 질문해 답을 얻는 화면을 로컬에서 띄우게 되지만, 질문을 몇 번을 반복해도 PDF 재처리(ingest)는 다시 일어나지 않는다는 것도 실측으로 확인합니다 — Day 048과 정반대입니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -212,7 +212,7 @@ print('모델의 max_seq_length:', s.maximum_tokens_per_chunk)
     )
 ```
 
-`chat_model`은 이번에는 `run_rag_chain` 함수 **안**에서 만들어지므로(Step 2의 `embedding_model`과 다르게) `main()`이 "Submit"을 처리할 때에야 생성되고, 이때는 `st.session_state.get("gemini_api_key")` — 즉 사이드바에 저장된 값을 그대로 씁니다. 문제는 `gemini-1.5-pro`라는 이름입니다: Google 공식 모델 목록(https://ai.google.dev/gemini-api/docs/models, 2026-09-23 확인)에는 이 모델이 없고, 사용 중단 페이지에도 더 이상 나타나지 않습니다 — 두 목록 모두에서 빠졌다는 것은 추적조차 하지 않을 만큼 오래전에 서비스가 끝났다는 뜻입니다. Step 2의 임베딩 키 배선 문제를 다 우회해도, 답변을 생성하는 이 모델 이름 자체가 이미 유효하지 않습니다.
+`chat_model`은 이번에는 `run_rag_chain` 함수 **안**에서 만들어지므로(Step 2의 `embedding_model`과 다르게) `main()`이 "Submit"을 처리할 때에야 생성되고, 이때는 `st.session_state.get("gemini_api_key")` — 즉 사이드바에 저장된 값을 그대로 씁니다. 문제는 `gemini-1.5-pro`라는 이름입니다: Google Gemini API 변경 이력(https://ai.google.dev/gemini-api/docs/changelog, 2026-09-23 확인)의 2025-09-29 항목이 "The following Gemini 1.5 models are now shut down: `gemini-1.5-pro`, `gemini-1.5-flash-8b`, `gemini-1.5-flash`"라고 명시합니다 — 이 모델은 이미 공식적으로 종료 처리되었고, 그래서 현재 모델 목록(https://ai.google.dev/gemini-api/docs/models)에도 사용 중단 페이지에도 더 이상 나타나지 않습니다. Step 2의 임베딩 키 배선 문제를 다 우회해도, 답변을 생성하는 이 모델 이름 자체가 이미 유효하지 않습니다.
 
 `rag_tutorials/rag_chain/app.py:121-125`
 
@@ -305,7 +305,9 @@ LCEL 구성 요소 import 정상
                     st.success(":file_folder: Documents successfully added to the database!")
 ```
 
-세 블록은 각각 `"Submit"`, `"Enter"`, `"Submit & Process"`라는 서로 다른 버튼에 매달려 있습니다. Streamlit은 재실행 한 번에 클릭된 버튼 하나만 참(`True`)을 돌려주므로, "Submit"을 눌러 질문하는 재실행에서는 "Submit & Process" 블록의 `if`가 거짓이 되어 `add_to_db`가 아예 호출되지 않습니다. 159번째 줄에는 `gemini_api_key`가 저장돼 있는지 확인하는 코드가 없다는 것도 눈에 띕니다 — 키를 저장하지 않고 곧장 "Submit"을 누르면 `run_rag_chain`이 Step 4의 `ChatGoogleGenerativeAI` 생성자에서 Step 1과 같은 종류의 `ValueError`로 멈추고, 이를 잡는 `try/except`도 없습니다.
+세 블록은 각각 `"Submit"`, `"Enter"`, `"Submit & Process"`라는 서로 다른 버튼에 매달려 있습니다. Streamlit은 재실행 한 번에 클릭된 버튼 하나만 참(`True`)을 돌려주므로, "Submit"을 눌러 질문하는 재실행에서는 "Submit & Process" 블록의 `if`가 거짓이 되어 `add_to_db`가 아예 호출되지 않습니다. 159번째 줄에는 `gemini_api_key`가 저장돼 있는지 확인하는 코드가 없다는 것도 눈에 띕니다 — 하지만 이것이 곧장 `ValueError`로 이어지지는 **않습니다**. `chat_model = ChatGoogleGenerativeAI(..., api_key=st.session_state.get("gemini_api_key"), ...)`가 넘기는 `api_key`는 저장된 값이 없으면 `None`이고, `langchain-google-genai`는 이 자리에서 "명시적으로 넘긴 `None`"과 "아예 넘기지 않음"을 구분하지 않습니다(소스로 확인, `langchain_google_genai/_common.py`의 `model_validator(mode="before")` `_resolve_gateway`가 `langchain_core.utils._gateway._pop_provided`로 값을 꺼내는데, 그 구현이 `values.pop(field, None)`이라 `None`이 오면 "값 없음"과 똑같이 취급되어 `GOOGLE_API_KEY`/`GEMINI_API_KEY` 환경변수로 대체됩니다). 이 앱은 Step 2에서 이미 확인했듯 그 환경변수 없이는 애초에 뜨지도 못하므로, "Submit"을 누르는 시점에는 이미 그 값이 존재하고, `chat_model` 생성 자체는 조용히 성공합니다.
+
+실제로 처음 멈추는 자리는 그다음입니다 — 검색(`retriever.invoke`)이 부르는 `embed_query`이거나, 거기를 넘겨도 `chat_model`이 실제로 응답을 생성하는 순간입니다. 둘 다 이미 종료된 모델 이름(`embedding-001`·`gemini-1.5-pro`, Step 2·4에서 확인)이나 유효하지 않은 키로 Gemini API를 실제로 호출하는 지점이고, `try/except`가 없으므로 이 예외가 화면에 그대로 노출됩니다. 실제로 확인해 보면 다음과 같습니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -320,6 +322,41 @@ grep -n "st.button" app.py
 172:        if st.button("Enter"):
 187:        if st.button("Submit & Process"):
 ```
+
+앱을 실제로 띄워 이 구조를 확인합니다 — 환경변수만 있고 사이드바에는 키를 저장하지 않은 채 질문해 봅니다.
+
+```bash
+GOOGLE_API_KEY=dummy-key-for-launch-test uv run --no-project streamlit run app.py --server.headless true
+```
+
+(PowerShell: `$env:GOOGLE_API_KEY="dummy-key-for-launch-test"; uv run --no-project streamlit run app.py --server.headless true`.)
+
+다른 터미널에서 화면이 떴는지만 먼저 확인합니다.
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
+```
+
+```
+200
+```
+
+화면 자체는 Streamlit의 `AppTest` 도구로 앱을 그대로 실행해(클릭을 코드로 재현) 직접 확인했습니다 — 결과는 실제 브라우저로 여는 것과 같습니다.
+
+```
+header: ['Pharmaceutical Insight Retrieval System']
+sidebar title: ['API Keys']
+button labels: ['Submit', 'Enter', 'Submit & Process']
+```
+
+사이드바에서 키를 저장하지 않고 텍스트 영역에 질문만 입력한 뒤 "Submit"을 누르면(환경변수 `GOOGLE_API_KEY`는 가짜 값으로 설정된 상태), 예상대로 생성자에서 죽지 않고 검색 단계에서 멈춥니다 — 직접 확인한 예외(마지막 줄):
+
+```
+GoogleGenerativeAIError: Error embedding content (INVALID_ARGUMENT): 400
+INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key not valid. Please pass a valid API key.', ...}}
+```
+
+트레이스백을 따라가면 `run_rag_chain` → `rag_chain.invoke` → `retriever.invoke` → `langchain_chroma`의 `similarity_search` → `embed_query`(`langchain-google-genai` 4.4.0의 `embeddings.py`)입니다 — 위에서 설명한 그대로, `ChatGoogleGenerativeAI` 생성자가 아니라 임베딩 호출이 처음 멈추는 자리입니다.
 
 ### Step 6. 실행 확인 — 질문을 세 번 해도 업로드는 한 번만
 
@@ -381,7 +418,7 @@ print('질문 3회 후 embed_documents 호출(변화 없어야 함):', calls['em
 질문 3회 후 embed_documents 호출(변화 없어야 함): 1 / embed_query 호출: 3
 ```
 
-앱 자신의 함수(`add_to_db`, `db.as_retriever()`)를 그대로 실행한 결과이므로, 이것은 Step 5에서 읽은 구조가 실제로 그렇게 동작한다는 직접 증명입니다. 질문을 몇 번을 반복해도 `embed_documents`(청크를 벡터로 바꿔 저장소에 넣는 호출) 횟수는 늘지 않고, `embed_query`(질문 하나를 벡터로 바꾸는 호출)만 질문 수만큼 늘어납니다 — Day 048에서 질문마다 웹 재수집·재임베딩이 통째로 반복되던 것과 정확히 반대입니다. `persist_directory='./pharma_db'` 덕분에 이 저장소는 프로세스를 껐다 켜도 남아 있습니다 — 실제로 이 확인을 실행한 폴더에는 `pharma_db/chroma.sqlite3`와 HNSW 인덱스 폴더(`.bin` 파일 4개)가 새로 생겼습니다(직접 확인).
+앱 자신의 함수(`add_to_db`, `db.as_retriever()`)를 그대로 실행한 결과입니다. 다만 이 스크립트는 `add_to_db`와 검색을 스스로 순서대로 부르는 것이라, "Submit"·"Submit & Process" **버튼의 배타성**(Step 5) 자체를 시험하지는 않습니다 — 이 실행이 보여주는 것은 "검색 경로는 `embed_query`만 부르고 `embed_documents`는 안 부른다"는 사실입니다. 버튼이 서로 독립된 블록이라는 구조는 Step 5에서 이미 소스로 확인했습니다. 질문을 몇 번을 반복해도 `embed_documents`(청크를 벡터로 바꿔 저장소에 넣는 호출) 횟수는 늘지 않고, `embed_query`(질문 하나를 벡터로 바꾸는 호출)만 질문 수만큼 늘어납니다 — Day 048에서 질문마다 웹 재수집·재임베딩이 통째로 반복되던 것과 정확히 반대입니다. `persist_directory='./pharma_db'` 덕분에 이 저장소는 프로세스를 껐다 켜도 남아 있습니다 — 실제로 이 확인을 실행한 폴더에는 `pharma_db/chroma.sqlite3`와 HNSW 인덱스 폴더(`.bin` 파일 4개)가 새로 생겼습니다(직접 확인).
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -395,10 +432,11 @@ print('질문 3회 후 embed_documents 호출(변화 없어야 함):', calls['em
 
 - [ ] `uv venv && uv pip install -r requirements.txt`로 139개 패키지를 설치했다(추가 설치 불필요)
 - [ ] `GOOGLE_API_KEY`/`GEMINI_API_KEY` 환경변수 없이는 `embedding_model` 생성이 사이드바가 뜨기도 전에 `ValueError`로 멈춘다는 것을 확인했다
-- [ ] `models/embedding-001`(2025-10-30 종료)과 `gemini-1.5-pro`(현재 모델 목록·사용 중단 목록 모두에 없음)가 이미 서비스 종료 상태라는 것을 Google 공식 문서에서 확인했다
+- [ ] `models/embedding-001`(2025-10-30 종료)과 `gemini-1.5-pro`(2025-09-29 종료)가 이미 서비스 종료 상태라는 것을 Google Gemini API 변경 이력에서 확인했다
 - [ ] `sentence-transformers/all-mpnet-base-v2`(약 420MB)가 `~/.cache/huggingface/hub`에 내려받아지고, 이 모델이 임베딩이 아니라 토크나이저로만 쓰인다는 것을 확인했다
 - [ ] `chunk_size=100`이 무시되고 실제 청크 크기는 384토큰이라는 것을 직접 확인했다
 - [ ] "Submit"·"Enter"·"Submit & Process"가 서로 다른 버튼에 매달린 독립된 블록이라는 것을 확인했다
+- [ ] 앱을 실제로 띄워, 사이드바에 키를 저장하지 않아도 `ChatGoogleGenerativeAI` 생성자는 죽지 않고(환경변수로 대체) `embed_query`에서 처음 멈춘다는 것을 직접 확인했다
 - [ ] 질문을 3번 반복해도 `embed_documents` 호출이 늘지 않는다는 것을 직접 실행으로 확인했다
 
 ## 문제 해결
@@ -406,17 +444,17 @@ print('질문 3회 후 embed_documents 호출(변화 없어야 함):', calls['em
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `streamlit run app.py`가 사이드바도 뜨기 전에 `pydantic_core._pydantic_core.ValidationError: ... API key required for Gemini Developer API`로 멈춤 | `rag_tutorials/rag_chain/app.py:15`의 `embedding_model = GoogleGenerativeAIEmbeddings(...)`가 모듈 최상위에 있어 import 시점에 즉시 생성되는데, `api_key`도 환경변수도 없다(직접 확인) | `streamlit run app.py`를 실행하기 **전에** `GOOGLE_API_KEY`(또는 `GEMINI_API_KEY`) 환경변수를 먼저 설정한다. 사이드바 입력만으로는 이 크래시를 피할 수 없다 |
-| 키를 다 갖췄는데도 임베딩·채팅 호출이 모델을 찾지 못할 것으로 예상됨(문서상 이미 종료된 모델) | `models/embedding-001`은 2025-10-30에, `gemini-1.5-pro`는 그보다 먼저 Google이 서비스를 종료했다(Google 공식 문서로 확인 — 키가 없어 실제 호출 자체는 못해 봄) | 코드를 고친다면 `rag_tutorials/rag_chain/app.py:15`를 `gemini-embedding-001`로, `rag_tutorials/rag_chain/app.py:116`을 현재 지원되는 채팅 모델로 바꾼다 |
+| 키를 다 갖췄는데도 임베딩·채팅 호출이 모델을 찾지 못함 | `models/embedding-001`은 2025-10-30에, `gemini-1.5-pro`는 2025-09-29에 Google이 이미 서비스를 종료했다(Google Gemini API 변경 이력으로 확인) | 코드를 고친다면 `rag_tutorials/rag_chain/app.py:15`를 `gemini-embedding-001`로, `rag_tutorials/rag_chain/app.py:116`을 현재 지원되는 채팅 모델로 바꾼다 |
 | `add_to_db`가 청크를 100토큰이 아니라 훨씬 크게(384토큰) 자름 | `SentenceTransformersTokenTextSplitter`에는 `chunk_size` 매개변수가 없어 `rag_tutorials/rag_chain/app.py:70`의 `chunk_size=100`이 조용히 무시되고, 실제 크기는 `tokens_per_chunk`(기본값 = 모델의 `max_seq_length`, 384)를 따른다(직접 확인) | 의도한 크기를 쓰려면 `chunk_size=100` 대신 `tokens_per_chunk=100`을 넘긴다 |
-| 사이드바에서 키를 저장한 적 없이 "Submit"을 누르면 화면 전체가 처리되지 않은 예외로 멈춤 | `rag_tutorials/rag_chain/app.py:159`의 "Submit" 블록에 `gemini_api_key`가 저장돼 있는지 확인하는 코드가 없고, `run_rag_chain`의 `ChatGoogleGenerativeAI` 생성자(`rag_tutorials/rag_chain/app.py:115-119`)가 Step 1과 같은 이유로 즉시 예외를 던진다(소스로 확인) — `try/except`도 없다 | 질문하기 전에 사이드바에서 키를 입력하고 "Enter"를 먼저 누른다 |
+| 사이드바에서 키를 저장한 적 없이 "Submit"을 눌러도 크래시하지 않고, 대신 화면이 처리되지 않은 예외로 멈춤 | `api_key=None`은 `langchain-google-genai`에서 "안 넘김"과 똑같이 취급되어 `GOOGLE_API_KEY` 환경변수로 대체된다(소스로 확인) — 그래서 `ChatGoogleGenerativeAI` 생성은 성공하고, 실제로 멈추는 곳은 `embed_query`나 채팅 호출이다(직접 확인, 위 Step 5). 이 경로에도 `try/except`가 없다 | 질문하기 전에 사이드바에서 유효한 키를 입력하고 "Enter"를 먼저 누른다 — 환경변수만으로는 이미 종료된 모델 이름 문제(위 행)가 남는다 |
 | `requirements.txt`대로 설치하고 `.env` 파일에 키를 적어도 아무 효과가 없음 | `python-dotenv`는 설치만 되고 `app.py`는 `load_dotenv()`를 어디서도 부르지 않는다(직접 확인, `grep -n dotenv app.py` 0건) | `.env`에 기대지 말고 실제 환경변수(위 첫 행)로 설정한다 |
 
 ## 더 해보기
 
 - `rag_tutorials/rag_chain/app.py:68-72`의 `chunk_size=100`을 `tokens_per_chunk=100`으로 바꾸고, Step 3의 확인 명령으로 `tokens_per_chunk`가 정말 100이 되는지, 같은 문서에서 나오는 청크 수가 어떻게 달라지는지 비교해보기.
 - `rag_tutorials/rag_chain/app.py:15`의 임베딩 모델과 `rag_tutorials/rag_chain/app.py:116`의 채팅 모델을 현재 서비스 중인 Gemini 모델 이름으로 바꾸고, 유효한 키로 실제 질문·답변까지 이어지는지 확인해보기.
-- `rag_tutorials/rag_chain/app.py:159`의 "Submit" 블록 앞에 `st.session_state`에 키가 있는지 보는 가드를 추가해, 키 없이 질문했을 때 화면이 멈추는 대신 안내 문구가 뜨도록 고쳐보기.
+- `rag_tutorials/rag_chain/app.py:159`의 "Submit" 블록을 `try/except`로 감싸 Gemini 호출 실패(만료된 모델 이름·잘못된 키)를 `st.error`로 보여주는 가드를 추가해, 화면이 처리되지 않은 예외로 멈추는 대신 안내 문구가 뜨도록 고쳐보기.
 
 ## 다음 날 예고
 
-[Day 053 · 👀 Hybrid Search RAG (Cloud)](../day053-hybrid-search-rag/README.md) — OpenAI 임베딩과 Cohere 재순위화, Claude 생성을 한 파이프라인에 엮고 Postgres(Neon)에서 의미 검색과 키워드 검색을 함께 쓰는, 이 볼륨에서 가장 많은 외부 서비스를 동시에 쓰는 앱입니다.
+[Day 053 · 👀 Hybrid Search RAG (Cloud)](../day053-hybrid-search-rag/README.md) — OpenAI 임베딩과 Cohere 재순위화, Claude 생성을 한 파이프라인에 엮는 앱입니다. 벡터 저장소 기본값은 오늘처럼 로컬 파일(SQLite)이고, Postgres(Neon)는 선택지로만 남습니다.

@@ -3,8 +3,8 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-vstore: Chroma 벡터 저장소 { class: store }
 cloud: Google Gemini API { class: ext }
+vstore: Chroma 벡터 저장소 { class: store }
 
 user -> ui: 질문 입력 → Submit 클릭
 ui -> cloud: 질문 임베딩 요청 (embedding-001)
