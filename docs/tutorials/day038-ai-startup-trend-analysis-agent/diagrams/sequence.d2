@@ -4,9 +4,9 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 collector: News Collector { class: ours }
-summarizer: Summary Writer { class: ours }
-analyzer: Trend Analyzer { class: ours }
 gemini: Gemini API { class: ext }
+analyzer: Trend Analyzer { class: ours }
+summarizer: Summary Writer { class: ours }
 
 user -> ui: 주제 + 키 입력 후 클릭
 ui -> collector: news_collector.run(topic)

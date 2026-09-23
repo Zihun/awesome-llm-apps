@@ -377,6 +377,8 @@ final analysis (앞 120자): {
 
 세 단계 모두 `RunStatus.error`이고, 세 번째 단계가 화면에 최종적으로 보여줄 `analysis`는 첫 번째 실패의 에러 JSON과 글자 그대로 같습니다 — 잘못된 키 하나의 에러 메시지가 "기사"와 "요약"을 거쳐 그대로 살아남은 것입니다. 세 호출 모두 파이썬 예외 없이 정상 반환됐으므로(`try/except`는 이 상황에서 한 번도 발동하지 않습니다), Streamlit 화면에는 빨간 에러 대신 "Trend Analysis and Potential Startup Opportunities"라는 제목 아래 이 JSON 조각이 표시됩니다.
 
+**agno 텔레메트리.** agno 3.0.10은 `run()`이 **성공**할 때만 익명 사용 통계를 보냅니다(끄는 법은 Day 047 Step 5 참고, `AGNO_TELEMETRY=false`) — 위에서 확인한 세 호출은 잘못된 키로 `RunStatus.error`를 반환했으므로 아무것도 보내지 않았습니다. 유효한 키로 세 에이전트가 모두 성공하면 호출마다(News Collector·Summary Writer·Trend Analyzer 각각 한 번씩, 총 세 번) 전송됩니다. 이 앱은 `AgentOS`를 띄우지 않으므로 그쪽의 `POST /telemetry/os`는 해당하지 않습니다.
+
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
