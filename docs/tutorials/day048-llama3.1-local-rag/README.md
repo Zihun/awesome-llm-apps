@@ -54,7 +54,7 @@ langchain_community
 langchain_ollama
 ```
 
-이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 앱 폴더의 환경 대신 루트 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. 이 문서를 쓰며 설치했을 때는 85개 패키지가 받아졌고(직접 확인), 그중 이 날의 이야기와 관련된 것만 추리면 **streamlit 1.64.0**, **langchain 1.4.2**, **langchain-community 0.4.2**, **langchain-ollama 1.1.0**, **langchain-text-splitters 1.1.2**, **langchain-classic 1.0.8**, **ollama 0.6.2**입니다. `requirements.txt`의 `ollama` 줄은 사실 중복입니다 — `uv pip show langchain-ollama`로 확인하면 `Requires: langchain-core, ollama`라서 `langchain_ollama`만 설치해도 `ollama`는 전이 의존성으로 어차피 따라옵니다(직접 확인, 무해한 중복).
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 앱 폴더의 환경 대신 루트 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. 이 문서를 쓰며 설치했을 때는 83개 패키지가 받아졌고(직접 확인, 버전 미고정 상태라 실제 개수는 설치 시점의 PyPI 최신 릴리스에 따라 달라질 수 있음), 그중 이 날의 이야기와 관련된 것만 추리면 **streamlit 1.64.0**, **langchain 1.4.2**, **langchain-community 0.4.2**, **langchain-ollama 1.1.0**, **langchain-text-splitters 1.1.2**, **langchain-classic 1.0.8**, **ollama 0.6.2**입니다. `requirements.txt`의 `ollama` 줄은 사실 중복입니다 — `uv pip show langchain-ollama`로 확인하면 `Requires: langchain-core, ollama`라서 `langchain_ollama`만 설치해도 `ollama`는 전이 의존성으로 어차피 따라옵니다(직접 확인, 무해한 중복).
 
 `rag_tutorials/llama3.1_local_rag/llama3.1_local_rag.py:1-6`
 
@@ -112,7 +112,7 @@ ollama_model = "llama3.1"
 ollama = ChatOllama(model=ollama_model, base_url=ollama_endpoint)
 ```
 
-`ollama_model = "llama3.1"` 하나가 이 파일 전체에서 채팅(`ChatOllama`, 16행)과 임베딩(`OllamaEmbeddings`, Step 4) 양쪽에 그대로 재사용됩니다 — Day 042의 두 로컬 변형처럼 "채팅과 임베딩에 같은 모델"이지만, 여기서는 변수 하나를 공유해 그 사실이 코드에 그대로 드러납니다. `ChatOllama`와 `OllamaEmbeddings` 클래스에는 `validate_environment`가 없고 클래스 본문 어디에도 `pull`이나 서버 쪽 모델 목록을 조회하는 코드가 없습니다(소스로 확인, `langchain-ollama` 1.1.0) — 즉 이 생성자는 모델이 실제로 있는지 확인하지 않고, 다운로드를 시도하지도 않습니다. 이 컴퓨터의 `ollama list`에는 `llama3.2:latest`, `embeddinggemma:latest` 등은 있지만 `llama3.1`은 없습니다 — 그래서 이 문서는 `ollama pull`도, 임베딩·채팅 호출(`.invoke()`)도 실행하지 않고 생성자 호출까지만 확인합니다. ollama.com 라이브러리 페이지는 `llama3.1:latest`와 `llama3.1:8b`를 똑같이 "4.9GB"로 표시합니다(2026-09-23 확인) — 즉 태그를 생략해도 사실상 8B 모델입니다. RAM 요구량은 그 페이지에도 Ollama 공식 GitHub README에도 적힌 수치가 없었습니다(둘 다 직접 확인) — 4.9GB는 4비트로 양자화된 가중치 자체의 크기이므로, 그 가중치를 올리는 데만도 최소 그 정도의 여유 메모리가 필요하고 컨텍스트·KV 캐시까지 얹으면 실제로는 이보다 더 듭니다.
+`ollama_model = "llama3.1"` 하나가 이 파일 전체에서 채팅(`ChatOllama`, 16행)과 임베딩(`OllamaEmbeddings`, Step 4) 양쪽에 그대로 재사용됩니다 — Day 042의 두 로컬 변형처럼 "채팅과 임베딩에 같은 모델"이지만, 여기서는 변수 하나를 공유해 그 사실이 코드에 그대로 드러납니다. `ChatOllama`와 `OllamaEmbeddings`에는 `validate_model_on_init`이라는 필드가 있지만 기본값이 `False`라(소스로 확인, `langchain-ollama` 1.1.0 `chat_models.py:547`, `embeddings.py:147`) 이 앱처럼 그 인자를 주지 않고 만들면 생성자가 모델 존재 여부를 확인하지 않고, 다운로드를 시도하지도 않습니다. `True`로 주면 `_set_clients`가 `validate_model()`을 호출해(`chat_models.py:959-960`, `embeddings.py:313-314`) 내부적으로 `client.list()`로 서버의 모델 목록을 조회하고(`_utils.py:12-49`), 찾는 모델이 없으면 그 자리에서 `ValueError`(`` Model `llama3.1` not found in Ollama. Please pull the model (using `ollama pull llama3.1`)… ``)를 던집니다. 이 컴퓨터의 `ollama list`에는 `llama3.2:latest`, `embeddinggemma:latest` 등은 있지만 `llama3.1`은 없습니다 — 그래서 이 문서는 `ollama pull`도, 임베딩·채팅 호출(`.invoke()`)도 실행하지 않고 생성자 호출까지만 확인합니다. ollama.com 라이브러리 페이지는 `llama3.1:latest`와 `llama3.1:8b`를 똑같이 "4.9GB"로 표시합니다(2026-09-23 확인) — 즉 태그를 생략해도 사실상 8B 모델입니다. RAM 요구량은 그 페이지에도 Ollama 공식 GitHub README에도 적힌 수치가 없었습니다(둘 다 직접 확인) — 4.9GB는 4비트로 양자화된 가중치 자체의 크기이므로, 그 가중치를 올리는 데만도 최소 그 정도의 여유 메모리가 필요하고 컨텍스트·KV 캐시까지 얹으면 실제로는 이보다 더 듭니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -122,13 +122,7 @@ ollama = ChatOllama(model=ollama_model, base_url=ollama_endpoint)
 ollama list
 ```
 
-```
-NAME                     ID              SIZE      MODIFIED
-gemma4:26b               08ae7ec1744b    18 GB     3 weeks ago
-llama3.2:latest          a80c4f17acd5    2.0 GB    10 months ago
-embeddinggemma:latest    85462619ee72    621 MB    10 months ago
-(이하 생략 — llama3.1은 목록에 없음)
-```
+목록에 `llama3.1`이 있는지 본다(독자마다 이미 받아 둔 모델이 다르므로 전체 출력은 사람마다 다르다). 없으면 `ollama pull llama3.1`로 받는다.
 
 ```bash
 uv run --no-project python -c "
@@ -202,10 +196,19 @@ metadata: {'source': 'http://127.0.0.1:8748/test.html', 'title': 'Test Page', 'l
     vectorstore = Chroma.from_documents(documents=splits, embedding=embeddings)
 ```
 
-`Chroma.from_documents()`에는 `persist_directory`도, `client`도, `client_settings`도 없습니다. `Chroma.__init__` 소스(langchain-community 0.4.2)를 읽으면 이 경우 `chromadb.config.Settings()`(기본값)로 `chromadb.Client()`를 만드는 분기를 탑니다 — 그리고 `chromadb.config.Settings().is_persistent`의 기본값은 `False`입니다(직접 확인, chromadb 1.5.9). 즉 디스크에는 아무것도 쓰이지 않는, 프로세스 메모리만의 저장소입니다. 여기다 `langchain_community.vectorstores.Chroma` 자체가 LangChain 0.2.9부터 사용 중단(deprecated)돼 있고 `langchain_chroma` 패키지로 옮겨가라는 경고가 생성 시점에 뜹니다(직접 확인, 아래 그대로).
+`Chroma.from_documents()`에는 `persist_directory`도, `client`도, `client_settings`도 없습니다. `Chroma.__init__` 소스(langchain-community 0.4.2)를 읽으면 이 경우 `chromadb.config.Settings()`(기본값)로 `chromadb.Client()`를 만드는 분기를 탑니다 — 그리고 `chromadb.config.Settings().is_persistent`의 기본값은 `False`입니다(직접 확인, chromadb 1.5.9). 즉 디스크에는 아무것도 쓰이지 않는, 프로세스 메모리만의 저장소입니다. 여기다 `langchain_community.vectorstores.Chroma` 클래스 자체는 LangChain 0.2.9부터 사용 중단(deprecated) 데코레이터가 붙어 있습니다(`chroma.py:53`). 다만 이 경고는 **이 앱의 경로에서는 뜨지 않습니다** — `from_documents()`는 내부적으로 `cls(...)`를 호출하는데, `langchain_core`의 사용 중단 래퍼가 호출자가 langchain 패키지 내부인지 검사해(`_api/deprecation.py`의 `is_caller_internal()`) 내부 호출이면 경고를 억제하기 때문입니다. 직접 확인해 보면 차이가 분명합니다.
+
+```python
+# from_documents()만 쓰는 경로(이 앱과 동일) — 경고 0건
+Chroma.from_documents(documents=docs, embedding=FakeEmbeddings())
+# Chroma(...)를 직접 생성하는 경로 — 경고 1건
+Chroma(embedding_function=FakeEmbeddings())
+```
 
 ```
-LangChainDeprecationWarning: The class `Chroma` was deprecated in LangChain 0.2.9 and will be removed in 1.0. An updated version of the class exists in the `langchain-chroma package and should be used instead. To use it run `pip install -U `langchain-chroma` and import as `from `langchain_chroma import Chroma``.
+LangChainDeprecationWarning count on from_documents: 0
+LangChainDeprecationWarning count on direct Chroma(): 1
+ - The class `Chroma` was deprecated in LangChain 0.2.9 and will be removed in 1.0. An updated version of the class exists in the `langchain-chroma package and should be used instead. To use it run `pip install -U `langchain-chroma` and import as `from `langchain_chroma import Chroma``.
 ```
 
 더 중요한 것은 반복 호출의 결과입니다. `chromadb.Client(Settings())`는 기본 설정이 같으면 프로세스 안에서 시스템을 공유합니다 — 그래서 `Chroma.from_documents()`를 세 번 부르면 매번 "새 저장소"가 아니라 **같은 이름의 컬렉션(`langchain`, `_LANGCHAIN_DEFAULT_COLLECTION_NAME`)에 계속 쌓입니다.** 앱 코드 입장에서는 매 질문마다 `vectorstore`라는 새 변수를 만드는 것처럼 보이지만, 실제 chromadb 컬렉션은 비워지지 않고 누적됩니다. 실제 Ollama 임베딩 대신 가짜 임베딩 함수로 이를 확인했습니다(네트워크·모델 다운로드 없음).
@@ -305,7 +308,7 @@ compiled
         st.write(result)
 ```
 
-이 파일에는 `session_state`도 `st.cache_resource`/`st.cache_data`도 전혀 없습니다(직접 확인, `grep -n "session_state|st.cache" llama3.1_local_rag.py`가 0건). Day 042의 `chat_pdf_llama3.py`/`chat_pdf.py`처럼 캐싱이 없는 정도가 아니라, 이 파일에는 캐싱 후보 자체(임시 디렉터리 경로 등)도 없습니다 — `webpage_url`이 있는 한 `if webpage_url:` 블록(18행) 전체가 매 재실행마다 처음부터 다시 실행됩니다. 두 번째 `st.text_input`(75행, 질문 입력창)에 값을 입력하고 엔터를 치는 것 자체가 Streamlit 스크립트 전체의 재실행을 일으키므로, 질문을 새로 할 때마다 Step 3의 웹 가져오기·분할과 Step 4의 임베딩·벡터 저장이 처음부터 다시 돌고, 그 결과는 Step 4에서 확인했듯 비워지지 않고 쌓입니다. 이를 실제 엔트리 파일로 재현하려고 Ollama·네트워크 호출만 가짜로 바꿔치기하고(Step 1의 import 문제도 같은 방식으로 우회) 파일 자체를 세 번 재실행했습니다.
+이 파일에는 `session_state`도 `st.cache_resource`/`st.cache_data`도 전혀 없습니다(직접 확인, `grep -nE "session_state|st\.cache" llama3.1_local_rag.py`가 0건 — 기본 정규식으로 `grep -n "session_state|st.cache"`를 쓰면 `|`가 글자 그대로 취급돼 둘 중 어느 것도 찾지 못하므로 `-E`가 필요합니다). Day 042의 `chat_pdf_llama3.py`/`chat_pdf.py`처럼 캐싱이 없는 정도가 아니라, 이 파일에는 캐싱 후보 자체(임시 디렉터리 경로 등)도 없습니다 — `webpage_url`이 있는 한 `if webpage_url:` 블록(18행) 전체가 매 재실행마다 처음부터 다시 실행됩니다. 두 번째 `st.text_input`(75행, 질문 입력창)에 값을 입력하고 엔터를 치는 것 자체가 Streamlit 스크립트 전체의 재실행을 일으키므로, 질문을 새로 할 때마다 Step 3의 웹 가져오기·분할과 Step 4의 임베딩·벡터 저장이 처음부터 다시 돌고, 그 결과는 Step 4에서 확인했듯 비워지지 않고 쌓입니다. 이를 실제 엔트리 파일로 재현하려고 Ollama·네트워크 호출만 가짜로 바꿔치기하고(Step 1의 import 문제도 같은 방식으로 우회) 파일 자체를 세 번 재실행했습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -365,11 +368,11 @@ print('재실행 1,2,3회차 후 (웹 요청 누적, 답변 생성 누적):', co
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-질문을 입력하고 엔터를 치면 Streamlit은 스크립트 전체를 처음부터 다시 실행합니다. 그러면 `webpage_url`이 채워져 있는 한 `WebBaseLoader`가 대상 웹페이지를 **다시** GET으로 가져오고(Step 3), `RecursiveCharacterTextSplitter`로 청크를 나눈 뒤 그 청크 전부를 `llama3.1`에 임베딩 요청으로 보냅니다. 돌아온 벡터는 Chroma에 추가되는데, Step 4에서 확인했듯 이 컬렉션은 새로 비워지는 것이 아니라 이전 재실행에서 쌓인 것 위에 그대로 더해집니다. 그다음에야 비로소 이번 질문 자체가 같은 `llama3.1`에 임베딩되어 Chroma에서 유사도 검색을 하고, 관련 청크 몇 개를 돌려받습니다. 마지막으로 그 청크들과 질문을 합쳐 다시 `llama3.1`에 답변 생성을 요청하고, 돌아온 텍스트를 화면에 표시합니다. 그림에서는 순서대로 그려져 있지만 실제로 눈여겨볼 것은 순서가 아니라 반복입니다 — 이 열두 번의 오가는 화살표 중 앞쪽 절반(웹 가져오기~청크 저장)은 질문 내용과 무관하게 매번 통째로 되풀이됩니다.
+질문을 입력하고 엔터를 치면 Streamlit은 스크립트 전체를 처음부터 다시 실행합니다. 그러면 `webpage_url`이 채워져 있는 한 `WebBaseLoader`가 대상 웹페이지를 **다시** GET으로 가져오고(Step 3), `RecursiveCharacterTextSplitter`로 청크를 나눈 뒤 그 청크 전부를 `Chroma.from_documents()`로 넘깁니다. 청크를 실제로 `llama3.1`에 임베딩 요청으로 보내는 것은 앱 코드가 아니라 이 호출을 받은 Chroma 자신입니다 — 돌아온 벡터를 Chroma가 컬렉션에 추가하는데, Step 4에서 확인했듯 이 컬렉션은 새로 비워지는 것이 아니라 이전 재실행에서 쌓인 것 위에 그대로 더해집니다. 그다음에야 비로소 이번 질문 자체가 (마찬가지로 Chroma를 거쳐) 같은 `llama3.1`에 임베딩되어 유사도 검색을 하고, 관련 청크 몇 개를 돌려받습니다. 마지막으로 그 청크들과 질문을 합쳐 이번에는 앱 코드가 직접 `llama3.1`에 답변 생성을 요청하고, 돌아온 텍스트를 화면에 표시합니다. 그림에서는 순서대로 그려져 있지만 실제로 눈여겨볼 것은 순서가 아니라 반복입니다 — 이 13번의 오가는 화살표 중 앞쪽 절반(웹 가져오기~청크 저장)은 질문 내용과 무관하게 매번 통째로 되풀이됩니다.
 
 ## 실행 체크리스트
 
-- [ ] `uv venv && uv pip install -r requirements.txt`로 85개 패키지를 설치했다(추가로 `beautifulsoup4`, `chromadb` 필요)
+- [ ] `uv venv && uv pip install -r requirements.txt`로 패키지를 설치했다(추가로 `beautifulsoup4`, `chromadb` 필요 — 버전 미고정이라 정확한 개수는 설치 시점마다 달라질 수 있음)
 - [ ] `langchain.text_splitter`가 `ModuleNotFoundError`를 내고 `langchain_text_splitters`로 대체된다는 것을 확인했다
 - [ ] `ollama list`로 이 컴퓨터에 `llama3.1`이 없다는 것과, ollama.com 라이브러리 페이지의 4.9GB 크기를 확인했다
 - [ ] `ChatOllama`/`OllamaEmbeddings` 생성자가 네트워크 요청 없이 성공한다는 것을 확인했다
@@ -384,7 +387,8 @@ print('재실행 1,2,3회차 후 (웹 요청 누적, 답변 생성 누적):', co
 | `from langchain.text_splitter import RecursiveCharacterTextSplitter`가 `ModuleNotFoundError: No module named 'langchain.text_splitter'`로 실패 | `langchain==1.4.2`는 `agents`/`chat_models`/`embeddings`/`mcp`/`messages`/`rate_limiters`/`tools`만 노출하는 얇은 패키지로 바뀌었고 `text_splitter`가 빠졌다(직접 확인) | `from langchain_text_splitters import RecursiveCharacterTextSplitter`로 바꾸기(또는 `langchain_classic.text_splitter`) |
 | `Chroma.from_documents(...)` 호출 시 ``ImportError: Could not import chromadb python package. Please install it with `pip install chromadb`.`` | `chromadb`가 `requirements.txt`에 없고 `langchain`/`langchain_community`/`langchain_ollama` 어느 쪽의 전이 의존성으로도 설치되지 않는다(직접 확인) | `uv pip install chromadb` 실행 |
 | `WebBaseLoader(...).load()` 호출 시 `ModuleNotFoundError: No module named 'bs4'` | `beautifulsoup4`가 `requirements.txt`에 없다(직접 확인) | `uv pip install beautifulsoup4` 실행 |
-| 질문을 여러 번 반복하면 갈수록 느려지거나, 이미 떠난 웹페이지의 내용이 답변에 섞여 나옴 | `session_state`/`st.cache`가 전혀 없어 재실행마다 웹 재수집·재임베딩이 일어나고, `persist_directory` 없는 `Chroma`는 프로세스 안에서 설정이 같으면 컬렉션을 공유해 새로 만드는 게 아니라 계속 더해진다(직접 확인, Step 4·6) | 코드를 고친다면 `st.session_state`로 `vectorstore`를 캐싱하고, URL이 바뀔 때만 `vectorstore.delete_collection()` 후 다시 만들기 |
+| `llama3.1`을 받지 않은 채로 앱을 실행해도 `ChatOllama(model="llama3.1", ...)` 생성 자체는 성공하고, 첫 질문을 눌러야 비로소 Ollama 서버 쪽 오류가 남 | `validate_model_on_init` 기본값이 `False`라 생성자가 모델 존재를 확인하지 않는다(소스로 확인, Step 2) | `ollama pull llama3.1`로 미리 받아 두거나, 생성자에 `validate_model_on_init=True`를 주면 생성 시점에 `client.list()`로 확인해 바로 `ValueError`가 남 |
+| 질문을 여러 번 반복하면 검색 결과에 같은 청크의 사본이 여러 벌 섞이거나, 이미 떠난 웹페이지의 내용이 답변에 섞여 나옴 | `session_state`/`st.cache`가 전혀 없어 재실행마다 웹 재수집·재임베딩이 일어나고, `persist_directory` 없는 `Chroma`는 프로세스 안에서 설정이 같으면 컬렉션을 공유해 새로 만드는 게 아니라 계속 더해져 `as_retriever()`의 기본 k=4 결과가 사본으로 채워진다(직접 확인, Step 4·6) | 코드를 고친다면 `st.session_state`로 `vectorstore`를 캐싱하고, URL이 바뀔 때만 `vectorstore.delete_collection()` 후 다시 만들기 |
 
 ## 더 해보기
 
@@ -394,4 +398,4 @@ print('재실행 1,2,3회차 후 (웹 요청 누적, 답변 생성 누적):', co
 
 ## 다음 날 예고
 
-[Day 049 · 🔍 Autonomous RAG](../day049-autonomous-rag/README.md) — 오늘과 반대로 GPT-4o와 PgVector(Postgres, Docker로 실행)를 쓰는 호스팅 RAG로 돌아갑니다. PDF 업로드와 DuckDuckGo 웹 검색 결과를 같은 지식베이스에 결합하는 구조입니다.
+[Day 049 · 🔍 Autonomous RAG](../day049-autonomous-rag/README.md) — 오늘과 반대로 `gpt-4o-mini`와 PgVector(Postgres, Docker로 실행)를 쓰는 호스팅 RAG로 돌아갑니다. PDF 지식베이스를 먼저 검색하고, 못 찾으면 에이전트가 DuckDuckGo 웹 검색 도구를 고르는 구조입니다.

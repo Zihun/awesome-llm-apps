@@ -1,27 +1,23 @@
 ...@../../_tools/theme
-direction: right
-grid-columns: 2
+direction: down
 
 front: "브라우저 쪽" {
   class: group
-  grid-columns: 2
   user: 사용자 { class: person }
   ui: Streamlit UI (앱 스크립트) { class: ours }
 }
 
-local: "로컬 RAG 파이프라인" {
-  class: group
-  grid-columns: 2
-  ingest: 웹 로더·분할 (WebBaseLoader) { class: ours }
-  chain: RAG 체인 (rag_chain) { class: ours }
-  model: Ollama 로컬 모델 (llama3.1) { class: store }
-  vstore: Chroma 벡터 저장소 (메모리) { class: store }
-}
+ingest: 웹 로더·분할 (WebBaseLoader) { class: ours }
+chain: RAG 체인 (rag_chain) { class: ours }
+model: Llama 3.1 (Ollama, 로컬) { class: ext }
+vstore: Chroma 벡터 저장소 { class: store }
+web: 대상 웹페이지 { class: ext }
 
-web: 대상 웹페이지 (임의 URL) { class: ext }
-
-front -> local: 웹페이지 URL·질문 (질문마다 전체 재실행)
-local -> web: HTTP GET (매번 재요청)
-local -> front: 답변 텍스트
-local.ingest -> local.model: 청크 임베딩 요청
-local.chain -> local.vstore: 유사도 검색
+front -> ingest: 웹페이지 URL
+front -> chain: 질문
+chain -> front: 답변
+ingest -> web: HTTP GET
+ingest -> vstore: 청크
+vstore -> model: 임베딩 요청
+chain -> vstore: 유사도 검색
+chain -> model: 생성 요청
