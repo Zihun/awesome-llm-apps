@@ -1,26 +1,25 @@
 ...@../../_tools/theme
-direction: right
-grid-columns: 2
+direction: down
 
-front: "브라우저 쪽" {
+front: "사용자 쪽 화면" {
   class: group
   grid-columns: 2
   user: 사용자 { class: person }
-  ui: "Streamlit 앱 (local_main.py)" { class: ours }
+  ui: "Streamlit 앱" { class: ours }
 }
 
 search: "RAGLite 검색" {
   class: group
   grid-columns: 2
-  hybrid: "하이브리드 검색 (키워드+벡터, RRF)" { class: ours }
-  rerank: "재순위화 (FlashRank)" { class: ours }
+  hybrid: "하이브리드 검색 (키워드+벡터, RRF)" { class: ext }
+  rerank: "재순위화 (FlashRank)" { class: ext }
 }
 
 models: "로컬 모델 (llama-cpp-python)" {
   class: group
   grid-columns: 2
-  embed: "임베더 (GGUF)" { class: ours }
-  llm: "LLM (GGUF)" { class: ours }
+  embed: "임베더 (GGUF)" { class: ext }
+  llm: "LLM (GGUF)" { class: ext }
 }
 
 data: "저장소" {

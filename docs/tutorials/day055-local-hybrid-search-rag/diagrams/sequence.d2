@@ -1,21 +1,26 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자
-ui: "Streamlit UI"
-search: "하이브리드 검색"
-db: DB
-rerank: 재순위화
-llm: "로컬 LLM"
+user: 사용자 { class: person }
+ui: "Streamlit UI" { class: ours }
+search: "하이브리드 검색" { class: ext }
+rerank: 재순위화 { class: ext }
+embed: "임베더 (GGUF)" { class: ext }
+db: DB { class: store }
+llm: "로컬 LLM" { class: ext }
 
 user -> ui: 질문
 ui -> search: perform_search(query)
+search -> embed: 질의 임베딩 요청
+embed -> search: 질의 벡터
 search -> db: 키워드+벡터 검색
 db -> search: 후보 청크 (RRF 융합)
 search -> rerank: 상위 10개 재정렬
 rerank -> search: 정렬된 청크
 search -> ui: 있음/없음만 판정에 사용
 ui -> search: rag() 내부 재검색 (20개 후보)
+search -> embed: 질의 임베딩 요청
+embed -> search: 질의 벡터
 search -> db: 키워드+벡터 검색
 db -> search: 후보 청크 (RRF 융합)
 search -> rerank: 재정렬

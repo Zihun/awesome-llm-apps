@@ -1,10 +1,10 @@
 # Day 055 · 🖥️ Local Hybrid Search RAG
 
-> 볼륨 5 📀 RAG · 난이도 ★★★ ⚠ · 예상 소요 100분(설치 자체가 두 개의 컴파일 벽에 부딪히고, 그중 하나는 20분을 기다려도 끝나지 않아 손으로 확인하는 데 시간이 많이 듭니다) · API 비용 무료(LLM·임베더·리랭커 모두 로컬 실행 — 다만 GGUF 모델 2개와 spaCy 언어 모델을 최초 1회 내려받아야 하며 크기는 Step 1~2에서 다룸) · 원본 앱: `rag_tutorials/local_hybrid_search_rag`
+> 볼륨 5 📀 RAG · 난이도 ★★★ ⚠ · 예상 소요 125분(설치가 네 관문을 순서대로 지나야 하고 — Python 버전, CPU wheel 인덱스, `pydantic`, `numpy` — 그중 하나는 PyPI 기본 경로로 20분을 기다려도 끝나지 않아 손으로 확인하는 데 시간이 걸립니다. 이 볼륨에서 유난히 긴 것은 되풀이가 아니라 Day 053과 같은 스택의 네 관문을 하나씩 직접 재현하기 때문입니다) · API 비용 무료(LLM·임베더·리랭커 모두 로컬 실행 — 다만 GGUF 모델 2개와 spaCy 언어 모델을 최초 1회 내려받아야 하며 크기는 Step 1~2에서 다룸) · 원본 앱: `rag_tutorials/local_hybrid_search_rag`
 
 ## 오늘 만들 것
 
-Day 047이 정리한 파이프라인 — 문서 → 청크 → 임베딩 → 저장 → 질의 → 검색 → 답변 — 에서 오늘 앱이 다르게 채우는 자리는 "검색"과 "저장"입니다. `raglite`라는 라이브러리 위에 257줄짜리 Streamlit 앱을 올린 이 앱은, 질문 하나마다 키워드 검색(BM25류)과 벡터 검색을 각각 따로 돌려 Reciprocal Rank Fusion(RRF)으로 한 순위 목록으로 합치고, 그 상위 결과를 FlashRank라는 별도의 로컬 크로스인코더로 다시 정렬합니다 — 이것이 제목의 "Hybrid"입니다. 그리고 "Local"은 이 앱에서 겉치레가 아닙니다: 답변을 쓰는 LLM도, 문서를 벡터로 바꾸는 임베더도 `llama-cpp-python`이 돌리는 GGUF 파일이고, 재순위화 모델도 API가 아니라 ONNX 런타임으로 이 컴퓨터에서 돕니다. 그 대가는 설치 단계에서부터 드러납니다 — `llama-cpp-python`은 오늘 기준 어떤 플랫폼에도 미리 빌드된 wheel을 내놓지 않아 소스 빌드가 강제되고, 이 컴퓨터에는 실제로 Visual Studio(MSVC)와 CMake가 있는데도(직접 확인) 그 빌드가 20분 넘게 끝나지 않았습니다. 여기에 더해 이 Python(3.13)에서는 `spacy`·`thinc`·`blis`도 미리 빌드된 wheel이 없어 별도로 컴파일해야 하는데, `blis` 0.7.11은 Cython 오류로 아예 실패합니다(직접 확인) — 컴파일러가 없어서가 아니라 오래된 패키지가 오늘의 Cython과 맞지 않아서입니다. 데이터베이스도 앱 자체 README는 PostgreSQL(Neon)을 권하지만, 실제 코드와 `raglite` 소스를 보면 `sqlite:///`로 시작하는 URL도 그대로 받아들입니다 — 서버 없이 로컬 파일 하나로 시작할 길이 코드상 열려 있다는 뜻입니다. 마지막으로, 검색 결과가 없을 때 쓰는 폴백 함수 `handle_fallback`은 오늘 설치되는 `raglite`의 `rag()` 시그니처에 없는 인자를 넘겨 항상 `TypeError`로 죽고, 그 예외를 자기 자신의 `except`가 조용히 삼킵니다. 완성하면(그리고 위 벽들을 넘기면) PDF를 올리고 질문하면 하이브리드 검색과 재순위화를 거친 근거로 로컬 LLM이 스트리밍으로 답하는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
+RAG 파이프라인에서 오늘 앱이 다르게 채우는 자리는 "검색"과 "저장"입니다. `raglite`라는 라이브러리 위에 257줄짜리 Streamlit 앱을 올린 이 앱은, 질문 하나마다 키워드 검색(BM25류)과 벡터 검색을 각각 따로 돌려 Reciprocal Rank Fusion(RRF)으로 한 순위 목록으로 합치고, 그 상위 결과를 FlashRank라는 별도의 로컬 크로스인코더로 다시 정렬합니다 — 이것이 제목의 "Hybrid"입니다. 그리고 "Local"은 이 앱에서 겉치레가 아닙니다: 답변을 쓰는 LLM도, 문서를 벡터로 바꾸는 임베더도 `llama-cpp-python`이 돌리는 GGUF 파일이고, 재순위화 모델도 API가 아니라 ONNX 런타임으로 이 컴퓨터에서 돕니다. 그 대가는 설치 단계에서부터 드러납니다 — PyPI에는 `llama-cpp-python`의 미리 빌드된 wheel이 없어(sdist뿐) 그 경로로는 소스 빌드가 강제되고, 이 컴퓨터에는 실제로 Visual Studio(MSVC)와 CMake가 있는데도(직접 확인) 그 빌드가 20분 넘게 끝나지 않았습니다 — 다만 프로젝트 자신이 운영하는 CPU 전용 wheel 인덱스에는 Python 버전과 무관한 `py3-none-win_amd64` wheel이 있어(직접 확인, Day 053이 바로 전날 썼던 인덱스) 그 경로로는 컴파일 없이 몇백 밀리초에 끝납니다. 여기에 더해 이 Python(3.13)에서는 `spacy`·`thinc`·`blis`도 미리 빌드된 wheel이 없어 별도로 컴파일해야 하는데, `blis` 0.7.11은 Cython 오류로 아예 실패합니다(직접 확인) — 컴파일러가 없어서도, 오래된 패키지가 최신 Cython과 안 맞아서도 아니라, numpy 자신이 "Cython 3.0 이상이 아니면 헤더를 못 쓴다"며 빌드를 스스로 중단시키는데 `blis`가 격리 빌드 환경에 `Cython<3.0`을 고정해 두기 때문입니다. 두 벽을 모두 넘겨도(Python 3.11/3.12 + CPU wheel 인덱스) raglite 0.2.1 자신이 요구하는 `pydantic`·`numpy` 버전이 하나씩 더 막습니다 — Day 053이 같은 스택에서 정확히 이 순서로 부딪힌 두 관문과 같습니다. "Local"이라는 이름과 달리, 그렇게 통과시킨 `import raglite`조차 그 자리에서 네트워크를 씁니다 — FlashRank 재순위 모델(이 앱이 실제로 쓰는 것은 하나뿐인데도 raglite의 import 시점 기본값 평가가 영어·다국어 두 모델을 모두 내려받습니다, 처음 한 번 약 195MB)과 litellm의 비용표(매번, GitHub)입니다. 데이터베이스도 앱 자체 README는 PostgreSQL(Neon)을 권하지만, 실제 코드와 `raglite` 소스를 보면 `sqlite:///`로 시작하는 URL도 그대로 받아들입니다 — 서버 없이 로컬 파일 하나로 시작할 길이 코드상 열려 있다는 뜻입니다. 마지막으로, 검색 결과가 없을 때 쓰는 폴백 함수 `handle_fallback`은 오늘 설치되는 `raglite`의 `rag()` 시그니처에 없는 인자를 넘겨 항상 `TypeError`로 죽고, 그 예외를 자기 자신의 `except`가 조용히 삼킵니다. 네 관문을 모두 넘기면(그리고 GGUF 모델까지 내려받으면, 이 문서는 받지 않았습니다) PDF를 올리고 질문하면 하이브리드 검색과 재순위화를 거친 근거로 로컬 LLM이 스트리밍으로 답하는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,12 +12,13 @@ Day 047이 정리한 파이프라인 — 문서 → 청크 → 임베딩 → 저
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| C/C++ 컴파일러 + CMake | `llama-cpp-python` 소스 빌드에 필수. Python 3.13에서는 `spacy`·`thinc`·`blis`도 wheel이 없어 추가로 필요 | Windows는 Visual Studio Build Tools의 "C++를 사용한 데스크톱 개발" 워크로드 + CMake. 이 문서를 쓴 컴퓨터에는 이미 둘 다 있었다(Step 1에서 직접 확인) — 그런데도 빌드가 끝까지 가지 않았다는 것이 오늘의 핵심 발견 |
-| spaCy 언어 모델 `xx_sent_ud_sm` | `raglite`의 문장 분리기가 문서를 청크로 나누기 전에 사용(4.1MB, 이 문서는 받음) | `pip install https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl` — 이 wheel 하나만 받아도 `spacy`가 딸려 오고, Python 3.13에서는 Step 1과 같은 컴파일 벽에 부딪힌다(직접 확인) |
+| uv | 가상환경 생성과 패키지 설치. Python 3.11이나 3.12를 명시(`uv venv --python 3.11`) — 3.13에는 `spacy`·`thinc`·`blis` wheel이 없다 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
+| `llama-cpp-python` CPU wheel 인덱스 | PyPI에는 이 패키지의 사전 빌드 wheel이 없다(sdist뿐) — 이 인덱스에는 Python 버전과 무관한 wheel이 있어 컴파일 없이 받는다(직접 확인, Day 053도 같은 인덱스를 씀) | `--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu` |
+| C/C++ 컴파일러 + CMake | 위 인덱스를 안 쓰고 PyPI 기본 경로로 설치할 경우에만 필요. 이 컴퓨터에는 실제로 있었지만(Step 1에서 직접 확인) 그 경로의 빌드가 20분 넘게 끝나지 않았다 | Windows는 Visual Studio Build Tools의 "C++를 사용한 데스크톱 개발" 워크로드 + CMake |
+| spaCy 언어 모델 `xx_sent_ud_sm` | `raglite`의 문장 분리기가 문서를 청크로 나누기 전에 사용(4.1MB, 이 문서는 받음) | `uv pip install "https://github.com/explosion/spacy-models/releases/download/xx_sent_ud_sm-3.7.0/xx_sent_ud_sm-3.7.0-py3-none-any.whl"` — Python 3.11/3.12면 문제없이 받아진다(직접 확인) |
 | 로컬 GGUF 모델 파일 2개(LLM·임베더) | 답변 생성과 문서/질의 임베딩 | 사이드바에 `<HF 저장소>/<파일명>@<n>` 형식 경로를 입력하면 최초 사용 시 Hugging Face에서 자동 다운로드(수백 MB~수 GB, 발행 크기는 Step 2에서 확인, 이 문서는 받지 않음) |
 | 데이터베이스(선택) | 청크·임베딩·전문색인 저장 | 앱 자체 README는 PostgreSQL(Neon 무료 티어)을 안내하지만, 코드는 `sqlite:///로컬파일.db`도 그대로 받아들이는 것으로 보인다(Step 2, 소스로 확인) — 이 문서는 어느 쪽도 실행하지 않음 |
-| 인터넷 연결 | PyPI/Hugging Face 설치·다운로드 | 별도 설치 없음 |
+| 인터넷 연결 | PyPI/Hugging Face 설치·다운로드. `import raglite` 자체도 FlashRank 모델(195MB, 첫 1회)과 litellm 비용표(매번)를 내려받으려 한다(직접 확인) | 별도 설치 없음 |
 
 ## 아키텍처 한눈에 보기
 
@@ -49,7 +50,7 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
 
-이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. `uv venv`는 이 환경의 기본값인 Python 3.13.3을 그대로 골랐습니다(직접 확인) — 이 컴퓨터의 시스템 Python은 `python --version` 기준 3.13.12, `py` 런처 기준 3.14.3으로 셋 다 다릅니다(직접 확인).
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. `uv venv`는 이 환경의 기본값인 Python 3.13.3을 그대로 골랐습니다(직접 확인) — 뒤에서 보듯 이 버전은 `spacy`·`thinc`·`blis`에 wheel이 없어 `uv venv --python 3.11`처럼 버전을 명시하는 편이 낫습니다.
 
 `rag_tutorials/local_hybrid_search_rag/requirements.txt:1-15`
 
@@ -113,7 +114,7 @@ for v in ['0.3.35', '0.2.90', '0.2.56']:
 0.2.56 [('llama_cpp_python-0.2.56.tar.gz', 'sdist')]
 ```
 
-이 앱이 요구하는 하한(0.2.56)부터 오늘 풀리는 최신판(0.3.35)까지, 어느 버전도 **어떤 플랫폼의 wheel도 올리지 않았습니다** — 소스 배포(sdist)뿐입니다. 즉 이것은 "이 컴퓨터·이 Python이라서" 겪는 문제가 아니라 이 패키지가 오늘 모두에게 강제하는 소스 빌드입니다. 실제로 설치를 시도하면 무슨 일이 벌어지는지 직접 확인합니다.
+이 앱이 요구하는 하한(0.2.56)부터 오늘 풀리는 최신판(0.3.35)까지, **PyPI에는** 어느 버전도 어떤 플랫폼의 wheel도 없습니다 — 소스 배포(sdist)뿐입니다. 그런데 이것이 "어떤 플랫폼에도 wheel이 없다"는 뜻은 아닙니다 — `llama-cpp-python` 프로젝트 자신이 PyPI 밖에 CPU 전용 wheel 인덱스를 운영하고, 거기에는 Python 버전과 무관한 `py3-none-win_amd64` wheel이 올라와 있습니다(직접 확인, 아래). PyPI 기본 경로로 설치하면 무슨 일이 벌어지는지 먼저 봅니다.
 
 ```bash
 uv pip install llama-cpp-python
@@ -129,14 +130,37 @@ Resolved 6 packages in 923ms
 이 상태로 CMake(`C:\Program Files\CMake\bin\cmake.exe`)가 곧바로 뜨는 것을 프로세스 목록에서 확인했고, 그 후 20분 넘게 기다렸지만 다음 줄이 출력되지 않았습니다. 그사이 프로세스 목록에는 `cl.exe`와 `link.exe`(`...Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\bin\Hostx64\x64\`)가 실제로 나타났다 사라졌습니다 — 즉 이 컴퓨터에는 CMake도 MSVC 컴파일러/링커도 실제로 있고 빌드가 그것들을 실제로 불렀습니다. "컴파일러가 없다"는 이 컴퓨터에서는 사실이 아니었습니다. 그런데도 20분 안에 끝나지 않아 결국 프로세스를 강제 종료했고, 그 뒤 확인한 결과는 아무것도 설치되지 않았다는 것이었습니다.
 
 ```bash
-python -c "import llama_cpp"
+uv run --no-project python -c "import llama_cpp"
 ```
 
 ```
 ModuleNotFoundError: No module named 'llama_cpp'
 ```
 
-같은 Python(3.13)에서 `spacy`·`thinc`·`blis`(모두 `raglite`가 문장 분리에 쓰는 `spacy`의 하위 의존성)도 wheel이 없다는 것을 PyPI 메타데이터로 확인했습니다 — 세 패키지 모두 cp310~cp312 wheel은 있지만 cp313은 없습니다.
+PyPI 기본 경로는 여기서 막힙니다. 그런데 `llama-cpp-python` 프로젝트가 직접 운영하는 CPU 전용 wheel 인덱스를 추가하면 같은 설치가 컴파일 없이 그대로 끝납니다 — Day 053(바로 전날)이 raglite의 같은 강제 의존성을 이 방법으로 넘겼습니다.
+
+```bash
+uv pip install --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu llama-cpp-python
+```
+
+직접 확인한 출력(전부):
+
+```
+Installed 6 packages in 287ms
+ + llama-cpp-python==0.3.35
+```
+
+```bash
+uv run --no-project python -c "import llama_cpp; print(llama_cpp.llama_supports_gpu_offload())"
+```
+
+```
+False
+```
+
+(네트워크 시도 0건 — CPU 빌드라 GPU 오프로드는 당연히 `False`입니다.) 이 조합에서 실제로 받아지는 wheel 이름은 `llama_cpp_python-0.3.35-py3-none-win_amd64.whl`입니다(uv 캐시로 확인) — `py3-none`이라 Python 버전을 타지 않습니다. 이 인덱스를 몰랐을 때만 컴파일러가 필요했던 것이지, 이 컴퓨터에 컴파일러가 없어서 막힌 것은 아니었습니다(MSVC·CMake가 실제로 있다는 것은 위에서 이미 확인했습니다 — 그 사실 자체는 맞습니다, 다만 결론이 "그러니 소스 빌드만이 답이다"로 이어지는 것이 틀렸을 뿐입니다).
+
+두 번째 벽은 별개입니다 — 같은 Python(3.13)에서 `spacy`·`thinc`·`blis`(모두 `raglite`가 문장 분리에 쓰는 `spacy`의 하위 의존성)도 wheel이 없다는 것을 PyPI 메타데이터로 확인했습니다 — 세 패키지 모두 cp310~cp312 wheel은 있지만 cp313은 없습니다.
 
 ```bash
 python -c "
@@ -152,11 +176,11 @@ for pkg, ver in [('spacy','3.7.5'), ('thinc','8.2.4'), ('blis','0.7.11')]:
 
 ```
 spacy 3.7.5 -> ['cp310', 'cp311', 'cp312', 'cp37m', 'cp38', 'cp39']
-thinc 8.2.4 -> ['cp310', 'cp311', 'cp312', 'cp37m', 'cp38', 'cp39']
-blis 0.7.11 -> ['cp310', 'cp311', 'cp312', 'cp37m', 'cp38', 'cp39']
+thinc 8.2.4 -> ['cp310', 'cp311', 'cp312', 'cp36m', 'cp37m', 'cp38', 'cp39']
+blis 0.7.11 -> ['cp310', 'cp311', 'cp312', 'cp36m', 'cp37m', 'cp38', 'cp39']
 ```
 
-실제로 `blis`를 소스 빌드하면 컴파일러 유무와 무관한 다른 이유로 실패합니다 — Cython 3.x가 이 오래된 `.pyx` 문법을 거부합니다(직접 확인, 아래는 실제로 이 wheel 하나만 설치를 시도했을 때의 출력 마지막 부분입니다).
+실제로 `blis`를 소스 빌드하면 컴파일러 유무와 무관한 다른 이유로 실패합니다 — 격리 빌드 환경은 `blis`가 고정한 `Cython<3.0`(직접 확인, `cython==0.29.37`)과 상한 없는 `numpy`(오늘은 2.5.3)를 함께 받는데, numpy 자신의 헤더가 "Cython 3.0 이상이 아니면 못 쓴다"며 빌드를 스스로 중단시킵니다(직접 확인, 아래는 실제로 이 wheel 하나만 설치를 시도했을 때의 출력 마지막 부분입니다 — Cython이 옛 문법을 거부하는 것이 아니라 numpy가 옛 Cython을 거부하는 것입니다).
 
 ```bash
 uv venv --python 3.13
@@ -174,23 +198,67 @@ help: `blis` (v0.7.11) was included because `xx-sent-ud-sm` (v3.7.0) depends
       on `blis`
 ```
 
-즉 이 Python 버전에서는 spaCy 언어 모델 wheel 하나만 따로 받으려 해도 같은 벽에 부딪힙니다. Python을 3.10~3.12로 낮추면 이 벽은 피할 수 있지만(spacy/thinc/blis에 wheel이 있으므로), `llama-cpp-python`은 어느 Python에도 wheel이 없으므로 그 벽은 그대로 남습니다 — 두 문제는 원인이 다르고 해결책도 다릅니다.
+즉 이 Python 버전에서는 spaCy 언어 모델 wheel 하나만 따로 받으려 해도 같은 벽에 부딪힙니다. 이 벽은 Python을 3.10~3.12로 낮춰야만 피할 수 있습니다(spacy/thinc/blis에 그 버전들의 wheel이 있으므로) — CPU wheel 인덱스로는 못 피합니다, 그 인덱스는 `llama-cpp-python` 전용이지 `blis`용이 아니기 때문입니다. 반대로 `llama-cpp-python` 벽은 CPU wheel 인덱스로 어느 Python에서나 피할 수 있습니다 — 두 벽은 원인도 해결책도 다르지만, **함께 넘을 수 있습니다**: `uv venv --python 3.11`(또는 3.12) 뒤 `--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu`를 붙여 `requirements.txt`를 설치하면 됩니다.
+
+```bash
+uv venv --python 3.11
+uv pip install --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu -r requirements.txt
+```
+
+직접 확인한 출력(발췌 — 이 조합으로 실제 설치를 마쳤습니다):
+
+```
+Resolved 138 packages in 1.79s
+Installed 138 packages in 9.55s
+ + llama-cpp-python==0.3.35
+```
+
+받아진 주요 버전(직접 확인): **raglite 0.2.1**, **llama-cpp-python 0.3.35**, **pydantic 2.10.1**, **rerankers 0.6.0**, **flashrank 0.2.9**(정확한 고정대로), **spacy 3.7.5**, **numpy 2.4.6**, **sqlalchemy 2.0.54**, **torch 2.14.0**(`sentence-transformers`의 전이 의존성).
 
 **그림.**
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
-**확인.** 위에서 실행한 각 명령의 실제 출력이 이 단계의 확인입니다. 요약하면: PyPI 메타데이터로 wheel 부재를 확인했고, 실제 설치 시도로 CMake·MSVC가 호출되지만 20분 안에 끝나지 않는다는 것을 확인했고, `import llama_cpp`로 아무것도 설치되지 않았다는 것을 확인했습니다.
+**확인.** 위에서 실행한 각 명령의 실제 출력이 이 단계의 확인입니다. 요약하면: PyPI 메타데이터로 wheel 부재를 확인했고, PyPI 기본 경로의 설치 시도로 CMake·MSVC가 호출되지만 20분 안에 끝나지 않는다는 것을 확인했고, CPU wheel 인덱스 경로로는 두 벽(`llama-cpp-python`, `spacy`/`thinc`/`blis`)을 함께 넘겨 설치 자체는 성공한다는 것을 확인했습니다. 그런데 `import raglite`는 설치가 성공해도 아직 통과하지 못합니다 — Day 053이 겪은 것과 같은 두 관문이 이 앱에도 그대로 있습니다.
 
 ```bash
-uv run --no-project python -c "import raglite" 2>&1 | tail -3
+uv run --no-project python -c "import raglite"
 ```
 
-기대 출력(이 컴퓨터에서 직접 확인 — `llama_cpp`가 없으므로 `raglite`의 최상단 import에서부터 실패합니다):
+직접 확인한 마지막 줄(관문 3, `pydantic==2.10.1`이 litellm 최신판의 타입 표기를 처리하지 못함 — Day 053 Step 1과 같은 오류):
 
 ```
-ModuleNotFoundError: No module named 'llama_cpp'
+pydantic.errors.PydanticSchemaGenerationError: Unable to generate pydantic-core schema for typing_extensions.ReadOnly[typing.Literal['input_audio_buffer.speech_started', 'input_audio_buffer.speech_stopped']]. ...
 ```
+
+`uv pip install -U pydantic`로 올리면(직접 확인, 2.13.5) 이번엔 관문 4가 나옵니다 — numpy 2.x와 thinc 사전 빌드 wheel의 ABI 불일치:
+
+```
+ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
+```
+
+`uv pip install "numpy<2"`까지 적용한 뒤 같은 명령을 실행하면:
+
+```bash
+uv run --no-project python -c "import raglite; print('RAGLITE IMPORT OK')"
+```
+
+```
+RAGLITE IMPORT OK
+```
+
+직접 확인했습니다. 이 앱 자신의 진입점도 같은 네 관문을 넘기면 끝까지 import됩니다:
+
+```bash
+uv run --no-project python -m py_compile local_main.py && echo compiled
+uv run --no-project python -c "import local_main"
+```
+
+```
+compiled
+```
+
+`import local_main`은 아무 출력 없이 조용히 끝납니다(직접 확인) — 예외가 없다는 뜻입니다. 정리하면 이 컴퓨터에서 실제로 통하는 길은 **Python 3.11(또는 3.12) + `llama-cpp-python` CPU wheel 인덱스 + `pydantic` 업그레이드 + `numpy<2`** 네 가지를 모두 적용하는 것입니다 — 어느 하나만 빠져도 위 오류 중 하나로 멈춥니다.
 
 ### Step 2. RAGLiteConfig — 로컬 모델 세 자리와 데이터베이스 한 자리
 
@@ -211,7 +279,7 @@ ModuleNotFoundError: No module named 'llama_cpp'
         )
 ```
 
-`llm=`과 `embedder=`는 raglite가 문서화하는 `"llama-cpp-python/<HF 저장소>/<파일명>@<n>"` 형식 문자열입니다 — `n`은 LLM이면 컨텍스트 길이, 임베더면 차원입니다. 앱 자체 README의 "Quick Start"가 권하는 값은 `bartowski/Llama-3.2-3B-Instruct-GGUF/Llama-3.2-3B-Instruct-Q4_K_M.gguf@4096`(LLM)과 `lm-kit/bge-m3-gguf/bge-m3-Q4_K_M.gguf@1024`(임베더)인데, 이는 raglite 0.2.1 자신의 기본값(GPU 오프로드가 없거나 CPU 4코어 미만일 때)과 정확히 같습니다(소스로 확인, `_config.py`) — 이 앱은 raglite의 기본 선택을 그대로 명시한 것입니다. 각 파일의 발행 크기는 Hugging Face에 직접 확인했습니다(파일을 받지 않고 HTTP HEAD로만).
+`llm=`과 `embedder=`는 raglite가 문서화하는 `"llama-cpp-python/<HF 저장소>/<파일명>@<n>"` 형식 문자열입니다 — `n`은 LLM이든 임베더든 **컨텍스트 길이**입니다(소스로 확인, `raglite/_litellm.py`가 `@` 뒤 숫자를 `n_ctx`로 씁니다). 임베더 쪽 `@1024`가 bge-m3의 벡터 차원(1024)과 우연히 같은 숫자라 차원처럼 보일 뿐입니다. 앱 자체 README의 "Quick Start"가 권하는 값은 `bartowski/Llama-3.2-3B-Instruct-GGUF/Llama-3.2-3B-Instruct-Q4_K_M.gguf@4096`(LLM)과 `lm-kit/bge-m3-gguf/bge-m3-Q4_K_M.gguf@1024`(임베더)입니다. LLM 쪽은 raglite 0.2.1 자신의 기본값과 정확히 같습니다(소스로 확인, `_config.py`). 임베더 쪽은 GPU 오프로드가 없고 CPU가 4코어 미만일 때만 이 `Q4_K_M` 기본값이 나오고, 그 밖에는(이 PC처럼 16코어면) 기본값이 `*F16.gguf`입니다 — 즉 앱이 권하는 임베더 값은 raglite의 기본값과 항상 같지는 않고, 저사양 CPU 전용 기본값과 우연히 겹치는 경우입니다. 각 파일의 발행 크기는 Hugging Face에 직접 확인했습니다(파일을 받지 않고 HTTP HEAD로만).
 
 ```bash
 curl -sIL "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf" | grep -i content-length
@@ -248,7 +316,7 @@ content-length: 437778592
                 st.success("Configuration saved successfully!")
 ```
 
-검사하는 것은 "세 칸이 비어 있지 않은가"뿐입니다. raglite 0.2.1 소스를 보면 `RAGLiteConfig.db_url`의 기본값 자체가 `"sqlite:///raglite.sqlite"`이고(`_config.py`), 실제 연결을 여는 `_database.py`는 `make_url(db_url).get_backend_name()`으로 `"postgresql"`과 `"sqlite"` 두 값만 분기 처리하며 그 외에는 `"RAGLite only supports PostgreSQL and SQLite."`라는 오류를 던집니다 — 즉 SQLite도 정식으로 지원되는 경로입니다(소스로 확인). Day 049의 PostgreSQL이 코드에 주소가 그대로 박혀 있어 대안이 없었던 것과 달리, 이 앱은 라이브러리 차원에서 서버 없는 대안이 이미 있는데 앱의 UI와 앱 자체 README가 그쪽을 안내하지 않을 뿐입니다. 다만 이 자리를 실제로 `sqlite:///...`로 채워 끝까지 실행하는 것은 Step 1에서 확인한 `llama_cpp` 부재 때문에 이 문서에서는 재현하지 못했습니다.
+검사하는 것은 "세 칸이 비어 있지 않은가"뿐입니다. raglite 0.2.1 소스를 보면 `RAGLiteConfig.db_url`의 기본값 자체가 `"sqlite:///raglite.sqlite"`이고(`_config.py`), 실제 연결을 여는 `_database.py`는 `make_url(db_url).get_backend_name()`으로 `"postgresql"`과 `"sqlite"` 두 값만 분기 처리하며 그 외에는 `"RAGLite only supports PostgreSQL and SQLite."`라는 오류를 던집니다 — 즉 SQLite도 정식으로 지원되는 경로입니다(소스로 확인). Day 049의 PostgreSQL이 코드에 주소가 그대로 박혀 있어 대안이 없었던 것과 달리, 이 앱은 라이브러리 차원에서 서버 없는 대안이 이미 있는데 앱의 UI와 앱 자체 README가 그쪽을 안내하지 않을 뿐입니다.
 
 **그림.**
 
@@ -264,6 +332,35 @@ curl -s "https://raw.githubusercontent.com/superlinear-ai/raglite/v0.2.1/src/rag
 
 ```
     db_url: str | URL = "sqlite:///raglite.sqlite"
+    # LLM config used for generation.
+```
+
+네 관문을 넘긴 환경에서, 실제 GGUF 파일 이름을 넣어 `RAGLiteConfig`와 `Reranker`를 만드는 것 자체는 네트워크가 필요 없다는 것도 직접 확인했습니다(소켓을 막아 두고 실행) — GGUF 모델을 실제로 내려받는 것은 이 문자열을 나중에 `llm()`·`embed()` 등으로 실제 호출할 때입니다.
+
+```bash
+uv run --no-project python -c "
+from raglite import RAGLiteConfig
+from rerankers import Reranker
+cfg = RAGLiteConfig(
+    db_url='sqlite:///raglite.sqlite',
+    llm='llama-cpp-python/bartowski/Llama-3.2-3B-Instruct-GGUF/Llama-3.2-3B-Instruct-Q4_K_M.gguf@4096',
+    embedder='llama-cpp-python/lm-kit/bge-m3-gguf/bge-m3-Q4_K_M.gguf@1024',
+    embedder_normalize=True,
+    chunk_max_size=512,
+    reranker=Reranker('ms-marco-MiniLM-L-12-v2', model_type='flashrank', verbose=0),
+)
+print('db_url:', cfg.db_url)
+print('llm:', cfg.llm)
+print('embedder:', cfg.embedder)
+"
+```
+
+직접 확인한 출력:
+
+```
+db_url: sqlite:///raglite.sqlite
+llm: llama-cpp-python/bartowski/Llama-3.2-3B-Instruct-GGUF/Llama-3.2-3B-Instruct-Q4_K_M.gguf@4096
+embedder: llama-cpp-python/lm-kit/bge-m3-gguf/bge-m3-Q4_K_M.gguf@1024
 ```
 
 ### Step 3. 문서 적재 — 임베딩이 청크보다 먼저 온다
@@ -282,7 +379,7 @@ curl -s "https://raw.githubusercontent.com/superlinear-ai/raglite/v0.2.1/src/rag
         return True
 ```
 
-raglite 0.2.1의 `insert_document`(소스로 확인, `_insert.py`)는 `tqdm`으로 5단계를 진행합니다 — DB 초기화, 마크다운 변환, **문장 분리**(spaCy `xx_sent_ud_sm`, Step 1의 그 모델), **문장 임베딩**(`llm-cpp-python` 임베더), 그리고 **청크 분할**입니다. 순서가 중요합니다: 문장을 먼저 통째로 임베딩한 다음, 그 임베딩들의 유사도를 보고 의미가 이어지는 문장끼리 묶어 청크를 만듭니다(`embedder_sentence_window_size`, `chunk_max_size=512`로 이 앱이 raglite 기본값 1440에서 낮춘 값). Day 047의 agno 리더는 반대로 5000자 고정 크기로 먼저 자른 뒤 그 조각을 임베딩했습니다 — 오늘 앱은 의미가 끊기는 자리에서 청크를 나누려는 편입니다. 이 단계도 임베더(`llama_cpp`)가 있어야 하므로 Step 1의 벽 때문에 이 문서에서 실제로 실행하지는 못했습니다.
+raglite 0.2.1의 `insert_document`(소스로 확인, `_insert.py`)는 `tqdm`으로 5단계를 진행합니다 — DB 초기화, 마크다운 변환, **문장 분리**(spaCy `xx_sent_ud_sm`, Step 1의 그 모델), **문장 임베딩**(`llama-cpp-python` 임베더), 그리고 **청크 분할**입니다. 순서가 중요합니다: 문장을 먼저 통째로 임베딩한 다음, 그 임베딩들의 유사도를 보고 의미가 이어지는 문장끼리 묶어 청크를 만듭니다(`embedder_sentence_window_size`, `chunk_max_size=512`로 이 앱이 raglite 기본값 1440에서 낮춘 값). Day 047의 agno 리더는 반대로 5000자 고정 크기로 먼저 자른 뒤 그 조각을 임베딩했습니다 — 오늘 앱은 의미가 끊기는 자리에서 청크를 나누려는 편입니다. Step 1의 네 관문은 이제 넘겼지만, 이 단계를 실제로 실행하려면 임베더 GGUF 파일(Step 2에서 확인한 약 417MiB~2.3GiB)을 실제로 내려받아야 하는데, 이 문서는 그 큰 다운로드는 하지 않았습니다 — 그래서 `insert_document` 자체의 실행은 이 문서에서 재현하지 못했습니다.
 
 **그림.**
 
@@ -350,14 +447,16 @@ for cid, s in rrf([vec, kw]):
 "
 ```
 
-기대 출력(직접 확인 — A와 C가 두 목록 모두에 들어 있어 D·B보다 높습니다):
+직접 확인한 출력(A와 C가 두 목록 모두에 들어 있어 D·B보다 높습니다):
 
 ```
-A 0.03252
-C 0.03226
-D 0.01587
-B 0.01575
+A 0.03306
+C 0.0328
+B 0.03227
+D 0.032
 ```
+
+("목록에 없으면 그 목록의 길이를 순위로 쓴다"는 규칙대로 B·D도 벌점을 받을 뿐 3위 안팎의 점수를 받습니다 — 두 값이 0.0158 근처로 뚝 떨어지지는 않습니다.)
 
 ### Step 5. 재순위화 — FlashRank ONNX 크로스인코더
 
@@ -388,18 +487,18 @@ print('top:', top.document.text[:50], '| score:', round(top.score, 4))
 직접 확인한 출력:
 
 ```
-top: Paris is the capital of France, known for the Ei | score: 0.9998
+top: Paris is the capital of France, known for the Eiff | score: 0.9998
 ```
 
 모델은 Hugging Face의 `prithivida/flashrank` 저장소에서 zip으로 내려받습니다(`https://huggingface.co/prithivida/flashrank/resolve/main/ms-marco-MiniLM-L-12-v2.zip`) — 압축 파일은 22,696,961바이트(≈21.6MiB), 풀었을 때 실제로 추론에 쓰는 ONNX 파일(`flashrank-MiniLM-L-12-v2_Q.onnx`)은 34,004,051바이트(≈32.4MiB)로, flashrank 자신의 README가 이 모델을 "~34MB"라고 표기한 것과 정확히 일치합니다(둘 다 직접 확인). 재순위화 자체는 CPU에서 문장 3개에 0.13초가 걸렸습니다 — 실행마다 달라질 수 있는 값입니다.
 
-이 생성자는 **매번 즉시** 다운로드를 시도합니다(지연 로딩이 아닙니다) — 이 문서를 쓰며 처음 시도했을 때는 파이썬 `requests`가 huggingface.co와의 TLS 핸드셰이크에서 `SSLEOFError`로 실패했지만, 같은 URL을 `curl`로 받으면 문제없이 끝까지 받아졌습니다(둘 다 직접 확인) — 모델이나 URL의 문제가 아니라 이 환경의 `requests`/OpenSSL 스택과 관련된 것으로 보입니다.
+이 생성자는 **캐시 디렉터리(`./.flashrank_cache`)가 없을 때만** 다운로드를 시도합니다(소스로 확인, flashrank 0.2.9의 `Ranker._prepare_model_dir`이 `if not self.model_dir.exists():`로 감쌉니다) — 지연 로딩은 아니지만(생성자 안에서 바로 받습니다) "매번"도 아닙니다. 실제로 두 번째 생성부터는 캐시를 그대로 쓰고 네트워크를 타지 않습니다(직접 확인). 이 문서를 쓰며 처음 시도했을 때는 파이썬 `requests`가 huggingface.co와의 TLS 핸드셰이크에서 `SSLEOFError`로 한 번 실패했지만, 같은 URL을 `curl`로도, 이후 `requests`로 다시 받아도 1초 남짓에 문제없이 끝났습니다(둘 다 직접 확인) — 매번 재현되는 문제는 아니고 일시적인 네트워크 오류였을 가능성이 큽니다.
 
 **그림.**
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** 위 두 명령(설치, 실제 rank 호출)의 출력이 이 단계의 확인입니다. 네트워크 상태에 따라 다운로드 자체가 실패할 수 있습니다(위 SSL 오류 참고) — 실패하면 재시도하거나 같은 URL을 `curl`로 받아 봅니다.
+**확인.** 위 두 명령(설치, 실제 rank 호출)의 출력이 이 단계의 확인입니다. 드물게 다운로드 자체가 일시적으로 실패할 수 있습니다(위 SSL 오류 참고) — 실패하면 재시도하거나 같은 URL을 `curl`로 받아 봅니다.
 
 ### Step 6. 답변 생성과 실패하는 폴백
 
@@ -434,13 +533,13 @@ top: Paris is the capital of France, known for the Ei | score: 0.9998
                         )
 ```
 
-두 호출 모두 raglite의 `rag()`를 부르지만 넘기는 인자가 다릅니다. raglite 0.2.1의 `rag()` 시그니처는(소스로 확인, `_rag.py`) `prompt, *, max_contexts=5, context_neighbors=(-1,1), search=hybrid_search, messages=None, system_prompt=..., config=None`이고 `**kwargs`가 없습니다 — `max_tokens`도 `temperature`도 이 함수가 아는 이름이 아닙니다. 즉 `handle_fallback`의 호출(101-109행)은 존재하지 않는 두 키워드 인자 때문에 **항상** `TypeError`가 나고, 그 예외는 `handle_fallback` 자신의 `except Exception as e:`(122행)가 그대로 삼켜 "I apologize, but I encountered an error while processing your request."만 화면에 남깁니다 — 검색 결과가 없을 때 나오는 이 문구는 raglite나 LLM의 실패가 아니라 이 두 인자 이름 때문입니다. 반대로 본문 채팅 경로(229-236행)는 `search`·`messages`·`max_contexts`만 넘기므로 이 함수의 실제 시그니처와 맞습니다 — 검색 결과가 있을 때만 정상적으로 LLM을 호출한다는 뜻입니다. `search=None`도 별개의 문제입니다: `_contexts()`(소스로 확인)는 `callable(search)`가 거짓이면 `search` 값 자체를 청크 목록으로 취급해 그대로 슬라이스하므로, `None`을 넘기면 `max_tokens` 문제와 별개로 `'NoneType' object is not subscriptable` 오류가 날 자리이기도 합니다 — 다만 앞선 인자 문제 때문에 이 코드는 실제로 이 줄까지 가지도 못합니다.
+두 호출 모두 raglite의 `rag()`를 부르지만 넘기는 인자가 다릅니다. raglite 0.2.1의 `rag()` 시그니처는(소스로 확인, `_rag.py`) `prompt, *, max_contexts=5, context_neighbors=(-1,1), search=hybrid_search, messages=None, system_prompt=..., config=None`이고 `**kwargs`가 없습니다 — `max_tokens`도 `temperature`도 이 함수가 아는 이름이 아닙니다. 즉 `handle_fallback`의 호출(101-109행)은 존재하지 않는 두 키워드 인자 때문에 **항상** `TypeError`가 나고, 그 예외는 `handle_fallback` 자신의 `except Exception as e:`(120행)가 그대로 삼켜 122행의 "I apologize, but I encountered an error while processing your request."만 화면에 남깁니다 — 검색 결과가 없을 때 나오는 이 문구는 raglite나 LLM의 실패가 아니라 이 두 인자 이름 때문입니다. 반대로 본문 채팅 경로(229-236행)는 `search`·`messages`·`max_contexts`만 넘기므로 이 함수의 실제 시그니처와 맞습니다 — 검색 결과가 있을 때만 정상적으로 LLM을 호출한다는 뜻입니다. `search=None`도 별개의 문제입니다: `_contexts()`(소스로 확인)는 `callable(search)`가 거짓이면 `search` 값 자체를 청크 목록으로 취급해 그대로 슬라이스하므로, `None`을 넘기면 `max_tokens` 문제와 별개로 `'NoneType' object is not subscriptable` 오류가 날 자리이기도 합니다 — 다만 앞선 인자 문제 때문에 이 코드는 실제로 이 줄까지 가지도 못합니다.
 
 **그림.**
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** raglite 자체를 이 컴퓨터에서 import할 수 없으므로(Step 1), 실제 실행 대신 두 호출이 쓰는 인자 이름을 라이브러리의 실제 시그니처와 나란히 비교합니다 — 어느 이름이 맞고 틀린지는 소스에 그대로 있어 실행 없이도 확정할 수 있습니다.
+**확인.** 두 호출이 쓰는 인자 이름을 라이브러리의 실제 시그니처와 나란히 비교합니다.
 
 ```bash
 curl -s "https://raw.githubusercontent.com/superlinear-ai/raglite/v0.2.1/src/raglite/_rag.py" | grep -A8 "^def rag("
@@ -457,9 +556,27 @@ def rag(  # noqa: PLR0913
     search: SearchMethod | list[str] | list[Chunk] = hybrid_search,
     messages: list[dict[str, str]] | None = None,
     system_prompt: str = RAG_SYSTEM_PROMPT,
+    config: RAGLiteConfig | None = None,
 ```
 
-`max_tokens`와 `temperature`가 이 목록에 없다는 것이 `handle_fallback`이 항상 실패하는 이유입니다.
+`max_tokens`와 `temperature`가 이 목록에 없다는 것이 `handle_fallback`이 항상 실패하는 이유입니다. Step 1의 네 관문을 넘긴 환경에서, GGUF 모델 없이도 이 `TypeError`만은 직접 재현할 수 있습니다 — Python이 인자 이름을 확인하는 시점은 함수 본문이 실행되기 전이라, `config`가 실제로 쓸 수 있는 모델을 가리키는지는 상관이 없습니다.
+
+```bash
+uv run --no-project python -c "
+from raglite import rag, RAGLiteConfig
+cfg = RAGLiteConfig(db_url='sqlite:///doesnotmatter.sqlite')
+try:
+    rag(prompt='hi', system_prompt='x', search=None, messages=[], max_tokens=1024, temperature=0.7, config=cfg)
+except TypeError as e:
+    print('TypeError:', e)
+"
+```
+
+직접 확인한 출력:
+
+```
+TypeError: rag() got an unexpected keyword argument 'max_tokens'
+```
 
 ### Step 7. Streamlit 조립과 실행 — 어디까지 가는가
 
@@ -494,13 +611,13 @@ def main():
                     else:
 ```
 
-이 앱의 파일 맨 위 import(`rag_tutorials/local_hybrid_search_rag/local_main.py:4`)가 `from raglite import ...`이므로, Step 1의 `llama_cpp` 부재 때문에 `streamlit run local_main.py`는 사이드바나 제목이 뜨기도 전에 스크립트 실행 자체가 맨 처음 줄에서 실패합니다 — Streamlit은 이런 경우에도 정적 셸(HTTP 200)은 응답하지만, 그 안에는 이 예외가 표시됩니다. 그리고 213행의 `perform_search` 호출을 보면, 이 함수가 돌려주는 `reranked_chunks`는 "있는지 없는지"만 검사될 뿐(214행) 정상 경로(else 블록, Step 6에서 본 229-236행)에서 그대로 재사용되지 않습니다 — `rag(..., search=hybrid_search, ...)`가 `_contexts()` 내부에서 **다시** `hybrid_search`를 호출합니다(이번엔 `num_results=max_contexts+extra_contexts`인 20개 후보로, `perform_search`의 10개와 다른 크기입니다). 즉 검색 결과가 있는 매 질문마다 `hybrid_search`(키워드+벡터+RRF 전부)가 서로 다른 후보 수로 **두 번** 실행됩니다 — 한 번은 폴백 여부를 결정하기 위해, 한 번은 실제 답변 컨텍스트를 만들기 위해서입니다.
+이 앱의 파일 맨 위 import(`rag_tutorials/local_hybrid_search_rag/local_main.py:4`)가 `from raglite import ...`이므로, Step 1의 네 관문을 넘기지 못한 환경에서는 `streamlit run local_main.py`가 사이드바나 제목이 뜨기도 전에 스크립트 실행 자체가 맨 처음 줄에서 실패합니다 — Streamlit은 이런 경우에도 정적 셸(HTTP 200)은 응답하지만, 그 안에는 이 예외가 표시됩니다. 네 관문을 넘긴 환경에서는 이 import가 성공하므로 화면이 정상적으로 뜹니다(아래 확인). 그리고 213행의 `perform_search` 호출을 보면, 이 함수가 돌려주는 `reranked_chunks`는 "있는지 없는지"만 검사될 뿐(214행) 정상 경로(else 블록, Step 6에서 본 229-236행)에서 그대로 재사용되지 않습니다 — `rag(..., search=hybrid_search, ...)`가 `_contexts()` 내부에서 **다시** `hybrid_search`를 호출합니다(이번엔 `num_results=max_contexts+extra_contexts`인 20개 후보로, `perform_search`의 10개와 다른 크기입니다). 즉 검색 결과가 있는 매 질문마다 `hybrid_search`(키워드+벡터+RRF 전부)가 서로 다른 후보 수로 **두 번** 실행됩니다 — 한 번은 폴백 여부를 결정하기 위해, 한 번은 실제 답변 컨텍스트를 만들기 위해서입니다.
 
 **그림.**
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 파일이 어느 import에서 멈추는지 직접 확인합니다.
+**확인.** 네 관문을 넘긴 환경에서 파일이 끝까지 import되는지 직접 확인합니다.
 
 ```bash
 uv run --no-project python -m py_compile local_main.py && echo compiled
@@ -513,27 +630,24 @@ uv run --no-project python -c "import local_main"
 compiled
 ```
 
-```
-  File "local_main.py", line 4, in <module>
-    from raglite import RAGLiteConfig, insert_document, hybrid_search, retrieve_chunks, rerank_chunks, rag
-  ...
-ModuleNotFoundError: No module named 'llama_cpp'
-```
+`import local_main`은 예외 없이 조용히 끝납니다(직접 확인) — Step 1에서 아직 관문을 넘기지 않은 환경이라면 대신 다음과 같이 3번째 줄(`import streamlit`, `local_main.py`에는 pypdf·raglite보다 먼저 있습니다)이나 4번째 줄(`from raglite import ...`)에서 `ModuleNotFoundError`가 납니다 — 정확히 어느 줄인지는 그 환경에 무엇이 설치되어 있는지에 따라 다릅니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 질문을 보내면 Streamlit UI는 먼저 `perform_search`로 하이브리드 검색을 한 번 돌립니다 — 데이터베이스에 키워드 검색과 벡터 검색을 각각 요청하고, 두 순위 목록을 RRF(k=60)로 합친 상위 10개를 재순위화 모델(FlashRank)에 보내 다시 정렬합니다. 이 결과는 "검색된 것이 있는가"를 판단하는 데만 쓰이고, 실제 답변을 만드는 단계에서는 버려집니다 — UI는 `rag()`를 호출하고, `rag()`는 내부적으로 하이브리드 검색과 재순위화를 후보 수를 바꿔(20개) **다시** 실행한 뒤, 그렇게 얻은 컨텍스트를 시스템 프롬프트에 넣어 로컬 LLM에 스트리밍 생성을 요청합니다. 토큰이 도착할 때마다 화면에 이어붙여 표시되고, 완성된 답이 대화 기록에 저장됩니다. 이 그림은 검색 결과가 있는 경우의 경로만 그린 것입니다 — 결과가 없으면 대신 `handle_fallback`이 불리는데, 이 함수가 넘기는 `max_tokens`·`temperature` 인자를 raglite 0.2.1의 `rag()`가 모르기 때문에 그 호출은 항상 `TypeError`로 끝나고 함수 자신의 `except`가 이를 삼켜 사과 메시지만 돌려줍니다(Step 6). 이 전체 시퀀스는 Step 1에서 확인한 `llama_cpp` 부재 때문에 처음부터 끝까지 한 번에 재현하지는 못했고, RRF 융합(Step 4)과 재순위화(Step 5)는 각각 라이브러리 소스를 그대로 옮겨 실행하거나 실제 모델을 내려받아 개별적으로 확인한 것을 이어붙인 것입니다.
+사용자가 질문을 보내면 Streamlit UI는 먼저 `perform_search`로 하이브리드 검색을 한 번 돌립니다 — 데이터베이스에 키워드 검색과 벡터 검색을 각각 요청하고, 두 순위 목록을 RRF(k=60)로 합친 상위 10개를 재순위화 모델(FlashRank)에 보내 다시 정렬합니다. 이 결과는 "검색된 것이 있는가"를 판단하는 데만 쓰이고, 실제 답변을 만드는 단계에서는 버려집니다 — UI는 `rag()`를 호출하고, `rag()`는 내부적으로 하이브리드 검색과 재순위화를 후보 수를 바꿔(20개) **다시** 실행한 뒤, 그렇게 얻은 컨텍스트를 시스템 프롬프트에 넣어 로컬 LLM에 스트리밍 생성을 요청합니다. 토큰이 도착할 때마다 화면에 이어붙여 표시되고, 완성된 답이 대화 기록에 저장됩니다. 이 그림은 검색 결과가 있는 경우의 경로만 그린 것입니다 — 결과가 없으면 대신 `handle_fallback`이 불리는데, 이 함수가 넘기는 `max_tokens`·`temperature` 인자를 raglite 0.2.1의 `rag()`가 모르기 때문에 그 호출은 항상 `TypeError`로 끝나고 함수 자신의 `except`가 이를 삼켜 사과 메시지만 돌려줍니다(Step 6). 이 전체 시퀀스는 GGUF 모델(LLM 약 1.9GiB, 임베더 약 417MiB~2.3GiB, 이 문서는 받지 않았습니다) 없이는 처음부터 끝까지 한 번에 재현할 수 없고, RRF 융합(Step 4)과 재순위화(Step 5)는 각각 라이브러리 소스를 그대로 옮겨 실행하거나 실제 모델을 내려받아 개별적으로 확인한 것을 이어붙인 것입니다. `raglite` 자체의 import와 설정(Step 1·2)은 GGUF 모델 없이도 네 관문만 넘기면 통과한다는 것을 직접 확인했습니다.
 
 ## 실행 체크리스트
 
-- [ ] `llama-cpp-python`이 오늘 기준 0.2.56~0.3.35 어느 버전도 어떤 플랫폼에도 사전 빌드 wheel을 올리지 않는다는 것을 PyPI 메타데이터로 확인했다
-- [ ] 이 컴퓨터에 CMake와 MSVC(Visual Studio)가 실제로 있고 빌드 도중 `cl.exe`·`link.exe`가 호출되는데도, 소스 빌드가 20분 안에 끝나지 않는다는 것을 직접 확인했다
-- [ ] Python 3.13에서는 `spacy`·`thinc`·`blis`도 wheel이 없어 컴파일이 필요하고, `blis` 0.7.11이 Cython 3.x와 맞지 않아 실패한다는 것을 확인했다 — spaCy 언어 모델 wheel 하나만 받으려 해도 같은 벽에 부딪힌다
-- [ ] 네 개의 정확한 버전 고정(raglite/pydantic/rerankers/flashrank)이 오늘도 116개 패키지로 함께 풀리고, 그 안에 `llama-cpp-python`이 raglite 자신의 전이 의존성으로 포함된다는 것을 확인했다
+- [ ] `llama-cpp-python`이 오늘 기준 0.2.56~0.3.35 어느 버전도 PyPI에는 사전 빌드 wheel을 올리지 않는다는 것을 PyPI 메타데이터로 확인했다 — 다만 프로젝트 자신의 CPU wheel 인덱스에는 Python 버전과 무관한 wheel이 있고, 그걸로 설치하면 몇백 밀리초에 끝난다는 것도 직접 확인했다
+- [ ] 이 컴퓨터에 CMake와 MSVC(Visual Studio)가 실제로 있고 빌드 도중 `cl.exe`·`link.exe`가 호출되는데도, PyPI 기본 경로의 소스 빌드가 20분 안에 끝나지 않는다는 것을 직접 확인했다 — "컴파일러가 없다"가 아니라 "이 경로엔 컴파일이 필요한데 유난히 오래 걸린다"였다
+- [ ] Python 3.13에서는 `spacy`·`thinc`·`blis`도 wheel이 없어 컴파일이 필요하고, `blis` 0.7.11의 빌드가 numpy 자신의 "Cython 3.0 이상 필요" 중단으로 실패한다는 것을 확인했다 — spaCy 언어 모델 wheel 하나만 받으려 해도 같은 벽에 부딪히고, CPU wheel 인덱스로는 못 피한다(그 인덱스는 `llama-cpp-python` 전용)
+- [ ] Python 3.11(또는 3.12) + CPU wheel 인덱스로 `requirements.txt` 15줄 설치를 실제로 성공시켰다(138개 패키지)
+- [ ] 설치가 성공해도 `pydantic==2.10.1`이 litellm 최신판을 못 받아 `PydanticSchemaGenerationError`가 나고, 그걸 올려도 `numpy` 2.x와 thinc wheel의 ABI 불일치로 또 막힌다는 것을 확인했다 — `numpy<2`까지 고정해야 `import raglite`와 `import local_main`이 실제로 끝까지 통과한다(직접 확인)
+- [ ] 그렇게 통과한 import 자체가 FlashRank 두 모델(195MB, 첫 1회)과 litellm 비용표(매번)를 내려받으려 한다는 것을 확인했다
 - [ ] raglite의 `db_url` 기본값이 `sqlite:///raglite.sqlite`이고 PostgreSQL·SQLite 둘 다 정식 경로라는 것을 소스로 확인했다 — 이 앱의 UI는 검사하지 않지만 앱 자체 README는 PostgreSQL만 안내한다
-- [ ] `hybrid_search`가 키워드 검색과 벡터 검색을 각각 최대 100개까지 뽑아 Reciprocal Rank Fusion(`1/(60+순위)`의 합)으로 융합한다는 것을 소스로 확인하고 같은 공식을 직접 실행해 재현했다
+- [ ] `hybrid_search`가 키워드 검색과 벡터 검색을 각각 최대 100개까지 뽑아 Reciprocal Rank Fusion(`1/(60+순위)`의 합)으로 융합한다는 것을 소스로 확인하고 같은 공식을 실제로 실행해 재현했다
 - [ ] 재순위화 모델(FlashRank ms-marco-MiniLM-L-12-v2)을 실제로 내려받아(zip 22.7MB, ONNX 34.0MB) 실제 문장 3개를 재정렬해 봤다
 - [ ] `handle_fallback`의 `rag()` 호출이 오늘 버전에 없는 키워드 인자(`max_tokens`, `temperature`) 때문에 항상 `TypeError`로 실패하고 자기 자신의 `except`가 이를 삼킨다는 것을 시그니처 대조로 확인했다
 - [ ] 검색 결과가 있는 질문마다 `hybrid_search`가 서로 다른 후보 수로 두 번(폴백 판단용 10개, 실제 컨텍스트용 20개) 실행된다는 것을 코드로 확인했다
@@ -542,15 +656,17 @@ ModuleNotFoundError: No module named 'llama_cpp'
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `uv pip install llama-cpp-python`이 "Building llama-cpp-python==0.3.35"에서 몇 분 넘게 멈춰 있음 | 모든 버전이 sdist뿐이라 소스 빌드가 강제되고, ggml/llama.cpp 전체 컴파일에 시간이 오래 걸림(직접 확인, 컴파일러 유무와 무관) | 컴파일러가 있어도 수십 분을 기다려야 할 수 있음 — 시간을 넉넉히 잡거나 별도로 미리 빌드된 배포판을 찾아본다 |
-| Python 3.13에서 `spacy`/`thinc`/`blis` 설치 시 `Cython.Compiler.Errors.CompileError: blis\py.pyx` | `blis` 0.7.11의 `.pyx`가 Cython 3.x의 `nogil` 제약과 맞지 않고, 세 패키지 모두 cp313 wheel이 없음(직접 확인) | `uv venv --python 3.12`처럼 3.10~3.12로 내리면 이 벽은 피함(단 `llama-cpp-python` 벽은 별개로 남음) |
-| `handle_fallback`을 거치면 항상 "I apologize, but I encountered an error while processing your request."만 나옴 | `rag(..., max_tokens=1024, temperature=0.7, ...)`가 raglite 0.2.1의 `rag()`에 없는 키워드 인자를 넘겨 `TypeError`가 나고, 같은 함수의 `except`가 이를 삼킴(소스 대조로 확인) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침 — 고친다면 `max_tokens`/`temperature`를 빼거나 `search=hybrid_search`로 바꿔야 함 |
-| "Database URL"에 PostgreSQL이 아닌 문자열을 넣으면 동작이 불확실해 보임 | raglite는 `postgresql`·`sqlite` 두 스킴만 인식함(소스로 확인) | `sqlite:///로컬파일명.db` 형식이면 서버 없이 동작할 것으로 보임(소스로 확인 — `llama_cpp` 부재로 이 문서에서 끝까지 실행하지는 못함) |
-| `flashrank.Ranker` 생성 시 `requests.exceptions.SSLError: ... SSLEOFError`로 모델 다운로드 실패 | 이 환경의 파이썬 `requests`/OpenSSL 스택이 huggingface.co와의 TLS 핸드셰이크를 간헐적으로 실패시킴(직접 확인) — 모델·URL 자체의 문제는 아님 | 같은 URL을 `curl`로 받으면 문제없이 완료됨(직접 확인) — 재시도하거나 `curl`로 받아 캐시 디렉터리에 직접 넣어두는 우회가 가능 |
+| `uv pip install llama-cpp-python`이 "Building llama-cpp-python==0.3.35"에서 몇 분 넘게 멈춰 있음 | PyPI에는 모든 버전이 sdist뿐이라 그 경로는 소스 빌드가 강제되고, ggml/llama.cpp 전체 컴파일에 시간이 오래 걸림(직접 확인, 컴파일러 유무와 무관) | `uv pip install --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu llama-cpp-python`으로 프로젝트 자신의 CPU wheel 인덱스를 쓰면 컴파일 없이 몇백 밀리초에 끝남(직접 확인) |
+| Python 3.13에서 `spacy`/`thinc`/`blis` 설치 시 `Cython.Compiler.Errors.CompileError: blis\py.pyx` | `blis` 0.7.11이 격리 빌드 환경에 고정하는 `Cython<3.0`과, 상한 없이 함께 받아지는 `numpy`(오늘 2.5.3) 헤더가 요구하는 "Cython>=3.0"이 서로 맞지 않아 numpy 자신이 빌드를 중단시킴(직접 확인). 세 패키지 모두 cp313 wheel이 없음 | `uv venv --python 3.12`처럼 3.10~3.12로 내리면 이 벽은 피함 — 위 CPU wheel 인덱스는 `llama-cpp-python` 전용이라 이 벽에는 안 통함, 두 벽은 함께 넘겨야 함(직접 확인, Python 3.11 + 두 조치 모두 적용해 `requirements.txt` 15줄 설치를 성공시켰음) |
+| 설치가 성공해도 `from raglite import ...`가 `pydantic.errors.PydanticSchemaGenerationError`로 실패 | `pydantic==2.10.1`이 전이 의존성 `litellm`의 최신판이 쓰는 타입 표기를 처리하지 못함(직접 확인, Day 053과 같은 원인) | `uv pip install -U pydantic` |
+| `pydantic`을 올려도 `ValueError: numpy.dtype size changed`로 실패 | `spacy`가 끌어오는 `thinc`의 사전 빌드 wheel이 numpy 1.x ABI로 컴파일돼 있는데 numpy 2.x가 함께 설치됨(직접 확인) | `uv pip install "numpy<2"` — 이후 `import raglite`·`import local_main` 모두 성공(직접 확인) |
+| `handle_fallback`을 거치면 항상 "I apologize, but I encountered an error while processing your request."만 나옴 | `rag(..., max_tokens=1024, temperature=0.7, ...)`가 raglite 0.2.1의 `rag()`에 없는 키워드 인자를 넘겨 `TypeError`가 나고, 같은 함수의 `except`(120행)가 이를 삼킴(직접 확인 — GGUF 모델 없이도 이 `TypeError`만은 재현된다) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침 — 고친다면 `max_tokens`/`temperature`를 빼거나 `search=hybrid_search`로 바꿔야 함 |
+| "Database URL"에 PostgreSQL이 아닌 문자열을 넣으면 동작이 불확실해 보임 | raglite는 `postgresql`·`sqlite` 두 스킴만 인식함(소스로 확인) | `sqlite:///로컬파일명.db` 형식이면 서버 없이 동작할 것으로 보임(소스로 확인 — GGUF 모델을 받지 않아 이 문서에서 끝까지 실행하지는 못함) |
+| `flashrank.Ranker` 생성 시 `requests.exceptions.SSLError: ... SSLEOFError`로 모델 다운로드 실패 | 이 환경에서 한 번 관찰된 huggingface.co와의 TLS 핸드셰이크 실패(직접 확인) — 재현에서는 같은 URL이 매번 1초 남짓에 끝나, 매번 일어나는 문제는 아닌 것으로 보임 | 같은 URL을 `curl`로 받거나 잠시 뒤 다시 시도(직접 확인, 둘 다 성공) |
 
 ## 더 해보기
 
-- `sys.modules['llama_cpp']`에 `llama_supports_gpu_offload`·`Llama`·`LLAMA_POOLING_TYPE_NONE`만 갖춘 가짜 모듈을 미리 넣어 `from raglite import RAGLiteConfig`(`rag_tutorials/local_hybrid_search_rag/local_main.py:4`)를 우회하고, `RAGLiteConfig(db_url="sqlite:///test.db", ...)`가 정말 서버 없이 로컬 파일을 만드는지 실험해보기
+- Step 1의 네 관문(Python 3.11/3.12 + CPU wheel 인덱스 + `pydantic` 업그레이드 + `numpy<2`)을 넘긴 환경에서 `RAGLiteConfig(db_url="sqlite:///test.db", ...)`를 실제로 만들고 `insert_document`를 작은 GGUF 임베더(가장 작은 양자화본을 골라)로 직접 실행해, 정말 서버 없이 로컬 파일이 생기는지 끝까지 확인해보기
 - `initialize_config`(`rag_tutorials/local_hybrid_search_rag/local_main.py:41-48`)의 `reranker=` 자리를 raglite 기본값처럼 언어별 튜플(`(("en", ...), ("other", ...))`)로 바꿔, 영어가 아닌 문서에서 재순위화 결과가 달라지는지 비교해보기
 - `perform_search`(`rag_tutorials/local_hybrid_search_rag/local_main.py:86-94`)가 돌려주는 `reranked_chunks`를 버리지 않고 `rag()`의 `search=`에 직접 넘기도록 고쳐, 질문당 `hybrid_search`가 한 번만 실행되도록 만들어보기
 
