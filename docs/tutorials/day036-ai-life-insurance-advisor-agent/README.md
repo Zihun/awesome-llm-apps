@@ -537,6 +537,8 @@ if submitted:
 
 키 세 개 중 하나라도 비면 `st.error` 후 `st.stop()`으로 멈추고, `get_agent`가 `None`을 돌려줘도(키가 여전히 없거나 잘못됐을 때) 같은 방식으로 멈춥니다. 통과하면 `build_client_profile()`로 만든 JSON을 프롬프트에 박아 `advisor_agent.run(...)`을 호출하고, 돌아온 텍스트를 `extract_json`으로 파싱합니다 — 실패하면 원문을 펼침 상자에 그대로 보여주고, 성공하면 `render_recommendations`(Step 7)로 넘깁니다.
 
+**agno 텔레메트리.** 성공한 `advisor_agent.run(...)` 호출마다 agno 3.0.10이 os-api.agno.com으로 agent_id·모델 provider 등을 담은 익명 사용 통계를 백그라운드로 보냅니다 — 끄는 법과 자세한 동작은 Day 047 Step 5 참고(`AGNO_TELEMETRY=false`). 위 확인 명령은 키가 없어 이 지점까지 가지 않지만, 실제 키로 성공시키면 매번 전송됩니다. 이 앱은 `AgentOS`를 띄우지 않으므로 서버 기동 시의 `POST /telemetry/os`는 해당하지 않습니다.
+
 `starter_ai_agents/ai_life_insurance_advisor_agent/life_insurance_advisor_agent.py:410-414`
 
 ```python
