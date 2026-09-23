@@ -2,11 +2,9 @@
 direction: down
 
 query: 질문 { class: ours }
-check: "상위 10개 중 1개라도 score >= 0.7?" {
+check: "상위 10개 중 하나라도 정규화 점수 >= 0.7 (코사인 >= 0.4)?" {
   shape: diamond
-  style.font-size: 12
-  style.fill: "#F5F5F5"
-  style.stroke: "#2D3142"
+  class: ours
 }
 rag: RAG 체인 (문서 기반 답변) { class: ours }
 web: 웹 검색 에이전트 (LangGraph) { class: ours }

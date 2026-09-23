@@ -1,10 +1,10 @@
 # Day 057 · ✨ RAG Agent with Cohere
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 95분 · API 비용 대략 질문 1건에 Cohere 임베딩 호출 1회(질의 벡터화) + 채팅 호출 1~3회(문서 경로 1회, 웹 검색 경로는 LangGraph 루프 특성상 2회 이상 + 답변이 500자를 넘으면 요약 호출 추가), 문서 업로드 시 청크 수만큼 임베딩 호출 추가 — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/rag_agent_cohere`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 120분(검증 이력 없이 처음 검토된 날이라 Critical 정정과 스텝마다의 오프라인 재현이 유난히 많습니다) · API 비용 대략 질문 1건에 Cohere 임베딩 호출 2회(문서 경로: `retriever.get_relevant_documents`가 한 번, `create_retrieval_chain`이 그 retriever를 다시 부르며 한 번 더 — 직접 확인, Step 4·7) + 채팅 호출 1회(문서 경로) 또는 LangGraph 루프 특성상 2회 이상(웹 검색 경로: 도구 호출 여부 판단 1회 + 최종 답변 1회) — 답변 요약(`post_process`)은 실제로는 어디서도 호출되지 않아 500자를 넘어도 추가 호출이 없고(Step 7), 문서 업로드 시에는 청크 수만큼(64개씩 배치) + 컬렉션 검증용 `dummy_text` 1회가 임베딩 호출로 추가됨 — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/rag_agent_cohere`
 
 ## 오늘 만들 것
 
-Day 047이 정한 RAG 파이프라인 이름표 — 문서·청크·임베딩·저장소·질의·검색·답변 — 을 오늘도 그대로 씁니다. 오늘 앱이 갈라지는 지점은 두 곳입니다. 첫째, 임베딩(`embed-english-v3.0`, 1024차원)과 채팅(`command-r7b-12-2024`) 둘 다 Cohere 하나로 몰아주고, 벡터 저장소는 Day 047의 로컬 Docker Qdrant 대신 계정과 URL이 필요한 Qdrant Cloud를 씁니다(Step 2). 둘째, 검색이 실패하면 — 정확히는 유사도 상위 10개 문서 중 코사인 0.7을 넘는 것이 하나도 없으면(Step 4) — LangGraph로 만든 별도 에이전트가 DuckDuckGo로 웹을 검색해 대신 답합니다(Step 6). 그런데 이 319줄을 그대로 설치해 실행해 보면(직접 확인, Step 1·3), 그 세련된 분기 이전에 훨씬 단순한 문제가 있습니다: `requirements.txt` 14줄 어디에도 `pypdf`가 없어서, PDF를 업로드하는 순간 `PyPDFLoader`가 곧바로 `ImportError`로 실패합니다(직접 확인, Step 3) — 이 실패는 조용히 삼켜지고 빈 리스트가 그대로 벡터 저장소로 넘어가 "성공"처럼 보이는 빈 컬렉션이 되므로, 그 뒤로는 어떤 질문을 던져도 사실상 항상 웹 검색 경로를 타게 됩니다. 검색이 통과하는 절반의 경로도 조용한 그물을 하나 더 두르고 있습니다 — `from langchain import hub`가 질문마다 `hub.pull("langchain-ai/retrieval-qa-chat")`로 LangChain Hub(`api.smith.langchain.com`)에서 프롬프트를 실시간으로 내려받는데(직접 확인, Step 5), 이 세 번째 외부 서비스는 앱의 사전 준비 어디에도 언급되지 않습니다. 그리고 이 파일에는 실제로는 호출되지 않는 코드가 정확히 두 조각 있습니다 — DuckDuckGo의 레이트리밋을 버티려고 `tenacity`로 직접 짠 `RateLimitedDuckDuckGo` 클래스와 LangGraph 자신의 기본 상태 스키마를 그대로 옮겨 적은 `AgentState` — 둘 다 정의되지만 실제 호출부는 각각 다른 평범한 경로를 씁니다(grep으로 직접 확인, Step 6). 완성하면 PDF를 올리고 질문하는 화면을 로컬에서 띄우게 되며, 이 문서가 진짜로 확인하는 것은 그 화면 뒤에서 정확히 언제, 왜 문서를 버리고 웹으로 가는지, 그리고 그 결정에 도달하기 전에 이미 몇 개의 관문이 있는지입니다. 아래는 완성된 아키텍처입니다.
+문서를 청크로 나눠 임베딩하고 저장소에 넣은 뒤, 질문이 오면 같은 방식으로 검색해 답을 만드는 흐름 — Day 047부터 이 볼륨이 반복해 온 것 — 을 오늘도 그대로 씁니다. 오늘 앱이 갈라지는 지점은 두 곳입니다. 첫째, 임베딩(`embed-english-v3.0`, 1024차원)과 채팅(`command-r7b-12-2024`) 둘 다 Cohere 하나로 몰아주고, 벡터 저장소는 Day 047의 로컬 Docker Qdrant 대신 계정과 URL이 필요한 Qdrant Cloud를 씁니다(Step 2). 둘째, 검색이 실패하면 — 정확히는 유사도 상위 10개 문서 중 정규화 점수 0.7(코사인 유사도로는 0.4)을 넘는 것이 하나도 없으면(Step 4) — LangGraph로 만든 별도 에이전트가 DuckDuckGo로 웹을 검색해 대신 답합니다(Step 6). 그런데 이 319줄을 그대로 설치해 실행해 보면(직접 확인, Step 1·3), 그 세련된 분기 이전에 훨씬 단순한 문제가 있습니다: `requirements.txt` 14줄 어디에도 `pypdf`가 없어서, PDF를 업로드하는 순간 `PyPDFLoader`가 곧바로 `ImportError`로 실패합니다(직접 확인, Step 3) — 이 실패는 조용히 삼켜지고 빈 리스트가 그대로 벡터 저장소로 넘어가 "성공"처럼 보이는 빈 컬렉션이 되므로, 그 뒤로는 어떤 질문을 던져도 사실상 항상 웹 검색 경로를 타게 됩니다. 검색이 통과하는 절반의 경로도 조용한 그물을 하나 더 두르고 있습니다 — `from langchain import hub`가 질문마다 `hub.pull("langchain-ai/retrieval-qa-chat")`로 LangChain Hub(`api.smith.langchain.com`)에서 프롬프트를 실시간으로 내려받는데(직접 확인, Step 5), 이 세 번째 외부 서비스는 앱의 사전 준비 어디에도 언급되지 않습니다. 그리고 이 파일에는 실제로는 호출되지 않는 코드가 정확히 세 조각 있습니다 — DuckDuckGo의 레이트리밋을 버티려고 `tenacity`로 직접 짠 `RateLimitedDuckDuckGo` 클래스, LangGraph 자신의 기본 상태 스키마를 그대로 옮겨 적은 `AgentState`, 그리고 긴 답을 요약하는 `post_process` 함수 — 셋 다 정의되지만 실제 호출부는 각각 다른 평범한 경로를 쓰거나 아예 어디서도 불리지 않습니다(grep으로 직접 확인, Step 6·7). 완성하면 PDF를 올리고 질문하는 화면을 로컬에서 띄우게 되며, 이 문서가 진짜로 확인하는 것은 그 화면 뒤에서 정확히 언제, 왜 문서를 버리고 웹으로 가는지, 그리고 그 결정에 도달하기 전에 이미 몇 개의 관문이 있는지입니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -23,7 +23,7 @@ Day 047이 정한 RAG 파이프라인 이름표 — 문서·청크·임베딩·�
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
 | 사용자 | PDF 업로드, 질문 입력 | 코드 없음 (브라우저) |
-| 자격증명 게이트 (`init_session_state`/`sidebar_api_form`/`init_qdrant`) | Cohere·Qdrant 자격증명을 모두 검증해야 이 아래 함수·클래스 정의를 포함한 나머지 스크립트가 실행됨 | `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:22-32`, `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:34-66`, `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:68-76` |
+| 자격증명 게이트 (`init_session_state`/`sidebar_api_form`/`init_qdrant`) | Qdrant 자격증명은 실제 접속(`get_collections()`)으로 검증하고 Cohere 키는 비어 있지 않은지만 확인 — 통과해야 이 아래 함수·클래스 정의를 포함한 나머지 스크립트가 실행됨 | `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:22-32`, `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:34-66`, `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:68-76` |
 | 문서 적재 (`process_document`/`create_vector_stores`) | PDF → 청크(1000자/겹침 200) → Cohere 임베딩 → Qdrant 저장 | `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:95-111`, `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:115-139` |
 | 질의 처리 (`process_query`) | 유사도 문턱(0.7)으로 RAG 체인과 웹 검색 에이전트 중 분기 | `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:181-232` |
 | 웹 검색 폴백 에이전트 (`create_fallback_agent`) | LangGraph `create_react_agent` + DuckDuckGo 도구 1개 | `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:161-179` |
@@ -47,7 +47,7 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
 
-이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. `uv venv`는 인자 없이 실행하면 uv 자체 관리 Python 3.13.3을 그대로 고릅니다(직접 확인) — 이 컴퓨터의 `python`은 3.13.12, `py -3`는 3.14.3으로 셋 다 다릅니다(직접 확인. 어느 것이 잡히는지는 기기마다 다르므로 `uv venv --python 3.13`처럼 명시하는 편이 안전합니다).
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. `uv venv`는 인자 없이 실행하면 uv 자체 관리 Python 3.13.3을 그대로 고릅니다(직접 확인) — 이 값은 uv가 캐시해 둔 버전이라 기기마다 다를 수 있으므로, `python`이나 `py` 런처가 잡는 시스템 기본값에 기대지 말고 `uv venv --python 3.13`처럼 명시하는 편이 안전합니다.
 
 `rag_tutorials/rag_agent_cohere/requirements.txt:1-14`
 
@@ -76,7 +76,7 @@ Prepared 19 packages in 1m 22s
 Installed 106 packages in 1m 45s
 ```
 
-13개 고정은 요청한 버전 그대로 받아지고(`cohere==5.11.4`, `langgraph==0.2.53` 등), 느슨한 `duckduckgo-search`는 범위 안 최신인 `duckduckgo-search==8.1.1`이 되며, `requirements.txt`에 이름이 없는 `langsmith==0.2.11`(Step 5의 핵심)도 함께 딸려 옵니다(직접 확인). 이 계산은 공유 중인 느린 기기에서도 2분 안에 끝났습니다 — 매번 이만큼 걸린다고 일반화할 근거는 아닙니다.
+13개 고정은 요청한 버전 그대로 받아지고(`cohere==5.11.4`, `langgraph==0.2.53` 등), 느슨한 `duckduckgo-search`는 범위 안 최신인 `duckduckgo-search==8.1.1`이 되며, `requirements.txt`에 이름이 없는 `langsmith==0.2.11`(Step 5의 핵심)도 함께 딸려 옵니다(직접 확인). 이 설치는 공유 중인 느린 기기에서 3분 52초 만에 끝났습니다(위 로그의 45.16초+1분 22초+1분 45초 합) — 매번 이만큼 걸린다고 일반화할 근거는 아닙니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -120,7 +120,7 @@ ALL IMPORTS OK
 
 ### Step 2. 자격증명 게이트 — 계정 두 개가 있어야 나머지 코드가 존재한다
 
-**목적.** `init_session_state`·`sidebar_api_form`·`init_qdrant`가 Cohere·Qdrant 자격증명을 어떻게 검증하는지, 그리고 이 검증을 통과하기 전에는 이 아래에 있는 함수·클래스 정의(`RateLimitedDuckDuckGo`, `process_query` 등 포함) 자체가 실행되지 않는다는 것을 확인합니다.
+**목적.** `init_session_state`·`sidebar_api_form`·`init_qdrant`가 Qdrant 자격증명은 실제 접속으로, Cohere 키는 비어 있지 않은지만 어떻게 검증하는지, 그리고 이 검증을 통과하기 전에는 이 아래에 있는 함수·클래스 정의(`RateLimitedDuckDuckGo`, `process_query` 등 포함) 자체가 실행되지 않는다는 것을 확인합니다.
 
 **할 일.**
 
@@ -134,7 +134,7 @@ if not sidebar_api_form():
     st.stop()
 ```
 
-Streamlit은 상호작용마다 스크립트를 처음부터 다시 실행하는데, `st.stop()`은 그 실행 하나를 그 자리에서 멈춥니다. 이 두 줄이 파일 78~82번째 줄, 즉 전체 319줄 중 4분의 1도 안 되는 지점에 있고, `embedding =`(84행)·`chat_model =`(87행)·`client = init_qdrant()`(93행)은 물론 `class RateLimitedDuckDuckGo`(147행)·`def process_query`(181행) 같은 이 아래 모든 정의가 이 줄들 다음에 옵니다 — 즉 Cohere 키와 Qdrant 자격증명이 사이드바 폼에서 이미 한 번 검증되기 전까지는, 이 문서가 뒤에서 다루는 함수·클래스 자체가 그 실행에서 만들어지지 않습니다. 검증은 사이드바 폼의 제출 처리 안에서 실제 접속으로 이루어집니다(`rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:53-55`, `QdrantClient(...).get_collections()`를 호출해 실패하면 `st.error`). 통과 후 실제로 값을 다시 쓰는 쪽은 `init_qdrant()`입니다.
+Streamlit은 상호작용마다 스크립트를 처음부터 다시 실행하는데, `st.stop()`은 그 실행 하나를 그 자리에서 멈춥니다. 이 두 줄이 파일 78~82번째 줄, 즉 전체 319줄 중 4분의 1도 안 되는 지점에 있고, `embedding =`(84행)·`chat_model =`(87행)·`client = init_qdrant()`(93행)은 물론 `class RateLimitedDuckDuckGo`(147행)·`def process_query`(181행) 같은 이 아래 모든 정의가 이 줄들 다음에 옵니다 — 즉 사이드바 폼 제출이 통과되기 전까지는, 이 문서가 뒤에서 다루는 함수·클래스 자체가 그 실행에서 만들어지지 않습니다. 다만 그 "통과"가 두 벤더를 똑같이 검증하는 것은 아닙니다 — 제출 처리 안에서 실제로 접속하는 것은 `QdrantClient(...).get_collections()`뿐이고(`rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:53-55`, 실패하면 `st.error`), Cohere 키는 그 값을 그대로 `st.session_state.cohere_api_key`에 저장할 뿐 이 시점엔 어디에도 보내지 않습니다(직접 확인 — 빈 문자열이어도 `if not sidebar_api_form():`을 통과시킴, 아래). 빈 Cohere 키는 다음 실행에서 84행 `CohereEmbeddings(...)`가 즉시 `pydantic.ValidationError: Did not find cohere_api_key`로 멈추게 하고, 값은 있지만 틀린 키는 그보다 늦게 — 문서를 처음 업로드해 `QdrantVectorStore(...)`가 컬렉션 벡터 크기를 확인하려고 `embed_documents(["dummy_text"])`를 부르는 순간(`create_vector_stores`, 소스로 확인 — langchain-qdrant 0.2.0 `qdrant.py:1109`, `_validate_collection_for_dense`) — 에러로 드러납니다. 통과 후 실제로 값을 다시 쓰는 쪽은 `init_qdrant()`입니다.
 
 `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:68-76`
 
@@ -185,7 +185,59 @@ CASE both empty -> ValueError Qdrant API key not provided
 CASE only key -> ValueError Qdrant URL not provided
 ```
 
-(이 두 예외는 사실 사이드바를 통해서는 도달하기 어렵습니다 — `api_keys_submitted`가 `True`가 되는 시점에 이미 두 값이 한 번 성공적으로 쓰였기 때문입니다. 방어적으로 남아 있는 코드라는 뜻입니다.) 존재하지 않는 호스트로 실제 `QdrantClient(...)` 생성 자체를 시도하면 이 컴퓨터에서는 120초가 걸린 뒤에야 결과가 나왔습니다(직접 확인, 자리 표시자 형식의 가짜 URL 기준 — 소스상 생성자 자체는 즉시 반환하는 구조라 이 지연은 이 환경의 DNS·네트워크 사정일 가능성이 큽니다) — "Submit Credentials"를 눌렀는데 한동안 반응이 없어도 URL 오탈자를 의심할지언정 앱이 멈췄다고 단정하기는 이릅니다.
+(이 두 예외는 사실 사이드바를 통해서는 도달하기 어렵습니다 — `api_keys_submitted`가 `True`가 되는 시점에 이미 두 값이 한 번 성공적으로 쓰였기 때문입니다. 방어적으로 남아 있는 코드라는 뜻입니다.)
+
+`QdrantClient(...)` 생성 자체는 네트워크를 타지 않는다는 것도 소켓을 막아 직접 확인합니다 — placeholder 형식의 가짜 URL로 생성만 해 봅니다.
+
+```bash
+uv run --no-project python -c "
+import socket, time
+def _blocked(self, *a, **k): raise RuntimeError('network blocked')
+socket.socket.connect = _blocked
+from qdrant_client import QdrantClient
+t0 = time.monotonic()
+client = QdrantClient(url='https://xyz-example.eu-central.aws.cloud.qdrant.io:6333', api_key='fake-key', timeout=60)
+print(f'constructed in {time.monotonic()-t0:.2f}s, no RuntimeError raised so 0 connect attempts')
+"
+```
+
+직접 확인한 출력:
+
+```
+constructed in 0.21s, no RuntimeError raised so 0 connect attempts
+```
+
+즉 생성자 자체는 즉시 반환합니다 — "Submit Credentials" 후 한동안 반응이 없다면 그 시간은 `QdrantClient(...)` 생성이 아니라 바로 다음 줄 `client.get_collections()`(`rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:55`, `timeout=60`으로 최대 60초 대기)가 실제 접속을 시도하는 구간입니다 — URL 오탈자를 의심할지언정 앱이 멈췄다고 단정하기는 이릅니다.
+
+Cohere 쪽은 이 폼에서 전혀 접속을 시도하지 않는다는 것도 같은 방식으로 직접 확인합니다 — `CohereEmbeddings`·`ChatCohere` 생성이 빈 키에서는 즉시 실패하고, 값만 있는 가짜 키에서는 네트워크 없이 통과하는지 봅니다(84·87행과 같은 생성자 호출).
+
+```bash
+uv run --no-project python -c "
+import socket
+def _blocked(self, *a, **k): raise RuntimeError('network blocked')
+socket.socket.connect = _blocked
+from pydantic import ValidationError
+from langchain_cohere import CohereEmbeddings, ChatCohere
+
+try:
+    CohereEmbeddings(model='embed-english-v3.0', cohere_api_key='')
+except ValidationError as e:
+    print('empty key ->', str(e).splitlines()[1].strip())
+
+emb = CohereEmbeddings(model='embed-english-v3.0', cohere_api_key='fake-cohere-key')
+chat = ChatCohere(model='command-r7b-12-2024', cohere_api_key='fake-cohere-key')
+print('fake non-empty key -> both constructed OK, no network attempted')
+"
+```
+
+직접 확인한 출력:
+
+```
+empty key -> Value error, Did not find cohere_api_key, please add an environment variable `COHERE_API_KEY` which contains it, or pass `cohere_api_key` as a named parameter.
+fake non-empty key -> both constructed OK, no network attempted
+```
+
+즉 Cohere 키 칸을 비운 채 제출하면(Qdrant 값이 맞더라도) 사이드바가 아니라 84행에서 처리되지 않은 `ValidationError`로 화면이 멈추고, 아무 문자열이나 채우면 이 시점은 조용히 통과합니다 — 앞서 적었듯 그 키가 진짜 틀렸다는 것은 문서를 업로드해 `dummy_text` 임베딩을 시도할 때에야 드러납니다.
 
 ### Step 3. 문서 적재 — requirements.txt에 없는 패키지 하나
 
@@ -291,6 +343,38 @@ def create_vector_stores(texts):
 
 `VectorParams(size=1024, ...)`는 `embed-english-v3.0`의 실제 임베딩 차원과 정확히 일치합니다(Cohere 공식 문서 기준 1024차원). 문제는 `texts=[]`가 그대로 들어와도 이 함수가 실패하지 않는다는 점입니다 — `QdrantVectorStore.add_documents([])`는 배치를 순회하는 내부 반복이 빈 입력에서 그냥 0번 도는 구조라 Qdrant에 아무 요청도 보내지 않고 조용히 끝납니다(소스로 확인, `langchain-qdrant==0.2.0`의 `QdrantVectorStore.add_texts`). 그 결과 `create_vector_stores([])`는 **성공**을 반환하고, 화면에는 "Documents successfully stored in Qdrant!"까지 뜹니다 — 방금 위에서 본 "Error processing document" 오류 배너와 나란히. `pypdf`를 설치하지 않은 채로 PDF를 아무리 올려도 컬렉션은 영원히 비어 있고, Step 4의 유사도 검색은 항상 빈 결과만 돌려주게 됩니다.
 
+`texts=[]`든 실제 청크든, `QdrantVectorStore(client=client, collection_name=COLLECTION_NAME, embedding=embedding)`(127-129행) 생성 자체가 이미 임베딩 호출을 하나 발생시킵니다 — 컬렉션이 이미 존재하면(방금 막 만들었든 이전 업로드가 남겨 둔 것이든) `__init__`이 기본으로 `_validate_collection_config` → `_validate_collection_for_dense`를 불러 `embedding.embed_documents(["dummy_text"])`로 실제 임베딩 차원을 재고 저장된 `VectorParams.size`와 맞는지 검사합니다(소스로 확인, `langchain-qdrant==0.2.0` `qdrant.py:1109`). 인메모리 Qdrant와 가짜 임베더로 이 호출이 정말 일어나는지 직접 확인합니다.
+
+```bash
+uv run --no-project python -c "
+from langchain_core.embeddings import Embeddings
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
+from langchain_qdrant import QdrantVectorStore
+
+class ProbeEmbeddings(Embeddings):
+    def embed_documents(self, texts):
+        print('embed_documents called with:', texts)
+        return [[0.0, 0.0] for _ in texts]
+    def embed_query(self, text):
+        return [0.0, 0.0]
+
+client = QdrantClient(location=':memory:')
+client.create_collection('probe', vectors_config=VectorParams(size=2, distance=Distance.COSINE))
+QdrantVectorStore(client=client, collection_name='probe', embedding=ProbeEmbeddings())
+print('QdrantVectorStore constructed (no add_documents called yet)')
+"
+```
+
+직접 확인한 출력:
+
+```
+embed_documents called with: ['dummy_text']
+QdrantVectorStore constructed (no add_documents called yet)
+```
+
+즉 `add_documents(texts)`가 청크 수만큼(64개씩 배치) 임베딩을 부르기 **전에**, 컬렉션 검증만으로 이미 1회가 추가로 나갑니다 — 업로드마다 한 번씩입니다.
+
 ### Step 4. 검색과 문턱값 — 오늘의 핵심 조건
 
 **목적.** `process_query`가 문서 경로와 웹 검색 경로 중 어디로 갈지 가르는 정확한 조건을 확인합니다.
@@ -316,26 +400,56 @@ def process_query(vectorstore, query) -> tuple[str, list]:
         if relevant_docs:
 ```
 
-조건은 이 한 줄 `if relevant_docs:`이지만, 그 값을 만드는 것은 `search_type="similarity_score_threshold"`와 `score_threshold: 0.7`입니다. `VectorStoreRetriever`는 `score_threshold`를 kwargs에서 꺼낸 뒤 Qdrant에는 넘기지 않고, 상위 `k=10`개를 원점수 그대로 받아 온 다음 파이썬에서 `similarity >= 0.7`인 것만 남기는 클라이언트 쪽 필터링을 합니다 — `QdrantVectorStore`는 이 필터링 메서드를 직접 재정의하지 않고 langchain-core의 공통 구현을 그대로 씁니다(소스로 확인, `langchain-core==0.3.25`의 `VectorStore.similarity_search_with_relevance_scores`와 `langchain-qdrant==0.2.0`의 `QdrantVectorStore._similarity_search_with_relevance_scores`). 즉 **오늘의 정확한 조건은 "코사인 유사도 상위 10개 문서 중 0.7을 넘는 것이 단 하나도 없다"** 이고, 이때 `relevant_docs`는 빈 리스트가 되어 `if relevant_docs:`가 거짓이 됩니다. Step 3에서 본 대로 컬렉션 자체가 비어 있으면 이 조건은 질문 내용과 무관하게 항상 거짓입니다.
+조건은 이 한 줄 `if relevant_docs:`이지만, 그 값을 만드는 것은 `search_type="similarity_score_threshold"`와 `score_threshold: 0.7`입니다. `VectorStoreRetriever`는 `score_threshold`를 kwargs에서 꺼낸 뒤 Qdrant에는 넘기지 않고, 상위 `k=10`개를 받아 온 다음 파이썬에서 걸러내는 클라이언트 쪽 필터링을 합니다 — 그런데 그 필터링은 Qdrant가 돌려준 코사인 유사도 원점수를 그대로 0.7과 비교하지 않습니다. `QdrantVectorStore`는 `_select_relevance_score_fn`만 재정의해 COSINE 거리일 때 `_cosine_relevance_score_fn(distance) = (distance + 1.0) / 2.0`을 씁니다(소스로 확인, `langchain-qdrant==0.2.0` `qdrant.py:887-903`). langchain-core의 공통 구현(`_similarity_search_with_relevance_scores`, `langchain-core==0.3.25` `base.py:484-508`)이 원점수 각각에 이 함수를 먼저 씌워 "정규화 점수"로 바꾼 뒤, `similarity_search_with_relevance_scores`(`base.py:538-583`)가 `similarity >= score_threshold`로 그 정규화 점수를 거릅니다 — 원점수가 아니라 `(cos+1)/2`를 0.7과 비교하는 것입니다(`QdrantVectorStore`에는 이 필터링 메서드 자체의 재정의가 없어 이 공통 구현을 그대로 씁니다 — 같은 이름의 재정의는 구식 `Qdrant` 클래스에만 있고 공식은 다릅니다, langchain-qdrant 0.2.0의 `vectorstores.py:1934`). 즉 **오늘의 정확한 조건은 "상위 10개 문서 중 정규화 점수 `(cos+1)/2`가 0.7을 넘는 것이 단 하나도 없다", 코사인 유사도로 환산하면 "0.4를 넘는 것이 하나도 없다"** 입니다. 이때 `relevant_docs`는 빈 리스트가 되어 `if relevant_docs:`가 거짓이 됩니다. Step 3에서 본 대로 컬렉션 자체가 비어 있으면 이 조건은 질문 내용과 무관하게 항상 거짓입니다.
 
 ![문서-웹 분기 조건](diagrams/extra-fallback.svg)
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** Qdrant·Cohere 키 없이는 이 검색 자체를 실행할 수 없어 소스로 확인했습니다 — 대신 `score_threshold`가 정말 kwargs에서 빠진 뒤 별도로 필터링되는지, 공통 구현의 해당 위치를 확인합니다.
+**확인.** Qdrant Cloud·Cohere 키는 없지만, 인메모리 Qdrant와 코사인 값을 직접 정한 가짜 임베딩으로 앱과 똑같은 리트리버 설정을 그대로 돌려 확인할 수 있습니다 — 쿼리와 코사인 0.8/0.5/0.3인 문서 셋을 만들어 둡니다.
 
 ```bash
 uv run --no-project python -c "
-import inspect
-from langchain_core.vectorstores.base import VectorStore
-src = inspect.getsource(VectorStore.similarity_search_with_relevance_scores)
-print('score_threshold = kwargs.pop' in src, 'similarity >= score_threshold' in src)
+from langchain_core.embeddings import Embeddings
+from langchain_core.documents import Document
+from langchain_qdrant import QdrantVectorStore
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
+
+QUERY_VEC = [1.0, 0.0]
+DOC_VECS = {
+    'doc cos=0.8': [0.8, 0.6],
+    'doc cos=0.5': [0.5, 0.8660254037844386],
+    'doc cos=0.3': [0.3, 0.9539392014169456],
+}
+class FixedEmbeddings(Embeddings):
+    def embed_documents(self, texts):
+        return [DOC_VECS.get(t, QUERY_VEC) for t in texts]
+    def embed_query(self, text):
+        return QUERY_VEC
+
+client = QdrantClient(location=':memory:')
+client.create_collection('probe', vectors_config=VectorParams(size=2, distance=Distance.COSINE))
+vs = QdrantVectorStore(client=client, collection_name='probe', embedding=FixedEmbeddings())
+vs.add_documents([Document(page_content=t) for t in DOC_VECS])
+
+print('raw cosine       :', [round(s, 2) for _, s in vs.similarity_search_with_score('q', k=10)])
+print('relevance (cos+1)/2:', [round(s, 2) for _, s in vs.similarity_search_with_relevance_scores('q', k=10)])
+
+retriever = vs.as_retriever(search_type='similarity_score_threshold', search_kwargs={'k': 10, 'score_threshold': 0.7})
+print('app retriever (score_threshold=0.7) returns:', [d.page_content for d in retriever.invoke('q')])
 "
 ```
 
+직접 확인한 출력:
+
 ```
-True True
+raw cosine       : [0.8, 0.5, 0.3]
+relevance (cos+1)/2: [0.9, 0.75, 0.65]
+app retriever (score_threshold=0.7) returns: ['doc cos=0.8', 'doc cos=0.5']
 ```
+
+앱과 똑같은 `score_threshold=0.7` 설정이 원점수 코사인 0.5(정규화 0.75)인 문서는 통과시키고 코사인 0.3(정규화 0.65)인 문서는 거릅니다 — 코사인 0.7이 아니라 0.4가 실제 경계선이라는 뜻입니다.
 
 ### Step 5. RAG 체인과 숨은 다운로드 — hub.pull이 매번 접속하는 곳
 
@@ -353,7 +467,7 @@ True True
             return response['answer'], relevant_docs
 ```
 
-`hub.pull`은 이 파일 어디에도 캐싱되지 않고 `process_query`가 호출될 때마다, 즉 문서 경로를 타는 질문마다 매번 새로 불립니다. `langchain==0.3.12`의 `hub.pull()`(소스로 확인)은 `langsmith.Client(api_url=None, api_key=None).pull_prompt(owner_repo_commit, include_model=include_model)`을 그대로 호출하고, 이 요청은 커밋 해시를 안 적으면 `"latest"`로 풀립니다. 오늘 이 requirements.txt가 실제로 받아오는 `langsmith==0.2.11`(Step 1)의 `Client`는 API 키가 없어도 예외를 던지지 않고 경고만 낸 뒤 `GET https://api.smith.langchain.com/commits/langchain-ai/retrieval-qa-chat/latest`를 그대로 시도합니다 — 즉 **키는 필요 없지만 네트워크는 필요합니다.** 이 호출은 `process_query`의 같은 `try` 블록 안에 있어서(181-232행), 이 요청이 실패하면(사내망 차단 등) RAG 경로 전체가 맨 아래 `except Exception as e:`로 떨어져 "I encountered an error. Please try rephrasing your question."라는 일반 메시지 하나로 뭉뚱그려집니다 — 원인이 프롬프트 다운로드였는지 Cohere였는지 Qdrant였는지 화면만으로는 구분되지 않습니다.
+`hub.pull`은 이 파일 어디에도 캐싱되지 않고 `process_query`가 호출될 때마다, 즉 문서 경로를 타는 질문마다 매번 새로 불립니다. `langchain==0.3.12`의 `hub.pull()`(소스로 확인)은 `langsmith.Client(api_url=None, api_key=None).pull_prompt(owner_repo_commit, include_model=include_model)`을 그대로 호출하고, 이 요청은 커밋 해시를 안 적으면 `"latest"`로 풀립니다. 오늘 이 requirements.txt가 실제로 받아오는 `langsmith==0.2.11`(Step 1)의 `Client`는 API 키가 없어도 예외를 던지지 않고 경고만 낸 뒤 `GET https://api.smith.langchain.com/commits/langchain-ai/retrieval-qa-chat/latest`를 그대로 시도합니다 — 즉 **키는 필요 없지만 네트워크는 필요합니다.** 이 호출은 `process_query`의 같은 `try` 블록 안에 있어서(181-232행), 이 요청이 실패하면(사내망 차단 등) RAG 경로 전체가 맨 아래 `except Exception as e:`로 떨어집니다 — 다만 이 블록은 채팅 말풍선에 일반 메시지를 반환하기 **전에** `st.error(f"Error: {str(e)}")`(231행)로 실제 예외 문구를 화면에 먼저 찍습니다(소스로 확인). 즉 원인은 화면에서 사라지지 않습니다 — 채팅 답변 칸에는 "I encountered an error. Please try rephrasing your question."만 보이지만, 그 바로 위 빨간 오류 배너에는 `hub.pull` 실패라면 `LangSmithConnectionError`나 `SSLError` 같은 실제 예외 문구가, Cohere·Qdrant 실패라면 각각 그 예외 문구가 그대로 찍힙니다 — 다만 세 원인이 전부 같은 자리(오류 배너)에 나오므로 어떤 서비스 탓인지는 그 문구를 직접 읽어야 구분됩니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -408,7 +522,7 @@ class RateLimitedDuckDuckGo(DuckDuckGoSearchRun):
             raise e
 ```
 
-`RateLimitedDuckDuckGo`는 `DuckDuckGoSearchRun`의 **공개** `run()`을 오버라이드합니다(내부 `_run()`이 아닙니다) — 매 호출 앞에 2초를 쉬고, `tenacity`로 실패 시 최대 3회까지 4~10초 지수 백오프 재시도를 걸고, 예외 문구에 `"Ratelimit"`이 들어 있으면(실제 `duckduckgo_search`/`ddgs`의 `RatelimitException`이 내는 문구와 일치) 5초를 더 쉬고 한 번 더 시도합니다 — DuckDuckGo의 비공식 검색 백엔드가 실제로 자주 내는 429류 차단을 버티려고 쓴 이중 재시도입니다. `AgentState`는 `messages`·`is_last_step` 두 필드를 선언하는데, 이는 `langgraph.prebuilt.chat_agent_executor`가 `create_react_agent`의 기본 상태 스키마로 이미 내부에 갖고 있는 것과 필드 구성이 같습니다(소스로 확인, `langgraph==0.2.53`). 그런데 실제 폴백 에이전트는 이 둘 중 무엇도 쓰지 않습니다.
+`RateLimitedDuckDuckGo`는 `DuckDuckGoSearchRun`의 **공개** `run()`을 오버라이드합니다(내부 `_run()`이 아닙니다) — 매 호출 앞에 2초를 쉬고, `tenacity`로 실패 시 최대 3회까지 4~10초 지수 백오프 재시도를 걸고, 예외 문구에 `"Ratelimit"`이 들어 있으면(실제 `duckduckgo_search`/`ddgs`의 `RatelimitException`이 내는 문구와 일치) 5초를 더 쉬고 한 번 더 시도합니다 — DuckDuckGo의 비공식 검색 백엔드가 실제로 자주 내는 429류 차단을 버티려고 쓴 이중 재시도입니다. `AgentState`는 `messages`·`is_last_step` 두 필드를 선언하는데, `langgraph.prebuilt.chat_agent_executor`가 `create_react_agent`의 기본 상태 스키마로 이미 내부에 갖고 있는 것은 사실 세 필드입니다 — `messages`·`is_last_step`에 `remaining_steps`가 더 있습니다(직접 확인 아래, `langgraph==0.2.53` `chat_agent_executor.py:30-37`). 즉 앱의 `AgentState`는 그 기본 스키마와 "같지" 않고 한 필드가 모자랍니다. 그런데 실제 폴백 에이전트는 앱의 `AgentState`도, 기본 스키마의 세 필드 전부도 쓰지 않습니다 — `create_react_agent(model=chat_model, tools=tools, debug=False)`(161-179행)는 `state_schema` 인자를 아예 넘기지 않으므로 실행 중에는 langgraph의 기본 스키마가 그대로 적용됩니다.
 
 `rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:161-179`
 
@@ -469,7 +583,7 @@ def create_fallback_agent(chat_model: BaseLanguageModel):
                     return f"Web search unavailable. General response: {fallback_response}", []
 ```
 
-`agent_input`의 `"is_last_step": False`는 LangGraph 자신의 기본 스키마가 실제로 쓰는 필드이므로(위에서 확인) 이 부분은 정상 작동합니다 — 다만 그 사실은 앱의 `AgentState` 클래스가 아니라 LangGraph 내부 기본값 덕분입니다. 폴백에는 폴백이 하나 더 있습니다 — 에이전트 실행 자체가 실패하면(`except Exception as agent_error:`) 검색 없이 `chat_model.invoke(...)`로 Cohere에 일반 지식 답변을 한 번 더 요청합니다.
+`agent_input`의 `"is_last_step": False`는 langgraph 기본 스키마의 실제 키 이름과 같아 무시되지 않고 그래프 상태로 받아들여집니다 — 다만 그 값이 결과에 어떤 차이를 만드는지는 이 문서에서 확인하지 못했고("정상 작동"이라 부를 근거는 없습니다), `remaining_steps`가 함께 없으면 재귀 제한에 관련된 내부 조건 일부가 그냥 건너뛰어질 뿐입니다(소스로 확인, `chat_agent_executor.py:575-586`). 그 사실은 앱의 `AgentState` 클래스가 실행에 쓰였기 때문이 아니라 — 위에서 보듯 `state_schema`를 안 넘겨 langgraph 내부 기본 스키마가 대신 쓰였기 때문입니다. 폴백에는 폴백이 하나 더 있습니다 — 에이전트 실행 자체가 실패하면(`except Exception as agent_error:`) 검색 없이 `chat_model.invoke(...)`로 Cohere에 일반 지식 답변을 한 번 더 요청합니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -482,6 +596,36 @@ grep -n "RateLimitedDuckDuckGo" rag_agent_cohere.py
 ```
 147:class RateLimitedDuckDuckGo(DuckDuckGoSearchRun):
 ```
+
+langgraph의 기본 상태 스키마가 정말 세 필드인지, 그리고 `state_schema`를 넘기지 않은 `create_react_agent`가 `"is_last_step": False`를 오류 없이 받아들이되 그 값이 반환 상태에는 나타나지 않는지도 키·네트워크 없이 확인합니다 — 실제 도구 호출 없이 바로 답하는 가짜 채팅 모델을 씁니다.
+
+```bash
+uv run --no-project python -c "
+from langchain_core.language_models.fake_chat_models import FakeListChatModel
+from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt.chat_agent_executor import AgentState as DefaultAgentState
+from langchain_core.messages import HumanMessage
+
+print('langgraph 기본 AgentState 필드:', list(DefaultAgentState.__annotations__.keys()))
+
+class FakeToolModel(FakeListChatModel):
+    def bind_tools(self, tools, **kwargs):
+        return self
+
+agent = create_react_agent(model=FakeToolModel(responses=['final answer, no tool call']), tools=[], debug=False)
+result = agent.invoke({'messages': [HumanMessage(content='hi')], 'is_last_step': False}, config={'recursion_limit': 100})
+print('invoke OK, result state keys:', list(result.keys()))
+"
+```
+
+직접 확인한 출력:
+
+```
+langgraph 기본 AgentState 필드: ['messages', 'is_last_step', 'remaining_steps']
+invoke OK, result state keys: ['messages']
+```
+
+기본 스키마는 세 필드이고(앱의 `AgentState`는 둘뿐이라 `remaining_steps`가 빠짐), `is_last_step: False`를 입력에 넣어도 오류 없이 실행되지만 반환된 상태에는 `messages`만 남습니다 — 입력이 거부되지는 않되 결과에 흔적을 남기지도 않습니다.
 
 ### Step 7. 후처리와 화면 배선
 
@@ -525,6 +669,39 @@ grep -n "post_process" rag_agent_cohere.py
 
 (정의 줄 하나만 나오면 호출부가 없다는 뜻입니다.)
 
+지금까지 이 문서는 함수를 하나씩 떼어 확인했을 뿐, 앱을 실제로 띄우는 스텝이 없었습니다. 키 없이도 화면 자체는 뜹니다.
+
+```bash
+uv run --no-project streamlit run rag_agent_cohere.py --server.headless true
+```
+
+키를 입력하지 않으면 `st.stop()`(80-82행)이 그 실행을 그 자리에서 멈추므로, 화면에 보이는 것은 사이드바의 자격증명 폼뿐입니다. 이것은 `AppTest`로 키 없이, 네트워크 없이 재현할 수 있습니다.
+
+```bash
+uv run --no-project python -c "
+from streamlit.testing.v1 import AppTest
+at = AppTest.from_file('rag_agent_cohere.py')
+at.run()
+print('exception:', at.exception)
+print('title:', [t.value for t in at.title])
+print('sidebar headers:', [h.value for h in at.sidebar.header])
+print('sidebar text_input labels:', [ti.label for ti in at.sidebar.text_input])
+print('info messages:', [i.value for i in at.info])
+"
+```
+
+직접 확인한 출력:
+
+```
+exception: ElementList()
+title: []
+sidebar headers: ['API Credentials']
+sidebar text_input labels: ['Cohere API Key', 'Qdrant API Key', 'Qdrant URL']
+info messages: ['Please enter your API credentials in the sidebar to continue.']
+```
+
+예외 없이 렌더되고, `st.stop()`이 80행에서 실행을 멈춰 `st.title(...)`(250행)까지 도달하지 못했으므로 제목은 비어 있습니다 — 사이드바의 자격증명 폼과 안내 문구만 보인다는 뜻입니다.
+
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
@@ -536,11 +713,13 @@ grep -n "post_process" rag_agent_cohere.py
 - [ ] Cohere API 키와 Qdrant Cloud 클러스터(URL+API 키)를 모두 준비했다
 - [ ] `uv venv && uv pip install -r requirements.txt`가 13개 고정·1개 범위 그대로 충돌 없이 끝난다는 것을 확인했다(106개 패키지)
 - [ ] 자격증명 게이트를 통과하기 전까지는 `RateLimitedDuckDuckGo`·`process_query` 등 이 파일의 나머지 정의 자체가 실행되지 않는다는 것을 이해했다
+- [ ] 그 게이트가 Qdrant는 실제 접속으로 검증하지만 Cohere 키는 비어 있지 않은지만 본다는 것, 그리고 틀린 Cohere 키는 문서를 업로드할 때에야 드러난다는 것을 직접 확인했다
 - [ ] `pypdf`가 `requirements.txt`에 없어 `PyPDFLoader`가 `ImportError`로 실패하고, 그 실패가 조용히 삼켜져 빈 컬렉션이 "성공"으로 표시된다는 것을 직접 확인했다
-- [ ] 문서-웹 분기의 정확한 조건 — 상위 10개 중 코사인 유사도 0.7을 넘는 문서가 하나도 없을 때 — 을 소스로 확인했다
+- [ ] 문서-웹 분기의 정확한 조건 — 상위 10개 중 정규화 점수 0.7(코사인 유사도 0.4)을 넘는 문서가 하나도 없을 때 — 을 인메모리 Qdrant로 직접 확인했다
 - [ ] `hub.pull(...)`이 질문마다 `api.smith.langchain.com`에 실제 네트워크 요청을 보내며, API 키 없이도 시도된다는 것을 직접 확인했다
 - [ ] `RateLimitedDuckDuckGo`·`AgentState`·`post_process` 세 조각이 정의만 되고 실제 호출부가 없다는 것을 grep으로 확인했다
 - [ ] 이미지 업로드가 왜 항상 실패하는지 이해했다
+- [ ] 키 없이도 `streamlit run`이 자격증명 폼까지는 뜬다는 것을 `AppTest`로 확인했다
 
 ## 문제 해결
 
@@ -549,13 +728,14 @@ grep -n "post_process" rag_agent_cohere.py
 | PDF를 올리면 "Error processing document: pypdf package not found..." 오류와 "File uploaded and processed successfully!" 성공 메시지가 같이 뜸 | `requirements.txt`에 `pypdf`가 없어 `PyPDFLoader`가 즉시 실패하지만 `process_document`가 예외를 삼켜 빈 리스트를 반환하고, 빈 컬렉션 저장은 그 자체로 성공하기 때문(직접 확인) | `uv pip install pypdf` 추가 설치 |
 | 이미지(jpg/jpeg)를 업로드하면 항상 처리 실패 | 업로더는 `type=["pdf", "jpg", "jpeg"]`로 이미지도 받지만 `process_document`는 `PyPDFLoader`만 사용(소스로 확인) | PDF 파일만 올리기 |
 | 문서를 찾았어야 할 질문에도 "I encountered an error. Please try rephrasing your question."만 뜸 | `hub.pull(...)`이 매 질문마다 LangChain Hub에 접속하는데(직접 확인) 이 호출이 `process_query`의 같은 try 블록 안에 있어, 접속이 막히면 RAG 경로 전체가 이 일반 오류로 뭉뚱그려짐(소스로 확인) | 아웃바운드 HTTPS로 `api.smith.langchain.com` 접속이 가능한지 확인 |
-| "Submit Credentials"를 눌렀는데 한동안 반응이 없음 | 존재하지 않거나 오탈자가 있는 Qdrant URL이어도 `QdrantClient(...)` 생성 자체가 오래 걸릴 수 있음(직접 확인, 가짜 클라우드형 URL로 120초) | URL을 다시 확인하고 기다리거나, 취소 후 재시도 |
+| "Submit Credentials"를 눌렀는데 한동안 반응이 없음 | `QdrantClient(...)` 생성 자체는 0.2초 안에 끝남(직접 확인) — 오래 걸릴 수 있는 것은 바로 다음 줄 `client.get_collections()`(`timeout=60`)로, 존재하지 않거나 오탈자가 있는 URL이면 이 접속 시도가 최대 60초까지 걸릴 수 있음 | URL을 다시 확인하고 기다리거나, 취소 후 재시도 |
+| 로컬 Qdrant(인증 없음)를 쓰는데 "Qdrant API key not provided"로 멈춤 | `get_collections()`는 API 키가 비어 있어도 인증 없는 로컬 서버라면 통과하지만, 통과 후 `init_qdrant()`(68-76행)가 `st.session_state.qdrant_api_key`가 비어 있으면 그 자체로 `ValueError`를 던짐(소스로 확인) | 로컬 Qdrant라면 API 키 칸에 아무 문자열이나 채워 넣기 |
 | 레이트리밋 걱정 없이 웹 검색이 될 거라 기대했는데 그렇지 않음 | `RateLimitedDuckDuckGo`가 정의만 되고, 실제 폴백 경로는 이를 쓰지 않는 평범한 `DuckDuckGoSearchRun(num_results=5)`를 새로 만듦(grep으로 직접 확인 — 파일 전체에서 정의 줄 1곳뿐) | 리포 코드는 고치지 않는 것이 방침. 재현하려면 `create_fallback_agent`(`rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:167`)의 `DuckDuckGoSearchRun(num_results=5)`를 `RateLimitedDuckDuckGo()`로 바꿔보기 |
 
 ## 더 해보기
 
 - `uv pip install pypdf`로 빠진 패키지를 채운 뒤 실제 PDF를 올려 컬렉션이 정말 채워지는지, 이어서 문서 내용에 대한 질문이 RAG 경로(Step 5)를 타는지 직접 확인해보기
-- `process_query`(`rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:184-189`)의 `score_threshold`를 0.7에서 0.3처럼 낮춰, 같은 질문이 웹 검색 대신 문서 경로로 넘어가는 지점이 바뀌는지 실험해보기
+- `process_query`(`rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:184-189`)의 `score_threshold`를 0.7에서 0.3처럼 낮춰, 같은 질문이 웹 검색 대신 문서 경로로 넘어가는 지점이 바뀌는지 실험해보기 — 다만 이 값은 정규화 점수라 0.3은 코사인 유사도 −0.4 이상, 사실상 모든 문서를 통과시키는 값이라는 점을 염두에 둘 것(Step 4)
 - `hub.pull(...)`(`rag_tutorials/rag_agent_cohere/rag_agent_cohere.py:195`)이 실패할 경우를 대비해 로컬 `ChatPromptTemplate`으로 대체하는 `try/except`를 추가해보고, LangChain Hub 없이도 RAG 경로가 끝까지 동작하는지 확인해보기
 
 ## 다음 날 예고

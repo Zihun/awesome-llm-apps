@@ -1,8 +1,7 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 2
 
-front: "브라우저 쪽" {
+front: "사용자 쪽 화면" {
   class: group
   grid-columns: 3
   user: 사용자 { class: person }
@@ -12,7 +11,7 @@ front: "브라우저 쪽" {
 
 query: "질의 처리 (process_query)" {
   class: group
-  grid-rows: 2
+  grid-columns: 2
   rag: RAG 체인 (문서 검색) { class: ours }
   web: 웹 검색 에이전트 (LangGraph) { class: ours }
 }
@@ -21,7 +20,7 @@ qdrant: Qdrant 컬렉션 (cohere_rag) { class: store }
 
 providers: "외부 서비스" {
   class: group
-  grid-rows: 3
+  grid-columns: 3
   cohere: Cohere API (임베딩·채팅) { class: ext }
   hub: LangChain Hub (프롬프트) { class: ext }
   ddg: DuckDuckGo { class: ext }

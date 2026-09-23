@@ -2,19 +2,23 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-ui: Streamlit UI { class: ours }
 qdrant: Qdrant 컬렉션 { class: store }
-web: 웹 검색 에이전트 { class: ours }
+ui: Streamlit UI { class: ours }
 cohere: Cohere API { class: ext }
+web: 웹 검색 에이전트 { class: ours }
 ddg: DuckDuckGo { class: ext }
 
 user -> ui: 질문 입력
+ui -> cohere: 질의 임베딩 요청 (embed-english-v3.0)
+cohere -> ui: 질의 벡터
 ui -> qdrant: 유사도 검색 (threshold 0.7, k=10)
 qdrant -> ui: 결과 0건 (문턱 미달)
-ui -> web: 웹 검색으로 위임
+ui -> web: 위임
+web -> cohere: 완성 요청 (도구 스키마 포함)
+cohere -> web: web_research 도구 호출 결정
 web -> ddg: DuckDuckGoSearchRun(질문)
 ddg -> web: 검색 결과
-web -> cohere: 답변 생성 요청 (command-r7b-12-2024)
-cohere -> web: 답변
-web -> ui: 답변 반환
+web -> cohere: 도구 결과 포함 완성 요청
+cohere -> web: 최종 답변
+web -> ui: 반환
 ui -> user: 화면에 표시
