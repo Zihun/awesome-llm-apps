@@ -4,7 +4,7 @@ user: 사용자 { class: person }
 hosted: reasoning_agent.py { class: ours }
 openai: OpenAI API { class: ext }
 local: local_ai_reasoning_agent.py { class: ours }
-ollama: Ollama 데몬 { class: store }
+ollama: Ollama 데몬 (로컬) { class: ext }
 
 user -> hosted: 실행 (python reasoning_agent.py)
 hosted -> openai: 채팅 완성 요청 (regular_agent, gpt-4o-mini)

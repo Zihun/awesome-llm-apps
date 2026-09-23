@@ -1,6 +1,6 @@
 # Day 037 · AI Reasoning Agent
 
-> 볼륨 3 🌱 Starter AI Agents (추가분) · 난이도 ★★☆ · 예상 소요 60분 · API 비용 대략 무료 — 호스팅 경로(`reasoning_agent.py`)는 키가 없어 실제 호출까지 가지 못하고, 로컬 경로(`local_ai_reasoning_agent.py`)는 Ollama 자체가 무료입니다(다만 `qwq:32b`를 실제로 받으면 디스크 약 20GB, Step 4) · 원본 앱: `starter_ai_agents/ai_reasoning_agent`
+> 볼륨 3 🌱 Starter AI Agents (추가분) · 난이도 ★★☆ · 예상 소요 65분(Python 버전 차이·텔레메트리 참고 문단이 추가됨) · API 비용 대략 무료 — 호스팅 경로(`reasoning_agent.py`)는 키가 없어 실제 호출까지 가지 못하고, 로컬 경로(`local_ai_reasoning_agent.py`)는 Ollama 자체가 무료입니다(다만 `qwq:32b`를 실제로 받으면 디스크 약 20GB, Step 4) · 원본 앱: `starter_ai_agents/ai_reasoning_agent`
 
 ## 오늘 만들 것
 
@@ -154,6 +154,8 @@ Traceback (most recent call last):
                       ^^^^^^
 TypeError: Agent.__init__() got an unexpected keyword argument 'reasoning'
 ```
+
+(CPython 3.13(이 문서를 작성한 환경)에서는 이 메시지 끝에 `Did you mean 'learning'?`이 한 줄 더 붙습니다 — CPython 3.13이 새로 추가한 오타 제안 기능이고 무시해도 됩니다. Step 1에서 버전을 못박지 않고 `uv venv`만 쓰므로, CPython 3.12로 재현하면 위 메시지 그대로(제안 문구 없이) 나옵니다 — 직접 확인.)
 
 agno 3.0.10의 `Agent`에는 이제 `reasoning`이라는 불리언 매개변수가 없습니다. 대신 "네이티브 추론 모델(`reasoning_model`)을 직접 건네주는" 방식으로 바뀌었습니다(소스로 확인, agno 3.0.10의 `agno/agent/agent.py` — `reasoning_model: Optional[Union[Model, str]] = None` 필드에 "네이티브 추론 모델이어야 한다"는 주석이 달려 있습니다). `structured_outputs=True`는 죽지 않았습니다 — `reasoning=True`만 빼고 나머지 그대로 `Agent(model=OpenAIChat(id="gpt-4o"), markdown=True, structured_outputs=True)`를 만들면 정상 생성됩니다(직접 확인). 즉 이 19줄 중 지금 버전과 맞지 않는 것은 정확히 `reasoning=True` 한 줄입니다.
 
@@ -364,6 +366,7 @@ print([x for x in m.requires('agno') if 'fastapi' in x or 'uvicorn' in x])
 - `OPENAI_API_KEY`를 실제로 넣고, `reasoning=True` 대신 agno 3.0.10이 요구하는 `reasoning_model=`에 네이티브 추론 모델을 넘겨 `reasoning_agent.py`를 다시 동작시켜 보기
 - Ollama가 설치돼 있다면 `qwq:32b`보다 훨씬 작은, 이미 받아져 있는 추론형 로컬 모델(`deepseek-r1:8b` 등)로 `id`를 바꿔 실제 `think` 태그 응답을 받아 보기
 - 리포 밖 사본에서 `Playground(agents=[...])` 대신 `agno.os.AgentOS(agents=[...])`로 고쳐 써서, 실제로 로컬 웹 서버가 뜨는지 확인해 보기
+- 위 과제들로 두 경로 중 하나라도 실제로 완주시키면, `print_response`/`run`이 성공할 때마다 agno가 익명 사용 통계를 보낸다는 것을 참고(`AGNO_TELEMETRY=false`로 끔, Day 047 Step 5) — `AgentOS`까지 띄우면 서버 기동 시 별도의 `POST /telemetry/os`도 나감
 
 ## 다음 날 예고
 
