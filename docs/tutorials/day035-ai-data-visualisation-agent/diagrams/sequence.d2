@@ -7,14 +7,14 @@ e2b: E2B 샌드박스 { class: ext }
 user: 사용자 { class: person }
 
 user -> proc: CSV 업로드 + 키 2개 + 질문, Analyze 클릭
-proc -> e2b: Sandbox(api_key=...) 생성 (POST /sandboxes)
+proc -> e2b: Sandbox(api_key=...) 생성 (POST /sandboxes) — main()
 e2b -> proc: 샌드박스 준비 완료 (sandbox_id)
 proc -> e2b: files.write(경로, CSV 바이트) — upload_dataset
 e2b -> proc: 파일 쓰기 완료
-proc -> together: chat.completions.create(시스템 프롬프트 + 질문)
+proc -> together: chat.completions.create(시스템 프롬프트 + 질문) — chat_with_llm
 together -> proc: 코드가 담긴 응답 텍스트
 proc -> proc: match_code_blocks로 코드 추출 (로컬 정규식)
-proc -> e2b: run_code(추출된 코드) — POST /execute
+proc -> e2b: run_code(추출된 코드) — code_interpret, POST /execute
 e2b -> proc: stdout·stderr·Result 목록 (스트리밍)
-proc -> e2b: 샌드박스 종료 (with 블록 종료 시 kill())
+proc -> e2b: 샌드박스 종료 (with 블록 종료 시 kill()) — main()
 proc -> user: 이미지·표·텍스트로 렌더링
