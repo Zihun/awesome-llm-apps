@@ -1,14 +1,12 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 3
 
 user: 사용자 { class: person }
 plane: 컨트롤 플레인 { class: ext }
 key: XAI_API_KEY (환경변수) { class: file }
 app: xai_finance_agent.py {
-  grid-columns: 2
-  os: AgentOS 서버 { class: ours }
-  agent: 금융 에이전트 { class: ours }
+  os: 1. AgentOS 서버 { class: ours }
+  agent: 2. 금융 에이전트 { class: ours }
   ddg: 웹 검색 도구 { class: ours }
   yf: 주가 도구 { class: ours }
 }
@@ -17,9 +15,8 @@ ddgapi: DuckDuckGo { class: ext }
 yahoo: Yahoo Finance { class: ext }
 
 user -> plane: 브라우저에서 질문
-plane -> app.os: HTTP 요청
-app.os -> app.agent: run(message)
-key -> app.agent: 인증
-app -> grok: 메시지 + 도구 스키마
-app.agent -> app.ddg -> ddgapi: 검색어
-app.agent -> app.yf -> yahoo: 티커 (예: AAPL)
+plane -> app: HTTP 요청
+key -> app: 인증
+app.agent -> grok: 메시지 + 도구 스키마
+app.ddg -> ddgapi: 검색어
+app.yf -> yahoo: 티커 (예: AAPL)
