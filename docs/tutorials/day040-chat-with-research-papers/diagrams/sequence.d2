@@ -7,7 +7,7 @@ openai: OpenAI API { class: ext }
 tool: ArxivTools { class: ours }
 arxiv: arXiv { class: ext }
 local: 로컬 스크립트 { class: ours }
-ollama: Ollama 데몬 { class: ours }
+ollama: Llama 3.1 8B (Ollama, 로컬) { class: ext }
 
 user -> hosted: 키 입력 + 검색어
 hosted -> openai: 채팅 완성 요청

@@ -1,34 +1,24 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
 
-prep: "사전 준비" {
-  class: group
-  grid-columns: 2
-  user: 사용자 { class: person }
-  reqs: requirements.txt (5줄) { class: file }
-}
+user: 사용자 { class: person }
+reqs: requirements.txt (5줄) { class: file }
 
 paths: "호스팅 vs 로컬 경로" {
   class: group
-  grid-columns: 2
+  grid-columns: 4
   hosted: 호스팅 에이전트 (GPT-4o) { class: ours }
   openai: OpenAI API { class: ext }
   local: 로컬 에이전트 (Llama 3.1 8B) { class: ours }
-  ollama: Ollama 데몬 (내 컴퓨터) { class: ours }
+  ollama: Llama 3.1 8B (Ollama, 로컬) { class: ext }
 }
 
-work: "ArxivTools가 하는 일" {
-  class: group
-  grid-columns: 3
-  tool: 검색·읽기 도구 (ArxivTools) { class: ours }
-  arxiv: arXiv (검색 + PDF) { class: ext }
-  pdf: 다운로드된 PDF { class: file }
-}
+tool: 검색·읽기 도구 (ArxivTools) { class: ours }
+arxiv: arXiv (검색 + PDF) { class: ext }
+pdf: 다운로드된 PDF { class: file }
 
-prep -> paths: 호스팅은 API 키 + 검색어, 로컬은 검색어만
-paths.hosted -> paths.openai: 채팅 완성 요청
-paths.local -> paths.ollama: 채팅 완성 요청
-paths -> work: 두 경로 모두 같은 도구를 호출
-work.tool -> work.arxiv: 검색 / PDF 다운로드
-work.arxiv -> work.pdf: 페이지별 텍스트 추출
+user -> paths: 호스팅은 API 키 + 검색어, 로컬은 검색어만
+reqs -> paths: 두 스크립트 모두 설치
+paths -> tool: 두 경로 모두 같은 도구를 호출
+tool -> arxiv: 검색 / PDF 요청
+tool -> pdf: 다운로드 + 페이지별 텍스트 추출
