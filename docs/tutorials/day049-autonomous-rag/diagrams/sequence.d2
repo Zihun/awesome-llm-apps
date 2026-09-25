@@ -4,19 +4,21 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 agent: AutoRAG 에이전트 { class: ours }
-kb: pgvector 지식 베이스 { class: store }
 openai: OpenAI API { class: ext }
+kb: pgvector 지식 베이스 { class: store }
 ddg: DuckDuckGo { class: ext }
 
 user -> ui: 키 + 질문
 ui -> agent: query_assistant(질문)
 agent -> openai: 채팅 완성 요청 (도구 스키마 포함, 1차)
 openai -> agent: tool_call search_knowledge_base(질문)
-agent -> openai: 질의 임베딩 요청 (벡터로 응답)
+agent -> openai: 질의 임베딩 요청
+openai -> agent: 임베딩 벡터
 agent -> kb: 벡터 검색 (top-k)
 kb -> agent: 문서 조각 또는 빈 결과
 agent -> openai: 함수 결과 포함 요청 (2차)
-agent -> ddg: web_search(질문) (모델이 선택할 때만)
+openai -> agent: tool_call web_search(질문) (모델이 선택할 때만)
+agent -> ddg: web_search(질문)
 ddg -> agent: 검색 결과 JSON
 agent -> openai: 함수 결과 포함 요청 (3차, 웹 검색 시)
 openai -> agent: RunOutput(content, status)
