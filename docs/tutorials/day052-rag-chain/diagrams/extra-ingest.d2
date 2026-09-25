@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+ingest: PDF 로더·분할 { class: ours }
+tokenizer: 로컬 토크나이저 (mpnet) { class: ext }
+vstore: Chroma 벡터 저장소 { class: store }
+
+user -> ui: PDF 업로드 · "Submit & Process" 클릭
+ui -> ingest: add_to_db(PDF)
+ingest -> tokenizer: 토큰 분할 요청
+tokenizer -> ingest: 토큰 수 세기
+ingest -> vstore: 청크 저장
+ingest -> ui: 처리 완료
+ui -> user: 완료 메시지 표시

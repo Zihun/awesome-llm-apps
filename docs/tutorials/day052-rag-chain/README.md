@@ -188,6 +188,10 @@ print('모델의 max_seq_length:', s.maximum_tokens_per_chunk)
 모델의 max_seq_length: 384
 ```
 
+이 Step과 다음 Step의 호출 순서(사용자가 "Submit & Process"를 누른 뒤 `add_to_db`가 토크나이저를 부르고 그 결과로 청크를 나눠 Chroma에 저장하기까지)는 완성 아키텍처(overview)에는 번호(1~4)로만 남아 있습니다 — 그 번호가 실제로 어떤 호출 순서인지는 "요청 한 건이 흐르는 과정"의 시퀀스가 다루지 않는 별개의 흐름이라, 아래처럼 따로 그렸습니다.
+
+![PDF 적재 시퀀스](diagrams/extra-ingest.svg)
+
 ### Step 4. RAG 체인 — 검색·프롬프트, 그리고 다시 클라우드로
 
 **목적.** `run_rag_chain`이 검색된 청크를 어떻게 프롬프트로 합치고, 최종 답변을 어느 모델에 요청하는지 정확한 호출 순서를 확인합니다.
