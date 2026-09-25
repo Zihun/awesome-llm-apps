@@ -17,11 +17,12 @@ front: "브라우저 쪽" {
 
 kb: "지식 베이스" {
   class: group
-  grid-columns: 2
+  grid-rows: 2
   pdf: "2503.11486v1.pdf (커밋됨)" { class: file }
   store: "LanceDB recipes 테이블 (커밋됨)" { class: store }
 }
 
 front -> models: 질문 텍스트
 models -> front: 스트리밍 답변
-models <-> kb: 임베딩 저장 · 유사 청크 검색
+models -> kb: 임베딩 저장 · 질의
+kb -> models: 유사 청크
