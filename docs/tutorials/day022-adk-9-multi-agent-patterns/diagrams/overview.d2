@@ -4,24 +4,16 @@ direction: down
 user: 사용자 (브라우저) { class: person }
 app: "Streamlit 앱 ×3 (app.py)" { class: ours }
 
-seq_shell: 순차 셸 (business_intelligence_team) { class: ours }
-seq_children: "LLM 4개 (market_researcher 외)" { class: ours }
-
-loop_shell: 반복 셸 (spec_refinement_loop) { class: ours }
-loop_children: "LLM 1개 + 파이썬 노드 2개" { class: ours }
-
-par_shell: 병렬 셸 (market_snapshot_team) { class: ours }
-par_children: "LLM 3개" { class: ours }
+seq: "SequentialAgent (LLM 4개: market_researcher 외)" { class: ours }
+loop: "LoopAgent (LLM 1개 + 파이썬 2개, 최대 10회/escalate)" { class: ours }
+par: "ParallelAgent (LLM 3개)" { class: ours }
 
 gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
 user -> app: 주제·목표 입력
-app -> seq_shell: run_async (9_1)
-app -> loop_shell: run_async (9_2)
-app -> par_shell: run_async (9_3)
-seq_shell -> seq_children: 한 번에 하나씩
-loop_shell -> loop_children: 매 반복마다
-par_shell -> par_children: 동시에
-seq_children -> gemini: 모델 호출
-loop_children -> gemini: 모델 호출
-par_children -> gemini: 모델 호출
+app -> seq: run_async (9_1, 한 번에 하나씩)
+app -> loop: run_async (9_2)
+app -> par: run_async (9_3, 동시 실행)
+seq -> gemini: 모델 호출 (market_researcher만 도구도 사용)
+loop -> gemini: 모델 호출 (plan_refiner만)
+par -> gemini: 모델 호출
