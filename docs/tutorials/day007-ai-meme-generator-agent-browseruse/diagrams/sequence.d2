@@ -2,8 +2,8 @@
 shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-agent: browser-use Agent { class: ours }
 chrome: 실제 Chrome (imgflip.com) { class: ext }
+agent: browser-use Agent { class: ours }
 llm: 선택한 LLM API { class: ext }
 
 user -> ui: 모델 + 키 + 밈 아이디어
