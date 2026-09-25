@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: AutoRAG 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+ddg: DuckDuckGo { class: ext }
+
+agent -> openai: 함수 결과 포함 요청 (2차)
+openai -> agent: tool_call web_search(질문) (모델이 선택할 때만)
+agent -> ddg: web_search(질문)
+ddg -> agent: 검색 결과 JSON
+agent -> openai: 함수 결과 포함 요청 (3차, 웹 검색 시)
+openai -> agent: RunOutput(content, status)
+agent -> ui: RunOutput 그대로 반환
+ui -> user: 반복 시도 중 TypeError
