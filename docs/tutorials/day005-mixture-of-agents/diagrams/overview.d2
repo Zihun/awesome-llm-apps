@@ -1,31 +1,28 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
 
 input: "입력" {
   class: group
-  grid-columns: 2
   user: 사용자 { class: person }
   key: Together API 키 (본문 입력) { class: file }
 }
 app: mixture-of-agents.py {
-  grid-columns: 2
-  ui: Streamlit UI (질문 입력) { class: ours }
-  runllm: 제안자 병렬 호출 (run_llm) { class: ours }
-  main: 집계·표시 (main) { class: ours }
+  ui: 1. Streamlit UI (질문 입력) { class: ours }
+  runllm: 2. 제안자 병렬 호출 (run_llm) { class: ours }
+  main: 3. 집계·표시 (main) { class: ours }
 }
 together: Together AI API {
-  grid-columns: 2
   m1: Qwen2-72B-Instruct { class: ext }
   m2: Qwen1.5-72B-Chat { class: ext }
-  m3: Mixtral-8x22B-Instruct (제안자 + 집계자) { class: ext }
+  m3: Mixtral-8x22B-Instruct { class: ext }
   m4: dbrx-instruct { class: ext }
 }
 
-input -> app.ui: 질문 + 키 입력 (user)
-input -> app: 생성자 인자 + 환경변수 (key → runllm)
-app.ui -> app.runllm: 4개 병렬 호출 (Get Answer)
-app -> together: 질문만 전달 (runllm, 4개 병렬, m3는 제안자로도 호출)
-app.runllm -> app.main: 응답 4개 (gather 결과)
-app.main -> together: 응답 4개 이어붙여 재호출 (m3를 집계자로 호출)
-app.main -> app.ui: 개별 응답 4개 + 집계 응답 표시 (스트리밍)
+input.user -> app.ui: 질문 + 키 입력
+input.key -> app: 생성자 인자 + 환경변수 (run_llm)
+app.runllm -> together.m1: 질문만 전달
+app.runllm -> together.m2: 질문만 전달
+app.runllm -> together.m3: 질문만 전달 (제안자)
+app.runllm -> together.m4: 질문만 전달
+app.main -> together.m3: 응답 4개로 재호출 (집계자)
+app.main -> input.user: 개별 응답 4개 + 집계 응답(스트리밍)
