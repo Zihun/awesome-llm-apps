@@ -763,6 +763,24 @@ FINAL: 'Fake final answer: 2 + 3 = 5'
 
 이 여섯 개의 실행을 모두 합쳐 보면 콜백은 로깅 훅과 제어점 그 사이 어딘가가 아니라, 정확히 둘 다입니다 — 아무것도 반환하지 않으면 관찰만 하는 로깅 훅이고, 값을 반환하면 그 반환값의 타입과 계층에 따라 각기 다른 강도로 실행을 대신하는 제어점이 됩니다.
 
+지금까지 다섯 스텝 모두 `python agent.py`로 콜백만 직접 확인했고, `아키텍처 한눈에 보기`가 가리키는 `app.py`(Streamlit UI, 세 폴더 동일 구조)는 한 번도 실행하지 않았습니다. 이 폴더(`6_3_tool_execution_callbacks`)를 벗어나지 않고 마지막으로, 그 UI가 실제로 뜨는지만 헤드리스로 확인합니다 — 채팅 메시지를 보내지 않으므로 `run_agent()`는 호출되지 않고, 페이지 골격을 그리는 데는 `GOOGLE_API_KEY`가 필요 없습니다.
+
+```bash
+uv run --no-project streamlit run app.py --server.headless true --server.port 8989
+```
+
+(bash·PowerShell 공통 — 환경변수를 쓰지 않는 명령입니다.) 다른 터미널에서:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8989
+```
+
+```
+200
+```
+
+(직접 확인. Day 018 Step 3과 같은 방식 — 정적 HTML 뼈대만 확인한 것이고, 실제 채팅 화면은 브라우저 자바스크립트가 그리므로 이 환경에서는 직접 보지 못했습니다. 확인 후 서버는 종료했습니다.)
+
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
@@ -783,7 +801,7 @@ FINAL: 'Fake final answer: 2 + 3 = 5'
 - [ ] `6_3`을 그대로 실행하면 도구 콜백 둘 다 한 번도 실행되지 않는다는 것을 확인했다
 - [ ] 통합 실행에서 실제(리포) 도구 콜백이 `before_agent → before_model → before_tool → after_tool → before_model → after_agent` 순서로 실행됨을 확인했다
 - [ ] `before_tool_callback`이 가로채도 `after_tool_callback`은 항상 실행된다는 비대칭을 확인했다
-- [ ] `6_1`의 Streamlit UI를 헤드리스로 띄워 HTTP 200을 확인했다
+- [ ] `6_3`의 Streamlit UI(`app.py`, 세 폴더 동일 구조)를 헤드리스로 띄워 HTTP 200을 확인했다
 
 ## 문제 해결
 
