@@ -1,27 +1,16 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 3
 
-front: "실행 준비" {
-  class: group
-  grid-columns: 2
-  user: 실행자 (터미널) { class: person }
-  ctx: 컨텍스트 객체 (UserInfo) { class: ours }
-}
-
-back: "실행과 호출 대상" {
-  class: group
-  grid-columns: 3
-  tools: 컨텍스트 인식 도구 3개 { class: ours }
-  runner: 실행 엔진 (Runner) { class: ours }
-  openai: OpenAI API { class: ext }
-}
-
+user: 실행자 (터미널) { class: person }
+ctx: 컨텍스트 객체 (UserInfo) { class: ours }
+tools: 컨텍스트 인식 도구 3개 { class: ours }
+runner: 실행 엔진 (Runner) { class: ours }
+openai: OpenAI API { class: ext }
 agent: 컨텍스트 인식 에이전트 (root_agent) { class: ours }
 
-front.user -> back.runner: Runner.run(agent, msg, context=ctx)
-front.ctx -> back.runner: context 인자로 전달
-back.runner -> agent: 에이전트 실행
-agent -> back.tools: 도구 호출 결정
-back.tools -> front.ctx: wrapper.context 읽기/쓰기
-back.runner -> back.openai: 모델 호출
+user -> runner: Runner.run(agent, msg, context=ctx)
+ctx -> runner: context 인자로 전달
+runner -> agent: 에이전트 실행
+agent -> tools: 도구 호출 결정
+tools -> ctx: wrapper.context 읽기/쓰기
+runner -> openai: 모델 호출

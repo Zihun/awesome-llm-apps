@@ -3,9 +3,9 @@ shape: sequence_diagram
 
 user: 실행자 { class: person }
 runner: Runner { class: ours }
-agent: root_agent { class: ours }
-tools: 컨텍스트 인식 도구 { class: ours }
 ctx: UserInfo 컨텍스트 { class: ours }
+tools: 컨텍스트 인식 도구 { class: ours }
+agent: root_agent { class: ours }
 openai: OpenAI API { class: ext }
 
 user -> runner: Runner.run(agent, message, context=ctx)
