@@ -1,14 +1,8 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 2
 
-front: "요청 진입/응답" {
-  class: group
-  grid-columns: 2
-
-  user: 사용자 (브라우저) { class: person }
-  adk_web: adk web 서버 { class: ext }
-}
+user: 사용자 (브라우저) { class: person }
+adk_web: adk web 서버 { class: ext }
 
 openai_path: 2_1_openai_adk_agent/ {
   class: ours
@@ -22,7 +16,6 @@ anthropic_path: 2_2_anthropic_adk_agent/ {
 
 shared: "공통 요소" {
   class: ours
-  grid-columns: 2
 
   env: API 키 (.env) { class: file }
   tool: get_fun_fact 도구 { class: ours }
@@ -30,14 +23,14 @@ shared: "공통 요소" {
 
 openrouter: 모델 게이트웨이 (OpenRouter API) { class: ext }
 
-front.user -> front.adk_web: 채팅 메시지 (POST /run)
-front -> openai_path: 이름 검증 후 동적 임포트
-front -> anthropic_path: 마찬가지
+user -> adk_web: 채팅 메시지 (POST /run)
+adk_web -> openai_path: 이름 검증 후 동적 임포트
+adk_web -> anthropic_path: 마찬가지
 shared -> openai_path: OPENROUTER_API_KEY
 shared -> anthropic_path: 마찬가지
-openai_path -> shared: tools 파라미터로 연결
-anthropic_path -> shared: tools 파라미터로 연결
+shared.tool -> openai_path: tools 파라미터로 연결
+shared.tool -> anthropic_path: 마찬가지
 openai_path -> openrouter: openrouter/openai/gpt-4o 요청
 anthropic_path -> openrouter: openrouter/anthropic/claude-sonnet-4 요청
-openrouter -> front: 생성된 응답
-front.adk_web -> front.user: 응답 표시
+openrouter -> adk_web: 생성된 응답
+adk_web -> user: 응답 표시

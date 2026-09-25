@@ -13,7 +13,7 @@ adk_web -> agent: 검증 통과 시 동적 임포트해 조회
 agent -> adk_web: model(LiteLlm)·instruction·tools 반환
 adk_web -> openrouter: openrouter/<제공자>/<모델>로 추론 요청
 openrouter -> adk_web: 도구 호출 요청 또는 최종 응답
-adk_web -> tool: (도구 호출 요청 시) get_fun_fact 실행
+adk_web -> tool: get_fun_fact()
 tool -> adk_web: 무작위 사실 문자열
 adk_web -> openrouter: 도구 결과를 포함해 재요청
 openrouter -> adk_web: 최종 응답
