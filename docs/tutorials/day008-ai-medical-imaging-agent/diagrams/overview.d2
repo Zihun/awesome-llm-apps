@@ -1,6 +1,5 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
 
 input: "입력" {
   class: group
@@ -11,7 +10,7 @@ input: "입력" {
 
 app: ai_medical_imaging.py {
   class: ours
-  grid-columns: 2
+  grid-columns: 4
 
   ui: Streamlit UI { class: ours }
   tmp: temp_resized_image.png { class: file }
@@ -21,17 +20,13 @@ app: ai_medical_imaging.py {
 
 external: "외부 API" {
   class: group
-  grid-columns: 1
+  grid-columns: 2
   gemini: Gemini (gemini-2.5-pro) { class: ext }
   ddgapi: DuckDuckGo { class: ext }
 }
 
-input.user -> app.ui: 이미지 업로드 + 버튼 클릭
-input.key -> app.agent: 인증
-app.ui -> app.tmp: PIL로 리사이즈 후 저장
-app.tmp -> app.agent: 파일 경로 (AgnoImage)
-app.agent -> external.gemini: 고정 진단 프롬프트 + 이미지 + 도구 스키마
-app.agent -> app.ddg
-app.ddg -> external.ddgapi: 검색어 (문헌·치료 프로토콜)
-external.gemini -> app.agent: 소견 (markdown)
-app.agent -> app.ui: response.content
+input -> app: 이미지 업로드 + 버튼 클릭 (user)
+input -> app: 인증 (key, agent로)
+app -> external: 고정 진단 프롬프트 + 이미지 + 도구 스키마 (agent → gemini)
+app -> external: 검색어 (문헌·치료 프로토콜, ddg → ddgapi)
+external -> app: 소견 (markdown, gemini → agent)
