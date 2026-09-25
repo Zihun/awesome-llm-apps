@@ -8,17 +8,18 @@ front: "브라우저 쪽" {
   ui: ADK Web UI (adk web) { class: ext }
 }
 
-coordinator: "코디네이터 (multi_agent_researcher, 자신도 모델 호출)" { class: ours }
+coordinator: "코디네이터 (multi_agent_researcher, 전환 대상 둘 다 직접)" { class: ours }
 research: 리서치 에이전트 (research_agent) { class: ours }
 summarizer: 요약 에이전트 (summarizer_agent) { class: ours }
-critic: 비평 에이전트 (critic_agent) { class: ours }
+critic: 비평 { class: ours }
 
 gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
 front -> coordinator: 연구 주제 → root_agent 실행
 coordinator -> research: 도구 호출 후 응답 대기
 coordinator -> summarizer: transfer_to_agent (복귀 없음)
-coordinator -> critic: transfer_to_agent (복귀 없음, 직접 대상)
+coordinator -> critic: transfer_to_agent
 research -> gemini: 모델 호출
 summarizer -> gemini: 모델 호출
 critic -> gemini: 모델 호출
+coordinator -> gemini: 모델 호출
