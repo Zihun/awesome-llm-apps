@@ -1,27 +1,20 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
 
-front: "요청과 보호 대상" {
-  class: group
-  grid-columns: 2
-  user: 사용자 { class: person }
-  protected: 보호 대상 에이전트 (root_agent) { class: ours }
-}
+user: 사용자 { class: person }
+protected: 보호 대상 에이전트 (root_agent) { class: ours }
 
 checks: "가드레일 검사" {
   class: group
-  grid-columns: 2
   input_check: 입력 가드레일 (math_homework_guardrail) { class: ours }
   output_check: 출력 가드레일 (content_safety_guardrail) { class: ours }
 }
 
 openai: OpenAI API { class: ext }
 
-front.user -> front.protected: 질문
-front.protected -> checks.input_check: 원본 입력
-checks -> openai: 분류 요청 (자체 Runner.run)
-front.protected -> openai: 실제 응답 생성
-front.protected -> checks.output_check: 생성된 응답
+user -> protected: 질문
+protected -> checks.input_check: 원본 입력
+checks.input_check -> openai: 분류 요청 (자체 Runner.run)
+protected -> openai: 실제 응답 생성
+protected -> checks.output_check: 생성된 응답
 checks.output_check -> openai: 안전 검사 요청 (자체 Runner.run)
-front.protected -> front.user: 최종 응답
