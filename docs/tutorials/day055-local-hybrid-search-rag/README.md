@@ -385,7 +385,7 @@ raglite 0.2.1의 `insert_document`(소스로 확인, `_insert.py`)는 `tqdm`으�
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 앱이 저장하려는 파일이 실제로 존재하고 pypdf로 열리는지까지는 임베더 없이 확인할 수 있습니다(리포에 포함된 예시 PDF는 없으므로, 아무 PDF나 받아 pypdf 설치만으로 페이지 수를 셉니다).
+**확인.** 임베더 없이 확인할 수 있는 것은 `pypdf`가 설치돼 있고 `PdfReader`를 불러올 수 있다는 것뿐입니다 — 아래 명령은 PDF 파일을 열지도, 페이지 수를 세지도 않습니다. `inspect.getfile(PdfReader)`는 그 클래스가 정의된 모듈의 파일 경로만 찍는 명령이고, 실제 출력도 그 경로 하나뿐입니다. 참고로 raglite 0.2.1은 PDF를 이 `pypdf`가 아니라 자신의 `raglite._markdown.document_to_markdown`으로 변환합니다(소스로 확인, `_insert.py:13,79`) — 실제로 PDF를 열어 마크다운으로 바꾸는 것은 이 문서에서 확인하지 못했습니다.
 
 ```bash
 uv run --no-project python -c "
