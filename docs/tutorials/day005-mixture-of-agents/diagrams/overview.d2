@@ -14,15 +14,12 @@ app: mixture-of-agents.py {
 together: Together AI API {
   m1: Qwen2-72B-Instruct { class: ext }
   m2: Qwen1.5-72B-Chat { class: ext }
-  m3: Mixtral-8x22B-Instruct { class: ext }
+  m3: Mixtral-8x22B-Instruct (제안자 + 집계자) { class: ext }
   m4: dbrx-instruct { class: ext }
 }
 
 input.user -> app.ui: 질문 + 키 입력
 input.key -> app: 생성자 인자 + 환경변수 (run_llm)
-app.runllm -> together.m1: 질문만 전달
-app.runllm -> together.m2: 질문만 전달
-app.runllm -> together.m3: 질문만 전달 (제안자)
-app.runllm -> together.m4: 질문만 전달
+app.runllm -> together: 질문만 전달 (4개 병렬)
 app.main -> together.m3: 응답 4개로 재호출 (집계자)
 app.main -> input.user: 개별 응답 4개 + 집계 응답(스트리밍)
