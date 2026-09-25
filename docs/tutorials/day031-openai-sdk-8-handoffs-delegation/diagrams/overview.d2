@@ -1,15 +1,10 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 2
 
-entry: "진입" {
-  class: group
-  user: 사용자 { class: person }
-}
+user: 사용자 { class: person }
 
 basic: "8_1_basic_handoffs" {
   class: group
-  grid-columns: 3
   billing: 빌링 { class: ours }
   triage: 트리아지 { class: ours }
   technical: 기술지원 { class: ours }
@@ -17,15 +12,14 @@ basic: "8_1_basic_handoffs" {
 
 advanced: "8_2_advanced_handoffs" {
   class: group
-  grid-columns: 2
   triage2: 고급 트리아지 (root_agent) { class: ours }
   escalation: 에스컬레이션 (escalation_agent) { class: ours }
 }
 
 openai: OpenAI API { class: ext }
 
-entry.user -> basic: 문의
-entry.user -> advanced: 문의
+user -> basic: 문의
+user -> advanced: 문의
 basic.triage -> basic.billing: handoffs 목록 등록 (복귀 없음)
 basic.triage -> basic.technical: handoffs 목록 등록 (복귀 없음)
 advanced.triage2 -> advanced.escalation: handoff 함수로 등록 (복귀 없음)
