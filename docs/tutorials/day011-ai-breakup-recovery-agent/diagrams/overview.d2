@@ -1,10 +1,9 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 2
 
 app: ai_breakup_recovery_agent.py {
   class: ours
-  grid-columns: 2
+  grid-columns: 3
 
   ui: Streamlit 입력 폼 { class: ours }
   init: 에이전트 초기화 { class: ours }
@@ -32,10 +31,7 @@ external: "외부 API" {
   duckduckgo: DuckDuckGo { class: ext }
 }
 
-input.user -> app: 사연 텍스트 + 스크린샷 입력 (ui로)
-input.key -> app.init: 인증
-app.ui -> app.init: Get Recovery Plan 클릭
-app.init -> app.agents: 공유 Gemini 클라이언트로 4개 생성
-app.agents -> external.gemini: 호출1~4 (공감/이별 편지/7일 루틴/피드백)
-app.agents.honesty -> external.duckduckgo: 필요 시 웹 검색
-app.agents -> input.user: 답변 4개를 순서대로 개별 표시 (합성 없음)
+input -> app: 사연 텍스트 + 스크린샷 + 키 입력
+app -> external: 호출1~4 (공감/이별 편지/7일 루틴/피드백, agents → gemini)
+app -> external: 필요 시 웹 검색 (honesty → duckduckgo)
+app -> input: 답변 4개를 순서대로 개별 표시 (agents, 합성 없음)
