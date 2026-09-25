@@ -1,30 +1,25 @@
 ...@../../_tools/theme
-direction: right
-grid-columns: 2
+direction: down
 
-front: "브라우저 쪽" {
-  class: group
+user: 사용자 { class: person }
+
+app: "chat_substack.py" {
+  class: ours
   grid-columns: 2
-  user: 사용자 { class: person }
-  ui: Streamlit UI (chat_substack.py) { class: ours }
+  ui: Streamlit UI { class: ours }
+  bot: embedchain App (embedchain_bot) { class: ours }
 }
 
-local: "로컬 프로세스" {
-  class: group
-  grid-columns: 2
-  app: embedchain App (embedchain_bot) { class: ours }
-  store: Chroma 벡터 저장소 { class: store }
-}
+store: Chroma 벡터 저장소 { class: store }
 
 external: "외부 서비스" {
   class: group
-  grid-rows: 3
+  grid-columns: 3
   substack: Substack 뉴스레터 { class: ext }
   embed_api: OpenAI 임베딩 API { class: ext }
   chat_api: OpenAI Chat API { class: ext }
 }
 
-front.user -> front.ui: 키·URL·질문 입력
-front.ui -> local.app: embedchain_bot() 생성
-local.app -> local.store: 청크 저장·유사도 검색
-local -> external: 사이트맵·본문 요청 → 임베딩 → 답변 생성
+user -> app: 키·URL·질문 입력
+app -> store: 청크 저장·유사도 검색
+app -> external: 사이트맵·본문 요청 → 임베딩 → 답변 생성
