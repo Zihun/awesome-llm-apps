@@ -3,7 +3,7 @@ direction: down
 
 logic: "앱 로직 (agentic_rag_gpt5.py)" {
   class: group
-  sources: 지식 소스 URL { class: file }
+  sources: 지식 소스 URL (웹에서 다운로드) { class: file }
   knowledge: 지식 베이스 (load_knowledge) { class: ours }
   agent: GPT-5 에이전트 (load_agent) { class: ours }
 
