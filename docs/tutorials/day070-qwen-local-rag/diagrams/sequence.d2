@@ -4,10 +4,10 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 embed_model: 임베딩 모델 (로컬) { class: ext }
-qdrant: Qdrant (로컬) { class: store }
-rag_agent: RAG 에이전트 { class: ours }
 chat_model: 채팅 모델 (로컬) { class: ext }
+rag_agent: RAG 에이전트 { class: ours }
 agno_api: Agno 통계 API { class: ext }
+qdrant: Qdrant (로컬) { class: store }
 
 user -> ui: 질문 입력
 ui -> embed_model: 질문 임베딩 요청
