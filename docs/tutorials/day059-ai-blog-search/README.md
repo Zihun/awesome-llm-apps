@@ -13,7 +13,7 @@
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
 | Google Gemini API 키 | 임베딩(`models/embedding-001`)과 채팅(`gemini-2.0-flash`) 호출 인증 — 다만 두 모델 모두 이미 서비스 종료 상태라 키가 맞아도 응답은 못 받습니다(Step 3, Google 공식 사용 중단 페이지 2026-09-26 확인) | https://aistudio.google.com/apikey |
-| Qdrant 인스턴스(Cloud 또는 자체 호스팅) | 벡터 저장소(`qdrant_db` 컬렉션). `QdrantClient` 생성자 시그니처상 요구하는 것은 도달 가능한 호스트 URL과 비어 있지 않은 API 키 문자열뿐이라, 인증 없는 로컬 Qdrant도 API 키 칸에 아무 문자열이나 채우면 통과할 것으로 보입니다(소스로 확인 — Step 3에서 직접 재현한 것은 인메모리 인스턴스와 차단된 가짜 클라우드 주소뿐입니다) | https://cloud.qdrant.io 가입 후 클러스터 생성, 또는 Day 047처럼 로컬 Docker Qdrant |
+| Qdrant 인스턴스(Cloud 또는 자체 호스팅) | 벡터 저장소(`qdrant_db` 컬렉션). 사이드바가 실제로 요구하는 것은 도달 가능한 호스트 URL과 비어 있지 않은 API 키 문자열뿐이라(`set_sidebar`의 `app.py:49`, `initialize_components`의 `app.py:59-62` 조건 — `QdrantClient` 자체는 이 값들을 강제하지 않음), 인증 없는 로컬 Qdrant도 API 키 칸에 아무 문자열이나 채우면 통과할 것으로 보입니다(소스로 확인 — Step 3에서 직접 재현한 것은 인메모리 인스턴스와 차단된 가짜 클라우드 주소뿐입니다) | https://cloud.qdrant.io 가입 후 클러스터 생성, 또는 Day 047처럼 로컬 Docker Qdrant |
 | streamlit (별도 설치) | 앱의 UI 프레임워크 — `requirements.txt` 10줄 어디에도 없어 기본 설치로는 빠짐(Step 1에서 직접 확인) | Step 1의 `uv pip install -r requirements.txt streamlit "langchain<1.0"`로 한 번에 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 
@@ -139,13 +139,15 @@ uv pip install -r requirements.txt streamlit "langchain<1.0"
 uv pip check
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(방금 전 `uv pip install -r requirements.txt`를 이미 실행해 둔 같은 환경에 이어서 — 즉 이 문서를 순서대로 따라온 경우):
 
 ```
-All installed packages are compatible
+Found 2 incompatibilities
+The package `langchain-classic` requires `langchain-core>=1.4.4,<2.0.0`, but `0.3.86` is installed
+The package `langchain-classic` requires `langchain-text-splitters>=1.1.2,<2.0.0`, but `0.3.11` is installed
 ```
 
-이제 `langchain==0.3.30`·`langchain-google-genai==2.1.12`·`langchain-qdrant==0.2.1`·`langgraph==1.0.1`·`streamlit==1.64.0`으로 110개 패키지가 서로 호환되게 다시 풀립니다(직접 확인). `python -m py_compile`은 문법만 보므로 위 import 파손을 가리지 못합니다 — 실제로 통과하는지는 import 자체로 확인해야 합니다.
+`All installed packages are compatible`가 **아닙니다** — 걱정할 것 없는 이유까지 직접 확인했습니다. 이 두 줄은 전부 `langchain-classic==1.0.8`(처음 `-r requirements.txt`만 설치했을 때 `langchain==1.4.2`가 딸려 들여온 것) 하나에 관한 것이고, `app.py`는 `langchain_classic`을 어디에서도 import하지 않습니다(`grep -n "langchain_classic" app.py`가 빈 결과). 즉 이번 설치가 실제로 쓰는 `langchain==0.3.30`·`langchain-google-genai==2.1.12`·`langchain-qdrant==0.2.1`·`langgraph==1.0.1`·`streamlit==1.64.0`은 서로 호환되고, 남는 것은 아무도 안 쓰는 이전 설치의 찌꺼기 패키지 하나뿐입니다(직접 확인 — 새 venv에 처음부터 이 세 패키지를 한 번에 설치하면 `langchain-classic` 자체가 안 들어와 `uv pip check`가 정말로 `All installed packages are compatible`를 냅니다). `python -m py_compile`은 문법만 보므로 위 import 파손을 가리지 못합니다 — 실제로 통과하는지는 import 자체로 확인해야 합니다.
 
 ```bash
 uv run --no-project python -c "import app; print('import app OK')"
@@ -513,7 +515,7 @@ for e in g.get_graph().edges:
 "
 ```
 
-이 코드는 `app.py`를 모듈로 import하므로(24행에서 `import streamlit as st`) `streamlit`과 Step 1에서 하나로 재해석해 설치한 `langchain<1.0` 환경이 필요합니다(import만 하면 `st.session_state`를 실제로 쓰지 않는 한 문제없이 로드됩니다). `app.py`의 실제 `get_graph`를 더미 리트리버 도구로 직접 불러 확인한 결과(Streamlit bare-mode 경고 여러 줄은 생략):
+이 코드는 `app.py`를 모듈로 import하므로(`app.py:26`의 `import streamlit as st`) `streamlit`과 Step 1에서 하나로 재해석해 설치한 `langchain<1.0` 환경이 필요합니다. import 시점에 `app.py:32-37`이 `st.session_state`를 곧바로 건드리지만(`if 'x' not in st.session_state: ...`), Streamlit이 스크립트 실행기 밖(bare mode)에서도 이를 오류 없이 받아 주므로 경고만 몇 줄 찍히고 로드는 그대로 됩니다. `app.py`의 실제 `get_graph`를 더미 리트리버 도구로 직접 불러 확인한 결과(Streamlit bare-mode 경고 여러 줄은 생략):
 
 ```
 __start__ -> agent
@@ -715,7 +717,7 @@ grep -n "def from_tiktoken_encoder" -A 20 "$(uv run --no-project python -c 'impo
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 오늘의 "행복 경로" — 에이전트가 도구를 부르고, 검색된 문서가 관련 있다고 채점되어 `generate`까지 가는 경로 — 를 그린 것입니다. 질문이 오면 에이전트는 먼저 Gemini에 도구 바인딩 모델 호출을 보내 도구 호출 여부를 결정하고(Step 5·6), 도구를 부르기로 하면 `retrieve`가 (리트리버 내부에서) 질의를 Gemini로 먼저 임베딩한 뒤 그 벡터로 Qdrant에 유사도 검색(k=5)을 보냅니다(Step 4). 그 결과는 `retrieve` 자신이 아니라 **`retrieve`에 이어지는 조건부 엣지 함수 `grade_documents`**가 Gemini에 다시 보내 관련성을 채점하고("yes"/"no", Step 6), 관련 있으면 `generate`로 넘어가 LangChain Hub에서 프롬프트를 받고(Step 6) Gemini에 답변 생성을 요청해 화면에 표시합니다. 반대로 채점이 "no"였다면 이 그림과 다른 경로를 탑니다 — `generate` 대신 `rewrite`가 질문을 다시 써서 `agent`로 돌아가며(Step 5), 에이전트가 애초에 도구를 부르지 않기로 했다면 `retrieve` 자체를 거치지 않고 곧장 끝나 화면에는 빈 응답만 남습니다(Step 6). 이 시퀀스는 각 구간을 소스와 Step 2~6에서 개별적으로 확인한 것을 이어붙인 것이며, Gemini·Qdrant 키가 없어 처음부터 끝까지 한 번에 재현하지는 못했습니다.
+이 그림은 오늘의 "행복 경로" — 에이전트가 도구를 부르고, 검색된 문서가 관련 있다고 채점되어 `generate`까지 가는 경로 — 를 그린 것입니다. 질문이 오면 에이전트는 먼저 Gemini에 도구 바인딩 모델 호출을 보내 도구 호출 여부를 결정하고(Step 5·6), 도구를 부르기로 하면 `retrieve`가 (리트리버 내부에서) 질의를 Gemini로 먼저 임베딩한 뒤 그 벡터로 Qdrant에 유사도 검색(k=5)을 보냅니다(Step 4). 그 결과는 `retrieve` 자신이 아니라 `retrieve`에 이어지는 조건부 엣지 함수 `grade_documents`가 Gemini에 다시 보내 관련성을 채점하고("yes"/"no", Step 6), 관련 있으면 `generate`로 넘어가 LangChain Hub에서 프롬프트를 받고(Step 6) Gemini에 답변 생성을 요청해 화면에 표시합니다. 반대로 채점이 "no"였다면 이 그림과 다른 경로를 탑니다 — `generate` 대신 `rewrite`가 질문을 다시 써서 `agent`로 돌아가며(Step 5), 에이전트가 애초에 도구를 부르지 않기로 했다면 `retrieve` 자체를 거치지 않고 곧장 끝나 화면에는 빈 응답만 남습니다(Step 6). 이 시퀀스는 각 구간을 소스와 Step 2~6에서 개별적으로 확인한 것을 이어붙인 것이며, Gemini·Qdrant 키가 없어 처음부터 끝까지 한 번에 재현하지는 못했습니다.
 
 ## 실행 체크리스트
 
