@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-Day 047부터 이 볼륨이 반복해 온 "청크 → 임베딩 → 검색 → 생성" 골격은 오늘도 그대로입니다. 오늘 달라지는 것은 그 골격을 감싸는 타입입니다 — Pydantic AI의 `Agent`가 내놓는 답은 `text`뿐인 문자열이 아니라 인용·신뢰도·응답 여부를 갖춘 `Answer` 모델이고, 에이전트는 반드시 타입이 있는 `retrieve` 도구를 거쳐야 하며, 그 도구가 돌려주는 근거도 `RetrievalEvidence`라는 별도 모델입니다. 검색 점수가 문턱을 넘지 못하면 모델을 아예 부르지 않고 거절하고(Step 6), 모델이 답을 내놓아도 인용한 `quoted_span`이 실제로 저장된 청크 원문에 없으면 그 답은 버려지고 거절로 바뀝니다(Step 6) — LLM의 자기 신고가 아니라 코드가 직접 원문을 대조하는 이중 방어입니다. 벡터 저장소도 Qdrant나 ChromaDB 같은 별도 서비스가 아니라 NumPy 배열 하나로 세션 동안만 사는 `InMemoryVectorStore`이고(Step 4), 임베딩은 OpenAI 키가 있으면 `text-embedding-3-small`을, 없으면 해시 기반 로컬 벡터를 자동으로 씁니다(Step 3) — 다만 이 로컬 대안은 영문·숫자만 토큰으로 남기므로 한국어 문서·질문에는 쓸 수 없습니다(직접 확인, Step 3·문제 해결). 이 앱을 실제로 설치하고 import·테스트를 돌려본 범위에서는(직접 확인, Step 1·8) 이 한계 말고는 결함을 찾지 못했습니다 — 이 볼륨의 여러 날과 달리 앱 자체의 README가 코드와 어긋나는 곳도 없었습니다. 완성하면 PDF나 문서 URL을 올려 지식베이스를 만들고, 질문하면 인용과 신뢰도가 붙은 답 또는 명확한 거절 메시지를 받는 화면을 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
+Day 047부터 이 볼륨이 반복해 온 "청크 → 임베딩 → 검색 → 생성" 골격은 오늘도 그대로입니다. 오늘 달라지는 것은 그 골격을 감싸는 타입입니다 — Pydantic AI의 `Agent`가 내놓는 답은 `text`뿐인 문자열이 아니라 인용·신뢰도·응답 여부를 갖춘 `Answer` 모델이고, 에이전트는 반드시 타입이 있는 `retrieve` 도구를 거쳐야 하며, 그 도구가 돌려주는 근거도 `RetrievalEvidence`라는 별도 모델입니다. 검색 점수가 문턱을 넘지 못하면 모델을 아예 부르지 않고 거절하고(Step 6), 모델이 답을 내놓아도 인용한 `quoted_span`이 실제로 저장된 청크 원문에 없으면 그 답은 버려지고 거절로 바뀝니다(Step 6) — LLM의 자기 신고가 아니라 코드가 직접 원문을 대조하는 이중 방어입니다. 벡터 저장소도 Qdrant나 ChromaDB 같은 별도 서비스가 아니라 NumPy 배열 하나로 세션 동안만 사는 `InMemoryVectorStore`이고(Step 4), 임베딩은 OpenAI 키가 있으면 `text-embedding-3-small`을, 없으면 해시 기반 로컬 벡터를 자동으로 씁니다(Step 3) — 다만 이 로컬 대안은 영문·숫자만 토큰으로 남기므로 한국어 문서·질문에는 사실상 쓸 수 없습니다(공통 숫자가 없는 한 점수가 0.0, 직접 확인, Step 3·문제 해결). 이 앱을 실제로 설치하고 import·테스트를 돌려본 범위에서는(직접 확인, Step 1·8) 이 한계 말고는 결함을 찾지 못했습니다 — 이 볼륨의 여러 날과 달리 앱 자체의 README가 코드와 어긋나는 곳도 없었습니다. 완성하면 PDF나 문서 URL을 올려 지식베이스를 만들고, 질문하면 인용과 신뢰도가 붙은 답 또는 명확한 거절 메시지를 받는 화면을 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -271,7 +271,7 @@ def default_embedding_backend() -> EmbeddingBackend:
     return HashingEmbeddingBackend()
 ```
 
-`HashingEmbeddingBackend`는 어간을 자른 단어(`_stem`, `rag_tutorials/agentic_typed_rag_pydanticai/rag.py:173-177`)와 인접 바이그램을 blake2b 해시로 고정 차원에 흩뿌려 코사인 유사도를 흉내 냅니다 — 의미가 아니라 어휘 일치에 가깝습니다(앱 자체 README도 같은 취지로 "keyword-oriented"라고 밝힙니다). 그런데 그 단어를 고르는 `_terms`(`rag_tutorials/agentic_typed_rag_pydanticai/rag.py:180-187`)는 `re.findall(r"[a-z0-9]+", text.casefold())`로 영문·숫자만 토큰으로 남기므로, 한국어 문장은 숫자를 빼면 토큰이 하나도 남지 않습니다 — 한국어 PDF·질문을 이 백엔드로 색인·검색하면 항상 벡터가 0에 가까워 사실상 검색이 되지 않습니다(직접 확인, 아래·문제 해결). `pydantic_ai.Embedder`는 이 버전(2.10.0)에 실제로 존재하며(직접 확인), 키가 없어도 객체 생성 자체는 실패하지 않습니다 — 실패는 실제로 `embed_documents`/`embed_query`를 호출할 때에야 일어납니다.
+`HashingEmbeddingBackend`는 어간을 자른 단어(`_stem`, `rag_tutorials/agentic_typed_rag_pydanticai/rag.py:173-177`)와 인접 바이그램을 blake2b 해시로 고정 차원에 흩뿌려 코사인 유사도를 흉내 냅니다 — 의미가 아니라 어휘 일치에 가깝습니다(앱 자체 README도 같은 취지로 "keyword-oriented"라고 밝힙니다). 그런데 그 단어를 고르는 `_terms`(`rag_tutorials/agentic_typed_rag_pydanticai/rag.py:180-187`)는 `re.findall(r"[a-z0-9]+", text.casefold())`로 영문·숫자만 토큰으로 남기므로, 한국어 문장은 숫자를 빼면 토큰이 하나도 남지 않습니다 — 한국어 PDF·질문을 이 백엔드로 색인·검색하면 문서와 질문에 공통된 숫자가 없는 한 점수가 0.0이 되어 사실상 검색이 되지 않습니다(직접 확인, 아래·문제 해결). `pydantic_ai.Embedder`는 이 버전(2.10.0)에 실제로 존재하며(직접 확인), 키가 없어도 객체 생성 자체는 실패하지 않습니다 — 실패는 실제로 `embed_documents`/`embed_query`를 호출할 때에야 일어납니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -839,23 +839,25 @@ cp .env.example .env
 uv run --no-project streamlit run app.py
 ```
 
-이 명령을 그대로 실행하면 브라우저 탭이 자동으로 열리고 "📎 Typed Agentic RAG" 제목과 사이드바가 뜹니다. 이 문서는 브라우저를 열 수 없어 같은 명령에 헤드리스 옵션만 더해 키 없이 직접 확인했습니다 — 다른 에이전트와 포트가 겹치지 않도록 임의의 높은 포트(49152~65535 범위, 이번엔 61234)를 썼고, `--browser.serverAddress localhost`를 더해 외부 IP 조회를 피했습니다(이 플래그가 없으면 헤드리스 Streamlit이 시작 배너를 만들며 외부 IP를 조회합니다, Day 054 참고).
+이 명령을 그대로 실행하면 브라우저 탭이 자동으로 열리고 "📎 Typed Agentic RAG" 제목과 사이드바가 뜹니다. 이 문서는 브라우저를 열 수 없어 같은 명령에 헤드리스 옵션만 더해 키 없이 직접 확인했습니다 — 다른 에이전트와 포트가 겹치지 않도록 임의의 높은 포트(49152~65535 범위, 이번엔 61236)를 썼고, `--server.address localhost`를 더해 로컬호스트에만 열리게 했습니다. 이 플래그가 없으면 1.59.2는 모든 인터페이스(`::`)에 열리고, 헤드리스 시작 배너가 외부 IP를 조회합니다(Day 054 참고) — `--server.address localhost`는 이 조회도 함께 막습니다(직접 확인).
 
 ```bash
-uv run --no-project streamlit run app.py --server.headless true --server.port 61234 --browser.serverAddress localhost
+uv run --no-project streamlit run app.py --server.headless true --server.port 61236 --server.address localhost
 ```
 
-직접 확인한 콘솔 출력(키 없이도 서버는 뜨고, 질문을 실제로 하기 전까지는 키가 필요 없습니다):
+직접 확인한 콘솔 출력(키 없이도 서버는 뜨고, 질문을 실제로 하기 전까지는 키가 필요 없습니다. 첫 줄은 이 컴퓨터에 Streamlit 사용 기록이 전혀 없을 때만 한 번 뜹니다 — 이 문서는 빈 홈 디렉터리로 재현해 확인했습니다):
 
 ```
-Uvicorn server started on localhost:61234
+Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.
+
+Uvicorn server started on localhost:61236
 
   You can now view your Streamlit app in your browser.
 
-  URL: http://localhost:61234
+  URL: http://localhost:61236
 ```
 
-같은 터미널에서 `curl -s -o /dev/null -w "%{http_code}" http://localhost:61234/`로 응답을 확인하면 `200`이 돌아오고(직접 확인), 확인이 끝나면 그 프로세스를 종료합니다(`Ctrl+C` 또는 이 문서가 재현에 쓴 `kill`).
+다른 터미널에서 `curl -s -o /dev/null -w "%{http_code}" http://localhost:61236/`로 응답을 확인하면 `200`이 돌아오고(직접 확인 — 서버를 띄운 터미널은 그 프로세스가 전경을 차지해 명령을 더 받지 못합니다), 확인이 끝나면 그 프로세스를 종료합니다(`Ctrl+C` 또는 이 문서가 재현에 쓴 `kill`).
 
 ### Step 8. TestModel로 실제 호출 없이 검증하기 (test_typed_rag.py)
 
@@ -957,7 +959,7 @@ OK
 | 문서 URL에 사내 서버나 `localhost`, `169.254.169.254` 같은 주소를 넣으면 `ValueError: Private or local URLs are not supported` | `validate_public_url`이 사설·루프백·링크로컬 주소를 전부 거부함(직접 확인, Step 2) — 클라우드 메타데이터 서버로의 SSRF를 막기 위한 설계 | 공인 인터넷에서 접근 가능한 URL만 사용 |
 | 스캔 이미지로만 된 PDF를 올리면 `ValueError: No extractable text found in {파일명}` | `ingest_pdf`는 `pypdf`의 `extract_text()`가 빈 문자열을 돌려주는 페이지를 전부 건너뛰고, 청크가 하나도 안 남으면 예외를 냄(직접 확인, Step 2) | OCR로 텍스트 레이어를 추가한 PDF를 올리거나 다른 문서 사용 |
 | 질문했는데 항상 "I do not have enough evidence..."만 뜸 | 사이드바의 "Refusal threshold"가 실제 검색 점수보다 높게 설정됨 — 로컬 해싱 임베딩은 의미가 아니라 어휘 일치라 점수가 OpenAI 임베딩보다 낮게 나오는 경향이 있음(Step 3) | 문턱 슬라이더를 낮추거나(예: 0.10) OpenAI 임베딩으로 전환 |
-| 한국어 PDF·질문은 임베딩 모드와 무관하게 슬라이더를 최솟값(0.05)까지 낮춰도 항상 거절됨(로컬 해싱일 때) | `_terms`가 `[a-z0-9]+`만 토큰으로 남겨 한글 문장이 통째로 빈 벡터가 됨 — 점수가 정확히 0.0이라 문턱을 아무리 낮춰도 넘지 못함(직접 확인, Step 3) | 임베딩을 "OpenAI"로 바꾸거나(키 필요) 영어 문서·질문으로 시험 |
+| 로컬 해싱 모드에서 한국어 PDF·질문은 슬라이더를 최솟값(0.05)까지 낮춰도 거절됨 | `_terms`가 `[a-z0-9]+`만 토큰으로 남겨 한글 문장의 벡터가 숫자를 뺀 나머지를 전부 잃음 — 문서·질문에 공통된 숫자가 없으면 점수가 정확히 0.0(직접 확인, Step 3) | 임베딩을 "OpenAI"로 바꾸거나(키 필요) 영어 문서·질문으로 시험 |
 
 ## 더 해보기
 

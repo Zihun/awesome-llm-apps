@@ -25,17 +25,12 @@ agent: "타입 RAG 에이전트 (agent.py)" {
 }
 
 store: 벡터 저장소 (NumPy) { class: store }
+embedapi: OpenAI 임베딩 API { class: ext }
+answermodel: 답변 모델 API { class: ext }
 
-providers: "외부 제공자" {
-  class: group
-  grid-columns: 2
-  embedapi: OpenAI 임베딩 API { class: ext }
-  answermodel: 답변 모델 API { class: ext }
-}
-
-front -> kb
-front -> agent
+front -> kb: 업로드
+front -> agent: 질문
 kb -> store: 청크·벡터
-kb -> providers: 문서·질의 임베딩
+kb -> embedapi: 문서·질의 임베딩
 agent -> store: 유사도 검색
-agent -> providers: 출력 요청
+agent -> answermodel: 출력 요청
