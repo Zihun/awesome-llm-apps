@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+agent: 에이전트 (agent) { class: ours }
+retrieve: 검색 실행 (retrieve) { class: ours }
+rewrite: 질문 재작성 (rewrite) { class: ours }
+generate: 답변 생성 (generate) { class: ours }
+end: END { class: ours }
+
+agent -> retrieve: "도구 호출 (tools_condition)"
+agent -> end: "도구 미호출 (generate 건너뜀)"
+retrieve -> generate: "문서 관련 (grade_documents)"
+retrieve -> rewrite: "문서 무관 (grade_documents)"
+rewrite -> agent: 재질문
+generate -> end: 응답 반환
