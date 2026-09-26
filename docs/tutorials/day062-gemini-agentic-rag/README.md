@@ -1,10 +1,10 @@
 # Day 062 · 🤔 Gemini Agentic RAG
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 110분(agno의 `show_tool_calls` 제거가 세 에이전트 모두를 막는 과정과, 문서 검색 블록에 `try`가 없어 생기는 예외 전파를 직접 재현하는 절차가 더해져 다른 RAG 날보다 깁니다) · API 비용 대략 문서 임베딩(청크 수만큼)과 질의 임베딩(검색 시 1회)은 키만 있으면 실제로 나가지만, 채팅 관련 호출(질의 재작성·웹 검색·최종 생성)은 오늘 설치되는 agno에서 에이전트 생성 자체가 항상 실패해 사실상 발생하지 않습니다(직접 확인, Step 5) — 정확한 단가는 키가 없어 확인 못함 · 원본 앱: `rag_tutorials/gemini_agentic_rag`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 115분(agno의 `show_tool_calls` 제거가 세 에이전트 모두를 막는 과정, 문서 검색 블록에 `try`가 없어 생기는 예외 전파, 그리고 임베딩 모델의 서비스 종료를 각각 직접 재현하는 절차가 더해져 다른 RAG 날보다 깁니다) · API 비용 대략 0원에 가까움 — 채팅 세 곳(재작성·웹 검색·생성)은 agno의 `show_tool_calls` 제거로 에이전트 생성부터 막히고(Step 5), 임베딩(`text-embedding-004`)은 2026-01-14에 이미 서비스가 종료돼(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-27 확인) 유효한 키로도 문서 업로드의 검증 임베딩에서 실패합니다(Step 4) — 오늘은 어느 경로로도 실제 과금이 거의 나가지 않습니다 · 원본 앱: `rag_tutorials/gemini_agentic_rag`
 
 ## 오늘 만들 것
 
-오늘은 Gemini의 실험용 "thinking" 모델과 agno 에이전트 프레임워크, Qdrant 벡터 저장소를 엮은 Agentic RAG 앱을 다룹니다. 질문이 들어오면 먼저 별도 에이전트가 질문을 검색하기 좋게 다시 쓰고(질의 재작성), Qdrant에서 유사도 임계값(기본 0.7)을 넘는 문서를 찾아 문맥으로 삼으며, 문서가 없거나 사용자가 토글을 켜면 Exa AI로 웹을 검색해 대신 답합니다 — 웹 검색 폴백은 Day 057이, 질의 재작성은 Day 059가 이 볼륨에 각각 먼저 들여온 요소이고(둘 다 소스로 확인 — Day 047에는 재작성도 웹 폴백도 없습니다), 오늘은 그 둘을 한 앱에 함께 놓습니다. 오늘 새로 보는 것은 임베딩까지 Gemini 하나로 몰아준 `GeminiEmbedder`라는 자체 클래스(`google-genai`의 새 클라이언트를 LangChain의 `Embeddings` 인터페이스에 맞게 감쌉니다)입니다. 그런데 이 476줄을 실제로 설치해 그대로 실행해 보면(직접 확인, Step 1·5), 이 세련된 분기 이전에 두 개의 벽이 있습니다. 첫째, `requirements.txt` 7줄 어디에도 `beautifulsoup4`가 없는데 9번째 줄이 파일 맨 위에서 `import bs4`로 그것을 요구해서, 패키지를 더 설치하지 않으면 Streamlit 화면은 제목조차 뜨지 않고 `ModuleNotFoundError`로 통째로 멈춥니다(직접 확인, Step 1). 둘째, 그 벽을 넘어 화면이 뜨고 Google API 키까지 넣어도, 질의 재작성 에이전트·웹 검색 에이전트·최종 답변 에이전트 셋 다 — 셋 다 생성자에 `show_tool_calls=`를 넘기는데 — 오늘 설치되는 agno 3.0.11의 `Agent.__init__()`이 그 인자를 더 이상 받지 않아 `TypeError`로 즉시 실패합니다(직접 확인, Step 5). 이 오류는 각각 `try/except`로 감싸여 있어 앱이 죽지는 않지만, 화면에는 질문마다 오류 배너만 뜨고 실제 답변은 한 번도 만들어지지 않습니다. 문서 임베딩·저장은 이 세 에이전트와 무관한 별도 경로(`GeminiEmbedder`가 `google-genai` 클라이언트를 직접 부름)라서 키만 맞으면 실제로 호출이 나가지만, 그 임베딩조차 질의용 벡터에도 문서용 `task_type`(`RETRIEVAL_DOCUMENT`)을 그대로 쓰는 비대칭을 소스에서 확인했습니다(Step 4). 완성하면 PDF를 올리거나 URL을 넣고 질문하는 화면을 띄우게 되며, 이 문서는 그 화면 뒤에서 정확히 어느 줄이 왜 멈추는지를 직접 재현하며 따라갑니다. 아래는 완성된 아키텍처입니다.
+오늘은 Gemini의 실험용 "thinking" 모델과 agno 에이전트 프레임워크, Qdrant 벡터 저장소를 엮은 Agentic RAG 앱을 다룹니다. 질문이 들어오면 먼저 별도 에이전트가 질문을 검색하기 좋게 다시 쓰고(질의 재작성), Qdrant에서 유사도 임계값(기본 0.7)을 넘는 문서를 찾아 문맥으로 삼으며, 문서가 없거나 사용자가 토글을 켜면 Exa AI로 웹을 검색해 대신 답합니다 — 웹 검색 폴백은 Day 049(`autorag.py`의 `DuckDuckGoTools`)가, 질의 재작성은 Day 059가 이 볼륨에 각각 먼저 들여온 요소이고(둘 다 소스로 확인 — Day 047에는 둘 다 없습니다), 오늘은 그 둘을 한 앱에 함께 놓습니다. 오늘 새로 보는 것은 임베딩까지 Gemini 하나로 몰아준 `GeminiEmbedder`라는 자체 클래스(`google-genai`의 새 클라이언트를 LangChain의 `Embeddings` 인터페이스에 맞게 감쌉니다)입니다. 그런데 이 476줄을 실제로 설치해 그대로 실행해 보면(직접 확인, Step 1·5), 이 세련된 분기 이전에 두 개의 벽이 있습니다. 첫째, `requirements.txt` 7줄 어디에도 `beautifulsoup4`가 없는데 9번째 줄이 파일 맨 위에서 `import bs4`로 그것을 요구해서, 패키지를 더 설치하지 않으면 Streamlit 화면은 제목조차 뜨지 않고 `ModuleNotFoundError`로 통째로 멈춥니다(직접 확인, Step 1). 둘째, 그 벽을 넘어 화면이 뜨고 Google API 키까지 넣어도, 질의 재작성 에이전트·웹 검색 에이전트·최종 답변 에이전트 셋 다 — 셋 다 생성자에 `show_tool_calls=`를 넘기는데 — 오늘 설치되는 agno 3.0.11의 `Agent.__init__()`이 그 인자를 더 이상 받지 않아 `TypeError`로 즉시 실패합니다(직접 확인, Step 5). 이 오류는 각각 `try/except`로 감싸여 있어 앱이 죽지는 않지만, 화면에는 질문마다 오류 배너만 뜨고 실제 답변은 한 번도 만들어지지 않습니다. 문서 임베딩·저장은 이 세 에이전트와 무관한 별도 경로(`GeminiEmbedder`가 `google-genai` 클라이언트를 직접 부름)이지만, 이쪽도 온전하지 않습니다 — `GeminiEmbedder`가 쓰는 `models/text-embedding-004`는 2026-01-14에 이미 서비스가 종료됐습니다(Google 공식 문서, 2026-09-27 확인) — 즉 유효한 키가 있어도 문서를 올리는 순간 Qdrant 벡터 저장소 생성이 검증 임베딩에서 실패합니다(Step 4). 그 임베딩 코드 자체에도 질의용 벡터에 문서용 `task_type`(`RETRIEVAL_DOCUMENT`)을 그대로 쓰는 비대칭이 있다는 것을 소스에서 확인했습니다 — 모델이 살아 있었다면 검색 품질에 영향을 줬을 설계입니다(Step 4). 완성하면 PDF를 올리거나 URL을 넣고 질문하는 화면을 띄우게 되며, 이 문서는 그 화면 뒤에서 정확히 어느 줄이 왜 멈추는지를 직접 재현하며 따라갑니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,7 +12,7 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| Google API 키 | 임베딩(`text-embedding-004`)과 채팅(`gemini-exp-1206`, `gemini-2.0-flash-thinking-exp-01-21`) 호출 인증. 사이드바가 비어 있으면 전체 앱이 사이드바만 남기고 멈춤(Step 2) | https://aistudio.google.com/apikey |
+| Google API 키 | 임베딩(`text-embedding-004` — **2026-01-14에 이미 서비스 종료**, 아래 참고)과 채팅(`gemini-exp-1206`, `gemini-2.0-flash-thinking-exp-01-21`) 호출 인증. 사이드바가 비어 있으면 전체 앱이 사이드바만 남기고 멈춤(Step 2) | https://aistudio.google.com/apikey |
 | Qdrant 인스턴스(로컬 또는 클라우드) | 벡터 저장소(`gemini-thinking-agent-agno` 컬렉션). 코드 기본값은 빈 문자열이고 URL·키가 모두 있어야만 클라이언트가 만들어짐(Step 2) | 로컬: `docker run -p 6333:6333 qdrant/qdrant` / 클라우드: https://cloud.qdrant.io |
 | beautifulsoup4(별도 설치) | 9번째 줄의 최상단 `import bs4`가 요구 — 없으면 키와 무관하게 앱 전체가 뜨지 않음(Step 1에서 직접 확인) | `uv pip install beautifulsoup4` |
 | pypdf(별도 설치) | `PyPDFLoader`가 PDF를 실제로 읽을 때 요구 — `requirements.txt`에 없음(Step 3에서 직접 확인) | `uv pip install pypdf` |
@@ -349,7 +349,7 @@ def process_pdf(file) -> List:
         return []
 ```
 
-`source_type`·`file_name`을 메타데이터에 남겨 두는 것은 나중에 답변 화면에서 "어느 파일에서 나온 문단인지" 표시하기 위해서입니다(Step 7). `PyPDFLoader`는 `.load()`가 아니라 **생성자(`__init__`)** 안에서 `pypdf`를 지연 import합니다 — `super().__init__(...)`로 실제 파일을 여는 것보다도 먼저입니다(소스로 확인, langchain-community 0.3.13의 `pdf.py:236`. Day 061의 0.3.12도 같은 위치입니다 — 이 문서의 이전 판이 ".load() 시점"이라고 적은 것은 틀렸습니다).
+`source_type`·`file_name`을 메타데이터에 남겨 두는 것은 나중에 답변 화면에서 "어느 파일에서 나온 문단인지" 표시하기 위해서입니다(Step 7). `PyPDFLoader`는 `.load()`가 아니라 **생성자(`__init__`)** 안에서 `pypdf`를 지연 import합니다 — `super().__init__(...)`로 실제 파일을 여는 것보다도 먼저입니다(소스로 확인, langchain-community 0.3.13의 `pdf.py:236`. Day 061의 0.3.12도 같은 위치입니다).
 
 ```bash
 uv run --no-project python -c "import pypdf"
@@ -474,7 +474,9 @@ print(f'Client constructed in {time.monotonic()-t0:.3f}s, no network yet')
 Client constructed in 0.593s, no network yet
 ```
 
-**정정(리뷰로 발견).** 이 문서의 이전 판은 바로 이 자리에서 `socket.socket.connect`만 막은 채 실제로 `client.models.embed_content(...)`를 호출했습니다. 그 "차단됨" 출력에 찍힌 IP(`172.217.118.4`)는 사실 `generativelanguage.googleapis.com`을 실제로 조회한 DNS 응답이었습니다 — 즉 이 컴퓨터 밖으로 진짜 DNS 조회 1건이 나갔고, 이 문서의 §2.4가 "어떤 바이트도 나가지 않았음"이라고 적은 것은 틀렸습니다. google-genai 2.25.0의 실제 전송 계층은 `httpx`이고(소스로 확인, `import httpx`와 `class SyncHttpxClient(httpx.Client)`가 `google/genai/_api_client.py`에 있음), `httpx`는 연결을 시도하기 전에 반드시 `socket.getaddrinfo`로 호스트명을 먼저 풉니다 — `connect`만 막고 `getaddrinfo`는 막지 않으면 이 조회를 막지 못합니다. 지금은 같은 실수를 반복하지 않도록 실제 SDK 요청 메서드를 더 이상 호출하지 않고, `getaddrinfo` 차단 자체가 (SDK 없이도) 동작한다는 것만 따로 확인합니다.
+(이 시간은 예시입니다 — 실행마다 달라지는 비결정적 값입니다.)
+
+**주의.** `embed_content(...)`를 소켓 연결(`socket.socket.connect`)만 막고 실제로 호출하면 안전하지 않습니다 — google-genai 2.25.0의 실제 전송 계층은 `httpx`이고(소스로 확인, `import httpx`와 `class SyncHttpxClient(httpx.Client)`가 `google/genai/_api_client.py`에 있음), `httpx`는 연결을 시도하기 전에 반드시 `socket.getaddrinfo`로 호스트명을 먼저 풉니다. `connect`만 막고 `getaddrinfo`는 막지 않으면 `generativelanguage.googleapis.com`에 대한 실제 DNS 조회가 이 컴퓨터 밖으로 나갑니다. 그래서 이 문서는 실제 SDK 요청 메서드를 호출하지 않고, `getaddrinfo` 차단 자체가 (SDK 없이도) 동작한다는 것만 따로 확인합니다.
 
 ```bash
 uv run --no-project python -c "
@@ -534,7 +536,42 @@ def create_vector_store(client, texts):
 
 `size=768`은 주석 그대로 `text-embedding-004`의 실제 차원에 맞춘 값입니다. 이 함수는 게이트를 지난 뒤 실제로 문서를 올릴 때만 호출되므로, 여기까지 오면 `GeminiEmbedder()` 생성에 필요한 `st.session_state.google_api_key`는 이미 채워져 있어 그 안의 `ValueError` 가드는 실질적으로 발동하지 않는 방어 코드입니다.
 
+**`create_vector_store`가 실제로 막히는 것은 키가 아니라 모델입니다.** 이 함수가 쓰는 `GeminiEmbedder`의 기본 모델 `models/text-embedding-004`는 **2026-01-14에 이미 서비스가 종료됐습니다**(Google 공식 사용 중단 문서, https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-27 확인 — 같은 표에서 `embedding-001`은 2025-10-30, `gemini-2.0-flash`(`-001`·`-lite` 포함)는 2026-06-01 종료로 나와 있고, `gemini-exp-1206`·`gemini-2.0-flash-thinking-exp-01-21`은 이 표 자체에 없습니다). 즉 유효한 Google API 키가 있어도 이 이름으로는 임베딩 요청이 거부됩니다. 이 실패는 `QdrantVectorStore(...)` **생성 시점**에 곧바로 드러납니다 — langchain-qdrant 0.2.0은 컬렉션이 이미 있으면 생성자 안에서 `embedding.embed_documents(["dummy_text"])`로 검증 임베딩을 한 번 부르기 때문입니다(같은 메커니즘을 Day 057 Step 3에서 이미 확인했습니다). 이 호출이 실패하면 `create_vector_store`의 바깥 `try`가 잡아 `st.error(f"🔴 Vector store error: {str(e)}")`를 띄우고 `None`을 반환합니다.
+
 ![Step 4까지의 구성](diagrams/step4.svg)
+
+실제 Google API 대신 `embed_documents`가 곧바로 예외를 던지는 가짜 임베더로, `QdrantVectorStore(...)` 생성이 그 자리에서 정말 실패하는지 미리 확인해 둡니다(인메모리 Qdrant, 네트워크 없음). 정확한 오류 문구는 Google API를 직접 호출해야 알 수 있어 이 문서에서는 재현하지 못했습니다.
+
+```bash
+uv run --no-project python -c "
+from langchain_core.embeddings import Embeddings
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
+from langchain_qdrant import QdrantVectorStore
+
+class ProbeEmbeddings(Embeddings):
+    def embed_documents(self, texts):
+        print('embed_documents called with:', texts)
+        raise RuntimeError('simulated: text-embedding-004 has been retired')
+    def embed_query(self, text):
+        return [0.0]*768
+
+client = QdrantClient(location=':memory:')
+client.create_collection('gemini-thinking-agent-agno', vectors_config=VectorParams(size=768, distance=Distance.COSINE))
+try:
+    QdrantVectorStore(client=client, collection_name='gemini-thinking-agent-agno', embedding=ProbeEmbeddings())
+    print('constructed OK (unexpected)')
+except Exception as e:
+    print('QdrantVectorStore construction failed:', type(e).__name__, str(e)[:100])
+"
+```
+
+직접 확인한 출력:
+
+```
+embed_documents called with: ['dummy_text']
+QdrantVectorStore construction failed: RuntimeError simulated: text-embedding-004 has been retired
+```
 
 **확인.** `create_vector_store`가 호출되는 조건 — 텍스트가 있고 **또한** Qdrant 클라이언트가 있어야 함 — 을 그대로 옮겨 확인합니다. 이 조건이 오늘의 또 다른 조용한 실패로 이어집니다(Step 5에서 계속).
 
@@ -578,6 +615,8 @@ texts=O, qdrant_client=O    -> True
 ```
 
 `st.session_state.processed_documents.append(...)`와 `st.success(...)` 둘 다 `if texts and qdrant_client:` 안에 들여쓰기되어 있습니다. Qdrant 자격증명을 아직 넣지 않은 채(Step 2에서 본 대로 `qdrant_client`는 조용히 `None`) PDF를 올리면, `process_pdf`는 정상적으로 청크를 만들어내지만 **성공 메시지도, 실패 메시지도, 사이드바의 "처리된 소스" 목록에도 아무 흔적이 남지 않습니다** — 업로드가 그냥 허공으로 사라집니다. URL 입력 경로(`rag_tutorials/gemini_agentic_rag/agentic_rag_gemini.py:348-358`)도 같은 구조를 그대로 반복합니다.
+
+Qdrant 자격증명까지 다 채워 `qdrant_client`가 있는 경우는 다른 방식으로 조용합니다. `st.session_state.processed_documents.append(file_name)`과 `st.success(f"✅ Added PDF: {file_name}")`는 `create_vector_store(...)`의 **반환값을 확인하지 않고** 곧바로 실행됩니다 — 위에서 본 대로 그 반환값은 임베딩 모델이 죽어 있으면 `None`입니다. 그 결과 화면에는 "🔴 Vector store error"와 "✅ Added PDF"가 **동시에** 뜨고, 파일은 벡터 저장소에 아무것도 담기지 않은 채 "처리됨" 목록에 들어가 — 같은 파일 이름으로는 `if file_name not in st.session_state.processed_documents:`를 다시 통과하지 못해 재시도할 방법도 없어집니다.
 
 ### Step 5. 질의 재작성 에이전트 — `show_tool_calls`가 세 에이전트를 모두 막는다
 
@@ -894,7 +933,7 @@ Please provide a comprehensive answer based on the available information."""
                 st.error(f"❌ Error generating response: {str(e)}")
 ```
 
-**정정.** 이 문서의 이전 판은 이 네 블록(재작성·문서 검색·웹 검색·생성)이 "각자 독립된 `try/except`"라고 적었는데, 틀렸습니다 — **문서 검색 블록(398-415행)에는 `try`가 없습니다.** `retriever.invoke(rewritten_query)`가 예외(임베딩 API 오류, Qdrant 시간 초과 등)를 던지면 그 실행은 처리되지 않은 예외로 그 자리에서 끝나고, 웹 검색·생성 블록은 아예 돌지 않습니다 — 즉 "❌ Error generating response" 배너조차 뜨지 않고 Streamlit의 기본 오류 화면(트레이스백)이 뜹니다. `try`가 있는 것은 재작성·웹 검색·생성 세 블록뿐입니다. 문서 검색이 예외 없이 끝나는 보통의 경우에는 이 세 블록만 각자 독립적으로 실패할 수 있습니다 — 그 경우 오늘 이 앱에 질문을 하나 던지면: 재작성 단계에서 "❌ Error rewriting query: ...show_tool_calls..." 배너가 뜨고 원래 질문이 재작성 질문 자리를 대신하며, (웹 검색이 걸렸다면 "❌ Web search error: ...show_tool_calls..." 배너가 하나 더 뜨고), 마지막으로 생성 단계에서 "❌ Error generating response: ...show_tool_calls..." 배너가 뜨고 `response`가 만들어지지 않아 `st.session_state.history`에 assistant 메시지가 추가되지 않습니다. 즉 **문서 검색 자체가 예외를 던지지 않는 한, 키를 아무리 정확히 넣어도 오늘의 agno로는 실제 답변이 화면에 한 번도 나타나지 않고 질문마다 오류 배너 2~3개만 쌓입니다.**
+이 네 블록(재작성·문서 검색·웹 검색·생성)이 모두 "각자 독립된 `try/except`"인 것은 아닙니다 — **문서 검색 블록(398-415행)에는 `try`가 없습니다.** `retriever.invoke(rewritten_query)`가 예외(임베딩 API 오류, Qdrant 시간 초과 등)를 던지면 그 실행은 처리되지 않은 예외로 그 자리에서 끝나고, 웹 검색·생성 블록은 아예 돌지 않습니다 — 즉 "❌ Error generating response" 배너조차 뜨지 않고 Streamlit의 기본 오류 화면(트레이스백)이 뜹니다. `try`가 있는 것은 재작성·웹 검색·생성 세 블록뿐입니다. 문서 검색이 예외 없이 끝나는 보통의 경우에는 이 세 블록만 각자 독립적으로 실패할 수 있습니다 — 그 경우 오늘 이 앱에 질문을 하나 던지면: 재작성 단계에서 "❌ Error rewriting query: ...show_tool_calls..." 배너가 뜨고 원래 질문이 재작성 질문 자리를 대신하며, (웹 검색이 걸렸다면 "❌ Web search error: ...show_tool_calls..." 배너가 하나 더 뜨고), 마지막으로 생성 단계에서 "❌ Error generating response: ...show_tool_calls..." 배너가 뜨고 `response`가 만들어지지 않아 `st.session_state.history`에 assistant 메시지가 추가되지 않습니다. 즉 **문서 검색 자체가 예외를 던지지 않는 한, 키를 아무리 정확히 넣어도 오늘의 agno로는 실제 답변이 화면에 한 번도 나타나지 않고 질문마다 오류 배너 2~3개만 쌓입니다.**
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -947,7 +986,8 @@ exception    : ['simulated embed_content failure (e.g. 400 API key not valid)']
 - [ ] Google API 키 하나가 최상위 `if`로 파일 끝까지 전부를 가두고, 제목은 그보다 앞에 있어 키가 없어도 항상 뜬다는 것을 `AppTest`로 확인했다
 - [ ] `init_qdrant()`가 자격증명이 비어 있으면 오류 없이 조용히 `None`을 반환하고, 업로드 성공 메시지도 그 `None` 때문에 함께 조용히 사라진다는 것을 확인했다
 - [ ] `GeminiEmbedder.embed_query`가 질의 임베딩에도 문서용 `task_type`(`RETRIEVAL_DOCUMENT`)을 그대로 쓴다는 것을 소스로 확인했다
-- [ ] 질의 재작성·웹 검색·RAG 세 에이전트 모두 `Agent(..., show_tool_calls=...)`가 오늘의 agno 3.0.11에서 `TypeError`로 실패하고, 이 인자 하나만 빼면 나머지 구성은 문제없다는 것을 직접 확인했다
+- [ ] `models/text-embedding-004`가 2026-01-14에 이미 서비스 종료됐고, 유효한 키로도 `QdrantVectorStore(...)` 생성의 검증 임베딩이 실패해 "🔴 Vector store error"와 "✅ Added PDF"가 동시에 뜬다는 것을 Google 공식 문서와 가짜 임베더 재현으로 확인했다
+- [ ] 질의 재작성 에이전트가 `Agent(..., show_tool_calls=...)` 때문에 `TypeError`로 실패하고, 이 인자 하나만 빼면 문제없다는 것을 직접 확인했다 — 웹 검색·RAG 두 에이전트도 같은 인자 구성이라 같은 예외가 난다는 것은 소스로 확인했다
 - [ ] `check_document_relevance`가 정의만 되고 실제로는 쓰이지 않는다는 것을 grep으로 확인했다
 - [ ] `use_web_search` 체크박스가 꺼져 있으면 `force_web_search` 토글을 켜도 웹 검색이 실행되지 않는다는 것을 확인했다
 - [ ] 문서 검색 블록(398-415행)에는 `try`가 없어 검색이 예외를 던지면 생성 블록까지 가지 않고 처리되지 않은 예외로 끝난다는 것을 `AppTest`로 직접 재현했다
@@ -961,8 +1001,9 @@ exception    : ['simulated embed_content failure (e.g. 400 API key not valid)']
 | PDF 업로드 시 "📄 PDF processing error: pypdf package not found..." | `requirements.txt`에 `pypdf`가 없어 `PyPDFLoader(...)` 생성자가 지연 import에서 실패(직접 확인) | `uv pip install pypdf` |
 | 질문을 하면 매번 "❌ Error rewriting query"·"❌ Error generating response" 배너만 뜨고 답이 안 나옴 | agno 3.0.11의 `Agent.__init__()`이 `show_tool_calls` 인자를 더 이상 받지 않음(직접 확인, Step 5) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침. 재현하려면 233·258·278행 근처 `get_*_agent` 세 함수에서 `show_tool_calls=...,` 줄을 지우기 |
 | Qdrant API Key·URL을 비워 둔 채 PDF를 올려도 성공도 실패도 뜨지 않음 | `init_qdrant()`가 조용히 `None`을 반환하고, 업로드 성공 메시지가 `if texts and qdrant_client:` 안에 있어 함께 건너뛰어짐(소스로 확인 — 해당 조건문을 그대로 옮긴 함수로 재현, 앱을 직접 실행한 것은 아님) | 사이드바에 Qdrant API Key·URL을 모두 채우기(로컬이면 아무 문자열이나 Key 칸에) |
+| Qdrant 자격증명까지 다 채우고 PDF를 올려도 "🔴 Vector store error"와 "✅ Added PDF"가 동시에 뜨고, 그 문서로 질문해도 검색 결과가 없음 | 임베딩 모델 `models/text-embedding-004`가 2026-01-14에 서비스 종료(Google 공식 문서, 2026-09-27 확인)돼 `QdrantVectorStore(...)` 생성의 검증 임베딩이 실패하지만, 호출부가 그 반환값(`None`)을 확인하지 않고 성공 메시지를 그대로 실행함(소스·가짜 임베더로 재현, Step 4) | 리포 코드는 고치지 않는 것이 방침. 재현하려면 `GeminiEmbedder(model_name=...)`에 `models/text-embedding-004` 대신 현재 제공되는 임베딩 모델 이름을 넘겨보기(사전 준비의 deprecations 문서에서 확인) |
 | 웹 검색 토글(🌐)을 켰는데도 웹 검색이 실행되지 않음 | 그 토글은 `force_web_search`일 뿐, "Enable Web Search Fallback" 체크박스(`use_web_search`)가 별도로 꺼져 있으면 세 조건의 곱이 거짓이 됨(소스로 확인) | 사이드바 "🌐 Web Search Configuration"의 체크박스도 함께 켜기 |
-| `gemini-exp-1206`·`gemini-2.0-flash-thinking-exp-01-21` 호출 시 모델을 찾을 수 없다는 오류가 날 수 있음 | 두 이름 모두 2024년 12월·2025년 1월의 실험용 프리뷰 스냅샷(이름 자체로 확인) — 지금도 유효한지는 키가 없어 확인 못함 | Google AI Studio에서 현재 사용 가능한 모델 이름을 확인 |
+| `gemini-exp-1206`·`gemini-2.0-flash-thinking-exp-01-21` 호출 시 모델을 찾을 수 없다는 오류가 날 수 있음 | 두 이름 모두 2024년 12월·2025년 1월의 실험용 프리뷰 스냅샷(이름 자체로 확인). Google 공식 사용 중단 문서에는 이 둘이 아예 올라 있지 않음(2026-09-27 확인) — 정식으로 종료 공지된 것은 아니지만, 실험용 프리뷰가 그 문서에 실리지 않은 채 조용히 막히는 경우와 구분되지 않으므로 지금도 유효한지는 키 없이는 확정할 수 없음 | Google AI Studio에서 현재 사용 가능한 모델 이름을 확인 |
 
 ## 더 해보기
 
