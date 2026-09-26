@@ -4,8 +4,8 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: 채팅 UI { class: ours }
 file: PDF 파일 { class: file }
-store: 벡터 저장소 (Chroma) { class: store }
 provider: 임베딩·LLM 제공자 { class: ext }
+store: 벡터 저장소 (Chroma) { class: store }
 
 user -> ui: PDF 업로드
 ui -> file: 텍스트 추출 (페이지별)
