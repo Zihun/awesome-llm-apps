@@ -1,10 +1,10 @@
 # Day 066 · 📎 Typed Agentic RAG with Pydantic AI
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 70분 · API 비용 대략 PDF·URL 업로드마다 임베딩 호출 1회(청크 전체를 한 번에 배치, OpenAI 임베딩 모드일 때만 발생 — 로컬 해싱 모드는 무료) + 질문마다 질의 임베딩 1회(OpenAI 모드) 및 답변 모델 호출(retrieve 도구 호출을 포함해 보통 왕복 2회, Step 8) — 정확한 단가는 키가 없어 확인 못함 · 원본 앱: `rag_tutorials/agentic_typed_rag_pydanticai`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 80분 · API 비용 대략 PDF·URL 업로드마다 임베딩 호출 1회(청크 전체를 한 번에 배치, OpenAI 임베딩 모드일 때만 발생 — 로컬 해싱 모드는 무료) + 답한 질문마다 질의 임베딩 2회(사전 검색·도구 검색 각 1회, OpenAI 모드, 직접 확인) 및 답변 모델 호출(retrieve 도구 호출을 포함해 보통 왕복 2회, Step 8) — 정확한 단가는 키가 없어 확인 못함 · 원본 앱: `rag_tutorials/agentic_typed_rag_pydanticai`
 
 ## 오늘 만들 것
 
-Day 047부터 이 볼륨이 반복해 온 "청크 → 임베딩 → 검색 → 생성" 골격은 오늘도 그대로입니다. 오늘 달라지는 것은 그 골격을 감싸는 타입입니다 — Pydantic AI의 `Agent`가 내놓는 답은 `text`뿐인 문자열이 아니라 인용·신뢰도·응답 여부를 갖춘 `Answer` 모델이고, 에이전트는 반드시 타입이 있는 `retrieve` 도구를 거쳐야 하며, 그 도구가 돌려주는 근거도 `RetrievalEvidence`라는 별도 모델입니다. 검색 점수가 문턱을 넘지 못하면 모델을 아예 부르지 않고 거절하고(Step 6), 모델이 답을 내놓아도 인용한 `quoted_span`이 실제로 저장된 청크 원문에 없으면 그 답은 버려지고 거절로 바뀝니다(Step 6) — LLM의 자기 신고가 아니라 코드가 직접 원문을 대조하는 이중 방어입니다. 벡터 저장소도 Qdrant나 ChromaDB 같은 별도 서비스가 아니라 NumPy 배열 하나로 세션 동안만 사는 `InMemoryVectorStore`이고(Step 4), 임베딩은 OpenAI 키가 있으면 `text-embedding-3-small`을, 없으면 해시 기반 로컬 벡터를 자동으로 씁니다(Step 3). 이 앱을 실제로 설치하고 import·테스트를 돌려본 범위에서는(직접 확인, Step 1·8) 결함을 찾지 못했습니다 — 이 볼륨의 여러 날과 달리 앱 자체의 README가 코드와 어긋나는 곳도 없었습니다. 완성하면 PDF나 문서 URL을 올려 지식베이스를 만들고, 질문하면 인용과 신뢰도가 붙은 답 또는 명확한 거절 메시지를 받는 화면을 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
+Day 047부터 이 볼륨이 반복해 온 "청크 → 임베딩 → 검색 → 생성" 골격은 오늘도 그대로입니다. 오늘 달라지는 것은 그 골격을 감싸는 타입입니다 — Pydantic AI의 `Agent`가 내놓는 답은 `text`뿐인 문자열이 아니라 인용·신뢰도·응답 여부를 갖춘 `Answer` 모델이고, 에이전트는 반드시 타입이 있는 `retrieve` 도구를 거쳐야 하며, 그 도구가 돌려주는 근거도 `RetrievalEvidence`라는 별도 모델입니다. 검색 점수가 문턱을 넘지 못하면 모델을 아예 부르지 않고 거절하고(Step 6), 모델이 답을 내놓아도 인용한 `quoted_span`이 실제로 저장된 청크 원문에 없으면 그 답은 버려지고 거절로 바뀝니다(Step 6) — LLM의 자기 신고가 아니라 코드가 직접 원문을 대조하는 이중 방어입니다. 벡터 저장소도 Qdrant나 ChromaDB 같은 별도 서비스가 아니라 NumPy 배열 하나로 세션 동안만 사는 `InMemoryVectorStore`이고(Step 4), 임베딩은 OpenAI 키가 있으면 `text-embedding-3-small`을, 없으면 해시 기반 로컬 벡터를 자동으로 씁니다(Step 3) — 다만 이 로컬 대안은 영문·숫자만 토큰으로 남기므로 한국어 문서·질문에는 쓸 수 없습니다(직접 확인, Step 3·문제 해결). 이 앱을 실제로 설치하고 import·테스트를 돌려본 범위에서는(직접 확인, Step 1·8) 이 한계 말고는 결함을 찾지 못했습니다 — 이 볼륨의 여러 날과 달리 앱 자체의 README가 코드와 어긋나는 곳도 없었습니다. 완성하면 PDF나 문서 URL을 올려 지식베이스를 만들고, 질문하면 인용과 신뢰도가 붙은 답 또는 명확한 거절 메시지를 받는 화면을 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -271,7 +271,7 @@ def default_embedding_backend() -> EmbeddingBackend:
     return HashingEmbeddingBackend()
 ```
 
-`HashingEmbeddingBackend`는 어간을 자른 단어(`_stem`, `rag_tutorials/agentic_typed_rag_pydanticai/rag.py:173-177`)와 인접 바이그램을 blake2b 해시로 고정 차원에 흩뿌려 코사인 유사도를 흉내 냅니다 — 의미가 아니라 어휘 일치에 가깝습니다(앱 자체 README도 같은 취지로 "keyword-oriented"라고 밝힙니다). `pydantic_ai.Embedder`는 이 버전(2.10.0)에 실제로 존재하며(직접 확인), 키가 없어도 객체 생성 자체는 실패하지 않습니다 — 실패는 실제로 `embed_documents`/`embed_query`를 호출할 때에야 일어납니다.
+`HashingEmbeddingBackend`는 어간을 자른 단어(`_stem`, `rag_tutorials/agentic_typed_rag_pydanticai/rag.py:173-177`)와 인접 바이그램을 blake2b 해시로 고정 차원에 흩뿌려 코사인 유사도를 흉내 냅니다 — 의미가 아니라 어휘 일치에 가깝습니다(앱 자체 README도 같은 취지로 "keyword-oriented"라고 밝힙니다). 그런데 그 단어를 고르는 `_terms`(`rag_tutorials/agentic_typed_rag_pydanticai/rag.py:180-187`)는 `re.findall(r"[a-z0-9]+", text.casefold())`로 영문·숫자만 토큰으로 남기므로, 한국어 문장은 숫자를 빼면 토큰이 하나도 남지 않습니다 — 한국어 PDF·질문을 이 백엔드로 색인·검색하면 항상 벡터가 0에 가까워 사실상 검색이 되지 않습니다(직접 확인, 아래·문제 해결). `pydantic_ai.Embedder`는 이 버전(2.10.0)에 실제로 존재하며(직접 확인), 키가 없어도 객체 생성 자체는 실패하지 않습니다 — 실패는 실제로 `embed_documents`/`embed_query`를 호출할 때에야 일어납니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -299,6 +299,21 @@ print('Embedder() constructed without a key:', type(embedder).__name__)
 backend: HashingEmbeddingBackend local-hashing-768
 Embedder class: <class 'pydantic_ai.embeddings.Embedder'>
 Embedder() constructed without a key: Embedder
+```
+
+한국어 문장이 이 백엔드에서 실제로 어떻게 되는지도 직접 확인합니다.
+
+```bash
+uv run --no-project python -c "
+from rag import _terms
+print('terms:', _terms('직원은 근속 6개월 후 12주의 유급 육아휴직을 받습니다.'))
+"
+```
+
+직접 확인한 출력(한글은 전부 빠지고 숫자만 남음):
+
+```
+terms: ['6', '12', '6:12']
 ```
 
 ### Step 4. 벡터 저장소: NumPy 코사인 인덱스 (rag.py)
@@ -358,7 +373,7 @@ Embedder() constructed without a key: Embedder
         ]
 ```
 
-`add_chunks`는 청크 하나하나가 아니라 문서 전체를 한 번의 `embed_documents` 호출로 묶어 보냅니다(사전 준비 표의 "PDF·URL 업로드마다 임베딩 호출 1회"의 근거). 검색은 질의 벡터를 정규화한 뒤 저장된 행렬과 내적(`@`)만으로 코사인 유사도를 구하고, `np.clip`으로 0~1 범위에 가둡니다. 저장소는 `st.session_state.rag_store`에 담겨 세션 동안만 살고(`rag_tutorials/agentic_typed_rag_pydanticai/app.py:82-83`), DB 파일이나 별도 서비스가 없습니다.
+`add_chunks`는 청크 하나하나가 아니라 문서 전체를 한 번의 `embed_documents` 호출로 묶어 보냅니다(머리말 비용 줄의 "PDF·URL 업로드마다 임베딩 호출 1회"의 근거). 검색은 질의 벡터를 정규화한 뒤 저장된 행렬과 내적(`@`)만으로 코사인 유사도를 구하고, `np.clip`으로 0~1 범위에 가둡니다. 저장소는 `st.session_state.rag_store`에 담겨 세션 동안만 살고(`rag_tutorials/agentic_typed_rag_pydanticai/app.py:82-83`), DB 파일이나 별도 서비스가 없습니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -445,7 +460,7 @@ class Answer(BaseModel):
         )
 ```
 
-`model_validator`는 "답했다면 인용이 최소 1개, 거절이면 인용 0개"를 구조적으로 강제합니다 — 모델이 이 규칙을 어기면 Pydantic AI가 `ValidationError`를 받아 자동으로 재시도합니다(`retries=2`, 아래). `RetrievedChunk`와 `RetrievalEvidence`는 `retrieve` 도구의 입출력 타입이고, `RagDependencies`는 `RunContext`로 주입되는 의존성입니다.
+`model_validator`는 "답했다면 인용이 최소 1개, 거절이면 인용 0개"를 구조적으로 강제합니다 — 모델이 이 규칙을 어기면 Pydantic AI가 `ValidationError`를 받아 자동으로 재시도합니다(`retries=2`, 아래). `RetrievedChunk`와 `RetrievalEvidence`는 `retrieve` 도구의 출력 타입이고(입력은 `query: str` 하나뿐입니다), `RagDependencies`는 `RunContext`로 주입되는 의존성입니다.
 
 `rag_tutorials/agentic_typed_rag_pydanticai/agent.py:76-100`
 
@@ -650,7 +665,7 @@ def validate_grounded_answer(
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 색인에 없는 질문이 모델을 한 번도 부르지 않고 거절되는지, 위조된 인용이 거절로 바뀌는지 `pydantic_ai.models.ALLOW_MODEL_REQUESTS = False`로 직접 확인합니다(테스트 스위트의 두 경우를 그대로 실행 — 실제 공급자 요청 없음).
+**확인.** 색인에 없는 질문이 모델을 한 번도 부르지 않고 거절되는지 `pydantic_ai.models.ALLOW_MODEL_REQUESTS = False`로 직접 확인합니다(테스트 스위트의 한 경우를 그대로 실행 — 실제 공급자 요청 없음. 위조된 인용이 거절로 바뀌는 나머지 한 경우는 `TestModel`이 필요해 Step 8에서 그대로 실행합니다).
 
 ```bash
 uv run --no-project python -c "
@@ -793,6 +808,7 @@ chat_input disabled: True
 ```bash
 uv run --no-project python -c "
 import os
+os.environ.pop('OPENAI_API_KEY', None)
 os.environ['ANTHROPIC_API_KEY'] = 'sk-ant-placeholder'
 from streamlit.testing.v1 import AppTest
 at = AppTest.from_file('app.py')
@@ -802,12 +818,44 @@ print('model field:', at.sidebar.text_input[0].value)
 "
 ```
 
+(`OPENAI_API_KEY`를 먼저 지우는 것은 이 확인만을 위한 것입니다 — 앞서 열어 둔 셸에 그 키가 이미 있으면 `prefer_anthropic` 조건이 거짓이 되어 공급자가 "OpenAI"로 뜹니다, `app.py:93-97`.)
+
 직접 확인한 출력:
 
 ```
 provider: Anthropic
 model field: anthropic:claude-sonnet-4-6
 ```
+
+앱을 실제로 띄우는 방법도 확인합니다. 먼저 `.env`를 만들고 키를 채웁니다.
+
+```bash
+cp .env.example .env
+```
+
+(PowerShell: `Copy-Item .env.example .env`) 이어서 `.env`에 `OPENAI_API_KEY=` 또는 `ANTHROPIC_API_KEY=` 뒤에 실제 키 하나를 적습니다 — 앱을 띄우는 데는 키가 필요 없고, 질문을 실제로 할 때만 필요합니다.
+
+```bash
+uv run --no-project streamlit run app.py
+```
+
+이 명령을 그대로 실행하면 브라우저 탭이 자동으로 열리고 "📎 Typed Agentic RAG" 제목과 사이드바가 뜹니다. 이 문서는 브라우저를 열 수 없어 같은 명령에 헤드리스 옵션만 더해 키 없이 직접 확인했습니다 — 다른 에이전트와 포트가 겹치지 않도록 임의의 높은 포트(49152~65535 범위, 이번엔 61234)를 썼고, `--browser.serverAddress localhost`를 더해 외부 IP 조회를 피했습니다(이 플래그가 없으면 헤드리스 Streamlit이 시작 배너를 만들며 외부 IP를 조회합니다, Day 054 참고).
+
+```bash
+uv run --no-project streamlit run app.py --server.headless true --server.port 61234 --browser.serverAddress localhost
+```
+
+직접 확인한 콘솔 출력(키 없이도 서버는 뜨고, 질문을 실제로 하기 전까지는 키가 필요 없습니다):
+
+```
+Uvicorn server started on localhost:61234
+
+  You can now view your Streamlit app in your browser.
+
+  URL: http://localhost:61234
+```
+
+같은 터미널에서 `curl -s -o /dev/null -w "%{http_code}" http://localhost:61234/`로 응답을 확인하면 `200`이 돌아오고(직접 확인), 확인이 끝나면 그 프로세스를 종료합니다(`Ctrl+C` 또는 이 문서가 재현에 쓴 `kill`).
 
 ### Step 8. TestModel로 실제 호출 없이 검증하기 (test_typed_rag.py)
 
@@ -862,43 +910,44 @@ model field: anthropic:claude-sonnet-4-6
 
 `TestModel(call_tools=["retrieve"], custom_output_args={...})`는 실제 LLM 대신 "이 도구를 부르고 이 값을 최종 출력으로 내라"는 각본을 따르는 가짜 모델입니다. `rag_agent.override(model=model)`로 전역 에이전트의 모델만 일시적으로 바꾸고, `models.ALLOW_MODEL_REQUESTS = False`로 진짜 네트워크 요청이 나가면 그 자리에서 예외가 나도록 막아 둡니다. 이 테스트는 원문에 없는 인용("one hundred dollars per day"는 저장된 "seventy dollars per day"에 없음)을 모델이 우겨도 Step 6의 `_valid_citations`가 걸러 거절로 바뀌는 것을 확인합니다.
 
-![요청 시퀀스](diagrams/sequence.svg)
+![Step 8까지의 구성](diagrams/step8.svg)
 
-**확인.** 전체 스위트 11개를 실행해 모두 통과하는지, 걸리는 시간이 네트워크 왕복 없이 끝나는 수준인지 확인합니다.
+**확인.** 전체 스위트 11개를 실행해 모두 통과하는지 확인합니다.
 
 ```bash
 uv run --no-project python test_typed_rag.py
 ```
 
-직접 확인한 출력(마지막 세 줄):
+직접 확인한 출력(마지막 세 줄, 여러 번 재현하는 동안 걸린 시간은 0.17~0.97초 사이에서 매번 달랐습니다 — 한 예):
 
 ```
 ----------------------------------------------------------------------
-Ran 11 tests in 0.405s
+Ran 11 tests in 0.200s
 
 OK
 ```
 
-0.4초라는 시간 자체가 증거입니다 — 실제 OpenAI·Anthropic 호출이 하나라도 있었다면 네트워크 왕복만으로 이보다 훨씬 오래 걸립니다.
+증거는 걸린 시간이 아니라 `models.ALLOW_MODEL_REQUESTS = False`를 건 채로 예외 없이 끝났다는 것입니다 — 실제 OpenAI·Anthropic 요청을 시도했다면 이 설정 때문에 그 자리에서 예외가 났을 것입니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 색인이 이미 끝난 뒤 질문이 답으로 이어지는 경로입니다. UI가 질문을 게이트(`answer_question`)로 넘기면, 게이트는 먼저 벡터 저장소에 사전 검색을 보냅니다 — 이 시퀀스는 문턱을 넘는 경우만 그렸고, 못 넘으면 이 지점에서 모델을 부르지 않고 곧장 거절로 끝납니다(Step 6). 문턱을 넘으면 에이전트가 답변 모델에 구조화 출력을 요청하고, 모델은 먼저 `retrieve` 도구 호출을 요구합니다 — 그림의 "유사도 검색 (사전+도구 2회)"가 가리키듯 저장소는 같은 종류의 검색을 이 요청 안에서 총 두 번 받습니다. 도구가 청크를 돌려주면 모델이 `Answer` JSON을 완성하고, 에이전트는 이를 그대로 믿지 않고 벡터 저장소에 저장된 원문과 인용을 다시 대조한 뒤에야 검증된 `Answer`를 UI로 돌려줍니다.
+이 그림은 색인이 이미 끝난 뒤 질문이 답으로 이어지는 경로입니다 — 문턱을 넘어 실제로 답하는 경우만 그렸고, 못 넘으면 "사전 검색" 직후 모델을 부르지 않고 곧장 거절로 끝납니다(Step 6). UI가 질문을 에이전트(`answer_question`)로 넘기면, 에이전트는 먼저 벡터 저장소에 **사전 검색**을 보냅니다(preflight) — 이 시점엔 아직 모델을 부르지 않았습니다. 문턱을 넘으면 에이전트가 답변 모델에 질문과 도구 스키마를 보내고, 모델은 곧바로 답을 내놓는 대신 **도구 호출**을 요구합니다 — 이 요청의 검색어(`query`)는 사용자 질문이 아니라 모델이 고른 문자열입니다. 에이전트가 그 도구를 실행해 벡터 저장소를 **다시** 검색하고(같은 `search`가 이 한 번의 응답 안에서 두 번 불립니다 — 사전 1회 + 도구 1회), 그 청크 원문을 모델에 결과로 돌려주면 모델이 비로소 `Answer` JSON을 완성합니다. 마지막으로 에이전트는 이 답을 그대로 믿지 않고 `find_chunk`로 저장소에서 원문을 다시 가져와 **에이전트 자신이**(`_valid_citations`, Step 6) 인용과 대조합니다 — 저장소는 청크를 찾아 돌려줄 뿐 대조는 하지 않습니다. 이 대조를 통과해야 검증된 `Answer`가 UI로 돌아갑니다.
 
 ## 실행 체크리스트
 
 - [ ] `uv venv --python 3.12 && uv pip install -r requirements.txt`가 7개 고정 패키지 그대로 충돌 없이 끝난다는 것을 확인했다
 - [ ] `chunk_text`의 겹침 방식과 `ingest_pdf`의 페이지별 청크 ID 규칙을 이해했다
 - [ ] `validate_public_url`이 사설·루프백·링크로컬 주소 5종을 실제로 거부한다는 것을 직접 확인했다
-- [ ] OpenAI 키가 없으면 `default_embedding_backend`가 `HashingEmbeddingBackend`로 자동 대체된다는 것을 직접 확인했다
-- [ ] `InMemoryVectorStore.add_chunks`가 청크 전체를 한 번의 임베딩 호출로 배치 처리한다는 것을 이해했다
+- [ ] OpenAI 키가 없으면 `default_embedding_backend`가 `HashingEmbeddingBackend`로 자동 대체되지만, 한국어 문서·질문에는 이 대체가 통하지 않는다는 것(`_terms`가 한글을 전부 버림)을 직접 확인했다
+- [ ] `InMemoryVectorStore.add_chunks`가 청크 전체를 한 번의 임베딩 호출로 배치 처리하고, 답한 질문마다 질의 임베딩이 두 번(사전+도구) 나간다는 것을 직접 확인했다
 - [ ] `Answer` 모델이 "답했는데 인용 없음"과 "신뢰도 범위 초과"를 거부한다는 것을 직접 확인했다
 - [ ] 사전 검색이 문턱을 못 넘으면 `rag_agent.run` 자체가 호출되지 않고 거절된다는 것을 `ALLOW_MODEL_REQUESTS = False`로 직접 확인했다
 - [ ] 인용의 `quoted_span`이 저장된 청크 원문과 8자 이상 일치해야 살아남는다는 것을 이해했다
 - [ ] 키가 하나도 없어도 Streamlit 화면이 예외 없이 뜨고, `ANTHROPIC_API_KEY`만 있으면 공급자가 자동으로 Anthropic이 된다는 것을 `AppTest`로 직접 확인했다
-- [ ] `TestModel`로 도구 호출·위조 인용 거절을 포함한 11개 테스트가 네트워크 없이 0.4초 안에 통과한다는 것을 직접 확인했다
+- [ ] `.env`를 만들고 `uv run --no-project streamlit run app.py`로 앱이 실제로 뜬다는 것을 확인했다(키 없이도 화면은 뜨고, 질문할 때만 키가 필요하다)
+- [ ] `TestModel`로 도구 호출·위조 인용 거절을 포함한 11개 테스트가 `ALLOW_MODEL_REQUESTS = False`에서도 예외 없이 통과한다는 것을 직접 확인했다
 
 ## 문제 해결
 
@@ -908,11 +957,12 @@ OK
 | 문서 URL에 사내 서버나 `localhost`, `169.254.169.254` 같은 주소를 넣으면 `ValueError: Private or local URLs are not supported` | `validate_public_url`이 사설·루프백·링크로컬 주소를 전부 거부함(직접 확인, Step 2) — 클라우드 메타데이터 서버로의 SSRF를 막기 위한 설계 | 공인 인터넷에서 접근 가능한 URL만 사용 |
 | 스캔 이미지로만 된 PDF를 올리면 `ValueError: No extractable text found in {파일명}` | `ingest_pdf`는 `pypdf`의 `extract_text()`가 빈 문자열을 돌려주는 페이지를 전부 건너뛰고, 청크가 하나도 안 남으면 예외를 냄(직접 확인, Step 2) | OCR로 텍스트 레이어를 추가한 PDF를 올리거나 다른 문서 사용 |
 | 질문했는데 항상 "I do not have enough evidence..."만 뜸 | 사이드바의 "Refusal threshold"가 실제 검색 점수보다 높게 설정됨 — 로컬 해싱 임베딩은 의미가 아니라 어휘 일치라 점수가 OpenAI 임베딩보다 낮게 나오는 경향이 있음(Step 3) | 문턱 슬라이더를 낮추거나(예: 0.10) OpenAI 임베딩으로 전환 |
+| 한국어 PDF·질문은 임베딩 모드와 무관하게 슬라이더를 최솟값(0.05)까지 낮춰도 항상 거절됨(로컬 해싱일 때) | `_terms`가 `[a-z0-9]+`만 토큰으로 남겨 한글 문장이 통째로 빈 벡터가 됨 — 점수가 정확히 0.0이라 문턱을 아무리 낮춰도 넘지 못함(직접 확인, Step 3) | 임베딩을 "OpenAI"로 바꾸거나(키 필요) 영어 문서·질문으로 시험 |
 
 ## 더 해보기
 
 - `agent.py`의 `AGENT_INSTRUCTIONS`(`rag_tutorials/agentic_typed_rag_pydanticai/agent.py:103-115`) 규칙 5번을 지우고, `quoted_span`을 일부러 원문과 다르게 답하도록 유도한 뒤 `_valid_citations`(`rag_tutorials/agentic_typed_rag_pydanticai/agent.py:178-189`)가 정말 그 인용만 걸러내는지 `TestModel`로 재현해보기
-- `rag.py`의 `DEFAULT_CHUNK_SIZE`·`DEFAULT_CHUNK_OVERLAP`(`rag_tutorials/agentic_typed_rag_pydanticai/rag.py:21-22`)를 바꿔가며 `test_chunk_text_uses_stable_overlap`(`rag_tutorials/agentic_typed_rag_pydanticai/test_typed_rag.py:59-65`)이 어느 값까지 통과하는지 실험해보기
+- `rag.py`의 `DEFAULT_CHUNK_SIZE`·`DEFAULT_CHUNK_OVERLAP`(`rag_tutorials/agentic_typed_rag_pydanticai/rag.py:21-22`)를 바꿔가며 `ingest_pdf`가 실제로 그 값을 쓰는지 확인해보기 — `test_chunk_text_uses_stable_overlap`(`rag_tutorials/agentic_typed_rag_pydanticai/test_typed_rag.py:61`)은 `chunk_size=10, overlap=2`를 직접 넘기므로 이 상수를 바꿔도 그 테스트 결과는 그대로입니다. 같은 텍스트로 `ingest_pdf`를 두 번 돌려 청크 개수·ID가 달라지는지 보는 편이 확인이 됩니다
 - `agent.py`의 `resolve_model_name()`(`rag_tutorials/agentic_typed_rag_pydanticai/agent.py:152-162`)을 `app.py`의 사이드바 로직 대신 실제로 연결해보고, 동작이 바뀌는지 확인해보기
 
 ## 다음 날 예고

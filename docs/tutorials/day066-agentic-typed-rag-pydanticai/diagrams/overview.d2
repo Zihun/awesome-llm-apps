@@ -33,8 +33,9 @@ providers: "외부 제공자" {
   answermodel: 답변 모델 API { class: ext }
 }
 
-front -> kb: 문서 업로드
-front -> agent: 질문 텍스트
-kb -> providers: 임베딩 요청
+front -> kb
+front -> agent
+kb -> store: 청크·벡터
+kb -> providers: 문서·질의 임베딩
 agent -> store: 유사도 검색
 agent -> providers: 출력 요청

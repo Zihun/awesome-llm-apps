@@ -9,11 +9,15 @@ answermodel: 답변 모델 API { class: ext }
 
 user -> ui: 질문 입력
 ui -> agent: 질문 실행
-agent -> store: 유사도 검색 (사전+도구 2회)
+agent -> store: 사전 검색
+store -> agent: 최고 점수·청크
+agent -> answermodel: 질문
+answermodel -> agent: 호출
+agent -> store: 도구 검색 (query)
 store -> agent: 근거 청크
-agent -> answermodel: 출력 요청
+agent -> answermodel: 결과
 answermodel -> agent: Answer
-agent -> store: 인용 원문 대조
-store -> agent: 대조 결과
+agent -> store: find_chunk
+store -> agent: 청크 원문
 agent -> ui: 검증된 Answer
 ui -> user: 인용과 함께 렌더링
