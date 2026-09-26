@@ -17,6 +17,6 @@ qdrant -> ui: 관련 청크 목록
 ui -> rag_agent: 프롬프트(문맥+질문)
 rag_agent -> chat_model: 채팅 완성 요청
 chat_model -> rag_agent: 답변 텍스트
-rag_agent -> agno_api: 실행 메타데이터(성공 시)
+rag_agent -> agno_api: 통계 전송
 rag_agent -> ui: response.content
 ui -> user: 답변 표시
