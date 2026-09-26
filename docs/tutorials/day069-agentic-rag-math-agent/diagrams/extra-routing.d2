@@ -11,6 +11,7 @@ out_guard: "답변 타당?" {
   shape: diamond
   class: ours
 }
+web_retry: 웹 재검색 후 재설명 (검증 없음) { class: ours }
 answer: 최종 답변 { class: ours }
 
 sim_check -> kb_explain: 예
@@ -18,4 +19,5 @@ sim_check -> web_explain: 미달·예외
 kb_explain -> out_guard
 web_explain -> out_guard
 out_guard -> answer: 예
-out_guard -> web_explain: "아니오 (재시도)"
+out_guard -> web_retry: 아니오
+web_retry -> answer
