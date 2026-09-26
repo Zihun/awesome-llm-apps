@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-오늘 앱은 217줄짜리 Streamlit 하나로 끝나는 가장 짧은 축의 agentic RAG입니다. 골격은 이 볼륨이 되풀이해 온 것과 같습니다 — agno의 `Knowledge`가 `LanceDb`(벡터 저장소)와 `OpenAIEmbedder`(임베딩)를 묶고, `Agent`가 그 지식 베이스와 채팅 모델(`OpenAIChat(id="gpt-5")`)을 묶어 `search_knowledge_base`라는 도구로 검색 여부를 스스로 판단합니다 — 이 판단 메커니즘 자체는 Day 047이 이미 소스로 확인했으므로 여기서는 되풀이하지 않습니다. 오늘 새로 보는 것은 세 가지입니다. 첫째, GPT-5 자체 — agno의 `OpenAIChat` 기본값이 이미 `gpt-5.4-mini`로 넘어가 있을 만큼(소스로 확인) GPT-5 계열이 일상화됐고, `reasoning_effort`·`verbosity` 같은 추론 모델용 필드가 클래스에 있지만 이 앱은 그중 무엇도 지정하지 않습니다(Step 4). 둘째, `requirements.txt` 5줄에 `openai`가 이미 들어 있어서 — Day 047·050이 매번 씨름했던 "agno가 요구하는데 선언에는 없는" 패턴이 오늘은 없습니다(Step 1). 셋째, 그리고 가장 중요한 것은, 이 앱이 사이드바에 API 키를 입력하는 순간 108행의 `knowledge.add_content(url=url)`에서 항상 `AttributeError`로 멈춰 질문 입력창에 단 한 번도 이르지 못한다는 사실입니다 — `add_content`가 `insert`로 이름이 바뀐 것은 Day 047·050과 같은 agno 버전 드리프트이지만, 이번엔 Streamlit의 공식 테스트 도구 `AppTest`로 실제 앱 파일을 그대로 실행해 정확히 그 줄에서 멈추는 것을 직접 확인합니다(Step 5·6). 앱 자체 README도 코드와 어긋나는 곳이 여러 군데 있습니다 — 실제로 없는 `UrlKnowledge` 클래스를 언급하고, 모델을 "GPT-5-nano"라 부르지만 코드는 `id="gpt-5"`이며, 기본 지식 소스를 Agno 공식 문서라 하지만 실제 기본 URL은 MCP·A2A를 비교하는 블로그 글이고, 추천 질문 문구도 코드의 버튼 3개와 다릅니다(문제 해결). 완성해도 이 문서 기준으로는 질문 화면 자체를 볼 수 없다는 것이 오늘의 결론이며, 아래는 코드가 의도한 완성 아키텍처입니다.
+오늘 앱은 217줄짜리 Streamlit 하나로 끝나는 가장 짧은 축의 agentic RAG입니다. 골격은 이 볼륨이 되풀이해 온 것과 같습니다 — agno의 `Knowledge`가 `LanceDb`(벡터 저장소)와 `OpenAIEmbedder`(임베딩)를 묶고, `Agent`가 그 지식 베이스와 채팅 모델(`OpenAIChat(id="gpt-5")`)을 묶어 `search_knowledge_base`라는 도구로 검색 여부를 스스로 판단합니다 — 이 판단 메커니즘 자체는 Day 047이 이미 소스로 확인했으므로 여기서는 되풀이하지 않습니다. 오늘 새로 보는 것은 세 가지입니다. 첫째, GPT-5 자체 — agno의 `OpenAIChat` 기본값이 이미 `gpt-5.4-mini`로 넘어가 있을 만큼(소스로 확인) GPT-5 계열이 일상화됐고, `reasoning_effort`(추론 모델 공통)·`verbosity`(GPT-5 계열) 같은 필드가 클래스에 있지만 이 앱은 그중 무엇도 지정하지 않습니다(Step 4). 둘째, `requirements.txt` 5줄에 `openai`가 이미 들어 있어서 — Day 047·050이 매번 씨름했던 "agno가 요구하는데 선언에는 없는" 패턴이 오늘은 없습니다(Step 1). 셋째, 그리고 가장 중요한 것은, 이 앱이 사이드바에 API 키를 입력하는 순간 108행의 `knowledge.add_content(url=url)`에서 항상 `AttributeError`로 멈춰 질문 입력창에 단 한 번도 이르지 못한다는 사실입니다 — `add_content`가 `insert`로 이름이 바뀐 것은 Day 047·050과 같은 agno 버전 드리프트이지만, 이번엔 Streamlit의 공식 테스트 도구 `AppTest`로 실제 앱 파일을 그대로 실행해 정확히 그 줄에서 멈추는 것을 직접 확인합니다(Step 5·6). 앱 자체 README도 코드와 어긋나는 곳이 여러 군데 있습니다 — 실제로 없는 `UrlKnowledge` 클래스를 언급하고, 모델을 "GPT-5-nano"라 부르지만 코드는 `id="gpt-5"`이며, 기본 지식 소스를 Agno 공식 문서라 하지만 실제 기본 URL은 MCP·A2A를 비교하는 블로그 글이고, 추천 질문 문구도 코드의 버튼 3개와 다릅니다(문제 해결). 완성해도 이 문서 기준으로는 질문 화면 자체를 볼 수 없다는 것이 오늘의 결론이며, 아래는 코드가 의도한 완성 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -120,7 +120,7 @@ ALL IMPORTS OK
             st.error("Please enter a URL")
 ```
 
-"Add URL" 버튼은 URL을 곧바로 적재하지 않고 `st.session_state.urls_to_add`에 큐잉만 합니다 — 실제 적재는 59행 이후, 키가 있을 때만 도는 블록이 담당합니다(Step 5). 이 파일 전체에서 `if openai_key:`(59행) 안쪽이 본문의 대부분(59~182행)을 차지하지만, 그렇다고 키를 넣기 전 화면이 사이드바 두 위젯뿐인 것은 아닙니다 — `AppTest`로 직접 확인하면 제목(22행)·설명 마크다운(23~29행)·사이드바(입력 2개·버튼 1개)·안내 문구(184~194행)에 더해, 맨 아래 "How This Works" 펼침(196~217행)까지 이 시점에도 이미 렌더링됩니다. `if openai_key:` 뒤에 숨는 것은 질문 입력·답변 영역(132행 이후)뿐입니다.
+"Add URL" 버튼은 URL을 곧바로 적재하지 않고 `st.session_state.urls_to_add`에 큐잉만 합니다 — 실제 적재는 59행 이후, 키가 있을 때만 도는 블록이 담당합니다(Step 5). 이 파일 전체에서 `if openai_key:`(59행) 안쪽이 본문의 대부분(59~182행)을 차지하지만, 그렇다고 키를 넣기 전 화면이 사이드바 두 위젯뿐인 것은 아닙니다 — `AppTest`로 직접 확인하면 제목(22행)·설명 마크다운(23~29행)·사이드바(입력 2개·버튼 1개)·안내 문구(184~194행)에 더해, 맨 아래 "How This Works" 펼침(196~217행)까지 이 시점에도 이미 렌더링됩니다. `if openai_key:` 뒤에 숨는 것은 사이드바의 적재된 URL 목록(113~117행)과 URL 추가 처리(119~130행), 그리고 질문 입력·답변 영역(132행 이후)입니다.
 
 **그림.**
 
@@ -211,7 +211,7 @@ Knowledge OK: Knowledge
 
 ### Step 4. GPT-5 에이전트 정의 — 지정하지 않은 필드들
 
-**목적.** `load_agent()`가 `OpenAIChat(id="gpt-5")`와 지식 베이스를 어떻게 묶는지, 그리고 추론 모델용 필드(`reasoning_effort`·`verbosity`)를 이 앱이 실제로는 건드리지 않는다는 것을 확인합니다.
+**목적.** `load_agent()`가 `OpenAIChat(id="gpt-5")`와 지식 베이스를 어떻게 묶는지, 그리고 `reasoning_effort`(추론 모델 공통)·`verbosity`(GPT-5 계열)를 이 앱이 실제로는 건드리지 않는다는 것을 확인합니다.
 
 **할 일.**
 
@@ -239,7 +239,7 @@ Knowledge OK: Knowledge
         )
 ```
 
-agno 3.0.11 소스(`agno/models/openai/chat.py`)를 보면 `OpenAIChat`의 기본 `id`는 이미 `"gpt-5.4-mini"`입니다(42행) — GPT-5 계열이 이 라이브러리의 기본값이 될 만큼 자리 잡았다는 뜻이고, 이 앱은 그중 `"gpt-5"`를 명시적으로 고른 것입니다. 같은 클래스에는 `reasoning_effort`·`verbosity`·`max_completion_tokens` 같은 필드도 있지만(51~59행), 이들은 GPT-5 전용이 아니라 `frequency_penalty`·`seed`·`top_p` 등과 나란히 요청 딕셔너리(`base_params`, 204~211행)에 들어가는 일반 요청 필드입니다 — 그중 추론 모델에 특화된 것은 `verbosity` 정도이고, 셋 다 기본값은 `None`입니다. 이 앱은 `id`와 `api_key` 외에는 아무것도 넘기지 않으므로 셋 다 `None`인 채로 요청됩니다. `search_knowledge=True`가 검색 결과를 프롬프트에 강제로 끼워넣는 것이 아니라 모델이 스스로 판단해 호출하는 도구를 등록할 뿐이라는 것은 Day 047이 이미 소스로 확인한 메커니즘이라 여기서는 되풀이하지 않습니다.
+agno 3.0.11 소스(`agno/models/openai/chat.py`)를 보면 `OpenAIChat`의 기본 `id`는 이미 `"gpt-5.4-mini"`입니다(42행) — GPT-5 계열이 이 라이브러리의 기본값이 될 만큼 자리 잡았다는 뜻이고, 이 앱은 그중 `"gpt-5"`를 명시적으로 고른 것입니다. 같은 클래스에는 `reasoning_effort`·`verbosity`·`max_completion_tokens` 같은 필드도 있지만(51~59행), 이들은 GPT-5 전용이 아니라 `frequency_penalty`·`seed`·`top_p` 등과 나란히 요청 딕셔너리(`base_params`, 204~211행)에 들어가는 일반 요청 필드입니다 — `reasoning_effort`는 o 시리즈를 포함한 추론 모델 전반에 공통인 필드이고, `verbosity`가 GPT-5 계열에 특화된 쪽이며, `max_completion_tokens`는 예전 `max_tokens`의 일반 후속 필드입니다(셋 다 GPT-5 전용은 아닙니다). 셋 다 기본값은 `None`입니다. 이 앱은 `id`와 `api_key` 외에는 아무것도 넘기지 않으므로 셋 다 `None`인 채로 요청됩니다. `search_knowledge=True`가 검색 결과를 프롬프트에 강제로 끼워넣는 것이 아니라 모델이 스스로 판단해 호출하는 도구를 등록할 뿐이라는 것은 Day 047이 이미 소스로 확인한 메커니즘이라 여기서는 되풀이하지 않습니다.
 
 **그림.**
 
@@ -375,7 +375,7 @@ with key -> exceptions: 1
 with key -> message: 'Knowledge' object has no attribute 'add_content'
 ```
 
-(실제 브라우저로 확인하고 싶다면 `uv run --no-project streamlit run agentic_rag_gpt5.py --server.address localhost --server.headless true`로 띄웁니다 — `--server.address`를 생략하면 Streamlit이 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보냅니다. 화면도 결국 같은 108행에서 멈춥니다.)
+(실제 브라우저로 확인하고 싶다면 `uv run --no-project streamlit run agentic_rag_gpt5.py --server.address localhost --server.headless true`로 띄웁니다 — `--server.headless true`를 쓰면서 `--server.address`를 생략하면 Streamlit이 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보냅니다(소스로 확인, Streamlit 1.64.0). 화면도 결국 같은 108행에서 멈춥니다.)
 
 ## 요청 한 건이 흐르는 과정
 
@@ -386,7 +386,7 @@ with key -> message: 'Knowledge' object has no attribute 'add_content'
 ## 실행 체크리스트
 
 - [ ] `uv venv && uv pip install -r requirements.txt`만으로(추가 설치 없이) 6개 import가 모두 성공한다는 것을 확인했다
-- [ ] `AppTest`로 키 없이 실행하면 text_input 2개·button 1개만 뜨고, 나머지 화면은 `if openai_key:` 뒤에 있다는 것을 확인했다
+- [ ] `AppTest`로 키 없이 실행하면 위젯은 text_input 2개·button 1개뿐이고, 사이드바의 적재 URL 목록과 질문 입력·답변 영역은 `if openai_key:` 뒤에 있다는 것을 확인했다
 - [ ] `OpenAIEmbedder()`의 기본 모델이 `text-embedding-3-small`(1536차원)이며 코드에는 이 값이 적혀 있지 않다는 것을 소스와 직접 실행으로 확인했다
 - [ ] `LanceDb(uri="tmp/lancedb")`가 별도 서버가 아니라 로컬 파일 기반 저장소라는 것을 Day 050에 이어 확인했다
 - [ ] `OpenAIChat(id="gpt-5")`의 `reasoning_effort`·`verbosity` 필드가 기본값 `None`이고 이 앱은 지정하지 않는다는 것을 확인했다
