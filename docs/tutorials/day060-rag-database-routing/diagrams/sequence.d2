@@ -3,10 +3,10 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
+openai: OpenAI API { class: ext }
+web_agent: 웹 검색 에이전트 { class: ours }
 router: 라우팅 (route_query) { class: ours }
 qdrant: Qdrant 컬렉션 3개 { class: store }
-web_agent: 웹 검색 에이전트 { class: ours }
-openai: OpenAI API { class: ext }
 ddg: DuckDuckGo { class: ext }
 
 user -> ui: 질문 입력

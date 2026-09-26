@@ -679,7 +679,7 @@ def query_database(db: Qdrant, question: str) -> tuple[str, list]:
 
 239행의 주석 "Use simpler chain creation with hub prompt"는 낡았습니다 — 실제 코드는 `from langchain import hub`(17행)를 import는 하지만 파일 전체에서 `hub.pull` 같은 호출은 한 번도 없습니다(grep으로 직접 확인, `hub`가 등장하는 곳은 17행 import와 이 주석뿐). Day 057의 `hub.pull("langchain-ai/retrieval-qa-chat")`(매 질문마다 LangChain Hub에 접속)과 달리, 이 앱은 프롬프트를 240-249행에서 직접 짜 넣으므로 그 세 번째 외부 서비스 의존은 없습니다. `create_stuff_documents_chain(st.session_state.llm, ...)`의 `st.session_state.llm`은 Step 2에서 확인했듯 `ChatOpenAI(temperature=0)` — 즉 `model=`이 없어 `gpt-3.5-turbo`입니다. `main()`은 이 함수가 돌려주는 `relevant_docs`를 받기만 하고 화면에는 답변 텍스트만 씁니다 — 어떤 청크가 근거였는지는 UI에 표시되지 않습니다(소스로 확인, `rag_tutorials/rag_database_routing/rag_database_routing.py:378-384`).
 
-이 함수는 질문을 **두 번** 임베딩합니다 — 236행의 `retriever.get_relevant_documents(question)`가 한 번, 그리고 668행(발췌 위 639-668)의 `create_retrieval_chain(retriever, combine_docs_chain)`이 만드는 체인이 `retrieval_chain.invoke({"input": question})` 안에서 같은 리트리버를 또 부릅니다(소스로 확인, `langchain==0.3.12`의 `chains/retrieval.py`: `retrieval_docs = (lambda x: x["input"]) | retriever`). 즉 "한 번 더"가 아니라 이 함수 안에서만 임베딩 호출이 2회입니다.
+이 함수는 질문을 **두 번** 임베딩합니다 — 236행의 `retriever.get_relevant_documents(question)`가 한 번, 그리고 251행의 `create_retrieval_chain(retriever, combine_docs_chain)`이 만드는 체인이 `retrieval_chain.invoke({"input": question})` 안에서 같은 리트리버를 또 부릅니다(소스로 확인, `langchain==0.3.12`의 `chains/retrieval.py`: `retrieval_docs = (lambda x: x["input"]) | retriever`). 즉 "한 번 더"가 아니라 이 함수 안에서만 임베딩 호출이 2회입니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -895,11 +895,11 @@ if __name__ == "__main__":
     main()
 ```
 
-`route_query`가 `None`이면 웹 검색, 아니면 해당 DB 검색 — Step 4에서 확인했듯 오늘 설치되는 agno로는 벡터 라우팅이 문턱을 못 넘는 모든 질문이 왼쪽(웹 검색) 경로로 갑니다. 두 경로 모두 `answer`만 화면에 쓰고 `relevant_docs`는 변수에만 남습니다.
+`route_query`가 `None`이면 웹 검색, 아니면 해당 DB 검색 — Step 4에서 확인했듯 오늘 설치되는 agno로는 벡터 라우팅이 문턱을 못 넘는 모든 질문이 오른쪽(웹 검색 에이전트) 경로로 갑니다. 두 경로 모두 `answer`만 화면에 쓰고 `relevant_docs`는 변수에만 남습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 키 없이 실제로 로컬 서버를 띄워, 응답이 오는지(자격증명 폼까지만) 확인합니다. `--server.address localhost`를 반드시 붙입니다 — Streamlit 1.64.0은 `--server.headless true`만 주면 배너의 External URL을 채우려고 `checkip.amazonaws.com`에 실제로 접속을 시도합니다(소스로 확인, `streamlit/web/bootstrap.py`의 `net_util.get_external_ip()`, `net_util.py`). 소켓 차단으로 직접 재현했습니다 — `--server.address localhost` 없이 돌리면:
+**확인.** 키 없이 실제로 로컬 서버를 띄워, 응답이 오는지(자격증명 폼까지만) 확인합니다. `--server.address localhost`를 반드시 붙입니다 — Streamlit 1.64.0은 `--server.headless true`만 주면 배너의 External URL을 채우려고 `checkip.amazonaws.com`에 실제로 접속을 시도합니다(소스로 확인, `streamlit/web/bootstrap.py`의 `net_util.get_external_ip()`, `net_util.py`). 소켓 차단으로 직접 재현했습니다(`--server.address localhost` 없이 돌리면 — 이 재현은 `sitecustomize.py`를 `PYTHONPATH`로 얹어 서브프로세스의 `socket.connect`·`getaddrinfo`까지 가로채는 별도 도구를 썼고, 본문에는 그 도구 자체는 싣지 않습니다):
 
 ```
 [netblock] blocked connect: ('8.8.8.8', 1)
