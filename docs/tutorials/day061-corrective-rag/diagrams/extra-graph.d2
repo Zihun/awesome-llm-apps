@@ -8,7 +8,7 @@ websearch: 웹 검색 { class: ours }
 generate: "생성 (→ END)" { class: ours }
 
 retrieve -> grade: 문서
-grade -> transform: 관련 없음
-grade -> generate: 관련 있음
+grade -> transform: no 판정 있음
+grade -> generate: no 판정 없음(빈 목록 포함)
 transform -> websearch: 질문
 websearch -> generate: 결과

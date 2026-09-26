@@ -5,12 +5,14 @@ front: "사용자 쪽 화면" {
   class: group
   grid-columns: 2
   user: 사용자 { class: person }
-  ui: Streamlit UI (corrective_rag.py) { class: ours }
+  ui: Streamlit UI { class: ours }
 }
+
+ingest: 문서 적재·색인 { class: ours }
 
 graph: "CRAG 그래프 (LangGraph)" {
   class: group
-  grid-columns: 3
+  grid-columns: 2
   retrieve: "1. 검색" { class: ours }
   grade: "2. 채점" { class: ours }
   transform: "3. 재작성" { class: ours }
@@ -18,16 +20,17 @@ graph: "CRAG 그래프 (LangGraph)" {
   generate: "5. 생성" { class: ours }
 }
 
-qdrant: Qdrant 컬렉션 (rag-qdrant) { class: store }
+qdrant: Qdrant (rag-qdrant) { class: store }
 
 providers: "외부 서비스" {
   class: group
-  grid-columns: 1
-  openai: OpenAI 임베딩 { class: ext }
-  claude: Claude Sonnet 4.5 { class: ext }
-  tavily: Tavily 검색 { class: ext }
+  grid-columns: 3
+  openai: OpenAI { class: ext }
+  claude: Claude { class: ext }
+  tavily: Tavily { class: ext }
 }
 
+ingest -> qdrant: 청크 임베딩(OpenAI)·저장
 front.ui -> graph: 질문 텍스트
-graph -> qdrant: 문서 임베딩·유사도 검색
-graph -> providers: 채점·재작성·생성(Claude), 임베딩(OpenAI), 웹 검색(Tavily)
+graph -> qdrant: 유사도 검색
+graph -> providers: 채점·재작성·생성(Claude), 웹 검색(Tavily)
