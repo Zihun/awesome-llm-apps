@@ -1,0 +1,31 @@
+...@../../_tools/theme
+direction: down
+
+logic: "앱 로직 (agentic_rag_gpt5.py)" {
+  class: group
+  sources: 지식 소스 URL { class: file }
+  knowledge: 지식 베이스 (load_knowledge) { class: ours }
+  agent: GPT-5 에이전트 (load_agent) { class: ours }
+
+  sources -> knowledge: add_content(url=..)
+  knowledge -> agent: 검색 도구로 등록
+}
+
+front: "사용자 쪽" {
+  class: group
+  grid-columns: 2
+  ui: Streamlit UI (agentic_rag_gpt5.py) { class: ours }
+  user: 사용자 { class: person }
+}
+
+storage: LanceDB (agentic_rag_docs) { class: store }
+
+providers: "OpenAI API" {
+  class: group
+  embed_model: 임베딩 모델 (text-embedding-3-small) { class: ext }
+  chat_model: 채팅 모델 (gpt-5) { class: ext }
+}
+
+front.ui -> logic: 질문·URL
+logic -> storage: 벡터 저장·검색
+logic -> providers: 임베딩·채팅 요청

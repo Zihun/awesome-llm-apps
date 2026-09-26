@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: GPT-5 에이전트 { class: ours }
+embed_model: 임베딩 모델 (text-embedding-3-small) { class: ext }
+storage: LanceDB { class: store }
+chat_model: 채팅 모델 (gpt-5) { class: ext }
+
+user -> ui: 질문 입력 후 "Get Answer" 클릭
+ui -> agent: agent.run(query, stream=True)
+agent -> chat_model: 1차 요청
+chat_model -> agent: 도구 호출
+agent -> embed_model: 임베딩 요청
+embed_model -> agent: 질의 벡터
+agent -> storage: 검색
+storage -> agent: 청크
+agent -> chat_model: 2차 요청
+chat_model -> agent: 스트리밍
+agent -> ui: chunk.content 누적 표시
+ui -> user: 실시간 답변 표시
