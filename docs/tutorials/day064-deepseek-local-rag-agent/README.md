@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-이 앱은 DeepSeek R1 추론 모델을 Ollama로 로컬 실행하면서 Qdrant 벡터 저장소와 Exa AI 웹 검색까지 얹은 526줄(마지막 줄에 개행이 없어 `wc -l`은 525로 세지만 편집기·GitHub에서는 526번째 줄까지 보입니다, 직접 확인) 단일 파일 Streamlit 앱입니다. 이름과 달리 "로컬"인 것은 모델 추론뿐입니다 — 기본 안내대로 하면입니다: 앱 자체 README와 사이드바의 URL 입력창 placeholder(`https://your-cluster.cloud.qdrant.io:6333`)는 Qdrant **Cloud**를 권하지만, 코드 자체(`QdrantClient(url=..., api_key=...)`)는 URL을 가리지 않습니다 — API 키를 켠 로컬 Qdrant도 같은 두 칸(URL·API Key)으로 그대로 씁니다(직접 확인, Step 3). `requirements.txt` 8줄을 그대로 설치하면 6번째 줄의 `import bs4`부터 `ModuleNotFoundError`로 막힙니다 — `beautifulsoup4`가 8개 의존성 어디에도 없기 때문입니다(직접 확인, Step 1). 반대로 Day 047이 겪었던 `ImportError: openai not installed`는 이 앱에서는 일어나지 않습니다 — `exa-py`가 자체적으로 `openai>=1.48`을 요구해 함께 설치되기 때문입니다(직접 확인). 임베딩은 `agno`의 `OllamaEmbedder`를 LangChain의 `Embeddings` 인터페이스로 감싼 `OllamaEmbedderr`(오타가 아니라 실제 클래스 이름입니다) 클래스가 맡고, 기본값을 `snowflake-arctic-embed`/1024차원으로 명시적으로 고정합니다. 채팅 모델은 사이드바에서 `deepseek-r1:1.5b`·`:7b` 중 고르지만, 웹 검색 실패 시 쓰는 보조 에이전트는 `llama3.2`로 하드코딩돼 있어 고를 수 없습니다.
+이 앱은 DeepSeek R1 추론 모델을 Ollama로 로컬 실행하면서 Qdrant 벡터 저장소와 Exa AI 웹 검색까지 얹은 526줄(마지막 줄에 개행이 없어 `wc -l`은 525로 세지만 편집기·GitHub에서는 526번째 줄까지 보입니다, 직접 확인) 단일 파일 Streamlit 앱입니다. 이름과 달리 "로컬"인 것은 모델 추론뿐입니다 — 기본 안내대로 하면입니다: 앱 자체 README와 사이드바의 URL 입력창 placeholder(`https://your-cluster.cloud.qdrant.io:6333`)는 Qdrant **Cloud**를 권하지만, 코드 자체(`QdrantClient(url=..., api_key=...)`)는 URL을 가리지 않습니다 — API 키를 켠 로컬 Qdrant도 같은 두 칸(URL·API Key)으로 그대로 씁니다(생성자까지 직접 확인, Step 3 — 서버 쪽 동작은 Qdrant 문서 기준). `requirements.txt` 8줄을 그대로 설치하면 6번째 줄의 `import bs4`부터 `ModuleNotFoundError`로 막힙니다 — `beautifulsoup4`가 8개 의존성 어디에도 없기 때문입니다(직접 확인, Step 1). 반대로 Day 047이 겪었던 `ImportError: openai not installed`는 이 앱에서는 일어나지 않습니다 — `exa-py`가 자체적으로 `openai>=1.48`을 요구해 함께 설치되기 때문입니다(직접 확인). 임베딩은 `agno`의 `OllamaEmbedder`를 LangChain의 `Embeddings` 인터페이스로 감싼 `OllamaEmbedderr`(오타가 아니라 실제 클래스 이름입니다) 클래스가 맡고, 기본값을 `snowflake-arctic-embed`/1024차원으로 명시적으로 고정합니다. 채팅 모델은 사이드바에서 `deepseek-r1:1.5b`·`:7b` 중 고르지만, 웹 검색 실패 시 쓰는 보조 에이전트는 `llama3.2`로 하드코딩돼 있어 고를 수 없습니다.
 
 API 키도, 큰 로컬 모델 다운로드도 없이 확인하기 위해 이 문서는 실제 Ollama 데몬 대신 이 PC의 다른 포트에 가짜 로컬 서버를 띄워 채팅(`/api/chat`)·임베딩(`/api/embed`) 왕복을 실제로 재현합니다(Step 2·5). 이 가짜 서버로 `agent.run()`을 성공시키는 순간 agno 3.0.11이 `os-api.agno.com`으로 익명 실행 통계를 실제로 보내려 시도합니다(Day 047 Step 5와 같은 메커니즘, 네트워크를 막고 직접 확인, Step 2) — 이 문서는 그 시도를 차단한 채로 관찰했고, 재현하려면 `AGNO_TELEMETRY=false`로 끄는 것을 권합니다. 그 과정에서 흥미로운 사실 하나를 더 직접 확인했습니다 — 이 앱이 자랑하는 "Thinking process visualization" 기능(단순 모드에만 있는 기능입니다)은 지금 새로 설치되는 agno(3.0.11)에서는 절대 작동하지 않습니다. agno의 `Ollama` 모델이 `<think>` 태그를 응답 파싱 단계에서 이미 떼어 `reasoning_content`로 옮겨 버려서, 이 앱이 497~507행에서 다시 찾는 정규식이 항상 빈손을 짚기 때문입니다(Step 6에서 직접 재현). 완성하면 브라우저에는 문서 업로드 사이드바와 채팅창이 뜨고(Step 7에서 실제로 띄워 봅니다), 이 문서는 키가 없어 실제 Qdrant·Exa 호출은 하지 않고 로컬 스텁으로 배선만 확인합니다. 아래는 완성된 아키텍처입니다.
 
@@ -15,7 +15,7 @@ API 키도, 큰 로컬 모델 다운로드도 없이 확인하기 위해 이 문
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
 | Ollama | `deepseek-r1:1.5b`·`deepseek-r1:7b`(채팅, 택1) · `snowflake-arctic-embed`(임베딩) · `llama3.2`(웹 검색용 채팅) 네 모델을 서빙하는 로컬 데몬 | https://ollama.com 설치 후 `ollama pull deepseek-r1:1.5b`(또는 `:7b`)·`ollama pull snowflake-arctic-embed`·`ollama pull llama3.2` — 이 문서는 받지 않습니다(이 PC에는 대신 `deepseek-r1:8b`·`llama3.2`가 이미 있었고, `ollama list`로 확인만 했습니다) |
-| Qdrant | RAG 모드의 벡터 저장소. 앱 안내는 Qdrant Cloud지만 코드는 URL을 가리지 않아 API 키를 켠 로컬 Qdrant도 됩니다(직접 확인, Step 3) | Cloud: https://cloud.qdrant.io 가입 → 클러스터 생성 → API Key·URL 발급 / 로컬: `QDRANT__SERVICE__API_KEY`를 설정해 띄운 뒤 그 키와 `http://localhost:6333` 입력(이 문서는 키가 없어 어느 쪽도 실행하지 않습니다) |
+| Qdrant | RAG 모드의 벡터 저장소. 앱 안내는 Qdrant Cloud지만 코드는 URL을 가리지 않아 API 키를 켠 로컬 Qdrant도 됩니다(생성자까지 직접 확인, Step 3 — 서버 쪽 동작은 Qdrant 문서 기준) | Cloud: https://cloud.qdrant.io 가입 → 클러스터 생성 → API Key·URL 발급 / 로컬: `QDRANT__SERVICE__API_KEY`를 설정해 띄운 뒤 그 키와 `http://localhost:6333` 입력(이 문서는 키가 없어 어느 쪽도 실행하지 않습니다) |
 | Exa AI (선택) | 사이드바의 "Enable Web Search Fallback"을 켰을 때만 필요 | https://exa.ai 가입 후 API Key 발급 |
 | beautifulsoup4 | `requirements.txt`에 없지만 6행의 `import bs4`에 필요합니다(Step 1) | `uv pip install beautifulsoup4` 별도 설치 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
@@ -271,6 +271,8 @@ ThreadingHTTPServer(("127.0.0.1", 7070), Sink).serve_forever()
 PY
 uv run --no-project python sink.py &
 ```
+
+PowerShell: heredoc 대신 파일을 에디터로 저장하거나 `@'...'@ | Set-Content sink.py`를 쓰고, 백그라운드 실행은 `Start-Process -NoNewWindow uv -ArgumentList 'run','--no-project','python','sink.py'`로 대신합니다.
 
 다른 터미널에서 `AGNO_API_RUNTIME=dev`로 통계 주소를 `os-api.agno.com` 대신 이 수신기(`http://localhost:7070`)로 돌린 채, 위 채팅 명령을 그대로 다시 실행합니다.
 
@@ -604,10 +606,10 @@ reasoning_content: '2+2 is basic addition, sum is 4'
 **할 일.**
 
 ```bash
-uv run --no-project streamlit run deepseek_rag_agent.py --server.headless true --browser.serverAddress localhost --browser.gatherUsageStats false
+uv run --no-project streamlit run deepseek_rag_agent.py --server.headless true --server.address localhost --browser.gatherUsageStats false
 ```
 
-PowerShell도 같은 명령입니다. `--server.headless true`만 주면 Streamlit 1.41.1은 외부 IP를 알아내려고 `http://checkip.amazonaws.com`·`https://checkip.amazonaws.com`에 실제로 접속을 시도합니다(`streamlit/web/bootstrap.py`의 `net_util.get_external_ip()`, Day 054가 이미 다룬 사실과 같음) — 네트워크를 막고 직접 확인하면 이 둘과 내부 IP를 추정하는 UDP `connect(8.8.8.8, 1)`까지 차단 로그에 남습니다. `--browser.serverAddress localhost`를 더하면 그 분기 자체를 타지 않아(소스로 확인) 같은 조건에서 차단 시도가 0건이 되고, 콘솔도 "Collecting usage statistics" 안내 없이 깔끔해집니다(`--browser.gatherUsageStats false`, 직접 확인). 뜬 뒤 확인:
+PowerShell도 같은 명령입니다. `--server.headless true`만 주면 Streamlit 1.41.1은 외부 IP를 알아내려고 `http://checkip.amazonaws.com`·`https://checkip.amazonaws.com`에 실제로 접속을 시도합니다(`streamlit/web/bootstrap.py`의 `net_util.get_external_ip()`, Day 054가 이미 다룬 사실과 같음) — 네트워크를 막고 직접 확인하면 이 둘과 내부 IP를 추정하는 UDP `connect(8.8.8.8, 1)`까지 차단 로그에 남습니다. `--server.address localhost`를 더하면 그 분기 자체를 타지 않아(소스로 확인) 같은 조건에서 차단 시도가 0건이 되고, 콘솔도 "Collecting usage statistics" 안내 없이 깔끔해집니다(`--browser.gatherUsageStats false`, 직접 확인). 뜬 뒤 확인:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501/
@@ -684,7 +686,7 @@ chat_input placeholder: ['Ask about your documents...']
 - [ ] `check_document_relevance`가 정의만 되고 실제 호출부는 없다는 것을 grep으로 확인했다
 - [ ] 가짜 로컬 Ollama 서버로 채팅(`/api/chat`)과 임베딩(`/api/embed`) 왕복이 실제로 되는 것을 확인했다(모델 다운로드 없이)
 - [ ] agno가 `<think>` 태그를 자동으로 떼어 `reasoning_content`에 저장하며, 단순 모드에만 있는 이 앱의 정규식 분리는 더 이상 매치되지 않는다는 것을 확인했다(RAG 모드는 이 코드 자체가 없음)
-- [ ] `streamlit run`으로 앱을 실제로 띄워 화면이 뜨는 것을 확인했고, `--server.headless true`만 주면 외부 IP 조회가 나가지만 `--browser.serverAddress localhost`로 막을 수 있다는 것을 확인했다
+- [ ] `streamlit run`으로 앱을 실제로 띄워 화면이 뜨는 것을 확인했고, `--server.headless true`만 주면 외부 IP 조회가 나가지만 `--server.address localhost`로 막을 수 있다는 것을 확인했다
 - [ ] idle 화면의 경고문이 RAG 모드 토글 상태와 무관하게 항상 뜬다는 것을 `AppTest`로 확인했다
 - [ ] `process_pdf`가 만드는 임시 PDF 파일이 `delete=False`로 인해 정리되지 않는다는 것을 확인했다
 
@@ -693,8 +695,8 @@ chat_input placeholder: ['Ask about your documents...']
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `streamlit run deepseek_rag_agent.py` 실행 즉시 `ModuleNotFoundError: No module named 'bs4'` | `requirements.txt`에 `beautifulsoup4`가 빠져 있고, 8개 의존성 중 어느 것도 이를 전이 설치하지 않음(직접 확인) | `uv pip install beautifulsoup4` 별도 설치 |
-| `--server.headless true`로 띄우면 콘솔에 "Collecting usage statistics"·"Did not auto detect external IP"가 뜨고 잠깐 멈춤 | 헤드리스 기동이 `checkip.amazonaws.com`으로 외부 IP를 조회함(Streamlit 1.41.1, Day 054와 같은 사실, 직접 확인) | `--browser.serverAddress localhost --browser.gatherUsageStats false`를 함께 줌(Step 7) |
-| 질문마다 응답이 느려지거나, 종료 직후 `DEBUG Could not send telemetry event to /telemetry/runs: ConnectError`가 보임(오프라인일 때) | `agent.run()`이 성공할 때마다 agno가 `os-api.agno.com`에 실행 통계를 보내려 시도함(직접 확인, Step 2) | 응답 자체는 느려지지 않음(백그라운드 스레드) — 시도 자체를 끄려면 `AGNO_TELEMETRY=false` |
+| `--server.headless true`만 주고 띄우면, 인터넷에 연결된 평범한 환경에서는 콘솔에 "External URL: http://<공인 IP>:8501"이 뜨고, 오프라인이거나 네트워크를 막았을 때는 "Collecting usage statistics"·"Did not auto detect external IP"가 뜨고 잠깐 멈춤 | 헤드리스 기동이 `checkip.amazonaws.com`으로 외부 IP를 조회함(Streamlit 1.41.1, Day 054와 같은 사실, 직접 확인) | `--server.address localhost --browser.gatherUsageStats false`를 함께 줌(Step 7) |
+| 종료 직후 `DEBUG Could not send telemetry event to /telemetry/runs: ConnectError`가 보임(오프라인일 때) | `agent.run()`이 성공할 때마다 agno가 `os-api.agno.com`에 실행 통계를 보내려 시도함(직접 확인, Step 2) | 응답 자체는 느려지지 않음(백그라운드 스레드) — 시도 자체를 끄려면 `AGNO_TELEMETRY=false` |
 | RAG 모드를 켠 채 질문해도 항상 "관련 문서가 없다"는 안내만 나옴, 또는 PDF·URL을 올려도 아무 메시지 없이 조용함 | Qdrant API Key·URL을 넣지 않으면 `init_qdrant()`가 `None`을 반환하고(153-154행), 이후 업로드 처리의 `if texts and qdrant_client:`(342·354행)가 거짓이 되어 문서 처리 성공 여부와 무관하게 저장을 건너뜀 — 성공해도 실패해도 메시지가 없음(소스로 확인) | 사이드바에 URL·API Key를 입력하고(로컬 Qdrant도 키를 설정하면 됨, Step 3) **그 뒤에 PDF나 URL을 다시 올려 실제로 처리시켜야** `vector_store`가 생김 |
 | RAG 모드를 켰는데도 채팅창 위 안내문이 "RAG 모드를 켜서 업로드하라"고 말함 | 525-526행의 `else`가 `rag_enabled`가 아니라 `if prompt:`에 걸려 있어, 질문을 아직 입력하지 않은 첫 화면에서 RAG 모드 상태와 무관하게 항상 뜸(직접 확인) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침 — 문구를 무시하고 사이드바 토글 상태로 판단 |
 | "🤔 See thinking process" 확장 패널이 한 번도 나타나지 않음(단순 모드) | 설치되는 agno(3.0.11)가 `<think>` 태그를 응답 파싱 단계에서 이미 떼어 `reasoning_content`로 옮기므로, 이 앱이 497행 근처에서 다시 찾는 `<think>` 태그가 `response.content`에 남아 있지 않음(직접 확인) | 코드는 고치지 않음 — `response.reasoning_content`를 직접 출력해보기(더 해보기 참고) |
