@@ -2,18 +2,14 @@
 direction: down
 
 user: 사용자 { class: person }
-
-handlers: "Motia 스텝" {
-  class: group
-  api: ChatApi 스텝 { class: ours }
-  ai: AiResponse 스텝 { class: ours }
-}
-
+api: ChatApi 스텝 { class: ours }
+ai: AiResponse 스텝 { class: ours }
 store: conversation 스트림 { class: store }
 openai: OpenAI API { class: ext }
 
-user -> handlers.api: POST /chat
-handlers.api -> store: 사용자 메시지 저장
-handlers.api -> handlers.ai: chat-message 이벤트
-handlers.ai -> store: 토큰마다 갱신 (WebSocket으로 사용자에게 푸시)
-handlers.ai -> openai: 스트리밍 호출
+user -> api: POST /chat
+api -> store: 사용자 메시지 저장
+api -> ai: chat-message 이벤트
+ai -> store: 토큰마다 갱신
+ai -> openai: 스트리밍 호출
+store -> user: WebSocket 실시간 푸시
