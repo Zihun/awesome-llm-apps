@@ -845,7 +845,7 @@ uv run --no-project streamlit run app.py
 uv run --no-project streamlit run app.py --server.headless true --server.port 61236 --server.address localhost
 ```
 
-직접 확인한 콘솔 출력(키 없이도 서버는 뜨고, 질문을 실제로 하기 전까지는 키가 필요 없습니다. 첫 줄은 이 컴퓨터에 Streamlit 사용 기록이 전혀 없을 때만 한 번 뜹니다 — 이 문서는 빈 홈 디렉터리로 재현해 확인했습니다):
+직접 확인한 콘솔 출력(키 없이도 서버는 뜨고, 질문을 실제로 하기 전까지는 키가 필요 없습니다. 첫 줄은 `~/.streamlit/credentials.toml`이 없으면 헤드리스로 띄울 때마다 뜹니다 — 이 문서는 빈 홈 디렉터리로 재현해 확인했습니다):
 
 ```
 Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.
