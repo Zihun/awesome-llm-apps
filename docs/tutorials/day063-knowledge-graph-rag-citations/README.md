@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-오늘은 벡터 유사도 대신 Neo4j 지식 그래프로 다중 홉 추론과 출처 인용을 보여주는 524줄짜리 Streamlit 앱을 다룹니다(직접 확인, `wc -l`). 지금까지 이 볼륨의 RAG 앱들은 대부분 벡터 저장소(Qdrant·Chroma 등)를 썼지만(예외: Day 051·056·058), 오늘은 처음으로 그래프 데이터베이스가 등장합니다 — 문서에서 뽑은 엔티티가 노드로, 관계가 `RELATES_TO` 간선으로 저장되고, 질문이 들어오면 시작 엔티티에서 최대 2홉까지 그래프를 타고 관련 정보를 모읍니다(아래 `diagrams/extra-schema.svg`). 이 앱은 이 볼륨에서 보기 드물게 API 키가 단 하나도 필요 없습니다 — `import`문 10줄(12-21행, 직접 확인) 어디에도 `requests`나 `httpx` 같은 임의 HTTP 클라이언트가 없고 agno도 쓰지 않아(소스로 확인) Day 047이 확인했던 S3 다운로드나 `os.agno.com` 컨트롤 플레인, 익명 사용 통계 같은 숨은 네트워크 호출은 없습니다. 다만 이것이 "완전 로컬"을 뜻하지는 않습니다 — `import`문에 없다는 것은 이 코드가 직접 호출을 안 한다는 뜻일 뿐 `ollama` 0.6.2 같은 서드파티 패키지 자체의 동작까지 막지는 못하고, 실제로 Streamlit 1.64.0은 기본값(`browser.gatherUsageStats=True`)으로 브라우저가 화면을 열 때 사용 통계를 자체 서버에 보냅니다(Day 054가 이미 확인한 사실 — Step 7에서 콘솔 문구로 다시 확인합니다). 이 앱이 실제로 좁혀 말할 수 있는 것은 "API 키 없이 모델 추론·그래프 저장이 이 컴퓨터에서 끝난다"는 것입니다. 사이드바에 `st.stop()`이 단 한 곳도 없어서(직접 확인, grep) 이 볼륨 대부분의 RAG 앱이 가진 "키 없으면 여기서 멈춘다"는 게이트 자체가 없고, 대신 Neo4j·Ollama가 없을 때 무엇이 어떻게 실패하는지를 실제로 실행해 확인하는 것이 오늘의 핵심입니다. `KnowledgeGraphManager.__init__`이 만드는 `GraphDatabase.driver(...)`는 생성 시점에는 연결을 시도하지 않고(직접 확인, 0.000초) 실제 쿼리(`session.run`)에서야 접속을 시도해 약 4초 뒤 `ServiceUnavailable`로 실패합니다(직접 확인) — 이 지연 순서 때문에 두 UI 탭이 실패를 다루는 방식이 서로 달라집니다. "문서 추가" 탭은 Ollama 호출(`extract_entities_with_llm`)을 먼저 하고 Neo4j는 나중에 건드리는데, 이 함수가 모든 예외를 삼켜 빈 리스트를 돌려주는 바람에 Ollama가 꺼져 있어도 화면에는 "✅ Extracted 0 entities and 0 relationships"라는 성공 배너가 뜹니다(직접 확인, `AppTest`) — 반면 "질문 응답" 탭은 Neo4j 검색을 먼저 하므로 같은 상황에서 진짜 `st.error` 배너가 뜹니다(직접 확인). `generate_answer_with_citations`의 마지막 Ollama 호출도 실패를 스스로 삼켜, "💬 Answer" 표시 영역에는 오류 대신 "Error generating answer: ..."라는 문장이 마치 모델의 답인 것처럼 나타납니다(직접 확인, 스텁 그래프로 재현). 여기에 더해 `semantic_search`의 검색어 정규식(`[A-Za-z0-9]{3,}`)은 한글을 전혀 못 걸러내, 라틴 문자·숫자 3자 이상이 하나도 없는 순수 한국어 질문은 질문 전체가 검색어 하나가 되어 사실상 매치되지 않습니다(정규식은 직접 확인, 0건 자체는 Neo4j 없이 추정 — 라틴 문자가 하나라도 섞인 질문은 이 규칙에 안 걸립니다). 이 문서는 이 다섯 가지를 Step 1~7에서 순서대로 재현합니다. 아래는 완성된 아키텍처입니다.
+오늘은 벡터 유사도 대신 Neo4j 지식 그래프로 다중 홉 추론과 출처 인용을 보여주는 524줄짜리 Streamlit 앱을 다룹니다(직접 확인, `wc -l`). 지금까지 이 볼륨의 RAG 앱들은 대부분 벡터 저장소(Qdrant·Chroma 등)를 썼지만(예외: Day 051·056·058), 오늘은 처음으로 그래프 데이터베이스가 등장합니다 — 문서에서 뽑은 엔티티가 노드로, 관계가 `RELATES_TO` 간선으로 저장되고, 질문이 들어오면 시작 엔티티에서 최대 2홉까지 그래프를 타고 관련 정보를 모읍니다(아래 `diagrams/extra-schema.svg`). 이 앱은 이 볼륨에서 보기 드물게 API 키가 단 하나도 필요 없습니다 — `import`문 10줄(12-21행, 직접 확인) 어디에도 `requests`나 `httpx` 같은 임의 HTTP 클라이언트가 없고 agno도 쓰지 않아(소스로 확인) Day 047이 확인했던 S3 다운로드나 `os.agno.com` 컨트롤 플레인, 익명 사용 통계 같은 숨은 네트워크 호출은 없습니다. 다만 이것이 "완전 로컬"을 뜻하지는 않습니다 — `import`문에 없다는 것은 이 코드가 직접 호출을 안 한다는 뜻일 뿐 `ollama` 0.6.2 같은 서드파티 패키지 자체의 동작까지 막지는 못하고, 실제로 Streamlit 1.64.0은 기본값(`browser.gatherUsageStats=True`)으로 브라우저가 화면을 열 때 사용 통계를 자체 서버에 보냅니다(Day 054가 이미 확인한 사실 — Step 7에서 콘솔 문구로 다시 확인합니다). 이 앱이 실제로 좁혀 말할 수 있는 것은 "API 키 없이 모델 추론·그래프 저장이 이 컴퓨터에서 끝난다"는 것입니다. 사이드바에 `st.stop()`이 단 한 곳도 없어서(직접 확인, grep) 이 볼륨 대부분의 RAG 앱이 가진 "키 없으면 여기서 멈춘다"는 게이트 자체가 없고, 대신 Neo4j·Ollama가 없을 때 무엇이 어떻게 실패하는지를 실제로 실행해 확인하는 것이 오늘의 핵심입니다. `KnowledgeGraphManager.__init__`이 만드는 `GraphDatabase.driver(...)`는 생성 시점에는 연결을 시도하지 않고(직접 확인, 0.000초) 실제 쿼리(`session.run`)에서야 접속을 시도해 약 4초 뒤 `ServiceUnavailable`로 실패합니다(직접 확인) — 이 지연 순서 때문에 두 UI 탭이 실패를 다루는 방식이 서로 달라집니다. "문서 추가" 탭은 Ollama 호출(`extract_entities_with_llm`)을 먼저 하고 Neo4j는 나중에 건드리는데, 이 함수가 모든 예외를 삼켜 빈 리스트를 돌려주는 바람에 Ollama가 꺼져 있어도 화면에는 "✅ Extracted 0 entities and 0 relationships"라는 성공 배너가 뜹니다(직접 확인, `AppTest`) — 반면 "질문 응답" 탭은 Neo4j 검색을 먼저 하므로 같은 상황에서 진짜 `st.error` 배너가 뜹니다(직접 확인). `generate_answer_with_citations`의 마지막 Ollama 호출도 실패를 스스로 삼켜, "💬 Answer" 표시 영역에는 오류 대신 "Error generating answer: ..."라는 문장이 마치 모델의 답인 것처럼 나타납니다(직접 확인, 스텁 그래프로 재현). 여기에 더해 `semantic_search`의 검색어 정규식(`[A-Za-z0-9]{3,}`)은 한글을 전혀 못 걸러내, 라틴 문자·숫자 3자 이상이 하나도 없는 순수 한국어 질문은 질문 전체가 검색어 하나가 되어 사실상 매치되지 않습니다(정규식은 직접 확인, 0건 자체는 Neo4j 없이 추정 — 라틴 문자·숫자가 3자 이상 연달아 있는 토큰이 하나라도 있으면 이 규칙에 안 걸립니다). 이 문서는 이 다섯 가지를 Step 1~7에서 순서대로 재현합니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -656,7 +656,7 @@ success: ['Extracted 0 entities and 0 relationships']
 error: []
 ```
 
-경고와 성공 배너가 같은 화면에 함께 뜹니다 — 위쪽의 노란 경고를 놓치면, 초록색 "Extracted 0 entities and 0 relationships"만 보고 정상적으로 끝났다고 오해하기 쉽습니다. 이 0건 "성공" 뒤에도 615-616행은 그대로 실행되어 `graph_initialized=True`와 문서 이름이 세션에 남으므로, tab2로 넘어가면 "📚 Knowledge graph contains documents: AI Research Paper"라는 안내가 뜹니다(457행, 소스로 확인) — 그래프에는 아무것도 저장되지 않았는데도 그렇습니다.
+경고와 성공 배너가 같은 화면에 함께 뜹니다 — 위쪽의 노란 경고를 놓치면, 초록색 "Extracted 0 entities and 0 relationships"만 보고 정상적으로 끝났다고 오해하기 쉽습니다. 이 0건 "성공" 뒤에도 444-445행은 그대로 실행되어 `graph_initialized=True`와 문서 이름이 세션에 남으므로, tab2로 넘어가면 "📚 Knowledge graph contains documents: AI Research Paper"라는 안내가 뜹니다(457행, 소스로 확인) — 그래프에는 아무것도 저장되지 않았는데도 그렇습니다.
 
 ### Step 6. 질문 응답 탭 — 이번엔 진짜 오류가 뜬다
 
@@ -819,19 +819,21 @@ clear error: ["Error: Couldn't connect to localhost:7687 ..."]
 uv run --no-project streamlit run knowledge_graph_rag.py
 ```
 
-(pip 대안: `streamlit run knowledge_graph_rag.py`. PowerShell도 같은 명령입니다.) 브라우저가 열리면 제목 "🔍 Knowledge Graph RAG with Verifiable Citations", 탭 "📄 Add Documents"·"❓ Ask Questions"·"🔬 View Graph", 사이드바 "Neo4j URI"·"Neo4j User"·"Neo4j Password"·"LLM Model"이 뜹니다 — 이 값들은 Step 1~7에서 `AppTest`로 이미 확인한 것과 같습니다(직접 확인). 이 문서는 실제 브라우저 대신 헤드리스로 기동해(`--server.headless true --browser.serverAddress localhost`, 임의로 비어 있던 높은 포트) `curl`로 확인했습니다 — `--browser.serverAddress`를 주면 Streamlit이 헤드리스일 때만 시도하는 외부 IP 자동탐지(`net_util.get_external_ip`, Day 054가 이미 확인한 사실)를 건너뜁니다.
+(pip 대안: `streamlit run knowledge_graph_rag.py`. PowerShell도 같은 명령입니다.) 브라우저가 열리면 제목 "🔍 Knowledge Graph RAG with Verifiable Citations", 탭 "📄 Add Documents"·"❓ Ask Questions"·"🔬 View Graph", 사이드바 "Neo4j URI"·"Neo4j User"·"Neo4j Password"·"LLM Model"이 뜹니다 — 이 값들은 Step 1~7에서 다룬 소스와 같습니다(소스로 확인). 이 문서는 실제 브라우저 대신 헤드리스로 기동해(`--server.headless true --server.address localhost`, 임의로 비어 있던 높은 포트) `curl`로 확인했습니다 — `--server.address`를 주면 Streamlit이 헤드리스일 때만 시도하는 외부 IP 자동탐지(`net_util.get_external_ip`, Day 054가 이미 확인한 사실)를 건너뜁니다.
 
 직접 확인한 콘솔 출력(포트는 예시입니다):
 
 ```
 Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.
 
+2026-09-27 07:05:46.293 Uvicorn server started on localhost:58734
+
   You can now view your Streamlit app in your browser.
 
-  URL: http://localhost:61823
+  URL: http://localhost:58734
 ```
 
-`curl http://localhost:61823/_stcore/health` → `ok`, `External URL`은 뜨지 않았습니다(직접 확인 — 네트워크를 막고 확인한 결과 이 기동에서 다른 호스트로 나간 시도는 0건이었습니다). 다만 콘솔 첫 줄이 스스로 밝히듯, 실제로 브라우저를 열면 Streamlit은 기본값(`browser.gatherUsageStats=True`)으로 사용 통계를 자체 서버에 보냅니다 — 끄려면 `--browser.gatherUsageStats false`를 더합니다.
+`curl http://localhost:58734/_stcore/health` → `ok`, `External URL`은 뜨지 않았습니다(직접 확인 — 네트워크를 막고 확인한 결과 이 기동에서 다른 호스트로 나간 시도는 0건이었습니다). 다만 콘솔 첫 줄이 스스로 밝히듯, 실제로 브라우저를 열면 Streamlit은 기본값(`browser.gatherUsageStats=True`)으로 사용 통계를 자체 서버에 보냅니다 — 끄려면 `--browser.gatherUsageStats false`를 더합니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -857,7 +859,7 @@ Collecting usage statistics. To deactivate, set browser.gatherUsageStats to fals
 |---|---|---|
 | "Extract & Add to Knowledge Graph"를 눌렀는데 노란 경고 아래 "✅ Extracted 0 entities and 0 relationships" 초록 배너가 뜸 | `extract_entities_with_llm`이 모든 예외를 삼켜 빈 리스트를 반환하고, 호출부는 그 길이만 세어 성공 배너를 씀(직접 확인, Step 3·5) | 리포 코드는 고치지 않는 방침. Ollama가 실제로 떠 있고 모델이 받아져 있는지 `curl http://localhost:11434/api/tags`로 먼저 확인 |
 | "Ask with Citations"·"Show Graph Statistics"·"Clear Graph" 중 아무거나 눌러도 빨간 "Couldn't connect to localhost:7687..." 오류 | Neo4j 서버가 떠 있지 않아 첫 쿼리에서 연결이 거부됨(직접 확인, Step 2·6·7) | Neo4j를 먼저 띄우기(사전 준비의 `docker run` 명령, 이 문서는 띄우지 않음) |
-| 순수 한국어로 질문했는데 매번 "찾을 수 없다"는 답만 나옴(추정) | `semantic_search`의 검색어 정규식(`[A-Za-z0-9]{3,}`)이 라틴 문자·숫자만 뽑고, 라틴 문자가 하나도 없으면 질문 전체가 검색어 하나가 되어 영어 엔티티와 정확히 일치할 리 없음(정규식은 직접 확인, Step 4 — 0건은 Neo4j 없이 추정) | 라틴 문자 고유명사(예: `GraphRAG`, 인명)를 포함해 질문 — 섞여만 있어도 그 부분은 매치됨(Step 4에서 직접 확인) |
+| 순수 한국어로 질문했는데 매번 "찾을 수 없다"는 답만 나옴(추정) | `semantic_search`의 검색어 정규식(`[A-Za-z0-9]{3,}`)이 라틴 문자·숫자만 뽑고, 라틴 문자·숫자가 3자 이상 연달아 있는 토큰이 하나도 없으면 질문 전체가 검색어 하나가 되어 영어 엔티티와 정확히 일치할 리 없음(정규식은 직접 확인, Step 4 — 0건은 Neo4j 없이 추정) | 라틴 문자 고유명사(예: `GraphRAG`, 인명)를 포함해 질문 — 섞여만 있어도 그 부분은 매치됨(Step 4에서 직접 확인) |
 | 추출 배너의 관계 수보다 "Show Graph Statistics"의 관계 수가 더 적음(추정) | 관계 끝점 이름이 엔티티 이름과 정확히 같지 않으면(예: "Microsoft" 대 "Microsoft Research") `MATCH`가 0건이라 관계 저장이 조용히 건너뛰어지는데, 추출 직후 배너(434행)는 저장 성공 여부와 무관하게 추출된 개수만 셈(소스로 확인 — Neo4j 미실행으로 직접 재현은 못함) | 리포 코드는 고치지 않는 방침. Neo4j Browser에서 `MATCH ()-[r]->() RETURN count(r)`로 실제 관계 수와 비교 |
 
 ## 더 해보기
