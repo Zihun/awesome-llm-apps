@@ -1,11 +1,12 @@
 ...@../../_tools/theme
 direction: down
 
-front: "사용자 쪽 화면" {
+front: "Streamlit 프로세스" {
   class: group
-  grid-columns: 2
+  grid-columns: 3
   user: 사용자 { class: person }
-  ui: Streamlit UI (app.py) { class: ours }
+  ui: Streamlit UI { class: ours }
+  init: 초기화 { class: ours }
 }
 
 ingest: 문서 적재 (add_documents) { class: ours }
@@ -15,8 +16,8 @@ graph: "LangGraph 워크플로" {
   grid-columns: 4
   agent: 에이전트 (agent) { class: ours }
   retrieve: 검색 (retrieve) { class: ours }
-  rewrite: 재작성 (rewrite) { class: ours }
-  generate: 생성 (generate) { class: ours }
+  rewrite: 재작성 { class: ours }
+  generate: 생성 { class: ours }
 }
 
 qdrant: Qdrant (qdrant_db) { class: store }
@@ -26,6 +27,8 @@ blog: 블로그 { class: ext }
 
 front -> ingest: Enter URL
 front -> graph: Submit Query
+front -> qdrant: 컬렉션 확인
+front -> gemini: 임베딩 검증
 ingest -> qdrant: 벡터 저장
 ingest -> gemini: 임베딩
 ingest -> blog: GET

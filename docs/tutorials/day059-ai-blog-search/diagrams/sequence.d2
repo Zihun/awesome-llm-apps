@@ -4,21 +4,23 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 agent: 에이전트 { class: ours }
+retrieve: 검색 { class: ours }
 gemini: Gemini API { class: ext }
 qdrant: Qdrant { class: store }
-retrieve: 검색 { class: ours }
 generate: 생성 { class: ours }
 hub: LangChain Hub { class: ext }
 
 user -> ui: 질문 입력
 ui -> agent: 그래프 실행
 agent -> gemini: 모델 호출
-gemini -> agent: 도구 호출 결정
+gemini -> agent: 도구 결정
 agent -> retrieve: 도구 실행
-retrieve -> qdrant: 유사도 검색 k=5
-qdrant -> retrieve: 상위 5개 문서
-retrieve -> retrieve: 관련성 채점 (Gemini)
-retrieve -> generate: 문서 관련
-generate -> hub: 프롬프트 다운로드
-generate -> generate: 답변 생성 (Gemini)
+retrieve -> gemini: 질의 임베딩
+retrieve -> qdrant: 유사도 검색
+qdrant -> retrieve: 문서 5개
+retrieve -> gemini: 관련성 채점 (grade_documents)
+retrieve -> generate: 관련
+generate -> hub: 프롬프트
+generate -> gemini: 답변 생성
+gemini -> generate: 최종 답변
 generate -> user: 표시
