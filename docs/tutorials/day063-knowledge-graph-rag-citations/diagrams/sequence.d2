@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ollama: "llama3.2 (Ollama)" { class: ext }
+ui: "Streamlit UI (tab2)" { class: ours }
+neo4j: Neo4j { class: store }
+user: 사용자 { class: person }
+
+user -> ui: 질문
+ui -> neo4j: 유사도 검색
+neo4j -> ui: 초기 엔티티
+ui -> neo4j: 다중 홉 확장
+neo4j -> ui: 관련 엔티티 + 출처
+ui -> ollama: 답변 생성 요청
+ollama -> ui: 인용 포함 답변
+ui -> user: 응답

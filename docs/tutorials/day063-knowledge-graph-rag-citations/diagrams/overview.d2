@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+
+extract: "엔티티 추출" { class: ours }
+generate: "인용 생성" { class: ours }
+stats: "그래프 통계" { class: ours }
+
+neo4j: "Neo4j (로컬)" { class: store }
+ollama: "llama3.2 (Ollama, 로컬)" { class: ext }
+
+user -> extract: 문서 텍스트
+user -> generate: 질문 텍스트
+user -> stats: 통계·초기화 클릭
+
+extract -> neo4j: 그래프 저장
+extract -> ollama: 추출 프롬프트
+generate -> neo4j: 다중 홉 검색
+generate -> ollama: 답변 생성
+stats -> neo4j: 통계 조회·초기화
