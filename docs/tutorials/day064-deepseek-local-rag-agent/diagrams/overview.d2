@@ -9,12 +9,13 @@ front: "사용자 쪽 화면 (deepseek_rag_agent.py)" {
   web_agent: 웹 검색 에이전트 (get_web_search_agent) { class: ours }
 }
 
-qdrant: Qdrant Cloud (벡터 저장소) { class: store }
+qdrant: Qdrant (벡터 저장소) { class: store }
 exa: Exa AI 검색 { class: ext }
+webpage: 대상 웹페이지 { class: ext }
 
 ollama: "Ollama 데몬 (이 PC, 로컬)" {
   class: group
-  grid-columns: 2
+  grid-rows: 3
   chat_model: 채팅 모델 (deepseek-r1) { class: ext }
   embed_model: 임베딩 모델 (snowflake-arctic-embed) { class: ext }
   web_model: 웹검색 모델 (llama3.2) { class: ext }
@@ -23,3 +24,4 @@ ollama: "Ollama 데몬 (이 PC, 로컬)" {
 front -> qdrant: 청크 저장·유사도 검색
 front -> ollama: 프롬프트·텍스트
 front -> exa: 검색 쿼리(폴백 시)
+front -> webpage: 웹페이지 요청(URL)
