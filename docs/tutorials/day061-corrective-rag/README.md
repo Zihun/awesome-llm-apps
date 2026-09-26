@@ -1,10 +1,10 @@
 # Day 061 · 🔄 Corrective RAG (CRAG)
 
-> 볼륨 5 📀 RAG · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `rag_tutorials/corrective_rag`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 90분 · API 비용 대략 질문 1건당 OpenAI 임베딩 1회(질문 임베딩) + Claude 호출 2~6회(문서 경로: 채점 최대 4회 — retriever 기본 k=4, 소스로 확인 — + 생성 1회 / 웹 검색 경로: 채점 + 재작성 + 생성) + 웹 검색 경로면 Tavily 호출 1회 + 문서 업로드 시 청크 수만큼 임베딩 호출 — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/corrective_rag`
 
 ## 오늘 만들 것
 
-(작성 필요)
+오늘은 문서를 검색해 답하다가 검색 품질이 부실하면 스스로 질문을 다시 쓰고 웹을 뒤져 바로잡는 Corrective RAG(CRAG)를 다룹니다. Day 047부터 이 볼륨이 반복해 온 "청크 → 임베딩 → 저장 → 검색 → 생성" 골격은 다시 설명하지 않고, 오늘 새로 얹히는 것 — LangGraph `StateGraph`로 짠 5노드 그래프(검색 → 채점 → [재작성 → 웹 검색] → 생성)와 그 조건부 분기 — 에 집중합니다. 그런데 이 468줄을 실제로 설치해 돌려보면(직접 확인, Step 1·3), "관련성이 없으면 웹으로 고친다"는 오늘의 핵심 아이디어 이전에 두 가지 더 근본적인 사실이 있습니다. 첫째, `requirements.txt` 18줄 어디에도 `pypdf`가 없는데 이 앱이 기본으로 제시하는 문서 URL 자체가 PDF(`arxiv.org`의 논문)라서, 아무 설정도 하지 않고 그대로 실행하면 `PyPDFLoader`가 `ImportError`로 곧바로 막힙니다(직접 확인, Step 3) — 이 실패는 네트워크 요청이 나가기 전에 일어난다는 것까지 소켓을 막아 직접 확인했습니다. 둘째, 그 실패로 문서가 하나도 들어오지 않은 상태(또는 실제 검색이 정말 아무것도 찾지 못한 상태)에서 `grade_documents`의 채점 루프는 "조사할 문서가 없다"와 "조사했더니 전부 관련 있다"를 구분하지 못합니다(직접 확인, Step 4) — 두 경우 모두 `run_web_search`가 초기값 `"No"`로 남아, CRAG의 존재 이유인 웹 검색 교정이 정확히 그것이 가장 필요한 순간에 건너뛰어집니다. 이 문서는 이 두 가지를 직접 재현하며 자격증명 게이트(Step 2)부터 그래프 조립·실행(Step 7)까지 다섯 개 노드를 하나씩 따라갑니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,46 +12,744 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| (작성 필요) | | |
+| Anthropic API 키 | 문서 채점·질의 재작성·답변 생성 세 곳 모두 Claude Sonnet 4.5(`claude-sonnet-4-5`) 호출 인증. 사이드바에 비어 있으면 전체 앱이 `st.stop()`으로 멈춤(Step 2) | https://console.anthropic.com/settings/keys |
+| OpenAI API 키 | 문서·질문 임베딩(`text-embedding-3-small`) 인증. 마찬가지로 비어 있으면 전체 앱이 멈춤(Step 2) | https://platform.openai.com/api-keys |
+| Qdrant 인스턴스(로컬 또는 클라우드) | 벡터 저장소. 코드 기본값은 로컬 `http://localhost:6333`이고 API 키 칸을 비워도 게이트를 통과함(Step 2에서 직접 확인) | 로컬: `docker run -p 6333:6333 qdrant/qdrant` / 클라우드: https://cloud.qdrant.io |
+| Tavily API 키(선택) | 검색된 문서가 부실할 때 웹 검색 교정. 비워 두면 사이드바 게이트는 그대로 통과하고 `web_search` 내부에서만 조용히 건너뜀(Step 6) | https://app.tavily.com |
+| pypdf(별도 설치) | `PyPDFLoader`가 실제로 import하는 패키지 — `requirements.txt` 18줄 어디에도 없어 기본 설치로는 빠짐(Step 1·3에서 직접 확인) | `uv pip install pypdf` |
+| uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 
 ## 아키텍처 한눈에 보기
 
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
-| (작성 필요) | | |
+| 사용자 | 문서 URL/업로드, 질문 입력 | 코드 없음 (브라우저) |
+| 자격증명 게이트 (`setup_sidebar`) | 6개 입력을 모두 그리지만 실제 통과 조건은 OpenAI·Anthropic 키뿐 — 통과 못하면 이 아래 모든 함수·그래프 정의 자체가 실행되지 않음 | `rag_tutorials/corrective_rag/corrective_rag.py:44-59` |
+| 문서 적재 (`load_documents`) | URL/업로드, PDF·txt/md·웹페이지 분기 후 청크 분할(500자/100자 겹침) | `rag_tutorials/corrective_rag/corrective_rag.py:156-178`, `rag_tutorials/corrective_rag/corrective_rag.py:205-208` |
+| Qdrant 컬렉션 (`rag-qdrant`) | 새 문서가 들어올 때마다 삭제 후 재생성 — 한 번에 문서 하나만 보관 | `rag_tutorials/corrective_rag/corrective_rag.py:210-222` |
+| CRAG 그래프 (LangGraph `StateGraph`) | retrieve → grade_documents → (조건부: transform_query 또는 generate) → web_search → generate | `rag_tutorials/corrective_rag/corrective_rag.py:421-445` |
+| 문서 검색 (`retrieve`) | Qdrant 유사도 검색(기본 k=4), retriever가 없으면 빈 리스트 반환 | `rag_tutorials/corrective_rag/corrective_rag.py:244-253` |
+| 관련성 평가 (`grade_documents`) | 문서별로 Claude에 yes/no 채점, 하나라도 "no"면 `run_web_search="Yes"` | `rag_tutorials/corrective_rag/corrective_rag.py:295-351` |
+| 질의 재작성 (`transform_query`) | Claude로 질문을 검색 최적화 버전으로 완전히 교체 | `rag_tutorials/corrective_rag/corrective_rag.py:354-386` |
+| 웹 검색 (`web_search`) | Tavily 검색(최대 3회 재시도), 결과를 문서 1건으로 합쳐 추가 | `rag_tutorials/corrective_rag/corrective_rag.py:85-153` |
+| 답변 생성 (`generate`) | 문서+질문 컨텍스트로 Claude 호출, 실패 시 대체 문구 반환 | `rag_tutorials/corrective_rag/corrective_rag.py:256-293` |
+| OpenAI 임베딩 | `text-embedding-3-small`, 1536차원 | `rag_tutorials/corrective_rag/corrective_rag.py:69-73` |
+| Claude Sonnet 4.5 (Anthropic) | 채점·재작성·생성 세 곳에서 각각 새 인스턴스를 만들어 호출 | `rag_tutorials/corrective_rag/corrective_rag.py:266`, `rag_tutorials/corrective_rag/corrective_rag.py:302`, `rag_tutorials/corrective_rag/corrective_rag.py:373-374` |
+| Tavily 검색 API | 웹 검색 폴백 | `rag_tutorials/corrective_rag/corrective_rag.py:81-83`, `rag_tutorials/corrective_rag/corrective_rag.py:104-109` |
 
 ## 단계별 진행
 
-### Step 1. (작성 필요)
+### Step 1. 환경 만들기 — 18줄 중 하나가 빠졌다
 
-**목적.** (작성 필요)
+**목적.** 격리된 가상환경에 `requirements.txt` 18줄을 설치하고, 이 파일의 모든 import가 통과하는지 확인합니다. 동시에 이 앱의 기본 예시 문서가 실제로 요구하는 패키지가 설치 목록에 있는지 미리 확인합니다.
 
-**할 일.** (작성 필요)
+**할 일.**
+
+```bash
+cd rag_tutorials/corrective_rag
+uv venv
+uv pip install -r requirements.txt
+```
+
+(pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
+
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 모든 `uv run` 명령에는 `--no-project`를 붙입니다.
+
+`rag_tutorials/corrective_rag/requirements.txt:1-18`
+
+```text
+# Core dependencies
+langchain==0.3.12
+langgraph==0.2.53
+qdrant-client==1.12.1
+langchain-openai==0.2.14
+langchain-anthropic==0.3.0
+tavily-python==0.5.0
+langchain-community==0.3.12
+langchain-core==0.3.28
+streamlit==1.41.1
+tenacity==8.5.0
+anthropic>=0.7.0
+openai>=1.12.0
+tiktoken>=0.6.0
+pydantic>=2.0.0
+numpy>=1.24.0
+PyYAML>=6.0.0
+nest-asyncio>=1.5.0
+```
+
+이 목록에 `pypdf`는 없습니다. 실제로 설치하면(직접 확인) 102개 패키지가 풀리고, 요청하지 않은 `langchain-text-splitters==0.3.4`가 `langchain`의 전이 의존성으로 함께 따라옵니다(이 파일이 쓰는 `from langchain_text_splitters import RecursiveCharacterTextSplitter`가 바로 이 패키지입니다) — `pypdf`는 이 102개 어디에도 없습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
-**확인.** (작성 필요)
+**확인.** 먼저 이 파일이 컴파일되고 모든 import가 성공하는지 확인합니다.
+
+```bash
+uv run --no-project python -m py_compile corrective_rag.py && echo COMPILE_OK
+```
+
+```
+COMPILE_OK
+```
+
+```bash
+uv run --no-project python -c "
+from langchain import hub
+from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
+from langchain_core.documents import Document
+from pydantic import BaseModel, Field
+import streamlit as st
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader, TextLoader, WebBaseLoader
+from langchain_community.tools import TavilySearchResults
+from langchain_community.vectorstores import Qdrant
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_core.messages import HumanMessage
+from langgraph.graph import END, StateGraph
+from langchain_core.prompts import PromptTemplate
+import pprint, yaml, nest_asyncio, tempfile, os
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
+from urllib.parse import urlparse
+from langchain_anthropic import ChatAnthropic
+from tenacity import retry, stop_after_attempt, wait_exponential
+print('ALL IMPORTS OK')
+"
+```
+
+직접 확인한 출력(경고는 뜨지만 실패는 아닙니다):
+
+```
+USER_AGENT environment variable not set, consider setting it to identify your requests.
+ALL IMPORTS OK
+```
+
+이어서 `pypdf`가 정말 빠졌는지 확인합니다.
+
+```bash
+uv run --no-project python -c "import pypdf"
+```
+
+직접 확인한 출력:
+
+```
+ModuleNotFoundError: No module named 'pypdf'
+```
+
+### Step 2. 자격증명 게이트 — 통과 전까지는 이 파일의 나머지 전부가 존재하지 않는다
+
+**목적.** 사이드바가 6개 입력 중 실제로 무엇을 검사하는지, 그리고 그 검사를 통과하기 전에는 이 아래 모든 함수·클래스·그래프 정의 자체가 실행되지 않는다는 것을 확인합니다.
+
+**할 일.**
+
+`rag_tutorials/corrective_rag/corrective_rag.py:44-59`
+
+```python
+def setup_sidebar():
+    """Setup sidebar for API keys and configuration."""
+    with st.sidebar:
+        st.subheader("API Configuration")
+        st.session_state.anthropic_api_key = st.text_input("Anthropic API Key", value=st.session_state.anthropic_api_key, type="password", help="Required for Claude 3 model")
+        st.session_state.openai_api_key = st.text_input("OpenAI API Key", value=st.session_state.openai_api_key, type="password")
+        st.session_state.tavily_api_key = st.text_input("Tavily API Key", value=st.session_state.tavily_api_key, type="password")
+        st.session_state.qdrant_url = st.text_input("Qdrant URL", value=st.session_state.qdrant_url)
+        st.session_state.qdrant_api_key = st.text_input("Qdrant API Key", value=st.session_state.qdrant_api_key, type="password")
+        st.session_state.doc_url = st.text_input("Document URL", value=st.session_state.doc_url)
+        
+        if not all([st.session_state.openai_api_key, st.session_state.anthropic_api_key, st.session_state.qdrant_url]):
+            st.warning("Please provide the required API keys and URLs")
+            st.stop()
+        
+        st.session_state.initialized = True
+```
+
+`qdrant_url`은 `initialize_session_state`(`rag_tutorials/corrective_rag/corrective_rag.py:32-42`)에서 `"http://localhost:6333"`로 미리 채워지므로 사용자가 손대지 않아도 항상 참입니다. 즉 `all([...])`이 실제로 요구하는 것은 OpenAI·Anthropic 키 두 개뿐이고, Tavily 키와 Qdrant API 키는 이 게이트에서 전혀 검사되지 않습니다. 또한 이 파일은 함수로 감싸여 있지 않은 평서문 스크립트라서, 55~59행의 `if`가 `st.stop()`을 부르면 그 아래 있는 `load_documents`·`retrieve`·`grade_documents`·`transform_query`·`web_search`·`generate`·`decide_to_generate` 정의와 `StateGraph` 조립(421-445행)까지 전부 — 정의조차 — 실행되지 않습니다(Day 057의 `rag_agent_cohere.py`도 게이트 뒤에 모든 함수·클래스 정의를 두는 같은 패턴이었습니다 — 이 파일은 거기서 한 걸음 더 나아가 그래프 조립 자체도 모듈 최상위 코드라 게이트에 함께 묶입니다).
+
+![Step 2까지의 구성](diagrams/step2.svg)
+
+**확인.** 키를 하나도 넣지 않았을 때 정확히 무엇이 뜨는지, `streamlit.testing.v1.AppTest`로 네트워크 없이 확인합니다.
+
+```bash
+uv run --no-project python -c "
+from streamlit.testing.v1 import AppTest
+at = AppTest.from_file('corrective_rag.py')
+at.run()
+print('title:', [t.value for t in at.title])
+print('sidebar text_input labels:', [ti.label for ti in at.sidebar.text_input])
+print('warning messages:', [w.value for w in at.warning])
+"
+```
+
+직접 확인한 출력:
+
+```
+title: []
+sidebar text_input labels: ['Anthropic API Key', 'OpenAI API Key', 'Tavily API Key', 'Qdrant URL', 'Qdrant API Key', 'Document URL']
+warning messages: ['Please provide the required API keys and URLs']
+```
+
+제목이 비어 있다는 것은 `st.title(...)`(447행)까지 실행이 아예 도달하지 않았다는 뜻입니다. 이번엔 가짜 OpenAI·Anthropic 키를 채우고, 소켓 연결을 루프백 외에는 전부 막은 채로(어디든 실제로 네트워크에 나가려 하면 예외가 나도록) 같은 파일을 다시 실행해, 게이트를 통과한 뒤에도 외부로 나가는 시도가 없는지 확인합니다.
+
+```bash
+uv run --no-project python -c "
+import socket
+_orig = socket.socket.connect
+def _guarded(self, address, *a, **k):
+    host = address[0] if isinstance(address, tuple) else address
+    if host in ('127.0.0.1', '::1', 'localhost'):
+        return _orig(self, address, *a, **k)
+    raise RuntimeError(f'network blocked: {address!r}')
+socket.socket.connect = _guarded
+
+from streamlit.testing.v1 import AppTest
+at = AppTest.from_file('corrective_rag.py')
+at.run()
+for ti in at.sidebar.text_input:
+    if ti.label == 'OpenAI API Key': ti.set_value('fake-openai-key')
+    if ti.label == 'Anthropic API Key': ti.set_value('fake-anthropic-key')
+at.run()
+print('exception:', [e.message for e in at.exception])
+print('title:', [t.value for t in at.title])
+print('error messages:', [e.value for e in at.error])
+"
+```
+
+직접 확인한 출력:
+
+```
+exception: []
+title: ['🔄 Corrective RAG Agent']
+error messages: ['Error loading document: pypdf package not found, please install it with `pip install pypdf`']
+```
+
+가짜 키만으로도 게이트를 통과해 제목까지 렌더되고, 468행 전체가 예외 없이 끝까지 실행됩니다 — 실제로 뜨는 오류는 Step 3에서 다룰 `pypdf` 부재이지, 네트워크 차단이 아닙니다(루프백 외 연결에서 `RuntimeError`가 하나도 나지 않았습니다). `OpenAIEmbeddings`·`QdrantClient` 생성 자체도 연결을 시도하지 않는다는 것을 따로 확인했습니다.
+
+```bash
+uv run --no-project python -c "
+import socket
+def _blocked(self, *a, **k): raise RuntimeError('network blocked')
+socket.socket.connect = _blocked
+from langchain_openai import OpenAIEmbeddings
+from qdrant_client import QdrantClient
+OpenAIEmbeddings(model='text-embedding-3-small', api_key='fake-openai-key')
+QdrantClient(url='http://localhost:6333', api_key='')
+print('both constructed, no RuntimeError')
+"
+```
+
+직접 확인한 출력:
+
+```
+both constructed, no RuntimeError
+```
+
+### Step 3. 문서 적재 — 기본 예시가 이미 실패한다
+
+**목적.** `load_documents`가 URL·업로드, PDF·텍스트·웹페이지를 어떻게 나누는지 확인하고, 이 앱의 기본 문서 URL이 Step 1에서 확인한 `pypdf` 부재로 왜 항상 실패하는지, 그 실패가 네트워크보다 먼저 일어나는지 직접 확인합니다.
+
+**할 일.**
+
+`rag_tutorials/corrective_rag/corrective_rag.py:156-178`
+
+```python
+def load_documents(file_or_url: str, is_url: bool = True) -> list:
+    try:
+        if is_url:
+            # A .pdf URL must be parsed as a PDF; WebBaseLoader would run an HTML
+            # parser over the binary body and embed decoded garbage.
+            if urlparse(file_or_url).path.lower().endswith(".pdf"):
+                loader = PyPDFLoader(file_or_url)
+            else:
+                loader = WebBaseLoader(file_or_url)
+                loader.requests_per_second = 1
+        else:
+            file_extension = os.path.splitext(file_or_url)[1].lower()
+            if file_extension == '.pdf':
+                loader = PyPDFLoader(file_or_url)
+            elif file_extension in ['.txt', '.md']:
+                loader = TextLoader(file_or_url)
+            else:
+                raise ValueError(f"Unsupported file type: {file_extension}")
+        
+        return loader.load()
+    except Exception as e:
+        st.error(f"Error loading document: {str(e)}")
+        return []
+```
+
+기본 문서 URL은 `initialize_session_state`가 채워 두는 `"https://arxiv.org/pdf/2307.09288.pdf"`(`rag_tutorials/corrective_rag/corrective_rag.py:42`)이고, 이 경로는 `.pdf`로 끝나므로 무조건 `PyPDFLoader`를 탑니다. `langchain-community==0.3.12`의 `PyPDFLoader.__init__`은(소스로 확인) `import pypdf`를 가장 먼저 시도하고, 실패하면 `requests.get(...)`으로 URL을 내려받는 `BasePDFLoader.__init__`을 호출하기도 전에 `ImportError`를 던집니다 — 즉 **URL이 맞든 틀리든, 인터넷이 되든 안 되든, `pypdf`가 없으면 네트워크 요청 자체가 나가지 않습니다.** 소켓을 완전히 막고 직접 실행해 확인했습니다.
+
+![Step 3까지의 구성](diagrams/step3.svg)
+
+**확인.**
+
+```bash
+uv run --no-project python -c "
+import socket
+def _blocked(self, *a, **k): raise RuntimeError('network blocked')
+socket.socket.connect = _blocked
+from langchain_community.document_loaders import PyPDFLoader
+try:
+    PyPDFLoader('https://arxiv.org/pdf/2307.09288.pdf')
+except Exception as e:
+    print('EXCEPTION TYPE:', type(e).__name__)
+    print('EXCEPTION TEXT:', str(e))
+"
+```
+
+직접 확인한 출력(소켓을 막았는데도 `RuntimeError`가 아니라 `ImportError`가 먼저 납니다 — 네트워크를 아예 시도하지 않았다는 뜻):
+
+```
+EXCEPTION TYPE: ImportError
+EXCEPTION TEXT: pypdf package not found, please install it with `pip install pypdf`
+```
+
+`load_documents`의 `except Exception as e:`가 이 예외를 그대로 삼켜 `st.error(...)`만 띄우고 `[]`를 반환하므로(177-178행), 화면에는 Step 2에서 이미 본 붉은 오류 배너만 남고 `docs`는 빈 리스트가 됩니다. 문서를 성공적으로 불러온 뒤에는 `rag_tutorials/corrective_rag/corrective_rag.py:199-222`가 청크로 쪼개 Qdrant에 넣습니다.
+
+```python
+# Streamlit re-runs this whole script on every widget interaction (e.g. asking a
+# question), so ingest only when the source actually changes — otherwise every
+# question would delete the collection and re-embed the entire document.
+source_key = url if input_option == "URL" else (uploaded_file.name if uploaded_file else None)
+
+if docs and st.session_state.get("ingested_source") != source_key:
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=500, chunk_overlap=100
+    )
+    all_splits = text_splitter.split_documents(docs)
+
+    client = QdrantClient(url=st.session_state.qdrant_url, api_key=st.session_state.qdrant_api_key)
+    collection_name = "rag-qdrant"
+
+    try:
+        # Try to delete the collection if it exists
+        client.delete_collection(collection_name)
+    except Exception:
+        pass
+
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
+    )
+```
+
+199~201행 주석이 이미 밝히듯 이 앱은 소스가 바뀔 때만 재적재합니다 — 그렇지 않으면 질문 하나마다(Streamlit이 스크립트를 처음부터 다시 실행하므로) 컬렉션을 지우고 다시 임베딩할 뻔했습니다. 다만 `docs`가 빈 리스트면(`if docs and ...`) 이 블록 전체가 건너뛰어지므로, `pypdf`가 없는 한 컬렉션은 절대 채워지지 않고 `client.delete_collection`/`create_collection`도 호출되지 않습니다. `delete_collection`이 무조건 먼저 불리는 것도 눈여겨볼 부분입니다 — 새 문서를 올릴 때마다 이전 컬렉션을 통째로 지우므로, 이 앱은 한 번에 문서 하나만 기억합니다.
+
+### Step 4. 관련성 평가 — "문서가 없다"와 "전부 관련 있다"를 구분하지 못한다
+
+**목적.** `grade_documents`가 Claude의 채점 응답을 어떻게 JSON으로 해석하는지, 그리고 오늘의 핵심 발견 — 검색된 문서가 하나도 없을 때 웹 검색 교정이 왜 건너뛰어지는지 — 를 직접 실행해 확인합니다.
+
+**할 일.**
+
+`rag_tutorials/corrective_rag/corrective_rag.py:295-351`
+
+```python
+def grade_documents(state):
+    """Determines whether the retrieved documents are relevant."""
+    print("~-check relevance-~")
+    state_dict = state["keys"]
+    question = state_dict["question"]
+    documents = state_dict["documents"]
+
+    llm = ChatAnthropic(model="claude-sonnet-4-5", api_key=st.session_state.anthropic_api_key,
+                       temperature=0, max_tokens=1000)
+
+    prompt = PromptTemplate(template="""You are grading the relevance of a retrieved document to a user question.
+        Return ONLY a JSON object with a "score" field that is either "yes" or "no".
+        Do not include any other text or explanation.
+        
+        Document: {context}
+        Question: {question}
+        
+        Rules:
+        - Check for related keywords or semantic meaning
+        - Use lenient grading to only filter clear mismatches
+        - Return exactly like this example: {{"score": "yes"}} or {{"score": "no"}}""",
+        input_variables=["context", "question"])
+
+    chain = (
+        prompt 
+        | llm 
+        | StrOutputParser()
+    )
+
+    filtered_docs = []
+    search = "No"
+    
+    for d in documents:
+        try:
+            response = chain.invoke({"question": question, "context": d.page_content})
+            import re
+            json_match = re.search(r'\{.*\}', response)
+            if json_match:
+                response = json_match.group()
+            
+            import json
+            score = json.loads(response)
+            
+            if score.get("score") == "yes":
+                print("~-grade: document relevant-~")
+                filtered_docs.append(d)
+            else:
+                print("~-grade: document not relevant-~")
+                search = "Yes"
+                
+        except Exception as e:
+            print(f"Error grading document: {str(e)}")
+            # On error, keep the document to be safe
+            filtered_docs.append(d)
+            continue
+
+    return {"keys": {"documents": filtered_docs, "question": question, "run_web_search": search}}
+```
+
+`search`는 `"No"`로 초기화되고(325행), `for d in documents:` 루프 안에서 어떤 문서가 `"no"`로 채점될 때만 `"Yes"`로 바뀝니다(342-343행). 이 구조에는 빈틈이 하나 있습니다 — **`documents`가 애초에 빈 리스트라면 루프 본문이 한 번도 실행되지 않아 `search`는 `"No"`로 남습니다.** `retrieve`(`rag_tutorials/corrective_rag/corrective_rag.py:244-253`)는 전역 `retriever`가 `None`이면 바로 빈 리스트를 반환하므로(249-250행), Step 3의 `pypdf` 부재로 컬렉션이 한 번도 채워지지 않은 상태 — 또는 실제 검색이 정말 아무것도 찾지 못한 상태 — 는 모두 이 "빈 리스트" 경로를 탑니다. 즉 **"검토할 문서가 없었다"와 "검토했더니 전부 관련 있었다"가 똑같이 `run_web_search="No"`로 귀결되어, `decide_to_generate`(Step 5)는 웹 검색 교정 없이 곧장 `generate`로 갑니다** — CRAG가 웹 검색으로 고쳐야 할 바로 그 상황(쓸 문서가 없음)에서 고침이 일어나지 않는 것입니다. 이 루프는 LLM 호출 부분만 빼면 순수 파이썬 로직이라, 실제로 그대로 실행해 확인할 수 있습니다.
+
+![Step 4까지의 구성](diagrams/step4.svg)
+
+**확인.** 325~349행의 필터링 로직을 그대로 옮겨(빈 리스트에서는 루프 본문이 실행되지 않으므로 `chain`은 정의만 하고 부르지 않아도 동일합니다), 빈 문서 리스트를 넣었을 때 무엇이 나오는지 확인합니다.
+
+```bash
+uv run --no-project python -c "
+def grade_documents_filter_only(documents, chain=None):
+    filtered_docs = []
+    search = 'No'
+    for d in documents:
+        try:
+            response = chain.invoke({'question': 'q', 'context': d.page_content})
+            import re, json
+            json_match = re.search(r'\{.*\}', response)
+            if json_match:
+                response = json_match.group()
+            score = json.loads(response)
+            if score.get('score') == 'yes':
+                filtered_docs.append(d)
+            else:
+                search = 'Yes'
+        except Exception:
+            filtered_docs.append(d)
+            continue
+    return filtered_docs, search
+
+docs, search = grade_documents_filter_only([])
+print('filtered_docs =', docs, ' run_web_search =', repr(search))
+"
+```
+
+직접 확인한 출력:
+
+```
+filtered_docs = []  run_web_search = 'No'
+```
+
+JSON 파싱의 정규식 우회(330-336행)도 같은 방식으로 직접 확인했습니다 — 순수 텍스트에 JSON이 섞여 있어도 뽑아내지만, JSON 자체가 없으면 파싱이 실패해 `except`로 떨어져 347-348행("On error, keep the document to be safe" 주석과 함께) **문서를 버리지 않고 그대로 유지**합니다 — `search`는 바뀌지 않습니다.
+
+```bash
+uv run --no-project python -c "
+import re, json
+def extract_score(response):
+    m = re.search(r'\{.*\}', response)
+    if m: response = m.group()
+    return json.loads(response)
+print(extract_score('{\"score\": \"yes\"}'))
+print(extract_score('Sure, here it is: {\"score\": \"no\"} -- done.'))
+"
+```
+
+직접 확인한 출력:
+
+```
+{'score': 'yes'}
+{'score': 'no'}
+```
+
+### Step 5. 질의 재작성과 조건부 분기
+
+**목적.** `decide_to_generate`가 정확히 무엇을 보고 갈림길을 정하는지, 그리고 `transform_query`가 원래 질문을 어떻게 바꾸는지 확인합니다.
+
+**할 일.**
+
+`rag_tutorials/corrective_rag/corrective_rag.py:389-400`
+
+```python
+def decide_to_generate(state):
+    print("~-decide to generate-~")
+    state_dict = state["keys"]
+    search = state_dict["run_web_search"]
+
+    if search == "Yes":
+     
+        print("~-decision: transform query and run web search-~")
+        return "transform_query"
+    else:
+        print("~-decision: generate-~")
+        return "generate"
+```
+
+조건은 딱 한 줄, `search == "Yes"` 뿐입니다 — Step 4에서 본 대로 이 값을 만드는 것이 전부입니다.
+
+`rag_tutorials/corrective_rag/corrective_rag.py:354-386`
+
+```python
+def transform_query(state):
+    """Transform the query to produce a better question."""
+    print("~-transform query-~")
+    state_dict = state["keys"]
+    question = state_dict["question"]
+    documents = state_dict["documents"]
+
+    # Create a prompt template
+    prompt = PromptTemplate(
+        template="""Generate a search-optimized version of this question by 
+        analyzing its core semantic meaning and intent.
+        \n ------- \n
+        {question}
+        \n ------- \n
+        Return only the improved question with no additional text:""",
+        input_variables=["question"],
+    )
+
+    # Use Claude instead of Gemini
+    llm = ChatAnthropic(
+        model="claude-sonnet-4-5",
+        anthropic_api_key=st.session_state.anthropic_api_key,
+        temperature=0,
+        max_tokens=1000
+    )
+
+    # Prompt
+    chain = prompt | llm | StrOutputParser()
+    better_question = chain.invoke({"question": question})
+
+    return {
+        "keys": {"documents": documents, "question": better_question}
+    }
+```
+
+372행의 "Use Claude instead of Gemini"라는 주석은 이 파일이 한 번은 Gemini에서, 한 번은 "Claude 3"(48·257행의 도움말·독스트링에 남은 이름)에서 지금의 `claude-sonnet-4-5`로 적어도 두 번 모델을 바꿔 왔다는 흔적입니다(소스로 확인) — 실제 호출 문자열은 세 곳(266·302·373-374행) 모두 `claude-sonnet-4-5`로 일치하므로 동작에는 영향이 없습니다. 주목할 점은 `better_question`이 원래 질문을 **대체**한다는 것입니다(384-386행에서 `question` 키가 사라지고 `better_question`이 그 자리를 차지) — 이후 `web_search`도, 관련 문서가 있었다면 건너뛰었을 `generate`도 재작성된 질문만 보게 됩니다.
+
+![Step 5까지의 구성](diagrams/step5.svg)
+
+**확인.** `decide_to_generate`의 분기 로직만 그대로 옮겨 두 입력에서 실행해 확인합니다.
+
+```bash
+uv run --no-project python -c "
+def decide_to_generate(state):
+    search = state['keys']['run_web_search']
+    return 'transform_query' if search == 'Yes' else 'generate'
+
+print('search=Yes ->', decide_to_generate({'keys': {'run_web_search': 'Yes'}}))
+print('search=No  ->', decide_to_generate({'keys': {'run_web_search': 'No'}}))
+"
+```
+
+직접 확인한 출력:
+
+```
+search=Yes -> transform_query
+search=No  -> generate
+```
+
+### Step 6. 웹 검색 보강 — Tavily 키는 게이트를 통과하지 않아도 된다
+
+**목적.** `web_search`가 Tavily 키가 없을 때 어떻게 조용히 건너뛰는지, 그리고 검색 결과를 어떻게 문서 하나로 합쳐 기존 문서 리스트에 더하는지 확인합니다.
+
+**할 일.**
+
+`rag_tutorials/corrective_rag/corrective_rag.py:85-100`
+
+```python
+def web_search(state):
+    """Web search based on the re-phrased question using Tavily API."""
+    print("~-web search-~")
+    state_dict = state["keys"]
+    question = state_dict["question"]
+    documents = state_dict["documents"]
+    
+    # Create progress placeholder
+    progress_placeholder = st.empty()
+    progress_placeholder.info("Initiating web search...")
+    
+    try:
+        # Validate Tavily API key
+        if not st.session_state.tavily_api_key:
+            progress_placeholder.warning("Tavily API key not provided - skipping web search")
+            return {"keys": {"documents": documents, "question": question}}
+```
+
+Step 2에서 확인했듯 사이드바 게이트는 `tavily_api_key`를 전혀 검사하지 않으므로, 이 98-100행이 사실상 유일한 방어선입니다 — 키가 비어 있으면 문서 리스트도, 질문도 바뀌지 않은 채 그대로 돌려줍니다(소스로 확인 — Streamlit 세션 상태가 필요해 이 함수 자체는 실행하지 않았습니다). 키가 있으면 재시도 로직을 감싼 검색을 실행합니다.
+
+`rag_tutorials/corrective_rag/corrective_rag.py:81-83`
+
+```python
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+def execute_tavily_search(tool, query):
+    return tool.invoke({"query": query})
+```
+
+`rag_tutorials/corrective_rag/corrective_rag.py:104-109`
+
+```python
+        # Initialize Tavily search tool
+        tool = TavilySearchResults(
+            api_key=st.session_state.tavily_api_key,
+            max_results=3,
+            search_depth="advanced"
+        )
+```
+
+성공하면 최대 3건의 결과를 제목·본문으로 합쳐 **문서 하나**로 만들어 기존 `documents`에 추가합니다(`rag_tutorials/corrective_rag/corrective_rag.py:134-143`). Step 4에서 필터를 통과해 이미 남아 있던 문서가 있었다면, 그 문서들과 이 새 웹 문서가 함께 `generate`로 넘어갑니다 — 즉 "일부만 관련 없음" 경로에서는 기존 문서를 버리지 않고 웹 결과를 더할 뿐입니다.
+
+![Step 6까지의 구성](diagrams/step6.svg)
+
+**확인.** 실제 웹 검색은 이 문서에서 실행하지 않습니다(외부로 요청을 보내는 코드는 실행하지 않는다는 방침). 대신 Tavily 키 검사가 게이트가 아니라 이 함수 안에만 있다는 것을 grep으로 확인합니다.
+
+```bash
+grep -n "tavily_api_key" corrective_rag.py
+```
+
+직접 확인한 출력:
+
+```
+39:        st.session_state.tavily_api_key = ""
+50:        st.session_state.tavily_api_key = st.text_input("Tavily API Key", value=st.session_state.tavily_api_key, type="password")
+66:tavily_api_key = st.session_state.tavily_api_key
+98:        if not st.session_state.tavily_api_key:
+106:            api_key=st.session_state.tavily_api_key,
+```
+
+55행의 `all([...])` 게이트 목록(`openai_api_key`, `anthropic_api_key`, `qdrant_url`)에는 `tavily_api_key`가 없다는 것도 이 출력으로 다시 확인됩니다 — 98행이 유일하게 이 값을 검사하는 곳입니다.
+
+### Step 7. 답변 생성과 그래프 조립·실행
+
+**목적.** `generate`가 Claude를 어떻게 호출하는지, `StateGraph`가 다섯 노드를 어떻게 잇는지, 그리고 Streamlit 루프가 각 노드의 중간 상태를 어떻게 화면에 펼치는지 확인합니다.
+
+**할 일.**
+
+`rag_tutorials/corrective_rag/corrective_rag.py:256-278`
+
+```python
+def generate(state):
+    """Generate answer using Claude 3 model"""
+    print("~-generate-~")
+    state_dict = state["keys"]
+    question, documents = state_dict["question"], state_dict["documents"]
+    try:
+        prompt = PromptTemplate(template="""Based on the following context, please answer the question.
+            Context: {context}
+            Question: {question}
+            Answer:""", input_variables=["context", "question"])
+        llm = ChatAnthropic(model="claude-sonnet-4-5", api_key=st.session_state.anthropic_api_key,
+                           temperature=0, max_tokens=1000)
+        context = "\n\n".join(doc.page_content for doc in documents)
+
+        # Create and run chain
+        rag_chain = (
+            {"context": lambda x: context, "question": lambda x: question} 
+            | prompt 
+            | llm 
+            | StrOutputParser()
+        )
+
+        generation = rag_chain.invoke({})
+```
+
+`documents`가 비어 있어도 `context`는 그냥 빈 문자열이 될 뿐 이 함수는 실패하지 않습니다 — Step 4에서 본 "문서가 없어도 웹 검색으로 가지 않는" 경로의 마지막 도착지가 바로 여기이며, Claude는 빈 컨텍스트로도 자신의 사전 지식만으로 답을 생성해 버립니다. 그래프 조립은 다음과 같습니다.
+
+`rag_tutorials/corrective_rag/corrective_rag.py:421-445`
+
+```python
+workflow = StateGraph(GraphState)
+
+# Define the nodes by langgraph
+workflow.add_node("retrieve", retrieve) 
+workflow.add_node("grade_documents", grade_documents)  
+workflow.add_node("generate", generate) 
+workflow.add_node("transform_query", transform_query)  
+workflow.add_node("web_search", web_search) 
+
+# Build graph
+workflow.set_entry_point("retrieve")
+workflow.add_edge("retrieve", "grade_documents")
+workflow.add_conditional_edges(
+    "grade_documents",
+    decide_to_generate,
+    {
+        "transform_query": "transform_query",
+        "generate": "generate",
+    },
+)
+workflow.add_edge("transform_query", "web_search")
+workflow.add_edge("web_search", "generate")
+workflow.add_edge("generate", END)
+
+app = workflow.compile()
+```
+
+이 상태 기계 전체는 `diagrams/extra-graph.svg`에 따로 그렸습니다 — "관련 있음" 경로가 `transform_query`·`web_search`를 완전히 건너뛰고 `grade_documents`에서 곧장 `generate`로 간다는 것을 한눈에 볼 수 있습니다.
+
+![CRAG 그래프 상태 기계](diagrams/extra-graph.svg)
+
+마지막으로 화면 배선입니다.
+
+`rag_tutorials/corrective_rag/corrective_rag.py:454-468`
+
+```python
+if user_question:
+    inputs = {
+        "keys": {
+            "question": user_question,
+        }
+    }
+
+    for output in app.stream(inputs):
+        for key, value in output.items():
+            with st.expander(f"Step '{key}':"):
+                st.text(pprint.pformat(format_state(value["keys"]), indent=2, width=80))
+
+    final_generation = value['keys'].get('generation', 'No final generation produced.')
+    st.subheader("Final Generation:")
+    st.write(final_generation)
+```
+
+`app.stream(inputs)`은 노드가 끝날 때마다 그 시점의 상태를 내보내므로, 화면에는 노드 이름별 접이식 패널이 실행 순서대로 쌓입니다. 마지막 `value`(파이썬 루프 변수가 루프 종료 후에도 남는다는 성질을 이용)에서 `generation`을 꺼내 최종 답으로 보여줍니다.
+
+![Step 7까지의 구성](diagrams/step7.svg)
+
+**확인.** Step 2에서 가짜 키로 실행한 `AppTest`가 이미 이 전체 조립(421-445행)과 화면 배선(447-468행)을 예외 없이 통과했다는 것을 다시 확인합니다 — `exception: []`이고 `title`이 채워졌다는 것이 그 증거였습니다(질문을 실제로 입력하지 않았으므로 `app.stream`은 호출되지 않았고, 그래프 조립 자체만 검증한 것입니다).
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-(작성 필요)
+이 시퀀스는 오늘 다섯 노드를 모두 거치는 "교정" 경로 — 검색된 문서 중 일부가 관련 없다고 채점되어 질의 재작성과 웹 검색까지 가는 경우 — 를 그린 것입니다. 그래프는 먼저 Qdrant에 유사도 검색을 보내고, 돌아온 문서를 Claude로 한 건씩 채점합니다. 하나라도 "no"가 나오면 Claude에 질의 재작성을 요청하고, 그 재작성된 질문으로 Tavily 웹 검색을 실행한 뒤, 원래 검색 결과와 웹 결과를 합쳐 Claude에게 최종 답을 생성시킵니다. 반대로 채점된 문서가 전부 관련 있었다면(또는 Step 4에서 본 대로 애초에 검색된 문서가 하나도 없었다면) 그래프는 Claude·Qdrant·Tavily 호출 순서가 이 그림과 다르게, `grade_documents`에서 곧장 `generate`로 건너뜁니다 — 그 분기는 `diagrams/extra-graph.svg`가 보여줍니다. Anthropic·OpenAI·Tavily 키가 없어 이 흐름을 처음부터 끝까지 한 번에 재현하지는 못했고, 각 구간은 Step 2~7에서 소스와 격리된 실행으로 따로 확인한 것을 이어붙였습니다.
 
 ## 실행 체크리스트
 
-- [ ] (작성 필요)
+- [ ] Anthropic·OpenAI API 키와 Qdrant 인스턴스(로컬 또는 클라우드)를 준비했다(Tavily는 선택)
+- [ ] `uv venv && uv pip install -r requirements.txt`가 102개 패키지로 끝나고 `pypdf`는 그 안에 없다는 것을 직접 확인했다
+- [ ] 이 파일이 함수로 감싸여 있지 않아, 키를 넣지 않으면 사이드바 아래 모든 정의·그래프 조립 자체가 실행되지 않는다는 것을 `AppTest`로 확인했다
+- [ ] 기본 문서 URL(arxiv PDF)이 `pypdf` 부재로 항상 실패하고, 그 실패가 네트워크 요청보다 먼저 일어난다는 것을 소켓을 막아 직접 확인했다
+- [ ] `grade_documents`가 빈 문서 리스트를 받으면 `run_web_search`가 `"No"`로 남아 웹 검색 교정이 건너뛰어진다는 것을 직접 실행해 확인했다
+- [ ] Tavily 키는 사이드바 게이트를 통과하지 않아도 되고, `web_search` 내부에서만 조용히 건너뛴다는 것을 grep으로 확인했다
+- [ ] CRAG 그래프의 다섯 노드와 조건부 분기를 `diagrams/extra-graph.svg`로 따라갔다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| (작성 필요) | | |
+| 기본 문서 URL이나 PDF 업로드에서 "Error loading document: pypdf package not found..." | `requirements.txt` 18줄에 `pypdf`가 없어 `PyPDFLoader.__init__`이 네트워크 요청 전에 `ImportError`로 실패(직접 확인) | `uv pip install pypdf` 추가 설치 |
+| 검색된 문서가 없거나 채점이 전부 통과했는데도 웹 검색으로 넘어가지 않아 의아함 | `grade_documents`의 `search` 초기값이 `"No"`이고 빈 문서 리스트에서는 루프가 한 번도 안 돌아 바뀌지 않음(직접 확인) | 리포 코드는 고치지 않는 방침. 재현하려면 `documents`가 정말 비어 있는지 콘솔 로그(`~-retrieve-~` 다음 줄)로 먼저 확인 |
+| Tavily API 키를 비워 뒀는데도 앱이 멈추지 않고 그대로 진행됨 | 사이드바 게이트(44-59행)는 Tavily 키를 검사하지 않고, `web_search` 내부(98-100행)에서만 조용히 건너뜀(grep으로 직접 확인) | 의도된 동작. 웹 검색이 필요하면 키를 입력 |
+| 로컬 Qdrant(인증 없음)를 쓰는데 Qdrant API 키를 안 넣어도 잘 붙음 | 코드가 `qdrant_api_key`를 검증하지 않고 `QdrantClient`에 그대로 전달하며, 인증 없는 로컬 서버는 빈 문자열도 받아들임(소스로 확인) | 로컬이면 정상. Qdrant Cloud라면 실제 키가 필요 |
+| 사이드바 도움말이나 `generate` 함수 독스트링의 "Claude 3 model"을 보고 옛 모델을 쓴다고 오해함 | 실제 호출 문자열은 세 곳(266·302·373-374행) 모두 `claude-sonnet-4-5`이고, 도움말·독스트링·주석(48·257·372행)만 Gemini→Claude 3을 거친 이전 버전 흔적으로 남음(소스로 확인) | 실제 동작에는 영향 없음. 문구는 무시 |
 
 ## 더 해보기
 
-- (작성 필요)
+- `pypdf`를 설치한 뒤 실제 PDF를 올려 컬렉션이 채워지는지, 그다음 질문이 정말 Step 3~4의 검색·채점 경로를 타는지 직접 확인해보기
+- `grade_documents`(`rag_tutorials/corrective_rag/corrective_rag.py:324-325`)의 `search = "No"` 초기값을 `documents`가 비어 있을 때 `"Yes"`로 바꿔보고, "검토할 문서가 없으면 곧장 웹 검색"이 되도록 동작이 어떻게 달라지는지 실험해보기
+- `transform_query`(`rag_tutorials/corrective_rag/corrective_rag.py:354-386`)가 실제로 어떤 질문을 만들어내는지, 원래 질문과 나란히 로그로 남겨 비교해보기
 
 ## 다음 날 예고
 
-[Day 062 · 🤔 Gemini Agentic RAG](../day062-gemini-agentic-rag/README.md) — (작성 필요)
+[Day 062 · 🤔 Gemini Agentic RAG](../day062-gemini-agentic-rag/README.md) — Gemini 2.0 Flash Thinking과 Agno 에이전트, Exa AI 웹 검색을 조합한 RAG 앱을 다룹니다.

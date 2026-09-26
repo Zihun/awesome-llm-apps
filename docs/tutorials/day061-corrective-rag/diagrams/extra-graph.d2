@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+retrieve: 검색 { class: ours }
+grade: 채점 { class: ours }
+transform: 재작성 { class: ours }
+websearch: 웹 검색 { class: ours }
+generate: "생성 (→ END)" { class: ours }
+
+retrieve -> grade: 문서
+grade -> transform: 관련 없음
+grade -> generate: 관련 있음
+transform -> websearch: 질문
+websearch -> generate: 결과
