@@ -1,0 +1,27 @@
+...@../../_tools/theme
+direction: down
+
+front: "사용자 쪽 화면" {
+  class: group
+  grid-columns: 4
+  user: 사용자 { class: person }
+  source_in: "원본 소스 (텍스트·URL·파일)" { class: file }
+  ui: "소스·Q&A UI (App.tsx)" { class: ours }
+  vector_view: "3D 임베딩 뷰 (VectorSpace)" { class: ours }
+}
+
+backend_grp: "백엔드" {
+  class: group
+  grid-columns: 2
+  api: "FastAPI 서버 (server.py)" { class: ours }
+  store: MultimodalRagStore { class: ours }
+  mem: 인메모리 인덱스 { class: store }
+  agent: "ADK 에이전트 (agent.py)" { class: ours }
+}
+
+gemini: "Gemini API (임베딩·생성)" { class: ext }
+
+front -> backend_grp: REST 요청 (질문·소스)
+backend_grp -> front: 답변·인용·space
+backend_grp -> gemini: 임베딩·생성 요청
+gemini -> backend_grp: 벡터·답변 텍스트

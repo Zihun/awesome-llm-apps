@@ -1,0 +1,23 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "소스·Q&A UI" { class: ours }
+backend: FastAPI 서버 { class: ours }
+store: MultimodalRagStore { class: ours }
+embed_api: Gemini Embedding 2 { class: ext }
+agent: ADK 에이전트 { class: ours }
+gemini_api: Gemini API { class: ext }
+
+user -> ui: 질문 입력
+ui -> backend: POST /ask
+backend -> store: search(question, top_k)
+store -> embed_api: 질의 임베딩 요청
+embed_api -> store: 질의 벡터
+store -> backend: 매치·쿼리 포인트
+backend -> agent: 질문·증거 전달
+agent -> gemini_api: 프롬프트+도구 결과
+gemini_api -> agent: 답변 텍스트
+agent -> backend: 답변
+backend -> ui: 답변·인용·space
+ui -> user: 화면 갱신
