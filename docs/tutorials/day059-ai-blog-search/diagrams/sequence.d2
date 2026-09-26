@@ -7,8 +7,8 @@ agent: 에이전트 { class: ours }
 retrieve: 검색 { class: ours }
 gemini: Gemini API { class: ext }
 qdrant: Qdrant { class: store }
-generate: 생성 { class: ours }
 hub: LangChain Hub { class: ext }
+generate: 생성 { class: ours }
 
 user -> ui: 질문 입력
 ui -> agent: 그래프 실행
@@ -22,4 +22,5 @@ retrieve -> gemini: 관련성 채점 (grade_documents)
 retrieve -> generate: 관련
 generate -> hub: 프롬프트
 generate -> gemini: 답변 생성
+gemini -> generate: 최종 답변
 generate -> user: 표시

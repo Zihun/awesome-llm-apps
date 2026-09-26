@@ -147,7 +147,7 @@ The package `langchain-classic` requires `langchain-core>=1.4.4,<2.0.0`, but `0.
 The package `langchain-classic` requires `langchain-text-splitters>=1.1.2,<2.0.0`, but `0.3.11` is installed
 ```
 
-`All installed packages are compatible`가 **아닙니다** — 걱정할 것 없는 이유까지 직접 확인했습니다. 이 두 줄은 전부 `langchain-classic==1.0.8`(처음 `-r requirements.txt`만 설치했을 때 `langchain==1.4.2`가 딸려 들여온 것) 하나에 관한 것이고, `app.py`는 `langchain_classic`을 어디에서도 import하지 않습니다(`grep -n "langchain_classic" app.py`가 빈 결과). 즉 이번 설치가 실제로 쓰는 `langchain==0.3.30`·`langchain-google-genai==2.1.12`·`langchain-qdrant==0.2.1`·`langgraph==1.0.1`·`streamlit==1.64.0`은 서로 호환되고, 남는 것은 아무도 안 쓰는 이전 설치의 찌꺼기 패키지 하나뿐입니다(직접 확인 — 새 venv에 처음부터 이 세 패키지를 한 번에 설치하면 `langchain-classic` 자체가 안 들어와 `uv pip check`가 정말로 `All installed packages are compatible`를 냅니다). `python -m py_compile`은 문법만 보므로 위 import 파손을 가리지 못합니다 — 실제로 통과하는지는 import 자체로 확인해야 합니다.
+`All installed packages are compatible`가 **아닙니다** — 걱정할 것 없는 이유까지 직접 확인했습니다. 이 두 줄은 전부 `langchain-classic==1.0.8`(처음 `-r requirements.txt`만 설치했을 때 `langchain-community==0.4.2`가 딸려 들여온 것) 하나에 관한 것이고, `app.py`는 `langchain_classic`을 어디에서도 import하지 않습니다(`grep -n "langchain_classic" app.py`가 빈 결과). 즉 이번 설치가 실제로 쓰는 `langchain==0.3.30`·`langchain-google-genai==2.1.12`·`langchain-qdrant==0.2.1`·`langgraph==1.0.1`·`streamlit==1.64.0`은 서로 호환되고, 남는 것은 아무도 안 쓰는 이전 설치의 찌꺼기 패키지 하나뿐입니다(직접 확인 — 새 venv에 처음부터 이 세 패키지를 한 번에 설치하면 `langchain-classic` 자체가 안 들어와 `uv pip check`가 정말로 `All installed packages are compatible`를 냅니다). `python -m py_compile`은 문법만 보므로 위 import 파손을 가리지 못합니다 — 실제로 통과하는지는 import 자체로 확인해야 합니다.
 
 ```bash
 uv run --no-project python -c "import app; print('import app OK')"
