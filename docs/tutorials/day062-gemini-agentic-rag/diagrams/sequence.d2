@@ -1,0 +1,24 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+qdrant: Qdrant { class: store }
+ui: Streamlit UI { class: ours }
+gemini: Google Gemini API { class: ext }
+web_agent: 웹 검색 에이전트 { class: ours }
+exa: Exa AI { class: ext }
+
+user -> ui: 질문 입력
+ui -> gemini: 질의 재작성 요청 (Query Rewriter)
+gemini -> ui: 재작성된 질의
+ui -> qdrant: 유사도 검색 (score_threshold)
+qdrant -> ui: 관련 문서 없음
+ui -> web_agent: 위임
+web_agent -> exa: ExaTools 검색 실행
+exa -> web_agent: 검색 결과
+web_agent -> gemini: 결과 요약 요청
+gemini -> web_agent: 최종 텍스트
+web_agent -> ui: 반환
+ui -> gemini: 최종 답변 생성 요청 (RAG Agent)
+gemini -> ui: 답변 텍스트
+ui -> user: 화면에 표시

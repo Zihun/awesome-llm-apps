@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: down
+
+front: "사용자 쪽 화면" {
+  class: group
+  grid-columns: 3
+  user: 사용자 { class: person }
+  ui: Streamlit UI (agentic_rag_gemini.py) { class: ours }
+  source_doc: 업로드 PDF·URL { class: file }
+}
+
+qdrant: Qdrant (gemini-thinking-agent-agno) { class: store }
+
+pipeline: "질의 처리 에이전트 (agno)" {
+  class: group
+  grid-columns: 3
+  rewriter: 질의 재작성 에이전트 { class: ours }
+  websearch_agent: 웹 검색 에이전트 { class: ours }
+  rag_agent: RAG 에이전트 { class: ours }
+}
+
+platform: "외부 API" {
+  class: group
+  grid-columns: 2
+  gemini: Google Gemini API (임베딩·채팅) { class: ext }
+  exa: Exa AI 웹 검색 { class: ext }
+}
+
+front -> qdrant: 청크 저장·유사도 검색
+front -> platform: 문서 임베딩 요청
+front -> pipeline: 질문·재작성 요청
+pipeline -> platform: 채팅·웹검색 요청
