@@ -651,7 +651,7 @@ print('constructed OK, wrapper key =', tool.api_wrapper.tavily_api_key.get_secre
 constructed OK, wrapper key = fake-env-key
 ```
 
-`fake-tavily-key`(사이드바에 해당하는 값)가 아니라 `fake-env-key`(환경변수 값)가 실제로 저장된다는 뜻입니다. 그런데 이 지점(106행)에 실제로 도달하려면 **그 앞의 98행 게이트부터 통과해야 합니다** — 그 게이트가 보는 것은 사이드바 값이 비어 있는지 아닌지뿐, 환경변수와는 무관합니다. `web_search` 함수 본문을 소스에서 그대로 떼어(`ast`로 함수 정의만 추출 — 모듈 전체를 import하지 않으므로 사이드바 등 나머지 코드는 실행되지 않습니다) `st`를 얇은 스텁으로 바꿔, **사이드바 칸을 비워 둔 채 환경변수만 설정한 경우**(제가 맨 처음 이 문서에 잘못 적었던 "우회법")를 직접 실행해 확인했습니다(프록시를 죽은 포트로 돌리고 소켓·DNS를 막은 채로, 네트워크 시도 0건).
+`fake-tavily-key`(사이드바에 해당하는 값)가 아니라 `fake-env-key`(환경변수 값)가 실제로 저장된다는 뜻입니다. 그런데 이 지점(106행)에 실제로 도달하려면 **그 앞의 98행 게이트부터 통과해야 합니다** — 그 게이트가 보는 것은 사이드바 값이 비어 있는지 아닌지뿐, 환경변수와는 무관합니다. `web_search` 함수 본문을 소스에서 그대로 떼어(`ast`로 함수 정의만 추출 — 모듈 전체를 import하지 않으므로 사이드바 등 나머지 코드는 실행되지 않습니다) `st`를 얇은 스텁으로 바꿔, **사이드바 칸을 비워 둔 채 환경변수만 설정한 경우**를 직접 실행해 확인했습니다(프록시를 죽은 포트로 돌리고 소켓·DNS를 막은 채로, 네트워크 시도 0건).
 
 ```bash
 HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 NO_PROXY=localhost,127.0.0.1 TAVILY_API_KEY=fake-env-key \
@@ -693,13 +693,14 @@ print('documents after web_search:', result['keys']['documents'])
 직접 확인한 출력:
 
 ```
+~-web search-~
   placeholder.info | Initiating web search...
   placeholder.warning | Tavily API key not provided - skipping web search
   placeholder.empty | None
 documents after web_search: ['kept doc']
 ```
 
-98행의 `if not st.session_state.tavily_api_key:`가 **환경변수와 무관하게** 사이드바 값만 보고 곧바로 돌아가 버립니다 — `TavilySearchAPIWrapper`(106행)까지 가지도 못하므로, 환경변수를 아무리 채워도 사이드바 칸이 비어 있으면 웹 검색이 절대 켜지지 않습니다. 이전 판의 "사이드바 대신 환경변수만 설정하면 된다"는 안내는 **틀렸습니다** — 이 재현으로 정정합니다.
+98행의 `if not st.session_state.tavily_api_key:`가 **환경변수와 무관하게** 사이드바 값만 보고 곧바로 돌아가 버립니다 — `TavilySearchAPIWrapper`(106행)까지 가지도 못하므로, 환경변수를 아무리 채워도 사이드바 칸이 비어 있으면 웹 검색이 절대 켜지지 않습니다.
 
 반대로 **사이드바 칸에 아무 문자열이나 채운 경우**는 98행을 통과해 106행의 `TavilySearchResults(...)` 생성까지 갑니다 — 바로 위에서 이미 확인한 "환경변수를 채우면 통과" 시험이 정확히 이 지점입니다(그 시험에서 사용한 `api_key='fake-tavily-key'`가 106행이 넘기는 값과 같은 자리입니다). 그다음 줄(`execute_tavily_search` → `tool.invoke(...)`)은 실제 검색 요청을 내보내므로 이 문서는 실행하지 않습니다. 즉 **사이드바 칸과 환경변수 둘 다 채워야** — 칸의 값 자체는 검증되지 않으니 아무 문자열이나 되지만, 칸이 비어 있으면 절대 안 됩니다 — 106행까지 도달합니다.
 
@@ -867,7 +868,7 @@ grade_documents -> generate (conditional)
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 시퀀스는 오늘 다섯 노드를 모두 거치는 "교정" 경로 — 검색된 문서 중 일부가 "no"로 채점되어 질의 재작성과 웹 검색까지 가는 경우 — 를 그린 것입니다. 그래프는 먼저 OpenAI로 질문을 임베딩한 뒤 그 벡터로 Qdrant에 유사도 검색을 보내고, 돌아온 문서를 Claude로 한 건씩 채점합니다. 하나라도 "no"가 나오면 Claude에 질의 재작성을 요청하고 Tavily 웹 검색을 실행한 뒤, 원래 검색 결과와 웹 결과를 합쳐 Claude에게 최종 답을 생성시킵니다 — **다만 이 Tavily 구간은 사이드바 Tavily 칸과 `TAVILY_API_KEY` 환경변수가 둘 다 채워져 있을 때의 그림입니다.** Step 6에서 확인했듯 둘 중 하나라도 비어 있으면(사이드바만 비었거나, 사이드바는 채웠지만 환경변수가 없거나) `web_search`는 경고나 예외를 콘솔에 남기고 문서 목록을 그대로 돌려주므로, 이 시퀀스의 Tavily 왕복 없이 곧장 `generate`로 넘어갑니다. 반대로 채점된 문서에 "no"가 하나도 없었다면(전부 관련 있음, 또는 Step 4에서 본 대로 애초에 검색된 문서가 하나도 없었다면) 그래프는 `grade_documents`에서 곧장 `generate`로 건너뜁니다 — 그 분기는 `diagrams/extra-graph.svg`가 보여줍니다. Anthropic·OpenAI·Tavily 키가 없어 이 흐름을 처음부터 끝까지 한 번에 재현하지는 못했고, 각 구간은 Step 2~7에서 소스와 격리된 실행으로 따로 확인한 것을 이어붙였습니다.
+이 시퀀스는 오늘 다섯 노드를 모두 거치는 "교정" 경로 — 검색된 문서 중 일부가 "no"로 채점되어 질의 재작성과 웹 검색까지 가는 경우 — 를 그린 것입니다. 그래프는 먼저 OpenAI로 질문을 임베딩한 뒤 그 벡터로 Qdrant에 유사도 검색을 보내고, 돌아온 문서를 Claude로 한 건씩 채점합니다. 하나라도 "no"가 나오면 Claude에 질의 재작성을 요청하고 Tavily 웹 검색을 실행한 뒤, 원래 검색 결과와 웹 결과를 합쳐 Claude에게 최종 답을 생성시킵니다 — **다만 이 Tavily 구간은 사이드바 Tavily 칸과 `TAVILY_API_KEY` 환경변수가 둘 다 채워져 있을 때의 그림입니다.** Step 6에서 확인했듯 둘 중 하나라도 비어 있으면 — 사이드바가 비어 있으면 화면에 경고가 잠깐 떴다 사라지고, 사이드바는 채웠지만 환경변수가 없으면 콘솔에 `Web search error: …`가 남고 화면 배너도 곧 지워지는 식으로 — `web_search`는 문서 목록을 그대로 돌려주므로, 이 시퀀스의 Tavily 왕복 없이 곧장 `generate`로 넘어갑니다. 반대로 채점된 문서에 "no"가 하나도 없었다면(전부 관련 있음, 또는 Step 4에서 본 대로 애초에 검색된 문서가 하나도 없었다면) 그래프는 `grade_documents`에서 곧장 `generate`로 건너뜁니다 — 그 분기는 `diagrams/extra-graph.svg`가 보여줍니다. Anthropic·OpenAI·Tavily 키가 없어 이 흐름을 처음부터 끝까지 한 번에 재현하지는 못했고, 각 구간은 Step 2~7에서 소스와 격리된 실행으로 따로 확인한 것을 이어붙였습니다.
 
 ## 실행 체크리스트
 
@@ -885,8 +886,8 @@ grade_documents -> generate (conditional)
 |---|---|---|
 | 기본 문서 URL이나 PDF 업로드에서 "Error loading document: pypdf package not found..." | `requirements.txt` 18줄에 `pypdf`가 없어 `PyPDFLoader.__init__`이 네트워크 요청 전에 `ImportError`로 실패(직접 확인) | `uv pip install pypdf` 추가 설치 |
 | 검색된 문서가 없거나 채점이 전부 통과했는데도 웹 검색으로 넘어가지 않아 의아함 | `grade_documents`의 `search` 초기값이 `"No"`이고 빈 문서 리스트에서는 루프가 한 번도 안 돌아 바뀌지 않음(직접 확인) | 리포 코드는 고치지 않는 방침. 재현하려면 `documents`가 정말 비어 있는지 콘솔 로그(`~-retrieve-~` 다음 줄)로 먼저 확인 |
-| 사이드바 Tavily 칸을 비워 뒀는데 셸에는 `TAVILY_API_KEY`를 설정해 두어 웹 검색을 기대했지만 화면에 "Tavily API key not provided - skipping web search"만 뜸 | 98행의 게이트가 환경변수와 무관하게 사이드바 값만 보고 곧바로 돌아감(직접 확인) | 사이드바 칸에 아무 문자열이나 채우기(빈 칸이 아니기만 하면 됨) |
-| 사이드바 칸도 채우고 `TAVILY_API_KEY`도 설정했는데(또는 사이드바에만 진짜 키를 넣었는데) 웹 결과가 안 붙고 콘솔에 "Web search error: 1 validation error for TavilySearchAPIWrapper"가 남음 | `TavilySearchResults`에 `api_key` 필드가 없어 사이드바 값이 조용히 버려지고, 내부 `TavilySearchAPIWrapper`는 환경변수 `TAVILY_API_KEY`만 봄(직접 확인) | 사이드바 칸(아무 문자열)과 `TAVILY_API_KEY`(진짜 키) 둘 다 채우기 — 하나만으로는 안 됨 |
+| 사이드바 Tavily 칸을 비워 뒀는데 셸에는 `TAVILY_API_KEY`를 설정해 두어 웹 검색을 기대했지만, 경고가 잠깐 떴다 사라지고 웹 결과가 붙지 않음 | 98행의 게이트가 환경변수와 무관하게 사이드바 값만 보고 곧바로 돌아가고, `finally: progress_placeholder.empty()`(151-152행)가 그 경고 배너를 바로 지움(직접 확인) | 사이드바 칸에 아무 문자열이나 채우기(빈 칸이 아니기만 하면 됨) |
+| 사이드바 칸도 채우고 `TAVILY_API_KEY`도 설정했다고 생각했는데 콘솔에 "Web search error: 1 validation error for TavilySearchAPIWrapper"가 남음 | 실제로는 사이드바에만 키를 넣었거나(진짜 키라도 106행에서 버려짐), 앱을 띄운 셸에 `TAVILY_API_KEY`가 안 보이는 경우(다른 셸에서 설정했거나 앱을 띄운 뒤에 설정)임 — 둘 다 채운 상태에서는 Step 6에서 `constructed OK`까지 직접 확인됨 | 앱을 띄운 바로 그 셸에서 `TAVILY_API_KEY`를 설정했는지, 사이드바 칸이 실제로 채워졌는지 다시 확인 |
 
 ## 더 해보기
 

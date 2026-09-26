@@ -3,12 +3,11 @@ direction: down
 
 front: "사용자 쪽 화면" {
   class: group
-  grid-columns: 2
+  grid-columns: 3
   user: 사용자 { class: person }
   ui: Streamlit UI { class: ours }
+  ingest: 문서 적재·색인 { class: ours }
 }
-
-ingest: 문서 적재·색인 { class: ours }
 
 graph: "CRAG 그래프 (LangGraph)" {
   class: group
@@ -30,8 +29,8 @@ providers: "외부 서비스" {
   tavily: Tavily { class: ext }
 }
 
-front -> ingest: 문서 URL·업로드
 front -> graph: 질문 텍스트
-ingest -> qdrant: 청크 임베딩(OpenAI)·저장
+front -> qdrant: 청크 저장
+front -> providers: 청크 임베딩(OpenAI)
 graph -> qdrant: 유사도 검색
 graph -> providers: 질의 임베딩(OpenAI), 채점·재작성·생성(Claude), 웹 검색(Tavily)
