@@ -1,33 +1,26 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 2
 
-entry: "진입" {
-  class: group
-  user: 사용자 (마이크·스피커) { class: person }
-}
+user: 사용자 (마이크·스피커) { class: person }
 
 rt: "realtime/" {
   class: group
-  grid-columns: 2
   agent: RealtimeAgent·Session { class: ours }
-  api: Realtime API { class: ext }
 }
 
 vp: "static/ · streamed/" {
   class: group
-  grid-columns: 2
   static_agent: static/agent.py { class: ours }
-  models: STT·Chat·TTS 세 모델 { class: ext }
   io: sounddevice I/O (util.py) { class: ours }
   streamed_agent: streamed/agent.py { class: ours }
 }
 
-entry.user -> rt.agent: 오디오 바이트
-entry.user -> vp: 마이크 입력·스피커 출력
-rt.agent -> rt.api: 세션 연결
+openai: OpenAI API (STT·Chat·TTS·Realtime, 같은 계정) { class: ext }
+
+user -> rt: 오디오 바이트
+user -> vp: 마이크 입력·스피커 출력
 vp.static_agent -> vp.io: 녹음 1회·재생
 vp.streamed_agent -> vp.io: 연속 녹음·재생
-vp.static_agent -> vp.models: 턴마다 세 번 호출
-vp.streamed_agent -> vp.models: 턴마다 세 번 호출
-rt.api -> vp.models: 같은 계정, 모델 하나
+rt.agent -> openai: 세션 연결
+vp.static_agent -> openai: 턴마다 세 번 호출
+vp.streamed_agent -> openai: 턴마다 세 번 호출
