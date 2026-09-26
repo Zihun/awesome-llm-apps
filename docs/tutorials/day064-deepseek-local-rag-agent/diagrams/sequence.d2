@@ -4,9 +4,9 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 embed_model: 임베딩 모델 (snowflake-arctic-embed) { class: ext }
-qdrant: Qdrant Cloud { class: store }
-rag_agent: RAG 에이전트 { class: ours }
 chat_model: 채팅 모델 (deepseek-r1) { class: ext }
+rag_agent: RAG 에이전트 { class: ours }
+qdrant: Qdrant Cloud { class: store }
 
 user -> ui: 질문 입력
 ui -> embed_model: 질문 임베딩 요청
