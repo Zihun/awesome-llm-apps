@@ -15,12 +15,15 @@ vp: "static/ · streamed/" {
   streamed_agent: streamed/agent.py { class: ours }
 }
 
-openai: OpenAI API (STT·Chat·TTS·Realtime, 같은 계정) { class: ext }
+openai: "OpenAI API (같은 계정)" {
+  class: group
+  api: Realtime API { class: ext }
+  models: STT·Chat·TTS 세 모델 { class: ext }
+}
 
 user -> rt: 오디오 바이트
 user -> vp: 마이크 입력·스피커 출력
 vp.static_agent -> vp.io: 녹음 1회·재생
 vp.streamed_agent -> vp.io: 연속 녹음·재생
-rt.agent -> openai: 세션 연결
-vp.static_agent -> openai: 턴마다 세 번 호출
-vp.streamed_agent -> openai: 턴마다 세 번 호출
+rt.agent -> openai.api: 세션 연결
+vp -> openai.models: 턴마다 세 번 호출
