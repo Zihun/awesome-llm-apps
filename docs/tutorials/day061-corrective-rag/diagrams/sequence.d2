@@ -4,9 +4,9 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 graph: CRAG 그래프 { class: ours }
+claude: Claude { class: ext }
 openai: OpenAI { class: ext }
 qdrant: Qdrant { class: store }
-claude: Claude { class: ext }
 tavily: Tavily { class: ext }
 
 user -> ui: 질문 입력

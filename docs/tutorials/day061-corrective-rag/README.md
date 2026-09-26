@@ -1,10 +1,10 @@
 # Day 061 · 🔄 Corrective RAG (CRAG)
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 100분 · API 비용 대략 질문 1건당 OpenAI 임베딩 1회(질문 임베딩) + Claude 호출 1~6회(빈 문서 경로: 생성 1회뿐 / 문서 경로: 채점 최대 4회 — retriever 기본 k=4, 소스로 확인 — + 생성 1회 / 웹 검색 경로: 채점 + 재작성 + 생성) + Tavily 호출은 사이드바 키만으로는 0회(Step 6에서 직접 확인 — 키가 조용히 무시됨, `TAVILY_API_KEY` 환경변수로 우회하면 최대 3회 시도) + 문서 업로드 시 청크를 묶어서 임베딩 호출(청크마다 1회가 아님) — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/corrective_rag`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 100분 · API 비용 대략 질문 1건당 OpenAI 임베딩 1회(질문 임베딩) + Claude 호출 1~6회(빈 문서 경로: 생성 1회뿐 / 문서 경로: 채점 최대 4회 — retriever 기본 k=4, 소스로 확인 — + 생성 1회 / 웹 검색 경로: 채점 + 재작성 + 생성) + Tavily 호출은 사이드바 Tavily 칸이 비어 있거나 `TAVILY_API_KEY` 환경변수가 없으면 0회(Step 6에서 직접 확인 — 둘 다 채워야 최대 3회 시도) + 문서 업로드 시 청크를 묶어서 임베딩 호출(청크마다 1회가 아님) — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/corrective_rag`
 
 ## 오늘 만들 것
 
-오늘은 문서를 검색해 답하다가 검색 품질이 부실하면 스스로 질문을 다시 쓰고 웹을 뒤져 바로잡는 Corrective RAG(CRAG)를 다룹니다. Day 047부터 이 볼륨이 반복해 온 "청크 → 임베딩 → 저장 → 검색 → 생성" 골격은 다시 설명하지 않고, 오늘 새로 얹히는 것 — LangGraph `StateGraph`로 짠 5노드 그래프(검색 → 채점 → [재작성 → 웹 검색] → 생성)와 그 조건부 분기 — 에 집중합니다. 그런데 이 468줄을 실제로 설치해 돌려보면(직접 확인, Step 1·3·6), "관련성이 없으면 웹으로 고친다"는 오늘의 핵심 아이디어 자체가 세 군데에서 걸립니다. 첫째, `requirements.txt` 18줄 어디에도 `pypdf`가 없는데 이 앱이 기본으로 제시하는 문서 URL 자체가 PDF(`arxiv.org`의 논문)라서, 아무 설정도 하지 않고 그대로 실행하면 `PyPDFLoader`가 `ImportError`로 곧바로 막힙니다(직접 확인, Step 3) — 이 실패는 네트워크 요청이 나가기 전에 일어난다는 것까지 소켓을 막아 직접 확인했습니다. 둘째, 그 실패로 문서가 하나도 들어오지 않은 상태(또는 실제 검색이 정말 아무것도 찾지 못한 상태)에서 `grade_documents`의 채점 루프는 "조사할 문서가 없다"와 "조사했더니 전부 관련 있다"를 구분하지 못합니다(직접 확인, Step 4) — 두 경우 모두 `run_web_search`가 초기값 `"No"`로 남아, 웹 검색 교정이 정확히 그것이 가장 필요한 순간에 건너뛰어집니다. 셋째, 앞의 두 문제를 모두 피해 `run_web_search`가 정말 `"Yes"`가 되어도, 사이드바에 Tavily 키를 넣는 것만으로는 웹 검색이 **한 번도 일어나지 않습니다** — `TavilySearchResults(api_key=...)`의 `api_key` 인자는 langchain-community 0.3.12에서 이미 버려지는 인자라 조용히 무시되고, 실제 검증은 환경변수 `TAVILY_API_KEY`만 보기 때문입니다(직접 확인, Step 6). 이 문서는 이 세 가지를 모두 직접 재현하며 자격증명 게이트(Step 2)부터 그래프 조립·실행(Step 7)까지 다섯 개 노드를 하나씩 따라갑니다. 아래는 완성된 아키텍처입니다.
+오늘은 문서를 검색해 답하다가 검색 품질이 부실하면 스스로 질문을 다시 쓰고 웹을 뒤져 바로잡는 Corrective RAG(CRAG)를 다룹니다. Day 047부터 이 볼륨이 반복해 온 "청크 → 임베딩 → 저장 → 검색 → 생성" 골격은 다시 설명하지 않고, 오늘 새로 얹히는 것 — LangGraph `StateGraph`로 짠 5노드 그래프(검색 → 채점 → [재작성 → 웹 검색] → 생성)와 그 조건부 분기 — 에 집중합니다. 그런데 이 468줄을 실제로 설치해 돌려보면(직접 확인, Step 1·3·6), "관련성이 없으면 웹으로 고친다"는 오늘의 핵심 아이디어 자체가 세 군데에서 걸립니다. 첫째, `requirements.txt` 18줄 어디에도 `pypdf`가 없는데 이 앱이 기본으로 제시하는 문서 URL 자체가 PDF(`arxiv.org`의 논문)라서, 아무 설정도 하지 않고 그대로 실행하면 `PyPDFLoader`가 `ImportError`로 곧바로 막힙니다(직접 확인, Step 3) — 이 실패는 네트워크 요청이 나가기 전에 일어난다는 것까지 소켓을 막아 직접 확인했습니다. 둘째, 그 실패로 문서가 하나도 들어오지 않은 상태(또는 실제 검색이 정말 아무것도 찾지 못한 상태)에서 `grade_documents`의 채점 루프는 "조사할 문서가 없다"와 "조사했더니 전부 관련 있다"를 구분하지 못합니다(직접 확인, Step 4) — 두 경우 모두 `run_web_search`가 초기값 `"No"`로 남아, 웹 검색 교정이 정확히 그것이 가장 필요한 순간에 건너뛰어집니다. 셋째, 앞의 두 문제를 모두 피해 `run_web_search`가 정말 `"Yes"`가 되어도, 웹 검색을 실제로 켜려면 **서로 다른 두 곳을 동시에** 채워야 합니다 — 사이드바 Tavily 칸이 비어 있으면 98행이 그 자리에서 돌아가 버리고, 칸을 채워도 `TavilySearchResults(api_key=...)`의 `api_key` 인자는 langchain-community 0.3.12에서 이미 버려지는 인자라 조용히 무시되며 실제 검증은 환경변수 `TAVILY_API_KEY`만 보기 때문에, 둘 중 하나만 채우면 여전히 웹 검색은 **한 번도 일어나지 않습니다**(직접 확인, Step 6). 이 문서는 이 세 가지를 모두 직접 재현하며 자격증명 게이트(Step 2)부터 그래프 조립·실행(Step 7)까지 다섯 개 노드를 하나씩 따라갑니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -15,7 +15,7 @@
 | Anthropic API 키 | 문서 채점·질의 재작성·답변 생성 세 곳 모두 Claude Sonnet 4.5(`claude-sonnet-4-5`) 호출 인증. 사이드바에 비어 있으면 전체 앱이 `st.stop()`으로 멈춤(Step 2) | https://console.anthropic.com/settings/keys |
 | OpenAI API 키 | 문서·질문 임베딩(`text-embedding-3-small`) 인증. 마찬가지로 비어 있으면 전체 앱이 멈춤(Step 2) | https://platform.openai.com/api-keys |
 | Qdrant 인스턴스(로컬 또는 클라우드) | 벡터 저장소. 코드 기본값은 로컬 `http://localhost:6333`이고 API 키 칸을 비워도 게이트를 통과함(Step 2에서 직접 확인) | 로컬: `docker run -p 6333:6333 qdrant/qdrant` / 클라우드: https://cloud.qdrant.io |
-| Tavily API 키 | 검색된 문서가 부실할 때 웹 검색 교정. **사이드바 입력칸은 실제로 쓰이지 않습니다** — `TavilySearchResults`가 이 값을 버리고 환경변수 `TAVILY_API_KEY`만 읽으므로(Step 6에서 직접 확인), 웹 검색을 실제로 켜려면 이 환경변수를 셸에 설정해야 합니다 | https://app.tavily.com |
+| Tavily API 키 | 검색된 문서가 부실할 때 웹 검색 교정. **두 곳에 다 있어야 합니다** — 98행의 게이트는 사이드바 칸이 비어 있으면 그 자리에서 건너뛰므로 칸을 반드시 채워야 하고(값 자체는 검증되지 않아 아무 문자열이나 통과합니다), 정작 검색에 실제로 쓰이는 키는 그 값이 아니라 환경변수 `TAVILY_API_KEY`뿐입니다(Step 6에서 직접 확인) | https://app.tavily.com |
 | pypdf(별도 설치) | `PyPDFLoader`가 실제로 import하는 패키지 — `requirements.txt` 18줄 어디에도 없어 기본 설치로는 빠짐(Step 1·3에서 직접 확인) | `uv pip install pypdf` |
 | 인터넷 연결(첫 적재 시) | `pypdf` 설치 후 문서를 처음 적재하면 청크 분할이 쓰는 `tiktoken`의 `gpt2` 인코딩 파일을 `openaipublic.blob.core.windows.net`에서 내려받습니다(소스로 확인, Day 059 Step 7이 이미 다룬 사실) | 별도 설치 없음 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
@@ -32,7 +32,7 @@
 | 문서 검색 (`retrieve`) | Qdrant 유사도 검색(기본 k=4), retriever가 없으면 빈 리스트 반환 | `rag_tutorials/corrective_rag/corrective_rag.py:244-253` |
 | 관련성 평가 (`grade_documents`) | 문서별로 Claude에 yes/no 채점, 하나라도 "no"면 `run_web_search="Yes"` | `rag_tutorials/corrective_rag/corrective_rag.py:295-351` |
 | 질의 재작성 (`transform_query`) | Claude로 질문을 검색 최적화 버전으로 완전히 교체 | `rag_tutorials/corrective_rag/corrective_rag.py:354-386` |
-| 웹 검색 (`web_search`) | Tavily 검색(최대 3회 시도, 재시도 2회) — 단 사이드바 키는 무시되고 `TAVILY_API_KEY` 환경변수만 통함(Step 6), 결과를 문서 1건으로 합쳐 추가 | `rag_tutorials/corrective_rag/corrective_rag.py:85-153` |
+| 웹 검색 (`web_search`) | Tavily 검색(최대 3회 시도, 재시도 2회) — 사이드바 칸이 비어 있으면 98행에서 건너뛰고, 채워도 실제 키는 `TAVILY_API_KEY` 환경변수만 통함(Step 6), 결과를 문서 1건으로 합쳐 추가 | `rag_tutorials/corrective_rag/corrective_rag.py:85-153` |
 | 답변 생성 (`generate`) | 문서+질문 컨텍스트로 Claude 호출, 실패 시 대체 문구 반환 | `rag_tutorials/corrective_rag/corrective_rag.py:256-293` |
 | OpenAI 임베딩 | `text-embedding-3-small`, 1536차원 | `rag_tutorials/corrective_rag/corrective_rag.py:69-73` |
 | Claude Sonnet 4.5 (Anthropic) | 채점·재작성·생성 세 곳에서 각각 새 인스턴스를 만들어 호출 | `rag_tutorials/corrective_rag/corrective_rag.py:266`, `rag_tutorials/corrective_rag/corrective_rag.py:302`, `rag_tutorials/corrective_rag/corrective_rag.py:373-374` |
@@ -651,29 +651,70 @@ print('constructed OK, wrapper key =', tool.api_wrapper.tavily_api_key.get_secre
 constructed OK, wrapper key = fake-env-key
 ```
 
-`fake-tavily-key`(사이드바에 해당하는 값)가 아니라 `fake-env-key`(환경변수 값)가 실제로 저장된다는 뜻입니다. 이 실패가 실제 앱 화면에서 어떻게 보이는지도, `web_search` 함수 본문을 소스에서 그대로 떼어(`ast`로 함수 정의만 추출 — 모듈 전체를 import하지 않으므로 사이드바 등 나머지 코드는 실행되지 않습니다) `st`를 얇은 스텁으로 바꿔 직접 실행해 확인했습니다(프록시를 죽은 포트로 돌리고 소켓·DNS를 막은 채로, 네트워크 시도 0건).
+`fake-tavily-key`(사이드바에 해당하는 값)가 아니라 `fake-env-key`(환경변수 값)가 실제로 저장된다는 뜻입니다. 그런데 이 지점(106행)에 실제로 도달하려면 **그 앞의 98행 게이트부터 통과해야 합니다** — 그 게이트가 보는 것은 사이드바 값이 비어 있는지 아닌지뿐, 환경변수와는 무관합니다. `web_search` 함수 본문을 소스에서 그대로 떼어(`ast`로 함수 정의만 추출 — 모듈 전체를 import하지 않으므로 사이드바 등 나머지 코드는 실행되지 않습니다) `st`를 얇은 스텁으로 바꿔, **사이드바 칸을 비워 둔 채 환경변수만 설정한 경우**(제가 맨 처음 이 문서에 잘못 적었던 "우회법")를 직접 실행해 확인했습니다(프록시를 죽은 포트로 돌리고 소켓·DNS를 막은 채로, 네트워크 시도 0건).
+
+```bash
+HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 NO_PROXY=localhost,127.0.0.1 TAVILY_API_KEY=fake-env-key \
+uv run --no-project python -c "
+import socket
+def _blocked(*a, **k): raise RuntimeError('network blocked')
+socket.socket.connect = _blocked
+socket.getaddrinfo = _blocked
+import ast, types
+src = open('corrective_rag.py', encoding='utf-8').read()
+tree = ast.parse(src)
+func_src = next(ast.get_source_segment(src, n) for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'web_search')
+
+class Placeholder:
+    def __getattr__(self, name):
+        return lambda msg=None: print(f'  placeholder.{name} | {msg}')
+
+class St(types.SimpleNamespace):
+    session_state = types.SimpleNamespace(tavily_api_key='')  # 사이드바 Tavily 칸을 비워 둔 상태
+    @staticmethod
+    def empty(): return Placeholder()
+
+# corrective_rag.py 최상위에서 web_search가 참조하는 이름들을 같은 네임스페이스에 준비
+setup_src = '''
+from langchain_community.tools import TavilySearchResults
+from tenacity import retry, stop_after_attempt, wait_exponential
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+def execute_tavily_search(tool, query):
+    return tool.invoke({\"query\": query})
+'''
+ns = {'st': St}
+exec(compile(setup_src, '<setup>', 'exec'), ns)
+exec(compile(func_src, 'corrective_rag.py', 'exec'), ns)
+result = ns['web_search']({'keys': {'question': 'q', 'documents': ['kept doc']}})
+print('documents after web_search:', result['keys']['documents'])
+"
+```
+
+직접 확인한 출력:
 
 ```
-~-web search-~
   placeholder.info | Initiating web search...
-  placeholder.info | Configuring search tool...
-Web search error: 1 validation error for TavilySearchAPIWrapper
-  Value error, Did not find tavily_api_key, please add an environment variable `TAVILY_API_KEY` which contains it, or pass `tavily_api_key` as a named parameter. [...]
-  placeholder.error | Web search error: 1 validation error for TavilySearchAPIWrapper [...]
+  placeholder.warning | Tavily API key not provided - skipping web search
   placeholder.empty | None
 documents after web_search: ['kept doc']
 ```
 
-`ValidationError`는 바깥 `except`(147-150행)에 잡혀 `print(error_msg)`(148행, 콘솔에만 남음)와 `progress_placeholder.error(...)`(150행, 화면에 잠깐 표시됨)로 각각 한 번씩 나타나지만, 바로 다음 줄 `finally: progress_placeholder.empty()`(151-152행)가 그 화면 배너를 **즉시 지웁니다.** 화면에 남는 것은 위 출력의 마지막 줄처럼 아무 웹 결과도 추가되지 않은 원래 `documents`(`'kept doc'`)뿐이고, 사용자는 "no" 판정을 봤는데도 왜 웹 검색 결과가 안 보이는지 알 방법이 콘솔 로그 말고는 없습니다. 성공했다면 최대 3건의 결과를 제목·본문으로 합쳐 **문서 하나**로 만들어 기존 `documents`에 추가했을 것입니다(`rag_tutorials/corrective_rag/corrective_rag.py:134-143`, 재시도는 `@retry(stop_after_attempt(3), wait_exponential(...))`, `rag_tutorials/corrective_rag/corrective_rag.py:81-83`).
+98행의 `if not st.session_state.tavily_api_key:`가 **환경변수와 무관하게** 사이드바 값만 보고 곧바로 돌아가 버립니다 — `TavilySearchAPIWrapper`(106행)까지 가지도 못하므로, 환경변수를 아무리 채워도 사이드바 칸이 비어 있으면 웹 검색이 절대 켜지지 않습니다. 이전 판의 "사이드바 대신 환경변수만 설정하면 된다"는 안내는 **틀렸습니다** — 이 재현으로 정정합니다.
 
-이 결함을 피해 실제로 웹 검색을 켜려면 사이드바가 아니라 셸에서 환경변수를 설정해야 합니다:
+반대로 **사이드바 칸에 아무 문자열이나 채운 경우**는 98행을 통과해 106행의 `TavilySearchResults(...)` 생성까지 갑니다 — 바로 위에서 이미 확인한 "환경변수를 채우면 통과" 시험이 정확히 이 지점입니다(그 시험에서 사용한 `api_key='fake-tavily-key'`가 106행이 넘기는 값과 같은 자리입니다). 그다음 줄(`execute_tavily_search` → `tool.invoke(...)`)은 실제 검색 요청을 내보내므로 이 문서는 실행하지 않습니다. 즉 **사이드바 칸과 환경변수 둘 다 채워야** — 칸의 값 자체는 검증되지 않으니 아무 문자열이나 되지만, 칸이 비어 있으면 절대 안 됩니다 — 106행까지 도달합니다.
+
+키는 채웠지만 방식이 틀린 경우(예: 진짜 키를 사이드바에만 넣고 환경변수는 비움)는 어떻게 되는지도 이미 위에서 확인했습니다 — `ValidationError`가 나고 `finally: progress_placeholder.empty()`(151-152행)가 그 배너를 **화면에서 즉시 지웁니다.** 콘솔에는 `print(error_msg)`(148행)로 남지만, 사용자는 "no" 판정을 봤는데도 왜 웹 검색 결과가 안 보이는지 화면만으로는 알 길이 없습니다. 성공했다면 최대 3건의 결과를 제목·본문으로 합쳐 **문서 하나**로 만들어 기존 `documents`에 추가했을 것입니다(`rag_tutorials/corrective_rag/corrective_rag.py:134-143`, 재시도는 `@retry(stop_after_attempt(3), wait_exponential(...))`, `rag_tutorials/corrective_rag/corrective_rag.py:81-83`).
+
+정리하면, 이 앱에서 웹 검색을 실제로 켜려면 **두 가지를 동시에** 해야 합니다 — 사이드바 Tavily 칸에 아무 문자열이나(진짜 키가 아니어도) 채우고, 그와 별개로 셸에 진짜 키를 `TAVILY_API_KEY`로 설정한 뒤 앱을 띄웁니다:
 
 ```bash
 TAVILY_API_KEY=여기에_실제_키 uv run --no-project streamlit run corrective_rag.py
+# 그리고 브라우저의 사이드바 Tavily 칸에는 아무 문자열이나 입력(빈 칸이면 98행에서 곧바로 건너뜀)
 ```
 
 ```powershell
 $env:TAVILY_API_KEY="여기에_실제_키"; uv run --no-project streamlit run corrective_rag.py
+# 사이드바 Tavily 칸은 위와 동일하게 아무 문자열이나 채웁니다
 ```
 
 ### Step 7. 답변 생성과 그래프 조립·실행
@@ -826,7 +867,7 @@ grade_documents -> generate (conditional)
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 시퀀스는 오늘 다섯 노드를 모두 거치는 "교정" 경로 — 검색된 문서 중 일부가 "no"로 채점되어 질의 재작성과 웹 검색까지 가는 경우 — 를 그린 것입니다. 그래프는 먼저 OpenAI로 질문을 임베딩한 뒤 그 벡터로 Qdrant에 유사도 검색을 보내고, 돌아온 문서를 Claude로 한 건씩 채점합니다. 하나라도 "no"가 나오면 Claude에 질의 재작성을 요청하고 Tavily 웹 검색을 실행한 뒤, 원래 검색 결과와 웹 결과를 합쳐 Claude에게 최종 답을 생성시킵니다 — **다만 이 Tavily 구간은 `TAVILY_API_KEY` 환경변수가 실제로 설정돼 있을 때의 그림입니다.** 사이드바에만 키를 넣은 경우 Step 6에서 확인했듯 `web_search`는 예외를 콘솔에 남기고 문서 목록을 그대로 돌려주므로, 이 시퀀스의 Tavily 왕복 없이 곧장 `generate`로 넘어갑니다. 반대로 채점된 문서에 "no"가 하나도 없었다면(전부 관련 있음, 또는 Step 4에서 본 대로 애초에 검색된 문서가 하나도 없었다면) 그래프는 `grade_documents`에서 곧장 `generate`로 건너뜁니다 — 그 분기는 `diagrams/extra-graph.svg`가 보여줍니다. Anthropic·OpenAI·Tavily 키가 없어 이 흐름을 처음부터 끝까지 한 번에 재현하지는 못했고, 각 구간은 Step 2~7에서 소스와 격리된 실행으로 따로 확인한 것을 이어붙였습니다.
+이 시퀀스는 오늘 다섯 노드를 모두 거치는 "교정" 경로 — 검색된 문서 중 일부가 "no"로 채점되어 질의 재작성과 웹 검색까지 가는 경우 — 를 그린 것입니다. 그래프는 먼저 OpenAI로 질문을 임베딩한 뒤 그 벡터로 Qdrant에 유사도 검색을 보내고, 돌아온 문서를 Claude로 한 건씩 채점합니다. 하나라도 "no"가 나오면 Claude에 질의 재작성을 요청하고 Tavily 웹 검색을 실행한 뒤, 원래 검색 결과와 웹 결과를 합쳐 Claude에게 최종 답을 생성시킵니다 — **다만 이 Tavily 구간은 사이드바 Tavily 칸과 `TAVILY_API_KEY` 환경변수가 둘 다 채워져 있을 때의 그림입니다.** Step 6에서 확인했듯 둘 중 하나라도 비어 있으면(사이드바만 비었거나, 사이드바는 채웠지만 환경변수가 없거나) `web_search`는 경고나 예외를 콘솔에 남기고 문서 목록을 그대로 돌려주므로, 이 시퀀스의 Tavily 왕복 없이 곧장 `generate`로 넘어갑니다. 반대로 채점된 문서에 "no"가 하나도 없었다면(전부 관련 있음, 또는 Step 4에서 본 대로 애초에 검색된 문서가 하나도 없었다면) 그래프는 `grade_documents`에서 곧장 `generate`로 건너뜁니다 — 그 분기는 `diagrams/extra-graph.svg`가 보여줍니다. Anthropic·OpenAI·Tavily 키가 없어 이 흐름을 처음부터 끝까지 한 번에 재현하지는 못했고, 각 구간은 Step 2~7에서 소스와 격리된 실행으로 따로 확인한 것을 이어붙였습니다.
 
 ## 실행 체크리스트
 
@@ -835,7 +876,7 @@ grade_documents -> generate (conditional)
 - [ ] 이 파일이 함수로 감싸여 있지 않아, 키를 넣지 않으면 사이드바 아래 모든 정의·그래프 조립 자체가 실행되지 않는다는 것을 `AppTest`로 확인했다
 - [ ] 기본 문서 URL(arxiv PDF)이 `pypdf` 부재로 항상 실패하고, 그 실패가 네트워크 요청보다 먼저 일어난다는 것을 소켓·DNS를 막아 직접 확인했다
 - [ ] `grade_documents`가 빈 문서 리스트를 받으면 `run_web_search`가 `"No"`로 남아 웹 검색 교정이 건너뛰어진다는 것을 직접 실행해 확인했다
-- [ ] 사이드바의 Tavily 키는 `TavilySearchResults`에 전달되지 않고 조용히 버려지며, 실제로는 `TAVILY_API_KEY` 환경변수만 통한다는 것을 직접 확인했다
+- [ ] Tavily 웹 검색을 실제로 켜려면 사이드바 칸(비어 있으면 98행이 건너뜀)과 `TAVILY_API_KEY` 환경변수(값 자체는 이것만 쓰임) 둘 다 필요하다는 것을, 하나만 채운 두 경우를 각각 직접 실행해 확인했다
 - [ ] CRAG 그래프의 다섯 노드와 조건부 분기를 `diagrams/extra-graph.svg`와 `app.get_graph().edges` 출력으로 따라갔다
 
 ## 문제 해결
@@ -844,14 +885,15 @@ grade_documents -> generate (conditional)
 |---|---|---|
 | 기본 문서 URL이나 PDF 업로드에서 "Error loading document: pypdf package not found..." | `requirements.txt` 18줄에 `pypdf`가 없어 `PyPDFLoader.__init__`이 네트워크 요청 전에 `ImportError`로 실패(직접 확인) | `uv pip install pypdf` 추가 설치 |
 | 검색된 문서가 없거나 채점이 전부 통과했는데도 웹 검색으로 넘어가지 않아 의아함 | `grade_documents`의 `search` 초기값이 `"No"`이고 빈 문서 리스트에서는 루프가 한 번도 안 돌아 바뀌지 않음(직접 확인) | 리포 코드는 고치지 않는 방침. 재현하려면 `documents`가 정말 비어 있는지 콘솔 로그(`~-retrieve-~` 다음 줄)로 먼저 확인 |
-| 사이드바에 Tavily 키를 넣었는데도 웹 결과가 붙지 않고, 콘솔에 "Web search error: 1 validation error for TavilySearchAPIWrapper"가 남음 | `TavilySearchResults`에 `api_key` 필드가 없어 사이드바 값이 조용히 버려지고, 내부 `TavilySearchAPIWrapper`는 환경변수 `TAVILY_API_KEY`만 봄(직접 확인) | 셸에서 `TAVILY_API_KEY`를 설정한 뒤 `streamlit run` 실행 |
+| 사이드바 Tavily 칸을 비워 뒀는데 셸에는 `TAVILY_API_KEY`를 설정해 두어 웹 검색을 기대했지만 화면에 "Tavily API key not provided - skipping web search"만 뜸 | 98행의 게이트가 환경변수와 무관하게 사이드바 값만 보고 곧바로 돌아감(직접 확인) | 사이드바 칸에 아무 문자열이나 채우기(빈 칸이 아니기만 하면 됨) |
+| 사이드바 칸도 채우고 `TAVILY_API_KEY`도 설정했는데(또는 사이드바에만 진짜 키를 넣었는데) 웹 결과가 안 붙고 콘솔에 "Web search error: 1 validation error for TavilySearchAPIWrapper"가 남음 | `TavilySearchResults`에 `api_key` 필드가 없어 사이드바 값이 조용히 버려지고, 내부 `TavilySearchAPIWrapper`는 환경변수 `TAVILY_API_KEY`만 봄(직접 확인) | 사이드바 칸(아무 문자열)과 `TAVILY_API_KEY`(진짜 키) 둘 다 채우기 — 하나만으로는 안 됨 |
 
 ## 더 해보기
 
 - `pypdf`를 설치한 뒤 실제 PDF를 올려 컬렉션이 채워지는지, 그다음 질문이 정말 Step 3~4의 검색·채점 경로를 타는지 직접 확인해보기
 - `grade_documents`(`rag_tutorials/corrective_rag/corrective_rag.py:324-325`)의 `search = "No"` 초기값을 `documents`가 비어 있을 때 `"Yes"`로 바꿔보고, "검토할 문서가 없으면 곧장 웹 검색"이 되도록 동작이 어떻게 달라지는지 실험해보기
 - `transform_query`(`rag_tutorials/corrective_rag/corrective_rag.py:354-386`)가 실제로 어떤 질문을 만들어내는지, 원래 질문과 나란히 로그로 남겨 비교해보기
-- 실제 Tavily 키가 있다면 `TAVILY_API_KEY` 환경변수로 설정하고(사이드바 칸이 아니라) `web_search`가 정말 웹 결과를 붙이는지 확인해보기 — 이왕이면 `TavilySearchResults(api_key=...)`를 실제로 통하게 고치려면 몇 줄이 필요한지도 가늠해보기(리포 코드는 고치지 않는 것이 방침이므로 가늠만)
+- 실제 Tavily 키가 있다면 사이드바 칸에 아무 문자열이나 채우고 셸에는 `TAVILY_API_KEY`로 진짜 키를 설정한 뒤(둘 다 필요합니다 — Step 6) `web_search`가 정말 웹 결과를 붙이는지 확인해보기 — 이왕이면 `TavilySearchResults(api_key=...)`를 실제로 통하게 고치려면 몇 줄이 필요한지도 가늠해보기(리포 코드는 고치지 않는 것이 방침이므로 가늠만)
 
 ## 다음 날 예고
 

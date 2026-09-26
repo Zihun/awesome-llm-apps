@@ -12,7 +12,7 @@ ingest: 문서 적재·색인 { class: ours }
 
 graph: "CRAG 그래프 (LangGraph)" {
   class: group
-  grid-columns: 2
+  grid-columns: 5
   retrieve: "1. 검색" { class: ours }
   grade: "2. 채점" { class: ours }
   transform: "3. 재작성" { class: ours }
@@ -30,7 +30,8 @@ providers: "외부 서비스" {
   tavily: Tavily { class: ext }
 }
 
+front -> ingest: 문서 URL·업로드
+front -> graph: 질문 텍스트
 ingest -> qdrant: 청크 임베딩(OpenAI)·저장
-front.ui -> graph: 질문 텍스트
 graph -> qdrant: 유사도 검색
-graph -> providers: 채점·재작성·생성(Claude), 웹 검색(Tavily)
+graph -> providers: 질의 임베딩(OpenAI), 채점·재작성·생성(Claude), 웹 검색(Tavily)
