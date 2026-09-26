@@ -11,7 +11,7 @@ exa: Exa AI { class: ext }
 user -> ui: 질문 입력
 ui -> gemini: 질의 재작성 요청 (Query Rewriter)
 gemini -> ui: 재작성된 질의
-ui -> gemini: 질의 임베딩 요청
+ui -> gemini: 질의 텍스트 임베딩 요청 (text-embedding-004)
 gemini -> ui: 질의 벡터
 ui -> qdrant: 유사도 검색 (score_threshold)
 qdrant -> ui: 관련 문서 없음
