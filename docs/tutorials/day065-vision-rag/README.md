@@ -350,6 +350,8 @@ embedding: (4,) embed() 호출 횟수: 1
 rm -f logo.png
 ```
 
+PowerShell: `Remove-Item logo.png`
+
 ### Step 4. 업로드 처리 — 이미지와 PDF 페이지를 임베딩하기
 
 **목적.** PDF가 페이지별 PNG로 어떻게 렌더링되는지, 그리고 이 렌더링이 Cohere 없이도 완전히 로컬에서 끝난다는 것을 확인합니다.
@@ -438,6 +440,8 @@ embed() 호출: [('embed-v4.0', 'search_document'), ('embed-v4.0', 'search_docum
 ```bash
 rm -rf pdf_pages
 ```
+
+PowerShell: `Remove-Item -Recurse pdf_pages`
 
 ### Step 5. 검색 — 질문과 이미지 임베딩의 내적 유사도
 
@@ -635,7 +639,7 @@ Did not auto detect external IP.
 Please go to https://docs.streamlit.io/ for debugging hints.
 ```
 
-이 메시지는 `get_external_ip()`가 `http://checkip.amazonaws.com`과 `https://checkip.amazonaws.com` 두 곳 모두 실패했을 때만 찍힙니다(소스로 확인) — 즉 두 URL 모두에 실제 연결 시도가 있었다는 뜻입니다.
+이 메시지는 `get_external_ip()`가 `http://checkip.amazonaws.com`과 `https://checkip.amazonaws.com` 두 곳 모두 실패했을 때만 찍힙니다(소스로 확인) — 즉 두 URL 모두에 실제 연결 시도가 있었다는 뜻입니다. 이 출력은 이 문서가 소켓·DNS를 막은 상태에서 재현한 결과입니다 — 인터넷에 정상적으로 연결된 평범한 환경에서 같은 명령을 실행하면 조회가 성공해 대신 실제 공인 IP가 들어간 `External URL: http://<공인 IP>:61201` 배너가 뜨고, 그 요청이 실제로 `checkip.amazonaws.com`까지 나갑니다.
 
 `--server.address localhost`를 더하면 코드가 아예 다른 분기를 타 이 조회 자체를 건너뜁니다(소스로 확인 — streamlit 1.64.0의 `web/bootstrap.py`, `_print_url`) — 이 문서가 실제로 쓰는 명령은 이쪽입니다. 브라우저가 페이지를 열 때만 발생하는 별도의 사용 통계 전송(`data.streamlit.io/metrics.json`, Day 054에서 이미 확인)도 `--browser.gatherUsageStats false`로 함께 꺼 둡니다.
 

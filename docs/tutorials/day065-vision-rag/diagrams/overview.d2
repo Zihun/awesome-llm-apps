@@ -29,7 +29,7 @@ providers: "외부 서비스" {
   gemini: Gemini 2.5 Flash { class: ext }
 }
 
-front.ui -> logic: 콘텐츠·질문
+front.ui -> logic: 입력
 logic -> session: 임베딩 저장·조회
 logic -> files: 저장·재로딩
 logic -> providers: 다운로드·임베딩·답변 생성
