@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+embed_model: 임베딩 모델 (snowflake-arctic-embed) { class: ext }
+qdrant: Qdrant Cloud { class: store }
+rag_agent: RAG 에이전트 { class: ours }
+chat_model: 채팅 모델 (deepseek-r1) { class: ext }
+
+user -> ui: 질문 입력
+ui -> embed_model: 질문 임베딩 요청
+embed_model -> ui: 질문 벡터(1024차원)
+ui -> qdrant: 유사도 검색(threshold=0.7)
+qdrant -> ui: 관련 청크 목록
+ui -> rag_agent: 프롬프트(문맥+질문)
+rag_agent -> chat_model: 채팅 완성 요청
+chat_model -> rag_agent: 답변 텍스트
+rag_agent -> ui: response.content
+ui -> user: 답변·출처 표시
