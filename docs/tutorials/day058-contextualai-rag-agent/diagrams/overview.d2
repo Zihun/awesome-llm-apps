@@ -1,0 +1,30 @@
+...@../../_tools/theme
+direction: down
+
+front: "사용자 쪽 화면" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: Streamlit UI (contextualai_rag_agent.py) { class: ours }
+}
+
+backend: "앱 로직" {
+  class: group
+  grid-columns: 5
+  gate: 자격증명 게이트 { class: ours }
+  ingest: 데이터스토어·업로드 { class: ours }
+  agent_mgmt: 에이전트 관리 { class: ours }
+  query: 질의 처리 { class: ours }
+  debug_eval: 시각화·LMUnit 평가 { class: ours }
+}
+
+platform: "Contextual AI 플랫폼 (모두 호스팅형)" {
+  class: group
+  grid-columns: 3
+  datastore_api: 데이터스토어 (문서 저장) { class: ext }
+  agent_api: 에이전트·질의 API { class: ext }
+  lmunit_api: LMUnit API (별도 키) { class: ext }
+}
+
+front -> backend: 자격증명·업로드·질문
+backend -> platform: 검증·적재·질의·평가 요청

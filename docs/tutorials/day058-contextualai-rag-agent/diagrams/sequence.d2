@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent_api: Contextual AI 에이전트·질의 API { class: ext }
+
+user -> ui: 질문 입력
+ui -> agent_api: query.create(agent_id, messages)
+agent_api -> ui: message.content, message_id, retrieval_contents
+ui -> user: 답변 표시(post_process_answer)
+user -> ui: Show Retrieval Info 선택
+ui -> agent_api: query.retrieval_info(message_id, content_ids)
+agent_api -> ui: 첫 content_metadata의 page_img
+ui -> user: 첨부 페이지 이미지 표시
