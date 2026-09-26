@@ -1,10 +1,10 @@
 # Day 067 · 🧬 Multimodal Agentic RAG
 
-> 볼륨 5 📀 RAG · 난이도 ★★★ · 예상 소요 90분(백엔드·프런트엔드 두 프로세스를 각각 설치·실행해야 해서 단일 프로세스 앱보다 손이 더 갑니다) · API 비용 대략 소스 하나당 임베딩 호출 1회 이상(텍스트는 청크 수만큼, 파일은 미디어 임베딩 1회+주석 임베딩 1회) + 질문마다 질의 임베딩 1회와 ADK 에이전트의 생성 호출(도구를 몇 번 부르느냐에 따라 1회 이상, 정확한 횟수는 모델이 정함) — 키가 없어 정확한 단가는 확인 못함 · 원본 앱: `rag_tutorials/multimodal_agentic_rag`
+> 볼륨 5 📀 RAG · 난이도 ★★★ · 예상 소요 100분(백엔드·프런트엔드 두 프로세스를 각각 설치·실행해야 하고, Windows 전용 File API 결함까지 함께 확인하느라 단일 프로세스 앱보다 손이 더 갑니다) · API 비용 대략 소스 하나당 임베딩 호출 1회 이상(텍스트는 청크 수만큼, 파일은 미디어 임베딩 1회+주석 임베딩 1회) + 질문마다 질의 임베딩 1회와 ADK 에이전트의 생성 호출(도구를 몇 번 부르느냐에 따라 1회 이상, 정확한 횟수는 모델이 정함) — 키가 없어 정확한 단가는 확인 못함 · 원본 앱: `rag_tutorials/multimodal_agentic_rag`
 
 ## 오늘 만들 것
 
-오늘은 텍스트·URL·PDF·이미지·오디오·비디오를 한 벡터 공간에 넣고, 그 공간을 3D로 직접 들여다보면서 질문에 근거 있는 답을 받는 앱을 다룹니다. 지금까지 이 볼륨의 RAG 앱 스무 개 중 열여덟 개는 Streamlit이었고 FastAPI를 쓴 날은 하나도 없었는데(grep으로 직접 확인), 오늘은 처음으로 Python FastAPI 백엔드와 React+Vite 프런트엔드가 별도 프로세스로 갈라집니다. 백엔드의 `MultimodalRagStore`(507줄)는 Gemini Embedding 2로 여섯 가지 모달리티를 임베딩하고 코사인 유사도로 검색한 뒤, 진짜 PCA 라이브러리 대신 사인·코사인으로 시드를 잡은 자체 거듭제곱 반복(power iteration)으로 768차원 벡터를 3D 좌표로 눌러 담습니다(Step 2, 소스로 확인) — 프런트엔드는 그 좌표를 three.js로 그려 소스와 질의를 떠다니는 점으로 보여줍니다(Step 6). 답변은 Google ADK 에이전트가 만드는데, `/ask`가 검색을 딱 한 번만 실행하고 그 결과 패킷을 UI의 인용 패널과 에이전트의 도구 응답에 동시에 흘려보내는 구조라 두 화면이 서로 다른 근거로 답하는 일이 없습니다(Step 4). 807줄짜리 이 백엔드는 `requirements.txt` 7줄이 빠짐없이 설치되고 오늘의 google-adk 2.10.0에서도 코드의 키워드 인자가 전부 그대로 통한다는 것을 직접 확인했습니다(Step 1) — 그래서 이번 문서가 찾은 진짜 결함은 의존성 문제가 아니라 상태 문제입니다: 소스를 추가할 때 임베딩이 끝나기도 전에 소스 목록에 먼저 등록해 버리는 순서 때문에, 키가 없거나 임베딩이 실패하면 청크 0개짜리 "고아 소스"가 화면에 남습니다(직접 재현, Step 2). 완성하면 브라우저 탭 두 개(백엔드 8897, 프런트엔드 5177)를 오가며 소스를 넣고 3D 공간에서 그 점들이 어떻게 흩어지는지 확인하게 됩니다. 아래는 완성된 아키텍처입니다.
+오늘은 텍스트·URL·PDF·이미지·오디오·비디오를 한 벡터 공간에 넣고, 그 공간을 3D로 직접 들여다보면서 질문에 근거 있는 답을 받는 앱을 다룹니다. 지금까지 이 볼륨의 RAG 앱 스무 개 중 열여덟 개는 Streamlit이었지만(grep으로 직접 확인, Day 047의 AgentOS·Day 056의 CLI는 예외), 오늘은 처음으로 Python FastAPI 백엔드와 React+Vite 프런트엔드가 별도 프로세스로 갈라집니다. 백엔드의 `MultimodalRagStore`(`rag_store.py` 507줄짜리 파일 전체, 클래스 자체는 118행부터)는 Gemini Embedding 2로 여섯 가지 모달리티를 임베딩하고 코사인 유사도로 검색한 뒤, 진짜 PCA 라이브러리 대신 사인·코사인으로 시드를 잡은 자체 거듭제곱 반복(power iteration)으로 768차원 벡터를 3D 좌표로 눌러 담습니다(Step 2, 소스로 확인) — 프런트엔드는 그 좌표를 three.js로 그려 소스와 질의를 떠다니는 점으로 보여줍니다(Step 6). 답변은 Google ADK 에이전트가 만드는데, `/ask`가 검색을 딱 한 번만 실행하고 그 결과 패킷을 UI의 인용 패널과 에이전트의 도구 응답에 동시에 흘려보내는 구조라 두 화면이 서로 다른 근거로 답하는 일이 없습니다(Step 4). 807줄짜리 이 백엔드는 `requirements.txt` 7줄이 빠짐없이 설치되고 오늘의 google-adk 2.10.0에서도 코드의 키워드 인자가 전부 그대로 통한다는 것을 직접 확인했습니다(Step 1) — 그래서 이번 문서가 찾은 진짜 결함은 의존성 문제가 아니라 상태 문제입니다: 소스를 추가할 때 임베딩이 끝나기도 전에 소스 목록에 먼저 등록해 버리는 순서 때문에, 키가 없거나 임베딩이 실패하면 청크 0개짜리 "고아 소스"가 화면에 남습니다(직접 재현, Step 2). 완성하면 브라우저 탭 두 개(백엔드 8897, 프런트엔드 5177)를 오가며 소스를 넣고 3D 공간에서 그 점들이 어떻게 흩어지는지 확인하게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -60,7 +60,7 @@ beautifulsoup4>=4.12.0
 httpx>=0.27.0
 ```
 
-버전 지정이 하나도 고정(`==`)이 아니라 전부 하한(`>=`)입니다. 직접 설치하면(`uv pip list` 기준) 이 7줄이 50개 패키지로 풀리고, 그중 **google-adk 2.10.0**과 **google-genai 2.25.0**이 오늘의 최신입니다. `requirements.txt`에 없는 패키지가 빠져서 막히는 일은 없었습니다 — Day 057이 `pypdf` 누락으로, Day 062가 `beautifulsoup4` 누락으로 각각 첫 단계부터 막혔던 것과 다릅니다.
+버전 지정이 하나도 고정(`==`)이 아니라 전부 하한(`>=`)입니다. 직접 설치하면(`uv pip list` 기준) 이 7줄이 50개 패키지로 풀리고, 그중 **google-adk 2.10.0**과 **google-genai 2.25.0**이 오늘의 최신입니다. `requirements.txt`에 없는 패키지가 빠져서 막히는 일은 없었습니다 — Day 062는 최상단 `import bs4` 때문에 Step 1의 import 자체가 막혔고, Day 057은 Step 1의 import는 통과했지만 `pypdf`가 지연 import되는 Step 3(문서 적재)에서 막혔던 것과 다릅니다.
 
 이 앱은 Python 백엔드에 필요한 것을 전부 이 한 파일에 담았고, ADK를 가져오지 못하거나 키가 없을 때 무엇이 달라지는지는 서버 시작 코드 자체가 미리 검사해 둡니다.
 
@@ -114,21 +114,21 @@ print('ALL IMPORTS OK')
 ALL IMPORTS OK
 ```
 
-이어서 키 없이 서버를 임포트하고 `/health`를 직접 호출해 `SETUP_ERROR`가 정말 그 문구인지 확인합니다(외부 요청 없이 FastAPI `TestClient`로만 — 아래 Step 3에서 같은 방식을 계속 씁니다).
+이어서 키 없이 서버 모듈을 임포트해 `ADK_AVAILABLE`·`SETUP_ERROR` 두 변수가 정말 그 값인지 직접 확인합니다(모듈 임포트만 — `RAG_STORE`의 검색·임베딩 기능은 아직 건드리지 않습니다. 그 부분은 Step 2·3에서 다룹니다).
 
 ```bash
 uv run --no-project python -c "
-from fastapi.testclient import TestClient
 import server
-client = TestClient(server.app, raise_server_exceptions=False)
-print(client.get('/health').json())
+print('ADK_AVAILABLE:', server.ADK_AVAILABLE)
+print('SETUP_ERROR:', server.SETUP_ERROR)
 "
 ```
 
 직접 확인한 출력:
 
 ```
-{'status': 'setup_required', 'adk': False, 'setup_error': 'GOOGLE_API_KEY is required for Gemini Embedding 2 and the ADK answer flow.', 'sources': 0, 'chunks': 0, 'dimensions': 768, 'provider': 'gemini-embedding-2', 'modalities': {}, 'chunk_modalities': {}, 'projection': 'pca_3d'}
+ADK_AVAILABLE: False
+SETUP_ERROR: GOOGLE_API_KEY is required for Gemini Embedding 2 and the ADK answer flow.
 ```
 
 ### Step 2. 멀티모달 저장소 — 청크·임베딩·검색·3D 투영 (`rag_store.py`)
@@ -189,6 +189,30 @@ def _chunk_text(text: str) -> list[str]:
 ```
 
 인라인 임베딩이 실패했을 때 PDF·비디오·오디오는 File API로 재시도하지만 **이미지는 재시도 없이 그대로 예외를 다시 던집니다** — `except Exception:` 블록의 조건문에 `image/`가 없기 때문입니다(소스로 확인). File API 경로(`_embed_uploaded_file`, 149-187행)는 최대 90초(2초 간격 폴링)까지 처리 상태를 기다리고, 임베딩이 끝나면 업로드했던 파일을 `finally`에서 지웁니다 — 앱 자체 README의 "Media files uploaded through the Gemini File API are cleaned up after embedding"는 이 부분과 정확히 일치합니다.
+
+**이 File API 경로는 Windows에서 열리지 않을 가능성이 높습니다.** `_embed_uploaded_file`은 `tempfile.NamedTemporaryFile(suffix=suffix, delete=True)`로 임시 파일을 연 채로(149-160행) 그 파일명을 `client.files.upload(file=temp_file.name, …)`에 넘기는데, google-genai 2.25.0은 이 경로를 문자열로 받으면 내부에서 다시 `open(file_path, 'rb')`로 **같은 경로를 한 번 더** 엽니다(소스로 확인 — google-genai 2.25.0 패키지의 `files.py` 645행이 `os.fspath(file)`을 넘기고, `_api_client.py` 1864행이 `with open(file_path, 'rb') as file:`을 실행). Windows는 `delete=True`로 이미 열려 있는 파일을 경로로 다시 여는 것을 보통 거부합니다 — 이 앱 코드와 똑같은 패턴만 떼어 이 컴퓨터(Windows)에서 직접 재현했습니다.
+
+```bash
+uv run --no-project python -c "
+import tempfile
+with tempfile.NamedTemporaryFile(suffix='.mp4', delete=True) as temp_file:
+    temp_file.write(b'fake video bytes')
+    temp_file.flush()
+    try:
+        with open(temp_file.name, 'rb') as f:
+            print('REOPEN SUCCEEDED, read', len(f.read()), 'bytes')
+    except Exception as exc:
+        print('REOPEN FAILED:', type(exc).__name__, exc)
+"
+```
+
+직접 확인한 출력:
+
+```
+REOPEN FAILED: PermissionError [Errno 13] Permission denied: 'C:\\Users\\...\\Temp\\tmpo6scaopj.mp4'
+```
+
+대상은 File API를 타는 모든 소스 — 오디오·비디오, 18MB를 넘는 파일, 인라인 임베딩이 실패한 PDF입니다. 키가 없어 `client.files.upload(...)`까지 실행해 최종 확인하지는 못했고, 재열기 패턴만 떼어 재현했습니다.
 
 파일 소스는 미디어 자체의 임베딩과 "제목 + 메모" 텍스트 임베딩을 0.68:0.32로 섞어 하나의 벡터로 만듭니다 — 메모를 비워 두면 "제목 (MIME 타입) embedded natively..." 같은 자동 문구가 대신 섞입니다. 그래서 이미지·오디오·비디오 인용 카드에 보이는 미리보기 텍스트는 Gemini가 자동으로 만든 설명이 아니라 사용자가 직접 적은 메모(또는 그 자동 문구) 그대로입니다.
 
@@ -315,7 +339,7 @@ def _blend_vectors(primary: list[float], secondary: list[float], secondary_weigh
             vector = _blend_vectors(media_vector, annotation_vector)
 ```
 
-즉 이 순서 문제는 **텍스트 소스에만** 있습니다. 이어서 눈에 띄는 것 하나 더 — `add_text_source`의 `seed: bool = False` 매개변수는 리포 전체에서 이 정의 줄 하나뿐, `seed=True`로 부르는 곳이 없습니다(grep으로 직접 확인). 있으나 마나 한 매개변수라는 뜻입니다.
+이 순서 문제는 파일 소스에는 없지만, **URL 소스는 `/sources/url`이 결국 `add_text_source(title, text, "url")`을 그대로 부르므로(`server.py:174`) 텍스트 소스와 똑같이 고아가 남습니다** — 실제 네트워크 요청 없이 `httpx.AsyncClient.get`만 가짜로 바꿔 직접 확인했습니다: `POST /sources/url -> 400 {'detail': 'Could not ingest URL: GOOGLE_API_KEY is required for Gemini Embedding 2.'}` 뒤에도 `('example.com/doc', 'url', 1)`이 소스 목록에 남고 실제 청크는 0개였습니다. 이어서 눈에 띄는 것 하나 더 — `add_text_source`의 `seed: bool = False` 매개변수는 함수 안에서 `if not seed:`(297행)로 이벤트 기록 여부만 가르는데, 호출부 어디에서도 `seed=True`를 넘기지 않습니다(grep으로 직접 확인). 있으나 마나 한 매개변수라는 뜻입니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -342,7 +366,7 @@ sources=1 chunks=0
 
 ### Step 3. FastAPI 서버 — 라우팅과 URL 안전장치 (`server.py`)
 
-**목적.** 6개 엔드포인트가 무엇을 하는지, CORS가 프런트엔드 포트와 어떻게 맞춰져 있는지, 그리고 URL 소스 추가가 왜 localhost와 사설 IP를 막는지 확인합니다.
+**목적.** 7개 엔드포인트가 무엇을 하는지, CORS가 프런트엔드 포트와 어떻게 맞춰져 있는지, 그리고 URL 소스 추가가 왜 localhost와 사설 IP를 막는지 확인합니다.
 
 **할 일.**
 
@@ -410,7 +434,7 @@ async def health():
     }
 ```
 
-`/ask`만 예외입니다 — `RAG_STORE.search`를 부르는 줄이 try/except로 감싸여 있지 않아서, 키가 없어 `_embed_text`가 `RuntimeError`를 던지면 그대로 처리되지 않은 예외가 되어 FastAPI가 500을 돌려줍니다(다른 라우트는 전부 `except Exception as exc: raise HTTPException(400, ...)`로 감싸져 있는 것과 다릅니다).
+`/ask`만 예외입니다 — `RAG_STORE.search`를 부르는 줄이 try/except로 감싸여 있지 않아서, 키가 없어 `_embed_text`가 `RuntimeError`를 던지면 그대로 처리되지 않은 예외가 되어 FastAPI가 500을 돌려줍니다. 소스를 등록하는 세 라우트(`POST /sources/text`·`/sources/url`·`/sources/file`)는 전부 `except Exception as exc: raise HTTPException(400, ...)`로 감싸져 있어 같은 실패가 400으로 끝나는 것과 다릅니다 — `/health`·`/space`·`DELETE /sources/{id}`는 애초에 임베딩을 부르지 않아 이 감싸기가 필요 없습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -421,6 +445,7 @@ uv run --no-project python -c "
 from fastapi.testclient import TestClient
 import server
 client = TestClient(server.app, raise_server_exceptions=False)
+print('GET /health ->', client.get('/health').json())
 res = client.post('/sources/text', json={'title': 'n', 'text': 'hello world ' * 30, 'modality': 'text'})
 print('POST /sources/text ->', res.status_code, res.json())
 res = client.post('/ask', json={'question': 'hi', 'top_k': 3})
@@ -437,12 +462,15 @@ for url in ['http://localhost:8000/x', 'http://192.168.1.5/x', 'ftp://example.co
 직접 확인한 출력:
 
 ```
+GET /health -> {'status': 'setup_required', 'adk': False, 'setup_error': 'GOOGLE_API_KEY is required for Gemini Embedding 2 and the ADK answer flow.', 'sources': 0, 'chunks': 0, 'dimensions': 768, 'provider': 'gemini-embedding-2', 'modalities': {}, 'chunk_modalities': {}, 'projection': 'pca_3d'}
 POST /sources/text -> 400 {'detail': 'GOOGLE_API_KEY is required for Gemini Embedding 2.'}
 POST /ask -> 500
 http://localhost:8000/x -> Private and localhost URLs are disabled for URL ingestion.
 http://192.168.1.5/x -> Private and localhost URLs are disabled for URL ingestion.
 ftp://example.com/x -> Only HTTP and HTTPS URLs are supported.
 ```
+
+`/health`가 `RAG_STORE.space_tool()`의 값(`sources`·`chunks`·`dimensions`·`modalities`)까지 그대로 실어 돌려주는 것도 이 자리에서 확인합니다 — Step 2에서 이미 다룬 저장소이므로 여기서는 그 값을 그대로 인용만 합니다.
 
 ### Step 4. Google ADK 에이전트 — 도구 두 개와 "같은 증거" 트릭 (`agent.py`)
 
@@ -589,7 +617,7 @@ export default defineConfig({
 });
 ```
 
-백엔드 주소는 빌드 시점이 아니라 런타임에 `import.meta.env.VITE_API_URL`로 읽습니다 — 기본값은 `http://localhost:8897`이고, 백엔드를 다른 포트로 띄웠다면 `VITE_API_URL=http://localhost:8897 npm run dev -- --port 5177`처럼 넘깁니다(PowerShell: `$env:VITE_API_URL = "http://localhost:8897"; npm run dev -- --port 5177`).
+백엔드 주소는 `import.meta.env.VITE_API_URL`로 정해지는데, Vite는 이 값을 브라우저 런타임이 아니라 **`npm run dev`를 띄우는 시점(또는 `npm run build`가 번들을 만드는 시점)에 코드 안 문자열로 그대로 박아 넣습니다** — 실제로 만든 `dist/assets/*.js`를 열어 보면 `import.meta.env`라는 글자는 한 곳도 없고 `"http://localhost:8897"`이 상수로 그대로 있습니다(직접 확인). 그래서 기본값 `http://localhost:8897`을 바꾸려면 dev 서버를 새로 띄우거나 다시 빌드해야 합니다 — 백엔드를 예컨대 9000번으로 띄웠다면 `VITE_API_URL=http://localhost:9000 npm run dev -- --port 5177`처럼 넘깁니다(PowerShell: `$env:VITE_API_URL = "http://localhost:9000"; npm run dev -- --port 5177`).
 
 질문 전송은 `top_k`를 6으로 고정해 보냅니다.
 
@@ -673,7 +701,7 @@ npm run dev &
 curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:5177/
 ```
 
-(`npm run dev`는 `package.json`에 이미 `vite --host 0.0.0.0`로 정의되어 있어 추가 인자가 필요 없습니다.)
+(`npm run dev`는 `package.json`에 이미 `vite --host 0.0.0.0`로 정의되어 있어 추가 인자가 필요 없습니다. `&`는 bash 표기이고, PowerShell은 `&`로 백그라운드 실행이 안 되므로 새 터미널 창을 하나 더 열어 그 창에서 `npm run dev`를 그대로 실행합니다.)
 
 직접 확인한 출력:
 
@@ -713,7 +741,7 @@ HTTP 200
       }
 ```
 
-`pointermove` 이벤트가 발생할 때마다(애니메이션 프레임이 아니라 실제 마우스 이동마다) `Raycaster`가 화면 좌표를 3D 광선으로 바꿔 어떤 점과 만나는지 계산하고, 맞은 점을 `onSelect`로 부모(`App`)에 알려 우측 하단 카드에 제목·모달리티·미리보기를 띄웁니다.
+`pointermove` 이벤트가 발생할 때마다(애니메이션 프레임이 아니라 실제 마우스 이동마다) `Raycaster`가 화면 좌표를 3D 광선으로 바꿔 어떤 점과 만나는지 계산하고, 맞은 점을 `onSelect`로 부모(`App`)에 알려 3D 영역 우측 위에 고정된 카드(`.hover-card`, `right: 24px; top: 96px`, 소스로 확인)에 제목·모달리티·미리보기를 띄웁니다.
 
 `rag_tutorials/multimodal_agentic_rag/frontend/src/App.tsx:313-322`
 
@@ -745,24 +773,25 @@ cd rag_tutorials/multimodal_agentic_rag/frontend
 npm run dev -- --port 5177
 ```
 
-브라우저에서 `http://localhost:5177`을 열면 왼쪽에 소스 매니저, 가운데에 3D 뷰, 오른쪽에 Q&A·트레이스·인용 패널이 보입니다. 텍스트 소스를 하나 추가하면 그 점이 원점(소스가 하나뿐이므로, Step 2)에 나타나고, 소스를 하나 더 추가한 뒤 질문을 던지면 두 점이 갈라지고 질의점(주황)이 그 사이 어딘가에 나타나는 것을 볼 수 있습니다. 이 실제 임베딩·생성 호출은 키가 있는 독자의 몫이며, 이 문서는 여기까지를 소스와 격리된 실행으로 확인했습니다.
+브라우저에서 `http://localhost:5177`을 열면 왼쪽에 소스 매니저, 가운데에 3D 뷰, 오른쪽에 Q&A·트레이스·인용 패널이 보입니다. 텍스트 소스를 하나 추가하면 그 점이 원점(소스가 하나뿐이므로, Step 2)에 나타나고, 소스를 하나 더 추가하면 `_pca_projection`이 둘을 벌려 놓습니다(Step 2). 이어서 질문을 던지면 질의점(주황)이 새로 나타나는데, 정확히 어디에 나타나는지는 그 시점의 벡터 값에 달려 있어 이 문서가 미리 단정하지는 않습니다 — 키가 있는 독자가 직접 봐야 하는 부분입니다. 실제 임베딩·생성 호출도 키가 있는 독자의 몫이며, 이 문서는 여기까지를 소스와 격리된 실행으로 확인했습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 백엔드가 정말 8897번에서, 프런트엔드가 5177번에서 응답하는지는 위 두 명령을 각자 실행해 브라우저나 `curl http://localhost:8897/health` / `curl http://localhost:5177/`로 확인합니다.
+**확인.** 백엔드가 정말 8897번에서, 프런트엔드가 5177번에서 응답하는지는 위 두 명령을 각자 실행해 브라우저나 `curl http://localhost:8897/health` / `curl http://localhost:5177/`로 확인합니다. 키를 넣지 않았다면 `/health`는 Step 1·3에서 이미 본 것과 같은 모양(`{"status": "setup_required", "adk": false, ...}`)을 그대로 돌려주고, 올바른 키를 넣었다면 `{"status": "ok", "adk": true, ...}`로 바뀝니다 — 이 성공 값은 키가 없어 이 문서에서 직접 보지는 못했습니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-질문을 보내면 UI는 `POST /ask`만 호출하고, 나머지는 서버가 순서대로 처리합니다. 서버는 먼저 `MultimodalRagStore.search`로 질의를 임베딩해 코사인 유사도 상위 매치를 구하고(Step 2), 그 결과를 UI로 돌려줄 인용 패킷과 에이전트에게 넘길 "도구 응답"으로 동시에 준비합니다. 이어서 ADK 에이전트를 새로 만들어(Step 4) Gemini API에 프롬프트와 도구 결과를 보내고, 텍스트 답변만 받아 옵니다. 마지막으로 서버는 답변·인용·고정된 3줄 트레이스·갱신된 3D 스냅샷을 한 번에 묶어 UI로 돌려주고, UI는 답변 영역과 3D 뷰를 함께 갱신합니다. 이 시퀀스는 Step 2~5에서 각 구간을 소스와 격리된 실행으로 확인한 것을 이어붙인 것이며, 키가 없어 처음부터 끝까지 한 번에 재현하지는 못했습니다.
+질문을 보내면 UI는 `POST /ask`만 호출하고, 나머지는 서버가 순서대로 처리합니다. 서버는 먼저 `MultimodalRagStore.search`로 질의를 임베딩해 코사인 유사도 상위 매치를 구하고(Step 2), 그 결과를 UI로 돌려줄 인용 패킷과 에이전트에게 넘길 "도구 응답"으로 동시에 준비합니다. 이어서 ADK 에이전트를 새로 만들어(Step 4) Gemini API로 질문과 도구 스키마를 보내면, Gemini는 먼저 도구를 불러 달라는 요청을 돌려주고 — 실제로는 도구 호출을 아예 하지 않거나 두 도구(`inspect_embedding_space`, `retrieve_relevant_context`)를 모두 부를 수도 있는데, 이 그림은 그중 검색 도구 왕복 하나만 대표로 그렸습니다 — 서버는 Step 2에서 이미 구해 둔 고정된 검색 패킷을 도구 실행 결과인 것처럼 돌려주고, 그제서야 Gemini가 최종 답변 텍스트를 만듭니다(Step 4의 "같은 증거" 트릭). 마지막으로 서버는 답변·인용·고정된 3줄 트레이스·갱신된 3D 스냅샷을 한 번에 묶어 UI로 돌려주고, UI는 답변 영역과 3D 뷰를 함께 갱신합니다. 이 시퀀스는 Step 2~5에서 각 구간을 소스와 격리된 실행으로 확인한 것을 이어붙인 것이며, 키가 없어 처음부터 끝까지 한 번에 재현하지는 못했습니다.
 
 ## 실행 체크리스트
 
 - [ ] `uv venv && uv pip install -r requirements.txt`로 백엔드 의존성 7줄이 50개 패키지로 풀리고 google-adk 2.10.0이 설치되는 것을 확인했다
 - [ ] `GOOGLE_API_KEY` 없이도 모든 import와 `py_compile`이 통과하고, `/health`가 200과 `"status": "setup_required"`를 반환하는 것을 직접 확인했다
-- [ ] `add_text_source`가 임베딩 실패 시에도 소스를 먼저 등록해 청크 0개짜리 고아 소스를 남긴다는 것을 직접 재현했다
+- [ ] `add_text_source`가 임베딩 실패 시에도 소스를 먼저 등록해 청크 0개짜리 고아 소스를 남긴다는 것을 직접 재현했고, `/sources/url`도 같은 함수를 불러 URL 소스에서도 같은 문제가 난다는 것을 확인했다
 - [ ] `add_file_source`는 반대로 임베딩을 먼저 끝낸 뒤에만 소스를 등록한다는 차이를 소스로 확인했다
+- [ ] Windows에서 `NamedTemporaryFile(delete=True)`로 연 파일을 경로로 다시 열면 `PermissionError`가 난다는 것을 직접 재현했고, 이것이 File API 업로드 경로(오디오·비디오·큰 파일)를 막을 수 있다는 것을 소스로 확인했다
 - [ ] `_validate_fetch_url`이 localhost·사설 IP를 막고 http/https가 아닌 스킴도 거부한다는 것을 직접 확인했다
 - [ ] `build_agent()`와 `Runner`/`InMemorySessionService`가 키 없이도 생성까지는 성공한다는 것을 확인했고, 실제 생성 호출(`run_async`)은 실행하지 않았다
 - [ ] "Agent Trace" 패널의 3줄이 ADK 이벤트가 아니라 서버가 매번 구성하는 고정 요약이라는 것을 소스로 확인했다
@@ -773,16 +802,18 @@ npm run dev -- --port 5177
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `GOOGLE_API_KEY` 없이 소스를 추가하면 400 오류가 뜨는데도 왼쪽 소스 목록에 청크 0개짜리 항목이 남는다 | `add_text_source`가 `self.sources.append(source)`를 임베딩 루프보다 먼저 실행해서, 첫 청크 임베딩이 실패해도 소스 메타데이터는 이미 등록된 뒤이기 때문(직접 확인, Step 2) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침. 남은 고아 소스는 UI의 휴지통 버튼(`DELETE /sources/{id}`, 정상 동작)으로 지운다 |
+| `GOOGLE_API_KEY` 없이 소스를 추가하면 400 오류가 뜨는데, 그 소스가 새로고침(또는 다음 성공한 요청) 뒤에 정상 항목처럼 목록에 나타난다 | `add_text_source`가 `self.sources.append(source)`를 임베딩 루프보다 먼저 실행해서, 첫 청크 임베딩이 실패해도 소스 메타데이터는 이미 등록된 뒤이기 때문(직접 확인, Step 2). 실패한 그 요청 자체는 `setSpace`를 부르지 못해 화면이 바로 갱신되지는 않고(소스로 확인, `App.tsx:499-507`), 목록 행에는 애초에 청크 수가 표시되지 않으며, 저장된 레코드의 `chunks` 필드는 0이 아니라 청크 예정 개수(보통 1)를 그대로 적는다(직접 확인, `/space` 응답) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침. 남은 고아 소스는 UI의 휴지통 버튼(`DELETE /sources/{id}`, 정상 동작)으로 지운다 — URL 소스도 같은 문제가 있다(Step 2) |
 | 질문을 보내면 답 대신 500 Internal Server Error만 뜬다 | `/ask`가 `RAG_STORE.search` 호출을 try/except로 감싸지 않아서, 키가 아예 없으면 `_require_client()`의 `RuntimeError`가 그대로 올라감(직접 확인, Step 3). 키가 틀린 경우는 Gemini API 호출 자체가 실패하며 다른 예외가 나겠지만 키가 없어 이 문서에서는 확인하지 못함 | `GOOGLE_API_KEY`가 설정됐고 올바른지 서버 콘솔 로그로 확인 |
 | "Agent Trace" 패널에 항상 똑같은 3줄만 뜨고 실제로 어떤 도구가 몇 번 호출됐는지 알 수 없다 | `/ask`가 반환하는 `trace`는 ADK 실행 이벤트를 읽어 만든 것이 아니라 서버가 매번 같은 문구로 구성하는 고정 요약(소스로 확인, Step 4·5) | 리포 코드는 고치지 않는 것이 방침. 실제 도구 호출을 보려면 `_run_adk_agent`의 `event` 루프에서 `event.get_function_calls()`를 직접 로그로 남겨본다 |
 | localhost나 사설 IP로 URL 소스를 추가하면 항상 거부된다 | `_validate_fetch_url`이 `ALLOW_PRIVATE_URLS=true`가 아닌 한 loopback·사설·링크로컬·예약 대역을 전부 막음(직접 확인, Step 3) | 로컬 테스트가 꼭 필요하면 `ALLOW_PRIVATE_URLS=true` 환경변수를 설정(프로덕션에는 SSRF 위험이 있어 권장하지 않음) |
+| Windows에서 오디오·비디오(또는 18MB를 넘는 파일, 인라인 임베딩이 실패한 PDF)를 추가하면 `PermissionError: [Errno 13] Permission denied: …tmp….mp4` 계열 오류로 실패할 것으로 보인다 | `_embed_uploaded_file`이 `delete=True`로 열어 둔 임시 파일의 이름을 `client.files.upload`에 넘기는데, google-genai 2.25.0이 그 경로를 `open(file_path, 'rb')`로 다시 여는 순간 Windows가 거부함(소스 확인 + 재열기 패턴만 이 컴퓨터에서 직접 재현, Step 2) | 리포 코드는 고치지 않는 것이 방침. WSL·macOS·Linux에서 실행하거나, 18MB 이하 이미지·PDF(인라인 경로)만 사용 |
 
 ## 더 해보기
 
 - `_run_adk_agent`의 `event` 루프(`rag_tutorials/multimodal_agentic_rag/backend/server.py:128-132`)에서 `event.get_function_calls()`를 모아 실제 도구 호출 로그를 `/ask` 응답에 실어보고, 지금의 고정 3줄 트레이스와 비교해보기
 - `add_text_source`(`rag_tutorials/multimodal_agentic_rag/backend/rag_store.py:297-328`)를 `add_file_source`처럼 임베딩을 전부 끝낸 뒤에만 `self.sources.append`하도록 고쳐, 임베딩 실패 시 고아 소스가 더 이상 남지 않는지 확인해보기
 - `_embed_file`(`rag_tutorials/multimodal_agentic_rag/backend/rag_store.py:189-211`)의 인라인 실패 폴백 조건에 `image/`를 추가해, 큰 이미지도 File API로 자동 전환되는지 실험해보기
+- `_embed_uploaded_file`(`rag_tutorials/multimodal_agentic_rag/backend/rag_store.py:149-187`)의 `NamedTemporaryFile(suffix=suffix, delete=True)`를 `delete=False`로 바꾸고 업로드가 끝난 뒤 `finally`에서 `os.unlink`로 직접 지우도록 고쳐, Windows에서도 File API 경로(오디오·비디오 업로드)가 실제로 동작하는지 확인해보기
 
 ## 다음 날 예고
 

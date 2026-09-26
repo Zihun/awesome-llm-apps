@@ -16,8 +16,10 @@ store -> embed_api: 질의 임베딩 요청
 embed_api -> store: 질의 벡터
 store -> backend: 매치·쿼리 포인트
 backend -> agent: 질문·증거 전달
-agent -> gemini_api: 프롬프트+도구 결과
-gemini_api -> agent: 답변 텍스트
+agent -> gemini_api: 질문+도구 스키마
+gemini_api -> agent: 도구 호출 요청(함수명+인자)
+agent -> gemini_api: 도구 실행 결과(고정된 검색 패킷)
+gemini_api -> agent: 최종 답변 텍스트
 agent -> backend: 답변
 backend -> ui: 답변·인용·space
 ui -> user: 화면 갱신
