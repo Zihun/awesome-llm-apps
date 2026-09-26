@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+query: 질문 { class: ours }
+vec_check: "3개 DB 중 top-3 평균 raw cosine 최고 점수 >= 0.5?" {
+  shape: diamond
+  class: ours
+}
+llm_route: "LLM 라우팅 시도 (create_routing_agent, gpt-4o)" { class: ours }
+direct: 해당 DB로 바로 검색 { class: ours }
+web: 웹 검색 에이전트로 위임 { class: ours }
+
+query -> vec_check: similarity_search_with_score(k=3)
+vec_check -> direct: "예 - 확신 있는 DB 있음"
+vec_check -> llm_route: "아니오 - 셋 다 문턱 미달"
+llm_route -> web: "TypeError: show_tool_calls — route_query가 삼킴"

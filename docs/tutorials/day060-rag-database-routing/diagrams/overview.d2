@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: down
+
+front: "사용자 쪽" {
+  class: group
+  grid-columns: 4
+  user: 사용자 { class: person }
+  ui: Streamlit UI (rag_database_routing.py) { class: ours }
+  pdf: 업로드 PDF { class: file }
+  router: 라우팅 (route_query) { class: ours }
+}
+
+storage: "Qdrant Cloud" {
+  class: group
+  grid-columns: 3
+  products: 제품 정보 { class: store; width: 90; height: 90 }
+  support: 고객 지원·FAQ { class: store; width: 90; height: 90 }
+  finance: 재무 정보 { class: store; width: 90; height: 90 }
+}
+
+rag_chain: RAG 답변 체인 (query_database) { class: ours }
+web_agent: 웹 검색 에이전트 (LangGraph) { class: ours }
+openai: OpenAI API { class: ext }
+ddg: DuckDuckGo { class: ext }
+
+front -> storage: 청크 저장·유사도 검색
+front -> rag_chain: 확신 있음
+front -> web_agent: 확신 없음
+storage -> openai: 임베딩 요청
+rag_chain -> openai: 답변 생성
+web_agent -> ddg: 웹 검색
+web_agent -> openai: 답변 생성

@@ -1,0 +1,24 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+router: 라우팅 (route_query) { class: ours }
+qdrant: Qdrant 컬렉션 3개 { class: store }
+web_agent: 웹 검색 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+ddg: DuckDuckGo { class: ext }
+
+user -> ui: 질문 입력
+ui -> router: 질문 전달
+router -> qdrant: 유사도 검색 (임베딩 포함, k=3×3개 DB)
+qdrant -> router: 최고 평균 점수 0.5 미만
+router -> router: LLM 라우팅 시도 → TypeError(show_tool_calls)
+router -> ui: None (확신 있는 DB 없음)
+ui -> web_agent: 위임
+web_agent -> ddg: DuckDuckGoSearchRun(질문)
+ddg -> web_agent: 검색 결과
+web_agent -> openai: 완성 요청 (gpt-3.5-turbo)
+openai -> web_agent: 최종 답변
+web_agent -> ui: 반환
+ui -> user: 화면에 표시
