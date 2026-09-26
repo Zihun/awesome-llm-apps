@@ -3,8 +3,8 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 adk_web: adk web 서버 { class: ext }
-agent: root_agent (LlmAgent) { class: ours }
 mcp_server: MCP 서버 (별도 프로세스) { class: ext }
+agent: root_agent (LlmAgent) { class: ours }
 gemini: Gemini API { class: ext }
 
 user -> adk_web: POST /run
