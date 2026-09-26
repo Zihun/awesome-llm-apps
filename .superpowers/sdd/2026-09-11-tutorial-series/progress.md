@@ -8,19 +8,16 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
-**멈춤 지점 (2026-09-23 오후) — 사용자가 주간 한도 때문에 즉시 중단시켰다. 재개는 사용자 지시를 받고.**
+**멈춤 지점 (2026-09-26) — Task 11 완료·푸시함. 다음 작업(Day 58~)은 사용자 지시를 받고.**
 
-Task 11(화살표 지침 + 미검토 22일 리뷰·수정 + 전 일차 화살표 재배치) 진행 상황:
-- 끝남: 검사 19~23·세로 1000(82eb389, 97036b8, 리뷰 둘 다 승인). 미검토 22일 리뷰 전부(review-*.md 5개).
-- 수정·재배치 **커밋됨**(재검토 전): 020 021 022 035 047 048 049 050 051 053 054 056 057, 052·055는 1차분만.
-- **작업 트리에 미커밋 수정이 남은 날**(에이전트를 중간에 끊음 — 되돌리지 말고 이어서 할 것):
-  012 013 019(D1: 리뷰 반영 일부, 재배치 전) / 023(E1: README 출력 블록 수정 중) / 036(E2: 재배치 중, 글자 관통 남음) /
-  052 053 055(D3a 수정 1차: 세로 상한 맞추는 중 — 055는 통과 직전이었음).
-  각 묶음 보고서 task-11c-<D1|E1|E2|D3a>-report.md에 그때까지 한 일이 있다(멈춤 절은 못 썼다).
-- 안 한 것: 037·038(E2), 재검토 네 개 RR1 047~051(diff 준비됨: fix-RR1-047-051.diff) · RR2 052~057 · RR3 020~023 ·
-  RR4 012·013·019+035~038, F(이미 리뷰된 35일 화살표 재배치, 7묶음), G(전체 검증·푸시). 공통 지시서: task-11c-fix-brief.md,
-  task-11-relayout-brief.md, rereview-11c-brief.md, 대조 도구 diagram-inventory.mjs, diff 생성 mkfixdiff.sh.
-- **푸시 안 함.** origin/main보다 앞선 로컬 커밋이 있다(82eb389부터).
+- Task 11 끝: 검사 19~23·세로 1000(82eb389, 97036b8) / 미검토 22일 리뷰·수정·재검토 / 이미 리뷰된 35일 화살표 재배치·검토.
+  npm test 47/47. Day 001~057 중 50일 check 통과, 화살표 규칙(17·20~23) 위반 0.
+- **사용자 결정 대기 — 세로 상한 1000px 초과 7일**(모두 화살표 규칙은 통과, 관계를 지우거나 합치지 않고는 못 줄임, 각
+  task-11c/11d 보고서에 레버별 측정): 006 1059 · 010 1113 · 016 1023 · 023 1212 · 025 1040 · 027 1075 · 034 1070.
+  선택지: 상한을 1250으로 / 이 7일만 예외 표시 / 더 줄이기(내용 손실 위험).
+- 참고: 분당 낱말 대역 밖 13일(001·002·003·006·007·011·013·014·015·018·030·034·039)은 예전 볼륨의 기존 상태 — 이번 범위 밖.
+- 브리프에 새로 들어간 규칙: task-11-relayout-brief.md의 "세로 1000px을 넘을 때의 기준"(레버 1~5), 로컬 모델 ext(§5),
+  VIRTUAL_ENV 해제 + --python, 루트 .venv 금지(메모리 root-venv-extras).
 
 **내가 저지른 것 (되풀이하지 말 것)**
 
@@ -580,3 +577,95 @@ Task 11c: D1 (012·013·019) dispatched (sonnet, a399b92e05f3d5ca8) → task-11c
 Ruling: 재검토는 리뷰 결과 파일 단위로 묶는다 — RR1 047~051(D2a+D2b), RR2 052~057(D3a+D3b, D3a 수정 뒤), RR3 020~023(E1), RR4 012·013·019 + 035~038(D1+E2). 같은 리뷰 파일을 한 재검토자가 보면 날 사이 일관성(텔레메트리, raglite 순서)을 한 번에 확인한다 — 틀리면: 재검토 하나가 길어질 뿐.
 === USER 2026-09-23 13:54: "지금부터 2시간 40분 지난 후부터 작업 재개해. 모든 조건은 전과 같아" ===
   16:34에 이 세션 안에서 재개하도록 예약(CronCreate, 세션 전용 — Claude를 닫으면 사라짐). 재개 순서: 끊은 네 에이전트를 SendMessage로 재개(E1 a0bb386ec5130d4cb, E2 a50cdbfee6739826c, D3a a8eb20620400a649d, D1 a399b92e05f3d5ca8) → 재검토 RR1~RR4 → F → G. 세션이 사라졌으면 새 세션이 이 절과 맨 위 재개 지점을 보고 같은 순서로 한다(에이전트 재개가 안 되면 같은 브리프로 새로 띄우되, 작업 트리의 미커밋 수정을 먼저 이어받게 할 것).
+--- 2026-09-23 16:34 예약 재개 ---
+  멈출 때 미커밋이던 8폴더(012 013 019 023 036 052 053 055)의 수정은 사용자 계정 커밋 0bb1c0a("Refactor code structure…", 13:39, 58파일)에 합쳐져 들어가 있었다 — 잃은 것 없음. 그 커밋은 고치지 않는다(amend·rebase·reset 금지).
+  네 에이전트 SendMessage로 재개: E1 a0bb386ec5130d4cb, E2 a50cdbfee6739826c, D3a a8eb20620400a649d, D1 a399b92e05f3d5ca8 — 각자 0bb1c0a 위에서 이어 새 경로 지정 커밋으로. D1의 내용 대조 기준은 97036b8.
+Task 11c: D3a fix round 1/5 DONE — 변경은 0bb1c0a에 들어 있음. 052 950×617 / 053 1102×968 / 055 942×984 · sequence 1395×1346, 세 날 check 통과. 052는 처리 체인 간선 3개를 번호 붙은 화살표 없는 grid로(순서 → sequence 몫), 055 sequence는 두 번째 재검색 6메시지를 트리거 메시지 라벨로 접음(19→13). **재검토에서 볼 것**: 055 overview의 되돌아오는 간선(models→front)을 4px 때문에 지웠다 — 나는 "라벨 한 줄"을 권했었다. "화살표를 지워 규칙을 피하지 않는다"에 걸리는지 RR2가 판정.
+Task 11c: RR1 (047~051) re-review dispatched (sonnet) → rereview-047-051.md.
+Task 11c: D1 재개 응답이 DONE_WITH_CONCERNS로 왔다 — 재개 메시지를 "현재 상태만 보고"로 읽고 재배치를 안 했다. 리뷰 반영(파트 1)은 세 날 다 끝나 0bb1c0a에 있음. 012에 실험 중 회귀 둘이 커밋됨(step1~3이 없어진 external.* 경로를 덮어씀, ics→user 다운로드 간선 빠짐). 012·013·019 check 실패(25·25·29건). → 다시 SendMessage: 멈춤이 아니라 계속, 회귀부터 고치고 D3a가 쓴 "구조는 overview, 순서는 sequence" 기법으로 1000px 안에.
+Task 11c: E1 DONE_WITH_CONCERNS — ce18528 020, b4b2901 021, ab672b1 022, 8f17356 023. 리뷰 지적 전부 반영(틀린 것 없음). 020 통과, 021 1381px · 022 1050px(+sequence 글자 관통 1) · 023 1329px 세로 초과. → fix round 1/5 (resume a0bb386ec5130d4cb): SequentialAgent의 sub_agents는 순서 자체이므로 번호 붙은 화살표 없는 grid 묶음으로, ParallelAgent는 번호 없는 grid, LoopAgent는 번호+묶음 라벨에 반복 조건.
+Task 11c: E2 DONE_WITH_CONCERNS — cc6c4b3 035, 147564b 036, cc977a5 037, ac34d33 038. 036·037·038 통과, 035는 943×1180(5단 호출 체인, 실제 호출 간선을 지우지 않겠다며 멈춤 — 옳은 판단).
+  컨트롤러 실측: ELK 세로에서 체인 한 단계 ≈200px — 노드 5개 체인 997px, 사각형 높이 44px 강제해도 940px. 노드 높이로는 안 풀린다 → 층 수를 줄여야 한다.
+Ruling: 세로 초과의 표준 처방을 "부품 단위 맞추기"로 정한다 — 같은 파일 안의 함수·에이전트는 그 파일 묶음 안 화살표 없는 grid의 구성원(순서가 뜻을 가지면 번호), 파일 안 호출 순서는 sequence 몫, 부품 사이 호출(다른 파일·외부 API·저장소)은 화살표로 남긴다. relayout 브리프에 넣었다 — 틀리면: overview가 함수 단위 호출 관계를 덜 보여 준다(그 순서는 sequence에 남는다).
+Task 11c: E2 fix round 1/5 (resume a50cdbfee6739826c) — Day 035에 위 처방. E1·D1에는 같은 내용을 덧붙여 보냄.
+Task 11c: RR1 (047~051) re-review DONE (a7a929dd34a94f408) → rereview-047-051.md. 047(Minor 1)·048·051 모두 반영. 049 open 2(임베딩 요청/응답 화살표 병합, web_search tool_call 화살표 누락 — §5 위반), 050 open 2(D2a의 050-M6 반박이 틀림 — 재검토자가 11→22 재현, models↔kb 화살표 병합).
+Task 11c: D2a fix round 1/5 dispatched (resume a84e72d86560fe4cf) with the 4 open findings.
+Task 11c: D1 DONE (a399b92e05f3d5ca8) — d003884 012, a7389d0·c1972a8 013, 6fa11ac 019. 세 날 check 통과. 012 회귀 둘 먼저 고침. 013에서 "순서 → sequence"로 옮긴 간선 6개 중 4개는 sequence.d2에 낱낱이 없다고 스스로 표시 — RR4에서 볼 것.
+Task 11c: RR2 (052~057) re-review dispatched (sonnet) → rereview-052-057.md.
+--- 2026-09-25 주간 한도(429)로 E1·D2a·E2·RR2가 끊김 → 2026-09-26 사용자 "멈춘지점에서 다시 시작해" ---
+  멈출 때: E2 DONE(ebce45f Day 035 fix round 1, 035~038 모두 통과), D1 DONE. E1 fix round 1 진행 중(021·022 미커밋), D2a fix round 1 진행 중(049·050 미커밋), RR2 결과 파일 없음.
+  재개(한도 규칙대로 SendMessage): E1 a0bb386ec5130d4cb, D2a a84e72d86560fe4cf, RR2 acc166298c4412637. 새로: RR4(012·013·019 + 035~038) → fix-RR4-012-019-035-038.diff.
+Task 11c: D2a fix round 1/5 — 3a7e5f2 049, 175e609 050. RR1의 open 4개 모두 반영(049 임베딩 요청·응답 두 화살표 복원, web_search tool_call 복원 / 050 11→22 재현해 원래 지적 반영 — AppTest가 상대경로를 호출 파일 기준으로 풀어 해시가 우연히 맞았던 것, models↔kb 두 화살표 복원). 050 통과. 049 sequence 1610px(상한 1500): 메시지 16개 모두 별개, 배우 순서 4가지 모두 1610(메시지당 ~88px 고정).
+Ruling: 049의 sequence를 자연스러운 단계 경계에서 sequence.d2 + extra-*.d2(역시 sequence_diagram) 둘로 나눈다 — 규격이 extra를 하루 0~2장 허용하고, 메시지를 지우거나 합치지 않고 상한을 지키는 유일한 길이다. 상한 자체는 바꾸지 않는다 — 틀리면: 그림 두 장을 이어 읽어야 한다.
+Task 11c: D2a fix round 2/5 dispatched (resume a84e72d86560fe4cf).
+Task 11c: D2a fix round 2/5 DONE — 611466a Day 049: sequence를 지식 베이스 왕복 직후(8/9번 메시지)에서 sequence.d2(995×906) + extra-followup.d2(1077×906)로 나눔, 16개 메시지 순서 그대로, README에 두 그림과 잇는 문장. 047·049·050 check 통과, 049 분당 17.1로 대역 안.
+Task 11c: RR1 scoped re-review of D2a fix rounds 1-2 (049·050) → resume a7a929dd34a94f408 with fix-RR1-round-049-050.diff.
+Task 11c: RR2 (052~057) DONE (acc166298c4412637) → rereview-052-057.md. 053·054·056·057 모두 반영(054-M6 기각 타당). 052 open 1: 처리 순서 화살표 3개 중 2개가 sequence에도 없는 채 삭제("순서→sequence" 불성립). 055 open 2: pypdf "페이지 수를 센다" 서술 ≠ 실제 명령(inspect.getfile), models→front 반환 화살표 대체 없이 삭제.
+Task 11c: D3a fix round 2/5 dispatched (resume a8eb20620400a649d) — 052는 번호 grid 유지 + 색인 순서를 sequence.d2 또는 extra-ingest.d2에 실제로 그림, 055는 서술 교정 + 반환 화살표 복원 후 4px은 라벨로.
+Task 11c: RR1 fix-round re-check DONE — 049·050 open 4개 모두 해결, 새 문제 없음. → 047~051 완료.
+Task 11c-D2a: complete (review clean after 2 fix rounds). Task 11c-D2b: complete (review clean).
+Task 11d (F, 이미 리뷰된 35일 재배치) 시작: 묶음 F1 001~005, F2 006~011, F3 014~018, F4 024~028, F5 029~034, F6 039~042, F7 043~046. 공통 지시 task-11-relayout-brief.md, 보고서 task-11d-F<n>-report.md.
+Task 11c: RR4 (012·013·019 + 035~038) DONE (a57f64351bfa8995e) → rereview-012-019-035-038.md. 013·035·036·037·038 모두 반영 → 11c-E2 complete. 012 Minor 1(보고서가 화살표를 에이전트별로 다시 이었다고 썼으나 실제는 묶음 수준 — 내용 손실 없음). 019 Important 1: front.ui의 -new를 Step 6으로 옮겼지만 Step 6은 app.py를 실행하지 않음 — 드러냄의 근거 없음.
+Task 11c: minor (deferred): Day 012 보고서 문구 정확성(묶음 수준 화살표) — D1 fix round 2에서 보고서만 고침.
+Task 11c: D1 fix round 2/5 dispatched (resume a399b92e05f3d5ca8) — 019: (a) UI를 실제로 띄우는 짧은 확인(headless streamlit, HTTP 200)을 넣고 그 단계에서 -new, 또는 (b) 이 날이 app.py를 쓰지 않으면 overview가 그걸 만든다고 주장하지 않게.
+Task 11c: D3a fix round 2/5 DONE — 47cc1f1 Day 052(extra-ingest.d2 sequence에 지워진 두 화살표 "토큰 수 세기"·"청크 저장", 셋째 vstore→chain은 RR2가 sequence의 ui↔vstore로 인정), 7a664a7 Day 055(반환 화살표를 search→front "스트리밍 답변"으로 복원, 994px, pypdf 서술 교정). 052·053·055 check 통과.
+Task 11c: RR2 scoped re-check of D3a round 2 → resume acc166298c4412637 with fix-RR2-round-052-055.diff.
+Task 11c: D1 fix round 2/5 DONE — b311e4a Day 019: Step 6 끝에 headless Streamlit으로 app.py를 띄워 HTTP 200 확인 후 종료하는 실제 확인을 넣어 front.ui의 -new에 근거를 줌(스크래치 venv에서 실행, 출력 기록). 012는 보고서 문구만 교정. 012·013·019 check 통과.
+Task 11c: RR4 scoped re-check of Day 019 → resume a57f64351bfa8995e with fix-RR4-round-019.diff.
+Task 11c: RR2 fix-round re-check DONE — 052~057 모두 반영, 새 문제 없음. Task 11c-D3a: complete (review clean after 2 fix rounds). Task 11c-D3b: complete (review clean).
+Task 11d: F2 (006~011) dispatched → task-11d-F2-report.md.
+Task 11c: RR4 fix-round re-check DONE — 012·013·019·035~038 모두 반영(019의 headless Streamlit 확인을 재검토자가 스크래치 venv에서 재현, HTTP 200). Task 11c-D1: complete (review clean after 2 fix rounds). 남은 11c: E1(020~023) → RR3.
+Task 11d: F3 (014~018) dispatched → task-11d-F3-report.md.
+Task 11c: E1 fix round 1/5 DONE — 8fb9a34 021, 0837a7a 022, 92acd48 023(020은 이미 통과). 네 날 check 통과. 판단 셋(재검토 대상): 021 coordinator→gemini 간선을 coordinator 라벨로 접음, 022 seq/loop/par를 기준본처럼 한 노드씩으로(개별 이름은 원래도 그림에 없었음), 023 MCP 서버 + Firecrawl 클라우드를 한 노드로 병합(라벨에 둘 다). 새 실측: 한 층 경계를 지나는 간선 수도 높이를 먹는다(021: 같은 라벨로 7→2간선, 1140→903px).
+Task 11c: RR3 (020~023) re-review dispatched → rereview-020-023.md.
+Task 11c: RR3 (020~023) DONE (a34ccc94bd302988a) → rereview-020-023.md. 020·022 모두 반영. 021 open 1(coordinator→gemini 화살표를 라벨로 접은 것 = 화살표 삭제로 판정, 77px 여유). 023 open 2(MCP 서버+Firecrawl 병합 = 병합 금지·외부 호출은 화살표 위반, 발견 11의 Step4 -new 오표시 재발 / README.md:352 대시 중복).
+Task 11c: E1 fix round 2/5 dispatched (resume a0bb386ec5130d4cb).
+Task 11d: F1 DONE_WITH_CONCERNS (a673370e1724b9fd4) — 9380593 001, b90cfbd 002, 8e06860 003, 68f2e4f 004, fbd97cb 005. 001~004 통과, 005는 948×1147(세로 초과) — 항목 6대로 run_llm→모델 넷 정밀 화살표를 되살려서. 판단 둘(검토 대상): 004 audio→user를 묶음 수준(app→user)으로(사람 아이콘 포트의 곡선 잔여 사선), 003·004 같은 파일 내부 간선을 번호 묶음으로 접었는데 일부는 sequence에 낱낱이 없음.
+Task 11d: F1 fix round 1/5 (resume) — 005: 같은 데이터("질문만 전달")를 나르는 제안자 넷 화살표는 중복 → 제안자 묶음으로 화살표 하나(라벨에 4개 병렬), 다른 데이터(집계 호출, 반환)는 정밀 유지.
+Task 11d: F1 fix round 1/5 DONE — 8277398 Day 005: 같은 데이터 제안자 넷 → 제안자 묶음 화살표 하나("질문만 전달 (4개 병렬)"), 집계 호출은 정밀, 1091×967. 001~005 전부 통과. 검토는 F2와 묶어 FR1로.
+Task 11d: F4 (024~028) dispatched → task-11d-F4-report.md.
+Task 11c: E1 fix round 2/5 — 3295948 021(coordinator→gemini 화살표 복원, 740×973 통과, critic 라벨만 줄임), efcee76 023(MCP 서버·Firecrawl 클라우드 다시 둘로, research→mcp→cloud 정밀 두 화살표, Step4/5 공개 교정, README:352 오타). 020·021·022 통과, 023은 709×1212(세로만 초과, 화살표 규칙 0) — 관계를 자르지 않고는 1000 안에 못 넣는다고 보고.
+Ruling: 023은 루트 direction:right 한 번만 더 시도(미시도 레버). 안 되면 커밋된 1212 상태로 두고 "세로 상한 예외 후보"로 사용자 최종 보고에 올린다 — 상한 1000은 사용자가 직접 고른 값이라 임의로 풀지 않는다 — 틀리면: 023 하나가 check를 통과하지 못한 채 남는다.
+Task 11c: E1 fix round 3/5 dispatched (resume).
+Task 11c: E1 fix round 3/5 — 023 루트 direction:right: 라벨을 1~3글자까지 깎아도 1322×258(폭 상한 1200 초과), 새 커밋 없음. **023은 709×1212로 남는다 — 사용자 최종 보고의 열린 항목(세로 상한 예외).** 020·021·022 통과.
+Task 11c: RR3 scoped re-check of E1 round 2 (021·023) → resume a34ccc94bd302988a with fix-RR3-round-021-023.diff.
+Task 11c: RR3 fix-round re-check DONE — 020~023 모두 반영(023의 세로 1212는 사용자에게 올리는 열린 항목으로 제외). Task 11c-E1: complete (review clean after 3 fix rounds; Day 023 height open → user).
+--- Task 11c 완료: 미검토였던 22일 모두 리뷰·수정·재검토 끝. 열린 항목: Day 023 overview·step 세로 1212px(상한 1000). ---
+Task 11d: F5 (029~034) dispatched → task-11d-F5-report.md.
+Task 11d: F2 DONE_WITH_CONCERNS (ab582cba334128ce4) — d013e39 006, 3b7eb07 007, b276fcd 008, 702d7a2 009, b333eb0 011 통과. 010은 화살표 규칙 위반 29→0이지만 overview·step 953×1113(세로 초과) — 4단 구조(입력→구매자→{Claude, 판매자}→파실리테이터, README가 "구매자는 파실리테이터와 직접 통신하지 않는다"고 명시), 여섯 가지 대안 모두 더 나쁘거나 같음.
+Ruling: Day 010도 023처럼 세로 상한 예외 후보로 사용자에게 올리고, 화살표 규칙을 맞춘 현재 상태는 커밋해 둔다(미커밋 상태로 두면 다시 끊길 때 잃는다) — 틀리면: check를 통과 못 하는 커밋이 하나 는다(이미 023이 같은 처지).
+Task 11d: F2 — Day 010 화살표 규칙 통과 상태를 46fc183으로 커밋(세로 1113 초과, 사용자에게 올릴 열린 항목). F2 끝.
+Task 11d: F6 (039~042) dispatched → task-11d-F6-report.md. (새 브리프 문구: 세로만 걸리면 화살표 통과 상태를 커밋하고 보고)
+Task 11d: F4 DONE_WITH_CONCERNS (aea300954fa9cf010) — 3266656 024(통과, 커밋 꼬리말 누락 — amend 금지라 그대로), 95e90b4 025(623×1040 세로 초과), 0cfd0aa 026(sequence 글자 관통 1), b2493f6 027(1048×1075 세로 초과), 8f56738 028(통과).
+Ruling: 025·027의 세로 초과는 010·023과 함께 사용자에게 올리는 열린 항목. 026의 글자 관통은 화살표 규칙(사용자의 핵심 지시)이라 고친다 — 건너뛰는 메시지 라벨이 |d2−d1|보다 좁으면 가운데 수명선을 피한다는 기하 조건을 줘서 fix round 1.
+Task 11d: F4 fix round 1/5 (resume) — Day 026 sequence.
+--- 세션 한도(429, 10:20 재설정)로 F4 수정·F3·F5·F6 끊김 → 사용자 "멈춘지점에서 다시 시작해" → 넷 모두 SendMessage로 재개(aea300954fa9cf010 026 / a2a7ad2e384689c01 014~018 / a9eaa0dfb3e2345d9 029~034 / a067441404eb333f1 039~042). 남은 것: F7(043~046), F 검토, G. 사용자에게 올릴 열린 항목(세로 초과): 010 1113, 023 1212, 025 1040, 027 1075. ---
+Task 11d: F4 fix round 1/5 DONE — 25e2feb Day 026: 가운데 배우를 건너뛰는 두 메시지 라벨을 "위임"·"응답"으로 줄여 29px 간격차 안에 넣음(README가 전문을 설명), 026 통과. F4 끝(025·027 세로 초과는 열린 항목).
+Task 11d: F7 (043~046) dispatched → task-11d-F7-report.md. 이것으로 재배치 묶음 일곱 모두 출발.
+Task 11d: F3 DONE (a2a7ad2e384689c01) — 74da4bb 014, 632ea84 015, 2ed1f26 016(988×1023, 세로 23px 초과, 화살표 규칙 통과), 2b1d65f 017, c81bdc5 018. 열린 항목 추가: 016.
+Task 11d: 검토 FR1(001~011, F1+F2) dispatched — 공통 지시 review-11d-brief.md, diff fix-FR1-001-011.diff → review-11d-FR1.md. FR2(014~018·024~028), FR3(029~034·039~046)는 뒤에.
+Task 11d: F6 DONE (a067441404eb333f1) — 02f1d72 039, 21b5393 040, 6976988 041, 73e255f 042, 넷 다 통과(040~042 로컬 모델 ext, 042 step5 기존 클래스 오류도 고침, 항목 6 복원 둘).
+Task 11d: 검토 FR2(014~018·024~028) dispatched → review-11d-FR2.md.
+Task 11d: F5 DONE (a9eaa0dfb3e2345d9) — a89a2bb 029, b36b8d5 030, 5a2b8ec 031, ab216df 032, 05c160a 033, 1ed5e3d 034, 여섯 다 통과. 판단(검토 대상): 034에서 Realtime API + STT·Chat·TTS 외부 노드 둘을 "OpenAI API" 하나로 병합(레슨 README 표가 한 행으로 다룸), 030·032 일부 화살표를 묶음 수준으로.
+Task 11d: 검토 FR3(029~034·039~042) dispatched → review-11d-FR3.md. 043~046은 F7 뒤 FR4.
+Task 11d: FR2 DONE (a7a35fc9b701fe8a5) — 014~018·024~028 열 날 모두 문제 없음 → F3·F4 complete.
+Task 11d: FR3 DONE (aafd29c591dd923cc) — 029~033·039~042 문제 없음(032 의심 관통은 D2 마스크가 라벨 밑 선을 비워 실제로 안 보임 — 오탐 아님이 아니라 렌더상 무해로 확인). 034 Important 1: Realtime API와 STT·Chat·TTS를 한 노드로 병합 — 다른 서비스 병합 금지 위반.
+Task 11d: F5 fix round 1/5 (resume a9eaa0dfb3e2345d9) — 034: ext 두 잎을 "OpenAI API (같은 계정)" group으로 감싸고 사이 화살표 없이, 각 파이프라인은 자기 잎으로.
+Task 11d: FR1 DONE (a1f80bc149040b1c1) — 002·003·005·007~011 문제 없음. 001 Minor(웹 검색 도구 트리거 화살표 유실), 004 Minor(app→user 라벨 "(audio)" 누락), 006 Important(PandasTools가 어디에도 연결 안 됨, 보고서 서술 거짓).
+Task 11d: F1 fix round 2/5 (001·004), F2 fix round 1/5 (006) dispatched (resume).
+Task 11d: F1 fix round 2/5 DONE — 65e6d6f 001(agent→ddg 트리거는 화살표로 되살리면 1160px이라 라벨 "검색어 (agent)"로, Day 008/010/011 관례), 46f5359 004("(audio)" 복원, 기준본과 정확히 같아짐). 001~005 통과. FR1 재확인은 006 수정 뒤 001·004·006 함께.
+Task 11d: F2 fix round 1/5 DONE — 0fb7e5c Day 006: agent→pandas_tools 관계를 97036b8 그대로 복원, 보고서 거짓 문장 교정. 대가로 974×1059(세로 59px 초과, 화살표 규칙 0) — 열린 항목 추가: 006.
+Task 11d: FR1 fix-round re-check (001·004·006) → resume a1f80bc149040b1c1 with fix-FR1-round-001-004-006.diff.
+Task 11d: F5 fix round 1/5 DONE — 518dcce Day 034: OpenAI를 group "OpenAI API (같은 계정)" + ext 두 잎(Realtime API / STT·Chat·TTS)으로, 각 파이프라인은 자기 잎으로, 비교 화살표 제거(묶음 제목이 대신), 같은 데이터 두 간선 병합(레버 4). 737×1070(세로 70px 초과, 화살표 규칙 0) — 열린 항목 추가: 034.
+Task 11d: FR3 fix-round re-check (034) → resume aafd29c591dd923cc.
+Task 11d: FR1 fix-round re-check DONE — 001·004·006 문제 없음. F1·F2 complete (열린 항목: 006 1059, 010 1113).
+Task 11d: FR3 fix-round re-check DONE — 034 문제 없음(노드 목록이 기준본과 정확히 같아짐). F5·F6 complete (열린 항목: 034 1070). 남은 것: F7(043~046) → FR4 → G.
+Task 11d: F7 DONE (aa7ce0a19c548b2f3) — 6f306ab 043, f9f77dd 044, 9d7c409 045, 5acbb5d 046, 넷 다 통과. 판단(검토 대상): 044(google 경유 토큰 저장)·045(WebSocket 푸시) 되돌아오는 화살표를 정방향 라벨로 접음 — Day 021에서 같은 방식이 "화살표 삭제"로 판정됐다. 045는 9/23 보수가 만든 가짜 "브라우저: 웹 UI" 노드 제거, 046은 로컬 LLM store→ext·호출 그래프를 소스대로 재구성.
+Task 11d: 검토 FR4(043~046) dispatched → review-11d-FR4.md.
+Task 11d: FR4 DONE (afb2fd6707b4daa6c) — 044·046 문제 없음(044는 실제로 여섯 화살표 정밀 복원, 045의 "브라우저: 웹 UI" 제거는 원형·README와 대조해 정확). 043 Important(embed_api·chat_api로 가는 두 화살표가 여전히 하나로 병합, 보고서는 복원했다고 잘못 적음), 045 Important(WebSocket 푸시 store→user를 라벨로 접음 = 삭제, README 표와 모순).
+Task 11d: F7 fix round 1/5 (resume aa7ce0a19c548b2f3).
+G 선검증(FR4 전): npm test 47/47. Day 001~057 중 50일 통과, 7일(006·010·016·023·025·027·034)은 세로 상한만 걸림, 화살표 규칙 위반 0. (분당 낱말 대역 밖 13일은 예전 볼륨의 기존 상태 — 이번 범위 밖.)
+Task 11d: F7 fix round 1/5 DONE — 834e26a 043(embed_api·chat_api 두 화살표 복원, 묶음 제목 label.near: top-left로 관통 해소, 1080×968), 1a8aed2 045(store→user "WebSocket 실시간 푸시" 복원, 456×858). 네 날 통과. 수정 담당자 지적: 044 app→token도 라벨 접기 패턴일 수 있음(FR4는 통과로 봤음) — 재확인에서 함께 볼 것.
+Task 11d: FR4 fix-round re-check (043·045 + 044 token) → resume afb2fd6707b4daa6c.
+Task 11d: FR4 fix-round re-check DONE — 043·045 해결, 044 app→token은 045와 다른 패턴(화살표가 살아 있고 출발점만 app으로 — _get_credentials 한 함수)으로 유지. F7 complete.
+--- 2026-09-26 Task 11 완료. G: npm test 47/47, Day 001~057 중 50일 통과, 7일 세로만 초과(열린 항목). 원장 커밋 후 origin/main 푸시. ---
