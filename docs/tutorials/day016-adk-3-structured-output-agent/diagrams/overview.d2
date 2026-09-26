@@ -1,46 +1,37 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 2
 
-front: "요청 진입/응답" {
-  class: group
-  grid-columns: 2
-
-  user: 사용자 (브라우저) { class: person }
-  adk_web: adk web 서버 { class: ext }
-}
+user: 사용자 (브라우저) { class: person }
+adk_web: adk web 서버 { class: ext }
 
 pkg1: customer_support_agent/ {
   class: ours
-  grid-columns: 2
+  grid-rows: 2
 
-  agent: root_agent { class: ours }
-  schema: SupportTicket 스키마 { class: ours }
+  schema: 1. SupportTicket 스키마 { class: ours }
+  agent: 2. root_agent (output_schema로 지정) { class: ours }
 }
 
 pkg2: email_generator_agent/ {
   class: ours
-  grid-columns: 2
+  grid-rows: 2
 
-  agent: root_agent { class: ours }
-  schema: EmailContent 스키마 { class: ours }
+  schema: 1. EmailContent 스키마 { class: ours }
+  agent: 2. root_agent (output_schema로 지정) { class: ours }
 }
 
 config: "환경·모델" {
   class: group
-  grid-columns: 2
 
   env: API 키 (.env) { class: file }
   gemini: Gemini API { class: ext }
 }
 
-front.user -> front.adk_web: POST /run
-front -> pkg1: 이름 검증 후 동적 임포트
-front -> pkg2: 마찬가지
-pkg1.agent -> pkg1.schema: output_schema로 지정
-pkg2.agent -> pkg2.schema: output_schema로 지정
+user -> adk_web: POST /run
+adk_web -> pkg1: 이름 검증 후 동적 임포트
+adk_web -> pkg2: 마찬가지
 config -> pkg1: GOOGLE_API_KEY
 config -> pkg2: 마찬가지
 pkg1 -> config: response_schema 요청 → JSON 결과
 pkg2 -> config: response_schema 요청 → JSON 결과
-front.adk_web -> front.user: 결과 표시
+adk_web -> user: 결과 표시
