@@ -14,12 +14,12 @@ ui -> app: App 생성 + add(query, 'gmail')
 app -> gmail: (최초 1회) 동의 → 토큰 발급
 app -> gmail: 메일 조회 (최대 100통)
 gmail -> app: 메일 원문(MIME)
-app -> embed_api: 청크 임베딩 요청
-embed_api -> app: 임베딩 벡터
+app -> embed_api: 요청
+embed_api -> app: 벡터
 app -> store: 임베딩 저장
 user -> ui: 질문 입력
 ui -> app: query(질문)
-app -> store: 유사도 검색 → 청크 3개
-app -> chat_api: 컨텍스트 + 질문 프롬프트
+app -> store: 유사도 검색
+app -> chat_api: 프롬프트
 chat_api -> app: 답변 텍스트
 ui -> user: st.write(answer) 표시
