@@ -19,6 +19,8 @@ logic: "핵심 함수 (vision_rag.py)" {
 
 session: 세션 임베딩 저장소 (session_state) { class: store }
 
+files: 이미지 파일 (img·uploaded_img·pdf_pages) { class: file }
+
 providers: "외부 서비스" {
   class: group
   grid-columns: 1
@@ -29,4 +31,5 @@ providers: "외부 서비스" {
 
 front.ui -> logic: 콘텐츠·질문
 logic -> session: 임베딩 저장·조회
+logic -> files: 저장·재로딩
 logic -> providers: 다운로드·임베딩·답변 생성

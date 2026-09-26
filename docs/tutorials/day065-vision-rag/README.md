@@ -1,6 +1,6 @@
 # Day 065 · 🖼️ Vision RAG
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 60분 · API 비용 대략 질문 1건당 Cohere 텍스트 임베딩 1회(embed-v4.0) + Gemini 생성 1회(gemini-2.5-flash) — 콘텐츠 적재 시 이미지 1장·PDF 페이지 1장당 Cohere 이미지 임베딩 1회씩 추가(샘플 6장 또는 업로드 수만큼) — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/vision_rag`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 70분(Step 7에서 헤드리스 기동의 외부 IP 조회를 재현·수정하는 두 번째 명령이 늘었습니다) · API 비용 대략 질문 1건당 Cohere 텍스트 임베딩 1회(embed-v4.0) + Gemini 생성 1회(gemini-2.5-flash) — 콘텐츠 적재 시 이미지 1장·PDF 페이지 1장당 Cohere 이미지 임베딩 1회씩 추가(샘플 6장 또는 업로드 수만큼) — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/vision_rag`
 
 ## 오늘 만들 것
 
@@ -26,6 +26,7 @@
 | 샘플 이미지 로더 (`download_and_embed_sample_images`) | 고정 URL 6개를 내려받아 Cohere로 임베딩, 1시간 캐시 | `rag_tutorials/vision_rag/vision_rag.py:219-302` |
 | 업로드 처리 (`process_pdf_file`, 업로드 배선) | 이미지 업로드 또는 PDF를 페이지별 PNG로 렌더링 후 임베딩 | `rag_tutorials/vision_rag/vision_rag.py:150-217`, `rag_tutorials/vision_rag/vision_rag.py:416-480` |
 | 세션 임베딩 저장소 (`st.session_state`) | `image_paths` 리스트와 `doc_embeddings` numpy 배열, 메모리에만 존재 | `rag_tutorials/vision_rag/vision_rag.py:38-41` |
+| 이미지 파일 (`img/`·`uploaded_img/`·`pdf_pages/`) | 샘플·업로드·PDF 페이지 이미지를 로컬 디스크에 저장, `answer`가 다시 열어 읽음 | `rag_tutorials/vision_rag/vision_rag.py:358` |
 | 검색 (`search`) | 질문 임베딩과 저장된 임베딩의 내적으로 최상위 이미지 1장 선택 | `rag_tutorials/vision_rag/vision_rag.py:304-346` |
 | 답변 생성 (`answer`) | 질문과 선택된 이미지를 Gemini에 함께 전달 | `rag_tutorials/vision_rag/vision_rag.py:348-375` |
 | Cohere Embed-4 | 이미지·텍스트 공용 멀티모달 임베딩(`embed-v4.0`) | 외부 API |
@@ -105,7 +106,33 @@ Installed 4 packages in 140ms
 OK
 ```
 
-`google-genai`는 `distro`·`sniffio`·`tenacity` 3개만 추가로 설치할 뿐 `grpcio`를 새로 요구하지 않습니다 — 뒤에서 볼 `genai.Client`가 gRPC가 아니라 REST(httpx) 경로를 쓴다는 간접 증거입니다. `import fitz`(12행)는 매번 다음 경고도 함께 뜹니다: `The 'fitz' API is deprecated and will be removed in future. Use 'import pymupdf' instead.`(PyMuPDF 1.28.2, 직접 확인) — 오류는 아니지만 이 리포 코드는 여전히 옛 이름을 씁니다.
+`google-genai`가 새로 설치한 것은 `distro`·`sniffio`·`tenacity` 3개뿐이지만, 이것만으로는 gRPC를 안 쓴다고 말할 수 없습니다 — `grpcio==1.84.0`은 이미 `google-generativeai`가 깔아 둔 것이라 이 3개 추가 설치와 무관하게 환경에 남아 있기 때문입니다. 실제 증거는 패키지 메타데이터입니다.
+
+```bash
+uv run --no-project python -c "
+import importlib.metadata as m
+for r in m.requires('google-genai'):
+    if 'extra ==' not in r:
+        print(r)
+"
+```
+
+직접 확인한 출력(확장 기능용 `extra ==` 의존성 8개는 제외한 코어 10개 전부):
+
+```
+anyio<5.0.0,>=4.8.0
+google-auth[requests]<3.0.0,>=2.56.0
+httpx<1.0.0,>=0.28.1
+pydantic<3.0.0,>=2.12.5
+requests<3.0.0,>=2.28.1
+tenacity<9.2.0,>=8.2.3
+websockets<17.0,>=13.0.0
+typing-extensions<5.0.0,>=4.14.0
+distro<2,>=1.7.0
+sniffio
+```
+
+`grpc`·`grpcio` 계열은 어디에도 없고 `httpx`가 있습니다 — 뒤에서 볼 `genai.Client`가 gRPC가 아니라 REST(httpx) 경로를 쓴다는 근거입니다. `import fitz`(12행)는 매번 다음 경고도 함께 뜹니다: `The 'fitz' API is deprecated and will be removed in future. Use 'import pymupdf' instead.`(PyMuPDF 1.28.2, 직접 확인) — 오류는 아니지만 이 리포 코드는 여전히 옛 이름을 씁니다. 이 경고는 이 파일을 새 파이썬 프로세스에서 import할 때마다 매번 뜨므로, 이후 Step의 확인 블록에서는 따로 적지 않습니다.
 
 ### Step 2. 사이드바 키 입력과 클라이언트 초기화 — 이 앱엔 `st.stop()`이 없다
 
@@ -160,7 +187,7 @@ Day 057·060·061은 키가 없으면 `st.stop()`으로 화면을 아예 멈췄�
 uv run --no-project python -c "
 from streamlit.testing.v1 import AppTest
 at = AppTest.from_file('vision_rag.py')
-at.run()
+at.run(timeout=30)
 print('title:', [t.value for t in at.title])
 print('sidebar warnings:', [w.value for w in at.sidebar.warning])
 print('subheaders:', [s.value for s in at.subheader])
@@ -177,17 +204,17 @@ subheaders: ['📊 Load Sample Images', '📤 Upload Your Images', '❓ Ask a Qu
 buttons: [('Run Vision RAG', True)]
 ```
 
-세 구획 제목이 모두 뜨는데 "Load Sample Images" 버튼은 `buttons` 목록에 아예 없습니다(379-403행의 `if cohere_api_key and co:` 분기 때문). 이제 가짜 키를 넣고, 루프백 외 모든 소켓 연결과 DNS 조회를 차단한 채(프로세스 환경에도 `HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 ALL_PROXY=http://127.0.0.1:9 grpc_proxy=http://127.0.0.1:9 NO_PROXY=`를 걸어 이중으로 막았습니다) 클라이언트 생성만 실행합니다 — `embed()`나 `generate_content()` 같은 실제 요청 메서드는 절대 부르지 않습니다.
+세 구획 제목이 모두 뜨는데 "Load Sample Images" 버튼은 `buttons` 목록에 아예 없습니다(379-403행의 `if cohere_api_key and co:` 분기 때문). 이제 가짜 키를 넣고 클라이언트 생성만 실행합니다 — `embed()`나 `generate_content()` 같은 실제 요청 메서드는 절대 부르지 않습니다. (이 문서는 이 확인을 루프백 외 소켓·DNS 차단 + 프록시 환경변수(`HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 ALL_PROXY=http://127.0.0.1:9 grpc_proxy=http://127.0.0.1:9 NO_PROXY=localhost,127.0.0.1`)까지 건 상태에서 수행해 네트워크 시도가 전혀 없음을 확인했습니다 — 아래 명령 자체는 이 차단 없이 그대로 실행해도 같은 성공 메시지가 나옵니다.)
 
 ```bash
 uv run --no-project python -c "
 from streamlit.testing.v1 import AppTest
 at = AppTest.from_file('vision_rag.py')
-at.run()
+at.run(timeout=30)
 for ti in at.sidebar.text_input:
     if ti.label == 'Cohere API Key': ti.set_value('fake-cohere-key')
     if ti.label == 'Google API Key (Gemini)': ti.set_value('fake-google-key')
-at.run()
+at.run(timeout=30)
 print('sidebar success:', [s.value for s in at.sidebar.success])
 print('buttons:', [(b.label, b.disabled) for b in at.button])
 "
@@ -220,7 +247,7 @@ cohere OK: <class 'cohere.client_v2.ClientV2'>
 genai OK: <class 'google.genai.client.Client'> <class 'google.genai.models.Models'>
 ```
 
-Day 059에서는 옛 `google-generativeai`/`langchain-google-genai` 조합이 gRPC로 소켓 차단을 우회해 실제 요청 1건이 새어 나간 적이 있었는데, 오늘은 `.models` 속성 접근까지만 했고(호출은 안 함) 이 조합에서는 새어 나간 요청이 없었습니다.
+gRPC를 쓰는 옛 SDK는 파이썬 소켓 패치를 우회할 수 있다고 알려져 있지만, 이 앱이 실제로 쓰는 `google-genai`는 Step 1에서 패키지 메타데이터로 확인했듯 애초에 `grpc`를 요구하지 않습니다 — `.models` 속성 접근까지만 한(호출은 안 함) 이 확인에서 새어 나간 요청은 없었습니다.
 
 ### Step 3. 샘플 이미지 로더 — 다운로드와 Cohere 임베딩
 
@@ -317,7 +344,11 @@ print('embedding:', emb1.shape, 'embed() 호출 횟수:', Stub.calls)
 embedding: (4,) embed() 호출 횟수: 1
 ```
 
-같은 base64 문자열에 대해 클라이언트 인스턴스를 새로 만들어 두 번 불러도 `embed()`는 한 번만 실행됐습니다 — 캐시 키가 `base64_img`에만 의존한다는 뜻입니다.
+같은 base64 문자열에 대해 클라이언트 인스턴스를 새로 만들어 두 번 불러도 `embed()`는 한 번만 실행됐습니다 — 캐시 키가 `base64_img`에만 의존한다는 뜻입니다. 이 명령이 앱 폴더에 남긴 `logo.png`는 실제 앱 동작과 무관한 확인용 파일이니 지웁니다.
+
+```bash
+rm -f logo.png
+```
 
 ### Step 4. 업로드 처리 — 이미지와 PDF 페이지를 임베딩하기
 
@@ -402,7 +433,11 @@ files exist: [True, True]
 embed() 호출: [('embed-v4.0', 'search_document'), ('embed-v4.0', 'search_document')]
 ```
 
-2페이지 모두 실제 PNG 파일로 저장됐고, `embed()`는 `search_document` 타입으로 정확히 2번(페이지당 1번) 호출됐습니다. Windows에서 나온 경로가 `pdf_pages\sample\page_1.png`처럼 **백슬래시**라는 점을 눈여겨보십시오 — Step 7에서 이 사실이 다시 나옵니다.
+2페이지 모두 실제 PNG 파일로 저장됐고, `embed()`는 `search_document` 타입으로 정확히 2번(페이지당 1번) 호출됐습니다. Windows에서 나온 경로가 `pdf_pages\sample\page_1.png`처럼 **백슬래시**라는 점을 눈여겨보십시오 — Step 7에서 이 사실이 다시 나옵니다. 이 명령이 만든 `pdf_pages/` 폴더도 확인용이니 정리합니다.
+
+```bash
+rm -rf pdf_pages
+```
 
 ### Step 5. 검색 — 질문과 이미지 임베딩의 내적 유사도
 
@@ -483,9 +518,11 @@ print('길이 불일치:', app.search('q', Stub(), embeddings[:2], paths))
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(340-341행이 늘 먼저 찍는 두 줄 포함):
 
 ```
+Question: what is the profit?
+Most relevant image: img/b.png
 img/b.png
 길이 불일치: None
 ```
@@ -581,20 +618,41 @@ run_button = st.button("Run Vision RAG", key="main_run_button",
                              caption = f"Retrieved content for: '{question}' (Source: {pdf_name}.pdf, {page_name.replace('.png','')})"
 ```
 
-533행의 `"pdf_pages/"`는 슬래시(`/`)를 하드코딩한 문자열입니다. 그런데 Step 4에서 직접 확인했듯 이 경로는 `os.path.join`이 만든 것이라 Windows에서는 백슬래시(`pdf_pages\sample\page_1.png`)입니다 — 그래서 `startswith("pdf_pages/")`가 Windows에서는 항상 거짓이 되고, 534행의(플랫폼에 맞는) `os.sep` 분할 코드까지는 아예 도달하지 못합니다. 결과가 틀리지는 않지만(530행의 기본 캡션으로 조용히 대체됨), "Source: X.pdf, page N" 형태의 더 자세한 캡션은 이 플랫폼에서 나오지 않습니다.
+533행의 `"pdf_pages/"`는 슬래시(`/`)를 하드코딩한 문자열입니다. 그런데 Step 4에서 직접 확인했듯 이 경로는 `os.path.join`이 만든 것이라 Windows에서는 백슬래시(`pdf_pages\sample\page_1.png`)입니다 — 그래서 `startswith("pdf_pages/")`가 Windows에서는 항상 거짓이 되고, 534행의(플랫폼에 맞는) `os.sep` 분할 코드까지는 아예 도달하지 못합니다. 결과가 틀리지는 않지만(531행의 기본 캡션 `Source: {os.path.basename(...)}`으로 조용히 대체되어 `Source: page_1.png`가 됨 — 폴더 구분이 사라져 서로 다른 PDF가 우연히 같은 페이지 번호를 쓰면 어느 문서에서 왔는지 구분할 수 없습니다), POSIX였다면 나왔을 `Source: sample.pdf, page_1` 형태의 더 자세한 캡션은 이 플랫폼에서 나오지 않습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 앱을 로컬로 띄워 화면이 실제로 뜨는지만 확인하고(키 없이), 외부에는 요청을 보내지 않습니다.
+**확인.** 앱을 로컬로 띄워 화면이 실제로 뜨는지 확인합니다. 다만 `--server.address`를 지정하지 않고 `--server.headless true`만 주면, Streamlit이 시작 배너의 "External URL"을 채우려고 `net_util.get_external_ip()`를 실행해 `http://checkip.amazonaws.com`과 `https://checkip.amazonaws.com`에 실제로 요청을 보냅니다(소스로 확인 — streamlit 1.64.0의 `net_util.py`) — Day 054가 이미 확인한 사실입니다. 직접 재현(소켓·DNS 차단 상태):
 
 ```bash
-uv run --no-project python -m streamlit run vision_rag.py --server.headless true --server.port 8577
+uv run --no-project python -m streamlit run vision_rag.py --server.headless true --server.port 61201
+```
+
+직접 확인한 출력(콘솔):
+
+```
+Did not auto detect external IP.
+Please go to https://docs.streamlit.io/ for debugging hints.
+```
+
+이 메시지는 `get_external_ip()`가 `http://checkip.amazonaws.com`과 `https://checkip.amazonaws.com` 두 곳 모두 실패했을 때만 찍힙니다(소스로 확인) — 즉 두 URL 모두에 실제 연결 시도가 있었다는 뜻입니다.
+
+`--server.address localhost`를 더하면 코드가 아예 다른 분기를 타 이 조회 자체를 건너뜁니다(소스로 확인 — streamlit 1.64.0의 `web/bootstrap.py`, `_print_url`) — 이 문서가 실제로 쓰는 명령은 이쪽입니다. 브라우저가 페이지를 열 때만 발생하는 별도의 사용 통계 전송(`data.streamlit.io/metrics.json`, Day 054에서 이미 확인)도 `--browser.gatherUsageStats false`로 함께 꺼 둡니다.
+
+```bash
+uv run --no-project python -m streamlit run vision_rag.py --server.headless true --server.address localhost --browser.gatherUsageStats false --server.port 61202
+```
+
+직접 확인한 출력(콘솔, 차단 로그 0건):
+
+```
+  URL: http://localhost:61202
 ```
 
 다른 터미널에서(로컬 주소에만 접속):
 
 ```bash
-curl -s -o /dev/null -w "HTTP_STATUS:%{http_code}\n" http://localhost:8577
+curl -s -o /dev/null -w "HTTP_STATUS:%{http_code}\n" http://localhost:61202
 ```
 
 직접 확인한 출력:
@@ -616,7 +674,7 @@ HTTP_STATUS:200
 - [ ] Cohere API 키와 Google API 키(Gemini)를 준비했다
 - [ ] `requirements.txt` 그대로 설치하면 `from google import genai`가 실패하고, `uv pip install google-genai`로 해결된다는 것을 직접 확인했다
 - [ ] 이 앱엔 `st.stop()`이 없어 키가 없어도 화면 전체가 끝까지 그려지지만 "Load Sample Images" 버튼은 사라진다는 것을 `AppTest`로 확인했다
-- [ ] 소켓·DNS를 막고 프록시 환경변수를 건 상태에서 `cohere.ClientV2`·`genai.Client` 생성이 네트워크 없이 성공한다는 것을 직접 확인했다
+- [ ] `cohere.ClientV2`·`genai.Client`는 생성자만 호출해도 예외 없이 성공한다는 것을 직접 확인했다(요청 메서드는 호출하지 않았다)
 - [ ] `process_pdf_file`을 합성 PDF로 실제 호출해 페이지별 PNG 생성과 임베딩 호출 횟수를 확인했다
 - [ ] `search`의 "코사인 유사도" 주석이 실제로는 정규화 없는 내적이라는 것을 소스로 확인했다
 - [ ] Windows에서 `pdf_pages/` 슬래시 검사가 항상 거짓이 되어 PDF 출처 캡션이 기본형으로 대체된다는 것을 직접 확인했다
@@ -628,13 +686,13 @@ HTTP_STATUS:200
 | `requirements.txt` 설치 후 `from google import genai`에서 `ImportError` | 코드는 `google-genai` 패키지를 쓰는데 `requirements.txt`엔 다른 패키지 `google-generativeai`만 있음(직접 확인, Step 1) | `uv pip install google-genai` 별도 설치 |
 | `import fitz` 시 `The 'fitz' API is deprecated...` 경고 | 설치되는 PyMuPDF 1.28.2가 옛 이름 `fitz`를 곧 없앨 예정이라고 경고(직접 확인) | 오류 아님. 무시해도 이번 버전에서는 동작함 |
 | "Load Sample Images" 버튼이 안 보임 | `cohere_api_key and co`가 참이어야 버튼 블록이 그려짐(379행) — 키 하나라도 비면 버튼 자체가 없음 | Cohere·Google 키를 모두 입력 |
-| PDF를 올렸는데 캡션에 "Source: 파일명.pdf, page N"이 안 뜨고 파일명만 나옴 | 533행이 `"pdf_pages/"`(슬래시)를 하드코딩해 검사하는데 Windows의 실제 경로는 백슬래시라 항상 거짓(직접 확인, Step 7) | 리포 코드는 고치지 않는 방침. 기본 캡션도 어떤 이미지가 뽑혔는지는 정확히 보여줌 |
+| PDF를 올렸는데 캡션에 "Source: sample.pdf, page_1"이 안 뜨고 "Source: page_1.png"만 나옴 | 533행이 `"pdf_pages/"`(슬래시)를 하드코딩해 검사하는데 Windows의 실제 경로는 백슬래시라 항상 거짓(직접 확인, Step 7) | 리포 코드는 고치지 않는 방침. 서로 다른 PDF가 같은 페이지 번호를 쓰면 기본 캡션만으로는 어느 문서인지 구분 못함(직접 확인) |
 | 앱 자체 README의 "How It Works"가 `gemini-2.5-flash-preview-04-17`을 언급 | 실제 호출 문자열(366행)은 항상 `gemini-2.5-flash` — README 서술이 코드보다 낡음(소스로 확인) | 실제 동작에는 영향 없음. 코드 쪽을 신뢰 |
 
 ## 더 해보기
 
 - `search`(`rag_tutorials/vision_rag/vision_rag.py:335`)에서 두 벡터를 각각 `np.linalg.norm`으로 나눠 정규화한 뒤 내적을 계산해보고, 순위가 실제로 달라지는 질문이 있는지 확인해보기
-- `rag_tutorials/vision_rag/vision_rag.py:533`의 `"pdf_pages/"`를 `os.sep`을 쓰도록 바꾸고, 실제 PDF 업로드에서 "Source: 파일명.pdf, page N" 캡션이 뜨는지 직접 실행해 비교해보기
+- `rag_tutorials/vision_rag/vision_rag.py:533`의 `"pdf_pages/"`를 `os.sep`을 쓰도록 바꾸고, 실제 PDF 업로드에서 "Source: sample.pdf, page_1" 캡션이 뜨는지 직접 실행해 비교해보기
 - `search`에 유사도 임계값을 추가해, 저장된 이미지 중 어느 것과도 관련 없는 질문에는 "관련 이미지 없음"을 돌려주도록 바꿔보기
 
 ## 다음 날 예고

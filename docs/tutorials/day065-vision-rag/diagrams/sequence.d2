@@ -11,6 +11,6 @@ ui -> ui: 세션에 저장된 이미지 임베딩 조회
 ui -> cohere: 질의 임베딩 요청(search_query)
 cohere -> ui: 질의 임베딩 벡터
 ui -> ui: 내적 유사도로 최상위 이미지 선택
-ui -> gemini: 요청
+ui -> gemini: 이미지
 gemini -> ui: 답변
 ui -> user: 검색된 이미지·답변 표시
