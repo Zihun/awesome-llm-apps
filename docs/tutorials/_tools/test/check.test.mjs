@@ -115,6 +115,23 @@ test("an svg over either cap is reported", () => {
   assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
 });
 
+// 사용자가 일차별로 허락한 세로 예외(2026-09-26). 허락한 높이까지만 통과하고, 넘으면 다시 걸린다.
+test("a per-day height exception raises the cap for that day's overview only up to the granted height", () => {
+  const { repo, dayDir } = fixture();
+  const d2 = join(dayDir, "diagrams", "overview.d2");
+  const hash = sourceHash(inlineImports(d2));
+  const write = (svg) => writeFileSync(join(dayDir, "diagrams", "overview.svg"), embedHash(svg, hash));
+  const heightExceptions = { day001: { maxHeight: 1059, reason: "테스트" } };
+
+  write('<svg width="900" height="1059"></svg>');
+  assert.deepEqual(checkDay(dayDir, { repoRoot: repo, heightExceptions }), []);
+  assert.ok(checkDay(dayDir, { repoRoot: repo }).some((p) => p.includes("1059px") && p.includes("1000px")));
+
+  write('<svg width="900" height="1060"></svg>');
+  const over = checkDay(dayDir, { repoRoot: repo, heightExceptions });
+  assert.ok(over.some((p) => p.includes("1060px") && p.includes("1059px") && p.includes("예외")), over.join("\n"));
+});
+
 test("an unbalanced code span is reported outside a fence, but not inside one", () => {
   const { repo, dayDir } = fixture({
     readme: GOOD_README("정상: `x` `y`\n깨진: ``a` 하나\n```text\n펜스 안 홀수 백틱: `\n```\n"),

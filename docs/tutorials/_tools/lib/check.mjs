@@ -55,7 +55,19 @@ function stripFences(md) {
   return md.replace(/```[\s\S]*?```/g, (block) => (block.startsWith("```mermaid") ? block : ""));
 }
 
-export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
+/** 세로 상한 예외 — 사용자가 일차별로 허락한 것만(2026-09-26, §5). `_tools/height-exceptions.json`에서 읽는다.
+ *  그 날의 overview·stepN 그림에만, 적힌 높이까지 허용한다. 더 커지면 다시 걸린다. */
+let defaultHeightExceptions;
+export function loadHeightExceptions() {
+  if (defaultHeightExceptions) return defaultHeightExceptions;
+  const path = resolve(dirname(fileURLToPath(import.meta.url)), "..", "height-exceptions.json");
+  defaultHeightExceptions = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : {};
+  return defaultHeightExceptions;
+}
+
+export function checkDay(dayDir, { repoRoot, allowNoNextDay = false, heightExceptions = loadHeightExceptions() } = {}) {
+  const dayKey = dayDir.replace(/\\/g, "/").split("/").pop().slice(0, 6);
+  const heightException = heightExceptions[dayKey] ?? null;
   const problems = [];
   const readmePath = join(dayDir, "README.md");
   if (!existsSync(readmePath)) return [`${readmePath}: README.md 없음`];
@@ -125,8 +137,9 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false } = {}) {
         if (diagonals.length) problems.push(rel(`비스듬한 화살표가 있습니다: diagrams/${svgName} (${diagonals.length}개) — 곧은 화살표는 수평·수직 한 줄일 때만 씁니다. grid 칸 사이 화살표는 꺾이지 않으므로 그 층을 ELK에 맡기세요`));
       }
       const height = Number(svgText.match(/<svg[^>]*\sheight="(\d+)"/)?.[1] ?? 0);
-      const heightCap = f.startsWith("sequence") ? SEQUENCE_MAX_HEIGHT : SVG_MAX_HEIGHT;
-      if (height > heightCap) problems.push(rel(`다이어그램이 세로로 너무 깁니다: diagrams/${svgName} (${height}px, 상한 ${heightCap}px) — 안쪽에 화살표가 없는 묶음만 grid로 좁히고, 노드와 라벨을 줄이세요`));
+      const excepted = heightException && /^(overview|step\d+)\.d2$/.test(f);
+      const heightCap = f.startsWith("sequence") ? SEQUENCE_MAX_HEIGHT : excepted ? heightException.maxHeight : SVG_MAX_HEIGHT;
+      if (height > heightCap) problems.push(rel(`다이어그램이 세로로 너무 깁니다: diagrams/${svgName} (${height}px, 상한 ${heightCap}px${excepted ? " — 사용자가 허락한 예외 높이" : ""}) — 안쪽에 화살표가 없는 묶음만 grid로 좁히고, 노드와 라벨을 줄이세요`));
     }
     // (19) 단계 공개 불변식 — step<N>.d2가 overview 배치를 그대로 가져와 클래스만
     //      덧씌우므로, 경로를 잘못 짚으면 D2가 새 노드를 만들거나 -todo가 되살아난다.

@@ -1,0 +1,10 @@
+{
+  "_설명": "세로 상한(1000px) 예외. 사용자가 2026-09-26에 일차별로 허락했다(규격 §5). 그 날의 overview·stepN 그림에만, 적힌 높이까지 허용한다. 모두 화살표 규칙(17·20~23)은 통과하며, 실제 관계를 지우거나 합치지 않고는 더 줄일 수 없었다(측정은 .superpowers/sdd/2026-09-11-tutorial-series/task-11c·11d 보고서). 새 예외는 사용자 결정으로만 추가한다.",
+  "day006": { "maxHeight": 1059, "reason": "Pandas 도구 연결(agent → pandas_tools)을 되살리며 ELK 층이 늘었다" },
+  "day010": { "maxHeight": 1113, "reason": "입력 → 구매자 → {Claude, 판매자} → 파실리테이터의 4단 구조 — 구매자는 파실리테이터와 직접 통신하지 않는다" },
+  "day016": { "maxHeight": 1023, "reason": "config ↔ 패키지 사이 서로 다른 데이터를 나르는 두 화살표를 합치지 않았다" },
+  "day023": { "maxHeight": 1212, "reason": "사용자 → root → research → MCP 서버 → Firecrawl 클라우드 6층 — 가로로 두면 라벨을 최소로 줄여도 폭 1322px" },
+  "day025": { "maxHeight": 1040, "reason": "여러 단계의 실제 호출 체인" },
+  "day027": { "maxHeight": 1075, "reason": "여러 단계의 실제 호출 체인" },
+  "day034": { "maxHeight": 1070, "reason": "Realtime API와 STT·Chat·TTS를 서로 다른 외부 서비스로 나눠 그렸다" }
+}
