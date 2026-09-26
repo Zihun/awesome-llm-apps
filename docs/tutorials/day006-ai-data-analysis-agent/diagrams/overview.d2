@@ -3,12 +3,10 @@ direction: down
 
 input: "입력" {
   class: group
-  grid-columns: 2
   user: 사용자 { class: person }
   openai_key: OpenAI API 키 { class: file }
 }
 app: ai_data_analyst.py {
-  grid-columns: 3
   ui: Streamlit UI { class: ours }
   preprocess: 전처리 (preprocess_and_save) { class: ours }
   duckdb_tools: DuckDB 도구 (DuckDbTools) { class: ours }
@@ -24,3 +22,4 @@ app -> duckdb_db: CREATE OR REPLACE TABLE uploaded_data (duckdb_tools)
 app -> openai: 질문 + 도구 스키마 (agent)
 openai -> app: 답변 또는 tool_call (agent)
 app -> duckdb_db: SQL 쿼리 실행 (agent, 도구 호출)
+app.agent -> app.pandas_tools: 데이터프레임 연산 (도구 호출)
