@@ -11,11 +11,12 @@ ddg: DuckDuckGo { class: ext }
 
 user -> ui: 질문 입력
 ui -> router: 질문 전달
-router -> qdrant: 유사도 검색 (임베딩 포함, k=3×3개 DB)
+router -> qdrant: 유사도 검색 (k=3×3, 임베딩 OpenAI)
 qdrant -> router: 최고 평균 점수 0.5 미만
 router -> router: LLM 라우팅 시도 → TypeError(show_tool_calls)
 router -> ui: None (확신 있는 DB 없음)
 ui -> web_agent: 위임
+web_agent -> web_agent: OpenAI: 도구 호출 판단
 web_agent -> ddg: DuckDuckGoSearchRun(질문)
 ddg -> web_agent: 검색 결과
 web_agent -> openai: 완성 요청 (gpt-3.5-turbo)

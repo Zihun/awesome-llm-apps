@@ -1,7 +1,7 @@
 ...@../../_tools/theme
 direction: down
 
-front: "사용자 쪽" {
+front: "앱 화면·라우팅" {
   class: group
   grid-columns: 4
   user: 사용자 { class: person }
@@ -23,10 +23,10 @@ web_agent: 웹 검색 에이전트 (LangGraph) { class: ours }
 openai: OpenAI API { class: ext }
 ddg: DuckDuckGo { class: ext }
 
-front -> storage: 청크 저장·유사도 검색
+front -> storage: 청크 저장·유사도 검색(임베딩은 OpenAI)
 front -> rag_chain: 확신 있음
 front -> web_agent: 확신 없음
-storage -> openai: 임베딩 요청
+rag_chain -> storage: k=4 검색
 rag_chain -> openai: 답변 생성
 web_agent -> ddg: 웹 검색
 web_agent -> openai: 답변 생성

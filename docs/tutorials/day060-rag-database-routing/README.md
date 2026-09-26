@@ -1,10 +1,10 @@
 # Day 060 · 📠 RAG with Database Routing
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 85분(직접 재현이 소켓 차단·인메모리 Qdrant·로컬 서버 기동까지 여럿이라 읽는 시간보다 손으로 돌려 보는 시간이 깁니다) · API 비용 대략 질문 1건에 임베딩 호출 3회(3개 컬렉션 유사도 검색, Step 4) + 확신 있는 DB가 있으면 리트리버가 같은 질문을 한 번 더 임베딩(Step 5) + 채팅 완성 1회(`gpt-3.5-turbo` — Step 4에서 확인하듯 `gpt-4o` 라우팅은 오늘 설치되는 agno로는 항상 실패해 사실상 매번 이 답변 모델로 감) — 문서 업로드는 청크 수만큼 추가 임베딩 — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/rag_database_routing`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ ⚠ · 예상 소요 90분(직접 재현이 소켓 차단·인메모리 Qdrant·로컬 서버 기동까지 여럿이라 읽는 시간보다 손으로 돌려 보는 시간이 깁니다) · API 비용 대략 질문 1건마다 임베딩 호출 3회(3개 컬렉션 유사도 검색, Step 4)에 더해 확신 있는 DB가 있으면 `query_database`가 리트리버를 두 번 불러 같은 질문을 두 번 더 임베딩(Step 5, 직접 확인) — 채팅 완성은 확신 있는 경로가 `gpt-3.5-turbo` 1회, 웹 검색 경로는 도구 호출 여부 판단 1회+최종 답변 1회로 최소 2회(Step 6, 직접 확인) — 업로더에서 파일을 지우지 않으면 질문마다(재실행마다) 그 문서 전체가 다시 임베딩·저장되어 중복 비용이 쌓임(Step 3, 직접 확인) — 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/rag_database_routing`
 
 ## 오늘 만들 것
 
-문서를 세 개의 독립된 데이터베이스(제품/고객 지원/재무)로 나눠 저장하고, 질문이 들어오면 그중 어디를 찾아야 할지 자동으로 정하는 RAG 앱입니다. "청크 → 임베딩 → 저장 → 검색 → 답변"이라는 골격 자체는 Day 047부터 반복돼 왔고 청크 크기(1000자/겹침 200자)도 Day 057과 같지만, 오늘 새로 들어오는 것은 라우팅입니다. `route_query`는 먼저 3개 컬렉션 모두에 유사도 검색을 돌려 평균 점수가 0.5 이상인 곳이 있으면 그리로 바로 보내고, 없으면 agno 에이전트(`gpt-4o`)에게 어느 DB인지 물어보는 2단계 폴백을 둡니다 — 이 0.5는 정규화 점수가 아니라 Qdrant가 돌려주는 원점수 코사인 그대로입니다(소스로 확인, Step 4). 그런데 이 저장소를 그대로 설치해 돌려보면(직접 확인, Step 1·4) 그 2단계 폴백은 실제로는 한 번도 성공하지 못합니다 — `requirements.txt`가 `agno` 버전을 고정하지 않아(8번째 줄, `agno` 그대로) 오늘 설치되는 3.0.11의 `Agent.__init__`이 이 코드가 넘기는 `show_tool_calls` 인자를 더는 받지 않기 때문입니다. `create_routing_agent()`를 직접 호출해 확인한 예외 그대로입니다.
+문서를 세 개의 독립된 데이터베이스(제품/고객 지원/재무)로 나눠 저장하고, 질문이 들어오면 그중 어디를 찾아야 할지 자동으로 정하는 RAG 앱입니다. "청크 → 임베딩 → 저장 → 검색 → 답변"이라는 골격 자체는 Day 047부터 반복돼 왔고 청크 크기(1000자/겹침 200자)도 Day 057과 같지만, 오늘 새로 들어오는 것은 라우팅입니다. `route_query`는 먼저 3개 컬렉션 모두에 유사도 검색을 돌려 평균 점수가 0.5 이상인 곳이 있으면 그리로 바로 보내고, 없으면 agno 에이전트(`gpt-4o`)에게 어느 DB인지 물어보는 2단계 폴백을 둡니다 — 이 0.5는 정규화 점수가 아니라 Qdrant가 돌려주는 원점수 코사인 그대로입니다(소스로 확인, Step 4). 그런데 이 저장소를 그대로 설치해 돌려보면(직접 확인, Step 1·4) 그 2단계 폴백은 실제로는 한 번도 성공하지 못합니다 — `requirements.txt`가 `agno` 버전을 고정하지 않아(8번째 줄, `agno` 그대로) 오늘 설치되는 3.0.11의 `Agent.__init__`이 이 코드가 넘기는 `show_tool_calls` 인자를 더는 받지 않기 때문입니다 — Day 049에서 본 같은 agno 인자 제거가 여기서는 라우팅 폴백 전체를 죽입니다. `create_routing_agent()`를 직접 호출해 확인한 예외 그대로입니다.
 
 ```
 TypeError: Agent.__init__() got an unexpected keyword argument 'show_tool_calls'
@@ -20,7 +20,7 @@ TypeError: Agent.__init__() got an unexpected keyword argument 'show_tool_calls'
 |---|---|---|
 | OpenAI API 키 | 임베딩(`text-embedding-3-small`)과 두 채팅 모델(`gpt-4o` 라우팅 시도, 기본값으로 떨어지는 `gpt-3.5-turbo` 답변) 호출 인증 | https://platform.openai.com/api-keys |
 | Qdrant Cloud 클러스터 | `products_collection`/`support_collection`/`finance_collection` 3개 저장 — 코드가 실제로 요구하는 건 URL과 키가 모두 있는 Qdrant 인스턴스뿐이라 로컬 Qdrant도 됩니다(Step 2에서 소스로 확인) | https://cloud.qdrant.io 가입 후 클러스터 생성, API 키·URL 확보 |
-| 인터넷 연결 | PyPI 설치, OpenAI API, Qdrant Cloud API, DuckDuckGo 접속 | 별도 설치 없음. 사내망이면 이 네 곳 아웃바운드 허용 필요 |
+| 인터넷 연결 | PyPI 설치, OpenAI API, Qdrant Cloud API, DuckDuckGo 접속 — `--server.headless true`로 띄우면 Streamlit이 배너용 외부 IP를 얻으려 `checkip.amazonaws.com`에도 접속(Step 7) | 별도 설치 없음. 사내망이면 이 다섯 곳 아웃바운드 허용 필요 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 
 ## 아키텍처 한눈에 보기
@@ -75,9 +75,11 @@ duckduckgo-search>=6.4.2,<9
 (11줄, 마지막 줄에 개행이 없어 `wc -l`은 10으로 셉니다.) `agno`만 버전이 아예 없고, 나머지는 고정(`==`) 또는 범위입니다. 직접 설치하면(직접 확인) 125개 패키지가 해석됩니다.
 
 ```
-Resolved 125 packages in 49ms
-Installed 125 packages in 6.08s
+Resolved 125 packages in …
+Installed 125 packages in …
 ```
+
+(설치 시간은 캐시·회선에 따라 매번 바뀌므로 패키지 수만 옮깁니다 — 이 실행은 각각 49ms·6.08s였습니다.)
 
 `agno`는 오늘 3.0.11로 풀리고(직접 확인, 아래 Step 4에서 이 버전이 문제가 됩니다), `sentence-transformers>=2.2.2`는 6.1.0으로 풀리면서 **이 파일이 어디에서도 import하지 않는** `torch`(2.14.0)와 `transformers`(5.17.0)까지 함께 설치합니다 — `uv pip show sentence-transformers`의 `Required-by:`가 비어 있어, 다른 패키지가 필요로 해서 딸려온 것도 아닙니다(직접 확인). `rag_database_routing.py` 전체를 뒤져도 `sentence_transformers`나 `SentenceTransformer`를 언급하는 줄은 없습니다(grep으로 직접 확인) — 임베딩은 전부 OpenAI API로 하므로 이 패키지는 설치만 되고 쓰이지 않습니다.
 
@@ -244,14 +246,14 @@ except Exception as e:
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(생성 시간은 매 실행 바뀌므로 자릿수만 옮깁니다):
 
 ```
-constructed in 0.198s, no error yet
-get_collections() -> ResponseHandlingException network blocked by test harness (getaddrinfo/DNS)
+constructed in 0.2s, no error yet
+get_collections() -> ResponseHandlingException blocked
 ```
 
-`QdrantClient(...)` 생성 자체는 즉시 반환하고, `get_collections()`에서만 실제 접속(DNS 조회부터)을 시도합니다 — "Submit"을 눌렀을 때 반응이 없다면 바로 이 지점입니다. 같은 방식으로 `OpenAIEmbeddings`·`ChatOpenAI` 생성도 네트워크를 타지 않는다는 것을 확인합니다.
+`QdrantClient(...)` 생성 자체는 즉시 반환하고, `get_collections()`에서만 실제 접속(DNS 조회부터)을 시도합니다 — 이 앱에는 버튼이 하나도 없으므로(`grep -n "st.button\|form_submit" rag_database_routing.py` 0건, 직접 확인) 반응이 없다면 "Submit"이 아니라 세 번째 칸을 채운 직후의 자동 재실행이 바로 이 지점에서 멈춘 것입니다. 같은 방식으로 `OpenAIEmbeddings`·`ChatOpenAI` 생성도 네트워크를 타지 않는다는 것을 확인합니다.
 
 ```bash
 uv run --no-project python -c "
@@ -344,6 +346,49 @@ def process_document(file) -> List[Document]:
 ```
 
 `accept_multiple_files=True`라 탭당 여러 PDF를 한 번에 올릴 수 있고, 청크가 하나도 안 나오면(`all_texts`가 비면) `add_documents` 자체를 호출하지 않습니다 — Day 057의 조용한 "성공" 배너 문제(빈 리스트도 저장 성공으로 표시됨)는 여기서는 일어나지 않습니다.
+
+이 블록에는 "이미 저장했다"를 기억하는 장치(버튼, 세션 상태 플래그)가 전혀 없습니다. Streamlit은 질문 입력처럼 사소한 상호작용에도 스크립트 전체를 처음부터 다시 실행하는데, 업로더가 파일을 계속 들고 있는 한(사용자가 직접 지우기 전까지) `uploaded_files`는 매 재실행에서도 그대로 채워져 있습니다 — 즉 질문 하나를 물을 때마다 방금 올린 문서 전체가 다시 청크화·임베딩·저장됩니다. 가짜 임베딩과 인메모리 Qdrant로, 같은 업로드가 세 번의 "재실행"을 거치는 동안 무슨 일이 일어나는지 직접 확인합니다.
+
+```bash
+uv run --no-project python -c "
+from langchain_core.embeddings import Embeddings
+from langchain_core.documents import Document
+from langchain_community.vectorstores import Qdrant
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
+
+calls = {'embed_documents': 0}
+class CountingEmbeddings(Embeddings):
+    def embed_documents(self, texts):
+        calls['embed_documents'] += 1
+        return [[0.0, 0.0] for _ in texts]
+    def embed_query(self, text):
+        return [0.0, 0.0]
+
+client = QdrantClient(location=':memory:')
+client.create_collection('products_c', vectors_config=VectorParams(size=2, distance=Distance.COSINE))
+db = Qdrant(client=client, collection_name='products_c', embeddings=CountingEmbeddings())
+
+def one_rerun(label):
+    all_texts = [Document(page_content='같은 청크 내용')]  # uploaded_files가 재실행에도 남아있다고 가정
+    db.add_documents(all_texts)
+    print(label, '-> embed_documents 누적 호출:', calls['embed_documents'], '/ 저장된 점:', client.count('products_c').count)
+
+one_rerun('업로드 직후')
+one_rerun('질문 1개 후 재실행')
+one_rerun('질문 2개 후 재실행')
+"
+```
+
+직접 확인한 출력:
+
+```
+업로드 직후 -> embed_documents 누적 호출: 1 / 저장된 점: 1
+질문 1개 후 재실행 -> embed_documents 누적 호출: 2 / 저장된 점: 2
+질문 2개 후 재실행 -> embed_documents 누적 호출: 3 / 저장된 점: 3
+```
+
+같은 문서가 재실행마다 다시 임베딩되고 중복된 점으로 쌓입니다 — 업로더에서 파일을 지우지 않는 한 계속됩니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -510,7 +555,7 @@ def create_routing_agent() -> Agent:
         return None
 ```
 
-`Agent(...)` 생성 호출에 넘기는 `show_tool_calls=False`(155행)가 문제입니다 — agno 3.0.11의 `Agent.__init__`은 108개 매개변수 중에 `show_tool_calls`가 없습니다(직접 확인, `inspect.signature`). 키도 네트워크도 필요 없이, `create_routing_agent()`를 그냥 호출하기만 해도 즉시 실패합니다.
+`Agent(...)` 생성 호출에 넘기는 `show_tool_calls=False`(155행)가 문제입니다 — agno 3.0.11의 `Agent.__init__`은 108개 매개변수 중에 `show_tool_calls`가 없습니다(직접 확인, `inspect.signature`). 키도 네트워크도 필요 없이, `create_routing_agent()`를 그냥 호출하기만 해도 즉시 실패합니다. Day 049가 다른 앱(`autorag.py`)의 같은 `Agent(...)` 호출에서 이미 확인한 것과 같은 인자 제거이며(`docs/tutorials/day049-autonomous-rag/README.md:580`), 여기서는 그 결과로 라우팅 폴백 전체가 죽는다는 점이 다릅니다.
 
 ![라우팅 결정 흐름](diagrams/extra-routing.svg)
 
@@ -634,9 +679,11 @@ def query_database(db: Qdrant, question: str) -> tuple[str, list]:
 
 239행의 주석 "Use simpler chain creation with hub prompt"는 낡았습니다 — 실제 코드는 `from langchain import hub`(17행)를 import는 하지만 파일 전체에서 `hub.pull` 같은 호출은 한 번도 없습니다(grep으로 직접 확인, `hub`가 등장하는 곳은 17행 import와 이 주석뿐). Day 057의 `hub.pull("langchain-ai/retrieval-qa-chat")`(매 질문마다 LangChain Hub에 접속)과 달리, 이 앱은 프롬프트를 240-249행에서 직접 짜 넣으므로 그 세 번째 외부 서비스 의존은 없습니다. `create_stuff_documents_chain(st.session_state.llm, ...)`의 `st.session_state.llm`은 Step 2에서 확인했듯 `ChatOpenAI(temperature=0)` — 즉 `model=`이 없어 `gpt-3.5-turbo`입니다. `main()`은 이 함수가 돌려주는 `relevant_docs`를 받기만 하고 화면에는 답변 텍스트만 씁니다 — 어떤 청크가 근거였는지는 UI에 표시되지 않습니다(소스로 확인, `rag_tutorials/rag_database_routing/rag_database_routing.py:378-384`).
 
+이 함수는 질문을 **두 번** 임베딩합니다 — 236행의 `retriever.get_relevant_documents(question)`가 한 번, 그리고 668행(발췌 위 639-668)의 `create_retrieval_chain(retriever, combine_docs_chain)`이 만드는 체인이 `retrieval_chain.invoke({"input": question})` 안에서 같은 리트리버를 또 부릅니다(소스로 확인, `langchain==0.3.12`의 `chains/retrieval.py`: `retrieval_docs = (lambda x: x["input"]) | retriever`). 즉 "한 번 더"가 아니라 이 함수 안에서만 임베딩 호출이 2회입니다.
+
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** `hub`가 실제로 안 쓰인다는 것과, 답변 생성이 `gpt-3.5-turbo`로 간다는 것을 grep과 Step 2의 확인으로 재확인합니다.
+**확인.** `hub`가 실제로 안 쓰인다는 것과, `query_database`가 실제로 질문을 두 번 임베딩한다는 것을 이 앱의 함수를 그대로 호출해 확인합니다.
 
 ```bash
 grep -n "hub" rag_database_routing.py
@@ -648,6 +695,40 @@ grep -n "hub" rag_database_routing.py
 ```
 
 (정의/주석 두 줄뿐, 호출부가 없다는 뜻입니다.)
+
+```bash
+uv run --no-project python -c "
+from langchain_core.embeddings import Embeddings
+from langchain_core.documents import Document
+from langchain_core.language_models.fake_chat_models import FakeListChatModel
+from langchain_community.vectorstores import Qdrant
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
+import rag_database_routing as app
+
+calls = {'embed_query': 0}
+class CountingEmbeddings(Embeddings):
+    def embed_documents(self, texts): return [[1.0, 0.0] for _ in texts]
+    def embed_query(self, text):
+        calls['embed_query'] += 1
+        return [1.0, 0.0]
+
+client = QdrantClient(location=':memory:')
+client.create_collection('products_c', vectors_config=VectorParams(size=2, distance=Distance.COSINE))
+db = Qdrant(client=client, collection_name='products_c', embeddings=CountingEmbeddings())
+db.add_documents([Document(page_content='제품 매뉴얼 내용')])
+app.st.session_state.llm = FakeListChatModel(responses=['fake answer, no network needed'])
+
+answer, docs = app.query_database(db, '이 제품의 반품 정책은?')
+print('embed_query calls inside query_database:', calls['embed_query'])
+"
+```
+
+직접 확인한 출력:
+
+```
+embed_query calls inside query_database: 2
+```
 
 ### Step 6. 웹 검색 폴백 — LangGraph 에이전트와 DuckDuckGo
 
@@ -738,6 +819,46 @@ docs: []
 
 가짜 모델이 도구를 부르지 않고 바로 답하면 276행 조건이 참이 되어 정상적으로 문자열을 반환합니다 — 위에서 지적한 암묵적 `None` 경로는 이번 호출에서는 일어나지 않았습니다.
 
+실제로 질문 대부분은 도구를 한 번은 부르므로(문서가 하나도 없는 상태에서는 검색할 것이 있기 때문), 이번에는 도구 호출을 흉내 내는 가짜 모델로 채팅 완성이 몇 번 오가는지 셉니다 — `DuckDuckGoSearchRun`도 가짜로 바꿔 실제 검색 요청은 나가지 않습니다.
+
+```bash
+uv run --no-project python -c "
+from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
+from langchain_core.messages import AIMessage
+import rag_database_routing as app
+
+calls = {'chat': 0}
+
+class FakeSearch:
+    def __init__(self, *a, **k): pass
+    def run(self, query): return f'[fake search result for: {query}]'
+
+app.DuckDuckGoSearchRun = FakeSearch
+messages = [
+    AIMessage(content='', tool_calls=[{'name': 'web_research', 'args': {'query': 'refund policy'}, 'id': 'call_1'}]),
+    AIMessage(content='Based on the search, here is the final answer.'),
+]
+
+class CountingFakeModel(FakeMessagesListChatModel):
+    def bind_tools(self, tools, **kwargs): return self
+    def _generate(self, *a, **k):
+        calls['chat'] += 1
+        return super()._generate(*a, **k)
+
+app.st.session_state.llm = CountingFakeModel(responses=messages)
+answer, docs = app._handle_web_fallback('What is the refund policy?')
+print('chat completions used:', calls['chat'])
+"
+```
+
+직접 확인한 출력:
+
+```
+chat completions used: 2
+```
+
+도구를 한 번 부르는 경로는 채팅 완성이 1회가 아니라 2회입니다 — 첫 호출이 도구 호출 여부를 정하고, 도구 결과를 받은 뒤 두 번째 호출이 최종 답을 만듭니다.
+
 ### Step 7. 화면 배선과 실행
 
 **목적.** 지금까지 확인한 함수들이 `main()`에서 어떻게 이어지는지 확인하고, 키 없이도 앱이 로컬 서버로 뜨는지 확인합니다.
@@ -778,12 +899,20 @@ if __name__ == "__main__":
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 키 없이 실제로 로컬 서버를 띄워, 응답이 오는지(자격증명 폼까지만) 확인합니다. `localhost`에만 접속하므로 외부로 나가는 요청은 없습니다.
+**확인.** 키 없이 실제로 로컬 서버를 띄워, 응답이 오는지(자격증명 폼까지만) 확인합니다. `--server.address localhost`를 반드시 붙입니다 — Streamlit 1.64.0은 `--server.headless true`만 주면 배너의 External URL을 채우려고 `checkip.amazonaws.com`에 실제로 접속을 시도합니다(소스로 확인, `streamlit/web/bootstrap.py`의 `net_util.get_external_ip()`, `net_util.py`). 소켓 차단으로 직접 재현했습니다 — `--server.address localhost` 없이 돌리면:
+
+```
+[netblock] blocked connect: ('8.8.8.8', 1)
+[netblock] blocked getaddrinfo: 'checkip.amazonaws.com'
+[netblock] blocked getaddrinfo: 'checkip.amazonaws.com'
+```
+
+세 번의 외부 접속 시도가 나갑니다(하나는 로컬 IP를 알아내려는 UDP `connect`라 패킷은 안 나가지만, 나머지 둘은 실제 DNS 조회입니다). `--server.address localhost`를 더하면 이 시도가 0건이 됩니다(직접 확인). 포트는 다른 실습과 겹치지 않게 49152~65535 범위에서 무작위로 고른 58231을 씁니다.
 
 ```bash
-uv run --no-project streamlit run rag_database_routing.py --server.headless true --server.port 8598 &
+uv run --no-project streamlit run rag_database_routing.py --server.headless true --server.address localhost --server.port 58231 &
 sleep 3
-curl -s -o /dev/null -w "HTTP_STATUS:%{http_code}\n" http://localhost:8598
+curl -s -o /dev/null -w "HTTP_STATUS:%{http_code}\n" http://localhost:58231
 kill %1
 ```
 
@@ -799,7 +928,7 @@ HTTP_STATUS:200
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 오늘 가장 자주 일어나는 경로 — 벡터 유사도가 0.5를 못 넘고, agno 라우팅 시도가 `TypeError`로 실패해 웹 검색으로 넘어가는 흐름 — 을 그린 것입니다. UI는 질문을 `route_query`에 넘기고, `route_query`는 3개 컬렉션 모두에 유사도 검색(임베딩 포함, k=3)을 보낸 뒤 최고 평균 점수가 0.5 미만이면 자기 자신 안에서 LLM 라우팅을 시도하다 `show_tool_calls` 인자 때문에 즉시 실패합니다(Step 4) — 이 실패는 `route_query`의 `except`가 삼켜 UI에는 `None`만 돌아갑니다. UI는 이를 받아 웹 검색 에이전트에 위임하고, 에이전트는 `DuckDuckGoSearchRun`으로 검색한 뒤 그 결과를 OpenAI(`gpt-3.5-turbo`)에 넘겨 최종 답을 만듭니다. 반대로 어느 한 DB의 평균 점수가 0.5를 넘었다면 이 그림과 다른 경로를 탑니다 — 웹 검색 대신 `query_database`가 같은 DB를 다시 검색해(k=4) `gpt-3.5-turbo`로 곧장 답을 생성합니다(Step 5). 이 시퀀스는 Step 2·4·6에서 각 구간을 개별적으로 확인한 것을 이어붙인 것이며, 키가 없어 처음부터 끝까지 한 번에 재현하지는 못했습니다.
+이 그림은 오늘 가장 자주 일어나는 경로 — 벡터 유사도가 0.5를 못 넘고, agno 라우팅 시도가 `TypeError`로 실패해 웹 검색으로 넘어가는 흐름 — 을 그린 것입니다. UI는 질문을 `route_query`에 넘기고, `route_query`는 3개 컬렉션 모두에 유사도 검색(k=3×3, 질의 임베딩은 Qdrant가 아니라 OpenAI가 합니다)을 보낸 뒤 최고 평균 점수가 0.5 미만이면 자기 자신 안에서 LLM 라우팅을 시도하다 `show_tool_calls` 인자 때문에 즉시 실패합니다(Step 4) — 이 실패는 `route_query`의 `except`가 삼켜 UI에는 `None`만 돌아갑니다. UI는 이를 받아 웹 검색 에이전트에 위임하고, 에이전트는 먼저 OpenAI에 도구 호출 여부를 묻고 나서 `DuckDuckGoSearchRun`으로 검색한 뒤 그 결과를 다시 OpenAI(`gpt-3.5-turbo`)에 넘겨 최종 답을 만듭니다(Step 6에서 확인했듯 채팅 완성이 2회입니다). 반대로 어느 한 DB의 평균 점수가 0.5를 넘었다면 이 그림과 다른 경로를 탑니다 — 웹 검색 대신 `query_database`가 같은 DB를 다시 검색해(k=4, 이번에도 질의 임베딩은 OpenAI) `gpt-3.5-turbo`로 곧장 답을 생성합니다(Step 5). 이 시퀀스는 Step 2·4·5·6에서 각 구간을 개별적으로 확인한 것을 이어붙인 것이며, 키가 없어 처음부터 끝까지 한 번에 재현하지는 못했습니다.
 
 ## 실행 체크리스트
 
@@ -811,7 +940,9 @@ HTTP_STATUS:200
 - [ ] `route_query`의 확신 문턱(0.5)이 정규화 점수가 아니라 원점수 코사인이라는 것을 소스와 인메모리 재현으로 확인했다
 - [ ] `create_routing_agent()`가 오늘 설치되는 agno 3.0.11에서 `show_tool_calls` 인자 때문에 항상 `TypeError`로 실패한다는 것을 직접 호출해 확인했다
 - [ ] 문서 기반 답변과 웹 검색 답변 모두 결국 `gpt-3.5-turbo`(`ChatOpenAI` 기본값)로 생성된다는 것을 확인했다
-- [ ] `streamlit run`이 키 없이도 로컬 서버로 뜨고(HTTP 200) 자격증명 폼까지만 보여준다는 것을 직접 확인했다
+- [ ] `query_database`가 질문을 2회 임베딩하고, 도구를 부르는 웹 검색 경로는 채팅 완성이 2회라는 것을 이 앱의 함수를 직접 호출해 확인했다
+- [ ] 업로더에서 파일을 지우지 않으면 질문마다 같은 문서가 다시 임베딩·저장된다는 것을 직접 확인했다
+- [ ] `streamlit run`이 키 없이도 로컬 서버로 뜨고(HTTP 200) 자격증명 폼까지만 보여준다는 것과, `--server.address localhost`가 없으면 `checkip.amazonaws.com`으로 외부 요청이 나간다는 것을 직접 확인했다
 
 ## 문제 해결
 
@@ -821,11 +952,13 @@ HTTP_STATUS:200
 | 원본 앱 README의 "How to Run?" 안내에서 "Setup Qdrant Cloud"와 "Upload Documents"가 둘 다 5번으로 매겨져 있음 | 앱 자체 README의 번호 매기기 오탈자(직접 확인, `rag_tutorials/rag_database_routing/README.md:38,46`) | 번호 대신 이 문서의 사전 준비·체크리스트를 따르기 |
 | 인증 없는 로컬 Qdrant를 쓰는데 "Please enter all required credentials"에서 막힘 | `initialize_models()`는 URL과 키가 둘 다 채워진 `QdrantClient`만 요구해 로컬 URL도 통과하지만, 그 앞의 게이트(`rag_tutorials/rag_database_routing/rag_database_routing.py:324-326`)는 Qdrant API 키 칸이 비어 있으면 무조건 `st.stop()`을 부름(소스로 확인) | 로컬 Qdrant라면 API 키 칸에 아무 문자열이나 채워 넣기 |
 | `uv pip install`이 예상보다 오래 걸리고 PyTorch까지 받음 | `requirements.txt`의 `sentence-transformers`(7번째 줄)가 이 파일에서 전혀 쓰이지 않는데도 `torch`(2.14.0)·`transformers`(5.17.0)를 함께 설치함(직접 확인) | 실행에는 필요 없으므로 설치가 끝날 때까지 기다리면 됨 |
-| "Submit Credentials" 후 한동안 반응이 없음 | `QdrantClient(...)` 생성 자체는 0.2초 안에 끝남(직접 확인) — 이 앱은 `timeout=`을 지정하지 않아, 오탈자 URL이면 `client.get_collections()`가 라이브러리 기본 타임아웃만큼 걸릴 수 있음(Step 2) | URL을 다시 확인하고 기다리거나 취소 후 재시도 |
+| 세 번째 자격증명 칸을 채운 뒤 한동안 반응이 없음(이 앱에는 "Submit" 버튼이 없음 — `grep` 0건, 직접 확인) | `QdrantClient(...)` 생성 자체는 0.2초 안에 끝남(직접 확인) — 이 앱은 `timeout=`을 지정하지 않아, 오탈자 URL이면 `client.get_collections()`가 라이브러리 기본 타임아웃만큼 걸릴 수 있음(Step 2) | URL을 다시 확인하고 기다리거나 취소 후 재시도 |
+| 업로드한 문서를 지우지 않은 채 질문을 여러 번 물으면 같은 문서가 계속 다시 저장됨 | 업로드 블록이 `if uploaded_files:`뿐이라(`:351`) 버튼이나 처리-완료 플래그가 없음 — Streamlit은 질문 입력 같은 모든 상호작용마다 스크립트를 처음부터 다시 실행하므로, 업로더에 파일이 남아 있는 한 재실행마다 `process_document`→`add_documents`가 다시 돎(직접 확인, Step 3) | 저장이 끝나면 업로더에서 파일을 지우기(× 버튼) |
+| `streamlit run ... --server.headless true`로 띄웠는데 독자 컴퓨터에서 외부로 나가는 요청이 잡힘 | Streamlit 1.64.0은 headless 모드에서 배너의 External URL을 채우려고 `checkip.amazonaws.com`에 실제로 접속을 시도함(`web/bootstrap.py`·`net_util.py`, 소스로 확인) — Step 7의 명령처럼 `--server.address localhost`를 붙이지 않으면 이 요청이 나감(직접 확인) | `--server.address localhost`를 함께 준다 |
 
 ## 더 해보기
 
-- `rag_tutorials/rag_database_routing/rag_database_routing.py:155`의 `show_tool_calls=False`를 지우고 실제 키로 `create_routing_agent()`가 `'products'`/`'support'`/`'finance'` 중 하나를 정말 반환하는지 확인해보기
+- `rag_tutorials/rag_database_routing/rag_database_routing.py:155`의 `show_tool_calls=False`를 지우고 실제 키로 `create_routing_agent()`가 `'products'`/`'support'`/`'finance'` 중 하나를 정말 반환하는지 확인해보기 — 성공한 실행마다 agno가 `os-api.agno.com`으로 익명 사용 통계를 보낸다는 것(Day 047 Step 5)도 함께 확인해보기
 - Step 4의 인메모리 재현 스크립트를 바탕으로 `confidence_threshold`(`rag_tutorials/rag_database_routing/rag_database_routing.py:181`)를 0.3이나 0.7로 바꿔가며 벡터 라우팅과 LLM 라우팅의 경계가 어떻게 바뀌는지 실험해보기
 - `main()`이 버리는 `relevant_docs`(`rag_tutorials/rag_database_routing/rag_database_routing.py:382`)를 `st.write`로 화면에 추가해, 어떤 청크가 답변 근거가 됐는지 직접 확인해보기
 
