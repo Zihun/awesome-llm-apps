@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+orchestrator: 오케스트레이터 { class: ours }
+qdrant: Qdrant { class: store }
+tavily: Tavily { class: ext }
+openai: OpenAI { class: ext }
+
+user -> ui: 질문 입력
+ui -> orchestrator: 질문 텍스트
+orchestrator -> orchestrator: "입력 검증 → 통과 (가드레일)"
+orchestrator -> qdrant: 유사도 검색
+qdrant -> orchestrator: "0.80 미만"
+orchestrator -> tavily: 웹 검색
+tavily -> orchestrator: 검색 결과
+orchestrator -> openai: 설명 생성
+openai -> orchestrator: 단계별 설명
+orchestrator -> orchestrator: "출력 검증 → 통과 (가드레일)"
+orchestrator -> ui: 최종 답변
+ui -> user: 화면 표시
