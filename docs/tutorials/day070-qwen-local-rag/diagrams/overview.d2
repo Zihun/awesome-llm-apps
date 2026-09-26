@@ -1,0 +1,25 @@
+...@../../_tools/theme
+direction: down
+
+front: "사용자 쪽 화면 (qwen_local_rag_agent.py)" {
+  class: group
+  user: 사용자 { class: person }
+  doc_proc: 문서 처리 (process_pdf·process_web) { class: ours }
+  rag_agent: RAG 에이전트 (get_rag_agent) { class: ours }
+  web_agent: 웹 검색 에이전트 (get_web_search_agent) { class: ours }
+}
+
+qdrant: Qdrant (Docker, 로컬) { class: store }
+exa: Exa AI 검색 { class: ext }
+
+ollama: "Ollama 데몬 (이 PC, 로컬)" {
+  class: group
+  grid-columns: 1
+  chat_model: 채팅 모델 (Qwen3·Gemma3·DeepSeek 중 택1) { class: ext }
+  embed_model: 임베딩 모델 (snowflake-arctic-embed) { class: ext }
+  web_model: 웹검색 모델 (llama3.2) { class: ext }
+}
+
+front -> qdrant: 청크 저장·유사도 검색
+front -> ollama: 프롬프트·텍스트
+front -> exa: 검색 쿼리(폴백 시)
