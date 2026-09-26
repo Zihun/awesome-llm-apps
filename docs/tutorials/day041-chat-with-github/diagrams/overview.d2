@@ -1,6 +1,5 @@
 ...@../../_tools/theme
 direction: down
-grid-rows: 3
 
 front: "브라우저 쪽" {
   class: group
@@ -11,20 +10,15 @@ front: "브라우저 쪽" {
 
 loader: GithubLoader → 청크 분할 { class: ours }
 
-back: "모델과 저장소" {
-  class: group
-  grid-columns: 5
-  github: GitHub API { class: ext }
-  openai: OpenAI API { class: ext }
-  dbh: Chroma ./db (영구) { class: store }
-  ollama: Ollama 서버 { class: store }
-  dbl: Chroma 임시 폴더 { class: store }
-}
+github: GitHub API { class: ext }
+openai: OpenAI API { class: ext }
+dbh: Chroma ./db (영구) { class: store }
+ollama: Llama3:instruct (Ollama, 로컬) { class: ext }
+dbl: Chroma 임시 폴더 { class: store }
 
-front.user -> front.ui: 저장소 이름 (+ OpenAI 키)
-front.ui -> loader: repo: 쿼리
-loader -> back.github: 파일 트리 전체 요청
-loader -> back.openai: 청크 (호스팅)
-loader -> back.ollama: 청크 (로컬)
-back.openai -> back.dbh: 임베딩 벡터
-back.ollama -> back.dbl: 임베딩 벡터
+front -> loader: repo: 쿼리
+loader -> github: 파일 트리 전체 요청
+loader -> openai: 청크 (호스팅)
+loader -> ollama: 청크 (로컬)
+openai -> dbh: 임베딩 벡터
+ollama -> dbl: 임베딩 벡터
