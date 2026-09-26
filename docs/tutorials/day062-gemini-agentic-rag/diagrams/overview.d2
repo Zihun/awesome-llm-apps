@@ -27,6 +27,6 @@ platform: "외부 API" {
 }
 
 front -> qdrant: 청크 저장·유사도 검색
-front -> platform: 문서 임베딩 요청
+front -> platform: 임베딩 요청 (문서·질의)
 front -> pipeline: 질문·재작성 요청
 pipeline -> platform: 채팅·웹검색 요청
