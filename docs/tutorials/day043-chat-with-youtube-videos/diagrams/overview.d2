@@ -1,32 +1,26 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 2
 
-front: "브라우저 쪽" {
-  class: group
-  grid-columns: 2
-  user: 사용자 { class: person }
-  ui: Streamlit UI { class: ours }
-}
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+app: embedchain App { class: ours }
 
-local: "로컬 프로세스" {
+storage: "로컬 저장소" {
   class: group
-  grid-columns: 3
   chroma: Chroma 벡터 저장소 { class: store }
-  app: embedchain App { class: ours }
   history: 대화 기록 DB { class: store }
 }
 
 external: "외부 서비스" {
   class: group
-  grid-columns: 3
   transcript: YouTube 자막 API { class: ext }
   embed_api: OpenAI 임베딩 API { class: ext }
   chat_api: OpenAI Chat (gpt-4) { class: ext }
 }
 
-front.user -> front.ui: 키·URL·질문 입력
-front -> local: session_state에 보관
-local.app -> local.chroma: 청크 저장·유사도 검색
-local.app -> local.history: 대화 기록 저장(app_id 고정)
-local -> external: 자막 요청 → 임베딩 → 답변 생성
+user -> ui: 키·URL·질문 입력
+ui -> app: session_state에 보관
+app -> storage.chroma: 청크 저장·유사도 검색
+app -> storage.history: 대화 기록 저장
+ui -> external.transcript: 자막 요청
+app -> external: 임베딩 → 답변 생성 요청
