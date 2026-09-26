@@ -1,7 +1,10 @@
 ...@../../_tools/theme
 direction: right
 
-a: "Entity 노드\nid · name · type\ndescription\nsource_doc · source_chunk" { class: file }
-b: "Entity 노드\nid · name · type\ndescription\nsource_doc · source_chunk" { class: file }
+neo4j: Neo4j {
+  class: group
+  a: "Entity 노드\nid · name · type\ndescription\nsource_doc · source_chunk" { class: file }
+  b: "Entity 노드\nid · name · type\ndescription\nsource_doc · source_chunk" { class: file }
+}
 
-a -> b: RELATES_TO
+neo4j.a -> neo4j.b: "RELATES_TO {type · description · source_doc}"

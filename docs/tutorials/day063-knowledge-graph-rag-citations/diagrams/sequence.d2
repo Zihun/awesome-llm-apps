@@ -7,7 +7,7 @@ neo4j: Neo4j { class: store }
 user: 사용자 { class: person }
 
 user -> ui: 질문
-ui -> neo4j: 유사도 검색
+ui -> neo4j: 검색어 매칭
 neo4j -> ui: 초기 엔티티
 ui -> neo4j: 다중 홉 확장
 neo4j -> ui: 관련 엔티티 + 출처
