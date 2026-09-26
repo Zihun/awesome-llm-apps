@@ -3,10 +3,11 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-embed_model: 임베딩 모델 (snowflake-arctic-embed, 로컬) { class: ext }
-qdrant: Qdrant (Docker, 로컬) { class: store }
+embed_model: 임베딩 모델 (로컬) { class: ext }
+qdrant: Qdrant (로컬) { class: store }
 rag_agent: RAG 에이전트 { class: ours }
-chat_model: 채팅 모델 (Qwen3 등, 로컬) { class: ext }
+chat_model: 채팅 모델 (로컬) { class: ext }
+agno_api: Agno 통계 API { class: ext }
 
 user -> ui: 질문 입력
 ui -> embed_model: 질문 임베딩 요청
@@ -16,5 +17,6 @@ qdrant -> ui: 관련 청크 목록
 ui -> rag_agent: 프롬프트(문맥+질문)
 rag_agent -> chat_model: 채팅 완성 요청
 chat_model -> rag_agent: 답변 텍스트
+rag_agent -> agno_api: 실행 메타데이터(성공 시)
 rag_agent -> ui: response.content
 ui -> user: 답변 표시

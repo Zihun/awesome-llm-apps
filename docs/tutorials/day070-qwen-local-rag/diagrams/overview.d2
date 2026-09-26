@@ -1,16 +1,18 @@
 ...@../../_tools/theme
 direction: down
 
-front: "사용자 쪽 화면 (qwen_local_rag_agent.py)" {
+front: "사용자 쪽 화면" {
   class: group
   user: 사용자 { class: person }
+  ui: Streamlit UI { class: ours }
   doc_proc: 문서 처리 (process_pdf·process_web) { class: ours }
   rag_agent: RAG 에이전트 (get_rag_agent) { class: ours }
-  web_agent: 웹 검색 에이전트 (get_web_search_agent) { class: ours }
+  web_agent: 웹 검색 에이전트 { class: ours }
 }
 
 qdrant: Qdrant (Docker, 로컬) { class: store }
 exa: Exa AI 검색 { class: ext }
+agno_api: Agno 사용 통계 API { class: ext }
 
 ollama: "Ollama 데몬 (이 PC, 로컬)" {
   class: group
@@ -23,3 +25,4 @@ ollama: "Ollama 데몬 (이 PC, 로컬)" {
 front -> qdrant: 청크 저장·유사도 검색
 front -> ollama: 프롬프트·텍스트
 front -> exa: 검색 쿼리(폴백 시)
+front -> agno_api: 실행 메타데이터(성공 시)
