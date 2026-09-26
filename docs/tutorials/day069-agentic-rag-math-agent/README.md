@@ -50,6 +50,13 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. 이 저장소 루트에는 `pyproject.toml`이 있어 이후 모든 `uv run`에는 `--no-project`를 붙입니다.)
 
+완전히 새 가상환경에서 이 설치 명령을 직접 돌리면 아래처럼 시작합니다(발췌 — 뒤이어 `+ 패키지==버전`이 143줄 더 나옵니다).
+
+```
+Resolved 143 packages in 138ms
+Installed 143 packages in 2.63s
+```
+
 `config/.env.example`을 `config/.env`로 복사하고 두 키를 채웁니다.
 
 `rag_tutorials/agentic_rag_math_agent/config/.env.example:1-2`
@@ -79,16 +86,7 @@ if __name__ == "__main__":
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
-**확인.** 격리된 가상환경에 설치하고 모든 파일이 컴파일되는지 봅니다(완전히 새 venv 기준, 실제 명령·출력을 그대로 옮겼습니다).
-
-```bash
-uv pip install -r requirements.txt
-```
-
-```
-Resolved 143 packages in 138ms
-Installed 143 packages in 2.63s
-```
+**확인.** 위에서 이미 설치했으니, 몇 개나 깔렸는지만 셉니다(`uv pip list`는 상태 줄·구분선도 같이 나와 그대로 줄 수를 세면 틀리기 쉬우니 `uv pip freeze`를 씁니다).
 
 ```bash
 uv pip freeze | wc -l
@@ -98,7 +96,7 @@ uv pip freeze | wc -l
 143
 ```
 
-`requirements.txt`의 최상위 패키지 12개(마지막 줄 `requests==2.32.3`에는 개행이 없어 `wc -l`은 13으로 셉니다 — 실제로는 14줄, 그중 빈 줄 1개와 주석 1개를 빼면 12개)가 전이 의존성을 포함해 총 143개 패키지로 풀립니다(`uv pip list`로 세면 상태 줄·구분선까지 걸려 144로 잘못 셀 수 있으니 `uv pip freeze`를 씁니다).
+`requirements.txt`의 최상위 패키지 12개(마지막 줄 `requests==2.32.3`에는 개행이 없어 `wc -l`은 13으로 셉니다 — 실제로는 14줄, 그중 빈 줄 1개와 주석 1개를 빼면 12개)가 전이 의존성을 포함해 총 143개 패키지로 풀립니다.
 
 ```bash
 uv run --no-project python -m py_compile data/load_gsm8k_data.py rag/vector.py rag/guardrails.py rag/query_router.py app/benchmark.py app/streamlit.py && echo compiled
@@ -163,14 +161,16 @@ def build_vector_index():
 
 ```bash
 docker run -p 6333:6333 qdrant/qdrant   # 별도 터미널에서 먼저 띄워 둡니다
-uv run --no-project python rag/vector.py
+PYTHONIOENCODING=utf-8 uv run --no-project python rag/vector.py
 ```
+
+(PowerShell: `$env:PYTHONIOENCODING="utf-8"; uv run --no-project python rag/vector.py`)
 
 ```
 ✅ Qdrant vector index built and saved successfully.
 ```
 
-이 명령은 실제 `OPENAI_API_KEY`, 실행 중인 Qdrant, JEEBench 접속용 인터넷이 모두 있어야 하고 위 출력은 소스로 읽은 것이지 이번 재현에서 직접 실행한 결과는 아닙니다(키가 없어 실행하지 못했습니다) — JEEBench 전체 문항을 임베딩하므로 규모에 따라 몇 분 걸릴 수 있습니다.
+이 명령은 실제 `OPENAI_API_KEY`, 실행 중인 Qdrant, JEEBench 접속용 인터넷이 모두 있어야 하고 위 출력은 소스로 읽은 것이지 이번 재현에서 직접 실행한 결과는 아닙니다(키가 없어 실행하지 못했습니다) — JEEBench 전체 문항을 임베딩하므로 규모에 따라 몇 분 걸릴 수 있습니다. `PYTHONIOENCODING`을 안 붙이면 Step 3에서 다룰 것과 같은 이유로 인덱스는 다 만들어진 뒤 마지막 줄(`rag_tutorials/agentic_rag_math_agent/rag/vector.py:51`의 "✅")에서 `UnicodeEncodeError`가 납니다 — 작업 자체는 끝났는데 성공 메시지 대신 트레이스백을 보게 되는 것이니 당황하지 않습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -489,10 +489,12 @@ with tab2:
 여기까지 만들었으면 실제로 앱을 띄웁니다.
 
 ```bash
-uv run --no-project streamlit run app/streamlit.py
+PYTHONIOENCODING=utf-8 uv run --no-project streamlit run app/streamlit.py --server.address localhost --server.headless true
 ```
 
-브라우저가 열리면 3번째 탭("📊 Benchmark Results")을 여는 순간 `total_math = len(load_jeebench_dataset())`(`rag_tutorials/agentic_rag_math_agent/app/streamlit.py:101`)이 실행돼 HuggingFace에서 JEEBench를 내려받습니다 — 탭을 열기만 해도 인터넷 접속이 나갑니다.
+(PowerShell: `$env:PYTHONIOENCODING="utf-8"; uv run --no-project streamlit run app/streamlit.py --server.address localhost --server.headless true`)
+
+`streamlit`은 탭 3개의 본문을 매번 스크립트 전체와 함께 실행합니다 — 어떤 탭이 화면에 보이는지와 무관하게, 앱이 뜨는 순간부터 곧바로 3번째 탭 코드의 `total_math = len(load_jeebench_dataset())`(`rag_tutorials/agentic_rag_math_agent/app/streamlit.py:101`)이 실행돼 HuggingFace에 접속합니다. 이 함수에는 캐시가 없어(소스로 확인) 위젯을 하나 건드려 스크립트가 다시 돌 때마다(예: 1번 탭에 질문만 입력해도) 매번 다시 나갑니다 — 탭을 열지 않아도, 심지어 3번 탭을 한 번도 안 봐도 나갑니다. 스텁 로더로 `AppTest`를 돌려 직접 확인했습니다: 아무 탭도 고르지 않은 첫 실행에서 이미 호출 1회, 위젯 하나를 건드려 재실행하면 호출 2회.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -554,7 +556,7 @@ resp = df['Predicted'].str.lower()
 print('a,b,c,d 네 글자가 모두 들어 있는 응답:', resp.apply(lambda r: all(c in r for c in 'abcd')).sum(), '/', len(df))
 df['exp_len'] = df['Expected'].astype(str).str.len()
 single = df[df['exp_len'] == 1]
-is_letter = single['Expected'].astype(str).str.match('^[A-Da-d]\$')
+is_letter = single['Expected'].astype(str).str.fullmatch('[A-Da-d]')
 print('단일 보기(A~D)', is_letter.sum(), '건 중 정답 처리', single[is_letter]['Correct'].sum(), '건')
 print('정수 답', (~is_letter).sum(), '건 중 정답 처리', single[~is_letter]['Correct'].sum(), '건')
 multi = df[df['exp_len'] > 1]
@@ -569,7 +571,7 @@ a,b,c,d 네 글자가 모두 들어 있는 응답: 50 / 50
 복수 정답(예: BCD) 22 건 중 정답 처리 6 건
 ```
 
-50개 응답 **전부**에 a·b·c·d 네 글자가 이미 들어 있습니다(문장 속 관사 "a", "can"의 c 같은 흔한 글자라 당연합니다) — 그래서 정답이 A~D 한 글자인 문항 18건은 모델이 무슨 말을 했든 `expected.lower() in response.lower()`가 항상 참이 되어 **채점상 무조건 정답**입니다(직접 확인). 이전에는 이 18건이 섞인 "단일 정답 28건 중 27건(96%)"을 모델 정확도처럼 적었는데, 실제로 모델 실력을 반영하는 쪽은 정수 답 10건(9건 정답, 유일한 오답은 "7")입니다. 66%라는 최종 수치 자체는 A~D 한 글자 문항의 이 맹점을 그대로 포함합니다.
+50개 응답 **전부**에 a·b·c·d 네 글자가 이미 들어 있습니다(문장 속 관사 "a", "can"의 c 같은 흔한 글자라 당연합니다) — 그래서 정답이 A~D 한 글자인 문항 18건은 모델이 무슨 말을 했든 `expected.lower() in response.lower()`가 항상 참이 되어 **채점상 무조건 정답**입니다(직접 확인). 이 18건을 빼면, 단일 정답 중 실제로 모델 실력을 반영하는 쪽은 정수 답 10건(9건 정답, 유일한 오답은 "7")뿐입니다. 66%라는 최종 수치 자체는 A~D 한 글자 문항의 이 맹점을 그대로 포함합니다.
 
 복수 정답 22건(정답이 "BC"·"BCD"처럼 보기 여러 개를 합친 문자열)은 6건만 정답 처리됐지만, 나머지 16건을 들여다보면 이유가 섞여 있습니다(직접 대조). 정답 BCD에 모델이 "the correct answer is (A)"라고 끝맺은 경우처럼 **진짜 오답**도 있고, 정답 BC에 모델이 "the correct answer is (B) ... and (C) ..."라고 맞게 답했는데도 "bc"라는 연속 문자열이 없어 오답 처리된 **채점 탓**도 있습니다. 그러므로 "부분 문자열 채점이 복수 정답에 불리하다"는 방향은 맞지만, 16건 전부가 채점 탓이라고 말할 수는 없습니다(직접 대조한 것만 "(직접 확인)"입니다). 마지막에 정확도를 계산합니다.
 
@@ -629,7 +631,7 @@ print(f'{correct}/{len(df)} = {correct/len(df)*100:.1f}%')
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 KB 유사도가 문턱(0.80)에 못 미쳐 웹 폴백으로 넘어가는, 가장 흔할 경로를 그린 것입니다. 오케스트레이터가 실제로 내보내는 외부 호출은 넷입니다 — 입력 검증(GPT-4o, DSPy), 질의 임베딩(Qdrant 검색 전에 필요합니다, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:37`의 `retrieve()`가 내부에서 호출), 설명 생성(GPT-4o), 출력 검증(GPT-4o, DSPy). 입력 가드레일을 통과한 뒤 질의를 임베딩해 Qdrant에 유사도 검색을 보내고, 0.80 미만이 나오면(또는 Qdrant 접속 자체가 실패하면, Step 4) Tavily로 웹 검색을 하고 그 결과를 GPT-4o에 넘겨 설명을 만듭니다. 다시 출력 가드레일(GPT-4o)을 통과하고 나서야 Streamlit UI로 돌아가 사용자에게 보여집니다. KB 유사도가 0.80 이상이었다면 웹 검색·Tavily 구간 없이 Qdrant가 돌려준 정답만으로 GPT-4o가 설명을 만드는 더 짧은 경로를 탑니다(Step 4의 `extra-routing.svg` 참고 — 출력 검증에 실패하면 그림처럼 재검증 없이 한 번 더 웹으로 재시도합니다). 이 시퀀스는 키가 없어 실제로 끝까지 실행하지는 못했고, Step 3·4에서 각 구간을 개별적으로 확인한 것과 소스 읽기를 이어 붙인 것입니다.
+이 그림은 KB 유사도가 문턱(0.80)에 못 미쳐 웹 폴백으로 넘어가는, 가장 흔할 경로를 그린 것입니다. 오케스트레이터가 실제로 내보내는 외부 호출은 OpenAI 넷(입력 검증, 질의 임베딩, 설명 생성, 출력 검증 — 앞뒤 둘은 GPT-4o를 쓰는 DSPy 가드레일), 그리고 Qdrant·Tavily 각 한 번씩입니다. 질의 임베딩은 Qdrant 검색 전에 필요합니다 — `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:38`의 `retrieve()`가 내부에서 호출합니다. 입력 가드레일을 통과한 뒤 질의를 임베딩해 Qdrant에 유사도 검색을 보내고, 0.80 미만이 나오면(또는 Qdrant 접속 자체가 실패하면, Step 4) Tavily로 웹 검색을 하고 그 결과를 GPT-4o에 넘겨 설명을 만듭니다. 다시 출력 가드레일(GPT-4o)을 통과하고 나서야 Streamlit UI로 돌아가 사용자에게 보여집니다. KB 유사도가 0.80 이상이었다면 웹 검색·Tavily 구간 없이 Qdrant가 돌려준 정답만으로 GPT-4o가 설명을 만드는 더 짧은 경로를 탑니다(Step 4의 `extra-routing.svg` 참고 — 출력 검증에 실패하면 그림처럼 재검증 없이 한 번 더 웹으로 재시도합니다). 이 시퀀스는 키가 없어 실제로 끝까지 실행하지는 못했고, Step 3·4에서 각 구간을 개별적으로 확인한 것과 소스 읽기를 이어 붙인 것입니다.
 
 ## 실행 체크리스트
 
@@ -642,7 +644,7 @@ print(f'{correct}/{len(df)} = {correct/len(df)*100:.1f}%')
 - [ ] `logs/feedback_log.json`에 이미 14건의 피드백이 쌓여 있고, 이 파일을 다시 읽어 되먹이는 코드가 없다는 것을 확인했다
 - [ ] `benchmark/results_math_50.csv`를 직접 집계해 66.0%(33/50)가 앱 README의 "66%"와 일치한다는 것을 확인했다
 - [ ] 벤치마크의 정답 판정이 정확히 일치가 아니라 부분 문자열 포함이라는 것, 그리고 응답 50개 전부에 a·b·c·d가 들어 있어 A~D 한 글자 정답은 채점상 항상 통과한다는 것을 직접 집계로 확인했다
-- [ ] `streamlit run app/streamlit.py`로 실제 앱을 띄우고, 3번 탭이 HuggingFace에 접속한다는 것을 소스로 확인했다
+- [ ] `streamlit run app/streamlit.py`로 실제 앱을 띄우면 3번 탭을 열지 않아도, 그리고 위젯을 건드려 재실행할 때마다 HuggingFace에 접속한다는 것을 직접 확인했다(스텁 로더 + `AppTest`)
 
 ## 문제 해결
 
