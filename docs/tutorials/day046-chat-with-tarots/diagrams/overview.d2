@@ -1,31 +1,17 @@
 ...@../../_tools/theme
 direction: down
-grid-columns: 2
 
-front: "브라우저 쪽" {
-  class: group
-  grid-columns: 2
-  user: 사용자 { class: person }
-  ui: 스트림릿 UI { class: ours }
-}
+user: 사용자 { class: person }
+ui: 스트림릿 UI (app.py) { class: ours }
+csv: 카드 데이터셋 (tarots.csv) { class: file }
+select: 무작위 선택 { class: ours }
+chain: LCEL 체인 { class: ours }
+build: 프롬프트 조립 { class: ours }
+llm: 로컬 LLM (phi4) { class: ext }
 
-data: "카드 데이터" {
-  class: group
-  grid-columns: 2
-  csv: 카드 데이터셋 (tarots.csv) { class: file }
-  select: 무작위 선택 { class: ours }
-}
-
-run: "프롬프트와 모델" {
-  class: group
-  grid-columns: 3
-  build: 프롬프트 조립 { class: ours }
-  chain: LCEL 체인 { class: ours }
-  llm: 로컬 LLM (phi4) { class: store }
-}
-
-front.user -> front.ui: 카드 수 · 질문
-front -> data: 데이터프레임 로드 · 카드 수 전달
-data -> run: 뽑힌 카드(이름·역방향) + 질문 텍스트 → 해석 텍스트가 UI로 돌아온다
-run.build -> run.chain: 프롬프트 입력 dict
-run.chain -> run.llm: 완성된 프롬프트
+user -> ui: 카드 수 · 질문
+ui -> csv: 데이터프레임 로드
+ui -> select: 카드 수 · 카드 이름 목록
+ui -> chain: 뽑힌 카드 + 질문(context)
+chain -> build: 조립 호출
+chain -> llm: 완성된 프롬프트
