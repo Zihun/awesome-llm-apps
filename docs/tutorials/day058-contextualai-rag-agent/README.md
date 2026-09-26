@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-오늘은 Contextual AI의 완전 관리형 RAG 플랫폼 — 데이터스토어(문서 저장), 에이전트, 질의, LMUnit 평가까지 API 하나로 감싼 서비스 — 를 Streamlit으로 감싼 328줄짜리 에이전트를 다룹니다(직접 확인). 지금까지 이 볼륨이 다룬 로컬 임베딩+벡터DB 조합과 달리, 오늘 앱은 문서 저장부터 답변 생성까지 전부 `api.contextual.ai` 하나에 위임하고, 이 파일은 그 위에 자격증명 게이트·업로드 폼·채팅창을 얹은 얇은 층에 가깝습니다(소스로 확인). 그런데 그 얇은 층을 실제 SDK(`contextual-client==0.11.0`, 직접 확인)와 대조하면 몇 군데가 어긋납니다. 사이드바에서 API 키 칸을 비운 채 제출해도 클라이언트 생성 자체는 즉시 통과하고 — Day 057의 Cohere 키처럼 빈 문자열을 미리 걸러내는 검증이 없어 — 실패는 `client.agents.list()`가 실제 네트워크를 타는 순간에만 드러납니다(직접 확인, Step 2). 문서 업로드 위젯이 받는 확장자(`pdf`·`txt`·`md`)와 실제로 적재 가능한 확장자 집합(`ALLOWED_EXTS`: pdf·html·htm·mhtml·doc·docx·ppt·pptx)은 PDF 하나만 겹쳐서, txt·md는 골라도 항상 거부되고 html·doc(x)·ppt(x)는 API가 받아 줄 형식인데도 이 위젯에서는 애초에 고를 수 없습니다(소스로 확인, Step 3). 메타데이터 입력창에 JSON을 적으면 앱은 그것을 `json.loads`로 dict로 바꿔 SDK의 `ingest(..., metadata=...)`에 그대로 넘기는데, 이 인자의 실제 타입은 `str`(문자열화된 JSON)입니다 — 그 결과 실제 멀티파트 요청 필드는 `metadata`가 아니라 `metadata[custom_metadata][field1]`처럼 대괄호로 쪼개진다는 것을 가짜 전송계층(httpx `MockTransport`, 실제 네트워크 미사용)으로 직접 확인했습니다(Step 3). 문서 처리 완료를 기다리는 폴링 함수는 '아직 처리 중'을 `processing`·`pending` 두 가지로만 보는데, SDK가 정의한 실제 상태값은 여섯 가지(`pending`·`processing`·`retrying`·`completed`·`failed`·`cancelled`)라 `retrying` 중인 문서를 이미 끝난 것으로 착각할 수 있습니다(소스로 확인, Step 3). 채팅 응답을 꺼내는 함수는 세 갈래 `hasattr` 분기로 방어적으로 짜여 있지만, 실제 응답 스키마를 직접 만들어 넣어 보면 항상 두 번째 분기(`resp.message.content`)만 실행되고 나머지 둘은 죽은 코드이며, `message`가 비어 있으면 파이썬 객체의 문자열 표현이 그대로 화면에 노출됩니다(직접 확인, Step 5). LMUnit 평가는 SDK 자체 문서에 "별도 신청 양식으로 받는 키가 필요하다"고 적혀 있어, 메인 Contextual AI 키만으로 동작을 보장할 수 없습니다(소스로 확인, Step 6). 아래는 완성된 아키텍처입니다.
+오늘은 Contextual AI의 완전 관리형 RAG 플랫폼 — 데이터스토어(문서 저장), 에이전트, 질의, LMUnit 평가까지 API 하나로 감싼 서비스 — 를 Streamlit으로 감싼 328줄짜리 에이전트를 다룹니다(직접 확인). Day 051(Ragie)도 문서 저장·검색은 이미 호스팅형 서비스에 맡겼지만 생성은 별도로 Anthropic Claude를 불렀습니다(`docs/tutorials/day051-rag-as-a-service/README.md:7`) — 오늘 앱은 저장·검색뿐 아니라 생성·평가(LMUnit)까지 `api.contextual.ai` 하나에 전부 위임하고, 이 파일은 그 위에 자격증명 게이트·업로드 폼·채팅창을 얹은 얇은 층에 가깝습니다(소스로 확인). 그런데 그 얇은 층을 실제 SDK(`contextual-client==0.11.0`, 직접 확인)와 대조하면 몇 군데가 어긋납니다. 사이드바에서 API 키 칸을 비운 채 제출해도 클라이언트 생성 자체는 즉시 통과하고 — Day 057의 Cohere 키처럼 빈 문자열을 미리 걸러내는 검증이 없어 — 실패는 `client.agents.list()`가 실제 네트워크를 타는 순간에만 드러납니다(직접 확인, Step 2). 문서 업로드 위젯이 받는 확장자(`pdf`·`txt`·`md`)와 실제로 적재 가능한 확장자 집합(`ALLOWED_EXTS`: pdf·html·htm·mhtml·doc·docx·ppt·pptx)은 PDF 하나만 겹쳐서, txt·md는 골라도 항상 거부되고 html·doc(x)·ppt(x)는 API가 받아 줄 형식인데도 이 위젯에서는 애초에 고를 수 없습니다(소스로 확인, Step 3). 메타데이터 입력창에 JSON을 적으면 앱은 그것을 `json.loads`로 dict로 바꿔 SDK의 `ingest(..., metadata=...)`에 그대로 넘기는데, 이 인자의 실제 타입은 `str`(문자열화된 JSON)입니다 — 그 결과 실제 멀티파트 요청 필드는 `metadata`가 아니라 `metadata[custom_metadata][field1]`처럼 대괄호로 쪼개진다는 것을 가짜 전송계층(httpx `MockTransport`, 실제 네트워크 미사용)으로 직접 확인했습니다(Step 3). 문서 처리 완료를 기다리는 폴링 함수는 '아직 처리 중'을 `processing`·`pending` 두 가지로만 보는데, SDK가 정의한 실제 상태값은 여섯 가지(`pending`·`processing`·`retrying`·`completed`·`failed`·`cancelled`)라 `retrying` 중인 문서를 이미 끝난 것으로 착각할 수 있습니다(소스로 확인, Step 3). 채팅 응답을 꺼내는 함수는 세 갈래 `hasattr` 분기로 방어적으로 짜여 있지만, 실제 응답 스키마를 직접 만들어 넣어 보면 항상 두 번째 분기(`resp.message.content`)만 실행되고 나머지 둘은 죽은 코드이며, `message`가 비어 있으면 파이썬 객체의 문자열 표현이 그대로 화면에 노출됩니다(직접 확인, Step 5). LMUnit 평가는 SDK 자체 문서에 "별도 신청 양식으로 받는 키가 필요하다"고 적혀 있어, 메인 Contextual AI 키만으로 동작을 보장할 수 없습니다(소스로 확인, Step 6). 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -46,7 +46,7 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
 
-이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. `uv venv`는 인자 없이 실행하면 uv 자체 관리 Python 3.13.3을 그대로 고릅니다(직접 확인) — 기기마다 다를 수 있는 캐시된 값입니다. `uv pip install`을 앱 폴더 안에서 실행해도 uv는 상위 폴더를 훑어 리포 루트의 `pyproject.toml`을 찾아내고 `tool.uv.dev-dependencies` 사용에 대한 폐기 경고를 한 줄 띄웁니다(직접 확인) — 설치 대상 환경은 `--python`으로 지정한 곳 그대로이므로 무시해도 됩니다.
+이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다. `uv venv`는 인자 없이 실행하면 uv 자체 관리 Python 3.13.3을 그대로 고릅니다(직접 확인) — 기기마다 다를 수 있는 캐시된 값입니다. `uv pip install`을 앱 폴더 안에서 실행해도 uv는 상위 폴더를 훑어 리포 루트의 `pyproject.toml`을 찾아내고 `tool.uv.dev-dependencies` 사용에 대한 폐기 경고를 한 줄 띄웁니다(직접 확인) — `uv pip install`은 방금 만든 앱 폴더의 `.venv`에 그대로 설치하므로(리포 루트 `.venv`를 건드리지 않으므로) 무시해도 됩니다.
 
 `rag_tutorials/contextualai_rag_agent/requirements.txt:1-4`
 
@@ -133,20 +133,21 @@ client = ensure_client()
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-**확인.** 네트워크를 막아 두고(연결 시도 자체는 이 컴퓨터를 벗어나지 않습니다) 빈 키로 무엇이 통과하고 무엇이 실패하는지 봅니다.
+**확인.** 네트워크를 막아 두고(연결 시도 자체가 이 컴퓨터를 벗어나지 않게) 빈 키로 무엇이 통과하고 무엇이 실패하는지 봅니다 — 이때 막아야 하는 것은 소켓 연결(`socket.socket.connect`)만이 아니라 이름풀이(`socket.getaddrinfo`)도입니다. 호스트 이름을 실제 IP로 먼저 풀어야 연결을 시도할 수 있으므로, `connect`만 막고 `getaddrinfo`를 그대로 두면 `agents.list()`를 부르는 순간 `api.contextual.ai`에 대한 DNS 조회가 이미 이 컴퓨터를 벗어난 뒤입니다.
 
 ```bash
 uv run --no-project python -c "
 import socket, time
-def _blocked(self, *a, **k):
+def _blocked(*a, **k):
     raise RuntimeError('network blocked')
 socket.socket.connect = _blocked
+socket.getaddrinfo = _blocked
 
 from contextual import ContextualAI
 
 t0 = time.monotonic()
 client = ContextualAI(api_key='', base_url='https://api.contextual.ai/v1')
-print(f'empty api_key: constructed in {time.monotonic()-t0:.3f}s, no exception')
+print(f'empty api_key: client constructed, no exception ({time.monotonic()-t0:.2f}s)')
 
 try:
     client.agents.list()
@@ -155,14 +156,87 @@ except Exception as e:
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(초 단위 값은 실행마다 바뀝니다 — 아래는 한 번의 예시일 뿐입니다):
 
 ```
-empty api_key: constructed in 0.236s, no exception
+empty api_key: client constructed, no exception (0.18s)
 agents.list() -> APIConnectionError: Connection error.
 ```
 
-일반적인 네트워크 환경에서는 이 지점에서 연결 자체는 성공하고, 서버가 빈(또는 틀린) `Authorization: Bearer` 헤더를 401로 거부하면서 `AuthenticationError`가 나는 쪽이 더 흔할 것입니다 — 이 문서는 키가 없어 그 응답까지는 확인하지 못했고, 여기서는 "연결 시도가 정말 `agents.list()`에서 일어난다"는 지점만 소켓 차단으로 증명했습니다. 이어서 키 없이도 화면이 어디까지 뜨는지 `AppTest`로 확인합니다(네트워크·키 모두 불필요).
+`getaddrinfo`를 막지 않으면 정말로 새는지도 확인해 둡니다 — 이번에는 곧바로 막는 대신 호출을 **먼저 기록**한 뒤에 막습니다(실제 DNS 서버에는 여전히 안 나갑니다).
+
+```bash
+uv run --no-project python -c "
+import socket
+attempts = []
+def _log_and_block(host, *a, **k):
+    attempts.append(host)
+    raise RuntimeError('blocked before this left the machine')
+def _blocked_connect(self, *a, **k):
+    raise RuntimeError('network blocked')
+socket.getaddrinfo = _log_and_block
+socket.socket.connect = _blocked_connect
+
+from contextual import ContextualAI
+client = ContextualAI(api_key='', base_url='https://api.contextual.ai/v1')
+try:
+    client.agents.list()
+except Exception as e:
+    print(f'{type(e).__name__}: {e}')
+print('getaddrinfo would have resolved:', attempts)
+"
+```
+
+직접 확인한 출력:
+
+```
+APIConnectionError: Connection error.
+getaddrinfo would have resolved: ['api.contextual.ai', 'api.contextual.ai', 'api.contextual.ai']
+```
+
+세 번(최초 시도 1회 + 재시도 2회) 모두 `api.contextual.ai`를 실제로 풀이하려 합니다 — `connect`만 막아 두면 이 세 번의 DNS 조회는 그대로 나갑니다. 그래서 위 첫 명령은 처음부터 두 경로를 함께 막습니다.
+
+빈 키가 서버의 401 응답 이전에 실패한다는 것도 확인해 둘 가치가 있습니다 — 루프백(`127.0.0.1`)에 항상 401을 돌려주는 가짜 서버를 하나 띄우고, 빈 키와 "틀렸지만 비어 있지 않은" 키를 각각 보내 비교합니다(서버·클라이언트 모두 이 프로세스 안에 있어 실제 네트워크로는 한 바이트도 나가지 않습니다. 포트는 OS가 비어 있는 높은 포트를 골라 주도록 `0`을 넘겨 다른 프로세스와 겹치지 않게 합니다).
+
+```bash
+uv run --no-project python -c "
+import http.server, threading, json, time
+received = []
+class Handler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *a, **k): pass
+    def do_GET(self):
+        received.append((self.path, self.headers.get('Authorization')))
+        body = json.dumps({'detail': 'unauthorized'}).encode()
+        self.send_response(401); self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body)
+httpd = http.server.HTTPServer(('127.0.0.1', 0), Handler)
+port = httpd.server_address[1]
+threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+from contextual import ContextualAI
+base_url = f'http://127.0.0.1:{port}/v1'
+for key in ['', 'wrong-key']:
+    received.clear()
+    client = ContextualAI(api_key=key, base_url=base_url)
+    t0 = time.monotonic()
+    try:
+        client.agents.list()
+        outcome = 'no exception (unexpected)'
+    except Exception as e:
+        outcome = f'{type(e).__name__}: {e} (cause: {type(e.__cause__).__name__})'
+    print(f'key={key!r}: {outcome} [{time.monotonic()-t0:.2f}s] server saw={received}')
+httpd.shutdown()
+"
+```
+
+직접 확인한 출력(포트는 이번 실행에서 OS가 고른 값, 초 단위 값도 예시일 뿐입니다):
+
+```
+key='': APIConnectionError: Connection error. (cause: LocalProtocolError) [1.52s] server saw=[]
+key='wrong-key': AuthenticationError: Error code: 401 - {'detail': 'unauthorized'} (cause: NoneType) [0.02s] server saw=[('/v1/agents', 'Bearer wrong-key')]
+```
+
+빈 키는 서버에 **닿지도 못합니다** — SDK가 만드는 헤더가 `Authorization: Bearer `(토큰 없이 끝에 공백만 남은 값)인데, h11이 이 값을 불법으로 거부해(`LocalProtocolError: Illegal header value b'Bearer '`) 요청 자체가 나가기도 전에 실패하기 때문입니다(소스로 확인, `contextual/_client.py`의 `auth_headers`가 `f"Bearer {api_key}"`를 그대로 만듦 — `server saw=[]`가 그 증거입니다). SDK는 이것을 연결 오류로 보고 재시도한 뒤 `APIConnectionError: Connection error.`로 마무리합니다. 즉 **일반적인 네트워크 환경이라도 빈 키는 여전히 "연결 오류"로 보이고**, 서버가 401로 거부하며 `AuthenticationError`가 나는 쪽은 키가 "틀렸지만 비어 있지는 않을" 때뿐입니다(`server saw=[('/v1/agents', 'Bearer wrong-key')]`가 실제로 서버까지 갔음을 보여 줍니다). 이어서 키 없이도 화면이 어디까지 뜨는지 `AppTest`로 확인합니다(네트워크·키 모두 불필요).
 
 ```bash
 uv run --no-project python -c "
@@ -294,7 +368,6 @@ print(captured['body'].decode())
 
 ```
 ingest metadata annotation: str | Omit
-
 --boundary
 Content-Disposition: form-data; name="metadata[custom_metadata][field1]"
 
@@ -463,10 +536,27 @@ else:
 
 ```
 branch 2: resp.message.content -> answer text
-message=None -> branch 4: str(resp) fallback, QueryResponse(conversation_id='c2', retrieval_contents=[]
+message=None -> branch 4: str(resp) fallback, QueryResponse(conversation_id='c2', retrieval_contents=[], a
 ```
 
-정상 응답에서는 항상 두 번째 분기만 실행되어 첫 번째(`resp.content`)와 세 번째(`resp.messages`)는 죽은 코드이고, `message`가 비어 있는 응답(예: `retrievals_only` 사용 등)이 오면 네 번째 분기가 파이썬 객체의 `repr` 그대로를 채팅 말풍선에 띄웁니다. 답변이 만들어지면 후처리를 한 번 거칩니다.
+`query.create(agent_id=..., messages=...)` 호출의 인자 이름도 실제 SDK와 맞는지 같은 방식으로 확인합니다.
+
+```bash
+uv run --no-project python -c "
+import inspect
+from contextual.resources.agents.query import QueryResource
+skip = {'self','extra_headers','extra_query','extra_body','timeout'}
+print([p for p in inspect.signature(QueryResource.create).parameters if p not in skip])
+"
+```
+
+직접 확인한 출력:
+
+```
+['agent_id', 'messages', 'include_retrieval_content_text', 'retrievals_only', 'conversation_id', 'documents_filters', 'llm_model_id', 'override_configuration', 'stream', 'structured_output']
+```
+
+`query_agent`가 넘기는 `agent_id`·`messages`는 이 목록에 있습니다. 정상 응답에서는 항상 두 번째 분기만 실행되어 첫 번째(`resp.content`)와 세 번째(`resp.messages`)는 죽은 코드이고, `message`가 비어 있는 응답(예: `retrievals_only` 사용 등)이 오면 네 번째 분기가 파이썬 객체의 `repr` 그대로를 채팅 말풍선에 띄웁니다. 답변이 만들어지면 후처리를 한 번 거칩니다.
 
 `rag_tutorials/contextualai_rag_agent/contextualai_rag_agent.py:206-209`
 
@@ -479,7 +569,7 @@ def post_process_answer(text: str) -> str:
 
 빈 괄호(`( )`, 공백 포함)를 지우고 "• "를 줄바꿈+대시로 바꿉니다 — 인용 표시가 비어 남는 경우나 글머리 기호 답변을 다듬는 용도로 보입니다(소스로 확인, 정규식이 지우는 자리에는 공백이 그대로 남습니다).
 
-### Step 6. 검색 시각화와 LMUnit 평가 — 별도 요청, 별도 키
+### Step 6. 검색 시각화와 LMUnit 평가 — 근거 이미지는 별도 왕복, LMUnit은 별도 신청 언급
 
 **목적.** `show_retrieval_info`가 `message_id`를 이어받아 어떻게 근거 페이지 이미지를 가져오는지, `evaluate_with_lmunit`이 무엇을 요청하는지, 그리고 LMUnit에 별도 접근 권한이 필요하다는 사실을 확인합니다.
 
@@ -537,24 +627,28 @@ def evaluate_with_lmunit(client, query: str, response_text: str, unit_test: str)
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** `lmunit.create`의 인자 이름을 키·네트워크 없이 확인합니다.
+**확인.** `retrieval_info`와 `lmunit.create`의 인자 이름을 키·네트워크 없이 확인합니다.
 
 ```bash
 uv run --no-project python -c "
 import inspect
+from contextual.resources.agents.query import QueryResource
 from contextual.resources.lmunit import LMUnitResource
 skip = {'self','extra_headers','extra_query','extra_body','timeout'}
-print([p for p in inspect.signature(LMUnitResource.create).parameters if p not in skip])
+def params(sig): return [p for p in sig.parameters if p not in skip]
+print('query.retrieval_info:', params(inspect.signature(QueryResource.retrieval_info)))
+print('lmunit.create:', params(inspect.signature(LMUnitResource.create)))
 "
 ```
 
 직접 확인한 출력:
 
 ```
-['query', 'response', 'unit_test']
+query.retrieval_info: ['message_id', 'agent_id', 'content_ids']
+lmunit.create: ['query', 'response', 'unit_test']
 ```
 
-`evaluate_with_lmunit`이 넘기는 `query`·`response`·`unit_test` 세 인자와 정확히 같습니다.
+`show_retrieval_info`가 넘기는 `message_id`·`agent_id`·`content_ids`, `evaluate_with_lmunit`이 넘기는 `query`·`response`·`unit_test` 모두 실제 시그니처와 정확히 같습니다.
 
 ### Step 7. 화면 배선과 실행 확인
 
@@ -587,7 +681,7 @@ if query:
         st.error("Please create or select an agent first.")
 ```
 
-매 질문마다 `last_raw_response`를 새 값으로 덮어써서, Step 6의 "Show Retrieval Info"는 항상 **가장 최근 답변**의 근거만 보여줍니다(이전 답변으로 되돌아가 볼 방법은 없습니다). 디버그 패널(297-312행)과 사이드바의 Clear/Reset 버튼(314-326행)은 세션 상태를 비우고 `st.rerun()`하는, 이 시리즈에서 여러 번 본 패턴입니다. 실제로 앱을 띄우는 명령은 다음과 같습니다.
+매 질문마다 `last_raw_response`를 새 값으로 덮어써서, Step 6의 "Show Retrieval Info"는 항상 **가장 최근 답변**의 근거만 보여줍니다(이전 답변으로 되돌아가 볼 방법은 없습니다). 디버그 패널(297-312행)은 체크박스 하나와 LMUnit 버튼 하나로만 이루어져 있어 세션 상태를 건드리지 않고, 그 대신 사이드바의 Clear/Reset 버튼(314-326행)이 세션 상태를 비우고 `st.rerun()`하는 — 이 시리즈에서 여러 번 본 — 패턴을 씁니다. 실제로 앱을 띄우는 명령은 다음과 같습니다.
 
 ```bash
 uv run --no-project streamlit run contextualai_rag_agent.py
@@ -627,7 +721,8 @@ grep -n "^def " contextualai_rag_agent.py
 ## 실행 체크리스트
 
 - [ ] `uv venv && uv pip install -r requirements.txt`가 51개 패키지를 충돌 없이 설치한다는 것을 확인했다(`contextual-client`는 `>=0.1.0` 범위, 오늘은 0.11.0으로 풀림)
-- [ ] 사이드바에 빈 API 키를 넣고 제출해도 클라이언트 생성 자체는 통과하고, 실패는 `agents.list()`의 네트워크 호출에서만 일어난다는 것을 직접 확인했다
+- [ ] 사이드바에 빈 API 키를 넣고 제출해도 클라이언트 생성 자체는 통과하고, 빈 키는 h11이 거부하는 불법 헤더값 때문에 서버에 닿기도 전에 `APIConnectionError`로 실패하며, 틀렸지만 비어 있지 않은 키만 서버까지 가서 401이 된다는 것을 로컬 가짜 서버로 직접 확인했다
+- [ ] 네트워크를 막을 때 소켓 연결(`connect`)만으로는 부족하고 이름풀이(`getaddrinfo`)도 막아야 `api.contextual.ai`로의 실제 DNS 조회가 새지 않는다는 것을 직접 확인했다
 - [ ] 문서 업로드 위젯이 받는 확장자(pdf·txt·md)와 실제 적재 가능 확장자(`ALLOWED_EXTS`: pdf·html·htm·mhtml·doc·docx·ppt·pptx)가 PDF 하나만 겹친다는 것을 grep으로 확인했다
 - [ ] 메타데이터 dict를 그대로 넘기면 실제 멀티파트 요청 필드가 `metadata`가 아니라 `metadata[...][...]`로 쪼개진다는 것을 가짜 전송계층으로 직접 확인했다
 - [ ] `wait_until_documents_ready`가 문서 상태 6가지 중 2가지(`processing`·`pending`)만 "아직 처리 중"으로 본다는 것을 SDK 타입에서 확인했다
@@ -642,7 +737,7 @@ grep -n "^def " contextualai_rag_agent.py
 |---|---|---|
 | `.txt`나 `.md`를 골라 올려도 매번 "Unsupported file extension" 오류 | 업로드 위젯은 `type=["pdf","txt","md"]`로 고르게 하지만 실제 적재 검사(`ALLOWED_EXTS`)는 pdf·html·htm·mhtml·doc·docx·ppt·pptx만 허용(소스로 확인) | PDF만 사용하거나, html·doc(x)·ppt(x)는 API가 받는 형식이라도 이 위젯에서는 애초에 선택할 수 없다는 점을 감안 |
 | 커스텀 메타데이터를 입력했는데 문서에 제대로 안 붙는 것 같음 | `json.loads`로 만든 dict를 `ingest(..., metadata=dict)`로 그대로 넘기지만 SDK는 `metadata`를 문자열로 기대하며, 실제 요청은 `metadata`가 아니라 `metadata[...][...]` 필드로 나감(직접 확인, Step 3) | 리포 코드는 고치지 않는 방침. 재현하려면 호출부의 `metadata=metadata`를 `metadata=json.dumps(metadata)`로 바꿔 보기 |
-| "Save & Verify"를 빈 키로 눌러도 바로 에러가 안 뜨고 한참 후에 실패 | 빈 문자열 키는 `ContextualAI(...)` 생성을 그냥 통과하고, 실패는 `agents.list()`가 실제 네트워크를 탈 때에만 남(직접 확인, Step 2) | 키 칸이 비어 있지 않은지 먼저 확인 후 재시도 |
+| 빈 키로 "Save & Verify"를 누르면 1~2초 뒤 "Credential verification failed: Connection error."가 뜸(네트워크 문제처럼 보임) | 빈 문자열 키는 `ContextualAI(...)` 생성을 그냥 통과하지만, SDK가 만드는 `Authorization: Bearer `(끝에 공백만 남은 값)를 h11이 불법으로 거부해 요청이 서버에 닿기도 전에 `APIConnectionError`로 실패함(직접 확인, Step 2) — 틀렸지만 비어 있지 않은 키는 서버까지 가서 401 `AuthenticationError`가 됨 | 키 칸이 비어 있지 않은지 먼저 확인 후 재시도 |
 | 문서를 올렸는데 대기가 예상보다 짧게 끝나고 질문이 근거를 못 찾음(추정) | `wait_until_documents_ready`가 상태값 6가지 중 `processing`·`pending`만 "처리 중"으로 보아 `retrying` 문서를 이미 끝난 것으로 넘길 수 있음(소스로 확인, Step 3) | `app.contextual.ai` UI에서 데이터스토어의 문서 상태를 직접 확인 |
 | 채팅에 답변 대신 `QueryResponse(...)` 같은 객체 문자열이 그대로 뜸 | `query_agent`의 방어적 `hasattr` 분기 중 `message`가 `None`인 경우를 앞의 두 분기가 못 거르고 `str(resp)` 그대로를 반환(직접 확인, Step 5) | 리포 코드는 고치지 않는 방침. 원인 파악용으로만 사용 |
 | LMUnit 평가 버튼을 눌렀는데 권한 관련 오류(추정, 키 없어 실제 응답 미확인) | SDK의 `lmunit.create` 문서 문자열이 별도 신청 양식으로 받는 키가 필요하다고 명시(소스로 확인, Step 6) | `contextual.ai/request-lmunit-api/`에서 별도 신청 |
