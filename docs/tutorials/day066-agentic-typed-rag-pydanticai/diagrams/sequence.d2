@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: 타입 에이전트 (게이트+도구) { class: ours }
+store: 벡터 저장소 { class: store }
+answermodel: 답변 모델 API { class: ext }
+
+user -> ui: 질문 입력
+ui -> agent: 질문 실행
+agent -> store: 유사도 검색 (사전+도구 2회)
+store -> agent: 근거 청크
+agent -> answermodel: 출력 요청
+answermodel -> agent: Answer
+agent -> store: 인용 원문 대조
+store -> agent: 대조 결과
+agent -> ui: 검증된 Answer
+ui -> user: 인용과 함께 렌더링

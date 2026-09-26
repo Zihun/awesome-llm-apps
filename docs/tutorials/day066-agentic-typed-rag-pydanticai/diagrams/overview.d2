@@ -1,0 +1,40 @@
+...@../../_tools/theme
+direction: down
+
+front: "입력" {
+  class: group
+  grid-columns: 4
+  user: 사용자 { class: person }
+  ui: Streamlit UI { class: ours }
+  pdf: PDF 파일 { class: file }
+  url: 문서 URL { class: file }
+}
+
+kb: "문서 적재·임베딩 (rag.py)" {
+  class: group
+  grid-columns: 2
+  ingest: 1. 문서 적재 { class: ours }
+  embed: 2. 임베딩 { class: ours }
+}
+
+agent: "타입 RAG 에이전트 (agent.py)" {
+  class: group
+  grid-columns: 2
+  gate: 1. 검색 게이트 { class: ours }
+  tool: 2. retrieve 도구 { class: ours }
+}
+
+store: 벡터 저장소 (NumPy) { class: store }
+
+providers: "외부 제공자" {
+  class: group
+  grid-columns: 2
+  embedapi: OpenAI 임베딩 API { class: ext }
+  answermodel: 답변 모델 API { class: ext }
+}
+
+front -> kb: 문서 업로드
+front -> agent: 질문 텍스트
+kb -> providers: 임베딩 요청
+agent -> store: 유사도 검색
+agent -> providers: 출력 요청
