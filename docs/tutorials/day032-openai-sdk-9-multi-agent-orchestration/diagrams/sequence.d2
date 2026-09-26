@@ -1,11 +1,11 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 실행자 { class: person }
-proc: 파이썬 프로세스 { class: ours }
-spanish: spanish_agent { class: ours }
-picker: translation_picker { class: ours }
 openai: OpenAI API { class: ext }
+spanish: spanish_agent { class: ours }
+proc: 파이썬 프로세스 { class: ours }
+picker: translation_picker { class: ours }
+user: 실행자 { class: person }
 
 user -> proc: python parallel_execution.py
 proc -> spanish: asyncio.gather로 3건 동시 발사
