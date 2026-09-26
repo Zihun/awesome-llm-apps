@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: down
+
+front: "사용자 쪽 화면" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: Streamlit UI (vision_rag.py) { class: ours }
+}
+
+logic: "핵심 함수 (vision_rag.py)" {
+  class: group
+  grid-columns: 2
+  sample: 샘플 이미지 로더 { class: ours }
+  upload: 업로드 처리 (process_pdf_file) { class: ours }
+  search: 검색 (search) { class: ours }
+  answer: 답변 생성 (answer) { class: ours }
+}
+
+session: 세션 임베딩 저장소 (session_state) { class: store }
+
+providers: "외부 서비스" {
+  class: group
+  grid-columns: 1
+  substack: Substack CDN (샘플 이미지) { class: ext }
+  cohere: Cohere Embed-4 { class: ext }
+  gemini: Gemini 2.5 Flash { class: ext }
+}
+
+front.ui -> logic: 콘텐츠·질문
+logic -> session: 임베딩 저장·조회
+logic -> providers: 다운로드·임베딩·답변 생성
