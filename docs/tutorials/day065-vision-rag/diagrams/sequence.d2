@@ -8,9 +8,9 @@ gemini: Gemini 2.5 Flash { class: ext }
 
 user -> ui: 질문 입력 후 실행 버튼 클릭
 ui -> ui: 세션에 저장된 이미지 임베딩 조회
-ui -> cohere: 질의 임베딩 요청(search_query)
+ui -> cohere: 질의 텍스트 임베딩 요청(search_query)
 cohere -> ui: 질의 임베딩 벡터
 ui -> ui: 내적 유사도로 최상위 이미지 선택
-ui -> gemini: 이미지
+ui -> gemini: 질문+이미지
 gemini -> ui: 답변
 ui -> user: 검색된 이미지·답변 표시
