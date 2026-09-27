@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 57 / 164일 완료
+진도: 70 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -138,19 +138,19 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 055](day055-local-hybrid-search-rag/README.md) | 🖥️ Local Hybrid Search RAG | [rag_tutorials/local_hybrid_search_rag](../../rag_tutorials/local_hybrid_search_rag/) |
 | ✅ | [Day 056](day056-rag-failure-diagnostics-clinic/README.md) | 🩺 RAG Failure Diagnostics Clinic | [rag_tutorials/rag_failure_diagnostics_clinic](../../rag_tutorials/rag_failure_diagnostics_clinic/) |
 | ✅ | [Day 057](day057-rag-agent-cohere/README.md) | ✨ RAG Agent with Cohere | [rag_tutorials/rag_agent_cohere](../../rag_tutorials/rag_agent_cohere/) |
-| ⬜ | [Day 058](day058-contextualai-rag-agent/README.md) | 🔄 Contextual AI RAG Agent | [rag_tutorials/contextualai_rag_agent](../../rag_tutorials/contextualai_rag_agent/) |
-| ⬜ | [Day 059](day059-ai-blog-search/README.md) | 📰 AI Blog Search (RAG) | [rag_tutorials/ai_blog_search](../../rag_tutorials/ai_blog_search/) |
-| ⬜ | [Day 060](day060-rag-database-routing/README.md) | 📠 RAG with Database Routing | [rag_tutorials/rag_database_routing](../../rag_tutorials/rag_database_routing/) |
-| ⬜ | [Day 061](day061-corrective-rag/README.md) | 🔄 Corrective RAG (CRAG) | [rag_tutorials/corrective_rag](../../rag_tutorials/corrective_rag/) |
-| ⬜ | [Day 062](day062-gemini-agentic-rag/README.md) | 🤔 Gemini Agentic RAG | [rag_tutorials/gemini_agentic_rag](../../rag_tutorials/gemini_agentic_rag/) |
-| ⬜ | [Day 063](day063-knowledge-graph-rag-citations/README.md) | 🕸️ Knowledge Graph RAG with Citations | [rag_tutorials/knowledge_graph_rag_citations](../../rag_tutorials/knowledge_graph_rag_citations/) |
-| ⬜ | [Day 064](day064-deepseek-local-rag-agent/README.md) | 🐋 Deepseek Local RAG Agent | [rag_tutorials/deepseek_local_rag_agent](../../rag_tutorials/deepseek_local_rag_agent/) |
-| ⬜ | [Day 065](day065-vision-rag/README.md) | 🖼️ Vision RAG | [rag_tutorials/vision_rag](../../rag_tutorials/vision_rag/) |
-| ⬜ | [Day 066](day066-agentic-typed-rag-pydanticai/README.md) | 📎 Typed Agentic RAG with Pydantic AI | [rag_tutorials/agentic_typed_rag_pydanticai](../../rag_tutorials/agentic_typed_rag_pydanticai/) |
-| ⬜ | [Day 067](day067-multimodal-agentic-rag/README.md) | 🧬 Multimodal Agentic RAG | [rag_tutorials/multimodal_agentic_rag](../../rag_tutorials/multimodal_agentic_rag/) |
-| ⬜ | [Day 068](day068-agentic-rag-gpt5/README.md) | 🧠 Agentic RAG with GPT-5 | [rag_tutorials/agentic_rag_gpt5](../../rag_tutorials/agentic_rag_gpt5/) |
-| ⬜ | [Day 069](day069-agentic-rag-math-agent/README.md) | 🧠 Math Tutor Agent – Agentic RAG with Feedback Loop | [rag_tutorials/agentic_rag_math_agent](../../rag_tutorials/agentic_rag_math_agent/) |
-| ⬜ | [Day 070](day070-qwen-local-rag/README.md) | 🐋 Qwen 3 Local RAG Reasoning Agent | [rag_tutorials/qwen_local_rag](../../rag_tutorials/qwen_local_rag/) |
+| ✅ | [Day 058](day058-contextualai-rag-agent/README.md) | 🔄 Contextual AI RAG Agent | [rag_tutorials/contextualai_rag_agent](../../rag_tutorials/contextualai_rag_agent/) |
+| ✅ | [Day 059](day059-ai-blog-search/README.md) | 📰 AI Blog Search (RAG) | [rag_tutorials/ai_blog_search](../../rag_tutorials/ai_blog_search/) |
+| ✅ | [Day 060](day060-rag-database-routing/README.md) | 📠 RAG with Database Routing | [rag_tutorials/rag_database_routing](../../rag_tutorials/rag_database_routing/) |
+| ✅ | [Day 061](day061-corrective-rag/README.md) | 🔄 Corrective RAG (CRAG) | [rag_tutorials/corrective_rag](../../rag_tutorials/corrective_rag/) |
+| ✅ | [Day 062](day062-gemini-agentic-rag/README.md) | 🤔 Gemini Agentic RAG | [rag_tutorials/gemini_agentic_rag](../../rag_tutorials/gemini_agentic_rag/) |
+| ✅ | [Day 063](day063-knowledge-graph-rag-citations/README.md) | 🕸️ Knowledge Graph RAG with Citations | [rag_tutorials/knowledge_graph_rag_citations](../../rag_tutorials/knowledge_graph_rag_citations/) |
+| ✅ | [Day 064](day064-deepseek-local-rag-agent/README.md) | 🐋 Deepseek Local RAG Agent | [rag_tutorials/deepseek_local_rag_agent](../../rag_tutorials/deepseek_local_rag_agent/) |
+| ✅ | [Day 065](day065-vision-rag/README.md) | 🖼️ Vision RAG | [rag_tutorials/vision_rag](../../rag_tutorials/vision_rag/) |
+| ✅ | [Day 066](day066-agentic-typed-rag-pydanticai/README.md) | 📎 Typed Agentic RAG with Pydantic AI | [rag_tutorials/agentic_typed_rag_pydanticai](../../rag_tutorials/agentic_typed_rag_pydanticai/) |
+| ✅ | [Day 067](day067-multimodal-agentic-rag/README.md) | 🧬 Multimodal Agentic RAG | [rag_tutorials/multimodal_agentic_rag](../../rag_tutorials/multimodal_agentic_rag/) |
+| ✅ | [Day 068](day068-agentic-rag-gpt5/README.md) | 🧠 Agentic RAG with GPT-5 | [rag_tutorials/agentic_rag_gpt5](../../rag_tutorials/agentic_rag_gpt5/) |
+| ✅ | [Day 069](day069-agentic-rag-math-agent/README.md) | 🧠 Math Tutor Agent – Agentic RAG with Feedback Loop | [rag_tutorials/agentic_rag_math_agent](../../rag_tutorials/agentic_rag_math_agent/) |
+| ✅ | [Day 070](day070-qwen-local-rag/README.md) | 🐋 Qwen 3 Local RAG Reasoning Agent | [rag_tutorials/qwen_local_rag](../../rag_tutorials/qwen_local_rag/) |
 
 ### 볼륨 6. 💾 LLM Apps with Memory (Day 71–77, 7일)
 

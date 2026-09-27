@@ -8,16 +8,15 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
-**멈춤 지점 (2026-09-26) — Task 11 완료·푸시함. 다음 작업(Day 58~)은 사용자 지시를 받고.**
+**멈춤 지점 (2026-09-27) — RAG 볼륨 끝(Day 058~070 작성 → 리뷰 → 수정 최대 3라운드 → 재확인 완료), 푸시함. 다음 볼륨(Day 071~)은 사용자 지시를 받고.**
 
-- Task 11 끝: 검사 19~23·세로 1000(82eb389, 97036b8) / 미검토 22일 리뷰·수정·재검토 / 이미 리뷰된 35일 화살표 재배치·검토.
-  npm test 47/47. Day 001~057 중 50일 check 통과, 화살표 규칙(17·20~23) 위반 0.
-- **세로 상한 초과 7일은 사용자가 (나) 예외로 결정(2026-09-26) → `_tools/height-exceptions.json`, 57일 전부 check 통과.** 원래 기록:(모두 화살표 규칙은 통과, 관계를 지우거나 합치지 않고는 못 줄임, 각
-  task-11c/11d 보고서에 레버별 측정): 006 1059 · 010 1113 · 016 1023 · 023 1212 · 025 1040 · 027 1075 · 034 1070.
-  선택지: 상한을 1250으로 / 이 7일만 예외 표시 / 더 줄이기(내용 손실 위험).
-- 참고: 분당 낱말 대역 밖 13일(001·002·003·006·007·011·013·014·015·018·030·034·039)은 예전 볼륨의 기존 상태 — 이번 범위 밖.
-- 브리프에 새로 들어간 규칙: task-11-relayout-brief.md의 "세로 1000px을 넘을 때의 기준"(레버 1~5), 로컬 모델 ext(§5),
-  VIRTUAL_ENV 해제 + --python, 루트 .venv 금지(메모리 root-venv-extras).
+- Task 12 끝: 13일 모두 check 통과, 분당 17.5~21.9(전부 대역 안), npm test 48/48, Day 001~070 전부 check 통과, 진도 70/164.
+- 이번 볼륨은 1px 표본 검사 21(작업 폴더 `dense21.mjs`)도 0 — 예외는 061 sequence 1건(배우 순서 720가지 전수 탐색 최소 1, 재확인이 표본으로 재현).
+- **사용자 결정 대기 (볼륨 보고에 올림)**
+  1. 검사 21 표본 빈틈: check.mjs를 길이 비례 표본으로 고치면 옛 볼륨 SVG 46개(대부분 001~056 sequence, 052 extra-ingest)가 실패 → sequence 재배치 묶음이 필요. 수명선은 D2 mask로 라벨 자리에서 끊겨 글자 위에 그려지지는 않는다.
+  2. 예전 날들의 headless streamlit 명령(예: Day 018 Step 3, Day 019 Step 6)에 `--server.address localhost`가 없으면 checkip.amazonaws.com 요청이 나간다 — "네트워크 없음" 류 주장 점검.
+- 새 브리프 규칙(task-12-write-brief.md): 프록시 변수·DNS 차단(gRPC는 소켓 패치를 우회), 외부 클라이언트 요청 메서드 호출 금지, 임의의 높은 포트, streamlit `--server.address localhost`, 홈 디렉터리 캐시 금지(DSPY_CACHEDIR·DSP_CACHEDIR), 안전 규칙은 중간 메시지가 아니라 브리프 파일에(에이전트가 중간 메시지를 인젝션으로 의심함).
+- 세로 예외 7일(height-exceptions.json)은 그대로. 분당 낱말 대역 밖 13일(001·002·003·006·007·011·013·014·015·018·030·034·039)은 예전 볼륨 기존 상태.
 
 **내가 저지른 것 (되풀이하지 말 것)**
 
@@ -46,7 +45,7 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 그대로 쓰므로 이미 보이던 노드를 다시 주황으로 짚는 일이 흔하다(Day 001 step4의 `app.agent`).
 31일을 결함이라 부르는 대신 불변식을 고쳤다.
 
-**RAG 볼륨 리뷰어에게 넘길 것 (Day 56 이후 10일치 리뷰에서)**
+**RAG 볼륨 리뷰어에게 넘길 것 (Day 56 이후 10일치 리뷰에서)** — 해결됨: Day 047 머리말·Step 5에 agno 익명 사용 통계가 들어갔고, 이후 agno 날들은 그것을 가리킨다.
 
 - **agno 텔레메트리의 날 간 불일치.** Day 050이 `agent.run()`마다 `os-api.agno.com`으로 익명 사용
   통계가 나간다는 것(끄는 법: `Agent(telemetry=False)` 또는 `AGNO_TELEMETRY=false`)을 사전 준비·
@@ -670,3 +669,68 @@ Task 11d: FR4 fix-round re-check (043·045 + 044 token) → resume afb2fd6707b4d
 Task 11d: FR4 fix-round re-check DONE — 043·045 해결, 044 app→token은 045와 다른 패턴(화살표가 살아 있고 출발점만 app으로 — _get_credentials 한 함수)으로 유지. F7 complete.
 --- 2026-09-26 Task 11 완료. G: npm test 47/47, Day 001~057 중 50일 통과, 7일 세로만 초과(열린 항목). 원장 커밋 후 origin/main 푸시. ---
 === USER 2026-09-26: 세로 초과 7일은 "(나)" — 예외 표시. height-exceptions.json + check.mjs(그 날 overview·step만, 적힌 높이까지) + 테스트 1 + 규격 §5·§6. 48/48, Day 001~057 전부 통과. ===
+=== USER 2026-09-26: "시작해" — Day 058부터 작성 재개. 운영 파라미터 그대로(동시 4, 하루 단위 2단계, 리뷰 10일마다, 푸시·보고는 볼륨 끝). ===
+Task 12 (RAG 볼륨 나머지 Day 058~070 작성): 공통 브리프 task-12-write-brief.md(계획 Task 8 절차를 원장 규칙·Task 11 규칙으로 갱신 — 골격은 이미 있음, 경로 지정 커밋, 화살표 규칙·세로 레버·ext·VIRTUAL_ENV). 한 날에 에이전트 하나(sonnet), 보고서 task-12-dayNNN-report.md. 리뷰: 058~067(opus), 068~070(볼륨 끝과 함께).
+Task 12: 058 (a61f8f4b9980c526d), 059 (a927e273539156b7a), 060 (a4391803c36439f30), 061 (a2defb3fe1cccb91e) dispatched (sonnet). 다음: 062~070 차례로.
+Task 12: 058 DONE — 3da385c, check 통과, 18.0/분. 062 dispatched.
+Task 12: 061 DONE — af23739, check 통과, 17.2/분(requirements에 pypdf 누락, 빈 문서 목록이면 CRAG 교정이 안 걸림 — 둘 다 재현). 063 dispatched.
+Task 12: 060 DONE — 52b3f59, check 통과, 17.6/분(90→85분). agno 3.0.11에서 Agent(show_tool_calls=False) TypeError로 LLM 라우팅 폴백이 항상 실패→웹검색으로 삼켜짐(재현). 주의: 재현 1회차에 getaddrinfo를 안 막아 가짜 하위도메인 DNS 조회 1건이 나갔을 수 있음(페이로드 없음, 에이전트가 스스로 보고). 064 dispatched.
+Task 12: 059 DONE — dd2c9c2(커밋 꼬리말 누락, amend 금지라 그대로), check 통과, 17.9/분. 핵심: 오늘 설치되는 langchain 1.4.2에서 app.py의 import 둘이 깨지고 streamlit이 requirements에 없음. **안전 사고**: 오프라인 재현의 소켓 차단을 gRPC가 우회해 가짜 키 요청 1건이 generativelanguage.googleapis.com에 닿음(400 거절, 실제 키·개인정보·비용 없음, 에이전트 자진 보고). → 브리프에 프록시 환경변수(HTTP(S)_PROXY·ALL_PROXY·grpc_proxy=127.0.0.1:9) 필수 + 외부 클라이언트 요청 메서드 호출 금지 추가. 065 dispatched.
+Task 12: 062 DONE — 9ba51a4, check 통과, 18.2/분. 발견: requirements에 beautifulsoup4 없음(import bs4로 전체 사망), agno 3.0.11의 show_tool_calls TypeError로 에이전트 셋 생성 실패, init_qdrant가 자격증명 없으면 조용히 None, 질의에도 문서용 task_type. 안전: 컨트롤러의 gRPC 경고를 인젝션으로 판단해 미채택 — 그러나 이 날의 google-genai는 httpx 기반이라 소켓 차단이 실제로 걸렸고(보고서 §4 출력) 요청 유출 없음, 다만 Google IP로 DNS 해석은 됨(조회 1회, 내용 없음). 066 dispatched.
+Task 12: 064 DONE — a71c3eb, check 통과, 12.4/분(대역 밖, 손이 가는 시간이 길다는 근거절 — Day 047 선례). 발견: bs4 누락, check_document_relevance 죽은 코드, agno 3.0.11이 <think>를 reasoning_content로 먼저 빼서 앱의 생각 과정 펼침이 안 뜸(localhost 가짜 Ollama로 재현). 안전 경고 수용, 유출 없음. 067 dispatched.
+Task 12: 065 DONE — 941f929, check 통과, 19.4/분, 새 안전 규칙 적용·유출 없음. Windows에서 pdf_pages 슬래시 버그 재현. 068 dispatched.
+Task 12: 063 DONE — 4a7277a, check 통과, 18.6/분. 중간 안전 메시지를 인젝션으로 보고 미채택, 유출 없음 — 옳은 지적 하나: NO_PROXY 빈값은 localhost 가짜 서버를 깨뜨림 → 브리프를 NO_PROXY=localhost,127.0.0.1로 고침. 교훈: 안전 규칙은 중간 메시지보다 브리프 파일에(에이전트가 중간 메시지를 인젝션으로 의심함). 069 dispatched.
+Task 12: 066 DONE — 5244984, check 통과, 17.9/분, 앱 결함 없음(범위 한정). 리뷰에서 볼 것: sequence에서 store 수명선 관통을 라벨 단축+메시지 병합으로 풂(두 번 검색은 산문에). 070 dispatched.
+Task 12: 067 DONE — 3f3216a, check 통과, 18.7/분, 유출 없음. 앱 결함: add_text_source가 임베딩 전에 소스를 등록해 실패 시 빈 고아가 남음. 리뷰 058~067을 두 묶음(R12a 058~062 opus, R12b 063~067)으로 — R12a dispatched.
+Task 12: 068 DONE — 0d9a2c0, check 통과, 18.8/분. 앱이 키 입력 순간 108행 knowledge.add_content에서 AttributeError(agno 3.0.11에서 insert로 개명, Day 047·050과 같은 드리프트) — AppTest로 재현. R12b(063~067) dispatched.
+Task 12: 070 DONE — 07fe173, check 통과, 13.7/분(근거절, Day 064 선례). 텔레메트리 재현 중 다른 에이전트와 포트 7070 충돌 → 브리프에 임의의 높은 포트 규칙 추가. 남은 것: 069, 리뷰 058~062·063~067, 그 뒤 068~070 리뷰, 볼륨 마무리(roadmap·push·보고).
+Task 12: 069 DONE — ba429b4, check 통과, 13.3/분(근거절: Docker/Qdrant + 키 둘). 발견: README는 GPT-4.1이나 코드는 gpt-4o, load_gsm8k_data.py가 실제로는 JEEBench, Qdrant 다운 예외를 조용히 삼키고 웹으로, 35예제 few-shot이 생성만 되고 호출 안 됨, 부분 문자열 채점의 편향(96% vs 27%). 작성 13일 모두 끝. R12c(068~070) dispatched.
+Task 12 작성자 ID(리뷰 반영 때 SendMessage로 재개): 058 a61f8f4b9980c526d / 059 a927e273539156b7a / 060 a4391803c36439f30 / 061 a2defb3fe1cccb91e / 062 a05635a84d1256bd9 / 063 a9bce4fb76b6d1cd0 / 064 a3affcf410641345e / 065 a6192ad80cf9a91b5 / 066 aa2a25a605d486abc / 067 afd58d1b527af069e / 068 afa7b4d4cf1f98aec / 069 a87c4be8d8a88f336 / 070 a87f827061105d4fe. 리뷰: 058~062 a123a5bc94a31f625, 063~067 a84eb9e2555f82737, 068~070 a14d2a59c25d0c3e7.
+Task 12: 리뷰 058~062 DONE (a123a5bc94a31f625) → review-058-062.md. 5일 모두 ❌: C3 I14 M35 (058 I2 M7 / 059 C2 I4 M6 / 060 I4 M6 / 061 C1 I2 M7 / 062 I2 M9). fix round 1: 059·061 작성자 재개(Critical 먼저), 058·060·062는 자리 나면.
+Task 12: 리뷰 068~070 DONE (a14d2a59c25d0c3e7) → review-068-070.md. 3일 ❌: C0 I8 M28 (068 I1 M10 / 069 I5 M7 / 070 I2 M11). 부수 효과: 069 작성자가 사용자 홈에 ~/.dspy_cache를 만들었고 리뷰어도 사용 — 캐시일 뿐, 이후 브리프에 홈 디렉터리 쓰기 금지. fix round 1: 069 작성자 재개.
+--- 세션 한도(429, 20:20 재설정)로 059·061·069 수정 끊김 → 사용자 "멈춘지점에서 다시 시작해" → 셋 SendMessage로 재개. 063~067 리뷰(opus)는 계속. ---
+Task 12: 리뷰 063~067 DONE (a84eb9e2555f82737) → review-063-067.md. 5일 ❌: C0 I15 M43 (063 I5 M8 / 064 I3 M9 / 065 I2 M7 / 066 I4 M8 / 067 I1 M11). fix 대기열(Important 순): 063(재개함) → 060·066 → 064 → 058·062·065·070 → 067·068.
+Task 12: 059 fix round 1 DONE — c13c791(꼬리말 누락 재발, amend 금지라 그대로), C2 I4 M6 전부 반영, check 통과, 21.0/분. embedding-001·gemini-2.0-flash가 이미 종료됐음을 반영(Google 폐기 페이지 WebFetch). 060 fix dispatched.
+Task 12: 061 fix round 1 DONE — c36a3c5, C1 I2 M7 반영, check 통과, 18.8/분. 안전: M5 조사 중 차단 없이 tiktoken gpt2() 실행 → openaipublic.blob.core.windows.net에서 공개 토크나이저 파일 2개 받음(키·비용 없음, 자진 보고). 재검토에서 볼 것: overview의 새 ingest 노드에 UI에서 들어오는 화살표가 없음(위치·산문으로만). 066 fix dispatched.
+Task 12: 063 fix round 1 DONE — 0ffd050, I5 M8 반영(기각 없음), check 통과, 20.3/분(90→100분). 064 fix dispatched.
+Task 12: 069 fix round 1 DONE — 47e03d4, I5 M7 반영, check 통과, 17.1/분. 홈 폴더 ~/.dspy_cache가 두 번 더 생겼다가 즉시 지움(끝에 없음 확인). 058 fix dispatched.
+Task 12: 060 fix round 1 DONE — ab1aa7c, I4 M6 반영(기각 없음), check 통과, 20.6/분(85→90분). **시리즈 공통 사실**: `streamlit run --server.headless true`만으로는 Streamlit이 시작 시 checkip.amazonaws.com에 외부 IP를 묻는다 — `--server.address localhost`를 붙이면 안 나간다(sitecustomize로 하위 프로세스까지 차단해 확인). 브리프에 규칙 추가. **후속 점검 거리**: 예전 날들의 headless streamlit 확인 명령(예: Day 018 Step 3, Day 019 Step 6, Day 060 이전 판)에 "네트워크 없음" 같은 주장이 있으면 틀린 것 — 볼륨 끝 보고에 올린다. 062 fix dispatched.
+Task 12: 058 fix round 1 DONE — c2a87b8, I2 M7 반영, check 통과, 20.9/분. (I2: 원래 Step 2 차단 명령이 getaddrinfo를 안 막아 api.contextual.ai DNS 조회 3건이 실제로 나갔음 — 명령 고침.) 065 fix dispatched.
+Task 12: 066 fix round 1 DONE — 5201b4b, I4 M8 반영, check 통과, 19.7/분(70→80분). 재검토에서 볼 것: 높이 때문에 front→kb·front→agent 두 화살표 라벨을 뺌(§5 '화살표 라벨에는 오가는 데이터'), kb→providers·agent→store 직각 교차(규칙상 금지 항목 아님), streamlit 기동에 --server.address가 아니라 --browser.serverAddress를 씀(checkip 요청을 막는지 확인 필요). 067 fix dispatched.
+Task 12: 062 fix round 1 DONE — 5c6a261, I2 M9 반영, check 통과, 19.9/분(100→110분). 이전 판에서 generativelanguage.googleapis.com DNS 조회 1건이 나갔던 것을 스스로 찾아 보고서 정정. → 058~062 수정 끝, 재검토 dispatched (resume a123a5bc94a31f625, fix-RR12a-058-062.diff).
+Task 12: 064 fix round 1 DONE — 0f331e5, I3 M9 반영, check 통과, 18.4/분. --browser.serverAddress localhost도 checkip·UDP 8.8.8.8 요청을 막음을 차단-기록으로 확인. 068 fix dispatched.
+Task 12: 065 fix round 1 DONE — fbe7fa2, I2 M7 반영, check 통과, 19.9/분(60→70분). 070 fix dispatched(마지막 수정).
+Task 12: 067 fix round 1 DONE — baa1476, I1 M11 반영, check 통과, 20.7/분(90→100분). → 063~067 수정 끝, 재검토 dispatched (resume a84eb9e2555f82737, fix-RR12b-063-067.diff).
+Task 12: 068 fix round 1 DONE — 0a7a8db, I1 반영·M 9/10(M9 사용자→UI 화살표는 두 구조 모두 실패해 라벨만 고침, 근거 기록), check 통과, 19.9/분(60→65분). 남은 수정: 070. 그 뒤 068~070 재검토.
+Task 12: 058~062 재검토 DONE — 058·060 해결(060 Minor: 앱→OpenAI 임베딩이 라벨 글로만). open: 059 I1(uv pip check가 README 순서대로면 충돌 2건 — langchain-classic 잔여), 061 C1 미해결(사이드바 빈칸이면 98행에서 웹검색 건너뜀, 환경변수 우회 안 됨)+I(새 ingest 노드 화살표 누락 = §5 위반), 062 I1(text-embedding-004 2026-01-14 종료 확인, README는 동작한다고 씀) + 리뷰어 자기 정정: 웹검색 폴백 최초는 Day 057이 아니라 Day 049(062가 그 오류를 옮김). 신규 Minor 15. fix round 2: 061·059 dispatched, 062 자리 나면.
+--- 세션 한도(429, 02:10 재설정)로 070 수정·063~067 재검토·059/061 fix round 2 끊김 → 사용자 "멈춘지점에서 다시 시작해"(2026-09-27) → 넷 SendMessage로 재개. 대기: 062 fix round 2, 068~070 재검토. ---
+Task 12: 070 fix round 1 DONE — 9422a83, I2 M11 반영, check 통과, 17.5/분(90→85분). → 068~070 수정 끝, 재검토 dispatched (resume a14d2a59c25d0c3e7).
+Task 12: 063~067 재검토 DONE — 063·064·065·067 해결(신규 Minor 5·5·3·1, 065는 예전 Minor: UI→핵심 함수 화살표가 제 라벨에 가림). 066 open 1: 높이 2px 때문에 두 화살표 데이터 라벨 삭제 = §5 위반(리뷰어는 2px 예외를 제안 — 먼저 라벨 축약 등으로 규칙 안에서 풀게 한다). --browser.serverAddress localhost도 checkip 요청은 막음(1.41.1·1.59.2·1.64.0 확인) 그러나 모든 인터페이스에서 수신 → 063·064·066은 --server.address localhost로(Minor). 068~070 재검토·062 fix round 2 dispatched, 066 fix round 2는 다음 자리.
+Task 12: 062 fix round 2 DONE — 30279fc, text-embedding-004 종료(2026-01-14, 공식 문서 재확인)와 '오류·성공 메시지가 동시에 뜸'을 가짜 임베더로 재현해 반영, Day 049 정정, check 통과, 20.7/분(110→115분). 066 fix round 2 dispatched(라벨 복원 + 2px은 다른 곳에서, --server.address localhost).
+Task 12: 061 fix round 2 DONE — a4ed5cf, C1 해결(98행은 사이드바 칸만 봄 — 사이드바 값+TAVILY_API_KEY 둘 다 필요로 정정, 두 경로 재현), N1 front→ingest·front→graph 묶음 수준 화살표 복원, check 통과, 20.7/분. 재확인에서 볼 것: ingest→providers 임베딩 화살표를 ingest→qdrant 라벨로 접음. 063·064(--server.address)·065(가려진 화살표) Minor 묶음 수정 에이전트 dispatched → task-12-minors-063-065-report.md.
+Task 12: 059 fix round 2 DONE — e7289ca, N1+N2~N6 반영(N6 sequence 수명선-라벨 교차 1곳은 선형 배치로 불가 — 측정 근거, check.mjs가 못 잡는 경우: 후속 과제), check 통과, 21.9/분. → 058~062 2차 재확인 dispatched (resume a123a5bc94a31f625).
+Task 12: 066 fix round 2 DONE — 9508177, 라벨 '업로드'·'질문' 복원, '외부 제공자' 묶음 래퍼 제거로 862×868(직각 교차도 사라짐), step 경로 갱신·검사 19 통과, --server.address localhost, 콘솔 줄 재현 교정, check 통과, 20.4/분. 재확인은 063~065 Minor 묶음과 함께.
+Task 12: 068~070 재검토 DONE — Important 8/8 해결. 068 해결(신규 Minor 2). 069 open 1(HF 다운로드는 탭 3이 아니라 매 로드·재실행마다 — AppTest+스텁으로 1회/2회) + Minor 6. 070 open 1(UI 노드가 step1부터 평상 = 이미 만들어진 것처럼) + Minor 3. **홈 폴더**: 리뷰어가 ~/.dspy_cache/cachedir_joblib(빈 폴더 8 + .gitignore 39B) 생성, 삭제는 권한 시스템이 막음 — 대신 지워 달라는 요청은 권한 세탁이 되므로 하지 않고 사용자에게 알림(rm -rf ~/.dspy_cache). **도구 빈틈**: 검사 21이 선분당 39점만 표본 → 긴 수명선이 라벨 뒤를 지나는 경우를 놓침(059·069·070 sequence). 069·070 fix round 2 dispatched.
+Task 12: 검사 21 표본 빈틈 측정(읽기 전용, 스크래치 edges-dense.mjs = 길이 비례 표본) — Day 001~070 SVG 중 **46개가 새로 걸림**, 거의 모두 sequence.svg(001~056 전반, 한 파일 1~3곳) + day052 extra-ingest.svg. 모두 수명선(점선)이 메시지 라벨 상자 뒤를 지나는 경우. D2는 모든 연결선에 라벨 자리를 비우는 mask를 건다(day001 sequence: 점선 6/6·실선 12/12에 mask) → 글자 위로 선이 그려지지는 않고, 선이 라벨에서 끊겼다 이어지는 모양(FR3가 032에서 "렌더상 무해"로 본 것과 같은 경우). Ruling: check.mjs는 지금 고치지 않는다 — 고치면 46개 파일이 즉시 실패해 sequence 재배치가 필요하고, 이것이 사용자 지시("글자에 같은 라인으로 걸치는 것 방지")에 해당하는지는 사용자 판단 — 볼륨 끝 보고에 결정 항목으로 올린다 — 틀렸다면 sequence 재배치 한 묶음이 뒤로 밀릴 뿐.
+Task 12: 070 fix round 2 DONE — c9aa7be, R070-I1(UI step1 -todo·step2 -new) + M1~M3(텔레메트리 라벨 "통계 전송"으로 수명선 관통 해소, checkip 조건 정정, 작업 흔적 제거), check 통과, 17.5/분. 068 fix round 2 dispatched (resume afa7b4d4cf1f98aec: R068-M1·M2). 068~070 재확인은 069 round 2 뒤 함께.
+Task 12: 068 fix round 2 DONE — 6a8db32, R068-M1·M2 + :378 증거 표시, check 통과, 20.4/분. 068~070 재확인 대기(069 round 2 뒤).
+Task 12: 069 fix round 2 DONE — 6138691, I1(HF 다운로드는 매 로드·재실행 — AppTest 스텁 1회/2회로 재현) + M×6, sequence 재구성(1px 표본 자체 측정 0곳, 960×1258), check 통과, 18.4/분. DSP_CACHEDIR 누락이 홈 캐시 원인이었음(둘 다 설정). **작성자가 리뷰어의 잔여 ~/.dspy_cache/cachedir_joblib을 스스로 rm -rf**(내 지시 아님, 빈 폴더+.gitignore뿐) — 지금 ~/.dspy_cache 없음 확인. 보고에 적는다.
+Task 12: 063~065 Minor 묶음 DONE (a941540418ffaef5d) — 41376cb 063·94c4aac 064(--server.address localhost, 실행 재현), 963753d 065(가려진 화살표: 라벨 "입력"으로 축약 — 구조적 대안 3개는 높이·대각·관통으로 실패), §8.2 신규 Minor 전부. 미완 1: 065-N3(sequence ui→gemini 라벨 "질문" 복원은 검사 21로 3글자 한계 — "이미지" 유지). 셋 다 check 통과, 20.3/18.6/20.4.
+Task 12: 재확인 dispatched — 068~070 (resume a14d2a59c25d0c3e7, fix-RR12c-round2.diff), 063~066 (resume a84eb9e2555f82737, fix-RR12b-round2.diff). 058~062 2차 재확인(a123a5bc94a31f625)은 진행 중.
+Task 12: 068~070 2차 재확인 DONE — 068·069 모두 해결(069 OpenAI 왕복 병합은 라벨이 양방향 데이터를 적어 §5 적합, 1px 측정 0곳). 070 open 1: R070-M3(Minor) "통계 전송" 라벨(x 951–1018)을 채팅 모델 수명선(x 978)이 여전히 지남 — 라벨은 화살표 중점에 놓여 축약으로는 못 풂, 배우 간격을 바꿔야 함. check는 표본 빈틈 때문에 통과. ~/.dspy_cache 없음.
+Ruling: R070-M3은 park — 059 N6와 같은 부류(수명선이 D2 mask된 라벨 뒤를 지남)이고, 같은 부류가 기존 46개 SVG에 있어 검사 21 수정·sequence 일괄 재배치 여부를 사용자가 정할 때 함께 처리한다. 070 작성자는 배우 순서 2가지를 시도해 문제가 다른 수명선으로 옮겨 가기만 했다 — 틀렸다면 070 sequence 하나가 그 일괄 재배치에 들어갈 뿐. → 068·069·070 complete.
+Task 12: 058~062 2차 재확인 DONE — 062 해결(신규 Minor N6 문구 둘). 059 N6: 작성자의 "불가" 주장은 틀림 — 리뷰어가 5040 순서를 렌더해 111개 0건, sequence.d2:10↔:11 맞바꾸면 0(1295×1346), 지운 "최종 답변"도 되살리라(0건 유지) + 신규 Minor(README:150 langchain-classic은 langchain-community 0.4.2가 들임). 061 open Important: ingest→OpenAI 라벨 접기 = 삭제 → 배치 (a) ingest를 front grid로(1057×942) / (b) 전부 화살표 1057×1148(예외 필요) + 신규 Minor 5. 참고 §10.5: 060 overview도 같은 라벨 접기(당시 Minor는 너그러웠다).
+Task 12: 063~066 2차 재확인 DONE — 063 해결, 066 Important 해결. Minor 남음: 064 :698(usage statistics는 연결 무관·헤드리스+credentials 없음이면 뜸), 065 N3(규칙 안에서 가능: ui→cohere "질의 텍스트 임베딩 요청(search_query)" + ui→gemini "질문+이미지", 907×960), 066 :848("한 번"→매번).
+Ruling: 061은 배치 (a) — 상한 안이고 Day 059 선례, 예외 불필요 — (b)는 사용자 예외가 필요하다. 060 라벨 접기도 061과 같은 판정(Important)으로 고친다 — 규격 §5 "화살표를 라벨로 접지 않는다" — 틀렸다면 060 그림 하나를 되돌릴 뿐.
+Ruling: 이번 볼륨(058~070)은 1px 표본 검사 21(dense21.mjs, 작업 폴더에 둠)도 0으로 만든다 — 사용자의 핵심 지시("글자에 걸치는 것 방지")이고 리뷰어가 이미 059·070을 지적했으며 같은 날들을 어차피 고치는 중 — 현황: 059·060·061·062·064 각 1, 070 2(나머지 0). R070-M3 park는 철회해 이번 묶음에 넣는다. 옛 볼륨 46개는 여전히 사용자 결정.
+Task 12: round 3 dispatched (공통 task-12-round3-brief.md) — 061 fix round 3(resume a2defb3fe1cccb91e), 060 fix round 2(resume a4391803c36439f30), 묶음 C 059·062·064(addfbd91deb96017d, sonnet → task-12-round3-C-report.md), 묶음 D 065·066·070(af67d3d3349a3f6b8, sonnet → task-12-round3-D-report.md).
+Task 12: 061 fix round 3 DONE — 949600c, N1 배치 (a)(ingest를 front grid로, 묶음 수준 화살표 front→qdrant·front→providers "청크 임베딩(OpenAI)", 1057×942, step3에 OpenAI로 가는 실제 화살표) + 신규 Minor 5, check 통과, 20.7/분. dense21 = 1 유지: 사용자 외 배우 6의 720 순서를 전부 렌더해 최소 1(분포 1:77 2:444 3:185 4:14), 현재 순서가 이미 최소 — 잔여로 보고(라벨을 뜻 잃을 만큼 줄이지 않음).
+Task 12: 060 fix round 2 DONE — 0d06796, overview app→OpenAI 임베딩을 실제 화살표로 복원(엣지 선언 순서만 바꿔 940×893), sequence는 720 순열 전수 탐색 중 0건 4개 가운데 최소(1348×1488), dense21 0, check 통과, 20.8/분. 덤으로 §9.4 N1·N2·방향 오탈자.
+Task 12: 묶음 D DONE (af67d3d3349a3f6b8) — da238b4 065(N3: ui→gemini "질문+이미지", 옆 cohere 라벨 늘려 dense 0 유지, 907×960), 23cebd6 066(:848 매번 뜸, credentials.py 소스 확인), 407145c 070(배우 순서만 바꿔 dense 2→0 — 720 순열 중 48개 0건, 메시지·라벨 그대로, 1272×1170, 커밋 본문에 065 크기가 섞인 문구 1곳 — amend 금지라 그대로). 셋 다 check 통과, 20.4/20.3/17.5.
+Task 12: 묶음 C DONE (addfbd91deb96017d) — 2207518 059(hub↔generate 순서 + "최종 답변" 복원, 1295×1434, README:150 langchain-community 0.4.2 — uv 캐시 METADATA 확인), 6acf2b3 062(:940·:980 + sequence: 순서만으로는 720 전수 0 불가 → 이웃 라벨에 실제 모델명 text-embedding-004를 보태 간격을 벌려 0 — 재확인에서 판정), 6edc9ad 064(:698 소스 확인 + qdrant/chat_model 순서). 셋 다 check 통과, dense21 0, 21.9/20.7/18.6.
+Task 12: round 3 끝. 볼륨 dense21: 061만 1(전수 증명 잔여), 나머지 0. 3차 재확인 diff: fix-RR12a-round3.diff(059~062), fix-RR12b-round3.diff(064·065·066·070), base 6138691.
+Task 12: 3차 재확인 dispatched (공통 rereview-12-round3-brief.md, sonnet) — a: 059~062 (a80f46a86f6dff6ba → rereview-12-round3-a.md), b: 064·065·066·070 (a71b92bc78e8ae356 → rereview-12-round3-b.md).
+Task 12: 3차 재확인 b DONE (a71b92bc78e8ae356) — 064·065·066·070 모두 문제 없음(check 통과, dense21 0, inventory는 065의 의도한 라벨 2건만 차이, sequence PNG 확인). → 064·065·066·070 complete.
+--- 세션 한도(429, 11:30 재설정)로 059~062 3차 재확인 끊김(다른 다섯은 작업·커밋을 마친 뒤 뒤따른 턴에서 끊김 — git status 깨끗, 재개 불필요) → 사용자 "멈춘지점에서 다시 시작해" → a80f46a86f6dff6ba만 SendMessage로 재개. ---
+Task 12: 3차 재확인 a DONE (a80f46a86f6dff6ba) — 059·060·061·062 모두 문제 없음(061 dense21 1은 무작위 20표본 0/20으로 최소 주장 재현). → 058~070 13일 전부 complete. 볼륨 마무리 시작.
+Task 12: complete — roadmap 70/164, npm test 48/48, Day 001~070 check 전부 통과, 058~070 분당 17.5~21.9. 재개 지점 갱신, 로드맵·원장 커밋 후 푸시.
