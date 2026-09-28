@@ -3,20 +3,26 @@ direction: down
 
 user: 사용자 { class: person }
 keys: .env (OPENAI_API_KEY, ANTHROPIC_API_KEY) { class: file }
-wfgen: 1. 워크플로우 생성 { class: ours }
-wf: 2~3. 에이전트 준비·실행 { class: ours }
-verify: 4. 코드 검증 { class: ours }
-extract: 5. 코드 추출 { class: ours }
+script: 스크립트 (ai_Self-Evolving_agent.py main) { class: ours }
+wfgen: 워크플로 생성 { class: ours }
+am: 에이전트 준비 { class: ours }
+wf: 워크플로 실행 { class: ours }
+verify: 코드 검증 { class: ours }
+extract: 코드 추출 { class: ours }
 openai: OpenAI gpt-4o-mini { class: ext }
-anthropic: Anthropic Claude 3.7 Sonnet (LiteLLM) { class: ext }
-outfile: 생성된 코드 파일 (examples/output/tetris_game/) { class: file }
+anthropic: Anthropic Claude (LiteLLM) { class: ext }
+outfile: 결과 코드 파일 { class: file }
 
-user -> wfgen: 실행
-keys -> wfgen: OPENAI_API_KEY
-keys -> verify: ANTHROPIC_API_KEY
-wfgen -> openai: 목표 텍스트
+user -> script: 실행
+keys -> script: API 키
+script -> wfgen: 목표 텍스트
+script -> am: 초기화
+script -> wf: 실행
+script -> verify: 검증 요청
+script -> extract: 분리 요청
+script -> outfile: 저장(블록 1개)
+wfgen -> openai: 목표 분해
 wf -> openai: 실행 요청
 verify -> anthropic: 코드+요구사항
-verify -> outfile: 단일 코드면 저장
 extract -> openai: 분리 요청
-extract -> outfile: 여러 개면 저장
+extract -> outfile: 저장(여러 개)

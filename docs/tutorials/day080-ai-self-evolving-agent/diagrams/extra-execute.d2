@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+script: 스크립트 (main) { class: ours }
+wf: WorkFlow { class: ours }
+openai: OpenAI gpt-4o-mini { class: ext }
+
+script -> wf: execute()
+wf -> openai: 실행 요청
+openai -> wf: 생성된 코드(HTML)
+wf -> script: output

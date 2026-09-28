@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+script: 스크립트 (main) { class: ours }
+verify: CodeVerification { class: ours }
+anthropic: Anthropic Claude { class: ext }
+outfile: 결과 파일 (index.html) { class: file }
+
+script -> verify: execute(requirements, code)
+verify -> anthropic: 코드+요구사항
+anthropic -> verify: verified_code
+verify -> script: verified_code
+script -> outfile: 코드 블록 쓰기(index.html)
