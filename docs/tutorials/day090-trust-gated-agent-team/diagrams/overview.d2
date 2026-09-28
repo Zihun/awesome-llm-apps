@@ -3,8 +3,8 @@ direction: down
 
 user: 사용자 { class: person }
 ui: Streamlit UI (trust_gated_agents.py) { class: ours }
-registry: 트러스트 레지스트리 (TrustRegistry) { class: store }
-audit: 감사 로그 (AuditTrail, 해시체인) { class: store }
+registry: "트러스트 레지스트리 (TrustRegistry, 메모리)" { class: store }
+audit: "감사 로그 (AuditTrail, 해시체인·메모리)" { class: store }
 
 agents: "파이프라인 슬롯" {
   class: group
