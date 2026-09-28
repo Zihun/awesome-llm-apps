@@ -10,3 +10,5 @@ assessment_agent -> action_agent: 이관(1차 SwarmResult / 이후 AFTER_WORK �
 action_agent -> followup_agent: 이관(1차 SwarmResult / 이후 AFTER_WORK 기본값)
 followup_agent -> assessment_agent: 이관(1차 SwarmResult / 이후 AFTER_WORK 기본값)
 assessment_agent -> cache: 요청·응답 저장(cache_seed=41 기본값)
+action_agent -> cache: 요청·응답 저장(cache_seed=41 기본값)
+followup_agent -> cache: 요청·응답 저장(cache_seed=41 기본값)

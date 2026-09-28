@@ -4,9 +4,7 @@ shape: sequence_diagram
 followup_agent: Follow-up 에이전트 { class: ours }
 assessment_agent: Assessment 에이전트 { class: ours }
 gpt4o: GPT-4o { class: ext }
-action_agent: Action 에이전트 { class: ours }
 
 followup_agent -> assessment_agent: SwarmResult→assessment_agent
 assessment_agent -> gpt4o: 본문 지시
 gpt4o -> assessment_agent: Assessment 본문(1바퀴)
-assessment_agent -> action_agent: 이관

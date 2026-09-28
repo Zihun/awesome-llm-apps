@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+assessment_agent: Assessment 에이전트 { class: ours }
+action_agent: Action 에이전트 { class: ours }
+gpt4o: GPT-4o { class: ext }
+ui: Streamlit UI { class: ours }
+
+assessment_agent -> action_agent: SwarmResult(action_agent)
+action_agent -> gpt4o: 요약 강제 프롬프트 + 누적 요약
+gpt4o -> action_agent: update_action_overview 호출
+action_agent -> ui: 사이드바 표시

@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+followup_agent: Follow-up 에이전트 { class: ours }
+ui: Streamlit UI { class: ours }
+사용자: 사용자 { class: person }
+
+followup_agent -> ui: 반환(chat_history)
+ui -> 사용자: 3개 expander + 완료 메시지

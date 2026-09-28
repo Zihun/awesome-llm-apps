@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+action_agent: Action 에이전트 { class: ours }
+followup_agent: Follow-up 에이전트 { class: ours }
+gpt4o: GPT-4o { class: ext }
+
+action_agent -> followup_agent: AFTER_WORK(followup_agent)
+followup_agent -> gpt4o: 본문 지시
+gpt4o -> followup_agent: Follow-up 본문(1바퀴)

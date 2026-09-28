@@ -595,41 +595,29 @@ error boxes: ['Please enter your OpenAI API key.']
 
 ## 요청 한 건이 흐르는 과정
 
-한 번의 요청은 세 구간을 순서대로 거칩니다 — **요약 바퀴**(세 에이전트가 하나씩 요약을 내고 사이드바에 표시) → **본문 1바퀴**(세 에이전트가 순서대로 본문 전체를 씀, 아직 화면에 남지 않음) → **본문 2바퀴**(같은 순서로 다시 쓰고, 이번 결과가 화면에 남음). Step 1에서 가짜 로컬 서버로 직접 확인한 순서 그대로입니다. 여섯 배우(사용자·UI·에이전트 셋·GPT-4o)가 한 그림에 다 들어가면 GPT-4o를 사이에 둔 수명선이 다른 메시지 라벨을 가로질러(검사 21), 이 세 구간이라는 앱의 실제 시간 경계를 따라 나눴습니다 — 구간마다 한 그림에 다 안 들어가 다시 둘로 나눈 곳도 있습니다. 메시지는 하나도 지우지 않고 그대로 옮겼습니다.
+한 번의 요청은 세 구간을 순서대로 거칩니다 — **요약 바퀴**(세 에이전트가 하나씩 요약을 내고 사이드바에 표시, `SwarmResult`로 즉시 이관) → **본문 1바퀴**(같은 순서로 본문 전체를 씀, `AFTER_WORK`로 이관, 아직 화면에 안 남음) → **본문 2바퀴**(같은 순서로 다시 쓰고 이번 결과가 화면에 남음). Step 1에서 가짜 로컬 서버로 직접 확인한 순서 그대로입니다. 이관마다 GPT-4o를 사이에 둔 수명선이 그 이관 라벨을 가로지르는 문제(검사 21)가 있어, 에이전트 턴 하나하나(그리고 각 턴을 여는 이관)를 앱의 실제 시간 경계로 삼아 잘게 나눴습니다 — 메시지는 하나도 지우지 않고 그대로 옮겼습니다. 그림 10장이 순서대로 이어집니다.
 
-![1-1: 요약 — Assessment·Action](diagrams/sequence.svg)
+![1-1: 요약 — Assessment](diagrams/sequence.svg) ![1-2: 요약 — Action(이관 포함)](diagrams/extra-summary-action.svg) ![1-3: 요약 — Follow-up(이관 포함)](diagrams/extra-summary-followup.svg)
 
-1-1은 버튼 클릭부터 Assessment·Action이 요약을 내기까지입니다. Streamlit UI가 `initiate_swarm_chat(task)`로 스웜을 시작시키면 Assessment 에이전트가 요약 강제 프롬프트로 GPT-4o를 불러 `update_assessment_overview` 도구 호출을 받고, 그 요약을 사이드바에 표시한 뒤 `SwarmResult(agent=action_agent)`로 Action 에이전트에 이관됩니다(Step 5). Action도 같은 방식으로 요약을 내고 사이드바에 표시한 뒤 Follow-up에 이관합니다.
+1-1~1-3은 버튼 클릭부터 세 에이전트가 요약을 하나씩 내기까지입니다. Streamlit UI가 `initiate_swarm_chat(task)`로 스웜을 시작시키면 Assessment가 요약 강제 프롬프트로 GPT-4o를 불러 `update_assessment_overview` 도구 호출을 받고 사이드바에 표시합니다(Step 5). 1-2는 `SwarmResult(action_agent)` 이관으로 열려 Action이 같은 일을 하고, 1-3은 `SwarmResult(followup_agent)` 이관으로 열려 Follow-up이 같은 일을 합니다 — Follow-up의 `SwarmResult`가 다시 Assessment로 돌아오면서 본문 1바퀴가 시작됩니다.
 
-![1-2: 요약 — Follow-up과 본문 라운드 진입](diagrams/extra-summary-followup.svg)
+![2-1: 본문 1바퀴 — Assessment(이관 포함)](diagrams/extra-body1a.svg) ![2-2: 본문 1바퀴 — Action(이관 포함)](diagrams/extra-body1b.svg) ![2-3: 본문 1바퀴 — Follow-up(이관 포함)](diagrams/extra-body1c.svg)
 
-1-2는 Follow-up이 같은 방식으로 요약을 내고 사이드바에 표시하는 부분입니다. Follow-up의 `SwarmResult`가 다시 Assessment로 돌아오면서 본문 라운드가 시작됩니다.
+2-1~2-3은 같은 세 에이전트가 이번에는 함수 호출 없이(`tools=None`) 본문 전체를 쓰는 첫 바퀴입니다. 함수 호출이 없으므로 다음 에이전트는 Step 7에서 등록한 `AFTER_WORK` 기본값으로 정해집니다 — 목적지는 요약 바퀴와 같은 순서지만 이관 메커니즘 자체는 다릅니다. 이 바퀴의 결과는 아직 화면에 남지 않습니다.
 
-![2-1: 본문 1바퀴 — Assessment](diagrams/extra-body1a.svg)
+![3-1: 본문 2바퀴 — Assessment(이관 포함)](diagrams/extra-body2a.svg) ![3-2: 본문 2바퀴 — Action(이관 포함)](diagrams/extra-body2b.svg) ![3-3: 본문 2바퀴 — Follow-up(이관 포함)](diagrams/extra-body2c.svg) ![3-4: 결과 반환과 표시](diagrams/extra-body2d.svg)
 
-2-1은 요약 바퀴의 마지막 이관을 이어받아 Assessment가 이번에는 함수 호출 없이(`tools=None`) 본문 전체를 쓰는 부분입니다. 함수 호출이 없으므로 다음 에이전트는 Step 7에서 등록한 `AFTER_WORK` 기본값으로 정해집니다 — 목적지는 요약 바퀴와 같은 순서지만 이관 메커니즘 자체는 다릅니다.
-
-![2-2: 본문 1바퀴 — Action·Follow-up](diagrams/extra-body1b.svg)
-
-2-2는 Action·Follow-up이 같은 방식으로 본문을 쓰고 `AFTER_WORK`로 이관되는 부분입니다. 이 바퀴의 결과는 아직 화면에 남지 않습니다 — Follow-up의 마지막 이관이 본문 2바퀴를 엽니다.
-
-![3-1: 본문 2바퀴 — Assessment·Action](diagrams/extra-body2a.svg)
-
-3-1은 본문 1바퀴의 마지막 이관을 이어받아 Assessment·Action이 `AFTER_WORK`로 이관되며 본문을 한 번 더 쓰는 부분입니다.
-
-![3-2: 본문 2바퀴 — Follow-up과 결과 반환](diagrams/extra-body2b.svg)
-
-3-2는 Action에서 Follow-up으로 이관된 뒤, Follow-up이 마지막 본문을 쓰고 `max_rounds=13`이 다 돌아 `initiate_swarm_chat`이 반환되는 부분입니다. Streamlit UI는 `chat_history[-3:]`(바로 이 2바퀴의 세 메시지)를 받아 평가·행동·후속 세 섹션으로 화면에 표시합니다(Step 8). 여섯 그림 모두 메시지의 존재·순서·어느 함수가 불리는지는 가짜 서버로 직접 확인했고, 실제 GPT-4o가 무슨 문장을 쓰는지는 키가 없어 확인하지 못했습니다.
+3-1~3-3은 같은 세 에이전트가 `AFTER_WORK`로 이관되며 본문을 한 번 더 쓰는 두 번째 바퀴입니다. 3-4에서 Follow-up까지 끝나면 `max_rounds=13`이 다 돌아 `initiate_swarm_chat`이 반환되고, Streamlit UI는 `chat_history[-3:]`(바로 이 2바퀴의 세 메시지)를 받아 평가·행동·후속 세 섹션으로 화면에 표시합니다(Step 8). 열 그림 모두 메시지의 존재·순서·어느 함수가 불리는지는 가짜 서버로 직접 확인했고, 실제 GPT-4o가 무슨 문장을 쓰는지는 키가 없어 확인하지 못했습니다.
 
 에이전트가 요약 도구를 호출한 뒤 실제로 어디로 이관되는지, 그리고 그 요약이 어떻게 사이드바에 뜨는지는 구조로 보면 더 분명합니다 — 아래 두 그림은 순서가 아니라 구조이므로 개요도와 마찬가지로 "누가 누구에게 이어지는가"만 보여줍니다.
 
 ![요약 도구 호출과 사이드바 표시](diagrams/extra-summary-tools.svg)
 
-세 `update_*_overview` 도구가 각각 자기 에이전트 안에 있고, 1차 턴에 호출되어 사이드바에 요약을 표시합니다(Step 5).
+세 `update_*_overview` 도구가 각 에이전트에 도구로 등록되어, 1차 턴에 호출되어 사이드바에 요약을 표시합니다(Step 5).
 
 ![이관 구조와 디스크 캐시](diagrams/extra-swarm-handoff.svg)
 
-세 에이전트가 이루는 이관 고리(1차 턴은 `SwarmResult`, 이후는 `AFTER_WORK` 기본값)와, Step 7에서 볼 디스크 캐시(`.cache/41/cache.db`)에 요청·응답이 저장되는 것을 함께 보여줍니다.
+세 에이전트가 이루는 이관 고리(1차 턴은 `SwarmResult`, 이후는 `AFTER_WORK` 기본값)와, Step 7에서 볼 디스크 캐시(`.cache/41/cache.db`)에 **세 에이전트 모두**가 요청·응답을 저장하는 것을 함께 보여줍니다 — 같은 `llm_config`(126~128행, `cache_seed` 없음)로 각자 `OpenAIWrapper`를 쓰기 때문입니다(직접 확인: `max_rounds=13` 실행 뒤 `Cache` 테이블 9행을 시스템 프롬프트로 가르면 `{'assessment': 3, 'action': 3, 'followup': 3}`).
 
 ## 실행 체크리스트
 
