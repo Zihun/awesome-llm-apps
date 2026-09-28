@@ -137,7 +137,7 @@ else:
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run --no-project streamlit run startup_trends_agent.py --server.headless true
+uv run --no-project streamlit run startup_trends_agent.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
@@ -381,7 +381,19 @@ final analysis (앞 120자): {
 
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+세 에이전트가 앞 결과를 기다렸다가 순서대로 불리므로, 아래 세 그림은 그 순서 그대로입니다.
+
+![1단계: 뉴스 수집](diagrams/sequence.svg)
+
+1단계는 News Collector가 Gemini를 거쳐 DuckDuckGo로 기사를 모으는 부분만 그립니다.
+
+![2단계: 기사 요약](diagrams/extra-summarize.svg)
+
+2단계는 Summary Writer가 Gemini·Newspaper4k로 기사 원문을 조회해 요약하는 부분만 그립니다.
+
+![3단계: 트렌드 분석과 표시](diagrams/extra-analyze.svg)
+
+3단계는 Trend Analyzer가 도구 없이 Gemini에게 트렌드 종합을 요청하고, 그 결과를 화면에 표시하는 부분까지 그립니다.
 
 사용자가 주제와 Google API 키를 입력하고 "Generate Analysis"를 누르면, Streamlit UI는 세 에이전트를 **순서대로**, 앞 결과를 기다렸다가 부릅니다(asyncio 없이 완전히 동기적입니다 — Day 005의 병렬 `asyncio.gather`와 대비됩니다). 먼저 News Collector가 호출되어 내부적으로 Gemini에게 요청하고, Gemini가 DuckDuckGo 검색 도구를 부를지 판단해 결과를 받아온 뒤 최종 텍스트를 돌려줍니다 — 그 텍스트가 `RunOutput.content`로 UI에 반환됩니다. UI는 이 텍스트를 그대로 다음 프롬프트에 끼워 Summary Writer를 호출하고, Summary Writer는 다시 Gemini를 통해 Newspaper4k 도구로 기사 원문 전체를 조회한 뒤 요약 텍스트를 돌려받습니다. 마지막으로 Trend Analyzer는 도구 없이 그 요약 텍스트만 보고 Gemini에게 트렌드 종합을 요청합니다. 세 단계 모두 반환값은 `.content` 하나뿐이고, 이 값이 `RunStatus.error`를 담고 있어도 파이프라인은 멈추지 않고 그대로 다음 단계로 흘러간다는 것을 Step 6에서 직접 확인했습니다. 이 시퀀스는 키가 없어 유효한 키로 처음부터 끝까지 이어지는 것을 보지는 못했고, 각 구간을 유효하지 않은 키로 개별적으로 확인한 것입니다.
 

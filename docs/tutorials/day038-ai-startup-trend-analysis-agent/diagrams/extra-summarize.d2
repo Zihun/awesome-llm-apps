@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit UI { class: ours }
+summarizer: Summary Writer { class: ours }
+gemini: Gemini API { class: ext }
+
+ui -> summarizer: summary_writer.run(articles)
+summarizer -> gemini: 모델 호출 (Newspaper4k 도구로 본문 조회)
+gemini -> summarizer: 응답 텍스트

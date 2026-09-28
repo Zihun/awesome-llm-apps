@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+analyzer: Trend Analyzer { class: ours }
+gemini: Gemini API { class: ext }
+
+ui -> analyzer: trend_analyzer.run(summaries)
+analyzer -> gemini: 모델 호출 (도구 없음)
+gemini -> analyzer: 응답 텍스트
+ui -> user: st.write(analysis) 표시
