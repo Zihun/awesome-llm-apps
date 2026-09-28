@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+openai: OpenAI GPT-4o { class: ext }
+ui: Streamlit UI { class: ours }
+claude: "Claude 3.5 Sonnet (litellm)" { class: ext }
+
+ui -> openai: 채팅 완성 요청(OpenAI 선택 시)
+openai -> ui: 답변 텍스트
+ui -> claude: 채팅 완성 요청(Claude 선택 시, litellm)
+claude -> ui: 답변 텍스트
+ui -> user: 답변 표시

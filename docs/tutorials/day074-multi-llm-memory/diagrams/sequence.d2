@@ -2,18 +2,15 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
+openai: OpenAI (임베딩) { class: ext }
 qdrant: Qdrant (로컬) { class: store }
 mem0: Mem0 메모리 매니저 { class: ours }
-llm: "선택된 LLM (OpenAI/Claude)" { class: ext }
 ui: Streamlit UI { class: ours }
 
-user -> ui: 질문·사용자명 입력, LLM 선택
-ui -> mem0: search(query, user_id)
-mem0 -> qdrant: 임베딩 후 유사도 검색
-qdrant -> mem0: 관련 기억 목록(list)
-mem0 -> ui: relevant_memories
-ui -> llm: 채팅 완성 요청(GPT-4o 또는 Claude, 선택에 따라 분기)
-llm -> ui: 답변 텍스트
-ui -> mem0: add(answer, user_id)
-mem0 -> qdrant: 새 기억 벡터 저장
-ui -> user: 답변 표시
+user -> ui: 질문·사용자명·LLM 선택, "Chat with LLM" 클릭
+ui -> mem0: search(query=prompt, user_id=user_id)
+mem0 -> openai: 질의 임베딩 요청(text-embedding-3-small)
+openai -> mem0: 1536차원 임베딩 벡터
+mem0 -> qdrant: 코사인 유사도 검색(컬렉션 mem0, embedding_model_dims=1536)
+qdrant -> mem0: score 포함 관련 기억 목록(list)
+mem0 -> ui: relevant_memories(list, dict 아님)

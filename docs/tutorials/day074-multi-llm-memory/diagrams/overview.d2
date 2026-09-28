@@ -15,5 +15,5 @@ svc: "외부 LLM 제공자" {
 user -> ui: API 키·질문·사용자명·LLM 선택
 ui -> mem0: search()·add()·get_all() 호출
 mem0 -> qdrant: 벡터 저장·유사도 검색
-mem0 -> svc: 질의 임베딩
+mem0 -> svc.openai: 임베딩·사실 추출
 ui -> svc: 채팅 완성 요청

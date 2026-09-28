@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit UI { class: ours }
+qdrant: Qdrant (로컬) { class: store }
+mem0: Mem0 메모리 매니저 { class: ours }
+openai: "OpenAI (사실 추출·임베딩)" { class: ext }
+
+ui -> mem0: add(answer, user_id=user_id)
+mem0 -> openai: 사실 추출 요청(gpt-4o-mini, JSON 응답 강제)
+openai -> mem0: 추출된 사실 목록(facts, JSON)
+mem0 -> openai: 저장할 텍스트 임베딩 요청(text-embedding-3-small)
+openai -> mem0: 1536차원 임베딩 벡터
+mem0 -> qdrant: 새 기억 포인트 저장(컬렉션 mem0, 1536차원)
