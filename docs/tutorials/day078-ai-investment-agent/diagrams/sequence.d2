@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+user: 사용자 { class: person }
+plane: 컨트롤 플레인 { class: ext }
+os: AgentOS 서버 { class: ours }
+openai: OpenAI GPT { class: ext }
+agent: 투자 에이전트 { class: ours }
+yf: YFinanceTools { class: ours }
+
+user -> plane: "AAPL과 MSFT 주가를 비교해줘"
+plane -> os: "POST /agents/{id}/runs"
+os -> agent: run(message)
+agent -> openai: 메시지 + 도구 스키마 + 지시문
+openai -> agent: tool_call get_current_stock_price("AAPL")
+agent -> yf: get_current_stock_price("AAPL")
+yf -> agent: 가격 데이터
+agent -> openai: 도구 결과
+openai -> agent: 최종 답변 (markdown 표)
+agent -> os: 응답
+os -> plane -> user: 화면에 표시

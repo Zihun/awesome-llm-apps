@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+plane: 컨트롤 플레인 { class: ext }
+key: OPENAI_API_KEY (환경변수) { class: file }
+app: investment_agent.py {
+  os: 1. AgentOS 서버 { class: ours }
+  agent: 2. 투자 에이전트 { class: ours }
+  yf: 주가 도구 (YFinanceTools) { class: ours }
+}
+openai: OpenAI GPT { class: ext }
+yahoo: Yahoo Finance { class: ext }
+
+user -> plane: 브라우저에서 질문
+plane -> app: HTTP 요청
+key -> app: 인증
+app.agent -> openai: 메시지 + 도구 스키마
+app.yf -> yahoo: 티커 (예: AAPL)
