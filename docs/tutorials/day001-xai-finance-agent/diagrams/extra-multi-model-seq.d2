@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+cache: initialize_agent { class: ours }
+build: build_model() { class: ours }
+llm: 선택된 LLM { class: ext }
+agent: 금융 에이전트 { class: ours }
+
+user -> ui: 질문, 실행 클릭 (키 비움)
+ui -> cache: 1차 호출 (캐시 없음)
+cache -> build: build_model(model_name)
+build -> cache: None (경고 호출)
+cache -> ui: None (캐시에 저장)
+ui -> cache: 재클릭 (키 입력함)
+cache -> ui: 캐시된 None + 경고 재생
+cache -> agent: 캐시 지움 → 재실행
+agent -> llm: 메시지 + 스키마

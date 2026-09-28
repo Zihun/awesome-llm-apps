@@ -2,12 +2,12 @@
 direction: down
 
 user: 사용자 { class: person }
-app: xai_finance_agent_multi_model.py {
+app: 멀티모델 앱 (xai_finance_agent_multi_model.py) {
   ui: 1. 모델 선택 UI { class: ours }
-  build: 2. build_model() { class: ours }
+  build: 2. 모델 팩토리 (build_model()) { class: ours }
   agent: 3. 금융 에이전트 { class: ours }
-  ddg: 웹 검색 도구 { class: ours }
-  yf: 주가 도구 { class: ours }
+  ddg: 웹 검색 도구 (DuckDuckGoTools) { class: ours }
+  yf: 주가 도구 (YFinanceTools) { class: ours }
 }
 providers: 4개 LLM 제공자 {
   class: group
@@ -20,7 +20,7 @@ providers: 4개 LLM 제공자 {
 ddgapi: DuckDuckGo { class: ext }
 yahoo: Yahoo Finance { class: ext }
 
-user -> app.ui: 모델 선택 + 질문
+user -> app.ui: API 키 + 모델 선택 + 질문
 app.agent -> providers: 메시지 (선택된 하나만 호출)
 app.ddg -> ddgapi: 검색 요청
 app.yf -> yahoo: 시세 요청
