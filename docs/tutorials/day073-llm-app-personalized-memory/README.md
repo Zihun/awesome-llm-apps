@@ -1,12 +1,12 @@
 # Day 073 · 📝 LLM App with Personalized Memory
 
-> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 65분 · API 비용 대략 $0.1 이하(이 문서는 대부분 로컬로 재현해 실제 호출은 거의 없음) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory`
+> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 75분(Day 072와의 버전 차이, 두 겹의 실제 크래시, 그리고 검증용 재현 명령이 많아 다른 날보다 읽고 손으로 돌려볼 것이 많습니다) · API 비용 대략 $0.1 이하(이 문서는 대부분 로컬로 재현해 실제 호출은 거의 없음) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory`
 
 ## 오늘 만들 것
 
-Day 071의 `llama3_stateful_chat`은 세션 하나 안에서만 사는 파이썬 리스트로 "기억"을 흉내 냈습니다. 오늘 앱(`llm_app_memory.py`, 75줄)은 그다음 단계로, **mem0**라는 메모리 프레임워크와 **Qdrant** 벡터 저장소를 붙여 브라우저를 닫고 다시 열어도, 심지어 다른 세션에서도 남는 "개인화된 기억"을 만듭니다. 사용자가 화면에 자기 이름(`user_id`)과 질문을 입력하면, 앱은 그 사용자의 과거 메모리를 벡터 검색으로 찾아 GPT-4o의 프롬프트에 끼워 넣고, 답변을 다시 메모리에 저장합니다 — 같은 사람이 다음에 관련된 질문을 하면 이전 대화의 맥락이 자동으로 딸려 옵니다. 코드 자체는 짧지만(mem0 설정 13줄, 검색·응답·저장 20여 줄, 사이드바 10줄) `mem0ai`라는 프레임워크 하나가 임베딩·사실 추출·벡터 검색·컬렉션 관리를 전부 대신 해 주기 때문입니다.
+Day 071의 `llama3_stateful_chat`이 세션 하나짜리 파이썬 리스트로 "기억"을 흉내 냈다면, 바로 앞 Day 072는 같은 mem0+Qdrant 조합으로 세션을 넘는 기억을 만들려다 `Memory.from_config` 단계부터 막혔습니다(Day 072 "오늘 만들 것" 문단에서 직접 확인한 사실). 오늘 앱(`llm_app_memory.py`, 75줄)도 mem0+Qdrant를 쓰지만 `requirements.txt`가 `mem0ai==0.1.29`로 버전을 고정합니다 — 버전 고정이 없어 오늘 기준 2.2.1이 깔리는 Day 072의 mem0ai는 `memory.search(..., user_id=...)`를 `ValueError`로 거부하지만(Day 072가 직접 확인한 사실), 옛 버전인 0.1.29의 `search()`는 `user_id`를 최상위 인자로 그대로 받습니다(패키지 내부 `mem0/memory/main.py` 379행, 직접 확인) — 그래서 36행의 `memory.search(query=prompt, user_id=user_id)`는 Day 072가 겪은 거부 없이 그대로 통과합니다. 사용자가 화면에 자기 이름(`user_id`)과 질문을 입력하면, 앱은 그 사용자의 과거 메모리를 벡터 검색으로 찾아 GPT-4o의 프롬프트에 끼워 넣고, 답변을 다시 메모리에 저장합니다 — 같은 사람이 다음에 관련된 질문을 하면 이전 대화의 맥락이 자동으로 딸려 옵니다. 코드 자체는 짧지만(mem0 설정 13줄, 검색·응답·저장 20여 줄, 메모리 보기 10여 줄) `mem0ai`라는 프레임워크 하나가 임베딩·사실 추출·벡터 검색·컬렉션 관리를 전부 대신 해 주기 때문입니다.
 
-이 문서를 쓰며 오늘(2026-09-28) `uv pip install -r requirements.txt`로 설치했을 때 **streamlit 1.64.0**, **openai 1.109.1**, **mem0ai 0.1.29**가 그대로 받아졌고 파일도 문제없이 컴파일됩니다(직접 확인, Step 1). 하지만 `requirements.txt`가 버전을 고정한 것은 `mem0ai`뿐이고, mem0ai가 느슨하게 허용하는 범위(`qdrant-client>=1.9.1,<2.0.0`) 안에서 오늘 설치되는 최신판(1.19.1)에는 mem0 0.1.29가 부르는 `QdrantClient.search()`가 없습니다 — `query_points()`로 이름이 바뀌었습니다(직접 확인, Step 5). 그 결과 Qdrant를 Docker로 제대로 띄우고 진짜 OpenAI 키를 넣어도, "Chat with LLM"을 누르는 순간 앱은 `AttributeError`로 죽습니다. 우회해서 검색까지 성공시켜도 코드가 읽는 키(`text`)는 mem0가 실제로 돌려주는 키(`memory`)와 달라 `KeyError`가 나고, 사이드바의 "View My Memory"는 mem0의 기본 반환 형식이 리스트라는 것과 앱의 dict 가정이 어긋나 메모리가 있어도 항상 "기록 없음"만 보여줍니다(모두 직접 재현, Step 5·7). 여기에 더해 `import mem0` 한 줄만으로 홈 디렉터리에 `.mem0/` 폴더가 생기는 부작용도 있습니다(직접 확인, Step 1). 완성 화면은 제목·API 키 입력창·사용자명/질문 입력창·"Chat with LLM" 버튼과, 사이드바의 "View My Memory" 버튼으로 이루어진 단순한 페이지입니다. 아래는 완성된 아키텍처입니다.
+이 문서를 쓰며 오늘(2026-09-28) `uv pip install -r requirements.txt`로 설치했을 때 **streamlit 1.64.0**, **openai 1.109.1**, **mem0ai 0.1.29**가 그대로 받아졌고 파일도 문제없이 컴파일됩니다(직접 확인, Step 1). 하지만 `requirements.txt`가 버전을 고정한 것은 `mem0ai`뿐이고, mem0ai가 느슨하게 허용하는 범위(`qdrant-client>=1.9.1,<2.0.0`) 안에서 오늘 설치되는 최신판(1.19.1)에는 mem0 0.1.29가 부르는 `QdrantClient.search()`가 없습니다 — `query_points()`로 이름이 바뀌었습니다(직접 확인, Step 5). 그 결과 Qdrant를 Docker로 제대로 띄우고 진짜 OpenAI 키를 넣어도, "Chat with LLM"을 누르는 순간 앱은 `AttributeError`로 죽습니다. 우회해서 검색까지 성공시켜도 코드가 읽는 키(`text`)는 mem0가 실제로 돌려주는 키(`memory`)와 달라 `KeyError`가 나고, 본문의 "View My Memory" 버튼은 mem0의 기본 반환 형식이 리스트라는 것과 앱의 dict 가정이 어긋나 메모리가 있어도 항상 "기록 없음"만 보여줍니다(모두 직접 재현, Step 5·7). 여기에 더해 `import mem0` 한 줄만으로 홈 디렉터리에 `.mem0/` 폴더가 생기는 부작용도 있습니다(직접 확인, Step 1). 완성 화면은 제목·API 키 입력창·사용자명/질문 입력창·"Chat with LLM" 버튼, 그리고 본문의 "View My Memory" 버튼(결과 없음 안내만 사이드바에 뜹니다)으로 이루어진 단순한 페이지입니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -23,8 +23,8 @@ Day 071의 `llama3_stateful_chat`은 세션 하나 안에서만 사는 파이썬
 
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
-| 사용자 (브라우저) | API 키·사용자명·질문 입력, 답변·사이드바 확인 | 코드 없음 (외부 UI) |
-| Streamlit UI | 제목·입력창·버튼·사이드바 렌더링 | `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:6-10`, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:30-34`, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:65-67` |
+| 사용자 (브라우저) | API 키·사용자명·질문 입력, 답변·메모리 목록 확인 | 코드 없음 (외부 UI) |
+| Streamlit UI | 제목·입력창·버튼(본문의 "View My Memory" 포함)·사이드바 안내 렌더링 | `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:6-10`, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:30-34`, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:65-67` |
 | OpenAI 클라이언트 | `gpt-4o`로 채팅 완성 요청 | `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:14`, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:47-53` |
 | mem0 Memory 계층 | 대화에서 사실을 뽑아 임베딩하고 사용자별로 검색·저장하는 오케스트레이션(mem0ai 0.1.29, 패키지 소스로 확인) | `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:17-28`, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:36`, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:62`, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:68` |
 | OpenAI API (외부) | `gpt-4o` 채팅 완성 + mem0 내부 `gpt-4o-mini` 사실 추출 + `text-embedding-3-small` 임베딩 | 코드 없음 (외부 서비스) |
@@ -99,18 +99,16 @@ ls ~/.mem0
 config.json
 ```
 
-`mem0/memory/setup.py`(패키지 소스로 확인, mem0ai 0.1.29)가 모듈을 불러오는 시점에 `os.path.expanduser("~")` 아래 `os.makedirs(..., exist_ok=True)`를 조건 없이 실행하고, 비어 있으면 익명 UUID가 담긴 `config.json`을 만듭니다. 이어서 `Memory` 객체를 실제로 쓰면 같은 폴더에 대화 이력(`history.db`)도 쌓입니다. 이 위치를 옮기려면 `import mem0`보다 먼저 `MEM0_DIR` 환경변수를 지정합니다 — 이 문서의 나머지 확인 명령은 모두 이렇게 실행했습니다.
+`mem0/memory/setup.py`(패키지 소스로 확인, mem0ai 0.1.29)가 모듈을 불러오는 시점에 `os.path.expanduser("~")` 아래 `os.makedirs(..., exist_ok=True)`를 조건 없이 실행하고, 비어 있으면 익명 UUID가 담긴 `config.json`을 만듭니다. 이어서 `Memory` 객체를 실제로 쓰면 같은 폴더에 대화 이력(`history.db`)도 쌓입니다. mem0는 모듈을 불러오는 순간 PostHog(`https://us.i.posthog.com`)로 보내는 익명 사용 통계 클라이언트도 만들고, `search`·`add`·`get_all`을 부를 때마다 OS·Python 버전과 컬렉션 이름 같은 메타데이터(대화 내용은 아님)를 전송합니다(`mem0/memory/telemetry.py` 소스로 확인). 이 둘을 끄려면 `import mem0`보다 먼저 `MEM0_DIR`(저장 위치)과 `MEM0_TELEMETRY=False`(통계 끄기) 환경변수를 지정합니다 — 이 문서의 나머지 확인 명령은 모두 이렇게, 그리고 저장소 밖(`$TEMP`)을 가리키도록 실행했습니다.
 
 ```bash
-MEM0_DIR="$(pwd)/.mem0_local" uv run --no-project python -c "..."
+MEM0_DIR="$TEMP/day073-mem0" MEM0_TELEMETRY=False uv run --no-project python -c "..."
 ```
 
 ```powershell
-$env:MEM0_DIR = "$PWD\.mem0_local"
+$env:MEM0_DIR="$env:TEMP\day073-mem0"; $env:MEM0_TELEMETRY="False"
 uv run --no-project python -c "..."
 ```
-
-mem0는 모듈을 불러오는 순간 PostHog(`https://us.i.posthog.com`)로 보내는 익명 사용 통계 클라이언트도 만들고, `search`·`add`·`get_all`을 부를 때마다 OS·Python 버전과 컬렉션 이름 같은 메타데이터(대화 내용은 아님)를 전송합니다(`mem0/memory/telemetry.py` 소스로 확인). 끄려면 같은 방식으로 `MEM0_TELEMETRY=False`를 지정합니다.
 
 ### Step 2. Streamlit 뼈대와 OpenAI 키 입력
 
@@ -191,11 +189,20 @@ client OK, base_url: https://api.openai.com/v1/
 
 **확인.** 두 가지를 직접 재현했습니다 — 아무도 듣지 않는 로컬 프록시(`127.0.0.1:9`)로 외부 네트워크를 막았습니다.
 
-먼저, OpenAI 키를 아예 지정하지 않으면 벡터 저장소를 Qdrant로 골라도 mem0 자신이 즉시 실패합니다.
+먼저, OpenAI 키를 아예 지정하지 않으면 벡터 저장소를 Qdrant로 골라도 mem0 자신이 즉시 실패합니다. 스크래치 경로는 저장소 밖(`$TEMP`)에 둡니다.
 
 ```bash
-MEM0_DIR="$(pwd)/.mem0_local_a" HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \
+MEM0_DIR="$TEMP/day073-mem0-a" MEM0_TELEMETRY=False HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \
   uv run --no-project python -c "
+from mem0 import Memory
+config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'llm_app_memory', 'host': 'localhost', 'port': 6333}}}
+memory = Memory.from_config(config)
+"
+```
+
+```powershell
+$env:MEM0_DIR="$env:TEMP\day073-mem0-a"; $env:MEM0_TELEMETRY="False"; $env:HTTP_PROXY="http://127.0.0.1:9"; $env:HTTPS_PROXY="http://127.0.0.1:9"
+uv run --no-project python -c "
 from mem0 import Memory
 config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'llm_app_memory', 'host': 'localhost', 'port': 6333}}}
 memory = Memory.from_config(config)
@@ -211,8 +218,17 @@ openai.OpenAIError: The api_key client option must be set either by passing api_
 키를 (형식만 맞으면 아무 값이나) 지정하면 이 에러는 사라지고, 대신 Qdrant 연결 시도로 넘어갑니다. Qdrant를 띄우지 않은 채로는:
 
 ```bash
-MEM0_DIR="$(pwd)/.mem0_local_b" OPENAI_API_KEY=sk-anything HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \
+MEM0_DIR="$TEMP/day073-mem0-b" MEM0_TELEMETRY=False OPENAI_API_KEY=sk-anything HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \
   uv run --no-project python -c "
+from mem0 import Memory
+config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'llm_app_memory', 'host': 'localhost', 'port': 6333}}}
+memory = Memory.from_config(config)
+"
+```
+
+```powershell
+$env:MEM0_DIR="$env:TEMP\day073-mem0-b"; $env:MEM0_TELEMETRY="False"; $env:OPENAI_API_KEY="sk-anything"; $env:HTTP_PROXY="http://127.0.0.1:9"; $env:HTTPS_PROXY="http://127.0.0.1:9"
+uv run --no-project python -c "
 from mem0 import Memory
 config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'llm_app_memory', 'host': 'localhost', 'port': 6333}}}
 memory = Memory.from_config(config)
@@ -337,7 +353,7 @@ has query_points: True
             memory.add(answer, user_id=user_id)
 ```
 
-실행 중에는 Step 5의 크래시 때문에 이 줄에 도달하지 못합니다. 소스로 보면(`mem0/memory/main.py`), `add()`는 `gpt-4o-mini`에게 방금 텍스트에서 "사실"을 JSON으로 뽑아내라고 시킨 뒤, 새로 뽑은 사실마다 기존에 비슷한 메모리가 있는지 `vector_store.search(...)`로 다시 확인합니다 — 즉 `add()`도 사실은 Step 5와 같은 깨진 `.search()` 호출을 내부에서 한 번 더 거칩니다. 비슷한 메모리가 없으면 임베딩과 함께 새 포인트로 Qdrant에 저장합니다.
+실행 중에는 Step 5의 크래시 때문에 이 줄에 도달하지 못합니다. 소스로 보면(패키지 내부 `mem0/memory/main.py` 146~229행), `add()`는 먼저 `gpt-4o-mini`에게 방금 텍스트에서 "사실"을 JSON으로 뽑아내라고 시킨 뒤, 새로 뽑은 사실마다 기존에 비슷한 메모리가 있는지 `vector_store.search(...)`로 다시 확인합니다 — 즉 `add()`도 사실은 Step 5와 같은 깨진 `.search()` 호출을 내부에서 한 번 더 거칩니다. 그 결과(기존 메모리 후보)와 새 사실들을 다시 `gpt-4o-mini`에게 보내 항목마다 ADD/UPDATE/DELETE/NONE 중 무엇으로 처리할지 판단하게 하고, 이 두 번째 LLM 응답에 따라서만 코드가 새 포인트를 만들거나 기존 포인트를 갱신합니다 — "비슷한 메모리가 없으면 저장"을 코드가 직접 정하는 것이 아니라 LLM의 판단입니다.
 
 **그림.**
 
@@ -356,9 +372,9 @@ sed -n '61,62p' llm_app_memory.py
             memory.add(answer, user_id=user_id)
 ```
 
-### Step 7. 사이드바 — 전체 메모리 보기
+### Step 7. 본문의 "View My Memory" 버튼 — 전체 메모리 보기
 
-**목적.** `get_all()`의 반환 형태가 앱이 기대하는 것과 맞는지 확인합니다.
+**목적.** `get_all()`의 반환 형태가 앱이 기대하는 것과 맞는지, 그리고 버튼이 실제로 어디에 나타나는지 확인합니다.
 
 **할 일.**
 
@@ -378,26 +394,106 @@ sed -n '61,62p' llm_app_memory.py
                 st.sidebar.info("No learning history found for this user ID.")
 ```
 
-69행은 `get_all()`이 `{"results": [...]}` 형태의 dict를 돌려준다고 가정합니다. 이는 mem0의 `api_version="v1.1"`일 때만 맞습니다 — Step 3에서 본 대로 이 앱의 config는 `version`을 지정하지 않아 기본값 `"v1.0"`으로 동작하고, 이 모드의 `get_all()`은 리스트를 그대로 돌려주면서 `DeprecationWarning`을 띄웁니다(패키지 소스 `mem0/memory/main.py`로 확인). 파이썬에서 `"results" in [...]`는 리스트의 **원소** 중에 문자열 `"results"`가 있는지를 묻는 것이라 항상 거짓이 되고, 그러면 70~73행은 절대 실행되지 않습니다 — 메모리가 실제로 쌓여 있어도 사이드바는 항상 "No learning history found"만 보여줍니다. `get_all()`은 내부에서 `vector_store.list()`(`.scroll()`을 씀)를 부르므로 Step 5의 `AttributeError`는 겪지 않습니다 — 이 버튼만 따로 눌러 보면 죽지 않고 조용히 틀린 답을 보여준다는 뜻입니다.
+66행의 `st.sidebar.title("Memory Info")`는 사이드바에 남지만, 67행은 `st.sidebar.button`이 아니라 `st.button`입니다 — 버튼 자체는 화면 본문에 렌더링됩니다(소스로 확인). 69행은 `get_all()`이 `{"results": [...]}` 형태의 dict를 돌려준다고 가정합니다. 이는 mem0의 `api_version="v1.1"`일 때만 맞습니다 — Step 3에서 본 대로 이 앱의 config는 `version`을 지정하지 않아 기본값 `"v1.0"`으로 동작하고, 이 모드의 `get_all()`은 리스트를 그대로 돌려주면서 `DeprecationWarning`을 띄웁니다(패키지 소스 `mem0/memory/main.py`로 확인). 파이썬에서 `"results" in [...]`는 리스트의 **원소** 중에 문자열 `"results"`가 있는지를 묻는 것이라 항상 거짓이 되고, 그러면 70~73행은 절대 실행되지 않습니다 — 메모리가 실제로 쌓여 있어도 이 버튼은 항상 "No learning history found"만 보여주며(75행 `st.sidebar.info`이므로 이 안내 문구만 사이드바에 뜹니다), 본문에는 아무것도 나타나지 않습니다. `get_all()`은 내부에서 `vector_store.list()`(`.scroll()`을 씀)를 부르므로 Step 5의 `AttributeError`는 겪지 않습니다 — 이 버튼만 따로 눌러 보면 죽지 않고 조용히 틀린 답을 보여준다는 뜻입니다.
 
 **그림.**
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** `:memory:` 모드의 Qdrant와 로컬 임베딩 스텁으로 벡터 저장소에 메모리 하나를 직접 넣고, 실제 `get_all()`의 반환 형태를 봤습니다(Qdrant Docker나 진짜 OpenAI 키 없이 재현했고, 로컬 스텁 서버는 임의의 높은 포트 61870을 썼습니다).
+**확인.** Qdrant Docker나 OpenAI 키 없이, 실제 `Memory.get_all()`을 그대로 불러 반환 형태를 확인합니다 — `vector_store.config.client`에 `:memory:` 모드의 `QdrantClient`를 직접 주입해 네트워크 연결 없이 진짜 `Memory` 객체를 만들고(임베더 생성에만 쓰이는 `OPENAI_API_KEY`는 형식만 맞으면 되므로 `sk-test`), mem0가 실제로 저장하는 페이로드 키(`data`, `get_all`이 이를 `memory`로 옮겨 돌려줍니다)로 메모리 1건을 직접 넣었습니다.
 
-직접 확인한 출력(발췌):
+```bash
+MEM0_DIR="$TEMP/day073-mem0-step7" MEM0_TELEMETRY=False uv run --no-project python -c "
+import os
+os.environ['OPENAI_API_KEY'] = 'sk-test'
+from qdrant_client import QdrantClient
+from mem0 import Memory
+
+client = QdrantClient(location=':memory:')
+config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'llm_app_memory', 'client': client}}}
+memory = Memory.from_config(config)
+memory.vector_store.insert(
+    vectors=[[0.0] * 1536],
+    payloads=[{'data': 'Alice enjoys hiking', 'user_id': 'alice', 'hash': 'x', 'created_at': 'now'}],
+    ids=['11111111-1111-1111-1111-111111111111'],
+)
+result = memory.get_all(user_id='alice')
+print('type(result):', type(result))
+print('result:', result)
+print('\"results\" in result:', 'results' in result)
+"
+```
+
+```powershell
+$env:MEM0_DIR="$env:TEMP\day073-mem0-step7"; $env:MEM0_TELEMETRY="False"
+uv run --no-project python -c "
+import os
+os.environ['OPENAI_API_KEY'] = 'sk-test'
+from qdrant_client import QdrantClient
+from mem0 import Memory
+
+client = QdrantClient(location=':memory:')
+config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'llm_app_memory', 'client': client}}}
+memory = Memory.from_config(config)
+memory.vector_store.insert(
+    vectors=[[0.0] * 1536],
+    payloads=[{'data': 'Alice enjoys hiking', 'user_id': 'alice', 'hash': 'x', 'created_at': 'now'}],
+    ids=['11111111-1111-1111-1111-111111111111'],
+)
+result = memory.get_all(user_id='alice')
+print('type(result):', type(result))
+print('result:', result)
+print('\"results\" in result:', 'results' in result)
+"
+```
+
+직접 확인한 출력(경고는 예상대로 `DeprecationWarning`, `api_version`을 지정하지 않았다는 뜻입니다):
 
 ```
-type(all_mem): list
-"results" in all_mem: False
+type(result): <class 'list'>
+result: [{'id': '11111111-1111-1111-1111-111111111111', 'memory': 'Alice enjoys hiking', 'hash': 'x', 'metadata': None, 'created_at': 'now', 'updated_at': None, 'user_id': 'alice'}]
+"results" in result: False
 ```
+
+메모리가 실제로 1건 있는데도 `"results" in result`는 거짓입니다 — 이 버튼은 항상 "No learning history found"만 보여줍니다.
+
+**실제로 앱을 띄워보면.** 12행의 `if openai_api_key:` 게이트가 이후 코드를 전부 감싸므로, 키를 입력하기 전까지는 Qdrant도 OpenAI 키도 필요 없이 제목과 API 키 입력창까지는 그대로 뜹니다.
+
+```bash
+uv run --no-project streamlit run llm_app_memory.py --server.address localhost
+```
+
+headless로 직접 확인할 때는 다른 에이전트와 겹치지 않는 임의의 높은 포트를 씁니다.
+
+```bash
+uv run --no-project streamlit run llm_app_memory.py --server.headless true --server.address localhost --server.port 58732 --browser.gatherUsageStats false
+```
+
+직접 확인한 콘솔 출력(포트 58732, 키 없이 실행):
+
+```
+Uvicorn server started on localhost:58732
+
+  You can now view your Streamlit app in your browser.
+
+  URL: http://localhost:58732
+```
+
+여기서 API 키를 입력해야 12행의 게이트를 넘어 사용자명·질문 입력창과 두 버튼(Step 4·5·7)이 나타납니다 — 그 뒤부터는 이 문서가 확인한 대로 Qdrant와 `qdrant-client` 버전이 실제 동작을 가릅니다.
 
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+한 번의 질문·답변은 실제로 두 단계를 거칩니다 — 아래 두 그림은 그 순서 그대로입니다.
 
-사용자가 질문을 입력하고 "Chat with LLM"을 누르면, Streamlit UI는 가장 먼저 mem0 Memory 계층에 `search(query, user_id)`를 넘깁니다. mem0는 질문을 OpenAI API로 임베딩으로 바꿔 받은 뒤, 그 벡터로 Qdrant에서 같은 `user_id`의 메모리만 걸러 유사도 검색을 하고, 결과 목록을 UI에 돌려줍니다. UI는 이 목록으로 컨텍스트 문자열을 만들어 OpenAI 클라이언트에 넘기고, 클라이언트는 `POST /v1/chat/completions`로 `gpt-4o`의 답변을 받아 화면에 렌더링합니다. 그 직후 UI는 같은 답변을 `add(answer, user_id)`로 다시 mem0에 넘기고, mem0는 OpenAI API로 사실을 추출·임베딩한 뒤 새 메모리를 Qdrant에 저장합니다 — 그래야 다음 질문의 검색 단계에서 이번 대화가 걸러집니다. Step 5·6에서 직접 확인했듯, 오늘 기준 설치에서는 이 그림의 첫 화살표(`search`)에서 이미 `AttributeError`로 멈추므로 실제로는 이 왕복 전체가 완주되지 않습니다 — 그림은 코드가 원래 의도한 구조를 보여줍니다.
+![1단계: 검색부터 답변 렌더링까지](diagrams/sequence.svg)
+
+1단계는 사용자가 "Chat with LLM"을 누른 뒤 답변이 화면에 뜨기까지, `memory.search(query=prompt, user_id=user_id)`와 `client.chat.completions.create(...)`가 오가는 부분만 그립니다.
+
+![2단계: 답변을 메모리에 저장](diagrams/extra-add.svg)
+
+2단계는 그 답변을 `memory.add(answer, user_id=user_id)`로 저장하는 부분만 그립니다 — Step 6에서 본 대로 mem0 내부에서 사실 추출, 기존 메모리와의 유사도 검색, 저장까지 이어집니다.
+
+사용자가 질문을 입력하고 "Chat with LLM"을 누르면, Streamlit UI는 가장 먼저 mem0 Memory 계층에 검색을 넘깁니다. mem0는 질문을 OpenAI API로 임베딩으로 바꿔 받은 뒤, 그 벡터로 Qdrant에서 같은 `user_id`의 메모리만 걸러 유사도 검색을 하고, 결과 목록을 UI에 돌려줍니다. UI는 이 목록으로 컨텍스트 문자열을 만들어 OpenAI 클라이언트에 넘기고, 클라이언트는 `POST /v1/chat/completions`로 `gpt-4o`의 답변을 받아 화면에 렌더링합니다. 그 직후 UI는 같은 답변을 다시 mem0에 넘기고, mem0는 OpenAI API로 사실을 추출한 뒤 기존 메모리 중 비슷한 것이 있는지 Qdrant에서 한 번 더 검색하고, 그 결과에 따라 새 메모리를 Qdrant에 저장합니다 — 그래야 다음 질문의 검색 단계에서 이번 대화가 걸러집니다. Step 5·6에서 직접 확인했듯, 오늘 기준 설치에서는 1단계의 첫 화살표(`search`)에서 이미 `AttributeError`로 멈추므로 실제로는 이 왕복 전체가 완주되지 않습니다 — 두 그림은 코드가 원래 의도한 구조를 보여줍니다.
 
 ## 실행 체크리스트
 
@@ -405,23 +501,25 @@ type(all_mem): list
 - [ ] `import mem0`만 해도 홈 디렉터리에 `.mem0/`가 생긴다는 것과, `MEM0_DIR`로 이를 돌릴 수 있다는 것을 직접 확인했다
 - [ ] `Memory.from_config`가 벡터 저장소를 Qdrant로 골라도 OpenAI 키가 없으면 즉시 실패하고, 키가 있어도 Qdrant가 없으면 연결 단계에서 실패한다는 것을 직접 확인했다
 - [ ] 오늘 설치되는 `qdrant-client`(mem0ai가 느슨하게 허용하는 범위의 최신판)에 `.search()`가 없어서, `memory.search(...)`가 Qdrant를 제대로 띄워도 `AttributeError`로 죽는다는 것을 직접 확인했다
-- [ ] `get_all()`이 기본 `api_version`("v1.0")에서는 dict가 아니라 리스트를 돌려줘서, 사이드바의 `"results" in memories` 검사가 항상 거짓이 된다는 것을 소스와 직접 재현으로 확인했다
+- [ ] `get_all()`이 기본 `api_version`("v1.0")에서는 dict가 아니라 리스트를 돌려줘서, 본문 버튼의 `"results" in memories` 검사가 항상 거짓이 된다는 것을 소스와 직접 재현으로 확인했다
+- [ ] "View My Memory" 버튼(67행)이 `st.sidebar.button`이 아니라 `st.button`이라 화면 본문에 나타난다는 것을 소스로 확인했다
 - [ ] 한 사용자의 메모리가 다른 브라우저에서도 같은 `user_id` 문자열만 입력하면 그대로 보인다는 것을 이해했다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| "Chat with LLM" 클릭 시 `AttributeError: 'QdrantClient' object has no attribute 'search'`로 앱이 죽음 | `requirements.txt`가 `mem0ai==0.1.29`만 버전을 고정하고 `qdrant-client`는 지정하지 않아, mem0ai가 선언한 범위(`>=1.9.1,<2.0.0`) 안에서 오늘 기준 최신인 1.19.1이 설치됨 — 이 버전은 `.search()`를 제거하고 `.query_points()`로 옮겼는데 mem0ai 0.1.29의 벡터 저장소 코드는 여전히 옛 이름을 부름(직접 확인) | 리포 코드는 고치지 않음 — 재현하려면 `uv pip install "qdrant-client==1.9.1"`(mem0ai가 선언한 하한, `.search()`가 남아 있음)로 내려 설치 |
+| "Chat with LLM" 클릭 시 `AttributeError: 'QdrantClient' object has no attribute 'search'`로 앱이 죽음 | `requirements.txt`가 `mem0ai==0.1.29`만 버전을 고정하고 `qdrant-client`는 지정하지 않아, mem0ai가 선언한 범위(`>=1.9.1,<2.0.0`) 안에서 오늘 기준 최신인 1.19.1이 설치됨 — 이 버전은 `.search()`를 제거하고 `.query_points()`로 옮겼는데 mem0ai 0.1.29의 벡터 저장소 코드는 여전히 옛 이름을 부름(직접 확인) | 리포 코드는 고치지 않음 — 우회하려면 `uv pip install "qdrant-client==1.9.1"`(mem0ai가 선언한 하한, `.search()`가 남아 있음)로 내려 설치 |
 | "View My Memory"를 눌러도 메모리가 있는데 항상 "No learning history found" | `Memory.from_config`에 `version`을 지정하지 않아 기본값 `"v1.0"`으로 동작 — 이 모드의 `get_all()`은 `{"results": [...]}`가 아니라 리스트를 그대로 반환(+ `DeprecationWarning`)하는데, 앱은 `"results" in memories`로 dict를 기대함(직접 확인) | 리포 코드는 고치지 않음 — 더 해보기에서 `version: "v1.1"`을 직접 넣어봄 |
 | (위 두 문제를 우회해 검색이 성공해도) `mem['text']`에서 `KeyError: 'text'` | mem0 0.1.29가 반환하는 각 메모리 항목의 키는 `memory`이지 `text`가 아님(직접 확인) | 리포 코드는 고치지 않음 |
+| 기본 `~/.mem0`를 그대로 쓰면 `Memory.from_config`가 `sqlite3.OperationalError: no such column: prev_value`로 한 번 실패(두 번째 실행부터는 성공) | Day 072(mem0ai 2.2.1, 버전 고정 없음)를 먼저 실행해 같은 `~/.mem0/history.db`에 이력 테이블을 만들어 두면, 0.1.29의 `_migrate_history_table`(패키지 내부 `mem0/memory/storage.py` 58행)이 그 위에서 한 번 어긋남(Day 072가 직접 재현, Day 072 Step 1) | 리포 코드는 고치지 않음 — 이 문서의 모든 명령처럼 날마다(또는 볼륨 전체에) 다른 `MEM0_DIR`을 지정 |
 | 원본 앱 README의 clone 안내를 그대로 따라가면 `cd`가 실패 | README가 `cd awesome-llm-apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory`라고 안내하지만, 실제 폴더는 한 단계 위에 `advanced_llm_apps/`가 더 있음(소스로 확인) | `cd advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory`로 이동 |
 
 ## 더 해보기
 
 - `uv pip install "qdrant-client==1.9.1"`로 내려서 실제 Qdrant를 Docker로 띄우고, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:41`의 `mem['text']`를 `mem['memory']`로 고쳐 실제 대화가 쌓이는지 확인해보기
-- `Memory.from_config`의 config dict에 `"version": "v1.1"`을 추가해 `get_all()`/`search()`의 반환 형태가 어떻게 바뀌는지 확인하고, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:67-75`의 사이드바 코드를 그에 맞게 고쳐보기
-- `MEM0_TELEMETRY=False`와 `MEM0_DIR=./.mem0_local` 환경변수를 설정해, 홈 디렉터리를 건드리지 않고 PostHog 전송도 끈 채로 앱을 띄워보기
+- `Memory.from_config`의 config dict에 `"version": "v1.1"`을 추가해 `get_all()`/`search()`의 반환 형태가 어떻게 바뀌는지 확인하고, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:67-75`의 "View My Memory" 코드를 그에 맞게 고쳐보기
+- `MEM0_TELEMETRY=False`와 `MEM0_DIR=$TEMP/day073-mem0`(저장소 밖) 환경변수를 설정해, 홈 디렉터리를 건드리지 않고 PostHog 전송도 끈 채로 앱을 띄워보기
 
 ## 다음 날 예고
 
