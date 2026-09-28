@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+openai: OpenAI API { class: ext }
+launch: Product Launch Analyst { class: ours }
+team: Product Intelligence Team { class: ours }
+
+openai -> launch: 태그 붙은 불릿 16개
+launch -> team: RunOutput.content (위임 결과)

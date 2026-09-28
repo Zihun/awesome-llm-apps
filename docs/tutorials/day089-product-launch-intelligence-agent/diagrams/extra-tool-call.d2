@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+launch: Product Launch Analyst { class: ours }
+openai: OpenAI API { class: ext }
+firecrawl_tool: FirecrawlTools { class: ours }
+
+launch -> openai: 지시문 + task + FirecrawlTools 스키마
+openai -> launch: tool_call search_web(query)
+launch -> firecrawl_tool: search_web(query)
+firecrawl_tool -> launch: 검색 결과 JSON
+launch -> openai: 도구 결과 포함 재요청

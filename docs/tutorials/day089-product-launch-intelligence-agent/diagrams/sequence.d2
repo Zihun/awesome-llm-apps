@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+team: Product Intelligence Team { class: ours }
+openai: OpenAI API { class: ext }
+launch: Product Launch Analyst { class: ours }
+
+user -> ui: 회사명 입력 + Analyze Competitor Strategy 클릭
+ui -> team: team.run(불릿 생성 프롬프트)
+team -> openai: 리더 모델 호출 + 위임 도구 스키마
+openai -> team: "tool_call delegate_task_to_member(Launch Analyst)"
+team -> launch: 위임 실행 (launch.run(task))
