@@ -1,10 +1,16 @@
 # Day 076 · 🗄️ Local ChatGPT Clone with Memory
 
-> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 75분(mem0ai가 오늘 기준으로 두 가지 실패를 겪어, 두 번 다 직접 재현하고 원인을 소스로 확인하는 시간을 포함합니다) · API 비용 무료(로컬 — 채팅·임베딩·메모리 벡터 저장까지 전부 Ollama와 Qdrant로 처리하고, 이 문서는 클라우드 API를 하나도 호출하지 않습니다) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory`
+> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 85분(mem0ai가 오늘 설치 조합에서 세 가지 실패를 겪어, 셋 다 직접 재현하고 원인을 소스로 확인하는 시간을 포함합니다) · API 비용 무료(로컬 — 채팅·임베딩·메모리 벡터 저장은 모두 Ollama·Qdrant로 처리하지만, "클라우드 호출이 전혀 없다"는 뜻은 아닙니다: litellm은 import 시점에 GitHub에서 가격표를 받으려 하고 mem0는 PostHog로 익명 통계를 보내려 합니다 — 둘 다 환경변수로 끌 수 있습니다, 아래에서 직접 확인) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory`
 
 ## 오늘 만들 것
 
-오늘 앱(`local_chatgpt_memory.py`, 137줄 — 마지막 줄에 개행이 없어 `wc -l`은 136으로 세지만 편집기·GitHub에서는 137번째 줄까지 보입니다, 직접 확인)은 이 볼륨에서 처음으로 채팅 모델과 mem0의 사실 추출·임베딩까지 전부 **Ollama** 하나로 돌리는 앱입니다. Day 073의 `llm_app_memory.py`는 mem0 config에 `llm`·`embedder`를 지정하지 않아 기본값인 OpenAI를 그대로 썼지만, 오늘 config는 `vector_store`(Qdrant)뿐 아니라 `llm`과 `embedder`도 명시적으로 `"provider": "ollama"`로 지정합니다(6~34행) — 그래서 원본 앱 README가 내세우는 "Fully local implementation with no external API dependencies"라는 문구가, 적어도 이 config가 가리키는 서비스들에 대해서는 소스로 확인됩니다. 사용자는 사이드바에 아무 이름이나 입력해 "로그인"하고(별도 인증 없음, 47~53행), 채팅창에 메시지를 보내면 앱은 그 메시지를 먼저 mem0에 저장한 뒤(88행), 같은 사용자의 과거 메모리 전체를 `get_all()`로 가져와(91행) 컨텍스트 문자열로 붙이고, `litellm.completion(model="ollama/llama3.1:latest", ...)`로 스트리밍 응답을 받습니다(105~113행). 이 문서를 쓰며 오늘(2026-09-28) `uv pip install -r requirements.txt`로 설치했을 때 **streamlit 1.64.0**, **litellm 1.80.0**, **mem0ai 0.1.29**, **qdrant-client 1.19.1**이 그대로 받아졌고 파일도 문제없이 컴파일됩니다(직접 확인, Step 1). 하지만 mem0ai 0.1.29의 Ollama LLM/임베더 provider는 `ollama`라는 별도 PyPI 패키지에 `from ollama import Client`로 직접 의존하는데, 이 패키지는 `requirements.txt` 4줄에도, mem0ai가 선언한 의존성에도 없습니다(직접 확인, Step 1) — 그 결과 사이드바에 사용자명을 입력하는 순간(=`Memory.from_config(config)` 호출, 59행) 앱은 깔끔한 `ImportError`가 아니라 표준입력이 없는 Streamlit 프로세스에서 즉시 `EOFError`로 죽습니다(직접 재현, Step 2). `ollama` 패키지를 따로 설치해도 두 번째 문제가 남습니다 — mem0ai 0.1.29가 "모델이 이미 있는지" 확인하는 코드는 오늘 설치되는 `ollama` 0.6.2의 응답 스키마와 필드 이름이 어긋나 있어, 모델이 이미 로컬에 있어도 매번 무조건 `pull`을 시도합니다(직접 재현, Step 2). 이 두 버그를 우회하면 앱 자체의 로직(v1.1 형식의 `get_all()`, 컨텍스트 구성, 스트리밍 응답 처리)은 설계대로 동작한다는 것도 로컬 스텁 서버로 직접 확인했습니다(Step 6~8) — Day 073에서 본 `get_all()` dict/list 불일치는 오늘 config가 `"version": "v1.1"`을 명시하기 때문에 이 앱에는 없습니다. 완성하면 브라우저에는 제목, 사이드바의 사용자명 입력창과 "View My Memory" 버튼, 그리고 채팅 입력창이 뜹니다. 아래는 완성된 아키텍처입니다.
+오늘 앱(`local_chatgpt_memory.py`, 137줄 — 마지막 줄에 개행이 없어 `wc -l`은 136으로 세지만 편집기·GitHub에서는 137번째 줄까지 보입니다, 직접 확인)은 이 볼륨에서 처음으로 채팅 모델과 mem0의 사실 추출·임베딩까지 전부 **Ollama** 하나로 돌리는 앱입니다. Day 073의 `llm_app_memory.py`는 mem0 config에 `llm`·`embedder`를 지정하지 않아 기본값인 OpenAI를 그대로 썼지만, 오늘 config는 `vector_store`(Qdrant)뿐 아니라 `llm`과 `embedder`도 명시적으로 `"provider": "ollama"`로 지정합니다(6~34행) — 그래서 원본 앱 README가 내세우는 "Fully local implementation with no external API dependencies"라는 문구는 **채팅·임베딩·메모리 벡터 저장이라는 모델 호출 자체**에 대해서는 소스로 확인됩니다. 다만 이것이 "이 앱을 켜면 어떤 외부 요청도 없다"는 뜻은 아닙니다 — `import litellm`은 그 시점에 `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`을 받으려 하고(`LITELLM_LOCAL_MODEL_COST_MAP=True`로 끌 수 있음, 직접 확인), `import mem0`는 홈 디렉터리에 `.mem0/`를 만들고 PostHog로 익명 통계를 보내려 합니다(`MEM0_TELEMETRY=False`로 끌 수 있음, Day 073에서 이미 확인한 동작). 둘 다 채팅·임베딩 요청 자체와는 무관한, import·초기화 시점의 부수 효과입니다. 사용자는 사이드바에 아무 이름이나 입력해 "로그인"하고(별도 인증 없음, 47~53행), 채팅창에 메시지를 보내면 앱은 그 메시지를 먼저 mem0에 저장한 뒤(88행), 같은 사용자의 과거 메모리 전체를 `get_all()`로 가져와(91행) 컨텍스트 문자열로 붙이고, `litellm.completion(model="ollama/llama3.1:latest", ...)`로 스트리밍 응답을 받습니다(105~113행). 이 문서를 쓰며 오늘(2026-09-28) `uv pip install -r requirements.txt`로 설치했을 때 **streamlit 1.64.0**, **litellm 1.80.0**, **mem0ai 0.1.29**, **qdrant-client 1.19.1**이 그대로 받아졌고 파일도 문제없이 컴파일됩니다(직접 확인, Step 1). 하지만 mem0ai 0.1.29의 Ollama LLM/임베더 provider는 `ollama`라는 별도 PyPI 패키지에 `from ollama import Client`로 직접 의존하는데, 이 패키지는 `requirements.txt` 4줄에도, mem0ai가 선언한 의존성에도 없습니다(직접 확인, Step 1) — 그 결과 사이드바에 사용자명을 입력하는 순간(=`Memory.from_config(config)` 호출, 59행) 앱은 깔끔한 `ImportError`가 아니라 표준입력이 없는 Streamlit 프로세스에서 즉시 `EOFError`로 죽습니다(직접 재현, Step 2). `ollama` 패키지를 따로 설치해도 두 번째 문제가 남습니다 — mem0ai 0.1.29가 "모델이 이미 있는지" 확인하는 코드는 오늘 설치되는 `ollama` 0.6.2의 응답 스키마와 필드 이름이 어긋나 있어, 모델이 이미 로컬에 있어도 매번 무조건 `pull`을 시도합니다(직접 재현, Step 2). 이 둘을 우회해 `Memory` 객체를 만드는 데 성공해도 **세 번째 문제**가 기다립니다 — `requirements.txt`가 버전을 고정하지 않은 `qdrant-client`는 오늘 설치되는 1.19.1인데, mem0ai 0.1.29의 `add()`는 추출한 사실마다 내부적으로 `self.vector_store.search(...)`를 부르고 그 래퍼는 `self.client.search(...)`를 부릅니다 — 이 메서드는 qdrant-client 1.19.1에 없습니다(`.search()`는 `query_points()`로 이름이 바뀌었습니다). 그래서 88행의 `m.add(prompt, ...)`는 사실이 하나라도 추출되는 순간 `AttributeError`로 죽습니다 — Day 073·075에서 본 것과 같은 원인입니다(직접 재현, Step 6). 이 세 가지를 모두 우회하면(`ollama` 설치 + `/api/pull` 성공 응답 + `qdrant-client==1.9.1`로 다운그레이드) 앱 자체의 로직(v1.1 형식의 `get_all()`, 컨텍스트 구성, 스트리밍 응답 처리)은 설계대로 동작한다는 것도 로컬 스텁 서버로 직접 확인했습니다(Step 6~8) — Day 073에서 본 `get_all()` dict/list 불일치는 오늘 config가 `"version": "v1.1"`을 명시하기 때문에 이 앱에는 없습니다. 완성하면 브라우저에는 제목, 사이드바의 사용자명 입력창과 "View My Memory" 버튼, 그리고 채팅 입력창이 뜹니다. 세 가지를 모두 갖춘 뒤(진짜 Ollama에 두 모델을 받고, `ollama` 패키지를 설치하고, `qdrant-client==1.9.1`로 맞추고, Qdrant를 Docker로 띄운 뒤) 앱 자체를 띄우는 명령은 다음과 같습니다.
+
+```bash
+uv run --no-project streamlit run local_chatgpt_memory.py --server.address localhost --server.headless true
+```
+
+(`--server.address localhost`가 없으면 Streamlit이 외부 IP 확인차 `checkip.amazonaws.com`에 요청을 보냅니다 — Day 060에서 확인한 동작.) 이 문서는 위 세 가지 우회 없이는 이 명령이 곧바로 죽으므로 직접 띄우지 않고, 아래 Step들에서 각 실패와 우회를 라이브러리 수준으로 재현합니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -14,7 +20,7 @@
 |---|---|---|
 | Ollama | `llama3.1:latest`로 채팅, `nomic-embed-text:latest`로 임베딩을 로컬로 서빙(`localhost:11434`) | https://ollama.com/download 설치 후 `ollama pull llama3.1`·`ollama pull nomic-embed-text` — 이 문서는 두 모델을 내려받지 않고 로컬 스텁 서버로 재현합니다 |
 | ollama (PyPI 패키지) | mem0ai 0.1.29의 Ollama LLM/임베더 provider가 직접 의존 — `requirements.txt`와 mem0ai 의존성 어디에도 없음(Step 1에서 직접 확인) | `uv pip install ollama` (pip: `pip install ollama`) |
-| Qdrant | mem0가 사용자별 벡터를 저장하는 벡터 저장소, `local-chatgpt-memory` 컬렉션 | Docker: `docker run -p 6333:6333 qdrant/qdrant` — 이 문서는 Docker 대신 `qdrant-client`의 로컬 파일 모드(`path=`)로 벡터 저장소 계층만 재현합니다 |
+| Qdrant | mem0가 사용자별 벡터를 저장하는 벡터 저장소, `local-chatgpt-memory` 컬렉션 | Docker: `docker run -p 6333:6333 qdrant/qdrant` — 이 문서는 Docker 대신 `qdrant-client`의 로컬 파일 모드(`path=`)로 벡터 저장소 계층만 재현합니다. `requirements.txt`가 버전을 고정하지 않아 오늘은 1.19.1이 설치되는데, 이 버전은 mem0ai 0.1.29가 부르는 `.search()`가 없어 `AttributeError`가 남 — `uv pip install "qdrant-client==1.9.1"`로 내려야 함(Step 6) |
 | MEM0_DIR·MEM0_TELEMETRY 환경변수 | `import mem0`가 홈 디렉터리에 `.mem0/`를 만들고 PostHog로 익명 통계를 보내는 것을 막음(Day 073에서 직접 확인한 것과 같은 동작) | 이 문서의 모든 명령은 import 전에 `MEM0_DIR=<스크래치 경로>`·`MEM0_TELEMETRY=False`를 지정합니다 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 참고 |
 
@@ -362,9 +368,114 @@ grep -n "st.chat_message\|st.chat_input" local_chatgpt_memory.py
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** Step 2의 두 버그를 우회한 상태(`ollama` 패키지 설치 + 스텁 서버가 `/api/pull`에 성공 응답)에서, Qdrant Docker 대신 로컬 파일 모드(`path=`)와 Ollama 대신 같은 스텁 서버(127.0.0.1:61076)로 이 왕복을 그대로 재현했습니다.
+**확인.** Step 2의 두 버그를 우회한 상태(`ollama` 패키지 설치 + `/api/pull`에 성공 응답)에서, Qdrant Docker 대신 로컬 파일 모드(`path=`)와 진짜 Ollama 대신 로컬 스텁 서버(127.0.0.1:61076)로 이 왕복을 재현했습니다. 스텁은 이렇게 생겼습니다 — mem0의 사실 추출 호출(system+user 메시지 2개)과 갱신 판단 호출(user 메시지 1개)을 메시지 개수로 구분해 각각 `{"facts": [...]}`·`{"memory": [...]}` JSON을 돌려주고, `/api/pull`·`/api/embeddings`·`/api/generate`(litellm용, NDJSON 스트림)도 흉내 냅니다.
+
+`fake_ollama.py` (직접 작성, 저장소 코드 아님 — 재현 전용):
+
+```python
+import json
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+PORT = 61076
+
+
+class FakeOllama(BaseHTTPRequestHandler):
+    def _send(self, obj, code=200):
+        data = json.dumps(obj).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        if self.path == "/api/tags":
+            self._send({"models": [
+                {"name": "llama3.1:latest", "model": "llama3.1:latest"},
+                {"name": "nomic-embed-text:latest", "model": "nomic-embed-text:latest"},
+            ]})
+        else:
+            self._send({"error": "not found"}, 404)
+
+    def do_POST(self):
+        n = int(self.headers.get("content-length", 0))
+        body = json.loads(self.rfile.read(n) or b"{}")
+        if self.path == "/api/chat":
+            msgs = body.get("messages", [])
+            if len(msgs) == 2:
+                # mem0 사실 추출 호출: system=FACT_RETRIEVAL_PROMPT, user="Input: <원문>"
+                fact = "Replied that hiking is fun" if "Assistant:" in msgs[1].get("content", "") else "Loves hiking on weekends"
+                content = json.dumps({"facts": [fact]})
+            elif len(msgs) == 1:
+                # mem0 갱신 판단 호출: user 메시지 1개(새 사실을 그대로 담음)
+                fact = "Replied that hiking is fun" if "fun" in msgs[0].get("content", "") else "Loves hiking on weekends"
+                content = json.dumps({"memory": [{"id": "0", "text": fact, "event": "ADD"}]})
+            else:
+                content = "FAKE_OLLAMA_CHAT_REPLY"
+            self._send({"model": body.get("model", "llama3.1:latest"),
+                        "message": {"role": "assistant", "content": content}, "done": True})
+        elif self.path == "/api/generate":
+            lines = [
+                json.dumps({"response": "FAKE_OLLAMA_GENERATE_REPLY", "done": False}),
+                json.dumps({"response": "", "done": True, "prompt_eval_count": 1, "eval_count": 1}),
+            ]
+            payload = ("\n".join(lines) + "\n").encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/x-ndjson")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+        elif self.path == "/api/embeddings":
+            self._send({"embedding": [0.001] * 768})
+        elif self.path == "/api/pull":
+            self._send({"status": "success"})
+        else:
+            self._send({"error": "not found"}, 404)
+
+    def log_message(self, *a):
+        pass
+
+
+ThreadingHTTPServer(("127.0.0.1", PORT), FakeOllama).serve_forever()
+```
+
+이 스텁을 백그라운드로 한 번 띄웁니다(Step 6~8이 공유합니다).
 
 ```bash
+uv run --no-project python fake_ollama.py &
+```
+
+(PowerShell: `Start-Process uv -ArgumentList "run","--no-project","python","fake_ollama.py"`) 먼저 `requirements.txt`가 오늘 그대로 설치하는 **qdrant-client 1.19.1**로 재현하면, 세 번째 문제가 그대로 드러납니다.
+
+```bash
+uv run --no-project python -c "
+from mem0.memory.main import Memory
+config = {
+    'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'local-chatgpt-memory', 'path': './.qdrant_local', 'embedding_model_dims': 768}},
+    'llm': {'provider': 'ollama', 'config': {'model': 'llama3.1:latest', 'ollama_base_url': 'http://localhost:61076'}},
+    'embedder': {'provider': 'ollama', 'config': {'model': 'nomic-embed-text:latest', 'ollama_base_url': 'http://localhost:61076'}},
+    'version': 'v1.1',
+}
+m = Memory.from_config(config)
+print(m.add('I love hiking on weekends', user_id='alice'))
+"
+```
+
+직접 확인한 출력(발췌):
+
+```
+  File ".../mem0/memory/main.py", line 165, in _add_to_vector_store
+    existing_memories = self.vector_store.search(
+  File ".../mem0/vector_stores/qdrant.py", line 143, in search
+    hits = self.client.search(
+AttributeError: 'QdrantClient' object has no attribute 'search'
+```
+
+Day 073·075와 원인이 같습니다 — mem0ai 0.1.29가 부르는 `.search()`가 qdrant-client 1.19.1에는 없고 `query_points()`로 이름이 바뀌었습니다. Day 073의 처방대로 mem0ai가 선언한 하한으로 내리면 통과합니다.
+
+```bash
+uv pip install "qdrant-client==1.9.1"
+rm -rf .qdrant_local
 uv run --no-project python -c "
 from mem0.memory.main import Memory
 config = {
@@ -379,14 +490,14 @@ print(m.get_all(user_id='alice'))
 "
 ```
 
-직접 확인한 출력(발췌):
+직접 확인한 출력:
 
 ```
-{'results': [{'id': '817c6a9a-...', 'memory': 'User loves hiking on weekends', 'event': 'ADD'}], 'relations': []}
-{'results': [{'id': '817c6a9a-...', 'memory': 'User loves hiking on weekends', 'hash': '...', 'metadata': None, 'created_at': '...', 'updated_at': None, 'user_id': 'alice'}]}
+{'results': [{'id': 'ba6e3325-...', 'memory': 'Loves hiking on weekends', 'event': 'ADD'}], 'relations': []}
+{'results': [{'id': 'ba6e3325-...', 'memory': 'Loves hiking on weekends', 'hash': '...', 'metadata': None, 'created_at': '...', 'updated_at': None, 'user_id': 'alice'}]}
 ```
 
-두 응답 모두 `"results"` 키를 가진 dict입니다 — 93행의 검사가 실제로 통과한다는 뜻입니다.
+두 응답 모두 `"results"` 키를 가진 dict입니다 — 93행의 검사가 실제로 통과한다는 뜻입니다. 이후 Step 7·8의 확인은 이 `qdrant-client==1.9.1` 상태를 이어서 씁니다.
 
 ### Step 7. LiteLLM로 Ollama 스트리밍 응답 생성
 
@@ -484,27 +595,39 @@ else:
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
-**확인.** Step 6·7의 스텁 서버로 두 번째 `add()`까지 이어서 실행했습니다.
+**확인.** `qdrant-client`의 로컬 파일 모드는 프로세스가 끝나야 디스크에 안전하게 반영되므로(파이썬 인터프리터 종료 중에는 `QdrantClient.__del__`이 제대로 못 닫는 경우가 있음, 직접 확인), Step 6의 `m`을 별도 프로세스에서 그대로 이어받을 수 없습니다. 그래서 Step 6의 설정을 그대로 반복한 뒤 두 번째 `add()`까지 **한 스크립트**로 실행했습니다 — 실제 앱도 세션 하나 안에서 같은 `m` 객체를 계속 씁니다(59행).
 
 ```bash
 uv run --no-project python -c "
-# Step 6에서 만든 m, alice의 컨텍스트를 이어서 사용
-m.add('Assistant: FAKE_OLLAMA_GENERATE_REPLY', user_id='alice')
-print(m.get_all(user_id='alice'))
+from mem0.memory.main import Memory
+config = {
+    'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'local-chatgpt-memory', 'path': './.qdrant_local2', 'embedding_model_dims': 768}},
+    'llm': {'provider': 'ollama', 'config': {'model': 'llama3.1:latest', 'ollama_base_url': 'http://localhost:61076'}},
+    'embedder': {'provider': 'ollama', 'config': {'model': 'nomic-embed-text:latest', 'ollama_base_url': 'http://localhost:61076'}},
+    'version': 'v1.1',
+}
+m = Memory.from_config(config)
+print('ADD1', m.add('I love hiking on weekends', user_id='alice'))
+print('ADD2', m.add('Assistant: FAKE_OLLAMA_GENERATE_REPLY', user_id='alice'))
+print('GET', m.get_all(user_id='alice'))
 "
 ```
 
-직접 확인한 출력(발췌, `results` 배열에 항목이 2개로 늘어남):
+직접 확인한 출력:
 
 ```
-{'results': [{'id': '817c6a9a-...', 'memory': 'User loves hiking on weekends', ...}, {'id': '9b7de5b2-...', 'memory': 'User loves hiking on weekends', ...}]}
+ADD1 {'results': [{'id': 'ba6e3325-...', 'memory': 'Loves hiking on weekends', 'event': 'ADD'}], 'relations': []}
+ADD2 {'results': [{'id': '6554a7a4-...', 'memory': 'Replied that hiking is fun', 'event': 'ADD'}], 'relations': []}
+GET {'results': [{'id': '6554a7a4-...', 'memory': 'Replied that hiking is fun', ...}, {'id': 'ba6e3325-...', 'memory': 'Loves hiking on weekends', ...}]}
 ```
+
+`results` 배열에 두 메모리가 모두 남습니다 — 134행의 두 번째 `add()`가 첫 번째를 지우지 않고 쌓는다는 뜻입니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 메시지를 보내면 Streamlit UI는 먼저 mem0에 `add(prompt, user_id)`를 넘깁니다. mem0는 내부적으로 Ollama에 사실 추출을 요청하고, 뽑힌 사실을 Qdrant에 임베딩·저장합니다. 이어서 UI는 `get_all(user_id)`로 그 사용자의 전체 메모리를 Qdrant에서 다시 조회해 컨텍스트 문자열을 만듭니다. UI는 이 컨텍스트와 프롬프트를 LiteLLM의 `completion(stream=True)` 호출에 넘기고, LiteLLM은 Ollama의 `POST /api/generate`로 요청해 토큰 스트림을 받아 UI에 청크 단위로 돌려줍니다. UI는 완성된 답변을 렌더링한 뒤, 그 답변을 다시 `add(assistant 응답, user_id)`로 mem0에 넘기고, mem0는 같은 절차(사실 추출 → Qdrant 저장)를 반복합니다. Step 2에서 직접 확인했듯, 오늘 기준 설치에서는 이 그림의 첫 화살표(mem0 → Ollama)에 이르기 전에 이미 `Memory.from_config()` 자체가 `EOFError`(또는 우회 후 항상 시도되는 `pull`)로 막히므로, 실제로는 이 왕복 전체가 두 버그를 우회해야만 완주됩니다 — 그림은 코드가 원래 의도한 구조를 보여줍니다.
+사용자가 메시지를 보내면 Streamlit UI는 먼저 mem0에 `add(prompt, user_id)`를 넘깁니다. mem0는 Ollama에 사실 추출을 요청하고(LLM 호출), 뽑힌 사실을 다시 Ollama에 임베딩으로 바꾼 뒤(별도 호출 — Qdrant가 임베딩을 만드는 것이 아닙니다), 그 벡터로 Qdrant에서 비슷한 기존 메모리를 검색하고 결과를 저장합니다. 이어서 UI는 `get_all(user_id)`로 그 사용자의 전체 메모리를 Qdrant에서 다시 조회해 컨텍스트 문자열을 만듭니다. UI는 이 컨텍스트와 프롬프트를 LiteLLM의 `completion(stream=True)` 호출에 넘기고, LiteLLM은 Ollama의 `POST /api/generate`로 요청해 토큰 스트림을 받아 UI에 청크 단위로 돌려줍니다. UI는 완성된 답변을 렌더링한 뒤, 그 답변을 다시 `add(assistant 응답, user_id)`로 mem0에 넘겨 같은 절차를 반복합니다. Step 2·6에서 직접 확인했듯, 오늘 기준 설치에서는 이 그림을 실제로 완주하기 전에 세 곳에서 막힙니다 — ① `Memory.from_config()` 자체가 `ollama` 패키지 부재로 `EOFError`, ② 우회해도 `_ensure_model_exists()`가 항상 `pull`을 시도, ③ 그것도 우회해 `Memory`를 만들어도 그림의 세 번째 화살표(mem0 → Qdrant "유사 메모리 검색")에서 `qdrant-client` 1.19.1에 없는 `.search()`를 불러 `AttributeError`. 세 가지를 모두 우회해야 그림 전체가 완주됩니다 — 그림 자체는 코드가 원래 의도한 구조를 보여줍니다.
 
 ## 실행 체크리스트
 
@@ -512,9 +635,12 @@ print(m.get_all(user_id='alice'))
 - [ ] `requirements.txt`와 mem0ai 배포 메타데이터 어디에도 `ollama` 패키지가 없어 `import ollama`가 실패한다는 것을 직접 확인했다
 - [ ] `ollama` 패키지가 없으면 사용자명을 입력하는 순간(`Memory.from_config`) `EOFError`로 앱이 죽는다는 것을 직접 재현했다(mem0/embeddings/ollama.py가 ImportError 대신 input()을 씀)
 - [ ] `ollama` 0.6.2의 응답 객체가 `name`이 아니라 `model` 필드를 써서, mem0ai 0.1.29의 `_ensure_model_exists()`가 모델이 이미 있어도 항상 `pull`을 시도한다는 것을 직접 확인했다
+- [ ] `requirements.txt`가 고정하지 않은 `qdrant-client`가 오늘 1.19.1로 설치되어 `.search()`가 없고, mem0ai 0.1.29의 `add()`가 이를 불러 `AttributeError`로 죽는다는 것을 직접 재현했다(Day 073·075와 같은 원인)
+- [ ] `qdrant-client==1.9.1`로 내리면 이 `AttributeError`가 사라지고 `add()`·`get_all()`이 정상 동작한다는 것을 직접 확인했다
 - [ ] config의 `"version": "v1.1"` 덕분에 `get_all()`이 dict를 돌려주고, Day 073에서 본 dict/list 불일치가 이 앱에는 없다는 것을 직접 확인했다
 - [ ] litellm의 `ollama/` provider가 `/api/generate`를 부르고, `ollama` PyPI 패키지 없이도 동작한다는 것을 소스와 재현으로 확인했다
-- [ ] 로컬 스텁 서버로 `add → get_all → completion → add` 전체 왕복이 설계대로 동작한다는 것을 확인했다
+- [ ] `import litellm`이 GitHub에서 가격표를 받으려 하고(`LITELLM_LOCAL_MODEL_COST_MAP=True`로 끔) `import mem0`가 PostHog로 통계를 보내려 한다는 것(`MEM0_TELEMETRY=False`로 끔)을 직접 확인해, "완전 로컬"이 모델 호출에만 해당한다는 것을 이해했다
+- [ ] 세 가지 실패를 모두 우회하면 로컬 스텁 서버로 `add → get_all → completion → add` 전체 왕복이 설계대로 동작한다는 것을 확인했다
 
 ## 문제 해결
 
@@ -522,11 +648,11 @@ print(m.get_all(user_id='alice'))
 |---|---|---|
 | 사이드바에 사용자명을 입력하자마자 `EOFError: EOF when reading a line`로 앱이 죽음 | mem0ai 0.1.29의 `mem0/embeddings/ollama.py`가 `ollama` 패키지 부재 시 `ImportError` 대신 `input()`으로 설치 여부를 묻는데, `requirements.txt`에 이 패키지가 없고 Streamlit 프로세스는 표준입력이 연결돼 있지 않음(직접 확인) | 리포 코드는 고치지 않음 — `uv pip install ollama`로 별도 설치 |
 | `ollama` 패키지 설치 후에도, 사용자를 바꿀 때마다(=`Memory` 재생성) 이미 있는 모델에 대해 `pull` 요청이 나감 | mem0ai 0.1.29의 `_ensure_model_exists()`가 `model.get("name")`으로 모델 존재를 확인하는데, 오늘 설치되는 `ollama` 0.6.2의 응답 객체는 `name`이 아니라 `model` 필드를 씀 — 비교가 항상 거짓이 되어 매번 pull 시도(직접 확인) | 리포 코드는 고치지 않음 — 진짜 Ollama와 함께 쓰면 매번 재검증 트래픽이 생긴다는 것만 유의 |
-| 스트리밍 응답의 마지막 청크에서 `content`가 항상 빈 문자열 | litellm 1.80.0의 `ollama/` provider는 `done: true`인 마지막 청크의 텍스트를 무조건 빈 문자열로 처리함(소스로 확인) — 버그가 아니라 정상 동작 | 코드 변경 불필요 |
+| 위 둘을 우회해도, 메시지를 보내면 `AttributeError: 'QdrantClient' object has no attribute 'search'`로 죽음 | `requirements.txt`가 `qdrant-client` 버전을 고정하지 않아 오늘 1.19.1이 설치되는데, mem0ai 0.1.29의 `add()`는 사실마다 내부적으로 `self.vector_store.search(...)` → `self.client.search(...)`를 부름 — 1.19.1은 이 메서드를 `query_points()`로 바꿔 이름이 없음(직접 확인, Day 073·075와 같은 원인) | 리포 코드는 고치지 않음 — `uv pip install "qdrant-client==1.9.1"`(mem0ai가 선언한 하한)로 내려 설치 |
 
 ## 더 해보기
 
-- 진짜 Ollama를 설치하고(`ollama pull llama3.1`·`ollama pull nomic-embed-text`) `uv pip install ollama`까지 마친 뒤, 실제 Qdrant Docker와 함께 앱을 띄워 두 사용자명으로 전환하며 메모리가 사용자별로 분리되는지 확인해보기
+- 진짜 Ollama를 설치하고(`ollama pull llama3.1`·`ollama pull nomic-embed-text`) `uv pip install ollama`와 `uv pip install "qdrant-client==1.9.1"`까지 마친 뒤, 실제 Qdrant Docker와 함께 `uv run --no-project streamlit run local_chatgpt_memory.py --server.address localhost --server.headless true`로 앱을 띄워 두 사용자명으로 전환하며 메모리가 사용자별로 분리되는지 확인해보기
 - mem0ai 0.1.29의 `mem0/llms/ollama.py`·`mem0/embeddings/ollama.py`를 로컬에서 몽키패치해 `model.get("name")`을 `model.get("model")`로 고치고, `_ensure_model_exists()`가 더 이상 불필요한 `pull`을 하지 않는지 확인해보기
 - `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory/local_chatgpt_memory.py:106`의 모델 이름을 로컬에 실제로 있는 다른 Ollama 모델로 바꿔, 코드의 나머지 부분을 고치지 않고도 동작하는지 확인해보기
 
