@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit UI { class: ours }
+memory: mem0 Memory { class: ours }
+gemini: Gemini API { class: ext }
+
+ui -> memory: add(질문만, role:user)
+memory -> gemini: 사실 추출·임베딩
+gemini -> memory: 사실·임베딩 벡터 → Qdrant에 저장
