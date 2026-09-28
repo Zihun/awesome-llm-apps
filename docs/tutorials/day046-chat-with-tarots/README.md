@@ -489,7 +489,7 @@ FileNotFoundError: [Errno 2] No such file or directory: 'images/08-strength.jpg'
 화면 자체도 헤드리스로 띄워 확인합니다 — 카드 수·질문 입력창까지는 버튼을 누르지 않아도 그려집니다.
 
 ```bash
-uv run --no-project streamlit run app.py --server.headless true
+uv run --no-project streamlit run app.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
