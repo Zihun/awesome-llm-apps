@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit UI (movie_production_agent.py) { class: ours }
+
+movie_producer: "MovieProducer (Team)" {
+  class: ours
+  script_writer: ScriptWriter (Agent) { class: ours }
+  casting_director: CastingDirector (Agent) { class: ours }
+}
+
+gemini: "Gemini 2.5 Flash (Google)" { class: ext }
+serpapi: "SerpApi (search_google)" { class: ext }
+
+user -> ui: 키 2개 + 아이디어·장르·대상·러닝타임
+ui -> movie_producer: 버튼 클릭 → run(input_text)
+movie_producer -> gemini: 위임 판단·결과 종합 호출
+movie_producer.script_writer -> gemini: 모델 호출
+movie_producer.casting_director -> gemini: 모델 호출
+movie_producer.casting_director -> serpapi: search_google 도구 호출
