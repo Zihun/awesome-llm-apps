@@ -1,14 +1,14 @@
 # Day 084 · 📑 AI Meeting Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 75분(에이전트 4개짜리 크루를 조립해야 하고, `anthropic` 패키지 버전·모델 폐기·프록시 잔류라는 세 겹의 함정을 직접 재현하는 손 시간이 읽는 시간보다 깁니다) · API 비용 대략 회의 준비 1회에 권장 대체 모델 `claude-sonnet-4-6` 기준(Anthropic 공식 요금표: 입력 $3/출력 $15, 1M 토큰당) 순차 LLM 호출 6회와 누적되는 컨텍스트를 고려하면 대략 $0.2~0.5 — 원래 코드에 박힌 모델은 폐기되어 호출 자체가 안 되므로(문제 해결) 실측치는 아닙니다 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_meeting_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 85분(에이전트 4개짜리 크루를 조립해야 하고, `anthropic` 패키지가 빠진 것·잘못된 버전(게다가 uv 버전에 따라 고치는 명령까지 달라짐)·폐기된 모델이라는 세 겹의 함정을 직접 재현하는 손 시간이 읽는 시간보다 깁니다) · API 비용 대략 회의 준비 1회에 권장 대체 모델 `claude-sonnet-4-6` 기준(Anthropic 공식 요금표: 입력 $3/출력 $15, 1M 토큰당) 순차 LLM 호출 6회와 누적되는 컨텍스트를 고려하면 대략 $0.2~0.5 — 원래 코드에 박힌 모델은 폐기되어 호출 자체가 안 되므로(문제 해결) 실측치는 아닙니다 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_meeting_agent`
 
 ## 오늘 만들 것
 
 이 앱은 186줄(마지막 줄에 개행이 없어 `wc -l`은 185로 세지만 편집기·GitHub에서는 186번째 줄까지 보입니다, 직접 확인) 단일 파일 Streamlit 앱입니다. crewai 패키지 자체는 이 시리즈에 이미 나왔습니다 — Day 017이 Google ADK 크래시 코스에서 crewai 1.15.22와 crewai-tools를 설치하고 `CrewaiTool` 어댑터로 CrewAI의 스크레이핑 도구를 ADK 에이전트에 감싸 썼습니다. 오늘 처음인 것은 `Agent`(역할·목표·배경 이야기), `Task`(지시문과 기대 출력), `Crew`(에이전트와 Task를 묶어 실행), `Process.sequential`(Task를 순서대로 실행)로 **직접 크루를 짜는 것**입니다. 앱은 회사명·회의 목표·참석자·소요 시간·주요 관심사를 입력받아, 같은 `claude` LLM 객체를 공유하는 에이전트 4개 — 컨텍스트 분석(`context_analyzer`), 산업 분석(`industry_insights_generator`), 전략 수립(`strategy_formulator`), 경영진 브리핑(`executive_briefing_creator`) — 를 차례로 돌려 회의 준비 자료를 만듭니다. 이 중 검색 도구(`SerperDevTool`)를 쥔 것은 앞의 두 에이전트뿐이고(코드에서 `tools=[search_tool]`이 있는 것도 이 둘뿐입니다, 직접 확인), 전략·브리핑 에이전트는 도구 없이 앞 단계의 결과만으로 씁니다. `Process.sequential`은 각 Task의 `context` 필드를 명시하지 않으면(오늘 코드가 그렇습니다) 이전 Task들의 출력을 자동으로 다음 Task의 컨텍스트에 이어 붙입니다 — crewai 자신의 `NOT_SPECIFIED` 기본값과 `Crew._get_context`가 하는 일입니다(소스로 확인, crewai 1.15.22).
 
-오늘 재현에서 겹으로 확인한 문제가 셋입니다. 첫째, `requirements.txt` 4줄(`streamlit`, `crewai`, `crewai-tools`, `openai`)에는 Anthropic 모델을 쓰는 코드에 정작 필요한 `anthropic` 패키지가 빠져 있습니다 — crewai의 `LLM` 팩토리는 모델 이름이 `claude-`로 시작하면 네이티브 Anthropic 공급자(`AnthropicCompletion`)로 라우팅하는데, 이 클래스를 불러오는 모듈이 `anthropic` SDK를 최상단에서 `import`하고 없으면 즉시 `ImportError`를 던집니다 — 이 오류는 `try/except`로 감싸이지 않고 `LLM.__new__` 밖으로 그대로 빠져나갑니다(소스로 확인, crewai 1.15.22). 그 결과 사이드바에 키 2개를 모두 입력하는 순간(Streamlit이 스크립트를 다시 실행하는 순간) 22행의 `LLM(...)` 생성에서 앱이 그대로 죽습니다 — 회의 정보 입력창도, Prepare Meeting 버튼도 뜨기 전입니다(직접 재현, Step 3). 둘째, 이 문제를 그냥 `uv pip install anthropic`로 넘기면 **더 조용한 실패**가 기다립니다 — 오늘 풀리는 anthropic **1.8.0**은 v1.0부터 `temperature`·`top_p`·`top_k` 매개변수를 아예 없앴는데, 22행은 `temperature=0.7`을 넘기고 crewai 1.15.22는 이 값을 그대로 `messages.create(**params)`에 담아 호출하므로 Claude에 요청을 보내기도 전에 로컬에서 `TypeError`가 납니다(직접 서명 대조로 확인, Step 3). crewai가 스스로 요구하는 것은 `crewai[anthropic]` extra(`anthropic~=0.73.0`)이고, 이 버전에는 `temperature`가 그대로 있습니다. 셋째, 이 둘을 모두 바로잡아도 코드가 못박은 스냅샷 `claude-3-5-sonnet-20240620`은 Anthropic 공식 문서 기준 2025-10-28부로 **폐기(retired)** 되어 있습니다 — 권장 대체는 `claude-sonnet-4-6`입니다(Anthropic 공식 모델 폐기 문서로 확인).
+오늘 재현에서 겹으로 확인한 문제가 셋입니다. 첫째, `requirements.txt` 4줄(`streamlit`, `crewai`, `crewai-tools`, `openai`)에는 Anthropic 모델을 쓰는 코드에 정작 필요한 `anthropic` 패키지가 빠져 있습니다 — crewai의 `LLM` 팩토리는 모델 이름이 `claude-`로 시작하면 네이티브 Anthropic 공급자(`AnthropicCompletion`)로 라우팅하는데, 이 클래스를 불러오는 모듈이 `anthropic` SDK를 최상단에서 `import`하고 없으면 즉시 `ImportError`를 던집니다 — 이 오류는 `try/except`로 감싸이지 않고 `LLM.__new__` 밖으로 그대로 빠져나갑니다(소스로 확인, crewai 1.15.22). 그 결과 사이드바에 키 2개를 모두 입력하는 순간(Streamlit이 스크립트를 다시 실행하는 순간) 22행의 `LLM(...)` 생성에서 앱이 그대로 죽습니다 — 회의 정보 입력창도, Prepare Meeting 버튼도 뜨기 전입니다(직접 재현, Step 3). 둘째, 이 문제를 그냥 `uv pip install anthropic`로 넘기면 **더 조용한 실패**가 기다립니다 — 이 문서를 쓸 때 풀리는 anthropic 1.x(설치 시점에 따라 1.8.0·1.9.0 등)는 v1.0부터 `temperature`·`top_p`·`top_k` 매개변수를 아예 없앴는데, 22행은 `temperature=0.7`을 넘기고 crewai 1.15.22는 이 값을 그대로 `messages.create(**params)`에 담아 호출하므로 Claude에 요청을 보내기도 전에 로컬에서 `TypeError`가 납니다(직접 서명 대조로 확인, Step 3). crewai가 스스로 요구하는 것은 `crewai[anthropic]` extra(`anthropic~=0.73.0`)이고, 이 버전에는 `temperature`가 그대로 있습니다 — 단 이미 `anthropic` 1.x가 깔려 있으면 uv 버전에 따라 `crewai[anthropic]`만으로는 안 내려갈 수 있어 `--reinstall-package anthropic`을 붙여야 합니다(Step 3). 셋째, 이 둘을 모두 바로잡아도 코드가 못박은 스냅샷 `claude-3-5-sonnet-20240620`은 Anthropic 공식 문서 기준 2025-10-28부로 **폐기(retired)** 되어 있습니다 — 권장 대체는 `claude-sonnet-4-6`입니다(Anthropic 공식 모델 폐기 문서로 확인).
 
-앱 자체 README는 "OpenAI의 GPT-4와 Anthropic의 Claude를 함께 쓴다"고 소개하지만, `meeting_agent.py`에는 OpenAI 모델을 만드는 코드가 한 줄도 없습니다(그렙으로 확인) — `requirements.txt`의 `openai` 줄은 지연 의존성이 아니라 그냥 중복입니다. crewai 1.15.22 자체가 `openai<3,>=2.30.0`을 extra 없는 필수 의존성으로 갖고 있어(METADATA로 확인) crewai만 설치해도 openai는 항상 함께 깔립니다. 한 가지 더, `kickoff()`가 시작되면 crewai가 OpenTelemetry span을 만들어 기본값으로 `telemetry.crewai.com:4319`에 백그라운드 전송을 시도하고, `Crew()`를 만드는 순간 `%LOCALAPPDATA%\CrewAI\<실행 폴더 이름>\latest_kickoff_task_outputs.db`에 이번 실행의 Task 입력·출력을 SQLite로 남깁니다(직접 재현 — 문제 해결). 완성하면 사이드바에 키 입력창 2개, 본문에 회의 정보 입력창 5개와 Prepare Meeting 버튼이 뜨고, 버튼을 누르면(키와 모델이 온전하다는 전제 아래) 네 에이전트가 순서대로 실행되며 마지막에 실행 결과가 마크다운으로 표시됩니다. 아래는 완성된 아키텍처입니다.
+앱 자체 README는 "OpenAI의 GPT-4와 Anthropic의 Claude를 함께 쓴다"고 소개하지만, `meeting_agent.py`에는 OpenAI 모델을 만드는 코드가 한 줄도 없습니다(그렙으로 확인) — `requirements.txt`의 `openai` 줄은 지연 의존성이 아니라 그냥 중복입니다. crewai 1.15.22 자체가 `openai<3,>=2.30.0`을 extra 없는 필수 의존성으로 갖고 있어(METADATA로 확인) crewai만 설치해도 openai는 항상 함께 깔립니다. 한 가지 더, `kickoff()`가 시작되면 crewai가 OpenTelemetry span을 만들어 기본값으로 `telemetry.crewai.com:4319`에 백그라운드 전송을 시도하고, `Crew()`를 만드는 순간 곧바로 `%LOCALAPPDATA%\CrewAI\<실행 폴더 이름>\latest_kickoff_task_outputs.db`에 빈 SQLite 파일이 생겼다가 실제 `kickoff()`를 실행할 때마다 그 안에 Task 입력·출력이 저장됩니다(직접 재현 — 문제 해결). 완성하면 사이드바에 키 입력창 2개, 본문에 회의 정보 입력창 5개와 Prepare Meeting 버튼이 뜨고, 버튼을 누르면(키와 모델이 온전하다는 전제 아래) 네 에이전트가 순서대로 실행되며 마지막에 실행 결과가 마크다운으로 표시됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -40,6 +40,10 @@
 | 실행 버튼 & 결과 표시 | `kickoff()` 호출과 `st.markdown(result)` | `advanced_ai_agents/single_agent_apps/ai_meeting_agent/meeting_agent.py:166-169` |
 | Claude API (Anthropic) | 4개 에이전트의 실제 추론 | 코드 없음 (외부 서비스) |
 | Serper API | 웹 검색 | 코드 없음 (외부 서비스) |
+
+위 개요 그림은 폭 1200×높이 1000px 안에 넣으려고 Crew와 에이전트·입력·결과 사이의 배선(누가 누구에게 속하고 누구에게 결과를 돌려주는지)을 뺐습니다 — 그 구조만 따로 그리면 이렇습니다.
+
+![Crew가 입력·에이전트·결과와 어떻게 연결되는지](diagrams/extra-crew.svg)
 
 ## 단계별 진행
 
@@ -125,7 +129,7 @@ if anthropic_api_key and serper_api_key:
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-**확인.** 헤드리스로 잠깐 띄워 페이지 자체가 뜨는지만 봅니다. `--server.address localhost`를 꼭 붙입니다 — 없으면 Streamlit이 시작하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보냅니다(Day 060에서 확인, 이번 streamlit 1.64.0도 headless·주소 미지정 조합에서 소스로 같은 동작을 확인했습니다 — 이번 확인에서는 주소를 지정해 재현하지 않았습니다).
+**확인.** 헤드리스로 잠깐 띄워 페이지 자체가 뜨는지만 봅니다. `--server.address localhost`를 꼭 붙입니다 — 없으면 Streamlit이 시작하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보냅니다(Day 060에서 확인, 이번 streamlit 1.64.0도 headless·주소 미지정 조합에서 소스로 같은 동작을 확인했습니다 — 주소를 **빼고** 띄워 실제로 요청이 나가는 것까지 이번에 재현하지는 않았습니다).
 
 ```bash
 uv run --no-project streamlit run meeting_agent.py --server.headless true --server.address localhost --server.port 58421
@@ -176,7 +180,7 @@ LLM(model='claude-3-5-sonnet-20240620', temperature=0.7, api_key='sk-fake-key-no
 ImportError: Anthropic native provider not available, to install: uv add "crewai[anthropic]"
 ```
 
-여기서 **`uv pip install anthropic`로 넘기면 안 됩니다.** 오늘 이 명령이 까는 것은 **anthropic 1.8.0**이고, Anthropic Python SDK는 v1.0부터 `temperature`·`top_p`·`top_k`를 클라이언트 메서드에서 아예 없앴습니다. 그런데 22행은 `temperature=0.7`을 넘기고, crewai 1.15.22의 `AnthropicCompletion`(`crewai/llms/providers/anthropic/completion.py`)은 `self.temperature is not None`이면 `params["temperature"] = self.temperature`를 채운 뒤 `self._get_sync_client().messages.create(**params)`를 호출합니다(소스로 확인) — `except`는 컨텍스트 초과만 따로 잡고 나머지는 그대로 다시 던집니다. 직접 서명 대조로 확인:
+여기서 **`uv pip install anthropic`로 넘기면 안 됩니다.** 이 문서를 쓸 때 이 명령이 까는 것은 **anthropic 1.x**(설치 시점에 따라 1.8.0·1.9.0 등 patch 번호가 바뀔 수 있습니다 — 실제로 이 문서를 쓰는 하루 사이에도 1.8.0에서 1.9.0으로 올라갔습니다)이고, Anthropic Python SDK는 v1.0부터 `temperature`·`top_p`·`top_k`를 클라이언트 메서드에서 아예 없앴습니다. 그런데 22행은 `temperature=0.7`을 넘기고, crewai 1.15.22의 `AnthropicCompletion`(`crewai/llms/providers/anthropic/completion.py`)은 `self.temperature is not None`이면 `params["temperature"] = self.temperature`를 채운 뒤 `self._get_sync_client().messages.create(**params)`를 호출합니다(소스로 확인) — `except`는 컨텍스트 초과만 따로 잡고 나머지는 그대로 다시 던집니다. 직접 서명 대조로 확인:
 
 ```bash
 uv pip install anthropic
@@ -191,14 +195,14 @@ print('temperature 매개변수 있음:', 'temperature' in sig.parameters)
 직접 확인한 출력:
 
 ```
-anthropic 1.8.0
+anthropic 1.9.0
 temperature 매개변수 있음: False
 ```
 
-`sig.bind(..., temperature=0.7)`도 `TypeError: got an unexpected keyword argument 'temperature'`로 실패합니다(직접 확인) — Claude에 요청을 보내기도 전에 로컬에서 나는 오류입니다. crewai가 스스로 요구하는 것은 `anthropic` 단독이 아니라 **`crewai[anthropic]` extra**입니다(오류 문구의 `uv add "crewai[anthropic]"`도 이것을 가리킵니다). 이 extra는 `anthropic~=0.73.0`을 고정합니다(crewai 1.15.22 METADATA `Requires-Dist: anthropic~=0.73.0; extra == 'anthropic'`, 직접 확인). 다시 설치해 대조하면:
+`sig.bind(..., temperature=0.7)`도 `TypeError: got an unexpected keyword argument 'temperature'`로 실패합니다(직접 확인) — Claude에 요청을 보내기도 전에 로컬에서 나는 오류입니다. crewai가 스스로 요구하는 것은 `anthropic` 단독이 아니라 **`crewai[anthropic]` extra**입니다(오류 문구의 `uv add "crewai[anthropic]"`도 이것을 가리킵니다). 이 extra는 `anthropic~=0.73.0`을 고정합니다(crewai 1.15.22 METADATA `Requires-Dist: anthropic~=0.73.0; extra == 'anthropic'`, 직접 확인). **여기서 uv 버전에 따라 갈립니다.** 방금처럼 `anthropic`을 먼저 설치해 둔 채로 `uv pip install "crewai[anthropic]"`만 실행하면, uv **0.7.2**(이 문서를 쓴 PC의 버전, `uv --version`으로 확인)는 이미 `anthropic`이 설치돼 있다는 이유만으로 `Audited 1 package`를 찍고 1.9.0을 그대로 둡니다 — extra의 `~=0.73.0` 제약을 다시 확인하지 않습니다(직접 재현). 최신 uv(0.12.19)는 같은 명령으로 곧바로 `- anthropic==1.9.0 / + anthropic==0.73.0`으로 내려 줍니다(직접 재현). uv 버전에 상관없이 안전하려면 `--reinstall-package anthropic`을 붙입니다:
 
 ```bash
-uv pip install "crewai[anthropic]"
+uv pip install "crewai[anthropic]" --reinstall-package anthropic
 uv run --no-project python -c "
 import anthropic, inspect
 print('anthropic', anthropic.__version__)
@@ -208,12 +212,16 @@ print('bind OK')
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(uv 0.7.2에서도 `--reinstall-package`를 붙이면 이렇게 내려갑니다):
 
 ```
+ - anthropic==1.9.0
+ + anthropic==0.73.0
 anthropic 0.73.0
 bind OK
 ```
+
+(처음부터 `anthropic`을 따로 설치하지 않고 `uv pip install "crewai[anthropic]"`만 실행하는 새 환경이라면 uv 버전과 상관없이 바로 0.73.0이 깔립니다 — 이 문제는 "이미 깔린 1.x 위에 extra만 더할 때"만 일어납니다.)
 
 이걸로 첫 번째 문제(패키지 부재)와 두 번째 문제(`temperature` 제거)가 함께 풀립니다. 하지만 세 번째 문제가 남습니다: `claude-3-5-sonnet-20240620`은 Anthropic 공식 모델 폐기 문서 기준 **2025-08-13에 폐기 공지, 2025-10-28에 완전히 폐기(retired)** 되었고, 권장 대체는 `claude-sonnet-4-6`입니다 — "폐기(retired)"는 "요청 자체가 실패한다"는 뜻이라고 같은 문서가 명시합니다. 이 리포 코드는 고치지 않으므로, 실제로 이 앱을 돌리려면 22행의 모델 문자열을 직접 바꿔야 합니다(더 해보기).
 
@@ -316,7 +324,7 @@ print('OK', type(c).__name__)
 "
 ```
 
-직접 확인한 출력(사전에 `uv pip install "crewai[anthropic]"` 필요 — Step 3):
+직접 확인한 출력(사전에 `uv pip install "crewai[anthropic]" --reinstall-package anthropic` 필요 — Step 3):
 
 ```
 OK Crew
@@ -348,7 +356,7 @@ else:
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** `streamlit.testing.v1.AppTest`로 스크립트를 직접 실행해(브라우저 없이) 어떤 위젯이 뜨는지 확인합니다.
+**확인.** `streamlit.testing.v1.AppTest`로 스크립트를 직접 실행해(브라우저 없이) 키 상태별로 어떤 위젯이 뜨는지 확인합니다. 먼저 키를 비워 둔 채로:
 
 ```bash
 uv run --no-project python -c "
@@ -361,7 +369,7 @@ print('button count:', len(at.button))
 "
 ```
 
-직접 확인한 출력(키 2개를 비워 둔 채로):
+직접 확인한 출력:
 
 ```
 exceptions: ElementList()
@@ -369,15 +377,45 @@ warnings: ['Please enter all API keys in the sidebar before proceeding.']
 button count: 0
 ```
 
-키 2개에 가짜 값을 채우고 `crewai[anthropic]`가 없는 환경에서 다시 실행하면(Step 3의 `ImportError`가 여기서도 그대로 잡힙니다):
+이제 사이드바 키 2개에 가짜 값을 채우고 다시 실행합니다 — 아래 명령을 두 환경에 각각 돌렸습니다:
+
+```bash
+uv run --no-project python -c "
+from streamlit.testing.v1 import AppTest
+at = AppTest.from_file('meeting_agent.py')
+at.run(timeout=30)
+at.text_input[0].set_value('sk-fake-key-not-real')
+at.text_input[1].set_value('fake-serper-key')
+at.run(timeout=30)
+print('exceptions:', [str(e.value) for e in at.exception])
+print('text_input count:', len(at.text_input))
+print('text_area count:', len(at.text_area))
+print('number_input count:', len(at.number_input))
+print('button count:', len(at.button))
+"
+```
+
+직접 확인한 출력 — `crewai[anthropic]`가 없는 환경(Step 3의 `ImportError`가 여기서도 그대로 잡히고, 22행에서 죽어 그 아래 회의 정보 입력 필드는 만들어지지도 않습니다):
 
 ```
 exceptions: ['Anthropic native provider not available, to install: uv add "crewai[anthropic]"']
 text_input count: 2
+text_area count: 0
+number_input count: 0
 button count: 0
 ```
 
-`crewai[anthropic]`를 설치한 환경에서 같은 가짜 키로 실행하면 예외 없이 입력창 5개(회의 정보)와 버튼 1개가 모두 뜹니다(직접 확인, `text_input count: 5, text_area count: 1, number_input count: 1, button count: 1`). `kickoff()` 자체는 유효한 키와 살아 있는 모델이 있어야 실행되므로 이 문서에서는 호출하지 않습니다.
+직접 확인한 출력 — `crewai[anthropic]`를 설치한 환경:
+
+```
+exceptions: []
+text_input count: 5
+text_area count: 1
+number_input count: 1
+button count: 1
+```
+
+`text_input count: 5`는 사이드바 키 2개(Anthropic·Serper)와 회의 정보 중 텍스트 입력 3개(회사명·목표·포커스)를 합친 수이고, 참석자는 `text_area`, 소요 시간은 `number_input`이라 따로 셉니다. `kickoff()` 자체는 유효한 키와 살아 있는 모델이 있어야 실행되므로 이 문서에서는 호출하지 않습니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -424,7 +462,7 @@ button count: 0
 ## 실행 체크리스트
 
 - [ ] `uv venv && uv pip install -r requirements.txt`로 격리 환경을 만들었다
-- [ ] `uv pip install "crewai[anthropic]"`을 추가로 설치했다(맨 `anthropic`만 넣으면 오늘 풀리는 1.8.0이 `temperature`를 없애 버려 다른 오류로 깨짐 — Step 3) — 없으면 `LLM(...)` 생성에서 바로 `ImportError`
+- [ ] `uv pip install "crewai[anthropic]" --reinstall-package anthropic`을 추가로 설치했다(맨 `anthropic`만 먼저 넣었다면 1.x가 남아 `temperature`로 깨지고, uv 0.7.2 등 일부 버전은 `crewai[anthropic]`만으로는 안 내려감 — Step 3) — 없으면 `LLM(...)` 생성에서 바로 `ImportError`
 - [ ] 22행의 `model="claude-3-5-sonnet-20240620"`을 살아 있는 모델(예: `claude-sonnet-4-6`)로 바꿨다 — 원래 스냅샷은 폐기됨
 - [ ] Anthropic·Serper API 키를 발급받았다
 - [ ] `uv run --no-project streamlit run meeting_agent.py`로 앱을 띄웠다(headless 확인이면 `--server.headless true --server.address localhost`)
@@ -436,7 +474,7 @@ button count: 0
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 키 2개를 입력하는 순간 `ImportError: Anthropic native provider not available, to install: uv add "crewai[anthropic]"` | `requirements.txt`에 `anthropic` 패키지가 빠져 있어 crewai의 네이티브 Anthropic 공급자를 불러오지 못함(직접 재현, Step 3) | `uv pip install "crewai[anthropic]"`(리포 코드는 고치지 않음) — 맨 `anthropic`만 넣으면 다음 증상으로 넘어갈 뿐임 |
-| 위 문제를 `uv pip install anthropic`(버전 미지정)으로 넘기면 `TypeError: got an unexpected keyword argument 'temperature'` | 오늘 풀리는 anthropic **1.8.0**이 v1.0부터 `temperature`·`top_p`·`top_k`를 없앴는데 22행은 `temperature=0.7`을 넘김(직접 서명 대조로 확인, Step 3) | `uv pip install "crewai[anthropic]"`로 anthropic **0.73.0**을 설치해야 함(리포 코드는 고치지 않음) |
+| 위 문제를 `uv pip install anthropic`(버전 미지정)으로 넘기면 `TypeError: got an unexpected keyword argument 'temperature'` | 이 문서를 쓸 때 풀리는 anthropic 1.x(1.8.0·1.9.0 등, 패치 번호는 설치 시점마다 바뀜)가 v1.0부터 `temperature`·`top_p`·`top_k`를 없앴는데 22행은 `temperature=0.7`을 넘김(직접 서명 대조로 확인, Step 3) | `uv pip install "crewai[anthropic]" --reinstall-package anthropic`로 anthropic **0.73.0**을 설치해야 함 — `anthropic`을 먼저 넣은 채로 `--reinstall-package` 없이 `crewai[anthropic]`만 실행하면 uv 0.7.2 등 일부 버전은 이미 설치된 1.x를 그대로 둠(직접 재현, Step 3, 리포 코드는 고치지 않음) |
 | 위 둘을 고쳐도 Claude 호출 자체가 실패할 것으로 보임(키가 없어 최종 확인은 못함) | 22행에 박힌 `claude-3-5-sonnet-20240620`이 Anthropic 공식 문서 기준 2025-10-28 폐기(retired) — "요청 자체가 실패한다"고 문서가 명시 | 22행의 모델 문자열을 `claude-sonnet-4-6`(Anthropic 권장 대체) 등 살아 있는 모델로 바꿔야 함(리포 코드는 고치지 않음) |
 | 앱 자체 README가 "OpenAI의 GPT-4와 Anthropic의 Claude를 함께 쓴다"고 소개하지만 실제로는 Claude만 씀 | `meeting_agent.py`에 `OpenAI(...)`나 OpenAI 모델을 만드는 코드가 없음(그렙으로 확인) — `requirements.txt`의 `openai` 줄은 crewai 1.15.22 자신의 필수 의존성(`openai<3,>=2.30.0`, extra 없음)과 겹치는 중복일 뿐임(METADATA로 확인) | 리포 코드·README는 고치지 않음, 실제로는 Claude 단일 모델 앱으로 이해하면 됨 |
 | `streamlit run`을 `--server.address localhost` 없이 headless로 띄우면 시작할 때 외부로 요청이 나감 | Streamlit이 headless이면서 주소를 지정하지 않으면 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보냄(Day 060에서 확인, 이번 streamlit 1.64.0에서는 소스로만 같은 조건을 재확인 — 주소 미지정 headless 기동은 재현하지 않음) | headless로 띄울 때는 항상 `--server.headless true --server.address localhost`를 함께 씀 |
@@ -446,7 +484,7 @@ button count: 0
 
 ## 더 해보기
 
-- `advanced_ai_agents/single_agent_apps/ai_meeting_agent/meeting_agent.py:22`의 `model="claude-3-5-sonnet-20240620"`을 `claude-sonnet-4-6`으로 바꾸고 `uv pip install "crewai[anthropic]"` 후 실제 키로 실행해, 네 에이전트가 실제로 순서대로 도는지, 그리고 검색 Task마다 LLM이 두 번씩 불리는지 확인해보기
+- `advanced_ai_agents/single_agent_apps/ai_meeting_agent/meeting_agent.py:22`의 `model="claude-3-5-sonnet-20240620"`을 `claude-sonnet-4-6`으로 바꾸고 `uv pip install "crewai[anthropic]" --reinstall-package anthropic` 후 실제 키로 실행해, 네 에이전트가 실제로 순서대로 도는지, 그리고 검색 Task마다 LLM이 두 번씩 불리는지 확인해보기
 - `strategy_formulator`와 `executive_briefing_creator`에도 `tools=[search_tool]`을 추가하면 전략·브리핑 단계가 검색 없이 앞 단계 요약만으로 쓰는 지금과 결과가 어떻게 달라지는지 비교해보기
 - 네 번째 Task(`executive_brief_task`)에 `context=[strategy_development_task]`처럼 이전 Task 하나만 명시적으로 좁혀 보고, `Process.sequential`의 자동 전달(모든 이전 Task 포함)과 어떻게 다른 프롬프트가 만들어지는지 비교해보기
 

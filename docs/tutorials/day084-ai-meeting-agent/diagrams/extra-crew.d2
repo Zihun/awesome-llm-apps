@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: down
+
+input: "입력 폼" { class: ours }
+crew: "준비 Crew" { class: ours }
+analyzer: "컨텍스트 분석" { class: ours }
+industry: "산업 분석" { class: ours }
+strategist: "전략 수립" { class: ours }
+brief: "경영진 브리핑" { class: ours }
+result: 결과 { class: ours }
+
+input -> crew: 입력값이 Task description에 삽입됨
+crew -> analyzer: "에이전트 등록(agents=[...])"
+crew -> industry: "에이전트 등록(agents=[...])"
+crew -> strategist: "에이전트 등록(agents=[...])"
+crew -> brief: "에이전트 등록(agents=[...])"
+crew -> result: "kickoff() 반환값"
