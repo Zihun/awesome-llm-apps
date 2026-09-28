@@ -254,7 +254,7 @@ t0 = time.time(); asyncio.run(poll()); print(f'{time.time()-t0:.1f}s')
 **확인.** 서버를 띄웁니다. 키가 없으면 30-33행의 가드에 걸려 오류 문구만 보이는 것까지가 정상 동작입니다.
 
 ```bash
-OPENAI_API_KEY=sk-not-a-real-key uv run --no-project streamlit run research_agent.py --server.headless true
+OPENAI_API_KEY=sk-not-a-real-key uv run --no-project streamlit run research_agent.py --server.headless true --server.address localhost
 ```
 
 ```bash
