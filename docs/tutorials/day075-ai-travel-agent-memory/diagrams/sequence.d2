@@ -1,0 +1,25 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+사용자: 사용자
+ui: Streamlit UI
+client: OpenAI 클라이언트
+openai_api: OpenAI API
+memory: mem0 Memory
+qdrant: Qdrant
+
+사용자 -> ui: 채팅창에 질문 입력
+ui -> memory: "search(query, user_id)"
+memory -> openai_api: 질문 임베딩 요청
+openai_api -> memory: 임베딩 벡터
+memory -> qdrant: 벡터 유사도 검색
+qdrant -> memory: 관련 메모리 목록
+memory -> ui: 메모리 리스트 반환
+ui -> client: 컨텍스트+질문 프롬프트
+client -> openai_api: "POST /v1/chat/completions"
+openai_api -> client: 답변 텍스트
+client -> ui: 응답 객체 반환
+ui -> 사용자: 답변 렌더링
+ui -> memory: "add(prompt)·add(answer)"
+memory -> openai_api: 사실 추출·임베딩 요청(각각)
+memory -> qdrant: 두 메시지 저장

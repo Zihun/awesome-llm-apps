@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+client: OpenAI 클라이언트 { class: ours }
+memory: mem0 Memory 계층 { class: ours }
+openai_api: "OpenAI API" { class: ext }
+qdrant: "Qdrant 벡터 저장소" { class: store }
+
+user -> ui: 키·사용자명·질문
+ui -> client: 프롬프트
+client -> openai_api: 채팅 완성 요청
+ui -> memory: search·add
+memory -> qdrant: 벡터 검색·저장
+memory -> openai_api: 임베딩·사실추출
