@@ -4,8 +4,8 @@ user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 agent: 요약 에이전트 { class: ours }
 openai: OpenAI API { class: ext }
-firecrawl: Firecrawl API { class: ext }
 elevenlabs: ElevenLabs API { class: ext }
+firecrawl: Firecrawl API { class: ext }
 
 user -> ui: URL + 키 3종 입력
 ui -> agent: run() 실행
