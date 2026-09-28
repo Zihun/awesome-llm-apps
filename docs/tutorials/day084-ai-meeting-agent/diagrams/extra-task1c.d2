@@ -5,6 +5,6 @@ crew: "미팅 준비 Crew" { class: ours }
 analyzer: 컨텍스트 분석 에이전트 { class: ours }
 claude: "Claude API" { class: ext }
 
-crew -> analyzer: context_analysis_task 실행 지시
-analyzer -> claude: 지시문 + 도구 정의(SerperDevTool)
-claude -> analyzer: 도구 호출 요청(search_query)
+analyzer -> claude: 지시문 + 도구 결과
+claude -> analyzer: 컨텍스트 분석 markdown
+analyzer -> crew: task1 출력 반환

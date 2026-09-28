@@ -8,8 +8,8 @@ app: "meeting_agent.py" {
 
   input: "입력 폼" { class: ours }
   crew: "준비 Crew" { class: ours }
-  analyzer: "컨텍스트 분석" { class: ours }
   industry: "산업 분석" { class: ours }
+  analyzer: "컨텍스트 분석" { class: ours }
   strategist: "전략 수립" { class: ours }
   brief: "경영진 브리핑" { class: ours }
   tool: "검색 도구" { class: ours }
@@ -21,8 +21,10 @@ serper: Serper API { class: ext }
 
 user -> app: 키·회의 정보 입력
 app -> user: 결과 표시
+app.analyzer -> app.tool: search_query
+app.industry -> app.tool: search_query
 app.tool -> serper: 검색 질의
 app.analyzer -> claude: 지시문 + 검색 결과
-app.industry -> claude: 지시문 + 이전 결과
+app.industry -> claude: 지시문 + task1 + 검색 결과
 app.strategist -> claude: 지시문 + 이전 결과
 app.brief -> claude: 지시문 + 이전 결과
