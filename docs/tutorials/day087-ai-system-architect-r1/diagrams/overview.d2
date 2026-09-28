@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit 채팅 UI (ai_system_architect_r1.py) { class: ours }
+
+model_chain: "ModelChain (프롬프트마다 새로 생성)" {
+  class: ours
+  agent: agno Agent (Claude 래퍼) { class: ours }
+}
+
+deepseek: "DeepSeek Reasoner API (deepseek-reasoner)" { class: ext }
+claude_api: "Claude API (claude-3-5-sonnet-20241022)" { class: ext }
+session: 세션 상태 (st.session_state.messages) { class: store }
+
+user -> ui: API 키 2개 + 프롬프트
+ui -> model_chain: chat_input 제출마다 새 인스턴스 생성
+model_chain -> deepseek: 시스템 프롬프트 + 사용자 프롬프트
+model_chain.agent -> claude_api: 질문 + DeepSeek reasoning·분석 텍스트
+ui -> session: user/assistant 메시지 저장
+session -> ui: 재실행 시 이전 대화 표시
+ui -> user: 두 단계 분석 렌더링(expander)

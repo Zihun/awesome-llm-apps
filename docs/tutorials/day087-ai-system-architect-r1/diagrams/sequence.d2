@@ -1,0 +1,25 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+deepseek: DeepSeek Reasoner API { class: ext }
+model_chain: ModelChain { class: ours }
+ui: Streamlit UI { class: ours }
+agent: agno Agent { class: ours }
+claude_api: Claude API { class: ext }
+session: 세션 상태 { class: store }
+
+user -> ui: 키 2개 + 프롬프트 제출
+ui -> model_chain: ModelChain 생성
+ui -> model_chain: get_deepseek_reasoning() 호출
+model_chain -> deepseek: create(system_prompt, prompt)
+deepseek -> model_chain: reasoning_content + content
+model_chain -> ui: (reasoning, content) 반환
+ui -> model_chain: get_claude_response() 호출
+model_chain -> agent: run() 호출
+agent -> claude_api: 시스템 프롬프트 + message
+claude_api -> agent: RunOutput 반환
+agent -> model_chain: content 반환
+model_chain -> ui: response 문자열 반환
+ui -> session: user·assistant 메시지 append
+ui -> user: 최종 화면 렌더링
