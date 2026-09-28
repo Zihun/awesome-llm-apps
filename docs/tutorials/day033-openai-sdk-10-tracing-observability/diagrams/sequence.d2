@@ -5,8 +5,8 @@ user: 사용자 { class: person }
 entry: 실행 스크립트 { class: ours }
 provider: TraceProvider { class: ours }
 default_proc: 기본 처리기 { class: ours }
-custom_proc: 로컬 처리기 { class: ours }
 backend: OpenAI Traces 백엔드 { class: ext }
+custom_proc: 로컬 처리기 { class: ours }
 
 user -> entry: python agent.py 실행
 entry -> provider: Runner.run() 시작
