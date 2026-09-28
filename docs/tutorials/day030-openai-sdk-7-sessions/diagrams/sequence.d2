@@ -2,9 +2,9 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
+openai: OpenAI API { class: ext }
 script: 서브 레슨 스크립트 (agent.py) { class: ours }
 session: SQLiteSession { class: store }
-openai: OpenAI API { class: ext }
 
 user -> script: 메시지 입력
 script -> session: get_items() 이전 기록 조회

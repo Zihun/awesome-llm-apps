@@ -175,12 +175,12 @@ class SessionManager:
 
 ```bash
 uv run --no-project python -m py_compile streamlit_sessions_app.py 7_1_basic_sessions/agent.py 7_2_memory_operations/agent.py 7_3_multi_sessions/agent.py && echo "py_compile OK for all 4 files"
-uv run --no-project streamlit run streamlit_sessions_app.py --server.headless true --server.port 8531
+uv run --no-project streamlit run streamlit_sessions_app.py --server.headless true --server.address localhost --server.port 8531
 ```
 
 ```powershell
 uv run --no-project python -m py_compile streamlit_sessions_app.py 7_1_basic_sessions/agent.py 7_2_memory_operations/agent.py 7_3_multi_sessions/agent.py
-uv run --no-project streamlit run streamlit_sessions_app.py --server.headless true --server.port 8531
+uv run --no-project streamlit run streamlit_sessions_app.py --server.headless true --server.address localhost --server.port 8531
 ```
 
 ![Step 2까지의 구성](diagrams/step2.svg)
