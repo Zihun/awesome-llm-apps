@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+crew: "미팅 준비 Crew" { class: ours }
+strategist: 전략 수립 에이전트 { class: ours }
+claude: "Claude API" { class: ext }
+
+crew -> strategist: strategy_development_task 실행 지시(context: task1·2)
+strategist -> claude: 지시문 + task1·2 출력
+claude -> strategist: 전략·의제 markdown
+strategist -> crew: task3 출력 반환

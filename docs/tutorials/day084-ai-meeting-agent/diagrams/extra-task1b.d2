@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+crew: "미팅 준비 Crew" { class: ours }
+analyzer: 컨텍스트 분석 에이전트 { class: ours }
+claude: "Claude API" { class: ext }
+
+analyzer -> claude: 지시문 + 검색 결과 프롬프트
+claude -> analyzer: 컨텍스트 분석 markdown
+analyzer -> crew: task1 출력 반환
