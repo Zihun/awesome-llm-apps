@@ -4,20 +4,18 @@ direction: down
 user: 사용자 { class: person }
 keys: .env (OPENAI_API_KEY, ANTHROPIC_API_KEY) { class: file }
 script: 스크립트 (ai_Self-Evolving_agent.py main) { class: ours }
-wfgen: 워크플로 생성 { class: ours }
-am: 에이전트 준비 { class: ours }
-wf: 워크플로 실행 { class: ours }
-verify: 코드 검증 { class: ours }
-extract: 코드 추출 { class: ours }
+wfgen: 워크플로 생성 (WorkFlowGenerator) { class: ours }
+wf: 준비·실행 (AgentManager, WorkFlow) { class: ours }
+verify: 코드 검증 (CodeVerification) { class: ours }
+extract: 코드 추출 (CodeExtraction) { class: ours }
 openai: OpenAI gpt-4o-mini { class: ext }
-anthropic: Anthropic Claude (LiteLLM) { class: ext }
+anthropic: Anthropic Claude { class: ext }
 outfile: 결과 코드 파일 { class: file }
 
 user -> script: 실행
 keys -> script: API 키
 script -> wfgen: 목표 텍스트
-script -> am: 초기화
-script -> wf: 실행
+script -> wf: workflow_graph 등록·실행
 script -> verify: 검증 요청
 script -> extract: 분리 요청
 script -> outfile: 저장(블록 1개)

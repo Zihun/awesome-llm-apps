@@ -1,6 +1,6 @@
 # Day 080 · 🧬 AI Self-Evolving Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 85분(가상환경 둘·설치 다섯 번 — `evoagentx[tools,rag,multimodal]`까지 확장하며 torch 등 약 470MB를 받는 설치까지 포함 — 으로 evoagentx의 import 실패 사슬을 직접 재현하는 시간이 읽는 시간보다 깁니다) · API 비용 알 수 없음(에이전트 수·토큰 수가 실행마다 달라 정확한 금액은 알 수 없습니다) — 코드 경로상 OpenAI gpt-4o-mini 호출 최소 3회(계획 1회 + 에이전트 생성 ≥1회 + 워크플로 실행 ≥1회)는 과금이 확정되고, 이어서 부르는 Anthropic 스냅샷(41행)은 2026-02-19에 폐기되어 있어 검증 단계에서 예외로 끝납니다(실제 호출은 하지 않아 과금 여부까지는 확인 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 90분(가상환경 둘·설치 다섯 번 — `evoagentx[tools,rag,multimodal]`까지 확장하며 torch 등 약 470MB를 받는 설치까지 포함 — 으로 evoagentx의 import 실패 사슬을 직접 재현하고, 폐기된 모델이 실제로 어디서 어떻게 막히는지 소스로 따라가는 시간이 읽는 시간보다 깁니다) · API 비용 알 수 없음(에이전트 수·토큰 수가 실행마다 달라 정확한 금액은 알 수 없습니다) — 코드 경로상 OpenAI gpt-4o-mini 호출 최소 3회(계획 1회 + 에이전트 생성 ≥1회 + 워크플로 실행 ≥1회)는 과금이 확정되고, 이어서 부르는 Anthropic 스냅샷(41행)은 2026-02-19에 폐기되어 있어 검증 단계에서 예외로 끝납니다(실제 호출은 하지 않아 과금 여부까지는 확인 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent`
 
 ## 오늘 만들 것
 
@@ -84,6 +84,8 @@ uv venv .venv313 --python 3.13
 uv pip install --python .venv313/Scripts/python.exe -r requirements.txt
 ```
 
+(macOS·Linux는 `--python .venv313/bin/python`으로 바꿉니다.)
+
 직접 확인한 출력(발췌):
 
 ```
@@ -114,7 +116,7 @@ uv run --no-project python -c "from evoagentx.models import OpenAILLMConfig"
 ModuleNotFoundError: No module named 'html2text'
 ```
 
-`evoagentx.models`는 여기서 끝입니다(`docker`·`html2text` 둘만 더 있으면 통과). 이번엔 `evoagentx.workflow`를 추가로 import해 봅니다.
+`evoagentx.models`는 여기서 끝나지 않습니다 — `docker`·`html2text`를 개별로 더 깔아도 곧바로 `bs4`가 없다는 `ModuleNotFoundError`가 나고(`tools/search_base.py`, 직접 확인), 그다음은 `googlesearch`가 없다고 걸립니다(`tools/search_google_f.py`, 직접 확인) — 이런 식으로 `tools` extra 전체가 필요합니다. 그래서 이번엔 개별 패키지를 더 깔지 않고 `tools` extra를 통째로 설치하면서, `evoagentx.workflow`도 함께 import해 봅니다.
 
 ```bash
 uv pip install "evoagentx[tools]"
@@ -125,7 +127,7 @@ from evoagentx.workflow import WorkFlowGenerator
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(발췌 — 실제로는 이 앞에 Authlib·PyPDF2 경고 3줄과 `evoagentx/workflow/__init__.py`부터 이어지는 전체 traceback이 더 찍힙니다):
 
 ```
 models ok
@@ -289,7 +291,7 @@ True
     ).verified_code
 ```
 
-41행은 생성 모델과 다른 제공자(Anthropic)를 LiteLLM으로 감쌉니다 — 코드 생성과 코드 검증을 서로 다른 모델에 맡기는 것이 이 앱 이름의 "검증" 절반입니다. **그런데 41행이 지정한 `claude-3-7-sonnet-20250219`는 2026-02-19에 폐기되었습니다.** Anthropic 공식 문서 "Model deprecations"의 표에 "Retirement date: February 19, 2026 · Deprecated model: `claude-3-7-sonnet-20250219` · Recommended replacement: `claude-sonnet-4-6`"이 그대로 있고(직접 확인), litellm 1.103.0에 내장된 요금표(`.venv/Lib/site-packages/litellm/model_prices_and_context_window_backup.json`)의 같은 모델 항목에도 `"deprecation_date": "2026-02-19"`가 있습니다(직접 확인). evoagentx 소스(`evoagentx/actions/code_verification.py`)로 확인하면, `execute()`는 48행의 `requirements`(검증 기준 — 원래 목표 `goal` 문자열)와 49행의 `code`(실제 검증 대상 — `output`)를 고정 프롬프트에 채워 `llm.generate()`를 한 번 호출합니다. 이 호출에는 try/except가 없으므로, 모델이 존재하지 않아 API가 오류를 돌려주면 `CodeVerification.execute()`는 그 예외를 그대로 위로 올립니다 — `WorkFlow.execute()`(Step 3)가 모든 예외를 삼켜 `status="failed"`로 바꾸는 것과 다릅니다. 즉 두 키를 넣고 그대로 실행하면 워크플로우 생성·실행 비용은 이미 쓴 뒤, 이 45행에서 스크립트 자체가 traceback과 함께 죽고 파일은 저장되지 않습니다. 응답이 정상적으로 온다면 `analysis_summary`·`issues_identified`·`verified_code` 등의 필드로 파싱을 시도하고, 구조화된 파싱이 실패하면 응답에서 코드 블록만 다시 추출하는 방식으로 대체합니다(소스로 확인) — 이 부분은 모델을 현재 서빙되는 것으로 바꾸면 그대로 유효합니다.
+41행은 생성 모델과 다른 제공자(Anthropic)를 LiteLLM으로 감쌉니다 — 코드 생성과 코드 검증을 서로 다른 모델에 맡기는 것이 이 앱 이름의 "검증" 절반입니다. **그런데 41행이 지정한 `claude-3-7-sonnet-20250219`는 2026-02-19에 폐기되었습니다.** Anthropic 공식 문서 "Model deprecations"의 표에 "Retirement date: February 19, 2026 · Deprecated model: `claude-3-7-sonnet-20250219` · Recommended replacement: `claude-sonnet-4-6`"이 그대로 있고(직접 확인), litellm 1.103.0에 내장된 요금표(`.venv/Lib/site-packages/litellm/model_prices_and_context_window_backup.json`)의 같은 모델 항목에도 `"deprecation_date": "2026-02-19"`가 있습니다(직접 확인). evoagentx 소스(`evoagentx/actions/code_verification.py`)로 확인하면, `execute()`는 48행의 `requirements`(검증 기준 — 원래 목표 `goal` 문자열)와 49행의 `code`(실제 검증 대상 — `output`)를 고정 프롬프트에 채워 `llm.generate()`를 한 번 호출합니다. 이 호출에는 try/except가 없으므로, 모델이 존재하지 않아 API가 오류를 돌려주면 `CodeVerification.execute()`는 그 예외를 그대로 위로 올립니다 — `WorkFlow.execute()`(Step 3)가 모든 예외를 삼켜 `status="failed"`로 바꾸는 것과 다릅니다. 다만 `llm.generate()`가 바로 이 예외를 내는 것은 아닙니다 — evoagentx 소스(`litellm_model.py`, 135~161행 부근)로 확인하면 실제 호출부인 `single_generate()`에 `@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(5))`가 붙어 있고, 실패마다 `RuntimeError`로 감싸 다시 던집니다. 그래서 모델을 못 찾는 오류가 나면 지수 백오프로 기다리며 5회를 채운 뒤 tenacity의 `RetryError`로 끝납니다(소스로 확인, 실제 호출은 하지 않아 정확한 오류 문구는 보지 못했습니다). 즉 두 키를 넣고 그대로 실행하면 워크플로우 생성·실행 비용은 이미 쓴 뒤, 이 45행에서 몇 분을 기다리다 `RetryError`와 함께 죽고 파일은 저장되지 않습니다. 응답이 정상적으로 온다면 `analysis_summary`·`issues_identified`·`verified_code` 등의 필드로 파싱을 시도하고, 구조화된 파싱이 실패하면 응답에서 코드 블록만 다시 추출하는 방식으로 대체합니다(소스로 확인) — 이 부분은 모델을 현재 서빙되는 것으로 바꾸면 그대로 유효합니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -451,7 +453,7 @@ print('여기까지는 키 없이도 예외 없음')
 여기까지는 키 없이도 예외 없음
 ```
 
-`generate_workflow(goal=...)`을 실제로 부르면 OpenAI에 네트워크 요청이 나가므로(규칙상 이 문서는 여기서 멈춥니다), 키가 없거나 네트워크가 없으면 이 지점부터는 연결 오류로 실패합니다.
+`generate_workflow(goal=...)`을 실제로 부르면 그 안에서 처음으로 OpenAI 클라이언트가 쓰입니다(규칙상 이 문서는 여기서 멈춥니다). 두 실패는 모양이 다릅니다 — evoagentx 소스(`openai_model.py`, 46행 부근)로 확인하면 클라이언트는 `OpenAI(api_key=config.openai_key)`로 만들어지는데, 키가 아예 없으면 openai 2.54.0은 요청을 보내기도 전에 `OpenAIError: Missing credentials. Please pass an api_key, …`를 즉시 냅니다(직접 확인, 네트워크 없이도 재현됨). 키는 있지만 네트워크가 없는 경우라야 실제 연결 오류가 납니다. 두 경우 모두 `generate_workflow()`의 재시도 로직(`workflow_generator.py`의 `_execute_with_retry`, 기본값 `retry=1`이라 시도 2회)이 이 오류를 감싸 `ValueError("Failed to Generating a workflow plan after 2 attempts.\nError: …")`로 바꿔 올립니다(소스로 확인).
 
 ## 요청 한 건이 흐르는 과정
 
@@ -483,7 +485,7 @@ print('여기까지는 키 없이도 예외 없음')
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 두 키를 넣고 그대로 실행하면 OpenAI 비용을 쓴 뒤 45행에서 예외로 끝나고 파일이 저장되지 않음 | 41행이 부르는 `claude-3-7-sonnet-20250219`가 2026-02-19에 폐기됨(Anthropic 공식 "Model deprecations" 문서, litellm 1.103.0 내장 요금표 둘 다로 확인) | 리포 코드는 고치지 않으면 실행 불가 — 41행의 모델 문자열을 현재 서빙되는 모델(예: `anthropic/claude-sonnet-4-6`)로 바꿔야 함 |
+(실행하지 않음 — 문서·소스로 추론) 두 키를 넣고 그대로 실행하면 OpenAI 비용을 쓴 뒤, 45행이 몇 분을 기다리다 tenacity `RetryError`로 끝나고 파일이 저장되지 않을 것으로 보임 | 41행이 부르는 `claude-3-7-sonnet-20250219`가 2026-02-19에 폐기됨(Anthropic 공식 "Model deprecations" 문서, litellm 1.103.0 내장 요금표로 확인) — `single_generate()`의 `@retry(stop=stop_after_attempt(5))`가 5회 재시도 뒤 포기함(evoagentx 소스로 확인) | 리포 코드는 고치지 않으면 실행 불가 — 41행의 모델 문자열을 현재 서빙되는 모델(예: `anthropic/claude-sonnet-4-6`)로 바꿔야 함 |
 | Python 3.13(또는 3.14)에서 `uv pip install -r requirements.txt`가 evoagentx를 설치하기도 전에 실패 | `requirements.txt` 35행의 `faiss-cpu==1.8.0.post1`에 `cp313`·`cp314` 바이너리 휠이 없음(직접 확인) | 리포 코드는 고치지 않음 — Python 3.12 이하 가상환경 사용 |
 | `evoagentx` 설치 후 이 스크립트의 import 문장들이 `ModuleNotFoundError: No module named 'docker'`(고치면 `html2text`, `llama_index`, `voyageai` 순으로 계속) | evoagentx 0.1.4의 base 패키지 import 사슬이 `tools`·`rag`·`multimodal` extra의 의존성까지 끌어들이는데, extra를 지정하지 않으면 그 패키지들이 없음(직접 확인) | `pip install "evoagentx[tools,rag,multimodal]"`로 설치(리포 코드는 고치지 않음) |
 | 원본 README의 `pip install git+https://github.com/ANative-Lab/EvoAgentX.git`가 매번 소스 빌드를 함 | evoagentx가 이제 PyPI(0.1.4)에 배포돼 있어 git 설치가 더 이상 필요하지 않음(직접 확인) — URL 자체는 유효함(GitHub 301 리다이렉트로 확인) | `pip install evoagentx` 계열로 대체 가능(리포 코드는 고치지 않음, 설치 안내일 뿐) |
