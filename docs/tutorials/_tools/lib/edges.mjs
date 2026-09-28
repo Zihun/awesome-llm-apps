@@ -294,7 +294,9 @@ export function edgeOverlaps(svg) {
 }
 
 /** 21. 선분이 남의 라벨이나 묶음 제목 위를 지나는 곳(경계에서 2px 안쪽). sequence의
- *  수명선도 연결선 path라서 저절로 걸린다 — 라벨이 없으니 모든 라벨이 "남의 것"이다. */
+ *  수명선도 연결선 path라서 저절로 걸린다 — 라벨이 없으니 모든 라벨이 "남의 것"이다.
+ *  표본은 선분 길이 1px마다 찍는다(최소 40점). 처음에는 선분마다 40점이라 1000px 수명선이면
+ *  25px 간격이 되어, 높이 12px 라벨 뒤를 지나는 경우를 놓쳤다(2026-09-27, 46개 파일). */
 export function edgesThroughText(svg) {
   const edges = connectionsOf(svg);
   const labels = labelBoxesOf(svg);
@@ -306,8 +308,9 @@ export function edgesThroughText(svg) {
     if (!others.length) continue;
     const hit = segmentsOf(e.pts).some(([p, q]) =>
       others.some((b) => {
-        for (let s = 1; s < 40; s++) {
-          const t = s / 40;
+        const n = Math.max(40, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1])));
+        for (let s = 1; s < n; s++) {
+          const t = s / n;
           if (insideBy(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, b, 2)) return true;
         }
         return false;

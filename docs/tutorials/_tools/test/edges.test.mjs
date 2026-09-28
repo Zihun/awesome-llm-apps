@@ -129,6 +129,12 @@ test("edgesThroughText: a path through another edge's label is reported, through
   assert.equal(edgesThroughText(throughTitle).length, 1);
 });
 
+test("edgesThroughText: a long lifeline passing behind a short label between 40 evenly spaced samples is reported", () => {
+  // 1000px 수명선에 40점만 찍으면 25px 간격이라 높이 12px 라벨(y 30~42)을 건너뛴다(2026-09-27 실측 46개 파일).
+  const lifeline = edge("M 0 0 L 0 1000") + edge("M 500 500 L 501 500", { x: 0, y: 40, text: "B" }) + mask([[-20, 30, 40, 12]]);
+  assert.equal(edgesThroughText(lifeline).length, 1);
+});
+
 test("labelCollisions: a label overlapping a leaf shape is reported, a far label is not, two overlapping labels are reported", () => {
   const onShape = leaf("ours", '<rect x="0" y="0" width="60" height="40" />') + mask([[10, 10, 20, 20]]);
   assert.equal(labelCollisions(onShape).length, 1);
