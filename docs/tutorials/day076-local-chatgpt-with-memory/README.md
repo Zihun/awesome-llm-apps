@@ -1,10 +1,10 @@
 # Day 076 · 🗄️ Local ChatGPT Clone with Memory
 
-> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 85분(mem0ai가 오늘 설치 조합에서 세 가지 실패를 겪어, 셋 다 직접 재현하고 원인을 소스로 확인하는 시간을 포함합니다) · API 비용 무료(로컬 — 채팅·임베딩·메모리 벡터 저장은 모두 Ollama·Qdrant로 처리하지만, "클라우드 호출이 전혀 없다"는 뜻은 아닙니다: litellm은 import 시점에 GitHub에서 가격표를 받으려 하고 mem0는 PostHog로 익명 통계를 보내려 합니다 — 둘 다 환경변수로 끌 수 있습니다, 아래에서 직접 확인) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory`
+> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 95분(mem0ai가 오늘 설치 조합에서 세 가지 실패를 겪고, 그중 첫 번째는 실제 터미널 동작까지 갈라져(y/N 응답별로) 직접 재현이 많아진 날입니다 — 되풀이가 아니라 실패마다 다른 재현이라 시간이 늘었습니다) · API 비용 무료(로컬 — 채팅·임베딩·메모리 벡터 저장은 모두 Ollama·Qdrant로 처리하지만, "클라우드 호출이 전혀 없다"는 뜻은 아닙니다: litellm은 import 시점에 GitHub에서 가격표를 받으려 하고 mem0는 PostHog로 익명 통계를 보내려 합니다 — 둘 다 환경변수로 끌 수 있습니다, 아래에서 직접 확인) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory`
 
 ## 오늘 만들 것
 
-오늘 앱(`local_chatgpt_memory.py`, 137줄 — 마지막 줄에 개행이 없어 `wc -l`은 136으로 세지만 편집기·GitHub에서는 137번째 줄까지 보입니다, 직접 확인)은 이 볼륨에서 처음으로 채팅 모델과 mem0의 사실 추출·임베딩까지 전부 **Ollama** 하나로 돌리는 앱입니다. Day 073의 `llm_app_memory.py`는 mem0 config에 `llm`·`embedder`를 지정하지 않아 기본값인 OpenAI를 그대로 썼지만, 오늘 config는 `vector_store`(Qdrant)뿐 아니라 `llm`과 `embedder`도 명시적으로 `"provider": "ollama"`로 지정합니다(6~34행) — 그래서 원본 앱 README가 내세우는 "Fully local implementation with no external API dependencies"라는 문구는 **채팅·임베딩·메모리 벡터 저장이라는 모델 호출 자체**에 대해서는 소스로 확인됩니다. 다만 이것이 "이 앱을 켜면 어떤 외부 요청도 없다"는 뜻은 아닙니다 — `import litellm`은 그 시점에 `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`을 받으려 하고(`LITELLM_LOCAL_MODEL_COST_MAP=True`로 끌 수 있음, 직접 확인), `import mem0`는 홈 디렉터리에 `.mem0/`를 만들고 PostHog로 익명 통계를 보내려 합니다(`MEM0_TELEMETRY=False`로 끌 수 있음, Day 073에서 이미 확인한 동작). 둘 다 채팅·임베딩 요청 자체와는 무관한, import·초기화 시점의 부수 효과입니다. 사용자는 사이드바에 아무 이름이나 입력해 "로그인"하고(별도 인증 없음, 47~53행), 채팅창에 메시지를 보내면 앱은 그 메시지를 먼저 mem0에 저장한 뒤(88행), 같은 사용자의 과거 메모리 전체를 `get_all()`로 가져와(91행) 컨텍스트 문자열로 붙이고, `litellm.completion(model="ollama/llama3.1:latest", ...)`로 스트리밍 응답을 받습니다(105~113행). 이 문서를 쓰며 오늘(2026-09-28) `uv pip install -r requirements.txt`로 설치했을 때 **streamlit 1.64.0**, **litellm 1.80.0**, **mem0ai 0.1.29**, **qdrant-client 1.19.1**이 그대로 받아졌고 파일도 문제없이 컴파일됩니다(직접 확인, Step 1). 하지만 mem0ai 0.1.29의 Ollama LLM/임베더 provider는 `ollama`라는 별도 PyPI 패키지에 `from ollama import Client`로 직접 의존하는데, 이 패키지는 `requirements.txt` 4줄에도, mem0ai가 선언한 의존성에도 없습니다(직접 확인, Step 1) — 그 결과 사이드바에 사용자명을 입력하는 순간(=`Memory.from_config(config)` 호출, 59행) 앱은 깔끔한 `ImportError`가 아니라 표준입력이 없는 Streamlit 프로세스에서 즉시 `EOFError`로 죽습니다(직접 재현, Step 2). `ollama` 패키지를 따로 설치해도 두 번째 문제가 남습니다 — mem0ai 0.1.29가 "모델이 이미 있는지" 확인하는 코드는 오늘 설치되는 `ollama` 0.6.2의 응답 스키마와 필드 이름이 어긋나 있어, 모델이 이미 로컬에 있어도 매번 무조건 `pull`을 시도합니다(직접 재현, Step 2). 이 둘을 우회해 `Memory` 객체를 만드는 데 성공해도 **세 번째 문제**가 기다립니다 — `requirements.txt`가 버전을 고정하지 않은 `qdrant-client`는 오늘 설치되는 1.19.1인데, mem0ai 0.1.29의 `add()`는 추출한 사실마다 내부적으로 `self.vector_store.search(...)`를 부르고 그 래퍼는 `self.client.search(...)`를 부릅니다 — 이 메서드는 qdrant-client 1.19.1에 없습니다(`.search()`는 `query_points()`로 이름이 바뀌었습니다). 그래서 88행의 `m.add(prompt, ...)`는 사실이 하나라도 추출되는 순간 `AttributeError`로 죽습니다 — Day 073·075에서 본 것과 같은 원인입니다(직접 재현, Step 6). 이 세 가지를 모두 우회하면(`ollama` 설치 + `/api/pull` 성공 응답 + `qdrant-client==1.9.1`로 다운그레이드) 앱 자체의 로직(v1.1 형식의 `get_all()`, 컨텍스트 구성, 스트리밍 응답 처리)은 설계대로 동작한다는 것도 로컬 스텁 서버로 직접 확인했습니다(Step 6~8) — Day 073에서 본 `get_all()` dict/list 불일치는 오늘 config가 `"version": "v1.1"`을 명시하기 때문에 이 앱에는 없습니다. 완성하면 브라우저에는 제목, 사이드바의 사용자명 입력창과 "View My Memory" 버튼, 그리고 채팅 입력창이 뜹니다. 세 가지를 모두 갖춘 뒤(진짜 Ollama에 두 모델을 받고, `ollama` 패키지를 설치하고, `qdrant-client==1.9.1`로 맞추고, Qdrant를 Docker로 띄운 뒤) 앱 자체를 띄우는 명령은 다음과 같습니다.
+오늘 앱(`local_chatgpt_memory.py`, 137줄 — 마지막 줄에 개행이 없어 `wc -l`은 136으로 세지만 편집기·GitHub에서는 137번째 줄까지 보입니다, 직접 확인)은 이 볼륨에서 처음으로 채팅 모델과 mem0의 사실 추출·임베딩까지 전부 **Ollama** 하나로 돌리는 앱입니다. Day 073의 `llm_app_memory.py`는 mem0 config에 `llm`·`embedder`를 지정하지 않아 기본값인 OpenAI를 그대로 썼지만, 오늘 config는 `vector_store`(Qdrant)뿐 아니라 `llm`과 `embedder`도 명시적으로 `"provider": "ollama"`로 지정합니다(6~34행) — 그래서 원본 앱 README가 내세우는 "Fully local implementation with no external API dependencies"라는 문구는 **채팅·임베딩·메모리 벡터 저장이라는 모델 호출 자체**에 대해서는 소스로 확인됩니다. 다만 이것이 "이 앱을 켜면 어떤 외부 요청도 없다"는 뜻은 아닙니다 — `import litellm`은 그 시점에 `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`을 받으려 하고(`LITELLM_LOCAL_MODEL_COST_MAP=True`로 끌 수 있음, 직접 확인), `import mem0`는 홈 디렉터리에 `.mem0/`를 만들고 PostHog로 익명 통계를 보내려 합니다(`MEM0_TELEMETRY=False`로 끌 수 있음, Day 073에서 이미 확인한 동작). 둘 다 채팅·임베딩 요청 자체와는 무관한, import·초기화 시점의 부수 효과입니다. 사용자는 사이드바에 아무 이름이나 입력해 "로그인"하고(별도 인증 없음, 47~53행), 채팅창에 메시지를 보내면 앱은 그 메시지를 먼저 mem0에 저장한 뒤(88행), 같은 사용자의 과거 메모리 전체를 `get_all()`로 가져와(91행) 컨텍스트 문자열로 붙이고, `litellm.completion(model="ollama/llama3.1:latest", ...)`로 스트리밍 응답을 받습니다(105~113행). 이 문서를 쓰며 오늘(2026-09-28) `uv pip install -r requirements.txt`로 설치했을 때 **streamlit 1.64.0**, **litellm 1.80.0**, **mem0ai 0.1.29**, **qdrant-client 1.19.1**이 그대로 받아졌고 파일도 문제없이 컴파일됩니다(직접 확인, Step 1). 하지만 mem0ai 0.1.29의 Ollama LLM/임베더 provider는 `ollama`라는 별도 PyPI 패키지에 `from ollama import Client`로 직접 의존하는데, 이 패키지는 `requirements.txt` 4줄에도, mem0ai가 선언한 의존성에도 없습니다(직접 확인, Step 1) — 그 결과 사이드바에 사용자명을 입력하는 순간(=`Memory.from_config(config)` 호출, 59행) 앱은 깔끔한 `ImportError`를 올리는 대신 `input()`으로 설치 여부를 묻는데, Streamlit은 실행 중인 스크립트의 표준입력을 건드리지 않으므로(소스로 확인) 실제 앱에서는 **브라우저가 멈추고 터미널에 `[y/N]` 프롬프트가 뜬 채 대기**하며, 표준입력이 아예 닫혀 있을 때만(예: 이 문서의 `python -c` 재현) 즉시 `EOFError`가 됩니다(직접 재현, Step 2). `ollama` 패키지를 따로 설치해도 두 번째 문제가 남습니다 — mem0ai 0.1.29가 "모델이 이미 있는지" 확인하는 코드는 오늘 설치되는 `ollama` 0.6.2의 응답 스키마와 필드 이름이 어긋나 있어, 모델이 이미 로컬에 있어도 매번 무조건 `pull`을 시도합니다(직접 재현, Step 2). 이 둘을 우회해 `Memory` 객체를 만드는 데 성공해도 **세 번째 문제**가 기다립니다 — `requirements.txt`가 버전을 고정하지 않은 `qdrant-client`는 오늘 설치되는 1.19.1인데, mem0ai 0.1.29의 `add()`는 추출한 사실마다 내부적으로 `self.vector_store.search(...)`를 부르고 그 래퍼는 `self.client.search(...)`를 부릅니다 — 이 메서드는 qdrant-client 1.19.1에 없습니다(`.search()`는 `query_points()`로 이름이 바뀌었습니다). 그래서 88행의 `m.add(prompt, ...)`는 사실이 하나라도 추출되는 순간 `AttributeError`로 죽습니다 — Day 073·075에서 본 것과 같은 원인입니다(직접 재현, Step 6). 이 세 가지를 모두 우회하면(`ollama` 설치 + `/api/pull` 성공 응답 + `qdrant-client==1.9.1`로 다운그레이드) 앱 자체의 로직(v1.1 형식의 `get_all()`, 컨텍스트 구성, 스트리밍 응답 처리)은 설계대로 동작한다는 것도 로컬 스텁 서버로 직접 확인했습니다(Step 6~8) — Day 073에서 본 `get_all()` dict/list 불일치는 오늘 config가 `"version": "v1.1"`을 명시하기 때문에 이 앱에는 없습니다. 완성하면 브라우저에는 제목, 사이드바의 사용자명 입력창과 "View My Memory" 버튼, 그리고 채팅 입력창이 뜹니다. 세 가지를 모두 갖춘 뒤(진짜 Ollama에 두 모델을 받고, `ollama` 패키지를 설치하고, `qdrant-client==1.9.1`로 맞추고, Qdrant를 Docker로 띄운 뒤) 앱 자체를 띄우는 명령은 다음과 같습니다.
 
 ```bash
 uv run --no-project streamlit run local_chatgpt_memory.py --server.address localhost --server.headless true
@@ -21,7 +21,7 @@ uv run --no-project streamlit run local_chatgpt_memory.py --server.address local
 | Ollama | `llama3.1:latest`로 채팅, `nomic-embed-text:latest`로 임베딩을 로컬로 서빙(`localhost:11434`) | https://ollama.com/download 설치 후 `ollama pull llama3.1`·`ollama pull nomic-embed-text` — 이 문서는 두 모델을 내려받지 않고 로컬 스텁 서버로 재현합니다 |
 | ollama (PyPI 패키지) | mem0ai 0.1.29의 Ollama LLM/임베더 provider가 직접 의존 — `requirements.txt`와 mem0ai 의존성 어디에도 없음(Step 1에서 직접 확인) | `uv pip install ollama` (pip: `pip install ollama`) |
 | Qdrant | mem0가 사용자별 벡터를 저장하는 벡터 저장소, `local-chatgpt-memory` 컬렉션 | Docker: `docker run -p 6333:6333 qdrant/qdrant` — 이 문서는 Docker 대신 `qdrant-client`의 로컬 파일 모드(`path=`)로 벡터 저장소 계층만 재현합니다. `requirements.txt`가 버전을 고정하지 않아 오늘은 1.19.1이 설치되는데, 이 버전은 mem0ai 0.1.29가 부르는 `.search()`가 없어 `AttributeError`가 남 — `uv pip install "qdrant-client==1.9.1"`로 내려야 함(Step 6) |
-| MEM0_DIR·MEM0_TELEMETRY 환경변수 | `import mem0`가 홈 디렉터리에 `.mem0/`를 만들고 PostHog로 익명 통계를 보내는 것을 막음(Day 073에서 직접 확인한 것과 같은 동작) | 이 문서의 모든 명령은 import 전에 `MEM0_DIR=<스크래치 경로>`·`MEM0_TELEMETRY=False`를 지정합니다 |
+| MEM0_DIR·MEM0_TELEMETRY 환경변수 | `import mem0`가 홈 디렉터리에 `.mem0/`를 만들고 PostHog로 익명 통계를 보내는 것을 막음(Day 073에서 직접 확인한 것과 같은 동작) | Step 1에서 셸에 한 번 `export`(PowerShell `$env:`)로 지정해 두고 이 문서 전체가 같은 셸에서 이어받습니다 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 참고 |
 
 ## 아키텍처 한눈에 보기
@@ -62,7 +62,14 @@ litellm
 
 (4줄이지만 마지막 줄에 개행이 없어 `wc -l`은 3으로 셉니다. 1행 끝에는 공백이 하나 더 있습니다.) 이 4줄 중 버전이 고정된 것은 `mem0ai`뿐입니다. `openai`는 이 파일이 직접 import하지 않지만(3개 import는 `streamlit`·`mem0.Memory`·`litellm.completion`뿐입니다) litellm 1.80.0 자신이 `openai>=1.99.5`를 의존성으로 선언하므로 어차피 함께 설치됩니다(배포 메타데이터로 확인). 이 목록에는 mem0ai가 Ollama LLM/임베더 provider에서 직접 요구하는 `ollama` 패키지가 빠져 있습니다 — Step 2에서 이게 왜 문제가 되는지 직접 확인합니다.
 
-Day 073에서 이미 확인했듯이 `import mem0`만 해도 홈 디렉터리에 `.mem0/`가 생기고 PostHog로 익명 통계가 나가므로, 이 문서의 모든 명령은 import 전에 `MEM0_DIR=<스크래치 경로>`와 `MEM0_TELEMETRY=False`를 지정합니다.
+Day 073에서 이미 확인했듯이 `import mem0`만 해도 홈 디렉터리에 `.mem0/`가 생기고 PostHog로 익명 통계가 나갑니다. 이 문서는 아래 두 변수를 이 셸에 한 번 지정해 두고 이후 모든 `import mem0`가 이 셸에서 계속 이어받게 합니다(새 터미널을 열면 다시 지정해야 합니다).
+
+```bash
+export MEM0_DIR="$(pwd)/.mem0_local"
+export MEM0_TELEMETRY=False
+```
+
+PowerShell: `$env:MEM0_DIR = "$PWD\.mem0_local"; $env:MEM0_TELEMETRY = "False"`.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -81,7 +88,7 @@ print('qdrant-client', m.version('qdrant-client'))
 uv run --no-project python -c "import ollama"
 ```
 
-직접 확인한 출력(2026-09-28 기준, 버전을 고정하지 않은 패키지들은 오늘 기준 최신):
+직접 확인한 출력(2026-09-28 기준). 다만 `litellm`은 오늘 최신판이 아닙니다 — 오늘 PyPI 최신은 1.103.0인데(`echo litellm | uv pip compile -`로 확인), `mem0ai==0.1.29`가 `openai>=1.33.0,<2.0.0`으로 상한을 묶어 두어 `openai>=1.99.5`를 요구하는 최신 litellm 대신 그 요구를 만족하는 마지막 세대인 1.80.0으로 밀립니다(직접 확인):
 
 ```
 compiled
@@ -144,7 +151,7 @@ config = {
 }
 ```
 
-Day 073의 config와 달리 이 config는 `llm`과 `embedder`를 모두 명시적으로 `"provider": "ollama"`로 지정하고, `"version": "v1.1"`도 명시합니다 — 그래서 Day 073에서 본 `get_all()`의 dict/list 불일치는 이 앱에는 없습니다(Step 6에서 직접 확인). 22행의 주석("Ensure this URL is correct")은 코드에 아무 검증도 없다는 뜻으로 읽힙니다 — 실제로 URL이 틀려도 이 시점에는 아무 예외도 나지 않습니다(연결은 나중에, 값을 실제로 쓸 때 시도됩니다).
+Day 073의 config와 달리 이 config는 `llm`과 `embedder`를 모두 명시적으로 `"provider": "ollama"`로 지정하고, `"version": "v1.1"`도 명시합니다 — 그래서 Day 073에서 본 `get_all()`의 dict/list 불일치는 이 앱에는 없습니다(Step 6에서 직접 확인). 22행의 주석("Ensure this URL is correct")은 코드에 아무 검증도 없다는 뜻으로 읽힙니다 — 이 config dict 자체를 만드는 시점에는 아무 예외도 나지 않지만, 연결 시도는 "나중"이 아니라 59행에서 `Memory.from_config(config)`를 호출하는 즉시 시작됩니다(`OllamaEmbedding.__init__`이 곧바로 `self.client.list()`를 부름, `mem0/embeddings/ollama.py` 소스로 확인 — Step 2의 두 번째 버그가 바로 이 호출에서 납니다).
 
 mem0/memory/main.py 소스로 확인한 `Memory.__init__` 순서는 임베더 → 벡터 저장소 → LLM입니다. 그래서 Qdrant나 Ollama 서버가 있고 없고와 무관하게, 임베더 생성이 가장 먼저 걸립니다.
 
@@ -160,14 +167,52 @@ m = Memory.from_config(config)
 "
 ```
 
+PowerShell: `$env:MEM0_DIR="$PWD\.mem0_local_a"; $env:MEM0_TELEMETRY="False"; $env:HTTP_PROXY="http://127.0.0.1:9"; $env:HTTPS_PROXY="http://127.0.0.1:9"; $env:ALL_PROXY="http://127.0.0.1:9"; $env:NO_PROXY="localhost,127.0.0.1"; uv run --no-project python -c "..."`
+
 직접 확인한 출력(발췌, `ollama` 패키지가 없는 상태):
 
 ```
-    user_input = input(\"The 'ollama' library is required. Install it now? [y/N]: \")
+    user_input = input("The 'ollama' library is required. Install it now? [y/N]: ")
 EOFError: EOF when reading a line
 ```
 
-mem0ai 0.1.29의 `mem0/embeddings/ollama.py`는 `ollama` 패키지가 없을 때 깔끔한 `ImportError`를 올리는 대신 `input()`으로 설치 여부를 묻습니다(패키지 소스로 확인). Streamlit처럼 표준입력이 터미널에 연결되지 않은 프로세스에서 `input()`은 즉시 `EOFError`가 됩니다 — 즉 이 앱은 사이드바에 사용자명을 입력해 55행의 `if user_id:`를 통과하는 순간(`Memory.from_config(config)`가 무조건 실행되는 지점) 이 에러로 죽습니다. (`mem0/llms/ollama.py` 쪽은 같은 상황에서 깔끔한 `ImportError`를 올리지만, 임베더가 먼저 생성되므로 여기까지 도달하지 않습니다.)
+mem0ai 0.1.29의 `mem0/embeddings/ollama.py`는 `ollama` 패키지가 없을 때 깔끔한 `ImportError`를 올리는 대신 `input()`으로 설치 여부를 묻습니다(패키지 소스로 확인). Streamlit은 실행 중인 스크립트의 `sys.stdin`을 건드리거나 닫지 않습니다(streamlit 1.64.0 소스 전체에서 `sys.stdin`을 쓰는 곳은 `web/skills.py`의 `isatty()` 검사 한 줄뿐, 그렙으로 확인) — 그래서 `input()`은 Streamlit 서버 프로세스가 물려받은 진짜 터미널의 표준입력을 그대로 읽습니다. 즉 `streamlit run`으로 띄운 실제 앱에서는, 사이드바에 사용자명을 입력해 55행의 `if user_id:`를 통과하는 순간(`Memory.from_config(config)`가 무조건 실행되는 지점) **브라우저 화면이 멈추고**, 앱을 띄운 **터미널**에 `The 'ollama' library is required. Install it now? [y/N]:`가 뜬 채 입력을 기다립니다. 터미널에서 N이나 Enter를 누르면 `sys.exit(1)`로 끝나고, y를 누르면 `sys.executable -m pip install ollama`를 시도하는데 `uv venv`로 만든 환경에는 `pip` 모듈 자체가 없어(직접 확인: `No module named pip`) 이 역시 `sys.exit(1)`로 끝납니다(두 경로 모두 직접 재현, 위 두 명령으로 확인). `EOFError`는 표준입력이 아예 닫혀 있을 때만 나오는 변형입니다(예: 이 문서의 `python -c` 재현처럼 파이프가 없는 자동화 실행, 또는 `< /dev/null`). (`mem0/llms/ollama.py` 쪽은 같은 상황에서 깔끔한 `ImportError`를 올리지만, 임베더가 먼저 생성되므로 여기까지 도달하지 않습니다.)
+
+두 갈래(y·N)를 실제로 확인했습니다 — 먼저 N을 답한 경우:
+
+```bash
+uv pip uninstall ollama
+echo N | uv run --no-project python -c "
+from mem0 import Memory
+config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'x', 'path': './.qdrant_i1a', 'embedding_model_dims': 768}}, 'llm': {'provider': 'ollama', 'config': {'model': 'llama3.1:latest', 'ollama_base_url': 'http://localhost:61076'}}, 'embedder': {'provider': 'ollama', 'config': {'model': 'nomic-embed-text:latest', 'ollama_base_url': 'http://localhost:61076'}}, 'version': 'v1.1'}
+m = Memory.from_config(config)
+"
+```
+
+직접 확인한 출력(발췌):
+
+```
+The 'ollama' library is required. Install it now? [y/N]: The required 'ollama' library is not installed.
+```
+
+(종료 코드 1) y를 답한 경우:
+
+```bash
+echo y | uv run --no-project python -c "
+from mem0 import Memory
+config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'x', 'path': './.qdrant_i1b', 'embedding_model_dims': 768}}, 'llm': {'provider': 'ollama', 'config': {'model': 'llama3.1:latest', 'ollama_base_url': 'http://localhost:61076'}}, 'embedder': {'provider': 'ollama', 'config': {'model': 'nomic-embed-text:latest', 'ollama_base_url': 'http://localhost:61076'}}, 'version': 'v1.1'}
+m = Memory.from_config(config)
+"
+```
+
+직접 확인한 출력(발췌):
+
+```
+The 'ollama' library is required. Install it now? [y/N]: ...\.venv\Scripts\python.exe: No module named pip
+Failed to install 'ollama'. Please install it manually using 'pip install ollama'.
+```
+
+(종료 코드 1) 두 경로 모두 결국 `sys.exit(1)`로 끝나므로, 실제 Streamlit 앱에서는 이 시점에 스크립트 실행이 중단되고 화면은 "실행 중" 상태로 멈춘 채 남습니다 — `except Exception`으로 잡히는 종류의 실패가 아니라 프로세스 자체가 끝나는 것이므로, 새로고침해야 다시 시도할 수 있습니다.
 
 `ollama` 패키지를 설치하면 이 `EOFError`는 사라지지만, 두 번째 문제가 남습니다. mem0ai 0.1.29의 `_ensure_model_exists()`(`mem0/llms/ollama.py`·`mem0/embeddings/ollama.py` 양쪽에 같은 코드가 있음, 패키지 소스로 확인)는 이렇게 모델이 이미 있는지 봅니다:
 
@@ -180,7 +225,7 @@ if not any(model.get("name") == self.config.model for model in local_models):
 오늘 설치되는 `ollama` 0.6.2의 `list()`는 각 모델을 `name`이 아니라 `model` 필드를 가진 pydantic 객체로 돌려줍니다 — `.get("name")`은 항상 `None`이라 비교가 절대 참이 될 수 없습니다.
 
 ```bash
-uv pip install ollama --python <스크래치 venv>/Scripts/python.exe
+uv pip install ollama
 uv run --no-project python -c "
 from ollama._types import ListResponse
 m = ListResponse.Model(model='llama3.1:latest')
@@ -196,7 +241,7 @@ get(name): None
 get(model): llama3.1:latest
 ```
 
-즉 `llama3.1:latest`가 로컬에 이미 있어도 `_ensure_model_exists()`는 항상 `self.client.pull(...)`을 호출합니다 — 사용자를 바꿔 사이드바가 다시 `Memory.from_config()`를 부를 때마다(51~53행) 반복됩니다. 이 문서는 이 왕복을 임의의 높은 포트(127.0.0.1:61076)에 `/api/tags`·`/api/pull`·`/api/chat`·`/api/embeddings`·`/api/generate`를 흉내 내는 로컬 스텁 서버로 안전하게 재현했습니다(진짜 Ollama 모델을 내려받지 않습니다) — `/api/tags`가 두 모델이 이미 있다고 정확히 답해도, `/api/pull`을 구현하지 않은 첫 시도는 다음처럼 실패해 `pull()`이 실제로 불린다는 것을 보여줍니다.
+즉 `llama3.1:latest`가 로컬에 이미 있어도 `_ensure_model_exists()`는 항상 `self.client.pull(...)`을 호출합니다. `Memory.from_config(config)`는 59행에 있고 `if user_id:` 안에서 조건 없이 실행되므로 — 51~53행은 화면 기록만 비우는 별개의 분기입니다 — 사용자명이 입력된 뒤에는 메시지를 보내거나 버튼을 누를 때마다(Streamlit이 매 상호작용마다 스크립트를 처음부터 다시 돌리므로) **매 재실행마다** 임베더·LLM 각각 한 번씩, 총 두 번 `pull` 시도가 나갑니다(Step 4에서 다시 확인합니다). 이 문서는 이 왕복을 임의의 높은 포트(127.0.0.1:61076)에 `/api/tags`·`/api/pull`·`/api/chat`·`/api/embeddings`·`/api/generate`를 흉내 내는 로컬 스텁 서버로 안전하게 재현했습니다(진짜 Ollama 모델을 내려받지 않습니다) — `/api/tags`가 두 모델이 이미 있다고 정확히 답해도, `/api/pull`을 구현하지 않은 첫 시도는 다음처럼 실패해 `pull()`이 실제로 불린다는 것을 보여줍니다.
 
 ```
 ollama._types.ResponseError: not found (status code: 404)
@@ -633,7 +678,7 @@ GET {'results': [{'id': '6554a7a4-...', 'memory': 'Replied that hiking is fun', 
 
 - [ ] `uv venv && uv pip install -r requirements.txt`만으로 `streamlit`·`litellm`·`mem0ai` 임포트가 성공하고 파일이 그대로 컴파일된다는 것을 확인했다
 - [ ] `requirements.txt`와 mem0ai 배포 메타데이터 어디에도 `ollama` 패키지가 없어 `import ollama`가 실패한다는 것을 직접 확인했다
-- [ ] `ollama` 패키지가 없으면 사용자명을 입력하는 순간(`Memory.from_config`) `EOFError`로 앱이 죽는다는 것을 직접 재현했다(mem0/embeddings/ollama.py가 ImportError 대신 input()을 씀)
+- [ ] `ollama` 패키지가 없으면 사용자명을 입력하는 순간(`Memory.from_config`) mem0가 `ImportError` 대신 `input()`으로 설치를 묻고, 실제 Streamlit에서는 터미널이 멈춰 `[y/N]`을 기다린다는 것(표준입력이 닫혀 있을 때만 `EOFError`)을 소스와 직접 재현으로 확인했다 — y를 답해도 `uv venv`에는 `pip`이 없어 결국 실패한다는 것도 확인했다
 - [ ] `ollama` 0.6.2의 응답 객체가 `name`이 아니라 `model` 필드를 써서, mem0ai 0.1.29의 `_ensure_model_exists()`가 모델이 이미 있어도 항상 `pull`을 시도한다는 것을 직접 확인했다
 - [ ] `requirements.txt`가 고정하지 않은 `qdrant-client`가 오늘 1.19.1로 설치되어 `.search()`가 없고, mem0ai 0.1.29의 `add()`가 이를 불러 `AttributeError`로 죽는다는 것을 직접 재현했다(Day 073·075와 같은 원인)
 - [ ] `qdrant-client==1.9.1`로 내리면 이 `AttributeError`가 사라지고 `add()`·`get_all()`이 정상 동작한다는 것을 직접 확인했다
@@ -646,8 +691,8 @@ GET {'results': [{'id': '6554a7a4-...', 'memory': 'Replied that hiking is fun', 
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 사이드바에 사용자명을 입력하자마자 `EOFError: EOF when reading a line`로 앱이 죽음 | mem0ai 0.1.29의 `mem0/embeddings/ollama.py`가 `ollama` 패키지 부재 시 `ImportError` 대신 `input()`으로 설치 여부를 묻는데, `requirements.txt`에 이 패키지가 없고 Streamlit 프로세스는 표준입력이 연결돼 있지 않음(직접 확인) | 리포 코드는 고치지 않음 — `uv pip install ollama`로 별도 설치 |
-| `ollama` 패키지 설치 후에도, 사용자를 바꿀 때마다(=`Memory` 재생성) 이미 있는 모델에 대해 `pull` 요청이 나감 | mem0ai 0.1.29의 `_ensure_model_exists()`가 `model.get("name")`으로 모델 존재를 확인하는데, 오늘 설치되는 `ollama` 0.6.2의 응답 객체는 `name`이 아니라 `model` 필드를 씀 — 비교가 항상 거짓이 되어 매번 pull 시도(직접 확인) | 리포 코드는 고치지 않음 — 진짜 Ollama와 함께 쓰면 매번 재검증 트래픽이 생긴다는 것만 유의 |
+| 사이드바에 사용자명을 입력하면 브라우저가 "실행 중"에서 멈추고, 앱을 띄운 터미널에 `The 'ollama' library is required. Install it now? [y/N]:`가 뜬 채 응답을 기다림(표준입력이 닫힌 자동화 실행에서는 대신 `EOFError`) | mem0ai 0.1.29의 `mem0/embeddings/ollama.py`가 `ollama` 패키지 부재 시 `ImportError` 대신 `input()`으로 설치 여부를 묻는데, `requirements.txt`에 이 패키지가 없음. Streamlit은 스크립트의 표준입력을 건드리지 않으므로 `input()`은 앱을 띄운 진짜 터미널을 읽음(직접 확인) | 리포 코드는 고치지 않음 — `uv pip install ollama`로 별도 설치(터미널에서 y를 답해도 `uv venv`에는 `pip`이 없어 자동 설치는 실패함, 직접 확인) |
+| `ollama` 패키지 설치 후에도, 사용자명이 입력된 뒤 메시지를 보내거나 버튼을 누를 때마다(매 재실행마다) 이미 있는 모델에 대해 `pull` 요청이 두 번씩(임베더·LLM 각각) 나감 | mem0ai 0.1.29의 `_ensure_model_exists()`가 `model.get("name")`으로 모델 존재를 확인하는데, 오늘 설치되는 `ollama` 0.6.2의 응답 객체는 `name`이 아니라 `model` 필드를 씀 — 비교가 항상 거짓이 되어 매번 pull 시도(직접 확인). `Memory.from_config(config)`(59행)가 `if user_id:` 안에서 조건 없이 매 재실행마다 실행되기 때문이지, 사용자를 바꿀 때만 그런 것이 아님 | 리포 코드는 고치지 않음 — 진짜 Ollama와 함께 쓰면 대화할 때마다 재검증 트래픽이 생긴다는 것만 유의 |
 | 위 둘을 우회해도, 메시지를 보내면 `AttributeError: 'QdrantClient' object has no attribute 'search'`로 죽음 | `requirements.txt`가 `qdrant-client` 버전을 고정하지 않아 오늘 1.19.1이 설치되는데, mem0ai 0.1.29의 `add()`는 사실마다 내부적으로 `self.vector_store.search(...)` → `self.client.search(...)`를 부름 — 1.19.1은 이 메서드를 `query_points()`로 바꿔 이름이 없음(직접 확인, Day 073·075와 같은 원인) | 리포 코드는 고치지 않음 — `uv pip install "qdrant-client==1.9.1"`(mem0ai가 선언한 하한)로 내려 설치 |
 
 ## 더 해보기
