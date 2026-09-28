@@ -1,10 +1,10 @@
 # Day 078 · 📈 AI Investment Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 55분(골격 자체는 Day 001과 같지만, 확인마다 직접 명령을 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 질문 10개에 수십~백여 원 이하(OpenAI 공식 요금표 기준 `gpt-5.2` 표준가 입력 $1.75/출력 $14.00, 1M 토큰당, 대략치 — 코드가 못박은 스냅샷 id `gpt-5.2-2025-12-11`은 요금표에 따로 없어 `gpt-5.2` 기준가로 계산) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_investment_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 58분(골격 자체는 Day 001과 같지만, 확인마다 직접 명령을 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 질문 10개에 수십~백여 원 이하(OpenAI 공식 요금표 기준 `gpt-5.2` 표준가 입력 $1.75/출력 $14.00, 1M 토큰당, 대략치 — 코드가 못박은 스냅샷 id `gpt-5.2-2025-12-11`은 요금표에 따로 없어 `gpt-5.2` 기준가로 계산) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_investment_agent`
 
 ## 오늘 만들 것
 
-오늘부터 34일간 이어지는 "🚀 Advanced AI Agents" 볼륨을 엽니다. 지난 볼륨(Day 071~077, "💾 LLM Apps with Memory")은 이름 그대로 대화가 끝나도 상태가 남는 것이 핵심이었습니다. 오늘의 27줄짜리 `investment_agent.py`에는 그런 장치가 전혀 없습니다 — `db=`도 세션도 없고, 질문 하나마다 완전히 새로 시작합니다. 대신 이 코드는 이 시리즈가 Day 001에서 이미 배운 3요소 뼈대(모델·도구·AgentOS 서버)를 그대로 반복합니다. 다른 점은 둘입니다. 첫째, LLM이 xAI Grok(Day 001)에서 OpenAI로 바뀌었고, 코드는 agno의 기본값(`gpt-5.4-mini` — Day 068이 같은 agno 3.0.11에서 이미 확인)을 쓰지 않고 `gpt-5.2-2025-12-11`이라는 날짜가 박힌 스냅샷 id를 직접 지정합니다. 둘째, 도구가 `YFinanceTools()` 하나뿐입니다 — 그런데 이 클래스가 기본값으로 켜는 함수는 Day 001이 이미 확인한 대로 `get_current_stock_price` 하나뿐이고(이번 agno 3.0.11에서도 재확인), 기업 정보·재무제표·손익계산서·재무비율·애널리스트 추천·기업 뉴스·기술 지표·역사적 가격까지 나머지 여덟 개 함수는 전부 `enable_*=False`로 꺼져 있습니다(생성자 시그니처를 직접 확인). 그런데도 에이전트 자신의 `description`과 `instructions`(코드에 그대로 있습니다)는 "애널리스트 추천"과 "재무 펀더멘털"을 언급하고, 앱 자체 README도 "두 종목 비교"·"포괄적 기업 정보"·"최신 기업 뉴스와 애널리스트 추천"을 기능으로 내세웁니다 — 코드가 실제로 줄 수 있는 것은 현재가 하나뿐인데도입니다. `requirements.txt` 3줄에는 `openai`가 이미 들어 있어 Day 001이 겪은 다섯 개짜리 누락 설치는 없지만, `agno.os`가 필요로 하는 `fastapi`·`uvicorn`·`python-multipart`는 여전히 빠져 있습니다(직접 확인, Day 001과 같은 원인). `OPENAI_API_KEY` 없이도 에이전트 객체와 AgentOS 서버는 그대로 만들어지고 뜹니다(직접 확인) — 실패는 실제로 모델을 호출하는 순간(`get_client()`가 `openai.OpenAI()`를 만드는 지점, 소스로 확인)에만 로컬에서 일어납니다. 서버가 뜨는 순간 agno가 `POST /telemetry/os`를 보내려 시도하는 것도(직접 확인) Day 047이 이미 다룬 사실 그대로입니다. 완성하면 로컬 AgentOS(포트 7777)를 `os.agno.com` 컨트롤 플레인에 연결해 주가를 물어볼 수 있지만, 애널리스트 추천이나 기업 뉴스를 물으면 도구가 아니라 모델 자신의 지식(또는 거절)에 의존하게 됩니다. 아래는 완성된 아키텍처입니다.
+오늘부터 34일간 이어지는 "🚀 Advanced AI Agents" 볼륨을 엽니다. 지난 볼륨("💾 LLM Apps with Memory")은 한 세션 안의 대화 기록(Day 071, `st.session_state`에만 쌓여 세션이 끝나면 사라짐)에서 세션을 넘어 남는 mem0 기억(Day 072~077)까지, 상태를 남기는 것이 주제였습니다. 오늘의 27줄짜리 `investment_agent.py`에는 그런 장치가 전혀 없습니다 — `db=`도 세션도 없고, 질문 하나마다 완전히 새로 시작합니다. 대신 이 코드는 이 시리즈가 Day 001에서 이미 배운 3요소 뼈대(모델·도구·AgentOS 서버)를 그대로 반복합니다. 다른 점은 둘입니다. 첫째, LLM이 xAI Grok(Day 001)에서 OpenAI로 바뀌었고, 코드는 agno의 기본값(`gpt-5.4-mini` — Day 068이 같은 agno 3.0.11에서 이미 확인)을 쓰지 않고 `gpt-5.2-2025-12-11`이라는 날짜가 박힌 스냅샷 id를 직접 지정합니다. 둘째, 도구가 `YFinanceTools()` 하나뿐입니다 — 그런데 이 클래스가 기본값으로 켜는 함수는 Day 001이 이미 확인한 대로 `get_current_stock_price` 하나뿐이고(이번 agno 3.0.11에서도 재확인), 기업 정보·재무제표·손익계산서·재무비율·애널리스트 추천·기업 뉴스·기술 지표·역사적 가격까지 나머지 여덟 개 함수는 전부 `enable_*=False`로 꺼져 있습니다(생성자 시그니처를 직접 확인). 그런데도 에이전트 자신의 `description`과 `instructions`(코드에 그대로 있습니다)는 "애널리스트 추천"과 "재무 펀더멘털"을 언급하고, 앱 자체 README도 "두 종목 비교"·"포괄적 기업 정보"·"최신 기업 뉴스와 애널리스트 추천"을 기능으로 내세웁니다 — 코드가 실제로 줄 수 있는 것은 현재가 하나뿐인데도입니다. `requirements.txt` 3줄에는 `openai`가 이미 들어 있어 Day 001이 겪은 다섯 개짜리 누락 설치는 없지만, `agno.os`가 필요로 하는 `fastapi`·`uvicorn`·`python-multipart`는 여전히 빠져 있습니다(직접 확인, Day 001과 같은 원인). `OPENAI_API_KEY` 없이도 에이전트 객체와 AgentOS 서버는 그대로 만들어지고 뜹니다(직접 확인) — 실패는 실제로 `agent.run()`이 모델을 부르는 순간, agno 자신의 `ModelAuthenticationError`("OPENAI_API_KEY not set")로 로컬에서 일어납니다(직접 확인, 소켓 연결 시도 0건 — `openai.OpenAI()` 클라이언트까지도 만들어지지 않습니다). 서버가 뜨는 순간 agno가 `POST /telemetry/os`를 보내려 시도하는 것도(직접 확인) Day 047이 이미 다룬 사실 그대로입니다. 완성하면 로컬 AgentOS(포트 7777)를 `os.agno.com` 컨트롤 플레인에 연결해 주가를 물어볼 수 있지만, 애널리스트 추천이나 기업 뉴스를 물으면 도구가 아니라 모델 자신의 지식(또는 거절)에 의존하게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -61,6 +61,18 @@ ModuleNotFoundError: No module named 'fastapi'
 uv pip install fastapi uvicorn python-multipart
 ```
 
+키는 셸에 환경변수로 둡니다(이 문서는 키가 없어 실제 값 없이 자리만 잡습니다).
+
+```bash
+# macOS/Linux, Git Bash
+export OPENAI_API_KEY="여러분의-키"
+```
+
+```powershell
+# Windows PowerShell
+$env:OPENAI_API_KEY="여러분의-키"
+```
+
 ![Step 1까지의 구성](diagrams/step1.svg)
 
 **확인.**
@@ -99,7 +111,7 @@ agent = Agent(
     model=OpenAIChat(id="gpt-5.2-2025-12-11"),
 ```
 
-agno 3.0.11 소스(`agno/models/openai/chat.py`)를 보면 `OpenAIChat`의 기본 `id`는 이미 `"gpt-5.4-mini"`입니다(42행) — Day 068이 같은 agno 버전에서 이미 확인한 사실입니다. 이 앱은 그 기본값을 쓰지 않고 `"gpt-5.2-2025-12-11"`을 명시적으로 고른 것입니다. `OpenAIChat(...)`는 키가 없어도 객체 자체는 만들어집니다 — 실제 OpenAI 클라이언트는 `get_client()`가 호출될 때(즉 `agent.run()`이 모델을 부르는 순간)에야 `openai.OpenAI(**client_params)`로 만들어집니다(소스로 확인). 이 문서는 외부 API 클라이언트의 요청 메서드를 부르지 않는다는 원칙에 따라 `agent.run()`은 부르지 않고, 그 대신 같은 클라이언트를 키 없이 직접 생성만 해 봤습니다.
+agno 3.0.11 소스(`agno/models/openai/chat.py`)를 보면 `OpenAIChat`의 기본 `id`는 이미 `"gpt-5.4-mini"`입니다(42행) — Day 068이 같은 agno 버전에서 이미 확인한 사실입니다. 이 앱은 그 기본값을 쓰지 않고 `"gpt-5.2-2025-12-11"`을 명시적으로 고른 것입니다. `OpenAIChat(...)`는 키가 없어도 객체 자체는 만들어집니다. 실제 키 확인은 `agent.run()`이 모델을 부르는 순간 agno 자신의 `_get_client_params()`(같은 `agno/models/openai/chat.py`, 105~113행, 소스로 확인)가 하는데, `OPENAI_API_KEY`가 없으면 이 함수가 `openai.OpenAI(...)` 클라이언트를 만들기도 전에 agno의 `ModelAuthenticationError`를 던집니다 — Day 001 Step 6(xAI)이 같은 모양을 이미 보여준 대로, 이 실패는 요청을 내보내기 전에 로컬에서 끝나므로 직접 실행해 확인할 수 있습니다(Step 6에서 확인합니다).
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -117,25 +129,7 @@ print(m.id)
 gpt-5.2-2025-12-11
 ```
 
-```bash
-uv run --no-project python -c "
-import os
-os.environ.pop('OPENAI_API_KEY', None)
-from openai import OpenAI
-try:
-    OpenAI()
-except Exception as e:
-    print(type(e).__name__, e)
-"
-```
-
-직접 확인한 출력(발췌):
-
-```
-OpenAIError Missing credentials. Please pass an `api_key`, ... or set the `OPENAI_API_KEY` ... environment variable.
-```
-
-`OpenAIChat.get_client()`가 만드는 클라이언트가 바로 이 `OpenAI()`이므로(소스로 확인), 키 없이 `agent.run()`을 불렀다면 실제 네트워크 요청 전에 이 지점에서 로컬로 막혔을 것입니다.
+`agent.run(...)`을 실제로 키 없이 불러 이 실패를 직접 보는 것은 Step 6에서 합니다 — 지금은 모델 객체 연결까지만 확인합니다.
 
 ### Step 3. 도구 연결 — 켜진 함수는 하나뿐입니다
 
@@ -236,12 +230,13 @@ print('agent built:', agent.name)
 "
 ```
 
-직접 확인한 출력(발췌, `debug_mode=True`가 객체 생성 순간 찍는 로그를 포함합니다):
+직접 확인한 출력:
 
 ```
-DEBUG   Agent initialized: ai-investment-agent
 agent built: AI Investment Agent
 ```
+
+`debug_mode=True`가 찍는 `DEBUG` 로그는 이 시점(단순 `Agent(...)` 생성)에는 아직 나오지 않습니다 — agno 소스(`agno/agent/_init.py`의 `initialize_agent()`, 소스로 확인)를 보면 이 로그는 `run()`이 시작되거나 `AgentOS`가 에이전트를 초기화할 때 찍힙니다. 그 첫 예는 바로 다음 Step 5의 서버 기동 로그, 그리고 Step 6의 `agent.run(...)` 로그에서 봅니다.
 
 ### Step 5. AgentOS로 서비스 — 서버를 켜자마자 나가는 텔레메트리
 
@@ -307,13 +302,31 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs
 
 ### Step 6. 질문 실행 — 여기서부터는 키가 필요합니다
 
-**목적.** AgentOS 컨트롤 플레인에서 실제로 질문을 던졌을 때 무엇이 가능하고 무엇이 불가능한지 정리합니다.
+**목적.** 키 없이 `agent.run(...)`을 불렀을 때 정확히 어디서 실패하는지 직접 확인하고, 키가 있다면 AgentOS 컨트롤 플레인에서 무엇이 가능하고 무엇이 불가능한지 정리합니다.
 
-**할 일.** 이 단계는 OpenAI API 키가 있어야 끝까지 진행할 수 있습니다. 브라우저에서 https://os.agno.com 에 접속해 로컬 AgentOS(`http://localhost:7777`)를 연결한 뒤, 채팅창에 "AAPL과 MSFT 주가를 비교해줘" 같은 질문을 입력합니다. 현재가 조회 하나만 켜져 있으므로(Step 3), 모델은 같은 함수를 티커만 바꿔(`"AAPL"`, 이어서 `"MSFT"`) 두 번 호출하는 식으로 답을 모을 것입니다. 반대로 "이 종목 애널리스트 추천 알려줘"처럼 켜지지 않은 기능을 물으면, 호출할 도구가 없으므로 모델은 학습된 지식으로 답하거나 정보가 없다고 답하는 것 중 하나를 스스로 고르게 됩니다 — 이 문서는 키가 없어 이 갈림을 실제로 실행해 확인하지는 못했습니다.
+**할 일.** 먼저 키 없이 실제로 실행해 Step 2에서 예고한 실패 지점을 직접 봅니다. 앱 폴더에서:
+
+```bash
+uv run --no-project python -c "import investment_agent as m; result = m.agent.run('Get the current AAPL stock price'); print('status:', result.status); print('content:', result.content)"
+```
+
+직접 확인한 로그(발췌, 소켓 가로채기로 재현해 연결 시도 0건도 함께 확인):
+
+```
+DEBUG   Creating new sync OpenAI client for model gpt-5.2-2025-12-11
+ERROR   Model authentication error from OpenAI API: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
+ERROR   Error in Agent run: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
+status: RunStatus.error
+content: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
+```
+
+`_get_client_params()`가 `openai.OpenAI(...)`를 만들기 전에 먼저 막으므로, `openai.OpenAI()` 클라이언트 자체가 생성되지 않고 소켓 연결도 한 번도 시도되지 않습니다.
+
+키가 있다면, 브라우저에서 https://os.agno.com 에 접속해 로컬 AgentOS(`http://localhost:7777`)를 연결한 뒤 "AAPL과 MSFT 주가를 비교해줘" 같은 질문을 입력합니다. 현재가 조회 하나만 켜져 있으므로(Step 3), 모델은 같은 함수를 티커만 바꿔(`"AAPL"`, 이어서 `"MSFT"`) 두 번 호출하는 식으로 답을 모을 것입니다. 반대로 "이 종목 애널리스트 추천 알려줘"처럼 켜지지 않은 기능을 물으면, 호출할 도구가 없으므로 모델은 학습된 지식으로 답하거나 정보가 없다고 답하는 것 중 하나를 스스로 고르게 됩니다 — 이 문서는 키가 없어 이 갈림은 실제로 실행해 확인하지 못했습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 키가 있다면, 서버를 띄운 터미널에 `debug_mode=True`가 찍는 `tool_call` 로그를 보고 실제로 몇 번 호출됐는지, 그리고 애널리스트 추천을 물었을 때 도구 호출이 아예 없는지 확인합니다.
+**확인.** 키 없이는 위 명령의 `status: RunStatus.error`로 실패 지점을 확인합니다. 키가 있다면, 서버를 띄운 터미널에 `debug_mode=True`가 찍는 `tool_call` 로그를 보고 실제로 몇 번 호출됐는지, 그리고 애널리스트 추천을 물었을 때 도구 호출이 아예 없는지 확인합니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -336,9 +349,9 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `from agno.os import AgentOS` 시점에 `ModuleNotFoundError: No module named 'fastapi'` | `requirements.txt`(`agno`, `openai`, `yfinance`)가 AgentOS 웹 서빙 계층이 필요로 하는 `fastapi`·`uvicorn`·`python-multipart`를 선언하지 않음(직접 설치해 확인 — Day 001과 같은 누락 패턴) | `uv pip install fastapi uvicorn python-multipart` 추가 실행 |
-| `OPENAI_API_KEY` 없이 `agent.run()`을 부르면(이 문서는 실행하지 않음) 실제 요청 전에 로컬에서 실패할 것으로 예상됨 | `OpenAIChat.get_client()`가 `openai.OpenAI(**client_params)`를 그대로 생성하는데(소스로 확인), 이 생성자가 키를 못 찾으면 `OpenAIError`를 즉시 던짐(직접 확인, `OpenAI()` 생성자만 별도 테스트) | 키를 환경변수로 설정하거나 `OpenAIChat(..., api_key=...)`로 직접 전달 |
+| `OPENAI_API_KEY` 없이 `agent.run()`을 부르면 `ERROR Model authentication error from OpenAI API: OPENAI_API_KEY not set...`가 찍히고 `status: RunStatus.error`로 끝남(직접 확인) | agno의 `OpenAIChat._get_client_params()`가 `openai.OpenAI(...)` 클라이언트를 만들기 전에 `OPENAI_API_KEY`부터 확인하고, 없으면 자신의 `ModelAuthenticationError`를 먼저 던짐(소스로 확인) — `openai.OpenAI()` 클라이언트는 아예 만들어지지 않음 | 키를 환경변수로 설정하거나 `OpenAIChat(..., api_key=...)`로 직접 전달 |
 | 에이전트의 `description`·`instructions`, 그리고 앱 자체 README가 애널리스트 추천·기업 뉴스·재무 펀더멘털을 기능으로 내세우지만 실제로는 현재가만 조회됨 | `YFinanceTools()`가 기본으로 켜는 함수는 `get_current_stock_price` 하나뿐이고, 나머지 여덟 개는 `enable_*=False`(생성자 시그니처 직접 확인) | 필요한 만큼 `YFinanceTools(enable_analyst_recommendations=True, enable_stock_fundamentals=True, enable_company_news=True, enable_company_info=True)`처럼 플래그를 명시적으로 켠다 |
-| 질문을 하기도 전에, 서버를 띄우자마자 외부로 요청을 시도하는 로그가 보임 | `AgentOS.serve()`가 기동 시 익명 사용 통계 `POST /telemetry/os`를 보냄(Day 047이 같은 메커니즘을 직접 확인) | `AGNO_TELEMETRY=false`와 `AgentOS(agents=[agent], telemetry=False)`를 함께 설정(Day 047 Step 5 참고) |
+| 평소에는 아무 로그도 안 보이지만, 서버는 기동 때마다 익명 사용 통계를 내보내고 있음 | `AgentOS.serve()`가 기동 시 `POST /telemetry/os`를 보냄(Day 047이 같은 메커니즘을 직접 확인) — 전송이 막혔을 때만 `DEBUG Could not send telemetry event...` 로그가 보이고, 네트워크가 정상이면 성공한 전송은 아무 로그도 남기지 않음(소스로 확인, `agno/api/api.py`) | `AGNO_TELEMETRY=false`와 `AgentOS(agents=[agent], telemetry=False)`를 함께 설정(Day 047 Step 5 참고) |
 
 ## 더 해보기
 
@@ -348,4 +361,4 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs
 
 ## 다음 날 예고
 
-[Day 079 · 🎬 AI Movie Production Agent](../day079-ai-movie-production-agent/README.md) — Claude 3.5 Sonnet으로 영화 각본 개요와 배역 캐스팅을 함께 제안하는 어시스턴트를 만듭니다.
+[Day 079 · 🎬 AI Movie Production Agent](../day079-ai-movie-production-agent/README.md) — Gemini 2.5 Flash로 도는 agno 팀(각본가·캐스팅 디렉터 + 프로듀서)이 SerpApi 검색을 곁들여 영화 개요를 만듭니다.
