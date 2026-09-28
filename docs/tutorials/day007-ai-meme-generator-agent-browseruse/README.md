@@ -305,7 +305,7 @@ TypeError expected string or bytes-like object, got 'NoneType'
 **확인.**
 
 ```bash
-uv run --no-project streamlit run ai_meme_generator_agent.py --server.headless true
+uv run --no-project streamlit run ai_meme_generator_agent.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
