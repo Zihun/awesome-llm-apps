@@ -2,10 +2,10 @@
 shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-prep: preprocess_and_save { class: ours }
 duckdb: DuckDbTools { class: ours }
-agent: Agent (OpenAIChat) { class: ours }
+prep: preprocess_and_save { class: ours }
 openai: OpenAI API { class: ext }
+agent: Agent (OpenAIChat) { class: ours }
 
 user -> ui: 키 + 파일 업로드
 ui -> prep: 업로드 파일 객체

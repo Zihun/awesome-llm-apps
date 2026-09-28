@@ -116,7 +116,7 @@ with st.sidebar:
 **확인.** 먼저 서버 자체가 키 없이도 뜨는지 봅니다.
 
 ```bash
-uv run --no-project streamlit run ai_data_analyst.py --server.headless true
+uv run --no-project streamlit run ai_data_analyst.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
