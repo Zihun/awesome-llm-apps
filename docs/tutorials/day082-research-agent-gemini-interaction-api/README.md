@@ -1,10 +1,10 @@
 # Day 082 · 🔬 AI Research Planner & Executor (Google Interactions API)
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 70분(103줄짜리 단일 파일이지만, `google-genai`가 버전에 따라 완전히 다른 두 세대(1.x·2.x)의 API 표면을 갖고 있어 그 차이를 직접 확인하는 시간이 코드를 읽는 시간보다 깁니다) · API 비용 알 수 없음(딥리서치 단계가 내부적으로 도는 검색·추론 루프 수가 실행마다 달라 토큰 수를 예측할 수 없습니다) — 참고로 공식 가격 문서(2026-09-28 기준, 직접 확인) 기준 Gemini 3 Flash Preview 표준가는 입력 $0.50/출력 $3.00(1M 토큰당), Gemini 3.1 Pro Preview는 입력 $2~4/출력 $12~18, Gemini 3 Pro Image는 이미지 한 장당 약 $0.134이며, 딥리서치는 "검색·추론 루프에서 쓰는 토큰까지 표준 요금대로" 과금된다고 명시되어 있습니다 · 원본 앱: `advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 85분(103줄짜리 단일 파일이지만, Interactions API가 2026년 5~6월에 응답 스키마를 통째로 바꿨고 Phase 3a·3b가 쓰는 모델 둘은 이미 서비스가 종료돼, 그 이력을 공식 문서 여러 개로 하나씩 확인하는 시간이 코드를 읽는 시간보다 깁니다) · API 비용 알 수 없음(딥리서치 단계가 내부적으로 도는 검색·추론 루프 수가 실행마다 달라 토큰 수를 예측할 수 없습니다) — 참고로 공식 가격 문서(2026-09-28 확인) 기준 Gemini 3 Flash Preview 표준가는 입력 $0.50/출력 $3.00(1M 토큰당), Gemini 3.1 Pro Preview는 입력 $2~4/출력 $12~18, Gemini 3 Pro Image는 이미지 한 장당 약 $0.134이며, 딥리서치는 "검색·추론 루프에서 쓰는 토큰까지 표준 요금대로" 과금된다고 명시되어 있습니다 · 원본 앱: `advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api`
 
 ## 오늘 만들 것
 
-오늘의 `research_planner_executor_agent.py`(103줄)는 Google의 **Gemini Interactions API**(`client.interactions`) 하나로 3단계 리서치 파이프라인을 만듭니다 — 목표를 입력하면 Gemini 3 Flash가 번호 매긴 태스크 목록을 짜고(Phase 1), 선택한 태스크를 Deep Research 에이전트가 웹 검색을 곁들여 조사하며(Phase 2), 그 결과를 Gemini 3 Pro가 임원 보고서로 종합하고 Gemini 3 Pro Image가 TL;DR 인포그래픽까지 그려 줍니다(Phase 3). 이 앱이 보여 주려는 핵심은 `previous_interaction_id`입니다 — 이전 단계의 응답 id 하나만 다음 호출에 넘기면 Google 서버가 대화 기록을 대신 들고 있어 줍니다(공식 문서: "서버가 이 id로 대화 기록을 찾아오므로, 전체 대화 기록을 다시 보낼 필요가 없다", 2026-09-28 직접 확인). Day 071이 `st.session_state`에 메시지를 쌓아 매번 통째로 다시 보내는 로컬 방식이었다면, 오늘 앱은 상태 자체를 서버에 맡기고 `st.session_state`(24~25행)는 각 단계의 id·텍스트만 기억하는 얇은 캐시로 씁니다. 앱 자신의 README는 "Beta API"라고 적어 두었지만, 공식 문서를 오늘 다시 열어 보면 "2026년 6월부터 정식 출시(Generally Available)되어 모든 신규 프로젝트에 권장됨"이라고 갱신되어 있습니다(직접 확인) — 문서가 앱보다 먼저 GA로 넘어간 셈입니다. 더 중요한 확인도 있습니다. 이 앱의 `requirements.txt`는 `google-genai>=1.55.0`처럼 **하한만** 고정하는데, 오늘 그대로 설치하면 2.25.0이 받아지고(직접 확인), 이 사이에 SDK 생성기 자체가 바뀌면서(1.55.0은 stainless 생성, 2.25.0은 speakeasy 생성 — 둘 다 각 패키지의 소스 주석에 적혀 있습니다) 응답 객체의 `outputs` 필드가 사라졌습니다. 그 결과 이 코드가 세 번 쓰는 `get_text(i.outputs)`(48·62·75행)는 오늘 설치되는 SDK에서 키를 넣고 실제로 호출해도 `AttributeError`로 끝납니다 — Step 3에서 직접 재현합니다. 아래는 완성된 아키텍처입니다.
+오늘의 `research_planner_executor_agent.py`(103줄)는 Google의 **Gemini Interactions API**(`client.interactions`) 하나로 3단계 리서치 파이프라인을 만듭니다 — 목표를 입력하면 Gemini 3 Flash가 번호 매긴 태스크 목록을 짜고(Phase 1), 선택한 태스크를 Deep Research 에이전트가 웹 검색을 곁들여 조사하며(Phase 2), 그 결과를 Gemini 3 Pro가 임원 보고서로 종합하고 Gemini 3 Pro Image가 TL;DR 인포그래픽까지 그려 줍니다(Phase 3). 이 앱이 보여 주려는 핵심은 `previous_interaction_id`입니다 — 이전 단계의 응답 id 하나만 다음 호출에 넘기면 Google 서버가 대화 기록을 대신 들고 있어 줍니다(공식 문서 확인, 2026-09-28: "서버가 이 id로 대화 기록을 찾아오므로, 전체 대화 기록을 다시 보낼 필요가 없다"). Day 071이 `st.session_state`에 메시지를 쌓아 매번 통째로 다시 보내는 로컬 방식이었다면, 오늘 앱은 상태 자체를 서버에 맡기고 `st.session_state`(24~25행)는 각 단계의 id·텍스트만 기억하는 얇은 캐시로 씁니다. 앱 자신의 README는 "Beta API"라고 적어 두었지만, 공식 문서를 오늘(2026-09-28) 다시 열어 보면 "2026년 6월부터 정식 출시(Generally Available)되어 모든 신규 프로젝트에 권장됨"이라고 갱신되어 있습니다(공식 문서 확인) — 문서가 앱보다 먼저 GA로 넘어간 셈입니다. 그런데 이 앱은 지금 그대로는 키를 넣어도 끝까지 가지 않습니다. 이유가 둘입니다. 첫째, Interactions API 자체가 **2026년 5~6월에 응답 스키마를 바꿨습니다** — 기존 `outputs` 배열을 없애고 `steps`라는 구조화된 타임라인으로 바꿨고(공식 "Breaking changes — May 2026" 문서 확인), 새 스키마가 2026-05-26부터 기본이 됐으며 레거시 스키마는 **2026-06-08에 완전히 제거**됐습니다("Python 1.x.x and JS 1.x.x SDK versions will break for Interactions API calls"). 이 코드가 세 번 쓰는 `get_text(i.outputs)`(48·62·75행)는 그래서 오늘 호출하면 응답에 `outputs` 자체가 없어 `AttributeError`로 끝납니다(Step 3에서 직접 재현합니다) — 이 앱의 `requirements.txt`가 `google-genai>=1.55.0`처럼 **하한만** 고정해 오늘 2.25.0이 받아지는 것(직접 확인)과 SDK 생성기가 1.x(stainless)에서 2.x(speakeasy)로 바뀐 것은, 이 서버 쪽 스키마 변경을 SDK가 뒤따라간 결과이지 원인이 아닙니다 — `google-genai<2`로 내려도 서버가 더 이상 `outputs`를 주지 않으므로 소용없습니다. 둘째, `outputs` 문제를 고쳐도 Phase 3a·3b는 끝까지 가지 않습니다 — **두 단계가 쓰는 모델이 이미 Google 공식 "Model deprecations" 문서에서 서비스 종료로 확인됩니다**: `gemini-3-pro-preview`는 **2026-03-09** 종료(대체 `gemini-3.1-pro-preview`), `gemini-3-pro-image-preview`는 **2026-06-25** 종료(대체 `gemini-3-pro-image`) — 같은 문서에서 Phase 1의 `gemini-3-flash-preview`만 "No shutdown date announced"로 남아 있습니다. 즉 Flash 계획과 Deep Research 조사(비용 발생)까지는 끝나도, 74행에서 실패해 임원 보고서는 나오지 않습니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -100,13 +100,13 @@ print(len(parse_tasks(sample)), '개 태스크')
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(Streamlit bare-mode 경고 여러 줄은 생략 — 예: "Warning: to view a Streamlit app on a browser, use Streamlit in a file and run it with the following command", "Session state does not function when running a script without `streamlit run`"):
 
 ```
 3 개 태스크
 ```
 
-그런데 모델이 이 형식을 살짝 벗어나면(번호와 구분자 사이에 공백이 끼면) 태스크가 사라집니다 — 정규식(10행)이 `\d+[\.\)\-]`(숫자 바로 뒤에 구분자)만 다음 항목의 시작으로 인식하기 때문입니다.
+그런데 모델이 이 형식을 살짝 벗어나면(번호와 구분자 사이에 공백이 끼면) 태스크가 앞 태스크에 합쳐집니다 — 정규식(10행)이 `\d+[\.\)\-]`(숫자 바로 뒤에 구분자)만 다음 항목의 시작으로 인식하기 때문입니다.
 
 ```bash
 uv run --no-project python -c "
@@ -118,7 +118,7 @@ print(len(parse_tasks(sample)), '개 태스크')
 "
 ```
 
-직접 확인한 출력:
+직접 확인한 출력(Streamlit bare-mode 경고 생략):
 
 ```
 2 개 태스크
@@ -197,30 +197,46 @@ if st.button("📋 Generate Plan", disabled=not research_goal, type="primary"):
         except Exception as e: st.error(f"Error: {e}")
 ```
 
-47행은 `model=`(에이전트가 아니라 모델 문자열), `input=`(그냥 문자열), `tools=[{"type": "google_search"}]`(내장 검색 도구), `store=True`(이후 단계가 `previous_interaction_id`로 이어 쓸 수 있게 서버에 저장)를 한 번에 넘깁니다. 문제는 48행입니다 — `get_text(i.outputs)`가 기대하는 `i.outputs`(출력 조각 리스트)는 이 앱의 `requirements.txt`가 하한으로 지정한 `google-genai>=1.55.0`에서는 실제로 존재하는 필드였지만(1.55.0 소스로 확인: `Interaction.outputs: Optional[List[Output]]`), 오늘(2026-09-28) 그 하한만으로 설치하면 받아지는 2.25.0에서는 사라졌습니다. 2.25.0의 `Interaction`(소스로 확인, `google/genai/_gaos/types/interactions/interaction.py`)은 `outputs` 대신 `output_text`·`output_image`·`output_audio`·`output_video`라는 개별 필드를 두고 있고, 이 필드들은 SDK가 응답의 `steps`를 훑어 자동으로 채워 줍니다(주석에 "Note: this is added by the SDK"라고 적혀 있습니다).
+47행은 `model=`(에이전트가 아니라 모델 문자열), `input=`(그냥 문자열), `tools=[{"type": "google_search"}]`(내장 검색 도구), `store=True`(이후 단계가 `previous_interaction_id`로 이어 쓸 수 있게 서버에 저장)를 한 번에 넘깁니다. 문제는 48행입니다 — `get_text(i.outputs)`가 기대하는 `i.outputs`(출력 조각 리스트)는 이 앱의 `requirements.txt`가 하한으로 지정한 `google-genai>=1.55.0`(1.55.0 소스로 확인: `Interaction.outputs: Optional[List[Output]]`) 시절에는 실제로 서버가 그렇게 응답했지만, **Interactions API 자체가 2026년 5~6월에 응답 스키마를 `outputs`에서 `steps`로 바꾸면서**(공식 "Breaking changes — May 2026" 문서 확인, 레거시 스키마는 2026-06-08 제거) 오늘 서버가 돌려주는 응답에는 `outputs` 키가 아예 없습니다. 2.25.0의 `Interaction`(소스로 확인, `google/genai/_gaos/types/interactions/interaction.py`)은 대신 `output_text`·`output_image`·`output_audio`·`output_video`라는 개별 필드를 두고 `steps`를 훑어 자동으로 채워 줍니다(주석 "Note: this is added by the SDK"). 이 모델의 설정(소스로 확인, `_gaos/types/basemodel.py`)은 `extra="allow"`라서, 서버가 실제로 `outputs`를 보냈다면 `i.outputs`는 예외 없이 그 값을 그대로 돌려줬을 것입니다(직접 확인: `Interaction.model_validate({'status':'completed','outputs':[...]}).outputs` → 리스트 그대로 나옵니다) — 오늘 `AttributeError`가 나는 진짜 이유는 SDK가 필드를 지운 것이 아니라 **서버 응답 자체에 `outputs`가 없기 때문**입니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 실제 호출 없이(규칙상 외부 API를 부르지 않습니다) 응답 객체를 흉내 내어 속성 접근만 해 봅니다.
+**확인.** 실제 호출 없이(규칙상 외부 API를 부르지 않습니다) 응답 객체를 흉내 내어 속성 접근만 해 봅니다. 2.25.0의 `Interaction`은 after-validator가 `output_text`를 항상 `steps`에서 다시 계산해 덮어쓰므로(소스 주석: "Always derived from the trailing model-output text; a str, \"\" when none."), 생성할 때 `output_text`를 직접 넘겨도 무시됩니다.
 
 ```bash
 uv pip install "google-genai>=1.55.0"
 uv run --no-project python -c "
 from google.genai._gaos.types.interactions.interaction import Interaction
 i = Interaction(status='completed', output_text='hello world')
-print('output_text:', i.output_text)
+print('output_text (직접 넘긴 값은 무시됨):', repr(i.output_text))
 i.outputs
 "
 ```
 
-직접 확인한 출력(2026-09-28, 설치된 google-genai 2.25.0):
+직접 확인한 출력(2026-09-28, 설치된 google-genai 2.25.0, traceback은 마지막 줄만 발췌):
 
 ```
-output_text: hello world
+output_text (직접 넘긴 값은 무시됨): ''
 AttributeError: 'Interaction' object has no attribute 'outputs'
 ```
 
-즉 키를 넣고 47행을 그대로 호출해 응답을 받아도, 48행이 `i.outputs`를 읽으려는 순간 `AttributeError`가 나고(49행의 `except Exception as e: st.error(...)`가 이를 잡아 화면에는 "Error: 'Interaction' object has no attribute 'outputs'"만 뜹니다), 계획 자체는 성공적으로 만들어졌더라도 화면에는 나타나지 않습니다.
+`output_text`가 `steps`에서 계산된다는 것은 `steps`를 직접 채워 주면 그대로 확인됩니다.
+
+```bash
+uv run --no-project python -c "
+from google.genai._gaos.types.interactions.interaction import Interaction
+i = Interaction(status='completed', steps=[{'type':'model_output','content':[{'type':'text','text':'hello world'}]}])
+print('steps에서 계산된 output_text:', repr(i.output_text))
+"
+```
+
+직접 확인한 출력:
+
+```
+steps에서 계산된 output_text: 'hello world'
+```
+
+즉 키를 넣고 47행을 그대로 호출해 응답을 받아도, 48행이 `i.outputs`를 읽으려는 순간 `AttributeError`가 나고(49행의 `except Exception as e: st.error(...)`가 이를 잡아 화면에는 "Error: 'Interaction' object has no attribute 'outputs'"만 뜹니다), 계획 자체는 성공적으로 만들어졌더라도 화면에는 나타나지 않습니다. 48행을 `i.output_text`로 바꾸면 위에서 본 대로 `steps`에서 계산된 텍스트가 그대로 나옵니다.
 
 ### Step 4. Phase 2 — 태스크 선택과 딥리서치
 
@@ -254,7 +270,7 @@ if st.session_state.research_text:
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** `deep-research-pro-preview-12-2025`가 오늘 설치되는 SDK에도 여전히 유효한 값으로 남아 있는지, 그리고 더 최신 변형이 있는지 확인합니다(설치는 Step 1에서 만든 가상환경 기준입니다).
+**확인.** `deep-research-pro-preview-12-2025`가 오늘 설치되는 SDK의 타입 목록에 여전히 있는지, 그리고 더 최신 변형이 있는지 확인합니다(설치는 Step 1에서 만든 가상환경 기준입니다). SDK 타입 목록에 있다는 것은 클라이언트가 이 문자열을 거부하지 않는다는 뜻일 뿐, Google 서버가 실제로 이 에이전트를 서빙한다는 뜻은 아닙니다.
 
 ```bash
 grep -n "deep-research\|antigravity" .venv/Lib/site-packages/google/genai/_gaos/types/interactions/agentoption.py
@@ -263,17 +279,17 @@ grep -n "deep-research\|antigravity" .venv/Lib/site-packages/google/genai/_gaos/
 직접 확인한 출력:
 
 ```
-        "deep-research-pro-preview-12-2025",
-        "deep-research-preview-04-2026",
-        "deep-research-max-preview-04-2026",
-        "antigravity-preview-05-2026",
+28:        "deep-research-pro-preview-12-2025",
+30:        "deep-research-preview-04-2026",
+32:        "deep-research-max-preview-04-2026",
+34:        "antigravity-preview-05-2026",
 ```
 
-60행이 쓰는 값은 목록에 그대로 남아 있습니다 — 다만 더 새로운 `deep-research-preview-04-2026`·`deep-research-max-preview-04-2026`도 같은 파일에 함께 있습니다(더 해보기 참고).
+60행이 쓰는 값은 SDK 타입 목록에 그대로 있습니다 — 다만 공식 Deep Research 문서(https://ai.google.dev/gemini-api/docs/deep-research, 2026-09-28 확인)에는 `deep-research-preview-04-2026`·`deep-research-max-preview-04-2026` 둘만 나오고 `deep-research-pro-preview-12-2025`는 없습니다. 같은 문서는 결과를 `interaction.steps[-1].content[0].text`로 읽으라고 안내합니다 — 이 앱의 `get_text(i.outputs)`와 다른, `steps` 기반 접근입니다(더 해보기 참고).
 
 ### Step 5. Phase 3a — 종합 리포트 (Gemini 3 Pro)
 
-**목적.** 리서치 결과가 `previous_interaction_id`로 다시 이어져 임원 보고서로 합성되는 과정을 보고, 이 단계가 쓰는 모델 문자열이 오늘 SDK에 알려진 값인지 확인합니다.
+**목적.** 리서치 결과가 `previous_interaction_id`로 다시 이어져 임원 보고서로 합성되는 과정을 보고, 이 단계가 쓰는 모델이 Google 공식 문서에서 이미 서비스 종료로 확인된다는 것을 봅니다.
 
 **할 일.**
 
@@ -290,11 +306,11 @@ if st.session_state.research_id:
             except Exception as e: st.error(f"Error: {e}"); st.stop()
 ```
 
-74행은 다시 `model=`(이번엔 `gemini-3-pro-preview`)과 `previous_interaction_id=st.session_state.research_id`로 Phase 2 결과에 이어 붙습니다. 75행도 같은 `get_text(i.outputs)` 패턴이라 Step 3의 `AttributeError`가 여기서도 재현됩니다. 그런데 이 단계는 한 가지 문제가 더 있습니다 — `gemini-3-pro-preview`라는 정확한 문자열이 오늘 설치되는 SDK의 `Model` 목록 어디에도 없습니다.
+74행은 다시 `model=`(이번엔 `gemini-3-pro-preview`)과 `previous_interaction_id=st.session_state.research_id`로 Phase 2 결과에 이어 붙습니다. 75행도 같은 `get_text(i.outputs)` 패턴이라 Step 3의 `AttributeError`가 여기서도 재현됩니다. 그런데 `outputs` 문제를 고치더라도 이 단계는 끝까지 가지 않습니다 — Google 공식 "Model deprecations" 문서(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-28 확인)에 `gemini-3-pro-preview`가 **2026-03-09에 이미 서비스 종료(shutdown)**됐고 권장 대체 모델은 `gemini-3.1-pro-preview`라고 명시되어 있습니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.**
+**확인.** 가장 강한 근거는 공식 문서입니다 — 표의 해당 행은 "`gemini-3-pro-preview` | November 18, 2025 | March 9, 2026 | `gemini-3.1-pro-preview`"입니다(공식 문서 확인). 오늘 설치되는 SDK도 같은 사실과 어긋나지 않습니다.
 
 ```bash
 grep -c '"gemini-3-pro-preview"' .venv/Lib/site-packages/google/genai/_gaos/types/interactions/model.py
@@ -305,14 +321,14 @@ grep -n '"gemini-3.1-pro-preview"' .venv/Lib/site-packages/google/genai/_gaos/ty
 
 ```
 0
-        "gemini-3.1-pro-preview",
+48:        "gemini-3.1-pro-preview",
 ```
 
-`Model` 필드는 `Union[Literal[...], UnrecognizedStr]` 형태라(소스로 확인) 목록에 없는 문자열이어도 클라이언트 쪽에서는 예외 없이 그대로 전송됩니다 — 다만 Google 서버가 이 정확한 문자열을 여전히 서빙하는지는 실제로 호출해 보지 않아 확인하지 못했습니다(규칙상 실제 API 호출은 하지 않습니다).
+`Model` 필드는 `Union[Literal[...], UnrecognizedStr]` 형태라(소스로 확인) 목록에 없는 문자열이어도 클라이언트 쪽에서는 예외 없이 그대로 전송됩니다 — 그 요청을 서버가 실제로 어떤 오류로 거부하는지는 호출해 보지 않아 확인하지 못했습니다(규칙상 실제 API 호출은 하지 않습니다). 확실한 것은 공식 문서가 이 모델을 이미 퇴역 목록에 올렸다는 사실입니다.
 
 ### Step 6. Phase 3b — 인포그래픽 생성, 화면 렌더, 다운로드
 
-**목적.** 합성된 리포트가 (Interactions API가 아닌) 표준 `generate_content` API로 이미지 모델에 전달되어 인라인 이미지 바이트를 받고, 최종 화면과 다운로드 버튼까지 이어지는 마지막 구간을 확인합니다.
+**목적.** 합성된 리포트가 (Interactions API가 아닌) 표준 `generate_content` API로 이미지 모델에 전달되어 인라인 이미지 바이트를 받고, 최종 화면과 다운로드 버튼까지 이어지는 마지막 구간을 확인하며, 이 모델도 이미 서비스 종료됐다는 것을 봅니다.
 
 **할 일.**
 
@@ -345,11 +361,11 @@ if st.session_state.synthesis_text:
     st.download_button("📥 Download Report", st.session_state.synthesis_text, "research_report.md", "text/markdown")
 ```
 
-80~83행은 지금까지와 다른 API를 씁니다 — `client.interactions.create()`가 아니라 `client.models.generate_content()`이고, `previous_interaction_id`도 없습니다. 대신 24~89행 사이에서 이미 세션에 저장해 둔 `synthesis_text`를 새 프롬프트 안에 문자열로 끼워 넣어 매번 새 요청으로 보냅니다. 84~87행은 응답의 `candidates[0].content.parts`를 순회하며 `inline_data`가 있는 첫 조각(이미지 바이트)만 꺼냅니다. `gemini-3-pro-image-preview`도 Step 5의 `gemini-3-pro-preview`와 같은 문제를 안고 있습니다.
+80~83행은 지금까지와 다른 API를 씁니다 — `client.interactions.create()`가 아니라 `client.models.generate_content()`이고, `previous_interaction_id`도 없습니다. 대신 24~89행 사이에서 이미 세션에 저장해 둔 `synthesis_text`를 새 프롬프트 안에 문자열로 끼워 넣어 매번 새 요청으로 보냅니다. 84~87행은 응답의 `candidates[0].content.parts`를 순회하며 `inline_data`가 있는 첫 조각(이미지 바이트)만 꺼냅니다. `generate_content()`의 `model=`은 Interactions API의 `Model` 타입과 달리 임의의 문자열을 받으므로(소스로 확인), Step 5처럼 SDK의 `Model` 목록에서 찾는 것은 이 호출 자체에는 맞지 않는 근거입니다 — 대신 같은 공식 "Model deprecations" 문서에 81행의 `gemini-3-pro-image-preview`가 **2026-06-25에 서비스 종료**됐고 권장 대체는 `gemini-3-pro-image`라고 명시되어 있습니다(2026-09-28 확인).
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.**
+**확인.** 공식 문서의 해당 행은 "`gemini-3-pro-image-preview` | November 20, 2025 | June 25, 2026 | `gemini-3-pro-image`"입니다(공식 문서 확인). SDK의 Interactions API용 `Model` 목록도 같은 흐름을 보여 주지만, 위에서 말했듯 `generate_content()`에는 강제되지 않는 참고 자료일 뿐입니다.
 
 ```bash
 grep -c '"gemini-3-pro-image-preview"' .venv/Lib/site-packages/google/genai/_gaos/types/interactions/model.py
@@ -360,11 +376,11 @@ grep -n '"gemini-3-pro-image"\|nano-banana-pro-preview' .venv/Lib/site-packages/
 
 ```
 0
-        "gemini-3-pro-image",
-        "nano-banana-pro-preview",
+54:        "gemini-3-pro-image",
+56:        "nano-banana-pro-preview",
 ```
 
-81행의 `gemini-3-pro-image-preview`(프리뷰 접미사 포함)는 목록에 없고, 대신 접미사 없는 `gemini-3-pro-image`(정식 출시로 보임)와 "Gemini 3 Pro Image Preview"라는 설명이 붙은 `nano-banana-pro-preview`가 있습니다 — 역시 `UnrecognizedStr` 폴백 덕에 클라이언트 쪽 예외는 없지만, 서버 응답은 실제로 호출해 보지 않아 확인하지 못했습니다.
+81행의 `gemini-3-pro-image-preview`(프리뷰 접미사 포함)는 두 근거 모두에서 사라졌습니다 — 접미사 없는 `gemini-3-pro-image`(공식 대체 모델)와 "Gemini 3 Pro Image Preview"라는 설명이 붙은 `nano-banana-pro-preview`가 대신 있습니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -372,7 +388,7 @@ grep -n '"gemini-3-pro-image"\|nano-banana-pro-preview' .venv/Lib/site-packages/
 
 ![요청 시퀀스 — Phase 1 계획](diagrams/sequence.svg)
 
-사용자가 목표를 입력하고 "Generate Plan"을 누르면 Streamlit UI가 Gemini 3 Flash에 `interactions.create()`를 보내고, 받은 `Interaction`(id, outputs)에서 `plan_id`·`plan_text`·`tasks`를 세션 상태에 저장한 뒤 번호 매긴 태스크 목록을 화면에 그립니다(Step 3).
+사용자가 목표를 입력하고 "Generate Plan"을 누르면 Streamlit UI가 Gemini 3 Flash에 `interactions.create()`를 보내고, 받은 `Interaction`(id, steps — 앱은 `.outputs`를 읽으려다 실패합니다)에서 `plan_id`·`plan_text`·`tasks`를 세션 상태에 저장한 뒤 번호 매긴 태스크 목록을 화면에 그립니다(Step 3).
 
 ![요청 시퀀스 — Phase 2 딥리서치](diagrams/extra-research.svg)
 
@@ -390,8 +406,9 @@ grep -n '"gemini-3-pro-image"\|nano-banana-pro-preview' .venv/Lib/site-packages/
 
 - [ ] 스크래치 가상환경에서 `google-genai`·`streamlit` 설치와 `py_compile`·임포트가 되는 것을 직접 확인했다
 - [ ] `parse_tasks()`가 "1. Task - Detail" 형식에서는 정상 동작하지만, 번호와 구분자 사이에 공백이 끼면(예: "3 - Task") 앞 태스크에 합쳐진다는 것을 직접 재현했다
-- [ ] 오늘(2026-09-28) `uv pip install "google-genai>=1.55.0"`이 2.25.0을 설치하며, 이 버전의 `Interaction`에는 `outputs` 속성이 없어(1.55.0에는 있었음) `i.outputs`가 `AttributeError`를 낸다는 것을 직접 재현했다(생성자·속성 접근만, 실제 API 호출 없음)
-- [ ] `deep-research-pro-preview-12-2025`는 오늘 SDK의 `AgentOption`에 여전히 남아 있지만, `gemini-3-pro-preview`·`gemini-3-pro-image-preview`는 오늘 SDK의 `Model` 목록에 없다는 것을 직접 확인했다(서버가 실제로 거부하는지는 호출하지 않아 확인 못함)
+- [ ] Interactions API가 2026년 5~6월에 응답 스키마를 `outputs`→`steps`로 바꿨고(레거시 스키마는 2026-06-08 제거) 오늘(2026-09-28) `uv pip install "google-genai>=1.55.0"`이 설치하는 2.25.0의 `Interaction`에는 `outputs` 속성이 없어 `i.outputs`가 `AttributeError`를 낸다는 것을 공식 문서와 직접 재현으로 확인했다(생성자·속성 접근만, 실제 API 호출 없음) — SDK 생성기가 바뀐 것은 결과이지 원인이 아니다
+- [ ] Phase 3a·3b가 쓰는 `gemini-3-pro-preview`(2026-03-09 종료)·`gemini-3-pro-image-preview`(2026-06-25 종료)가 Google 공식 "Model deprecations" 문서에서 이미 서비스 종료로 확인된다는 것을 확인했다(`outputs`를 고쳐도 이 두 모델 때문에 끝까지 가지 않음)
+- [ ] `deep-research-pro-preview-12-2025`는 오늘 SDK의 `AgentOption`에 여전히 남아 있다는 것을 직접 확인했다(공식 Deep Research 문서에는 이 값 대신 04-2026 계열만 나옴)
 - [ ] API 키가 비어 있으면 `client`가 `None`이 되어 `st.stop()`으로 이후 코드 전체가 평가되지 않는다는 것을 소스로 확인했다
 - [ ] `streamlit run`을 `--server.address localhost --server.headless true`로 띄워 외부 IP 조회 없이 로컬에서만 뜨는 것을 직접 확인했다(포트는 61417, 확인 후 종료)
 
@@ -399,15 +416,15 @@ grep -n '"gemini-3-pro-image"\|nano-banana-pro-preview' .venv/Lib/site-packages/
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| "Generate Plan"을 누르면 화면에 "Error: 'Interaction' object has no attribute 'outputs'"가 뜸(API 호출 자체는 성공) | `requirements.txt`가 `google-genai>=1.55.0`으로 하한만 고정해 오늘 설치하면 2.25.0이 받아지는데, 이 버전은 `Interaction.outputs`(리스트)를 없애고 `output_text`·`output_image` 등 개별 필드로 바꿨음(직접 확인) | 리포 코드는 고치지 않음 — 직접 실행한다면 48·62·75행의 `get_text(i.outputs)`를 `i.output_text`로 바꾸거나 `uv pip install "google-genai<2"`로 1.x대에 고정 |
+| "Generate Plan"을 누르면 화면에 "Error: 'Interaction' object has no attribute 'outputs'"가 뜸(API 호출 자체는 성공) | Interactions API 자체가 2026년 5~6월에 응답 스키마를 `outputs`→`steps`로 바꿨고(레거시 스키마는 2026-06-08 제거, 공식 문서 확인) 오늘 설치되는 google-genai 2.25.0의 `Interaction`에는 `outputs`가 없음(직접 확인) — SDK를 `google-genai<2`로 내려도 서버가 더 이상 `outputs`를 보내지 않으므로 소용없음 | 리포 코드는 고치지 않음 — 직접 실행한다면 48·62·75행의 `get_text(i.outputs)`를 `i.output_text`로 바꿈 |
 | 계획 태스크 개수가 요청한 5~8개보다 적게 파싱됨 | `parse_tasks()`(10행)의 정규식이 번호와 구분자 사이에 공백이 끼면(`"3 - "`) 다음 항목의 시작을 못 찾고 이전 태스크에 이어 붙임(직접 재현) | 리포 코드는 고치지 않음 — 모델이 프롬프트가 요청한 "1. [Task] - [Details]" 형식을 그대로 지키면 나타나지 않음 |
-| (실행 안 함, 소스로 추론) Phase 3a·3b에서 모델을 찾지 못하는 오류가 날 가능성 | `gemini-3-pro-preview`·`gemini-3-pro-image-preview` 문자열이 오늘 SDK의 `Model` 목록에 없음(직접 확인) — 필드가 `Union[Literal[...], UnrecognizedStr]`라 클라이언트 쪽 예외는 없음(직접 확인) | 리포 코드는 고치지 않음 — 안 되면 `gemini-3.1-pro-preview`·`gemini-3-pro-image`(또는 `nano-banana-pro-preview`)로 바꿔 시도 |
-| `streamlit run`을 그냥 띄우면 시작 시 외부 IP 조회 시도 | Day 060에서 이미 확인된 Streamlit의 기본 동작(`checkip.amazonaws.com` 호출) | `--server.address localhost --server.headless true`를 붙임(본 문서 모든 실행 명령에 이미 반영) |
+| `outputs`를 `output_text`로 고쳐도 74행에서 임원 보고서가 나오지 않음(실행 안 함, 공식 문서로 확인) | Phase 3a·3b가 쓰는 `gemini-3-pro-preview`(2026-03-09 종료)·`gemini-3-pro-image-preview`(2026-06-25 종료)를 Google이 이미 서비스 종료함(공식 "Model deprecations" 문서 확인) | 리포 코드는 고치지 않음 — 74행을 `gemini-3.1-pro-preview`로, 81행을 `gemini-3-pro-image`로 바꿔야 끝까지 감 |
+| `streamlit run`을 `--server.headless true`만 주고(주소 지정 없이) 띄우면 시작 시 외부 IP 조회 시도 | headless 모드에서만 나타나는 Streamlit 기본 동작(`checkip.amazonaws.com` 호출) — 브라우저가 열리는 일반 실행에서는 일어나지 않음(Day 060 확인, streamlit 1.64.0 소스 확인) | `--server.address localhost`를 함께 붙임(본 문서 모든 실행 명령에 이미 반영) |
 
 ## 더 해보기
 
 - `research_planner_executor_agent.py:60`의 `agent="deep-research-pro-preview-12-2025"`를 Step 4에서 확인한 `deep-research-max-preview-04-2026`으로 바꿔, 더 깊은 리서치 모드가 결과·소요 시간에 어떤 차이를 내는지 비교해보기
-- `research_planner_executor_agent.py:48,62,75`의 `get_text(i.outputs)`를 `i.output_text`로 바꿔, 오늘 설치되는 google-genai 2.25.0에서 이 앱이 실제로 끝까지 실행되는지 확인해보기(Step 3~5)
+- `research_planner_executor_agent.py:48,62,75`의 `get_text(i.outputs)`를 `i.output_text`로 바꾸고, `research_planner_executor_agent.py:74`의 `gemini-3-pro-preview`를 `gemini-3.1-pro-preview`로, `research_planner_executor_agent.py:81`의 `gemini-3-pro-image-preview`를 `gemini-3-pro-image`로 함께 바꿔, 오늘 설치되는 google-genai 2.25.0에서 이 앱이 실제로 끝까지 실행되는지 확인해보기(Step 3~6) — `outputs`만 고치면 두 모델이 이미 서비스 종료돼 있어 `research_planner_executor_agent.py:74`에서 다시 막힘
 - `research_planner_executor_agent.py:10`의 정규식을 번호와 구분자 사이의 공백도 허용하도록 고쳐(예: `\d+\s*[\.\)\-]`), "3 - Task" 같은 변형이 더 이상 앞 태스크에 합쳐지지 않는지 Step 1의 재현 명령으로 확인해보기
 
 ## 다음 날 예고

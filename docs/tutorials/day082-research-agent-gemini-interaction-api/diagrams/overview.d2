@@ -2,17 +2,16 @@
 direction: down
 
 user: 사용자 { class: person }
-ui: Streamlit UI (research_planner_executor_agent.py) { class: ours }
-session: 세션 상태 (plan_id·research_id 등) { class: store }
-google: "Google Gemini API" {
-  class: group
-  grid-columns: 2
-  flash: "Gemini 3 Flash (검색 도구)" { class: ext }
-  deep_research: "Deep Research 에이전트" { class: ext }
-  pro: "Gemini 3 Pro" { class: ext }
-  image: "Gemini 3 Pro Image" { class: ext }
-}
+ui: "Streamlit UI\n(research_planner_executor_agent.py)" { class: ours }
+session: "세션 상태\n(plan_id·research_id 등)" { class: store }
+flash: "Gemini 3 Flash\n(검색 도구)" { class: ext }
+deep_research: "Deep Research\n에이전트" { class: ext }
+pro: "Gemini 3 Pro" { class: ext }
+image: "Gemini 3 Pro Image\n(generate_content API)" { class: ext }
 
 user -> ui: 목표 입력 · 태스크 선택 · 버튼 클릭
 ui -> session: 단계별 id·텍스트 저장·조회
-ui -> google: 계획 → 리서치 → 종합 → 인포그래픽 요청 (단계별 호출)
+ui -> flash: 목표 프롬프트 + google_search
+ui -> deep_research: 선택 태스크 + plan_id
+ui -> pro: 리서치 텍스트 + research_id
+ui -> image: synthesis_text

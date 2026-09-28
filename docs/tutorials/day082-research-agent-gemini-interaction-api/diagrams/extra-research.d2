@@ -11,6 +11,6 @@ ui -> session: plan_id 조회
 ui -> deep_research: "interactions.create(agent, previous_interaction_id, background=True)"
 deep_research -> ui: Interaction(id, status=in_progress)
 ui -> deep_research: "interactions.get(id) — 3초 간격 반복"
-deep_research -> ui: Interaction(status, outputs)
+deep_research -> ui: Interaction(status, steps) — 앱은 .outputs를 읽음
 ui -> session: research_id·research_text 저장
 ui -> user: 리서치 결과 렌더
