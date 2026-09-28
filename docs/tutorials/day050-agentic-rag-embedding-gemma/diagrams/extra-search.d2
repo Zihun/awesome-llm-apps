@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+embed: EmbeddingGemma { class: ext }
+agent: "Agno Agent" { class: ours }
+store: LanceDB { class: store }
+
+agent -> embed: 질문 임베딩 요청
+embed -> agent: 768차원 벡터
+agent -> store: 벡터 유사도 검색 (상위 10개)
+store -> agent: 관련 청크 텍스트

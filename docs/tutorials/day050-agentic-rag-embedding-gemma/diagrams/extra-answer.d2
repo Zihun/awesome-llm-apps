@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "Streamlit UI" { class: ours }
+agent: "Agno Agent" { class: ours }
+chat: "Llama 3.2" { class: ext }
+telemetry: "Agno 사용 통계 API" { class: ext }
+
+agent -> chat: Ollama(id="llama3.2:latest")에 청크 결과 포함 2차 요청(stream=True)
+chat -> agent: llama3.2:latest의 토큰 스트림
+agent -> ui: 토큰마다 누적 표시
+agent -> telemetry: 메타데이터 전송 시도 (백그라운드)
