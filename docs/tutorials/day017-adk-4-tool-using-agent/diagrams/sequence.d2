@@ -10,7 +10,7 @@ gemini: Gemini API { class: ext }
 user -> adk_web: POST /run
 adk_web -> adk_web: 앱 이름이 유효한 식별자인지 검사
 adk_web -> agent: 검증 통과 시 동적 임포트
-agent -> mcp_server: (MCP면) stdio로 도구 목록 요청
+agent -> mcp_server: (MCP면) npx @modelcontextprotocol/server-filesystem을 stdio로 실행해 도구 목록 요청
 mcp_server -> agent: 도구 선언 반환
 agent -> gemini: instruction + 도구 선언으로 요청
 gemini -> agent: 도구 호출 필요 (예: read_file)
