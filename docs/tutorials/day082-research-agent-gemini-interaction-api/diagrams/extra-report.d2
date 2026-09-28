@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+pro: "Gemini 3 Pro" { class: ext }
+session: 세션 상태 { class: store }
+
+user -> ui: "Generate Executive Report 클릭"
+ui -> session: research_id·research_text 조회
+ui -> pro: "interactions.create(model, previous_interaction_id, store=True)"
+pro -> ui: Interaction(id, outputs)
+ui -> session: synthesis_text 저장

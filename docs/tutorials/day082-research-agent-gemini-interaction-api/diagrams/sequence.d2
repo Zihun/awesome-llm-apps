@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+flash: "Gemini 3 Flash" { class: ext }
+session: 세션 상태 { class: store }
+
+user -> ui: 목표 입력 + "Generate Plan" 클릭
+ui -> flash: "interactions.create(model, input, tools=[google_search], store=True)"
+flash -> ui: Interaction(id, outputs)
+ui -> session: plan_id·plan_text·tasks 저장
+ui -> user: 번호 매긴 태스크 목록 렌더

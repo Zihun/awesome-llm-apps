@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+image: "Gemini 3 Pro Image" { class: ext }
+session: 세션 상태 { class: store }
+
+ui -> image: "models.generate_content(model, contents)"
+image -> ui: "candidates[0].content.parts"
+ui -> session: infographic 저장
+ui -> user: 인포그래픽 + 리포트 + 다운로드 버튼 렌더
