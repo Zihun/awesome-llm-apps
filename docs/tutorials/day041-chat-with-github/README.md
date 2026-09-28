@@ -221,7 +221,7 @@ constructed without validating the token
 **확인.**
 
 ```bash
-uv run --no-project streamlit run chat_github.py --server.headless true --server.port 8503
+uv run --no-project streamlit run chat_github.py --server.headless true --server.address localhost --server.port 8503
 ```
 
 다른 터미널에서:
@@ -458,7 +458,7 @@ ValueError: GithubLoader requires a personal access token to use github api. Che
 실제로 `streamlit run`으로 띄워도 서버 프로세스 자체는 죽지 않습니다 — Streamlit이 스크립트 실행 중 예외를 잡아 페이지 안의 에러 박스로 보여주기 때문입니다. 헤드리스로 띄워 HTTP 상태만 직접 확인했습니다(브라우저 화면 자체는 이 환경에서 확인하지 않았습니다):
 
 ```bash
-uv run --no-project streamlit run chat_github_llama3.py --server.headless true --server.port 8502
+uv run --no-project streamlit run chat_github_llama3.py --server.headless true --server.address localhost --server.port 8502
 ```
 
 ```bash

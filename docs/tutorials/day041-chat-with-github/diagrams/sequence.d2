@@ -10,7 +10,7 @@ openai: OpenAI API { class: ext }
 
 user -> ui: 저장소 이름 입력
 ui -> loader: add("repo:X type:repo")
-loader -> github: get_contents() 재귀 호출
+loader -> github: get_repo().get_contents("") 재귀 호출 (기본 브랜치 전체)
 github -> loader: 파일 내용 전체
 loader -> store: 청크 분할 후 전달 (2000자)
 store -> openai: 임베딩 요청
