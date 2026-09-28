@@ -1,15 +1,16 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-openai_api: OpenAI API { class: ext }
+ui: Streamlit UI { class: ours }
 memory: mem0 Memory { class: ours }
+openai_api: OpenAI API { class: ext }
 qdrant: Qdrant { class: store }
 
-memory -> memory: "Streamlit UI가 add(prompt, role=user) 호출"
-memory -> qdrant: 기존 유사 메모리 검색(내부)
-memory -> openai_api: 사실 추출·임베딩 요청
-memory -> qdrant: 새 메모리 저장
-memory -> memory: "Streamlit UI가 add(answer, role=assistant) 호출"
-memory -> qdrant: 기존 유사 메모리 검색(내부)
-memory -> openai_api: 사실 추출·임베딩 요청
-memory -> qdrant: 새 메모리 저장
+ui -> memory: "add(prompt, user_id, metadata={role: user})"
+memory -> openai_api: 사실 추출(gpt-4o-mini)·임베딩(text-embedding-3-small) 요청
+memory -> qdrant: 유사 기억 검색(limit=5, user_id 필터)
+memory -> qdrant: 새 메모리 저장(컬렉션 mem0)
+ui -> memory: "add(answer, user_id, metadata={role: assistant})"
+memory -> openai_api: 사실 추출(gpt-4o-mini)·임베딩(text-embedding-3-small) 요청
+memory -> qdrant: 유사 기억 검색(limit=5, user_id 필터)
+memory -> qdrant: 새 메모리 저장(컬렉션 mem0)
