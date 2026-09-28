@@ -1,6 +1,6 @@
 # Day 078 · 📈 AI Investment Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 58분(골격 자체는 Day 001과 같지만, 확인마다 직접 명령을 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 질문 10개에 수십~백여 원 이하(OpenAI 공식 요금표 기준 `gpt-5.2` 표준가 입력 $1.75/출력 $14.00, 1M 토큰당, 대략치 — 코드가 못박은 스냅샷 id `gpt-5.2-2025-12-11`은 요금표에 따로 없어 `gpt-5.2` 기준가로 계산) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_investment_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 59분(골격 자체는 Day 001과 같지만, 확인마다 직접 명령을 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 질문 10개에 수십~백여 원 이하(OpenAI 공식 요금표 기준 `gpt-5.2` 표준가 입력 $1.75/출력 $14.00, 1M 토큰당, 대략치 — 코드가 못박은 스냅샷 id `gpt-5.2-2025-12-11`은 요금표에 따로 없어 `gpt-5.2` 기준가로 계산) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_investment_agent`
 
 ## 오늘 만들 것
 
@@ -304,9 +304,15 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs
 
 **목적.** 키 없이 `agent.run(...)`을 불렀을 때 정확히 어디서 실패하는지 직접 확인하고, 키가 있다면 AgentOS 컨트롤 플레인에서 무엇이 가능하고 무엇이 불가능한지 정리합니다.
 
-**할 일.** 먼저 키 없이 실제로 실행해 Step 2에서 예고한 실패 지점을 직접 봅니다. 앱 폴더에서:
+**할 일.** 먼저 키 없이 실제로 실행해 Step 2에서 예고한 실패 지점을 직접 봅니다. Step 1에서 `OPENAI_API_KEY`를 이미 export했다면 이 명령에서만 지워 실제 키로 요청이 나가지 않게 합니다. 앱 폴더에서:
 
 ```bash
+env -u OPENAI_API_KEY uv run --no-project python -c "import investment_agent as m; result = m.agent.run('Get the current AAPL stock price'); print('status:', result.status); print('content:', result.content)"
+```
+
+```powershell
+# Windows PowerShell
+Remove-Item Env:\OPENAI_API_KEY -ErrorAction SilentlyContinue
 uv run --no-project python -c "import investment_agent as m; result = m.agent.run('Get the current AAPL stock price'); print('status:', result.status); print('content:', result.content)"
 ```
 

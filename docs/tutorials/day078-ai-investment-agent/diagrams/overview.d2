@@ -11,9 +11,11 @@ app: investment_agent.py {
 }
 openai: OpenAI GPT { class: ext }
 yahoo: Yahoo Finance { class: ext }
+agno_api: Agno 사용 통계 API { class: ext }
 
 user -> plane: 브라우저에서 질문
 plane -> app: HTTP 요청
 key -> app: 인증
 app.agent -> openai: 메시지 + 도구 스키마
 app.yf -> yahoo: 티커 (예: AAPL)
+app.os -> agno_api: 기동 메타데이터 (POST /telemetry/os)
