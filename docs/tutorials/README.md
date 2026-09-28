@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 80 / 164일 완료
+진도: 86 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -171,12 +171,12 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 078](day078-ai-investment-agent/README.md) | 📈 AI Investment Agent | [advanced_ai_agents/single_agent_apps/ai_investment_agent](../../advanced_ai_agents/single_agent_apps/ai_investment_agent/) |
 | ✅ | [Day 079](day079-ai-movie-production-agent/README.md) | 🎬 AI Movie Production Agent | [advanced_ai_agents/single_agent_apps/ai_movie_production_agent](../../advanced_ai_agents/single_agent_apps/ai_movie_production_agent/) |
 | ✅ | [Day 080](day080-ai-self-evolving-agent/README.md) | 🧬 AI Self-Evolving Agent | [advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent](../../advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent/) |
-| ⬜ | [Day 081](day081-ai-journalist-agent/README.md) | 🗞️ AI Journalist Agent | [advanced_ai_agents/single_agent_apps/ai_journalist_agent](../../advanced_ai_agents/single_agent_apps/ai_journalist_agent/) |
-| ⬜ | [Day 082](day082-research-agent-gemini-interaction-api/README.md) | 🔬 AI Research Planner & Executor (Google Interactions API) | [advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api](../../advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api/) |
-| ⬜ | [Day 083](day083-ai-deep-research-agent/README.md) | 🔍 AI Deep Research Agent | [advanced_ai_agents/single_agent_apps/ai_deep_research_agent](../../advanced_ai_agents/single_agent_apps/ai_deep_research_agent/) |
-| ⬜ | [Day 084](day084-ai-meeting-agent/README.md) | 📑 AI Meeting Agent | [advanced_ai_agents/single_agent_apps/ai_meeting_agent](../../advanced_ai_agents/single_agent_apps/ai_meeting_agent/) |
-| ⬜ | [Day 085](day085-ai-mental-wellbeing-agent/README.md) | 🧠 AI Mental Wellbeing Agent | [advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent](../../advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent/) |
-| ⬜ | [Day 086](day086-ai-health-fitness-agent/README.md) | 🏋️‍♂️ AI Health & Fitness Agent | [advanced_ai_agents/single_agent_apps/ai_health_fitness_agent](../../advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/) |
+| ✅ | [Day 081](day081-ai-journalist-agent/README.md) | 🗞️ AI Journalist Agent | [advanced_ai_agents/single_agent_apps/ai_journalist_agent](../../advanced_ai_agents/single_agent_apps/ai_journalist_agent/) |
+| ✅ | [Day 082](day082-research-agent-gemini-interaction-api/README.md) | 🔬 AI Research Planner & Executor (Google Interactions API) | [advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api](../../advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api/) |
+| ✅ | [Day 083](day083-ai-deep-research-agent/README.md) | 🔍 AI Deep Research Agent | [advanced_ai_agents/single_agent_apps/ai_deep_research_agent](../../advanced_ai_agents/single_agent_apps/ai_deep_research_agent/) |
+| ✅ | [Day 084](day084-ai-meeting-agent/README.md) | 📑 AI Meeting Agent | [advanced_ai_agents/single_agent_apps/ai_meeting_agent](../../advanced_ai_agents/single_agent_apps/ai_meeting_agent/) |
+| ✅ | [Day 085](day085-ai-mental-wellbeing-agent/README.md) | 🧠 AI Mental Wellbeing Agent | [advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent](../../advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent/) |
+| ✅ | [Day 086](day086-ai-health-fitness-agent/README.md) | 🏋️‍♂️ AI Health & Fitness Agent | [advanced_ai_agents/single_agent_apps/ai_health_fitness_agent](../../advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/) |
 | ⬜ | [Day 087](day087-ai-system-architect-r1/README.md) | 🏗️ AI System Architect Agent | [advanced_ai_agents/single_agent_apps/ai_system_architect_r1](../../advanced_ai_agents/single_agent_apps/ai_system_architect_r1/) |
 | ⬜ | [Day 088](day088-ai-consultant-agent/README.md) | 🤝 AI Consultant Agent | [advanced_ai_agents/single_agent_apps/ai_consultant_agent](../../advanced_ai_agents/single_agent_apps/ai_consultant_agent/) |
 | ⬜ | [Day 089](day089-product-launch-intelligence-agent/README.md) | 🚀 AI Product Launch Intelligence Agent | [advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent](../../advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent/) |

@@ -8,7 +8,28 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
-**멈춤 지점 (2026-09-28) — 재개 지점 작업(Task 13) 끝 + Day 071~080 작성·리뷰·수정 끝(Task 14), 푸시함. 다음(Day 081~)은 사용자 지시를 받고.**
+**멈춤 지점 (2026-09-28 밤) — 사용자 "모두 커밋 푸시하고 다음 작업 순서 progress 메모리에 남겨". Day 086까지 작성·푸시(진도 86/164). 084~086은 fix round 1까지 커밋, 재확인 전.**
+
+**다음 작업 순서 (재개하면 이 순서대로)**
+1. **084~086 fix round 1 재확인** — 리뷰어 ae03ab1255cc4ae83을 SendMessage로 재개(없으면 새 opus 리뷰어 + review-11b-brief.md + review-084-086.md).
+   diff: `mk R16-round1 3b1d656 docs/tutorials/day084-* docs/tutorials/day085-* docs/tutorials/day086-*` (수정 커밋 086 e158765 · 084 1a63bc7 · 085 a71b4d2).
+   판정할 것: 084 overview에서 crew→agents·input→crew·crew→result를 +300px 때문에 못 되살림(도구 가진 두 에이전트→도구만 복원, 904×988).
+   이것이 "순서라서 sequence(9단계)가 보여 주면 overview에서 빠져도 되는 것"인지 본다(§5: overview에서 빠져도 되는 것은 sequence가 보여 주는 순서뿐).
+   구조 관계로 판정되면 세로 예외(사용자 결정)나 다른 배치가 필요 — 사용자에게 묻는다.
+   085 작성자는 커밋(a71b4d2) 뒤 보고서 "Fix round 1" 절을 쓰다가 멈춤(내가 TaskStop) — 재확인은 커밋 내용으로 한다.
+2. 재확인 결과를 fix round 2 → 짧은 재확인 → roadmap·원장 커밋·푸시·보고(사용자 지시: "끝나면 푸시하고 보고해").
+3. Day 087~는 사용자 지시를 받고 시작(볼륨 7 Advanced AI Agents, 111까지).
+
+**사용자에게 아직 보고하지 않은 것**
+- 에이전트가 사용자 홈에 만든 것: `%LOCALAPPDATA%\CrewAI\awesome-llm-apps\latest_kickoff_task_outputs.db`(9/28 20:51, Day 084 작성), 빈 폴더 `~/.config/crewai`(9/28 22:29). 지워도 된다.
+
+**Task 15~16 요약 (2026-09-28)**
+- Task 15: Day 081~083 + Day 001 멀티 모델 Step 7(사용자 지적: `xai_finance_agent_multi_model.py` 누락) — 리뷰·수정·재확인 0 open. Day 081 세로 예외 1008(사용자 허락, e48dbe6).
+- Task 16: Day 084~086 작성 → 리뷰(C5 I9 M16) → fix round 1 커밋. 재확인 대기.
+- 브리프 규칙 추가: crewai `CREWAI_STORAGE_DIR`, AG2는 스크래치를 작업 폴더로, PATH에서 루트 `.venv\Scripts` 빼기, 격리 변수를 독자 명령에 넣지 않기, 원본 앱 폴더 쓰기·컴파일 금지.
+- 세로 예외는 이제 8일(006·010·016·023·025·027·034·081).
+
+**멈춤 지점 (2026-09-28 낮) — 재개 지점 작업(Task 13) 끝 + Day 071~080 작성·리뷰·수정 끝(Task 14), 푸시함.**
 
 - Task 13: 검사 21을 선 길이 1px마다 표본으로(73e0646). 걸린 옛 sequence 40일 재배치 — 대부분 배우 순서, 일부 실제 소스 데이터로 라벨 보강,
   허브 구조 6일(038·039·043·048·050·055)은 앱의 실제 단계 경계에서 sequence + extra-*로 분할. headless streamlit 26일에 --server.address localhost.
@@ -811,3 +832,39 @@ Task 14: 078 fix round 3 DONE — 2c6d62b, os.environ.pop을 -c 안으로(두 �
 Task 14: 077 fix round 3 DONE — c17771e, Qdrant 검색을 extra-store 앞 메시지 쌍으로, 724행 정정, check 통과, 20.7/분.
 Task 14: 076 fix round 3 DONE — bdeae79(포트로 PID 찾아 그 프로세스만 종료, 이유절 정정). 076·077·078 round 3은 내가 해당 줄을 직접 확인(076:681-683, 077 extra-store 첫 메시지 쌍·724행, 078:218·312) → 076·077·078 complete. Task 14 작성 10일 전부 complete.
 Task 14: complete — roadmap 80/164, npm test 49/49, Day 001~080 check 전부 통과, 071~080 분당 20.5~21.8. 에이전트들이 원본 앱 폴더 8곳에 남긴 __pycache__(오늘 생성, .pyc만) 정리. ~/.mem0 없음. 재개 지점 갱신, 로드맵·원장 커밋 후 푸시.
+
+=== USER 2026-09-28: "우선 Day083 까지 추가 진행해" — Day 081~083. 운영 파라미터 그대로(작성 → 리뷰(opus) → 수정 → 재확인 → roadmap·push·보고 한 번). ===
+Task 15: 081 (a826bac2046ee7a7f), 082 (a219966c94a66d003), 083 (aa14313e471567eaf) dispatched (sonnet, task-14-write-brief.md + task-14-fix-brief.md 다이어그램 절, 원본 앱 폴더에 쓰기·컴파일 금지 추가). 리뷰는 셋 끝난 뒤 한 묶음(081~083).
+Task 15: 083 DONE — c15dc92, check 통과, 19.0/분. firecrawl 4.45.0에서 deep_research가 .v1로 옮겨져 AttributeError(속성 접근으로 재현), firecrawl/firecrawl-py 중복, 기본 모델 gpt-5.6-luna, Runner.run 자동 트레이스. 리뷰에서 볼 것: sequence '라벨 축약'으로 폭·높이 해소.
+=== USER 2026-09-28: "Day 01에 대해서 소스는 xai 뿐 아니라 multi model 이 가능한 소스를 만들어 놨는데 tutorial 문서는 그걸 빼먹었네." — 사용자가 c17ba06(9/17)에서 starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py(Streamlit, xAI·OpenAI·Gemini·Claude 선택)를 추가했는데 Day 001은 원래 앱만 다룸. ===
+Task 15: Day 001 멀티 모델 Step 추가 dispatched (sonnet → task-15-day001-multimodel-report.md): 의존성·AppTest·cache_resource의 None 캐시 의심·모델 id 4개 퇴역 여부(공식 문서)·실행 명령, extra 그림. 같은 커밋의 Day 002(gemini/local 스크래퍼)는 README에 이미 22곳 반영(사용자가 직접 갱신). 사용자 커밋 중 튜토리얼에 빠진 다른 소스 변경은 없음(9/10 이후 소스 경로 커밋 전수 확인).
+Task 15: 082 DONE — b5e70d4, check 통과, 18.0/분. google-genai>=1.55.0이 오늘 2.25.0으로 풀려 Interaction.outputs 제거 → get_text(i.outputs) AttributeError(속성 접근 재현), gemini-3-pro-(image-)preview가 SDK 모델 목록에 없음, parse_tasks 정규식 공백 버그. sequence 4장(Phase 1/2/3a/3b). 리뷰에서 볼 것: overview에서 외부 모델 4개를 묶음으로 — 개별 엣지를 묶음 수준으로 올려 서로 다른 데이터를 합쳤는지.
+Task 15: 081 DONE 1차 — 2cf73aa, check 통과, 19.5/분. Writer 지시문의 get_article_text는 없는 함수(실제 read_article). **규칙 위반**: overview에서 editor→openai 화살표를 세로(1008px) 때문에 뺌 = 구조 관계 삭제 → 되살리고 레버로 1000 안에 맞추라고 재개. sequence 3분할·실제 데이터 라벨 보강은 규칙 안.
+Task 15: Day 001 멀티 모델 DONE — 3173945, Step 7 + extra-multi-model(877×921), check 통과, 17.3/분(60→75분, 이전 14.4로 대역 밖이던 것이 안으로). 발견: 추가 패키지 streamlit·google-genai·anthropic, cache_resource가 None과 경고까지 캐시(AppTest 재현), claude-3-5-sonnet-20241022 퇴역(2025-10-28), grok-4-1-fast는 xAI 목록에 없음(날짜 미확인). 리뷰 081~083 + Day 001 추가분 dispatched (opus → review-081-083.md, 081은 화살표 복원 커밋 뒤).
+Task 15: 081 화살표 복원 DONE — a8de28a, editor→openai 되살림, 같은 파일(journalist_agent.py) 구성원 묶음(레버 1)으로 1008→847, 다섯 화살표 모두, step 경로 갱신, check 통과. 리뷰어가 이 커밋 뒤 081을 봄.
+Task 15: 리뷰 081~083 + Day 001 추가분 DONE (aca6b0f71ffb49252) → review-081-083.md. 넷 다 ❌: 001(Step 7) I3 M6 / 082 C2 I2 M6 / 083 I3 M4 / 081 I1 M5. 001: README의 AppTest 스크립트가 적힌 그대로면 시간 초과, xAI grok-4-1-fast는 2026-05-15 퇴역 공식 페이지 있음(grok-4.3 자동 전환·요금), extra 그림이 화살표를 지움. 082: 3a·3b 모델 두 개 서비스 종료(2026-03-09·06-25), outputs 제거 원인은 API 스키마 변경(outputs→steps, 2026-06-08) — google-genai<2 고정은 무효, Step 3 출력 거짓, overview가 네 호출을 한 화살표로 병합. 083: .v1은 옮긴 게 아니라 폐기 엔드포인트(2025-06-30 종료), 라벨 축약으로 데이터 소실, OpenAI 호출 병합, 실행 명령 없음. 081: a8de28a가 ui→editor run() 화살표를 지움.
+**사고(리뷰어)**: 스크래치에서 uv run streamlit이 PATH의 루트 .venv streamlit을 집어 0.0.0.0:8501로 headless 없이·차단 없이 약 1분 뜸 — 즉시 종료, 포트 빔, 루트 .venv에 authlib .pyc 117개만 생김(설치·삭제 없음), 사용자 브라우저에 localhost:8501 탭이 열렸을 수 있음. → 작성·수정 브리프에 PATH에서 루트 .venv\Scripts를 빼는 규칙 추가. 보고 항목.
+Task 15: fix round 동시 넷 dispatched(resume): 001(a5fdcd98e1938359e), 082(a219966c94a66d003), 083(aa14313e471567eaf), 081 round 2(a826bac2046ee7a7f).
+=== USER 2026-09-28 17:38: (세션 재시작 후) "이제 Day 86까지 진행해" + "앞에 작업 끝나면 진행하라고" — 081~083·001 수정·재확인을 먼저 끝내고 그 다음 Day 084~086. ===
+Task 15: 재시작 뒤 수정 넷에 이어 하라고 SendMessage — 넷 다 "다음 도구 라운드에 전달" = 아직 살아서 일하는 중(081·082는 미커밋 변경 있음). 084~086 작성(084 AI Meeting Agent, 085 AI Mental Wellbeing Agent, 086 AI Health & Fitness Agent)은 수정·재확인이 끝난 뒤.
+Task 15: 001 fix round 1 DONE — e81d5f9, 전부 반영(AppTest default_timeout=30 재검증, xAI 퇴역 공식 페이지 2026-05-15·grok-4.3 자동 전환, Step 2도 정정, extra-multi-model-seq로 호출 순서 복원), check 통과, 20.0/분.
+Task 15: 081 fix round 2 — ui→editor 복원(화살표 7개)·M1~M5 반영, 그러나 overview·step 1008px(상한 1000, 화살표 규칙 0). 레버 8가지 시도(방향·grid 2·노드 순서·라벨 길이) → 1008/0 또는 958/관통 1뿐. 내가 같은 파일 묶음(direction right) 한 번 더 시도 → 985×1118, 관통 1(더 나쁨). 미커밋(작업 트리에 있음). 세로 예외는 규격상 사용자 결정 → 사용자에게 물음.
+Task 15: 082·083 수정 에이전트가 스트림 정지(watchdog 600s)로 실패 → 둘 다 SendMessage로 재개.
+=== USER 2026-09-28: Day 081 세로 1008px → "예외 등록 (추천)". e48dbe6 height-exceptions.json에 day081 1008 추가, 49/49, 081 작업 트리 check 통과 → 081 작성자에게 커밋하라고. ===
+Task 15: 083 fix round 1 DONE — 839a068(폐기 v1 엔드포인트 근거, 라벨 데이터 복원 → sequence + extra-elaboration 분할, OpenAI 호출 분리, 실행 명령), check 통과, 21.0/분(60→65분). 082 fix round 1 DONE — bd2e91f(두 모델 종료 공식 문서, 원인은 API 스키마 변경, Step 3 실측, overview 네 화살표 복원·평면 981×682), check 통과, 19.9/분(70→85분).
+Task 15: 081 fix round 2 DONE — ba8091d(예외로 check 통과). 네 날 수정 끝 → 재확인 dispatched (resume aca6b0f71ffb49252, fix-R15-round1.diff base a8de28a, PATH 규칙 명시). 084~086은 재확인이 끝난 뒤(사용자: 앞 작업 끝나면).
+Task 15: 재확인 DONE — 081·082 해결 → complete. 001 open I1(캐시 지운 뒤 경로를 한 메시지로 접음) M1(비용) / 083 open M3(도구 실행 데이터, '종료' 과장 — 엔드포인트 아직 응답, deep_research 라벨의 '도구'). fix round 2: 001·083 dispatched(resume).
+Task 15: 083 fix round 2 DONE — d7908a2(Minor 3), 내가 해당 줄 확인·check 통과 → 083 complete.
+Task 15: 001 fix round 2 DONE — ee36688(성공 경로를 extra-multi-model-build·run 두 sequence로, build는 실제 데이터 보강, 경고 표시 메시지, grok-4.3 비용), check 통과, 20.7/분. 001 짧은 재확인 dispatched(resume aca6b0f71ffb49252).
+Task 15: 001 2차 재확인 ✅(성공 경로 실제 메시지·코드 순서, 비용 추정 맞음) + 새 Minor 2(머리말·문제 해결의 grok-4.3 전환 확정도 불일치, seq.d2 마지막 메시지가 두 번의 경고 표시를 접음) → fix round 3 dispatched. 끝나면 084~086.
+Task 15: 001 fix round 3 DONE — 17db81b(머리말·문제 해결 확정도 일치, 경고 표시 두 메시지 → cache-miss/cache-hit 경계로 extra-multi-model-cachehit 분할), check 통과(재확인), 21.1/분 → 001 complete. Task 15(081~083 + 001 추가분) 전부 complete.
+Task 16: Day 084(add40a1ffe2a951dd)·085(aa1c5d916203909d1)·086(a59ac1625b2bf0f60) dispatched (sonnet, 최신 규칙 포함, 보고서 task-16-dayNNN-report.md). 리뷰는 셋 끝난 뒤 한 묶음.
+Task 16: 086 DONE — 3b1d656, check 통과, 17.7/분. requirements가 옛 google-generativeai인데 agno Gemini는 google.genai 요구 → ImportError, 계획 딕셔너리 4필드 중 둘만 LLM·나머지 고정 문자열, hasattr 분기 죽은 코드, 앱 README가 phidata, 의료 고지 없음. 리뷰에서 볼 것: sequence '라벨 일부 축약'(뜻 유지 주장).
+Task 16: 085 DONE — f49621a, check 통과, 18.1/분. pyautogen 무고정 → 오늘 0.10.0(프록시 패키지)로 import autogen 실패, 0.7.6은 register_hand_off가 모듈 함수로 이동해 AttributeError, 0.6.1만 앱 그대로 동작(재현). sequence 3분할(라운드 경계). 앱의 위기 안내 988/911 인용, 임상 조언 아님 명시.
+Task 16: 084 DONE — bd75a0e, check 통과, 19.1/분. requirements에 anthropic 없음(crewai LLM 생성 시 ImportError), claude-3-5-sonnet-20240620 퇴역(2025-10-28), 앱 README는 GPT-4라 함. sequence 7파일 분할. 리뷰 084~086 dispatched (opus → review-084-086.md).
+Task 16: 리뷰 084~086 DONE (ae03ab1255cc4ae83) → review-084-086.md. 셋 다 ❌: 084 C3 I2 M6(anthropic 설치 안내가 1.8.0을 받아 temperature TypeError — crewai[anthropic]=0.73.0이 맞음, 흐름 순서 틀림·분할 경계 가짜, Step 2가 독자 셸에 죽은 프록시 export) / 085 C1 I3 M5(실제 GPT 호출 9번·순서 틀림, 0.6.1만 동작 주장 틀림(0.6.0~0.7.3), AG2가 정신건강 입력을 작업 폴더 .cache에 저장, overview 핸드오프 접기, '자살' 추가 의역) / 086 C1 I4 M5(gemini-2.5-flash-preview-05-20 2025-11-18 종료, 라벨 축약 데이터 소실, agno 텔레메트리, '세 번째 앱'→아홉 번째).
+작성자 부수 효과: 084·086이 원본 앱 폴더에 __pycache__(내가 지움), **084가 사용자 홈 %LOCALAPPDATA%\CrewAI\awesome-llm-apps\latest_kickoff_task_outputs.db(12KB, 20:51) 생성** — CrewAI 폴더 자체는 9/23부터 있었음(credentials). 사용자 보고 항목. 브리프 규칙 추가: CREWAI_STORAGE_DIR·AG2 작업 폴더, 격리 변수를 독자 명령에 넣지 않기.
+Task 16: fix round 1 셋 dispatched(resume).
+=== USER 2026-09-28: "끝나면 푸시하고 보고해" ===
+Task 16: 086 fix round 1 DONE — e158765, 전부 반영, check 통과, 20.7/분.
+Task 16: 084 fix round 1 DONE — 1a63bc7, C3·I2(부분)·M6, check 통과, 21.9/분(75분). I2 부분: overview에서 crew→agents·input→crew·crew→result를 되살리면 +300px — 도구를 가진 두 에이전트→도구 화살표만 복원(904×988), 나머지는 경계(포함 관계)로. 재확인에서 '순서라서 sequence가 보여 주면 overview에서 빠져도 되는 것'인지 판정. 부수 효과: 1차 때 ~/.config/crewai도 생성(보고서 정정).
