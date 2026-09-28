@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+store: Chroma { class: store }
+app: embedchain App { class: ours }
+chat_api: OpenAI Chat API { class: ext }
+
+user -> ui: 질문 입력
+ui -> app: query(질문)
+app -> store: 유사도 검색 → 청크 3개
+app -> chat_api: 컨텍스트 + 질문 프롬프트
+chat_api -> app: 답변 텍스트
+ui -> user: st.write(result) 표시

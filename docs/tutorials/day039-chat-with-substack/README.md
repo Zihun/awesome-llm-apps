@@ -131,7 +131,7 @@ openai_access_token = st.text_input("OpenAI API Key", type="password")
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run --no-project streamlit run chat_substack.py --server.headless true
+uv run --no-project streamlit run chat_substack.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
@@ -359,7 +359,19 @@ add() calls: 2
 
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+`add()` 한 번이 실제로는 세 단계를 거치므로, 아래 세 그림은 그 순서 그대로입니다.
+
+![1단계: URL 등록과 게시글 수집](diagrams/sequence.svg)
+
+1단계는 `embedchain_bot()`이 App을 만들고 사이트맵·게시글 HTML을 받아오는 부분만 그립니다.
+
+![2단계: 청크 임베딩과 저장](diagrams/extra-embed.svg)
+
+2단계는 받아온 HTML을 청크로 쪼개 OpenAI 임베딩 API로 벡터를 얻고 Chroma에 저장하는 부분만 그립니다.
+
+![3단계: 질문 응답](diagrams/extra-answer.svg)
+
+3단계는 `query()`가 Chroma에서 청크를 찾아 `gpt-4-turbo`로 답을 생성하고 화면에 표시하는 부분까지 그립니다.
 
 사용자가 OpenAI 키와 Substack URL을 입력하면 `embedchain_bot()`이 새 App을 만들고 `add(url, data_type='substack')`가 실행됩니다 — 사이트맵을 읽어 게시글 링크를 모으고, 게시글마다 순서대로(1초 간격) HTML을 받아와 청크로 쪼갠 뒤 OpenAI 임베딩 API로 벡터를 얻어 Chroma에 저장합니다. 이어서 질문을 입력하면 `query()`가 호출되어 Chroma에서 가장 비슷한 청크 3개를 찾고, 그 청크들과 질문을 프롬프트에 담아 `gpt-4-turbo`에 보낸 뒤 돌아온 답을 화면에 그대로 표시합니다. 그림은 이 흐름을 한 번의 성공 경로로만 그렸습니다 — Step 6에서 확인했듯 실제로는 질문을 입력하는 것 자체가 Streamlit 재실행을 일으켜, 앞의 수집·임베딩 구간(사이트맵 요청부터 Chroma 저장까지)이 매 질문마다 처음부터 반복됩니다. 이 시퀀스는 키가 없어 실제 응답을 재현하지 못했고, 각 구간을 소스 코드와 안전한 모의 호출로 개별 확인한 것입니다.
 
