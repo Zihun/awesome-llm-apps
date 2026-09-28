@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+openai: OpenAI GPT-4o-mini { class: ext }
+qdrant: Qdrant (로컬) { class: store }
+mem0: Mem0 메모리 매니저 { class: ours }
+ui: Streamlit UI { class: ours }
+multion: MultiOn 브라우징 에이전트 { class: ext }
+
+user -> ui: 검색어·사용자명 입력
+ui -> mem0: search(query, user_id, limit=3)
+mem0 -> openai: 질의 임베딩 요청
+openai -> mem0: 임베딩 벡터
+mem0 -> qdrant: 유사도 검색(cosine, 1536차원, 컬렉션 mem0)
+qdrant -> mem0: 관련 기억 목록(score 포함)
+mem0 -> ui: relevant_memories
+ui -> multion: browse(cmd, url=arxiv.org)
+multion -> ui: BrowseOutput(message)
+ui -> openai: 표 형식 정리 요청
+openai -> ui: 마크다운 표
+ui -> user: 결과 표시

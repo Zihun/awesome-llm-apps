@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+mem0: Mem0 메모리 매니저 (Memory) { class: ours }
+qdrant: Qdrant (로컬, Docker) { class: store }
+
+svc: "외부 서비스" {
+  class: group
+  openai: OpenAI GPT-4o-mini { class: ext }
+  multion: "MultiOn 브라우징 에이전트 (arXiv.org 탐색)" { class: ext }
+}
+
+user -> ui: API 키·검색어·사용자명
+ui -> mem0: search()·get_all() 호출
+mem0 -> qdrant: 벡터 저장·유사도 검색
+mem0 -> svc: 질의 임베딩
+ui -> svc: 표 정리·브라우징 요청
