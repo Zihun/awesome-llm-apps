@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit UI (journalist_agent.py) { class: ours }
+
+editor: "Editor (Team)" {
+  class: ours
+  searcher: Searcher (Agent) { class: ours }
+  writer: Writer (Agent) { class: ours }
+}
+
+openai: "OpenAI GPT-4o" { class: ext }
+serpapi: "SerpApi (search_google)" { class: ext }
+article_sites: "기사 원문 웹페이지 (read_article)" { class: ext }
+
+user -> ui: 키 2개 + 주제 입력
+ui -> editor: "run(query, stream=False)"
+editor.searcher -> serpapi: 검색 도구 호출
+editor.searcher -> openai: 모델 호출
+editor.writer -> article_sites: 기사 읽기 호출
+editor.writer -> openai: 모델 호출

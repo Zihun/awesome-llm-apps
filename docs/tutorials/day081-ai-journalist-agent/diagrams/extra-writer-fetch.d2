@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+writer: Writer { class: ours }
+article_sites: 기사 원문 웹페이지 { class: ext }
+
+writer -> article_sites: "read_article(url) ×N(선택한 URL마다)"
+article_sites -> writer: 기사 원문 텍스트(제목·저자·본문 JSON)

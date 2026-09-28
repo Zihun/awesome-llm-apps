@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+사용자: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+editor: Editor { class: ours }
+openai: OpenAI GPT-4o { class: ext }
+
+editor -> openai: 도구 결과(기사 초안)
+openai -> editor: 최종 기사 텍스트로 종합
+editor -> ui: "response.content"
+ui -> 사용자: "st.write()로 렌더링"

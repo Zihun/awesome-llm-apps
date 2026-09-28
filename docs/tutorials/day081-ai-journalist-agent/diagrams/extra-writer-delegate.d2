@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+editor: Editor { class: ours }
+openai: OpenAI GPT-4o { class: ext }
+writer: Writer { class: ours }
+
+editor -> openai: 이전 도구 결과(URL 10개 목록) 전달
+openai -> editor: "이 결과 반영해 delegate_task_to_member(Writer, task=주제+URL 목록)"
+editor -> writer: 작성 위임 + 주제 + URL 목록
+writer -> openai: 메시지 + 지시문 + read_article 스키마
+openai -> writer: read_article 호출 요청

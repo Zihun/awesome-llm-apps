@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+searcher: Searcher { class: ours }
+serpapi: SerpApi { class: ext }
+openai: OpenAI GPT-4o { class: ext }
+editor: Editor { class: ours }
+
+searcher -> serpapi: "search_google(query, num_results=10) ×3(검색어 3개마다)"
+serpapi -> searcher: "JSON(search_results 등)"
+searcher -> openai: 메시지 + 도구 결과
+openai -> searcher: URL 10개 목록
+searcher -> editor: URL 목록 반환

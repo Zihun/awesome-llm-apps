@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+writer: Writer { class: ours }
+openai: OpenAI GPT-4o { class: ext }
+editor: Editor { class: ours }
+
+writer -> openai: 메시지 + 지시문 + 기사 원문 전체 텍스트
+openai -> writer: 15문단 이상 기사 초안(마크다운)
+writer -> editor: 초안 반환
