@@ -766,7 +766,7 @@ FINAL: 'Fake final answer: 2 + 3 = 5'
 지금까지 다섯 스텝 모두 `python agent.py`로 콜백만 직접 확인했고, `아키텍처 한눈에 보기`가 가리키는 `app.py`(Streamlit UI, 세 폴더 동일 구조)는 한 번도 실행하지 않았습니다. 이 폴더(`6_3_tool_execution_callbacks`)를 벗어나지 않고 마지막으로, 그 UI가 실제로 뜨는지만 헤드리스로 확인합니다 — 채팅 메시지를 보내지 않으므로 `run_agent()`는 호출되지 않고, 페이지 골격을 그리는 데는 `GOOGLE_API_KEY`가 필요 없습니다.
 
 ```bash
-uv run --no-project streamlit run app.py --server.headless true --server.port 8989
+uv run --no-project streamlit run app.py --server.headless true --server.address localhost --server.port 8989
 ```
 
 (bash·PowerShell 공통 — 환경변수를 쓰지 않는 명령입니다.) 다른 터미널에서:

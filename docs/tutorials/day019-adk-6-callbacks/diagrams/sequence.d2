@@ -4,10 +4,10 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: app.py { class: ours }
 agent: agent.py { class: ours }
-gemini: Gemini API { class: ext }
 model: 모델 계층 { class: ours }
-tool: 도구 계층 { class: ours }
+gemini: Gemini API { class: ext }
 toolfn: calculator_tool { class: ours }
+tool: 도구 계층 { class: ours }
 
 user -> ui: 메시지
 ui -> agent: run_agent()
