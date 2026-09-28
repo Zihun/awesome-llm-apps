@@ -3,8 +3,8 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-agent: AutoRAG 에이전트 { class: ours }
 openai: OpenAI API { class: ext }
+agent: AutoRAG 에이전트 { class: ours }
 kb: pgvector 지식 베이스 { class: store }
 
 user -> ui: 키 + 질문
