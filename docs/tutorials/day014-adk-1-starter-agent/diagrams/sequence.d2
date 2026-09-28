@@ -2,8 +2,8 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-adk_web: adk web 서버 { class: ext }
 agent: root_agent (LlmAgent) { class: ours }
+adk_web: adk web 서버 { class: ext }
 gemini: Gemini API { class: ext }
 
 user -> adk_web: POST /run (세션ID, 메시지)
