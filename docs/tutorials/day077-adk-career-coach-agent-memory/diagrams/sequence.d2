@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+memory: mem0 Memory { class: ours }
+ui: Streamlit UI { class: ours }
+gemini: Gemini API { class: ext }
+resume: resume_agent { class: ours }
+orchestrator: career_orchestrator { class: ours }
+
+user -> ui: 질문 (이력서 봐줘)
+ui -> memory: search(query, filters=user_id)
+memory -> ui: relevant_memories (Qdrant 벡터 검색 결과)
+ui -> orchestrator: run_async(메시지 + 과거 정보)
+orchestrator -> resume: 전환 (transfer_to_agent)
+resume -> gemini: 모델 호출 (도구 결정)
+gemini -> resume: 함수 호출 get_candidate_resume
+resume -> gemini: 모델 호출 (결과 포함)
+gemini -> resume: 최종 텍스트
+resume -> ui: 최종 응답
+ui -> user: 화면 표시
+ui -> memory: add(질문만, role:user) → Qdrant에 저장

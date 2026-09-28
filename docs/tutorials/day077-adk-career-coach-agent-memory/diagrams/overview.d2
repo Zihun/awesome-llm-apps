@@ -1,0 +1,29 @@
+...@../../_tools/theme
+direction: down
+
+front: "브라우저 쪽" {
+  class: group
+  grid-columns: 2
+  user: 사용자 { class: person }
+  ui: Streamlit UI { class: ours }
+}
+
+agents: "에이전트 (career_orchestrator + 전문가 4개)" {
+  class: group
+  grid-columns: 3
+  orchestrator: 오케스트레이터 { class: ours }
+  resume: 이력서 (resume_agent) { class: ours }
+  interview: 인터뷰 (interview_agent) { class: ours }
+  skills: 스킬 로드맵 (skills_roadmap_agent) { class: ours }
+  salary: 연봉 (salary_agent) { class: ours }
+}
+
+memory: mem0 Memory 계층 { class: ours }
+qdrant: "Qdrant 저장소 (온디스크)" { class: store }
+gemini: Gemini API { class: ext }
+
+front -> agents: 메시지 + 과거 정보
+front -> memory: 검색·저장
+memory -> qdrant: 벡터 검색·저장
+memory -> gemini: 임베딩·사실 추출
+agents -> gemini: 모델 호출·위임
