@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+gemini: Gemini API { class: ext }
+fitness: Fitness Expert { class: ours }
+ui: Streamlit UI { class: ours }
+dietary: Dietary Expert { class: ours }
+session: 세션 상태 { class: store }
+
+user -> ui: 프로필 입력 + 버튼 클릭
+ui -> dietary: dietary_agent.run(user_profile)
+dietary -> gemini: 메시지 요청
+gemini -> dietary: meal_plan 텍스트
+dietary -> ui: RunOutput.content
+ui -> fitness: fitness_agent.run(...)
+fitness -> gemini: 메시지 요청
+gemini -> fitness: routine 텍스트
+fitness -> ui: RunOutput.content
+ui -> session: 결과 dict 저장
+ui -> user: 두 계획 렌더링(expander)

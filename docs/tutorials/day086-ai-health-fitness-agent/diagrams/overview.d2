@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit UI (health_agent.py) { class: ours }
+session: 세션 상태 (dietary_plan·fitness_plan·qa_pairs) { class: store }
+
+agents: 독립된 Agent 3개 {
+  class: group
+  grid-columns: 3
+  dietary: Dietary Expert (Agent) { class: ours }
+  fitness: Fitness Expert (Agent) { class: ours }
+  qa: Q&A 에이전트 (Agent) { class: ours }
+}
+
+gemini: "Gemini API (gemini-2.5-flash-preview-05-20)" { class: ext }
+
+user -> ui: 프로필 입력·질문
+ui -> agents: user_profile·맥락 전달
+agents -> gemini: 모델 호출
+ui <-> session: 결과 저장·재실행 시 조회
+ui -> user: 계획·답변 렌더링
