@@ -1,14 +1,18 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-사용자: 사용자
-ui: Streamlit 앱
-client: OpenAI 클라이언트
-lmstudio: LM Studio (로컬)
+사용자: 사용자 { class: person }
+session: 세션 상태 (messages) { class: store }
+ui: Streamlit 앱 { class: ours }
+client: OpenAI 클라이언트 { class: ours }
+lmstudio: LM Studio (로컬) { class: ext }
 
 사용자 -> ui: 질문 입력
-ui -> client: 시스템·사용자 메시지를 더한 전체 기록 전달
+ui -> session: 시스템·사용자 메시지 추가 (22·24행)
+session -> ui: 누적된 messages 리스트
+ui -> client: "chat.completions.create(messages=...)"
 client -> lmstudio: "POST /v1/chat/completions"
 lmstudio -> client: "JSON 응답(choices[0])"
 client -> ui: 응답 객체 반환
+ui -> session: 어시스턴트 메시지 추가 (34행)
 ui -> 사용자: 답변 렌더링
