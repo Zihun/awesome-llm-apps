@@ -103,7 +103,7 @@ else:
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run --no-project streamlit run music_generator_agent.py --server.headless true
+uv run --no-project streamlit run music_generator_agent.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:

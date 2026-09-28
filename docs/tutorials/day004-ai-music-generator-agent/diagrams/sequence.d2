@@ -2,14 +2,14 @@
 shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-agent: 음악 생성 에이전트 { class: ours }
 openai: OpenAI API { class: ext }
+agent: 음악 생성 에이전트 { class: ours }
 modelslab: ModelsLab API { class: ext }
 
 user -> ui: 프롬프트 + 키 2종 입력
 ui -> agent: run(prompt) 호출
 agent -> openai: 프롬프트 + 도구 스키마
-openai -> agent: tool_call generate_media(prompt)
+openai -> agent: tool_call generate_media(prompt) (GPT-4o)
 agent -> modelslab: generate_media(prompt) 요청
 modelslab -> agent: 오디오 URL
 agent -> openai: 도구 결과
