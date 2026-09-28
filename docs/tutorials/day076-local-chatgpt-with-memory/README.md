@@ -1,6 +1,6 @@
 # Day 076 · 🗄️ Local ChatGPT Clone with Memory
 
-> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 105분(mem0ai가 오늘 설치 조합에서 세 가지 실패를 겪고, 그중 첫 번째는 실제 터미널 동작까지 갈라져(y/N 응답별로) 직접 재현이 많아지고, 두 번째 `add()`의 내부 전개까지 그림으로 따로 확인하는 날입니다 — 되풀이가 아니라 실패·그림마다 다른 재현이라 시간이 늘었습니다) · API 비용 무료(로컬 — 채팅·임베딩·메모리 벡터 저장은 모두 Ollama·Qdrant로 처리하지만, "클라우드 호출이 전혀 없다"는 뜻은 아닙니다: litellm은 import 시점에 GitHub에서 가격표를 받으려 하고 mem0는 PostHog로 익명 통계를 보내려 합니다 — 둘 다 환경변수로 끌 수 있습니다, 아래에서 직접 확인) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory`
+> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 105분(머리말이 요약하는 세 가지 실패를 Step 2·6에서 각각 독립적으로 재현합니다 — 그중 첫 번째는 실제 터미널 동작까지 갈라져(y/N 응답별로) 재현이 더 늘고, 두 번째 `add()`의 내부 전개까지 그림 하나를 따로 더 확인하는 날이라 시간이 늘었습니다) · API 비용 무료(로컬 — 채팅·임베딩·메모리 벡터 저장은 모두 Ollama·Qdrant로 처리하지만, "클라우드 호출이 전혀 없다"는 뜻은 아닙니다: litellm은 import 시점에 GitHub에서 가격표를 받으려 하고 mem0는 PostHog로 익명 통계를 보내려 합니다 — 둘 다 환경변수로 끌 수 있습니다, 아래에서 직접 확인) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory`
 
 ## 오늘 만들 것
 
@@ -668,14 +668,20 @@ GET {'results': [{'id': '6554a7a4-...', 'memory': 'Replied that hiking is fun', 
 
 `results` 배열에 두 메모리가 모두 남습니다 — 134행의 두 번째 `add()`가 첫 번째를 지우지 않고 쌓는다는 뜻입니다.
 
-Step 6에서 띄운 스텁 서버는 다 쓰면 멈춥니다.
+Step 6에서 띄운 스텁 서버는 다 쓰면 멈춥니다 — 포트를 실제로 물고 있는 프로세스만 정확히 짚어서 끕니다(`Stop-Process -Name python`류는 이 컴퓨터의 다른 python 프로세스까지 모두 죽이므로 쓰지 않습니다).
 
 ```bash
 kill %1
 netstat -ano | grep :61076   # 아무 줄도 없어야 함
 ```
 
-(PowerShell로 `Start-Process`를 썼다면 `Stop-Process -Name python`, 또는 `Get-Process python | Stop-Process`.)
+PowerShell(`Start-Process`는 자식으로 python을 띄우므로, PID는 포트를 직접 물고 있는 프로세스에서 찾습니다):
+
+```powershell
+$stubPid = (Get-NetTCPConnection -LocalPort 61076 -State Listen).OwningProcess
+Stop-Process -Id $stubPid
+Get-NetTCPConnection -LocalPort 61076 -ErrorAction SilentlyContinue   # 아무 줄도 없어야 함
+```
 
 ## 요청 한 건이 흐르는 과정
 
