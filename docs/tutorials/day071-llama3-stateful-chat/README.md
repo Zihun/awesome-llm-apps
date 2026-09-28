@@ -247,7 +247,13 @@ print('turn 2 messages:', [m['role'] for m in at.session_state['messages']])
 " 2>/dev/null
 ```
 
-직접 확인한 출력(표준에러에는 매 턴 `openai.APIConnectionError`의 전체 트레이스백이 찍히므로 위 명령은 `2>/dev/null`로 걸러냅니다 — Streamlit이 이 예외를 잡아 `st.exception`으로 보여주고 스크립트 실행 자체는 멈추지 않으므로, 22-24행에서 이미 세션 상태에 추가된 메시지는 그대로 남습니다):
+PowerShell:
+
+```powershell
+uv run --no-project python -c "<위와 같은 코드>" 2>$null
+```
+
+직접 확인한 출력(표준에러에는 매 턴 `openai.APIConnectionError`의 전체 트레이스백이 찍히므로 위 명령은 `2>/dev/null`(PowerShell은 `2>$null`)로 걸러냅니다 — Streamlit이 이 예외를 잡아 `st.exception`으로 보여주고 스크립트 실행 자체는 멈추지 않으므로, 22-24행에서 이미 세션 상태에 추가된 메시지는 그대로 남습니다):
 
 ```
 turn 1 exception: ['Exception']
