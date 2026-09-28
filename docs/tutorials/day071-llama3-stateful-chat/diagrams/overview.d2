@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit 채팅 UI { class: ours }
+session: 세션 상태 (대화 기록) { class: store }
+client: OpenAI 클라이언트 { class: ours }
+lmstudio: "LM Studio 로컬 서버 (로컬, Llama-3-8B)" { class: ext }
+
+user -> ui: 채팅 메시지 입력
+ui -> session: 대화 기록 저장·조회
+ui -> client: 전체 messages 리스트 전달
+client -> lmstudio: POST 요청
+lmstudio -> client: JSON 응답
+client -> ui: 응답 객체 반환
+ui -> user: 답변 렌더링
