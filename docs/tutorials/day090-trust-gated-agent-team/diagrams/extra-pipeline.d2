@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+openai: OpenAI API { class: ext }
+audit: 감사 로그 { class: store }
+
+ui -> openai: Researcher 프롬프트 + 주제(1단계, 이전 맥락 없음)
+openai -> ui: 연구 브리핑 텍스트
+ui -> audit: record(pipeline_step_1, researcher-001)
+ui -> openai: Analyst 프롬프트 + 이전 맥락(연구 브리핑) + 주제(2단계)
+openai -> ui: 분석 텍스트
+ui -> audit: record(pipeline_step_2, analyst-001)
+ui -> audit: verify_chain()
+audit -> ui: (True, None)
+ui -> user: 배지·파이프라인 결과·감사 체인·JSON 렌더링

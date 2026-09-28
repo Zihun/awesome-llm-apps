@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+registry: 트러스트 레지스트리 { class: store }
+audit: 감사 로그 { class: store }
+
+user -> ui: 주제 입력 + 실행 버튼 클릭(임계값 30, Writer=Untrusted Bot)
+ui -> registry: verify(agent_id="researcher-001", min_score=30)
+registry -> ui: TrustVerdict(agent=researcher-001, trusted=True)
+ui -> audit: record(trust_verification)
+ui -> registry: verify(agent_id="analyst-001", min_score=30)
+registry -> ui: TrustVerdict(agent=analyst-001, trusted=True)
+ui -> audit: record(trust_verification)
+ui -> registry: verify(agent_id="rogue-bot-99", min_score=30)
+registry -> ui: TrustVerdict(agent=rogue-bot-99, trusted=False)
+ui -> audit: record(trust_verification)
