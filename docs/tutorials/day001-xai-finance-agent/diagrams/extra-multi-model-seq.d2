@@ -11,7 +11,4 @@ ui -> cache: 1차 호출 (캐시 없음)
 cache -> build: build_model(model_name)
 build -> cache: None (경고 호출)
 cache -> ui: None (캐시에 저장)
-user -> ui: 키 입력 후 재클릭
-ui -> cache: 재호출 (캐시 있음)
-cache -> ui: 캐시된 None + 경고 재생
-ui -> user: 경고 두 개 표시 (1·2차 클릭 동일)
+ui -> user: 경고 두 개 표시

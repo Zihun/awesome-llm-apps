@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+cache: initialize_agent { class: ours }
+
+user -> ui: 키 입력 후 재클릭
+ui -> cache: 재호출 (캐시 있음)
+cache -> ui: 캐시된 None + 경고 재생
+ui -> user: 경고 두 개 재표시 (1차와 동일)
