@@ -107,7 +107,7 @@ Day 2·11의 앱은 키 하나만 받았지만 여기는 둘이고, 이후 코�
 **확인.** 서버를 띄우고 응답을 확인합니다.
 
 ```bash
-uv run --no-project streamlit run travel_agent.py --server.headless true
+uv run --no-project streamlit run travel_agent.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:

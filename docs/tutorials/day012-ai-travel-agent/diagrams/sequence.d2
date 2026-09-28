@@ -2,9 +2,9 @@
 shape: sequence_diagram
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-researcher: Researcher { class: ours }
-openai: OpenAI API { class: ext }
 planner: Planner { class: ours }
+openai: OpenAI API { class: ext }
+researcher: Researcher { class: ours }
 serpapi: SerpAPI { class: ext }
 
 user -> ui: 키 2개, 목적지, 일수
