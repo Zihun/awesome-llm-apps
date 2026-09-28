@@ -5,6 +5,7 @@ user: 사용자 { class: person }
 ui: Streamlit UI (trust_gated_agents.py) { class: ours }
 registry: "트러스트 레지스트리 (TrustRegistry, 메모리)" { class: store }
 audit: "감사 로그 (AuditTrail, 해시체인·메모리)" { class: store }
+openai: OpenAI API (gpt-4o-mini) { class: ext }
 
 agents: "파이프라인 슬롯" {
   class: group
@@ -14,12 +15,12 @@ agents: "파이프라인 슬롯" {
   writer: Writer { class: ours }
 }
 
-openai: OpenAI API (gpt-4o-mini) { class: ext }
-
 user -> ui: 주제·임계값 선택
 ui -> user: 결과·로그 렌더링
-ui -> registry: 신뢰 확인(통과/차단 판정)
+ui -> registry: 신뢰 확인
+registry -> ui: 통과/차단 판정
+ui -> audit: 검증·실행 기록
+audit -> ui: 체인 검증 결과
 ui -> agents: 통과 슬롯만 실행
 agents -> openai: 프롬프트+맥락
 openai -> agents: 생성 텍스트
-ui -> audit: 검증·실행 기록 + 체인 검증

@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨의 **열세 번째** 앱입니다. Day 078·079·081·083·084·085·086·088 대부분은 agno·CrewAI·AG2·OpenAI Agents SDK·ADK 같은 프레임워크를 한 겹 두르고 있었지만, Day 082는 프레임워크 없이 `google-genai`를 직접 불렀습니다(`research_planner_executor_agent.py:3-4`, `from google import genai`). 오늘의 651줄짜리(`wc -l` 기준, 마지막 줄에 개행 있음) `trust_gated_agents.py`는 에이전트 프레임워크를 두르지 않는 Day 082에 이은 **두 번째** 날이고, `openai.OpenAI` 클라이언트를 직접 만들어 `chat.completions.create`를 부르는 것은 Day 087(DeepSeek 호출용, `ai_system_architect_r1.py:5,73,187`)에 이은 **두 번째**입니다. 앱은 두 가지를 합쳐 놓았습니다. 하나는 **트러스트 게이트**로, 등록된 에이전트마다 0~100점 신뢰 점수와 등급(gold/silver/bronze/none)을 매겨 두고, 슬라이더로 정한 임계값을 넘는 에이전트만 파이프라인에 들어가게 막습니다. 다른 하나는 **SHA-256 해시체인 감사 로그**로, 트러스트 검증부터 각 파이프라인 단계까지 모든 행동을 이전 항목의 해시와 묶어 기록해서, 항목 하나라도 손대면 그 뒤 모든 해시가 깨지는 것을 그 자리에서 검증합니다. 기본 상태로 실행하면 Researcher(75점)·Analyst(60점)는 통과하고 Writer 자리에 기본으로 꽂혀 있는 미검증 봇(rogue-bot-99, 5점)은 차단되어, 통과한 둘만 순서대로 리서치 브리핑→분석을 이어받아 씁니다. 레지스트리와 감사 로그는 `main()`이 실행될 때마다 새로 만들어지는 메모리 구조라(`trust_gated_agents.py:586-590`, 소스 주석으로 확인) 다른 위젯을 건드리면 그 전 실행의 감사 기록은 사라집니다 — 이 점은 소스 주석에도 "프로덕션이라면 `st.session_state`에 두라"고 명시돼 있습니다.
+Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨의 **열세 번째** 앱입니다. Day 078~089 중 082 하나만 빼고 나머지 열한 날은 모두 agno·CrewAI·AG2·OpenAI Agents SDK·ADK·EvoAgentX 같은 프레임워크를 한 겹 두르고 있었지만(078·079·081·086·087·089는 agno, 080은 EvoAgentX, 083은 OpenAI Agents SDK, 084는 CrewAI, 085는 AG2, 088은 ADK), Day 082는 프레임워크 없이 `google-genai`를 직접 불렀습니다(`research_planner_executor_agent.py:3-4`, `from google import genai`). 오늘의 651줄짜리(`wc -l` 기준, 마지막 줄에 개행 있음) `trust_gated_agents.py`는 에이전트 프레임워크를 두르지 않는 Day 082에 이은 **두 번째** 날이고, `openai.OpenAI` 클라이언트를 직접 만들어 `chat.completions.create`를 부르는 것은 Day 087(DeepSeek 호출용, `ai_system_architect_r1.py:5,73,187`)에 이은 **두 번째**입니다. 앱은 두 가지를 합쳐 놓았습니다. 하나는 **트러스트 게이트**로, 등록된 에이전트마다 0~100점 신뢰 점수와 등급(gold/silver/bronze/none)을 매겨 두고, 슬라이더로 정한 임계값을 넘는 에이전트만 파이프라인에 들어가게 막습니다. 다른 하나는 **SHA-256 해시체인 감사 로그**로, 트러스트 검증부터 각 파이프라인 단계까지 모든 행동을 이전 항목의 해시와 묶어 기록해서, 항목 하나라도 손대면 그 뒤 모든 해시가 깨지는 것을 그 자리에서 검증합니다. 기본 상태로 실행하면 Researcher(75점)·Analyst(60점)는 통과하고 Writer 자리에 기본으로 꽂혀 있는 미검증 봇(rogue-bot-99, 5점)은 차단되어, 통과한 둘만 순서대로 리서치 브리핑→분석을 이어받아 씁니다. 레지스트리와 감사 로그는 `main()`이 실행될 때마다 새로 만들어지는 메모리 구조라(`trust_gated_agents.py:586-590`, 소스 주석으로 확인) 다른 위젯을 건드리면 그 전 실행의 감사 기록은 사라집니다 — 이 점은 소스 주석에도 "프로덕션이라면 `st.session_state`에 두라"고 명시돼 있습니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -250,8 +250,6 @@ print(ROLE_PROMPTS['researcher-001'][:45])
 ['researcher-001', 'analyst-001', 'writer-001'] rogue-bot-99
 You are a research specialist. Given a topic,
 ```
-
-(45자 슬라이스라 콤마에서 정확히 끊깁니다 — `[:47]`처럼 47자로 자르면 다음 단어 중간(`Given a topic, f`)에서 끊깁니다.)
 
 ### Step 5. 사이드바 UI — 임계값과 에이전트 선택
 
