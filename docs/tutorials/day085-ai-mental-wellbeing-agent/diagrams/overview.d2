@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+사용자: 사용자 { class: person }
+ui: Streamlit UI (ai_mental_wellbeing_agent.py) { class: ours }
+
+swarm: "AG2 Swarm (3개 SwarmAgent, AFTER_WORK로 순환 이관)" {
+  class: group
+  assessment_agent: Assessment 에이전트 { class: ours }
+  action_agent: Action 에이전트 { class: ours }
+  followup_agent: Follow-up 에이전트 { class: ours }
+}
+
+gpt4o: "GPT-4o (OpenAI)" { class: ext }
+
+사용자 -> ui: 입력 6종 작성 후 버튼 클릭
+ui -> swarm.assessment_agent: initiate_swarm_chat(task)
+swarm.assessment_agent -> gpt4o: 모델 호출
+swarm.action_agent -> gpt4o: 모델 호출
+swarm.followup_agent -> gpt4o: 모델 호출
+swarm.followup_agent -> ui: chat_history 마지막 3개 반환
+ui -> 사용자: 3개 섹션으로 결과 표시

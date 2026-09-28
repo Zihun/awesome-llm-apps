@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+action_agent: Action 에이전트 { class: ours }
+gpt4o: GPT-4o { class: ext }
+followup_agent: Follow-up 에이전트 { class: ours }
+
+action_agent -> gpt4o: 시스템 프롬프트 1차(요약 강제)
+gpt4o -> action_agent: update_action_overview 함수 호출(요약)
+action_agent -> gpt4o: 시스템 프롬프트 2차(tools 해제, 본문 작성 지시)
+gpt4o -> action_agent: Action 섹션 전체 텍스트
+action_agent -> followup_agent: AFTER_WORK 이관
