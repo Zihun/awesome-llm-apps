@@ -330,10 +330,10 @@ grep -n "st.button" app.py
 앱을 실제로 띄워 이 구조를 확인합니다 — 환경변수만 있고 사이드바에는 키를 저장하지 않은 채 질문해 봅니다.
 
 ```bash
-GOOGLE_API_KEY=dummy-key-for-launch-test uv run --no-project streamlit run app.py --server.headless true
+GOOGLE_API_KEY=dummy-key-for-launch-test uv run --no-project streamlit run app.py --server.headless true --server.address localhost
 ```
 
-(PowerShell: `$env:GOOGLE_API_KEY="dummy-key-for-launch-test"; uv run --no-project streamlit run app.py --server.headless true`.)
+(PowerShell: `$env:GOOGLE_API_KEY="dummy-key-for-launch-test"; uv run --no-project streamlit run app.py --server.headless true --server.address localhost`.)
 
 다른 터미널에서 화면이 떴는지만 먼저 확인합니다.
 
