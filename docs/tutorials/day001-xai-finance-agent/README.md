@@ -1,6 +1,6 @@
 # Day 001 · 📊 xAI Finance Agent
 
-> 볼륨 1 🌱 Starter AI Agents · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 질문 10개에 수십 원 이하 (xAI 콘솔 요금표 기준, 대략치) · 원본 앱: `starter_ai_agents/xai_finance_agent`
+> 볼륨 1 🌱 Starter AI Agents · 난이도 ★☆☆ · 예상 소요 75분(Step 7에서 멀티모델 변형 앱까지 설치·실행해 늘었습니다) · API 비용 대략 질문 10개에 수십 원 이하 (xAI 콘솔 요금표 기준, 대략치) · 원본 앱: `starter_ai_agents/xai_finance_agent`
 
 ## 오늘 만들 것
 
@@ -8,11 +8,14 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
+이 폴더에는 같은 도구 조합(DuckDuckGoTools, YFinanceTools)을 그대로 쓰면서 모델 제공자만 바꿔 낄 수 있게 만든 두 번째 진입점 `xai_finance_agent_multi_model.py`도 있습니다. AgentOS 서버 대신 Streamlit UI 하나로 xAI Grok·OpenAI GPT·Gemini·Anthropic Claude 네 모델 중 하나를 골라 같은 질문에 답하게 하는 변형이며, Step 7에서 다룹니다.
+
 ## 사전 준비
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
 | xAI API 키 | Grok 모델(`grok-4-1-fast`) 호출 인증 | https://console.x.ai/ 가입 후 발급, `XAI_API_KEY` 환경변수로 설정 |
+| (선택) OpenAI·Google·Anthropic API 키 | Step 7의 멀티모델 앱에서 xAI 대신 다른 모델을 써볼 때만 필요. 하나도 없어도 화면 동작과 키 없을 때의 경고는 확인할 수 있다 | https://platform.openai.com/ , https://aistudio.google.com/ , https://console.anthropic.com/ 에서 각각 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | 인터넷 연결 | Yahoo Finance(주가)·DuckDuckGo(웹 검색) API 접속 | 별도 설치 없음. 사내망이면 두 도메인에 대한 접속 허용 필요 |
 
@@ -26,6 +29,10 @@
 | 모델 (xAI Grok) | 실제 추론을 수행하는 LLM, 도구 호출 여부를 판단 | `starter_ai_agents/xai_finance_agent/xai_finance_agent.py:3`, `starter_ai_agents/xai_finance_agent/xai_finance_agent.py:11` |
 | 도구 (DuckDuckGoTools, YFinanceTools) | 웹 검색·주가 조회를 함수로 노출해 에이전트가 대신 실행 | `starter_ai_agents/xai_finance_agent/xai_finance_agent.py:4-5`, `starter_ai_agents/xai_finance_agent/xai_finance_agent.py:12` |
 | 외부 API (xAI, DuckDuckGo, Yahoo Finance) | 실제 LLM 추론·검색 결과·주가 데이터를 제공하는 서드파티 서비스 3곳 | 코드 없음 (외부 서비스) |
+| Streamlit UI (멀티모델 변형) | 모델 선택 셀렉트박스, 제공자별 키 입력창 4개, 질문 입력창과 실행 버튼을 제공 | `starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:21-36` |
+| 모델 팩토리 (`build_model`) | 선택된 모델 이름에 따라 xAI·OpenAI·Gemini·Anthropic 중 하나의 모델 객체를 생성 | `starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:39-69` |
+| 캐시된 에이전트 생성 (`initialize_agent`) | 원본과 같은 도구·지시문으로 에이전트를 만들고 `model_name`별로 재사용 | `starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:72-89` |
+| 4개 LLM 제공자 (xAI, OpenAI, Gemini, Anthropic) | `build_model`이 고른 하나가 실제 추론을 수행 (도구·지시문은 원본과 동일) | 코드 없음 (외부 서비스) |
 
 ## 단계별 진행
 
@@ -249,6 +256,196 @@ ERROR   Error in Agent run: XAI_API_KEY not set. Please set the XAI_API_KEY envi
 
 가 찍힙니다. 반환된 응답 객체를 직접 보려면 `m.agent.run('hello')`를 `print(m.agent.run('hello'))`로 바꿔 실행하면 되며, 이때 `status=RunStatus.error`, `content`가 위와 같은 문구를 담고 있습니다. 키를 넣으면 이 자리에서 대신 마크다운 표 형식의 실제 답변이 오고, 터미널에는 `web_search`·`search_news`·`get_current_stock_price` 중 필요한 도구가 호출되는 `DEBUG` 로그가 찍힙니다.
 
+### Step 7. 같은 에이전트를 멀티모델로 확장하기 (Streamlit)
+
+**목적.** 지금까지 만든 에이전트(도구 2개 + 지시문)를 그대로 두고 모델만 바꿔 끼울 수 있다는 것을 실제 코드로 확인합니다. 같은 폴더의 `xai_finance_agent_multi_model.py`는 AgentOS 대신 Streamlit UI 하나로 xAI Grok·OpenAI GPT·Gemini·Anthropic Claude 네 모델 중 하나를 고르게 하고, 고른 모델에 맞는 API 키를 화면에서 직접 입력받습니다.
+
+**할 일.** 새 진입점은 같은 폴더에 있으므로 Step 1의 가상환경을 그대로 씁니다. `requirements.txt`에 없는 패키지가 다섯 개 더 필요한데, `ddgs`와 `openai`는 Step 1에서 이미 설치했으므로 이번에 새로 설치할 것은 Streamlit과 두 모델 SDK뿐입니다(하나씩 설치해 가며 직접 확인).
+
+```bash
+cd starter_ai_agents/xai_finance_agent
+uv pip install streamlit google-genai anthropic
+```
+
+(pip이면 `pip install streamlit google-genai anthropic`. Step 1을 건너뛰고 이 파일부터 바로 시작했다면 `uv pip install ddgs openai streamlit google-genai anthropic`까지 한 번에 설치합니다.)
+
+임포트는 4개 모델 클래스를 나란히 가져옵니다.
+
+`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:1-10`
+
+```python
+import os
+
+import streamlit as st
+from agno.agent import Agent
+from agno.models.anthropic import Claude
+from agno.models.google import Gemini
+from agno.models.openai import OpenAIChat
+from agno.models.xai import xAI
+from agno.tools.duckduckgo import DuckDuckGoTools
+from agno.tools.yfinance import YFinanceTools
+```
+
+사이드바는 제공자별 키 입력창 4개와 모델 선택 셀렉트박스를 만듭니다. `index=1`이 기본값이라 처음 열면 "OpenAI GPT"가 이미 선택돼 있습니다(직접 확인: `streamlit.testing.v1.AppTest`로 렌더링해 `selectbox[0].value`를 읽음).
+
+`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:21-36`
+
+```python
+with st.sidebar:
+    st.header("🔐 API Keys")
+    st.write("각 키는 로컬 세션에만 저장됩니다.")
+    st.caption("Google Gemini는 Google AI Studio에서 발급한 키를 사용해야 하며, 최신 모델 ID를 사용해야 합니다.")
+
+    xai_api_key = st.text_input("xAI API Key", type="password", key="xai_finance_key")
+    openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_finance_key")
+    google_api_key = st.text_input("Google API Key", type="password", key="google_finance_key")
+    anthropic_api_key = st.text_input("Anthropic API Key", type="password", key="anthropic_finance_key")
+
+    st.markdown("---")
+    model_choice = st.selectbox(
+        "Select LLM",
+        ["xAI Grok", "OpenAI GPT", "Gemini", "Anthropic Claude"],
+        index=1,
+    )
+```
+
+`build_model`은 선택된 이름에 따라 넷 중 하나의 모델 객체를 만듭니다. 네 분기는 같은 모양입니다 — 키가 비어 있으면 경고를 띄우고 `None`을 돌려주고, 있으면 `os.environ`에 심어 둔 뒤 모델을 생성합니다.
+
+`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:39-69`
+
+```python
+def build_model(model_name: str):
+    if model_name == "xAI Grok":
+        if not xai_api_key:
+            st.warning("xAI API 키를 입력하세요.")
+            return None
+        os.environ["XAI_API_KEY"] = xai_api_key
+        return xAI(id="grok-4-1-fast", api_key=xai_api_key)
+
+    if model_name == "OpenAI GPT":
+        if not openai_api_key:
+            st.warning("OpenAI API 키를 입력하세요.")
+            return None
+        os.environ["OPENAI_API_KEY"] = openai_api_key
+        return OpenAIChat(id="gpt-4o", api_key=openai_api_key)
+
+    if model_name == "Gemini":
+        if not google_api_key:
+            st.warning("Google API 키를 입력하세요.")
+            return None
+        os.environ["GOOGLE_API_KEY"] = google_api_key
+        os.environ["GEMINI_API_KEY"] = google_api_key
+        return Gemini(id="gemini-3.6-flash", api_key=google_api_key)
+
+    if model_name == "Anthropic Claude":
+        if not anthropic_api_key:
+            st.warning("Anthropic API 키를 입력하세요.")
+            return None
+        os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
+        return Claude(id="claude-3-5-sonnet-20241022", api_key=anthropic_api_key)
+
+    return None
+```
+
+네 생성자 모두 키만 있으면 네트워크 없이 즉시 객체를 돌려줍니다 — 직접 확인: 가짜 키로 네 클래스를 모두 만들어 `.id`·`.provider`를 출력해도 예외 없이 끝납니다(아래 "확인" 참고). 다만 모델 id 네 개 중 최소 하나는 실제로 호출하는 시점에 문제가 됩니다. "문제 해결"에 적었습니다.
+
+이렇게 만든 모델은 `initialize_agent`가 원본과 같은 도구·지시문으로 에이전트를 감싸고, `@st.cache_resource`로 같은 `model_name`에 대해 재사용합니다.
+
+`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:72-89`
+
+```python
+@st.cache_resource
+
+def initialize_agent(model_name: str):
+    model = build_model(model_name)
+    if model is None:
+        return None
+
+    return Agent(
+        name=f"{model_name} Finance Agent",
+        model=model,
+        tools=[DuckDuckGoTools(), YFinanceTools()],
+        instructions=[
+            "Always use tables to display financial and numerical data.",
+            "For text, use bullet points and short paragraphs.",
+            "When giving stock information, explain assumptions clearly and cite the source when possible.",
+        ],
+        markdown=True,
+    )
+```
+
+여기서 캐시 키가 `model_name` 문자열 하나뿐이라는 점이 문제를 만듭니다. 키를 입력하지 않은 채 실행을 눌러 `None`이 한 번 캐시되면, 이후 같은 모델을 고른 채 키를 채워 넣고 다시 눌러도 `initialize_agent`는 함수 본문을 다시 실행하지 않고 캐시된 `None`을 그대로 돌려줍니다. Streamlit의 `cache_resource`는 캐시된 함수 안에서 부른 `st.warning` 같은 위젯 출력도 함께 저장했다가 캐시가 맞을 때 그대로 다시 그리므로, 화면에는 `build_model`이 다시 실행된 것처럼 "OpenAI API 키를 입력하세요." 경고까지 똑같이 다시 뜹니다 — 이번엔 키가 있는데도 뜨는 것이라 원인을 착각하기 쉽습니다. 실제 브라우저 클릭 없이 `streamlit.testing.v1.AppTest`로 재현했습니다.
+
+```bash
+cat > cache_repro.py <<'PY'
+from streamlit.testing.v1 import AppTest
+
+at = AppTest.from_file("xai_finance_agent_multi_model.py")
+at.run()
+at.button[0].click().run()
+print("1st click (no key):", [w.value for w in at.warning])
+
+at.sidebar.text_input(key="openai_finance_key").set_value("sk-fake-not-a-real-key")
+at.run()
+at.button[0].click().run()
+print("2nd click (key entered, cache not cleared):", [w.value for w in at.warning])
+PY
+uv run --no-project python cache_repro.py
+```
+
+직접 확인한 출력:
+
+```
+1st click (no key): ['OpenAI API 키를 입력하세요.', '선택한 모델에 맞는 API 키를 입력해주세요.']
+2nd click (key entered, cache not cleared): ['OpenAI API 키를 입력하세요.', '선택한 모델에 맞는 API 키를 입력해주세요.']
+```
+
+버튼을 누르면 캐시된(또는 새로 만든) 에이전트로 실제 실행이 이어집니다.
+
+`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:98-111`
+
+```python
+if st.button("실행"):
+    agent = initialize_agent(model_choice)
+    if agent is None:
+        st.warning("선택한 모델에 맞는 API 키를 입력해주세요.")
+    elif user_question.strip():
+        with st.spinner(f"{model_choice} 모델로 분석 중..."):
+            try:
+                result = agent.run(user_question)
+                st.subheader("결과")
+                st.markdown(result.content)
+            except Exception as e:
+                st.error(f"실행 중 오류가 발생했습니다: {e}")
+else:
+    st.info("사이드바에서 API 키와 모델을 선택한 뒤 실행 버튼을 누르세요.")
+```
+
+![Step 7: 멀티모델 앱 구성](diagrams/extra-multi-model.svg)
+
+**확인.** 키 없이 네 모델 생성자만 직접 호출해 봅니다(네트워크 요청이 아니라 객체 생성만).
+
+```bash
+uv run --no-project python -c "from agno.models.xai import xAI; from agno.models.openai import OpenAIChat; from agno.models.google import Gemini; from agno.models.anthropic import Claude; ms = [xAI(id='grok-4-1-fast', api_key='fake'), OpenAIChat(id='gpt-4o', api_key='fake'), Gemini(id='gemini-3.6-flash', api_key='fake'), Claude(id='claude-3-5-sonnet-20241022', api_key='fake')]; [print(type(m).__name__, m.id, m.provider) for m in ms]"
+```
+
+직접 확인한 출력:
+
+```
+xAI grok-4-1-fast xAI
+OpenAIChat gpt-4o OpenAI
+Gemini gemini-3.6-flash Google
+Claude claude-3-5-sonnet-20241022 Anthropic
+```
+
+앱을 직접 띄워 보려면 다음 명령을 씁니다.
+
+```bash
+uv run --no-project streamlit run xai_finance_agent_multi_model.py --server.headless true --server.address localhost
+```
+
+브라우저에서 `http://localhost:8501`을 열면 사이드바 셀렉트박스가 "OpenAI GPT"로 이미 선택돼 있고, 키 없이 "실행"을 누르면 "OpenAI API 키를 입력하세요."와 "선택한 모델에 맞는 API 키를 입력해주세요." 경고 두 개가 뜹니다(직접 확인: 위 AppTest 재현과 같은 동작).
+
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
@@ -263,6 +460,9 @@ ERROR   Error in Agent run: XAI_API_KEY not set. Please set the XAI_API_KEY envi
 - [ ] https://os.agno.com 컨트롤 플레인에서 로컬 AgentOS에 연결했다
 - [ ] "AAPL 최근 주가와 관련 뉴스를 표로 정리해줘" 같은 질문을 보내고 표 형식 응답을 확인했다
 - [ ] 터미널 로그에서 `web_search`·`search_news`·`get_current_stock_price` 중 하나 이상의 도구 호출을 확인했다
+- [ ] `uv pip install streamlit google-genai anthropic`로 멀티모델 앱의 추가 의존성을 설치했다
+- [ ] `uv run --no-project streamlit run xai_finance_agent_multi_model.py --server.headless true --server.address localhost`로 멀티모델 앱을 띄우고 기본 선택된 모델이 "OpenAI GPT"인 것을 확인했다
+- [ ] 키 없이 "실행"을 눌러 경고 두 개를 본 뒤, 키를 입력하고 다시 눌러도 같은 경고가 뜨면 Streamlit 메뉴(단축키 `C`)에서 캐시를 지웠다
 
 ## 문제 해결
 
@@ -274,12 +474,18 @@ ERROR   Error in Agent run: XAI_API_KEY not set. Please set the XAI_API_KEY envi
 | 서버 기동 시 포트 관련 오류, 또는 브라우저에 다른 화면이 뜸 | 이미 7777 포트를 쓰는 프로세스가 떠 있음. 포트가 코드에 하드코딩돼 있어 `serve(port=...)`로 바꾸려면 앱 코드 수정이 필요 | 기존 프로세스 종료 후 재시작 (Windows: `netstat -ano \| findstr :7777`로 PID 확인 후 `taskkill /F /PID <PID>`) |
 | https://os.agno.com 컨트롤 플레인이 `http://localhost:7777`에 연결하지 못함 | 브라우저가 HTTPS 페이지에서 HTTP localhost로 가는 요청을 혼합 콘텐츠로 차단했거나, 서버가 떠 있지 않음 | 먼저 `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs`로 서버 응답 코드(직접 확인: `200`)를 본다(`curl` 없이 URL만 열면 HTML 문서가 그대로 보임). 브라우저가 차단하면 사이트 설정에서 안전하지 않은 콘텐츠를 허용 |
 | 앱 `README.md`의 3단계가 "Get your OpenAI API Key"라고 안내 | 문서 오탈자. 코드는 `xAI(id="grok-4-1-fast")`(`starter_ai_agents/xai_finance_agent/xai_finance_agent.py:11`)만 쓰고 OpenAI를 호출하지 않는다 | 그 문구는 무시하고 실제로는 xAI 키(`XAI_API_KEY`, https://console.x.ai/)를 발급받는다 |
+| (Step 7) `xai_finance_agent_multi_model.py` 임포트 시 `ModuleNotFoundError: No module named 'streamlit'`(또는 `google.genai`, `anthropic`) | `requirements.txt`에 없는 패키지. Step 1에서 이미 설치한 `ddgs`·`openai`와 달리 `streamlit`·`google-genai`·`anthropic` 셋은 이 스텝에서 처음 필요해진다(하나씩 설치해 가며 직접 확인) | `uv pip install streamlit google-genai anthropic` |
+| (Step 7) 모델 하나를 고르고 키 없이 "실행"을 누른 뒤, 키를 채우고 다시 눌러도 "OpenAI API 키를 입력하세요." 경고가 그대로 다시 뜸 | `initialize_agent`가 `@st.cache_resource`로 `model_name` 문자열만 캐시 키로 쓴다(`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:72-74`). 키 없이 한 번 호출돼 `None`이 캐시되면, Streamlit은 그 안에서 부른 `st.warning`까지 함께 캐시했다가 다음 캐시 히트 때 그대로 재생한다(직접 `streamlit.testing.v1.AppTest`로 재현, Step 7 참고) | Streamlit 앱 메뉴(오른쪽 위 ⋮, 단축키 `C`)에서 "Clear cache"를 누르거나 서버를 재시작한다. 다른 모델을 골랐다가 되돌아오는 것으로는 고쳐지지 않는다 — 캐시 키가 다시 같아지면 같은 `None`을 또 돌려준다 |
+| (Step 7) "Anthropic Claude"를 고르고 실제 키를 넣어도 요청 실패 | 코드가 쓰는 `claude-3-5-sonnet-20241022`(`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:67`)는 Anthropic 공식 모델 폐기 목록 기준 2025-08-13에 폐기 공지되고 2025-10-28에 퇴역(retired)됐다 — https://platform.claude.com/docs/en/about-claude/model-deprecations (2026-09-28 확인). 같은 문서에 "퇴역 모델로 보낸 요청은 실패한다"고 적혀 있다 | 앱 코드의 `id=`를 살아 있는 모델(같은 문서가 권고하는 `claude-sonnet-4-6` 등)로 바꿔야 하며, 코드 수정 없이는 고칠 수 없다 |
+| (Step 7, 확인 못 함) "xAI Grok"도 같은 위험이 있을 수 있음 | `grok-4-1-fast`(`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:45`, 원본 `starter_ai_agents/xai_finance_agent/xai_finance_agent.py:11`과 동일)가 https://docs.x.ai/docs/models (2026-09-28 확인) 현재 모델 목록에 없다. xAI는 OpenAI·Anthropic처럼 폐기 일자를 밝힌 별도 페이지가 없어 정확한 퇴역 여부·날짜는 확인하지 못했다 — 현재 목록은 grok-4.3~4.7·grok-4.20 계열이라 id 체계 자체가 바뀐 것으로 보인다 | xAI 콘솔에서 현재 쓸 수 있는 모델 이름을 확인해 `id=`를 바꾼다. 이 문제는 Step 2의 원본 앱에도 동일하게 있다 |
 
 ## 더 해보기
 
 - `instructions`에 "반드시 한국어로 답하라"를 추가해 응답 언어를 강제해보기 (`starter_ai_agents/xai_finance_agent/xai_finance_agent.py:13`)
 - "AAPL과 MSFT의 최근 주가를 비교해줘"처럼 종목 두 개를 묻는 질문을 넣어 `get_current_stock_price`가 두 번 호출되는지 로그로 확인하기
 - `debug_mode=True`를 `False`로 바꿔 재시작한 뒤 터미널 로그가 얼마나 줄어드는지 비교하기
+- 멀티모델 앱에서 Gemini 선택 시 `gemini-3.6-flash` 대신 더 최신 Flash 모델 id(예: `gemini-3.8-flash`, https://ai.google.dev/gemini-api/docs/models 2026-09-28 기준)로 바꿔 응답을 비교해보기 (`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:60`)
+- `build_model`에 다섯 번째 분기를 추가해 로컬 Ollama 모델도 선택지에 넣어보기 (`starter_ai_agents/xai_finance_agent/xai_finance_agent_multi_model.py:39-69`)
 
 ## 다음 날 예고
 
