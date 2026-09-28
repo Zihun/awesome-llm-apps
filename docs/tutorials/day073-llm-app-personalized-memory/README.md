@@ -99,10 +99,10 @@ ls ~/.mem0
 config.json
 ```
 
-`mem0/memory/setup.py`(패키지 소스로 확인, mem0ai 0.1.29)가 모듈을 불러오는 시점에 `os.path.expanduser("~")` 아래 `os.makedirs(..., exist_ok=True)`를 조건 없이 실행하고, 비어 있으면 익명 UUID가 담긴 `config.json`을 만듭니다. 이어서 `Memory` 객체를 실제로 쓰면 같은 폴더에 대화 이력(`history.db`)도 쌓입니다. mem0는 모듈을 불러오는 순간 PostHog(`https://us.i.posthog.com`)로 보내는 익명 사용 통계 클라이언트도 만들고, `search`·`add`·`get_all`을 부를 때마다 OS·Python 버전과 컬렉션 이름 같은 메타데이터(대화 내용은 아님)를 전송합니다(`mem0/memory/telemetry.py` 소스로 확인). 이 둘을 끄려면 `import mem0`보다 먼저 `MEM0_DIR`(저장 위치)과 `MEM0_TELEMETRY=False`(통계 끄기) 환경변수를 지정합니다 — 이 문서의 나머지 확인 명령은 모두 이렇게, 그리고 저장소 밖(`$TEMP`)을 가리키도록 실행했습니다.
+`mem0/memory/setup.py`(패키지 소스로 확인, mem0ai 0.1.29)가 모듈을 불러오는 시점에 `os.path.expanduser("~")` 아래 `os.makedirs(..., exist_ok=True)`를 조건 없이 실행하고, 비어 있으면 익명 UUID가 담긴 `config.json`을 만듭니다. 이어서 `Memory` 객체를 실제로 쓰면 같은 폴더에 대화 이력(`history.db`)도 쌓입니다. mem0는 모듈을 불러오는 순간 PostHog(`https://us.i.posthog.com`)로 보내는 익명 사용 통계 클라이언트도 만들고, `search`·`add`·`get_all`을 부를 때마다 OS·Python 버전과 컬렉션 이름 같은 메타데이터(대화 내용은 아님)를 전송합니다(`mem0/memory/telemetry.py` 소스로 확인). 이 둘을 끄려면 `import mem0`보다 먼저 `MEM0_DIR`(저장 위치)과 `MEM0_TELEMETRY=False`(통계 끄기) 환경변수를 지정합니다 — 이 문서의 나머지 확인 명령은 모두 이렇게, 그리고 저장소 밖을 가리키도록 실행했습니다. bash 계열은 `$TEMP`가 없는 macOS·Linux에서도 되도록 `${TMPDIR:-/tmp}`를 씁니다.
 
 ```bash
-MEM0_DIR="$TEMP/day073-mem0" MEM0_TELEMETRY=False uv run --no-project python -c "..."
+MEM0_DIR="${TMPDIR:-/tmp}/day073-mem0" MEM0_TELEMETRY=False uv run --no-project python -c "..."
 ```
 
 ```powershell
@@ -189,10 +189,10 @@ client OK, base_url: https://api.openai.com/v1/
 
 **확인.** 두 가지를 직접 재현했습니다 — 아무도 듣지 않는 로컬 프록시(`127.0.0.1:9`)로 외부 네트워크를 막았습니다.
 
-먼저, OpenAI 키를 아예 지정하지 않으면 벡터 저장소를 Qdrant로 골라도 mem0 자신이 즉시 실패합니다. 스크래치 경로는 저장소 밖(`$TEMP`)에 둡니다.
+먼저, OpenAI 키를 아예 지정하지 않으면 벡터 저장소를 Qdrant로 골라도 mem0 자신이 즉시 실패합니다. 스크래치 경로는 저장소 밖에 둡니다(`$TEMP`는 macOS·Linux에 없으므로 `${TMPDIR:-/tmp}`를 씁니다).
 
 ```bash
-MEM0_DIR="$TEMP/day073-mem0-a" MEM0_TELEMETRY=False HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \
+MEM0_DIR="${TMPDIR:-/tmp}/day073-mem0-a" MEM0_TELEMETRY=False HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \
   uv run --no-project python -c "
 from mem0 import Memory
 config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'llm_app_memory', 'host': 'localhost', 'port': 6333}}}
@@ -218,7 +218,7 @@ openai.OpenAIError: The api_key client option must be set either by passing api_
 키를 (형식만 맞으면 아무 값이나) 지정하면 이 에러는 사라지고, 대신 Qdrant 연결 시도로 넘어갑니다. Qdrant를 띄우지 않은 채로는:
 
 ```bash
-MEM0_DIR="$TEMP/day073-mem0-b" MEM0_TELEMETRY=False OPENAI_API_KEY=sk-anything HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \
+MEM0_DIR="${TMPDIR:-/tmp}/day073-mem0-b" MEM0_TELEMETRY=False OPENAI_API_KEY=sk-anything HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 \
   uv run --no-project python -c "
 from mem0 import Memory
 config = {'vector_store': {'provider': 'qdrant', 'config': {'collection_name': 'llm_app_memory', 'host': 'localhost', 'port': 6333}}}
@@ -403,7 +403,7 @@ sed -n '61,62p' llm_app_memory.py
 **확인.** Qdrant Docker나 OpenAI 키 없이, 실제 `Memory.get_all()`을 그대로 불러 반환 형태를 확인합니다 — `vector_store.config.client`에 `:memory:` 모드의 `QdrantClient`를 직접 주입해 네트워크 연결 없이 진짜 `Memory` 객체를 만들고(임베더 생성에만 쓰이는 `OPENAI_API_KEY`는 형식만 맞으면 되므로 `sk-test`), mem0가 실제로 저장하는 페이로드 키(`data`, `get_all`이 이를 `memory`로 옮겨 돌려줍니다)로 메모리 1건을 직접 넣었습니다.
 
 ```bash
-MEM0_DIR="$TEMP/day073-mem0-step7" MEM0_TELEMETRY=False uv run --no-project python -c "
+MEM0_DIR="${TMPDIR:-/tmp}/day073-mem0-step7" MEM0_TELEMETRY=False uv run --no-project python -c "
 import os
 os.environ['OPENAI_API_KEY'] = 'sk-test'
 from qdrant_client import QdrantClient
@@ -483,17 +483,19 @@ Uvicorn server started on localhost:58732
 
 ## 요청 한 건이 흐르는 과정
 
-한 번의 질문·답변은 실제로 두 단계를 거칩니다 — 아래 두 그림은 그 순서 그대로입니다.
+"Chat with LLM" 한 번은 실제로 검색·답변 생성·저장 세 단계를 거칩니다. mem0가 내부적으로 Qdrant뿐 아니라 OpenAI에도 직접 요청을 보내는 지점(질문 임베딩, 사실 추출, 저장용 임베딩)까지 포함하면 배우가 6명(사용자·Streamlit UI·OpenAI 클라이언트·OpenAI API·mem0 Memory·Qdrant)까지 늘어나는데, 이 여섯을 한 그림에 담으면 mem0가 UI·OpenAI·Qdrant 세 상대와 동시에 이어져 배우를 어떤 순서로 세워도 다른 화살표의 라벨을 지나는 선이 하나 남는다는 것을 전수 탐색으로 확인했습니다. 아래 세 그림은 실제 시간 경계(검색 → 답변 생성 → 저장)로 나눠 이 문제를 없앤 것입니다 — 메시지는 모두 원래 순서 그대로 정확히 한 그림에만 있습니다.
 
-![1단계: 검색부터 답변 렌더링까지](diagrams/sequence.svg)
+![1단계: 검색](diagrams/sequence.svg)
 
-1단계는 사용자가 "Chat with LLM"을 누른 뒤 답변이 화면에 뜨기까지, `memory.search(query=prompt, user_id=user_id)`와 `client.chat.completions.create(...)`가 오가는 부분만 그립니다.
+1단계는 사용자가 "Chat with LLM"을 누른 뒤 mem0가 질문을 OpenAI로 임베딩하고 Qdrant에서 유사도 검색을 해 `relevant_memories`를 돌려받기까지입니다. 오늘 설치 기준으로는 이 단계의 두 번째 메시지(`search(...)`)에서 이미 `AttributeError`로 멈춥니다(Step 5) — 이 그림은 Qdrant와 `OPENAI_API_KEY`가 준비돼 있고 `qdrant-client`도 `.search()`가 남아 있는 버전이라고 가정했을 때 코드가 실행하려는 순서입니다.
 
-![2단계: 답변을 메모리에 저장](diagrams/extra-add.svg)
+![2단계: 답변 생성](diagrams/extra-answer.svg)
 
-2단계는 그 답변을 `memory.add(answer, user_id=user_id)`로 저장하는 부분만 그립니다 — Step 6에서 본 대로 mem0 내부에서 사실 추출, 기존 메모리와의 유사도 검색, 저장까지 이어집니다.
+2단계는 1단계가 돌려준 메모리 목록으로 만든 프롬프트를 `gpt-4o`에 보내 답변을 받고 화면에 렌더링하는 부분입니다.
 
-사용자가 질문을 입력하고 "Chat with LLM"을 누르면, Streamlit UI는 가장 먼저 mem0 Memory 계층에 검색을 넘깁니다. mem0는 질문을 OpenAI API로 임베딩으로 바꿔 받은 뒤, 그 벡터로 Qdrant에서 같은 `user_id`의 메모리만 걸러 유사도 검색을 하고, 결과 목록을 UI에 돌려줍니다. UI는 이 목록으로 컨텍스트 문자열을 만들어 OpenAI 클라이언트에 넘기고, 클라이언트는 `POST /v1/chat/completions`로 `gpt-4o`의 답변을 받아 화면에 렌더링합니다. 그 직후 UI는 같은 답변을 다시 mem0에 넘기고, mem0는 OpenAI API로 사실을 추출한 뒤 기존 메모리 중 비슷한 것이 있는지 Qdrant에서 한 번 더 검색하고, 그 결과에 따라 새 메모리를 Qdrant에 저장합니다 — 그래야 다음 질문의 검색 단계에서 이번 대화가 걸러집니다. Step 5·6에서 직접 확인했듯, 오늘 기준 설치에서는 1단계의 첫 화살표(`search`)에서 이미 `AttributeError`로 멈추므로 실제로는 이 왕복 전체가 완주되지 않습니다 — 두 그림은 코드가 원래 의도한 구조를 보여줍니다.
+![3단계: 저장](diagrams/extra-add.svg)
+
+3단계는 `memory.add(answer, user_id=user_id)` 호출 하나가 내부적으로 여는 사실 추출·임베딩 요청, 기존 메모리와의 유사도 검색, 그리고 Qdrant 저장입니다(Step 6). 이 단계도 `add()`가 내부에서 다시 부르는 `.search()`가 Step 5와 같은 이유로 먼저 멈추므로, 오늘 설치 기준으로는 저장까지 가지 못합니다.
 
 ## 실행 체크리스트
 
@@ -519,7 +521,7 @@ Uvicorn server started on localhost:58732
 
 - `uv pip install "qdrant-client==1.9.1"`로 내려서 실제 Qdrant를 Docker로 띄우고, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:41`의 `mem['text']`를 `mem['memory']`로 고쳐 실제 대화가 쌓이는지 확인해보기
 - `Memory.from_config`의 config dict에 `"version": "v1.1"`을 추가해 `get_all()`/`search()`의 반환 형태가 어떻게 바뀌는지 확인하고, `advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/llm_app_memory.py:67-75`의 "View My Memory" 코드를 그에 맞게 고쳐보기
-- `MEM0_TELEMETRY=False`와 `MEM0_DIR=$TEMP/day073-mem0`(저장소 밖) 환경변수를 설정해, 홈 디렉터리를 건드리지 않고 PostHog 전송도 끈 채로 앱을 띄워보기
+- `MEM0_TELEMETRY=False`와 `MEM0_DIR=${TMPDIR:-/tmp}/day073-mem0`(저장소 밖, PowerShell은 `$env:TEMP\day073-mem0`) 환경변수를 설정해, 홈 디렉터리를 건드리지 않고 PostHog 전송도 끈 채로 앱을 띄워보기
 
 ## 다음 날 예고
 

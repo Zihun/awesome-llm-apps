@@ -2,21 +2,15 @@
 shape: sequence_diagram
 
 사용자: 사용자 { class: person }
-ui: Streamlit UI { class: ours }
-client: OpenAI 클라이언트 { class: ours }
 openai_api: OpenAI API { class: ext }
-memory: mem0 Memory { class: ours }
 qdrant: Qdrant { class: store }
+memory: mem0 Memory { class: ours }
+ui: Streamlit UI { class: ours }
 
 사용자 -> ui: 질문 입력 후 "Chat with LLM" 클릭
-ui -> memory: "search()"
-memory -> openai_api: 질문 임베딩 요청
-openai_api -> memory: 임베딩 벡터
-memory -> qdrant: 벡터 유사도 검색
-qdrant -> memory: 관련 메모리 목록
-memory -> ui: 메모리 반환
-ui -> client: 관련 메모리와 질문을 합친 프롬프트
-client -> openai_api: "POST /v1/chat/completions"
-openai_api -> client: 답변 텍스트
-client -> ui: 응답 객체 반환
-ui -> 사용자: 답변 렌더링
+ui -> memory: "search(query=prompt, user_id=user_id)"
+memory -> openai_api: 질문 임베딩 요청(text-embedding-3-small)
+openai_api -> memory: 1536차원 임베딩 벡터
+memory -> qdrant: 코사인 유사도 검색(컬렉션 llm_app_memory, embedding_model_dims=1536)
+qdrant -> memory: score 포함 관련 메모리 목록(list)
+memory -> ui: relevant_memories(list, dict 아님)

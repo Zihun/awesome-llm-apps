@@ -6,7 +6,7 @@ openai_api: OpenAI API { class: ext }
 memory: mem0 Memory { class: ours }
 qdrant: Qdrant { class: store }
 
-ui -> memory: "add()"
-memory -> openai_api: 사실 추출·임베딩 요청
-memory -> qdrant: 유사 기억 검색
-memory -> qdrant: 새 메모리 저장
+ui -> memory: "add(answer, user_id=user_id)"
+memory -> openai_api: 사실 추출(gpt-4o-mini)·임베딩(text-embedding-3-small) 요청
+memory -> qdrant: 유사 기억 검색(limit=5, user_id 필터)
+memory -> qdrant: 새 메모리 저장(컬렉션 llm_app_memory)
