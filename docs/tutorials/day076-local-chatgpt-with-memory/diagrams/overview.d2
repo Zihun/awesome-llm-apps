@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: "Streamlit UI" { class: ours }
+memory: "mem0 Memory 계층" { class: ours }
+chat: "LiteLLM 완성 호출 (completion)" { class: ours }
+qdrant: "Qdrant 벡터 저장소" { class: store }
+ollama: "Ollama 로컬 서버 (로컬)" { class: ext }
+
+user -> ui: 사용자명·메시지
+ui -> memory: add·get_all(user_id)
+memory -> qdrant: 벡터 검색·저장
+memory -> ollama: 사실추출·임베딩 요청
+ui -> chat: 프롬프트+컨텍스트
+chat -> ollama: 채팅 완성 요청(스트리밍)
