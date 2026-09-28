@@ -1,10 +1,10 @@
 # Day 088 · 🤝 AI Consultant Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 70분(Step마다 실제로 함수를 호출해 보고 `adk web`까지 띄워 확인하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 상담 1건에 Gemini 호출 여러 회(도구 호출마다 왕복) + Perplexity Sonar 호출 1회, 두 요금표 기준 수백 원 이하로 추정(키가 없어 실제 과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_consultant_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 73분(Step마다 실제로 함수를 호출해 보고 `adk web`까지 띄워 확인하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 상담 1건에 Gemini 호출 여러 회(도구 호출마다 왕복) + Perplexity Sonar 호출 1회, 두 요금표 기준 수백 원 이하로 추정(키가 없어 실제 과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_consultant_agent`
 
 ## 오늘 만들 것
 
-Day 014~023의 Google ADK 크래시 코스 이후 이 시리즈가 처음으로 돌아온 `google-adk` 앱입니다(078~086 전체를 "google.adk" 문자열로 검색해 확인 — 이 사이 아흐레는 전부 다른 프레임워크를 씁니다). 구조는 Day 014의 `LlmAgent` 선언 한 번, `adk web`이 서버를 대신 띄우는 패턴 그대로지만, 오늘의 310줄짜리(마지막 줄에 개행이 없어 `wc -l`은 309로 셉니다) `ai_consultant_agent.py`는 도구를 세 개 얹습니다. 이 중 둘(`analyze_market_data`, `generate_strategic_recommendations`)은 코드 주석이 스스로 밝히듯 "실제 구현이라면 검색 결과를 처리했을 것"인 키워드 매칭 시뮬레이션이고, 나머지 하나(`perplexity_search`)만 `requests.post`로 실제 외부 API(Perplexity Sonar)에 닿습니다 — 셋 다 `safe_tool_wrapper`라는 데코레이터로 감싸져 있는데, 이 래퍼는 예외를 잡고 `bytes`를 문자열로 바꾸는 안전장치이자 `@wraps`로 원본 시그니처를 유지해 ADK가 여전히 진짜 파라미터를 읽게 만드는 역할을 겸합니다(코드 주석 75~76행이 그 이유를 직접 적어 뒀습니다). `google.adk.tools.google_search`를 임포트만 해 두고 `tools=[...]`에는 끝내 넣지 않은 죽은 줄(11행)도 있습니다. 이 문서는 키 없이 이 구조가 어디까지 실제로 동작하는지 — 세 도구를 직접 호출해 반환값을 보고, `adk web`을 띄워 세션을 만들고, 정확히 어느 지점에서 `ValueError`로 멈추는지 — 를 전부 직접 실행해 확인합니다. 완성 아키텍처는 다음과 같습니다.
+이 볼륨("🚀 Advanced AI Agents", Day 078~)에서는 처음 등장하는 `google-adk` 앱입니다(078~086 전체를 "google.adk" 문자열로 검색해 확인 — 이 사이 아흐레는 전부 다른 프레임워크를 씁니다). 시리즈 전체로 보면 Day 014~023의 크래시 코스, Day 067(Multimodal Agentic RAG), Day 077(AI Career Coach with Memory)에 이어 네 번째로 이 프레임워크를 다루는 자리입니다(024~087 경로를 "google.adk"로 검색해 확인). 구조는 Day 014의 `LlmAgent` 선언 한 번, `adk web`이 서버를 대신 띄우는 패턴 그대로지만, 오늘의 310줄짜리(마지막 줄에 개행이 없어 `wc -l`은 309로 셉니다) `ai_consultant_agent.py`는 도구를 세 개 얹습니다. 이 중 둘(`analyze_market_data`, `generate_strategic_recommendations`)은 키워드 매칭 시뮬레이션입니다 — `analyze_market_data`는 코드 주석이 스스로 "실제 구현이라면 검색 결과를 처리했을 것"이라고 밝히지만(98행), `generate_strategic_recommendations`엔 그런 주석이 없고 소스를 직접 읽어야 같은 패턴임을 알 수 있습니다. 나머지 하나(`perplexity_search`)만 `requests.post`로 실제 외부 API(Perplexity Sonar)에 닿습니다 — 셋 다 `safe_tool_wrapper`라는 데코레이터로 감싸져 있는데, 이 래퍼는 예외를 잡고 `bytes`를 문자열로 바꾸는 안전장치이자 `@wraps`로 원본 시그니처를 유지해 ADK가 여전히 진짜 파라미터를 읽게 만드는 역할을 겸합니다(코드 주석 75~76행이 그 이유를 직접 적어 뒀습니다). `google.adk.tools.google_search`를 임포트만 해 두고 `tools=[...]`에는 끝내 넣지 않은 죽은 줄(11행)도 있습니다. 이 문서는 키 없이 이 구조가 어디까지 실제로 동작하는지 — 세 도구를 직접 호출해 반환값을 보고, `adk web`을 띄워 세션을 만들고, 정확히 어느 지점에서 `ValueError`로 멈추는지 — 를 전부 직접 실행해 확인합니다. 완성 아키텍처는 다음과 같습니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,8 +12,8 @@ Day 014~023의 Google ADK 크래시 코스 이후 이 시리즈가 처음으로 
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| Google AI Studio API 키 (`GOOGLE_API_KEY`) | `gemini-2.5-flash` 호출 인증. 사이드바가 아니라 `adk web`을 띄우기 **전에 셸 환경변수로** 설정한다(이 앱에는 Streamlit UI가 없다). 이 문서는 키를 발급하지 않고 없을 때 어디서 멈추는지만 확인한다 | https://aistudio.google.com/apikey 가입 후 발급. `gemini-2.5-flash`는 폐기 예정은 아니지만 Google이 "이전에 실제로 써 본 사용자"로 접근을 제한하기 시작했다(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-29 확인) |
-| Perplexity API 키 (`PERPLEXITY_API_KEY`) | `perplexity_search` 도구가 `sonar` 모델로 웹 검색할 때 인증. 이것도 환경변수다. 이 문서는 발급하지 않는다 | https://www.perplexity.ai/settings/api 에서 발급 |
+| Google AI Studio API 키 (`GOOGLE_API_KEY`) | `gemini-2.5-flash` 호출 인증. 사이드바가 아니라 `adk web`을 띄우기 **전에 셸 환경변수로**(`export GOOGLE_API_KEY=...`, PowerShell은 `$env:GOOGLE_API_KEY="..."`) 설정하거나, `ai_consultant_agent/` 안에 `.env` 파일로 둔다 — `adk web`은 `cli/utils/envs.py`의 `load_dotenv_for_agent`로 에이전트 폴더의 `.env`를 자동으로 읽는다(소스로 확인, Day 014의 `.env.example` 방식과 같은 메커니즘). 이 문서는 키를 발급하지 않고 없을 때 어디서 멈추는지만 확인한다 | https://aistudio.google.com/apikey 가입 후 발급. `gemini-2.5-flash`는 폐기 예정은 아니지만 Google이 "이전에 실제로 써 본 사용자"로 접근을 제한하기 시작했다(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-29 확인) |
+| Perplexity API 키 (`PERPLEXITY_API_KEY`) | `perplexity_search` 도구가 `sonar` 모델로 웹 검색할 때 인증. 이것도 셸 환경변수나 같은 `.env`로 설정한다. 이 문서는 발급하지 않는다 | https://www.perplexity.ai/settings/api 에서 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | 인터넷 연결 | PyPI 설치, 키가 있다면 Gemini·Perplexity API 접속 | 별도 설치 없음 |
 
@@ -26,9 +26,9 @@ Day 014~023의 Google ADK 크래시 코스 이후 이 시리즈가 처음으로 
 | 패키지 진입점 (`agent.py`, `__init__.py`) | 둘 다 `ai_consultant_agent.py`에서 `root_agent`를 재노출한다. `__init__.py`는 `session_service`·`runner`·`APP_NAME`과 `agent` 모듈까지 함께 내보내 `agent.py`보다 범위가 넓다 | `advanced_ai_agents/single_agent_apps/ai_consultant_agent/agent.py:1-5`, `advanced_ai_agents/single_agent_apps/ai_consultant_agent/__init__.py:1-5` |
 | 컨설턴트 에이전트 (`root_agent`, `LlmAgent`) | `gemini-2.5-flash` 모델과 지시문, 도구 3개를 선언 | `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:266-273` |
 | 도구 안전 래퍼 (`safe_tool_wrapper`) | 예외를 dict로 바꾸고 `bytes`를 정리하며, `@wraps`로 원본 시그니처를 유지 | `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:52-77` |
-| 로컬 분석 도구 (`analyze_market_data`, `generate_strategic_recommendations`) | 키워드 매칭으로 미리 정해 둔 인사이트·추천을 반환 (시뮬레이션, 코드 주석이 스스로 밝힘) | `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:87-133`, `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:135-192` |
+| 로컬 분석 도구 (`analyze_market_data`, `generate_strategic_recommendations`) | 키워드 매칭으로 미리 정해 둔 인사이트·추천을 반환 (시뮬레이션 — `analyze_market_data`는 코드 주석이 스스로 밝히고, `generate_strategic_recommendations`는 소스로 확인) | `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:87-133`, `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:135-192` |
 | Perplexity 검색 도구 (`perplexity_search`) | `requests.post`로 Perplexity Sonar에 실제 HTTPS 요청 | `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:194-213` |
-| Runner + `InMemorySessionService` | 모듈을 임포트하는 순간(함수 호출이 아니라 최상위 코드) 함께 생성됨 | `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:276-281` |
+| Runner + `InMemorySessionService` | 모듈을 임포트하는 순간(함수 호출이 아니라 최상위 코드) 함께 생성되지만, `adk web`은 이 인스턴스를 쓰지 않고 `_create_runner`로 자기 것을 따로 만든다 | `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:276-281` |
 | Gemini API (`gemini-2.5-flash`) | 실제 추론과 도구 호출 결정 | 코드 없음 (외부 서비스) |
 | Perplexity API (`sonar`) | 실제 웹 검색 | 코드 없음 (외부 서비스) |
 
@@ -117,7 +117,7 @@ root_agent = LlmAgent(
 )
 ```
 
-`output_key="consultation_response"`는 Day 014·017에는 없던 파라미터로, 에이전트의 최종 응답 텍스트를 세션 상태의 이 키에 자동으로 저장하라는 뜻입니다(Step 6에서 세션과 함께 다룹니다). 지시문(`INSTRUCTIONS`, 222~263행, 42줄)은 도구 사용 순서를 명시적으로 못박습니다.
+`output_key="consultation_response"`는 Day 016에서 이미 다룬 파라미터로, 모델 응답이 끝나는 즉시 `event.actions.state_delta[self.output_key]`에 값을 넣습니다(Step 6에서 이 세션이 누구 것인지 다시 다룹니다). 지시문(`INSTRUCTIONS`, 222~263행, 42줄)은 도구 사용 순서를 명시적으로 못박습니다.
 
 `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:222-236`
 
@@ -146,14 +146,15 @@ When consulting with clients:
 **확인.**
 
 ```bash
-uv run --no-project python -c "
+cd ..
+uv run --no-project --python ai_consultant_agent/.venv python -c "
 from ai_consultant_agent import root_agent
 print(root_agent.name, '|', root_agent.model, '|', root_agent.output_key)
 print('tools:', [t.__name__ for t in root_agent.tools])
 "
 ```
 
-(`ai_consultant_agent`의 부모 폴더, 즉 `single_agent_apps`에서 실행해야 임포트가 됩니다 — 또는 `PYTHONPATH`에 현재 폴더를 넣고 `ai_consultant_agent` 대신 상대 임포트로 실행합니다.)
+(`cd ..`로 `ai_consultant_agent`의 부모 폴더 — `single_agent_apps` — 로 나옵니다. 이 폴더 임포트는 `ai_consultant_agent`가 패키지로 보이는 부모 폴더에서만 되는데, 가상환경은 자식 폴더의 `ai_consultant_agent/.venv`에 있어 `uv run`이 기본으로는 못 찾고 다른 인터프리터를 집어 `ModuleNotFoundError: No module named 'requests'`로 실패합니다 — `--python ai_consultant_agent/.venv`로 그 가상환경을 직접 가리켜야 합니다(직접 확인).)
 
 ```
 ai_consultant_agent | gemini-2.5-flash | consultation_response
@@ -164,7 +165,7 @@ tools: ['analyze_market_data', 'generate_strategic_recommendations', 'perplexity
 
 **목적.** `safe_tool_wrapper`가 실제로 무엇을 감싸는지 직접 실험으로 확인합니다.
 
-**할 일.** 전체 30줄을 봅니다.
+**할 일.** 전체 26줄을 봅니다.
 
 `advanced_ai_agents/single_agent_apps/ai_consultant_agent/ai_consultant_agent.py:52-77`
 
@@ -201,10 +202,14 @@ def safe_tool_wrapper(tool_func):
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
+`safe_tool_wrapper`가 실제로 감싸는 도구는 둘(로컬 분석 도구, Perplexity 검색 도구)이고 각각 받는 인자가 다릅니다 — 개요 그림 한 장에 다 넣으면 너무 빽빽해져서, 이 관계만 따로 그렸습니다.
+
+![도구 호출 구조](diagrams/extra-tools.svg)
+
 **확인.** 직접 가짜 도구 두 개(bytes를 반환하는 것, 예외를 던지는 것)로 실험합니다.
 
 ```bash
-uv run --no-project python -c "
+uv run --no-project --python ai_consultant_agent/.venv python -c "
 import inspect
 from ai_consultant_agent.ai_consultant_agent import safe_tool_wrapper
 
@@ -224,13 +229,15 @@ print('error result:', wrapped_broken('q'))
 "
 ```
 
-(`ai_consultant_agent`의 부모 폴더에서 실행합니다.)
+(Step 2와 같은 이유로 `single_agent_apps`에서, `--python`으로 `ai_consultant_agent/.venv`를 직접 가리켜 실행합니다.)
 
 ```
 signature: (x: str) -> dict
 bytes result: {'raw': 'hello-bytes', 'nested': ['a', {'k': '//4='}]}
 error result: {'error': 'Tool execution failed: boom', 'tool': 'broken_tool', 'status': 'error'}
 ```
+
+(앱이 `logging.basicConfig(level=logging.INFO)`를 걸어 둬서(23행) `stderr`에 `ERROR:ai_consultant_agent.ai_consultant_agent:Error in tool broken_tool: boom` 로그 한 줄이 위 출력과 섞여 찍힙니다 — `logger.error(...)` 호출 때문입니다, 68행.)
 
 `inspect.signature`가 `(*args, **kwargs)`가 아니라 원본 그대로인 `(x: str) -> dict`를 돌려주고, `bytes`가 전부 문자열이 됐으며, 예외가 서버를 죽이지 않고 구조화된 dict로 바뀐 것을 직접 확인했습니다.
 
@@ -283,7 +290,7 @@ def analyze_market_data(research_query: str, industry: str = "") -> Dict[str, An
 **확인.**
 
 ```bash
-uv run --no-project python -c "
+uv run --no-project --python ai_consultant_agent/.venv python -c "
 from ai_consultant_agent.ai_consultant_agent import analyze_market_data, generate_strategic_recommendations
 r = analyze_market_data('I want to launch a SaaS startup', 'fintech')
 print('insights:', r['total_insights'])
@@ -292,7 +299,7 @@ print('first recommendation:', rec[0]['category'], '|', rec[0]['recommendation']
 "
 ```
 
-(`ai_consultant_agent`의 부모 폴더에서 실행합니다.)
+(Step 2와 같은 이유로 `single_agent_apps`에서, `--python`으로 `ai_consultant_agent/.venv`를 직접 가리켜 실행합니다.)
 
 ```
 insights: 6
@@ -339,21 +346,21 @@ def perplexity_search(query: str, system_prompt: str = "Be precise and concise. 
 **확인.**
 
 ```bash
-uv run --no-project python -c "
+uv run --no-project --python ai_consultant_agent/.venv python -c "
 from ai_consultant_agent.ai_consultant_agent import perplexity_search
 print(perplexity_search('current market size'))
 "
 ```
 
-(`ai_consultant_agent`의 부모 폴더에서 실행합니다. `PERPLEXITY_API_KEY`를 설정하지 않은 상태입니다.)
+(Step 2와 같은 이유로 `single_agent_apps`에서, `--python`으로 `ai_consultant_agent/.venv`를 직접 가리켜 실행합니다. `PERPLEXITY_API_KEY`를 설정하지 않은 상태입니다.)
 
 ```
 {'error': 'Perplexity API key not found. Please set PERPLEXITY_API_KEY environment variable.', 'query': 'current market size', 'status': 'error'}
 ```
 
-### Step 6. Runner와 세션 서비스 — 임포트하는 순간 함께 만들어진다
+### Step 6. Runner와 세션 서비스 — 만들어지지만 `adk web`은 쓰지 않는다
 
-**목적.** `Runner`·`InMemorySessionService`가 함수 호출이 아니라 모듈 최상위 코드로 선언되어 있다는 것, 그리고 이것이 `adk web`이 이 모듈을 임포트하는 순간 자동으로 실행된다는 것을 확인합니다. `Runner`와 세션 서비스 자체의 역할은 Day 077에서 이미 다뤘으므로 여기서는 이 파일이 그것을 **어디서** 만드는지만 봅니다.
+**목적.** `Runner`·`InMemorySessionService`가 함수 호출이 아니라 모듈 최상위 코드로 선언되어, 이 모듈을 임포트하는 순간 자동으로 만들어진다는 것을 확인합니다. 그리고 `adk web`은 이 객체들을 쓰지 않고 **자기 자신의** Runner와 세션 서비스를 따로 만든다는 것도 함께 확인합니다. `Runner`·세션 서비스 자체의 역할은 Day 077에서 이미 다뤘으므로 여기서는 누가 무엇을 만들고 누가 그것을 실제로 쓰는지만 봅니다.
 
 **할 일.**
 
@@ -368,24 +375,26 @@ runner = Runner(
 )
 ```
 
-`if __name__ == "__main__":` 블록(283행부터) 밖에 있으므로, 이 파일을 그냥 `import`하기만 해도 (직접 실행하지 않아도) `runner`와 `session_service`가 즉시 만들어집니다. `adk web`이 패키지를 스캔·임포트할 때 정확히 이 일이 일어납니다 — 별도로 `Runner(...)`를 호출하는 코드는 앱 어디에도 없습니다.
+`if __name__ == "__main__":` 블록(283행부터) 밖에 있으므로, 이 파일을 그냥 `import`하기만 해도 (직접 실행하지 않아도) `runner`와 `session_service`가 즉시 만들어집니다. 그런데 `adk web`은 `agent_loader.py`(google-adk 2.10.0)로 패키지에서 `root_agent`만 가져오고, `api_server.py`의 `_create_runner`로 **자기 자신의** `Runner`와 세션 서비스를 새로 만듭니다(소스로 확인) — 이 파일의 `runner`·`session_service` 변수는 아무도 참조하지 않습니다. 이 둘이 실제로 쓰이는 곳은 `__main__` 블록의 안내 출력(309~310행)뿐이고, 그것도 `type(runner).__name__`처럼 타입 이름만 찍습니다. Step 7에서 `POST /apps/.../sessions/s1`로 만드는 세션과 `consultation_response`가 저장되는 세션은 `adk web` 자신의 세션 서비스이지, 여기서 만든 `session_service`가 아닙니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
 **확인.**
 
 ```bash
-uv run --no-project python -c "
+uv run --no-project --python ai_consultant_agent/.venv python -c "
 from ai_consultant_agent.ai_consultant_agent import runner, session_service
 print(type(runner).__name__, '|', type(session_service).__name__)
 "
 ```
 
+(Step 2와 같은 이유로 `single_agent_apps`에서, `--python`으로 `ai_consultant_agent/.venv`를 직접 가리켜 실행합니다.)
+
 ```
 Runner | InMemorySessionService
 ```
 
-(임포트만 했을 뿐 `adk web`도, `Runner(...)` 호출도 따로 하지 않았는데 두 객체가 이미 존재합니다.)
+(임포트만 했을 뿐 `adk web`도, `Runner(...)` 호출도 따로 하지 않았는데 두 객체가 이미 존재합니다 — 다만 이 인스턴스들은 `adk web`이 만드는 것과는 다른, 아무도 쓰지 않는 별개의 객체입니다.)
 
 ### Step 7. `adk web`으로 띄우기 — 폴더 하나만 가리켜 다른 앱을 안 건드린다
 
@@ -398,7 +407,7 @@ cd advanced_ai_agents/single_agent_apps/ai_consultant_agent
 uv run --no-project adk web --no_use_local_storage .
 ```
 
-`adk` 계열 명령을 처음 실행하면 Day 014에서 이미 본 텔레메트리 동의 프롬프트가 뜹니다. 이번엔 그 이후를 하나 더 직접 확인했습니다: 동의든 거부든 일단 응답이 기록되면 `~/.adk/config.json`이 **실제 홈 디렉터리**에 생깁니다(직접 확인 — `adk telemetry disable`을 먼저 실행해도 마찬가지입니다). google-adk 2.10.0의 이 경로는 `pathlib.Path.home()`으로 고정돼 있어(소스로 확인) 스크래치 폴더로 돌릴 방법이 없습니다 — 이 문서를 작성하며 생긴 파일은 확인 후 직접 지웠습니다. `.`을 `single_agent_apps`가 아니라 이 폴더 자체로 준 것은 `adk web --help`가 밝히는 대로 이 버전의 AGENTS_DIR이 "여러 에이전트가 든 폴더"뿐 아니라 "에이전트 폴더 하나를 직접 가리키는 경로"도 받기 때문입니다(직접 확인 — 실제로 존재하지 않는 옆 폴더를 하나 만들어 두고 `/list-apps`를 불러도 그 폴더는 목록에 없었습니다).
+`adk` 계열 명령을 대화형 터미널(`sys.stdin.isatty()`)에서 처음 실행하면 Day 014에서 이미 본 텔레메트리 동의 프롬프트가 뜨고, 답하면 `~/.adk/config.json`에 동의 여부가 저장됩니다 — 이건 문제가 아니라 정상 설정 파일입니다(`google/adk/utils/_telemetry_config.py`, 프롬프트 문구도 "This is OFF by default"). 이 경로는 `pathlib.Path.home()`인데, 이 함수는 Windows에서 `USERPROFILE`, macOS/Linux에서 `HOME` 환경변수를 그대로 따르므로(소스로 확인) 위치를 스크래치로 돌리고 싶으면 그 변수를 바꾸면 됩니다 — "고정 경로"가 아닙니다. 또한 이 동의 코드 자체가 `sys.stdin.isatty()`일 때만 실행되므로(`cli_tools_click.py`), 이 문서처럼 비대화형으로 `adk web`만 띄우면 아무 파일도 쓰지 않습니다(직접 확인) — 파일이 생기는 것은 프롬프트에 답하거나 `adk telemetry enable`/`disable`을 직접 칠 때뿐입니다. `.`을 `single_agent_apps`가 아니라 이 폴더 자체로 준 것은 `adk web --help`가 밝히는 대로 이 버전의 AGENTS_DIR이 "여러 에이전트가 든 폴더"뿐 아니라 "에이전트 폴더 하나를 직접 가리키는 경로"도 받기 때문입니다(직접 확인 — 저장소에는 없는 가짜 옆 폴더를 스크래치에 만들어 두고 `/list-apps`를 불러도 그 폴더는 목록에 없었습니다).
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -435,11 +444,11 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 ADK 개발자 웹 UI로 질문을 보내면 `POST /run`으로 `adk web`에 도착하고, 서버는 이미 임포트해 둔 `root_agent`를 조회해 Gemini에 instruction과 세 도구의 선언을 담아 첫 추론을 요청합니다. 지시문이 시킨 순서대로 Gemini가 먼저 `perplexity_search`의 `function_call`을 돌려주면, `root_agent`는 `safe_tool_wrapper`가 감싼 실제 함수를 실행합니다 — 이 순간에만 `POST /chat/completions`로 Perplexity에 진짜 HTTPS 요청이 나갑니다. 결과가 `bytes` 없는 dict로 정리되어 Gemini에 `function_response`로 돌아가면, 이어서 두 번째 그림(아래)이 시작됩니다.
+사용자가 ADK 개발자 웹 UI로 질문을 보내면 실제로는 `POST /run_sse`로 스트리밍 응답을 받습니다(google-adk 2.10.0의 웹 UI 번들 `cli/browser/main-45TAU4AN.js`에서 `runSse()`가 이 경로를 부르는 것을 확인) — 이 문서의 Step 7 `curl` 명령이 쓰는 `/run`은 스트리밍이 아닌 대안 경로입니다. 어느 쪽이든 서버는 `agent_loader.py`로 이미 찾아 둔 `root_agent`를 조회해(Step 6에서 확인했듯 이때 `adk web` 자신의 Runner·세션 서비스를 새로 만듭니다), Gemini에 instruction과 세 도구의 선언을 담아 첫 추론을 요청합니다. 지시문이 시킨 순서대로 Gemini가 먼저 `perplexity_search`의 `function_call`을 돌려주면, `root_agent`는 `safe_tool_wrapper`(그림의 "도구 안전 래퍼")가 감싼 실제 함수를 실행합니다 — 이 순간에만 `POST /chat/completions`로 Perplexity에 진짜 HTTPS 요청이 나갑니다. 결과가 `bytes` 없는 dict로 정리되어 Gemini에 `function_response`로 돌아가면, 이어서 두 번째 그림(아래)이 시작됩니다.
 
 ![로컬 분석 라운드트립](diagrams/extra-analysis.svg)
 
-Gemini가 이번엔 `analyze_market_data`의 `function_call`을 돌려주고, 이 호출은 `safe_tool_wrapper`를 거치되 네트워크로는 전혀 나가지 않습니다 — 미리 써 둔 `MarketInsight` 인사이트를 키워드 매칭으로 골라 그대로 반환합니다. 그 결과까지 받은 Gemini가 마지막으로 생성한 컨설팅 텍스트가 `consultation_response`라는 이름으로 세션 상태에 저장되고, `adk web`이 이를 그대로 사용자에게 표시합니다. 이 문서는 키가 없어 이 마지막 두 단계(Gemini의 실제 추론과 최종 텍스트 생성)까지는 직접 관찰하지 못했고, Step 7에서 확인한 것처럼 첫 Gemini 호출 자체가 `ValueError`로 끊기는 지점 이전까지만 실제로 실행했습니다.
+Gemini가 이번엔 `analyze_market_data`의 `function_call`을 돌려주고, 이 호출도 `safe_tool_wrapper`를 거치되 네트워크로는 전혀 나가지 않습니다 — 미리 써 둔 `MarketInsight` 인사이트를 키워드 매칭으로 골라 그대로 반환합니다(지시문은 이어서 `generate_strategic_recommendations`도 쓰라고 시키지만, 이 함수는 `analyze_market_data`와 완전히 같은 모양의 왕복이라 그림에는 대표로 하나만 그렸습니다 — 소스는 `ai_consultant_agent.py:135-192`). 그 결과까지 받은 Gemini가 마지막으로 생성한 컨설팅 텍스트가 `consultation_response`라는 이름으로 **`adk web` 자신의 세션**(Step 7에서 `POST /apps/.../sessions/s1`로 만든 것) 상태에 저장되고, `adk web`이 이를 그대로 사용자에게 표시합니다 — 이 앱의 모듈 최상위 `session_service`(Step 6)가 아닙니다. 이 문서는 키가 없어 이 마지막 두 단계(Gemini의 실제 추론과 최종 텍스트 생성)까지는 직접 관찰하지 못했고, Step 7에서 확인한 것처럼 첫 Gemini 호출 자체가 `ValueError`로 끊기는 지점 이전까지만 실제로 실행했습니다.
 
 ## 실행 체크리스트
 
@@ -457,7 +466,7 @@ Gemini가 이번엔 `analyze_market_data`의 `function_call`을 돌려주고, �
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 앱 자신의 README대로 `cd advanced_ai_agents/single_agent_apps` 후 `pip install -r requirements.txt`를 실행하면 파일을 찾지 못함 | `requirements.txt`가 그보다 한 단계 아래인 `ai_consultant_agent/`에 있다(직접 확인) | `cd ai_consultant_agent`까지 한 단계 더 들어간 뒤 설치 |
-| `adk web`을 처음 띄우면 텔레메트리 동의 프롬프트가 뜨고, 응답이 기록되면 `~/.adk/config.json`이 실제 홈 디렉터리에 생김 | google-adk 2.10.0이 이 설정 파일 경로를 `pathlib.Path.home()`으로 고정해 둔다(소스로 확인). `adk telemetry disable`을 먼저 실행해도 그 명령 자체가 이 파일을 씀 | 스크래치로 돌릴 방법은 없다 — 실습 후 생긴 파일을 확인하고 직접 지운다 |
+| `adk` 계열 명령을 대화형 터미널에서 실행할 때마다 텔레메트리 동의 프롬프트가 다시 뜬다 | 아직 `~/.adk/config.json`에 동의 여부를 저장하지 않았다(`sys.stdin.isatty()`일 때만 묻는다, 소스로 확인) | 프롬프트에 한 번 답하거나 `adk telemetry disable`을 실행 — 이후로는 조용히 넘어간다 |
 | `/run`에 메시지를 보내면 응답 본문이 `Internal Server Error`뿐이고 원인은 응답에 없음 | `GOOGLE_API_KEY`가 없으면 `google-genai`의 `Client` 생성자가 `ValueError`를 던지고 ADK는 이를 HTTP 500으로만 반환한다(Day 014에서 이미 확인한 것과 같은 지점) | `GOOGLE_API_KEY`를 셸 환경변수로 설정하고 서버 재시작. 원인은 서버 터미널 로그에서 확인 |
 | Windows PowerShell에서 이 문서의 `curl` 명령이 매개변수 오류를 낸다 | PowerShell이 `curl`을 `Invoke-WebRequest`의 별칭으로 미리 정의해 둔다(Day 014에서 이미 확인) | `curl.exe`처럼 확장자를 붙여 호출 |
 

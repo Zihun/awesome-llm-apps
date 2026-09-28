@@ -4,16 +4,16 @@ direction: down
 user: 사용자 (브라우저) { class: person }
 adk_web: adk web 서버 { class: ext }
 agent: 컨설턴트 에이전트 (root_agent) { class: ours }
+wrapper: 안전 래퍼 (safe_tool_wrapper) { class: ours }
 local_tools: 로컬 분석 도구 { class: ours }
 search_tool: Perplexity 검색 도구 { class: ours }
-runner: Runner + 세션 서비스 { class: ours }
+runner: Runner + 세션 서비스 (임포트 시 생성, adk web은 안 씀) { class: ours }
 gemini: Gemini API (gemini-2.5-flash) { class: ext }
-perplexity: Perplexity API (sonar) { class: ext }
 
 user -> adk_web: 질문 텍스트
-adk_web -> agent: root_agent 조회
-agent -> local_tools
-agent -> search_tool
-agent -> runner
-agent -> gemini
-search_tool -> perplexity
+adk_web -> agent: 자체 Runner로 실행
+agent -> local_tools: 도구 호출
+agent -> search_tool: 도구 호출
+agent -> gemini: instruction + 도구 선언
+wrapper -> local_tools: 감쌈
+wrapper -> search_tool: 감쌈

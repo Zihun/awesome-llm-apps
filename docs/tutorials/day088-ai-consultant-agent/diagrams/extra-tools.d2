@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+wrapper: 안전 래퍼 (safe_tool_wrapper) { class: ours }
+agent: 컨설턴트 에이전트 (root_agent) { class: ours }
+search_tool: Perplexity 검색 도구 { class: ours }
+local_tools: 로컬 분석 도구 { class: ours }
+perplexity: Perplexity API (sonar) { class: ext }
+
+wrapper -> local_tools: 감쌈
+wrapper -> search_tool: 감쌈
+agent -> local_tools: research_query, industry
+agent -> search_tool: query, system_prompt
+search_tool -> perplexity: POST /chat/completions

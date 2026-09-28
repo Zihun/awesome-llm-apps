@@ -1,16 +1,19 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자 { class: person }
 adk_web: adk web 서버 { class: ext }
+local_tools: 로컬 분석 도구 { class: ours }
+wrapper: 안전 래퍼 { class: ours }
 gemini: Gemini API { class: ext }
-agent: 컨설턴트 에이전트 (root_agent) { class: ours }
-local_tools: 로컬 분석 도구 (analyze_market_data) { class: ours }
+agent: 컨설턴트 에이전트 { class: ours }
+user: 사용자 { class: person }
 
-gemini -> agent: function_call: analyze_market_data(query)
-agent -> local_tools: safe_tool_wrapper로 감싸 호출
-local_tools -> agent: insights dict 반환
-agent -> gemini: function_response, 최종 응답 요청
-gemini -> agent: 생성된 컨설팅 텍스트 (consultation_response)
+gemini -> agent: function_call: analyze_market_data
+agent -> wrapper: 호출 위임
+wrapper -> local_tools: 함수 호출
+local_tools -> wrapper: insights 반환
+wrapper -> agent: dict 반환
+agent -> gemini: function_response
+gemini -> agent: 컨설팅 텍스트
 agent -> adk_web: 응답 반환
 adk_web -> user: 응답 표시
