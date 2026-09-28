@@ -150,7 +150,7 @@ openai_access_token = st.text_input("OpenAI API Key", type="password")
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run --no-project streamlit run chat_youtube.py --server.headless true
+uv run --no-project streamlit run chat_youtube.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
@@ -518,9 +518,21 @@ exit code는 0입니다(직접 확인) — 테스트 자체는 통과합니다. 
 
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+한 영상을 넣고 질문 하나를 던지는 과정이 실제로는 세 단계를 거치므로, 아래 세 그림은 그 순서 그대로입니다.
 
-사용자가 키와 영상 URL을 입력하면 `chat_youtube.py`가 직접 `youtube_transcript_api`를 불러 자막을 가져옵니다 — Substack 앱과 달리 embedchain의 로더를 거치지 않는 이 앱만의 경로입니다(Step 4). 자막 텍스트는 `app.add(transcript, data_type="text", ...)`로 전달되어 OpenAI 임베딩 API를 거쳐 Chroma에 저장됩니다(Step 5). 이어서 질문을 입력하면 `app.chat()`이 호출되어 Chroma에서 유사한 청크를 찾고, 여기에 embedchain이 내부적으로 관리하는 대화 기록(Step 6)까지 더해 `gpt-4`에 보낸 뒤 돌아온 답을 화면과 `session_state.chat_history`에 함께 남깁니다. 그림은 한 영상·한 질문의 성공 경로만 그렸습니다 — 실제로는 같은 영상에 대한 두 번째 이후 질문에서는 왼쪽의 자막 수집·임베딩 구간 전체가 생략되고(Step 5에서 직접 확인) 곧바로 `app.chat()`부터 시작되며, 그림에는 없는 대화 기록 DB와의 왕복이 매 질문마다 추가로 일어납니다(Step 6). 이 시퀀스는 키가 없어 실제 응답을 재현하지 못했고, 각 구간을 소스 코드와 안전한 모의 호출로 개별 확인한 것입니다.
+![1단계: 자막 수집](diagrams/sequence.svg)
+
+1단계는 `chat_youtube.py`가 `youtube_transcript_api`를 직접 불러 자막을 가져오는 부분만 그립니다.
+
+![2단계: 청크 임베딩과 저장](diagrams/extra-embed.svg)
+
+2단계는 자막 텍스트가 `app.add()`로 전달되어 OpenAI 임베딩 API를 거쳐 Chroma에 저장되는 부분만 그립니다.
+
+![3단계: 질문 응답](diagrams/extra-answer.svg)
+
+3단계는 `app.chat()`이 Chroma에서 청크를 찾아 `gpt-4`로 답을 생성하고 화면에 표시하는 부분까지 그립니다.
+
+사용자가 키와 영상 URL을 입력하면 `chat_youtube.py`가 직접 `youtube_transcript_api`를 불러 자막을 가져옵니다 — Substack 앱과 달리 embedchain의 로더를 거치지 않는 이 앱만의 경로입니다(Step 4). 자막 텍스트는 `app.add(transcript, data_type="text", ...)`로 전달되어 OpenAI 임베딩 API를 거쳐 Chroma에 저장됩니다(Step 5). 이어서 질문을 입력하면 `app.chat()`이 호출되어 Chroma에서 유사한 청크를 찾고, 여기에 embedchain이 내부적으로 관리하는 대화 기록(Step 6)까지 더해 `gpt-4`에 보낸 뒤 돌아온 답을 화면과 `session_state.chat_history`에 함께 남깁니다. 그림은 한 영상·한 질문의 성공 경로만 그렸습니다 — 실제로는 같은 영상에 대한 두 번째 이후 질문에서는 1·2단계(자막 수집·임베딩) 전체가 생략되고(Step 5에서 직접 확인) 곧바로 3단계 `app.chat()`부터 시작되며, 그림에는 없는 대화 기록 DB와의 왕복이 매 질문마다 추가로 일어납니다(Step 6). 이 시퀀스는 키가 없어 실제 응답을 재현하지 못했고, 각 구간을 소스 코드와 안전한 모의 호출로 개별 확인한 것입니다.
 
 ## 실행 체크리스트
 
