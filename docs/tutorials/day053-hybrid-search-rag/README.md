@@ -276,7 +276,7 @@ def main():
 **확인.** 네 관문을 넘긴 환경에서 서버를 headless로 띄우는 명령입니다.
 
 ```bash
-uv run --no-project streamlit run main.py --server.headless true
+uv run --no-project streamlit run main.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
@@ -539,7 +539,7 @@ compiled
 `streamlit run main.py`가 실제로 화면을 띄우는지는 Step 3에서 이미 `AppTest`로 직접 확인했습니다 — `main.py:4`의 raglite import를 먼저 통과해야 하는데, 네 관문을 넘긴 환경에서는 그 import가 성공하므로 화면이 뜹니다.
 
 ```bash
-uv run --no-project streamlit run main.py --server.headless true
+uv run --no-project streamlit run main.py --server.headless true --server.address localhost
 ```
 
 ## 요청 한 건이 흐르는 과정
