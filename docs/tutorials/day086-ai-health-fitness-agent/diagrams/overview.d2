@@ -17,7 +17,7 @@ gemini: "Gemini API (gemini-2.5-flash-preview-05-20, 2025-11-18 종료)" { class
 
 user -> ui: 프로필 입력·질문
 ui -> agents: user_profile·맥락 전달
-agents -> gemini: role·instructions 시스템 메시지 + user_profile
+agents -> gemini: 시스템 메시지 + user_profile / 맥락·질문
 ui -> session: dietary_plan·fitness_plan·qa_pairs 저장
 session -> ui: 재실행 시 저장된 값 조회
 ui -> user: 계획·답변 렌더링
