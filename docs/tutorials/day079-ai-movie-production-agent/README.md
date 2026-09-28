@@ -1,12 +1,12 @@
 # Day 079 · 🎬 AI Movie Production Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 55분 · API 비용 대략 컨셉 1건에 `gemini-2.5-flash` 호출 여러 회(ScriptWriter·CastingDirector·팀 리더 각 1회 이상) + SerpApi 검색 1회 안팎, 요금표 기준 대략 $0.01~0.05 수준으로 추정(대략치 — 키가 없어 실제 호출 횟수·과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_movie_production_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 75분(agno `Team`의 `coordinate` 위임 메커니즘과 4단계 시퀀스를 함께 다루어 다른 ★★★ 날보다 깁니다) · API 비용 대략 컨셉 1건에 `gemini-2.5-flash` 호출 6회 안팎(팀 리더의 위임·종합 판단 3회 + ScriptWriter 1회 + CastingDirector 2회, agno 3.0.11의 `coordinate` 모드 기준) + SerpApi 검색 1회, 요금표 기준 대략 $0.01~0.05 수준으로 추정(대략치 — 키가 없어 실제 호출 횟수·과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_movie_production_agent`
 
 ## 오늘 만들 것
 
-이번 튜토리얼부터 "🚀 Advanced AI Agents" 볼륨입니다. 지금까지 78일 동안 agno의 `Agent`를 여러 개 만들 때는 전부 파이썬 변수로 손수 이어 붙였습니다 — Day 038의 3-에이전트 파이프라인(News Collector → Summary Writer → Trend Analyzer)은 `.run()`을 세 번 순서대로 호출하며 앞 결과를 다음 프롬프트 문자열에 끼워 넣는 식이었습니다(소스로 확인). 오늘의 85줄짜리 `movie_production_agent.py`는 처음으로 agno의 `Team` 클래스를 씁니다 — `ScriptWriter`·`CastingDirector` 두 `Agent`를 `Team(members=[...])`으로 묶고, 누구에게 무엇을 맡길지 그 판단 자체를 팀 리더(자신의 `Gemini` 모델을 별도로 가짐)에게 넘깁니다. 리포 안에서 `from agno.team import Team`을 쓰는 파일은 8개뿐이고 그중 나머지 7개는 모두 Day 081 이후에 나오는 "multi_agent_apps" 폴더에 있으므로(소스 검색으로 확인), 오늘이 이 시리즈에서 `Team`을 처음 만나는 날입니다.
+지난 Day 078에 이어 "🚀 Advanced AI Agents" 볼륨 둘째 날입니다. 지금까지 78일 동안 agno의 `Agent`를 여러 개 만들 때는 전부 파이썬 변수로 손수 이어 붙였습니다 — Day 038의 3-에이전트 파이프라인(News Collector → Summary Writer → Trend Analyzer)은 `.run()`을 세 번 순서대로 호출하며 앞 결과를 다음 프롬프트 문자열에 끼워 넣는 식이었습니다(소스로 확인). 오늘의 85줄짜리 `movie_production_agent.py`는 처음으로 agno의 `Team` 클래스를 씁니다 — `ScriptWriter`·`CastingDirector` 두 `Agent`를 `Team(members=[...])`으로 묶고, 누구에게 무엇을 맡길지 그 판단 자체를 팀 리더(자신의 `Gemini` 모델을 별도로 가짐)에게 넘깁니다. `agno.team`에서 `Team`을 가져오는 파일은 이 앱 말고 모두 Day 081 이후의 앱(081·089·109·110·112·121·124)이므로(소스 검색으로 확인, `days.json`의 Day 001~078 앱 경로 전부에서 `agno.team`·`Team(`·`team=[` 0건도 함께 확인), 오늘이 이 시리즈에서 `Team`을 처음 만나는 날입니다 — 두 번째는 Day 081입니다.
 
-원본 앱 자체 README는 "Claude 3.5 Sonnet 모델"을 쓴다고 소개하고 3단계 설치 안내에서도 Anthropic API 키를 발급받으라고 하지만, 실제 코드(`movie_production_agent.py:7`, `movie_production_agent.py:15`)는 `from agno.models.google import Gemini`를 임포트하고 화면에는 "Enter Google API Key to access Gemini 2.5 Flash"라는 문구로 Google 키를 요구합니다 — README가 모델을 바꾼 뒤 갱신되지 않은 것으로 보입니다(README와 소스 대조로 확인). `requirements.txt` 4줄에는 agno의 Gemini 인터페이스가 필요로 하는 `google-genai`가 빠져 있어서(agno가 선언한 `extra == "google"` 목록에 있음, `importlib.metadata.requires('agno')`로 확인), 오늘 기준 설치(agno 3.0.11)에서는 Streamlit 화면이 뜨기도 전에 7번째 import 줄에서 `ImportError`로 멈춥니다(직접 확인, Step 1) — 이 문제는 agno 버전과 무관하게 애초부터 있었습니다(agno 2.3.2에서도 같은 extra 구조를 소스로 확인).
+원본 앱 자체 README는 "Claude 3.5 Sonnet 모델"을 쓴다고 소개하고 3단계 설치 안내에서도 Anthropic API 키를 발급받으라고 하지만, 실제 코드(`movie_production_agent.py:7`, `movie_production_agent.py:15`)는 `from agno.models.google import Gemini`를 임포트하고 화면에는 "Enter Google API Key to access Gemini 2.5 Flash"라는 문구로 Google 키를 요구합니다 — README가 모델을 바꾼 뒤 갱신되지 않은 것으로 보입니다(README와 소스 대조로 확인). `requirements.txt` 4줄에는 agno의 Gemini 인터페이스가 필요로 하는 `google-genai`가 빠져 있어서(agno가 선언한 `extra == "google"` 목록에 있음, `importlib.metadata.requires('agno')`로 확인), 오늘 기준 설치(agno 3.0.11)에서는 7번째 import 줄이 `ImportError`를 던집니다 — `python movie_production_agent.py`(bare 실행)로 보면 서버가 뜨기 전에 traceback으로 끝나고(직접 확인, Step 1), `streamlit run`으로 띄우면 서버 자체는 멈추지 않습니다 — `google-genai` 없이 headless로 띄운 채 `_stcore/health`가 계속 `ok`를 돌려주고 프로세스도 살아 있는 것을 직접 확인했습니다(Step 7). 브라우저 페이지에는 제목 대신 이 `ImportError`가 표시될 것으로 보이나(Streamlit이 스크립트 예외를 세션마다 페이지에 렌더링하는 동작, 소스로 확인), 실제 렌더링된 화면 자체는 이 문서에서 보지 않았습니다. 이 문제는 agno 버전과 무관하게 애초부터 있었습니다(agno 2.3.2에서도 같은 extra 구조를 소스로 확인).
 
 두 키(Google API 키, SerpAPI 키)를 모두 입력하면 영화 아이디어·장르·대상·러닝타임을 받는 폼이 나타납니다. 버튼을 누르면 ScriptWriter가 3~5인 캐릭터의 3막 구조 각본 아웃라인을 쓰고, CastingDirector가 `SerpApiTools`의 `search_google` 도구로 배우 현황을 실제로 검색해 캐스팅을 제안하며, MovieProducer(Team)가 둘의 결과를 하나의 영화 컨셉으로 종합합니다. 아래는 완성된 아키텍처입니다.
 
@@ -172,7 +172,7 @@ sed -n '10,19p' movie_production_agent.py
     )
 ```
 
-`Gemini`의 기본 모델 id는 `gemini-2.0-flash-001`이지만(agno 소스로 확인) 22행이 `id="gemini-2.5-flash"`로 명시해 덮어씁니다. `Gemini(...)`를 만드는 시점 자체는 네트워크를 타지 않습니다 — 실제 클라이언트는 `get_client()`가 처음 호출될 때(즉 `.run()`이 실제로 모델을 부를 때) 지연 생성됩니다(agno 소스로 확인). ScriptWriter에는 `tools`가 없으므로 검색 없이 오직 프롬프트만으로 아웃라인을 씁니다.
+`Gemini`의 기본 모델 id는 agno 3.0.11 기준 `gemini-3.7-flash`이지만(`gemini.py:96`, 직접 확인: `python -c "from agno.models.google import Gemini; print(Gemini().id)"` → `gemini-3.7-flash`) 22행이 `id="gemini-2.5-flash"`로 명시해 덮어씁니다. `Gemini(...)`를 만드는 시점 자체는 네트워크를 타지 않습니다 — 실제 클라이언트는 `get_client()`가 처음 호출될 때(즉 `.run()`이 실제로 모델을 부를 때) 지연 생성됩니다(agno 소스로 확인). ScriptWriter에는 `tools`가 없으므로 검색 없이 오직 프롬프트만으로 아웃라인을 씁니다.
 
 **그림.**
 
@@ -269,7 +269,7 @@ print([f.name for f in t.functions.values()])
     )
 ```
 
-`Team`도 `members`와는 별개로 자기 자신의 `model`(56행)을 가집니다 — 이 모델이 "팀 리더" 역할입니다. agno 소스의 파라미터 주석으로 확인한 두 기본값이 이 앱의 동작을 정합니다: `determine_input_for_members=True`(기본값)라서 리더가 각 멤버에게 정확히 무엇을 넘길지 스스로 결정하고, `respond_directly=False`(기본값)라서 리더가 멤버들의 응답을 그대로 돌려주지 않고 직접 처리(가공)한 뒤 반환합니다 — 62행의 지시문("Summarize the script outline and casting suggestions.")이 바로 이 종합 단계를 가리킵니다. `markdown=True`는 최종 응답 텍스트가 마크다운 형식이 되도록 지시합니다. agno의 `Team`도 `Agent`와 마찬가지로 `telemetry` 기본값이 `True`입니다(직접 확인) — agno의 익명 사용 통계 자체는 Day 047 Step 5에서 이미 다룬 사실과 같습니다.
+`Team`도 `members`와는 별개로 자기 자신의 `model`(56행)을 가집니다 — 이 모델이 "팀 리더" 역할입니다. `mode`를 지정하지 않으면 agno 3.0.11의 기본값은 `coordinate`이고(`agno/team/mode.py`: "Leader picks members, crafts tasks, synthesizes responses"), 위임 자체는 리더 모델이 대화 도중 `delegate_task_to_member(member_id, task)`라는 도구를 호출하는 방식으로 일어납니다(`_default_tools.py:690`) — 즉 리더가 ScriptWriter나 CastingDirector를 부르기 전에, 먼저 리더 자신의 Gemini 호출이 하나씩 있습니다(아래 시퀀스에서 그립니다). agno 소스의 파라미터 주석으로 확인한 두 기본값도 이 앱의 동작을 정합니다: `determine_input_for_members=True`(기본값)라서 리더가 각 멤버에게 정확히 무엇을 넘길지 스스로 결정하고, `respond_directly=False`(기본값)라서 리더가 멤버들의 응답을 그대로 돌려주지 않고 직접 처리(가공)한 뒤 반환합니다 — 62행의 지시문("Summarize the script outline and casting suggestions.")이 바로 이 종합 단계를 가리킵니다. `markdown=True`는 최종 응답 텍스트가 마크다운 형식이 되도록 지시합니다. agno의 `Team`도 `Agent`와 마찬가지로 `telemetry` 기본값이 `True`입니다(직접 확인) — agno의 익명 사용 통계 자체는 Day 047 Step 5에서 이미 다룬 사실과 같습니다.
 
 **그림.**
 
@@ -357,7 +357,7 @@ grep -n "st.text_area\|st.selectbox\|st.slider" movie_production_agent.py
             st.write(response.content)
 ```
 
-79~82행은 4개 입력을 콤마로 구분한 문장 하나로 합칩니다. `movie_producer.run(input_text, stream=False)`는 `Team.run()`을 호출하는데, 이 메서드의 실제 반환 타입은 `TeamRunOutput`입니다 — 84행의 타입 힌트 `RunOutput`(4행에서 임포트)은 실행에는 영향 없는 사소한 오표기입니다(둘 다 `.content` 필드를 가지므로 85행의 `response.content`는 그대로 동작합니다, agno 소스로 확인). 실제 키를 넣고 버튼을 누르면 이 한 번의 호출 안에서 팀 리더가 ScriptWriter·CastingDirector에 차례로 위임하고 결과를 종합하는데, 그 과정은 아래 시퀀스에서 다룹니다. 잘못된 키를 넣으면 `get_client()`가 실제 Gemini API를 호출하는 순간 인증 오류가 나겠지만, 이 문서는 실제 요청을 보내지 않으므로 이 지점은 소스로만 확인했습니다(Step 3에서 본 지연 생성 구조).
+79~82행은 4개 입력을 콤마로 구분한 문장 하나로 합칩니다. `movie_producer.run(input_text, stream=False)`는 `Team.run()`을 호출하는데, 이 메서드의 실제 반환 타입은 `TeamRunOutput`입니다 — 84행의 타입 힌트 `RunOutput`(4행에서 임포트)은 실행에는 영향 없는 사소한 오표기입니다(둘 다 `.content` 필드를 가지므로 85행의 `response.content`는 그대로 동작합니다, agno 소스로 확인). 실제 키를 넣고 버튼을 누르면 이 한 번의 호출 안에서 팀 리더가 ScriptWriter·CastingDirector에 차례로 위임하고 결과를 종합하는데, 그 과정은 아래 시퀀스에서 다룹니다. 잘못된 키를 넣으면 모델 요청이 실제로 나가는 순간(클라이언트 자체는 `get_client()`가 그때 처음 `genai.Client`로 만들 뿐이고, 인증 오류는 그 뒤 생성 요청에서 납니다, `gemini.py:172-217`로 확인) 인증 오류가 나겠지만, 이 문서는 실제 요청을 보내지 않으므로 이 지점은 소스로만 확인했습니다(Step 3에서 본 지연 생성 구조).
 
 **그림.**
 
@@ -371,30 +371,44 @@ sed -n '76,85p' movie_production_agent.py
 
 직접 확인한 출력은 위 발췌와 같습니다(줄 번호 76~85, 85행에 개행이 없어 `wc -l`은 84로 셉니다).
 
+`google-genai`까지 설치한 뒤에는 다음 명령으로 앱을 실제로 띄웁니다.
+
+```bash
+uv run --no-project streamlit run movie_production_agent.py
+```
+
+(headless로 확인만 하려면 `--server.address localhost --server.headless true`를 붙입니다. 이 문서는 임의의 높은 포트(61879)로 headless 기동만 재현했습니다 — 서버는 `_stcore/health`에 `ok`로 응답하며 켜져 있었고, 두 키가 비어 있어도 죽지 않는다는 것을 직접 확인했습니다. `google-genai` 없이 `movie_production_agent.py`가 그대로 import를 실패하는 상태로 이 서버를 띄워도 프로세스 자체는 살아 있었습니다 — Streamlit이 스크립트 예외를 세션마다 페이지에 렌더링할 뿐 서버를 멈추지 않는 동작이며, 실제 브라우저 화면에 뜨는 오류 페이지 자체는 확인하지 않았습니다.)
+
 ## 요청 한 건이 흐르는 과정
 
-한 번의 "Develop Movie Concept" 클릭이 실제로는 세 단계를 거칩니다 — 아래 세 그림은 그 순서 그대로입니다.
+한 번의 "Develop Movie Concept" 클릭이 실제로는 네 단계를 거칩니다 — 아래 네 그림은 그 순서 그대로입니다. agno 3.0.11의 `Team` 기본 모드는 `coordinate`이고, 위임은 팀 리더 **모델**이 `delegate_task_to_member(member_id, task)`라는 도구를 부르는 방식으로 일어납니다(`_default_tools.py:690`) — 그래서 MovieProducer가 ScriptWriter·CastingDirector를 부르기 전마다, 그리고 CastingDirector가 SerpApi를 부르기 전에도, Gemini에게 먼저 "무엇을 시킬지" 물어보는 호출이 하나씩 있습니다. Step 5의 overview 라벨("위임 판단·결과 종합 호출")이 가리키는 것이 바로 이 호출들입니다.
 
-![1단계: 요청 시작과 ScriptWriter](diagrams/sequence.svg)
+![1단계: 요청 시작과 리더의 ScriptWriter 위임](diagrams/sequence.svg)
 
-1단계는 버튼 클릭이 MovieProducer의 `run()` 호출로 이어지고, ScriptWriter가 각본 아웃라인을 받아 돌려주는 부분만 그립니다.
+1단계는 버튼 클릭이 MovieProducer의 `run()` 호출로 이어지고, 리더가 Gemini에게 `delegate_task_to_member` 도구 스키마를 보내 "ScriptWriter에게 시켜라"는 결정을 받은 뒤, ScriptWriter가 각본 아웃라인을 받아 돌려주는 부분까지 그립니다.
 
-![2단계: CastingDirector와 도구 호출](diagrams/extra-casting.svg)
+![2단계: 리더의 CastingDirector 위임](diagrams/extra-casting.svg)
 
-2단계는 MovieProducer가 아웃라인을 들려 CastingDirector에 위임하고, CastingDirector가 SerpApi로 배우를 검색한 뒤 그 결과를 Gemini에 다시 넘겨 캐스팅 제안을 받는 부분만 그립니다.
+2단계는 ScriptWriter의 아웃라인이 리더의 Gemini 호출에 "도구 결과"로 들어가고, 리더가 다시 `delegate_task_to_member(CastingDirector, task)`를 받아 CastingDirector에게 넘기는 부분만 그립니다.
 
-![3단계: 결과 종합과 반환](diagrams/extra-synthesis.svg)
+![3단계: CastingDirector의 도구 호출](diagrams/extra-casting-tool.svg)
 
-3단계는 MovieProducer 자신이 Gemini를 한 번 더 호출해 두 멤버의 결과를 하나의 영화 컨셉으로 종합하고, 그 결과가 Streamlit UI를 거쳐 화면에 렌더링되는 부분만 그립니다.
+3단계는 CastingDirector도 SerpApi를 스스로 부르지 않고 먼저 Gemini에게 `search_google` 호출 여부를 물어본 뒤, 실제로 SerpApi를 불러 배우 정보를 받고, 그 결과를 다시 Gemini에 넘겨 캐스팅 제안을 받는 부분을 그립니다.
 
-두 키를 넣고 아이디어를 적은 뒤 "Develop Movie Concept"를 누르면, Streamlit UI는 `movie_producer.run(input_text, stream=False)`를 호출합니다. MovieProducer는 먼저 ScriptWriter에게 각본 아웃라인을 위임하고, ScriptWriter는 Gemini를 한 번 호출해 아웃라인을 받아 MovieProducer에 돌려줍니다. 이어서 MovieProducer는 그 아웃라인과 함께 캐스팅 제안을 CastingDirector에 위임합니다. CastingDirector는 `search_google(query, num_results=10)`으로 SerpApi를 호출해 검색 결과 JSON(`search_results`·`knowledge_graph` 등)을 받고, 그 결과를 Gemini에 다시 넘겨 캐스팅 제안 텍스트를 받아 MovieProducer에 돌려줍니다. 두 멤버의 결과가 모이면 MovieProducer 자신의 Gemini 호출(Step 5에서 본 `respond_directly=False` 기본값에 따른 종합 단계)로 하나의 영화 컨셉으로 합쳐지고, 그 `response.content`가 Streamlit UI로 돌아와 `st.write()`로 화면에 렌더링됩니다.
+![4단계: 결과 종합과 반환](diagrams/extra-synthesis.svg)
+
+4단계는 CastingDirector의 제안이 리더의 Gemini 호출에 "도구 결과"로 들어가 더 이상 위임할 멤버가 없으므로 최종 텍스트로 종합되고, 그 결과가 Streamlit UI를 거쳐 화면에 렌더링되는 부분을 그립니다.
+
+두 키를 넣고 아이디어를 적은 뒤 "Develop Movie Concept"를 누르면, Streamlit UI는 `movie_producer.run(input_text, stream=False)`를 호출합니다. MovieProducer의 리더 모델(Gemini)은 먼저 멤버 목록과 `delegate_task_to_member` 스키마를 받고 `delegate_task_to_member(ScriptWriter, task)`를 돌려주며, 그 결정에 따라 리더가 ScriptWriter에게 각본 아웃라인을 위임합니다. ScriptWriter는 자신의 Gemini를 한 번 호출해 아웃라인을 받아 MovieProducer에 돌려줍니다. 이 아웃라인은 리더의 Gemini 대화에 도구 결과로 들어가고, 리더는 이어서 `delegate_task_to_member(CastingDirector, task)`를 받아 CastingDirector에게 캐스팅 제안을 위임합니다. CastingDirector도 곧바로 SerpApi를 부르지 않습니다 — 먼저 자신의 Gemini에 메시지와 `search_google` 도구 스키마를 보내 호출 요청을 받은 뒤에야 `search_google(query, num_results=10)`으로 SerpApi를 호출해 검색 결과 JSON을 받습니다. 이 JSON의 `search_results` 키는 SerpApi가 실제로 돌려주는 `organic_results`를 agno의 `SerpApiTools.search_google`이 내부에서 이름만 바꿔 담은 것입니다(`serpapi.py`(67·74행)로 확인) — SerpApi 자체가 `search_results`라는 키를 쓰는 것이 아닙니다. CastingDirector는 이 결과를 다시 Gemini에 넘겨 캐스팅 제안 텍스트를 받아 MovieProducer에 돌려줍니다. 두 멤버의 결과가 모이면 이번에는 더 위임할 멤버가 없으므로, 같은 리더 Gemini 대화가 도구 호출 대신 하나의 영화 컨셉으로 종합된 최종 텍스트를 돌려주고(Step 5에서 본 `respond_directly=False` 기본값에 따른 동작), 그 `response.content`가 Streamlit UI로 돌아와 `st.write()`로 화면에 렌더링됩니다. 다만 실제 키로 호출해 보지는 않았으므로, 리더가 두 위임을 정말 이렇게 순서대로(하나씩) 결정하는지 — 아니면 한 응답에서 병렬 tool call 두 개로 한 번에 낼 수도 있는지 — 는 agno 소스(`team/mode.py`, `team/_default_tools.py`)만으로 판단했습니다.
 
 ## 실행 체크리스트
 
-- [ ] `uv pip install -r requirements.txt`만으로는 `google-genai`가 빠져 있어 Streamlit이 뜨기도 전에 `ImportError`로 멈춘다는 것을 직접 확인했다
+- [ ] `uv pip install -r requirements.txt`만으로는 `google-genai`가 빠져 있어 bare 실행이 `ImportError`로 끝난다는 것을 직접 확인했다(streamlit run에서는 서버가 멈추지 않고 페이지에 같은 오류가 표시됨을 소스로 확인)
 - [ ] 원본 앱 README가 "Claude 3.5 Sonnet"을 소개하지만 실제 코드는 Google Gemini 2.5 Flash를 쓴다는 것을 README와 소스 대조로 확인했다
 - [ ] `Team(members=[...])`이 `determine_input_for_members`로 멤버별 입력을 스스로 정하고 `respond_directly=False`로 결과를 종합해 반환한다는 것을 agno 소스로 확인했다
+- [ ] `coordinate` 모드(기본값)의 위임이 리더 모델의 `delegate_task_to_member` 도구 호출로 일어나서, 멤버를 부르기 전마다 리더 자신의 Gemini 호출이 하나씩 더 있다는 것을 agno 소스(`team/mode.py`, `_default_tools.py:690`)로 확인했다
 - [ ] CastingDirector의 지시문이 도구 함수 이름 `search_google`을 문자 그대로 지목한다는 것을 소스로 확인했다
+- [ ] `search_google`의 반환 키 `search_results`는 SerpApi 자신이 아니라 agno의 `SerpApiTools`가 SerpApi의 `organic_results`를 이름만 바꿔 담은 것이라는 것을 소스로 확인했다
 - [ ] agno `Team`의 텔레메트리 기본값이 `Agent`와 같이 `True`라는 것을 직접 확인했다(Day 047 Step 5와 같은 사실)
 - [ ] 두 API 키를 모두 입력해야만 폼과 실행 버튼이 나타나는 게이트 구조라는 것을 들여쓰기로 확인했다
 
@@ -402,13 +416,13 @@ sed -n '76,85p' movie_production_agent.py
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `requirements.txt`대로 설치해도 `streamlit run` 즉시 `ImportError: google-genai not installed`로 멈춤 | agno의 Gemini 인터페이스가 요구하는 `google-genai`가 `agno[google]` extra 뒤에 있는데 `requirements.txt`가 이 extra를 선언하지 않음(직접 확인, agno 버전과 무관) | 리포 코드는 고치지 않음 — 재현하려면 `uv pip install google-genai` 추가 설치 |
+| `requirements.txt`대로 설치하면 bare 실행(`python movie_production_agent.py`)이 `ImportError: google-genai not installed`로 끝남. `streamlit run`으로 띄우면 서버 프로세스는 안 멈추고(`_stcore/health`가 계속 `ok`, 직접 확인) 페이지에는 제목 대신 같은 오류가 표시될 것으로 보임(렌더링 화면 자체는 소스로만 확인) | agno의 Gemini 인터페이스가 요구하는 `google-genai`가 `agno[google]` extra 뒤에 있는데 `requirements.txt`가 이 extra를 선언하지 않음(직접 확인, agno 버전과 무관) | 리포 코드는 고치지 않음 — 재현하려면 `uv pip install google-genai` 추가 설치 |
 | 원본 앱 README의 소개와 설치 안내가 "Claude 3.5 Sonnet"·Anthropic 키를 말함 | 모델을 Gemini로 바꾼 뒤 README를 갱신하지 않음(README와 소스 대조로 확인) | 이 문서는 실제 코드 기준으로 Google API 키를 안내 |
 | `requirements.txt`에 `lxml_html_clean`이 있지만 이 앱에서 쓰이는 곳이 없음 | agno의 `newspaper`/`newspaper4k` 도구 extra에 딸린 패키지인데 이 앱은 그 도구를 쓰지 않음(소스로 확인) | 동작에는 영향 없음 — 설치만 되고 무시됨 |
 
 ## 더 해보기
 
-- `uv pip install google-genai`까지 마친 뒤 실제 두 키를 넣고 버튼을 눌러, MovieProducer가 종합한 컨셉과 CastingDirector가 실제로 찾아온 배우 이름을 비교해보기
+- `uv pip install google-genai`까지 마친 뒤 `uv run --no-project streamlit run movie_production_agent.py`로 앱을 띄우고 실제 두 키를 넣어 버튼을 눌러, MovieProducer가 종합한 컨셉과 CastingDirector가 실제로 찾아온 배우 이름을 비교해보기
 - `Team(..., respond_directly=True)`로 바꿔 팀 리더의 종합 단계를 건너뛰면 응답이 멤버들의 원본 출력 목록으로 어떻게 달라지는지 확인해보기(`advanced_ai_agents/single_agent_apps/ai_movie_production_agent/movie_production_agent.py:54-66`)
 - `SerpApiTools(api_key=serp_api_key, enable_search_youtube=True)`를 추가해 CastingDirector가 유튜브 검색 결과도 캐스팅 근거로 쓰게 해보기
 

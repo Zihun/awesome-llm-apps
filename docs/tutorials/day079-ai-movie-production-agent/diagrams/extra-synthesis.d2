@@ -6,7 +6,7 @@ ui: Streamlit UI { class: ours }
 movie_producer: MovieProducer { class: ours }
 gemini: Gemini 2.5 Flash { class: ext }
 
-movie_producer -> gemini: 결과 종합 요청
+movie_producer -> gemini: 도구 결과(캐스팅 제안)
 gemini -> movie_producer: 요약된 영화 컨셉 텍스트
 movie_producer -> ui: "response.content"
 ui -> 사용자: "st.write()로 렌더링"

@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+movie_producer: MovieProducer { class: ours }
+gemini: Gemini 2.5 Flash { class: ext }
+casting_director: CastingDirector { class: ours }
+serpapi: SerpApi { class: ext }
+
+casting_director -> gemini: "메시지 + 지시문 + search_google 스키마"
+gemini -> casting_director: search_google 호출 요청
+casting_director -> serpapi: "search_google(query, num_results=10)"
+serpapi -> casting_director: "JSON(organic_results·knowledge_graph 등)"
+casting_director -> gemini: 메시지 + 도구 결과
+gemini -> casting_director: 캐스팅 제안
+casting_director -> movie_producer: 제안 반환
