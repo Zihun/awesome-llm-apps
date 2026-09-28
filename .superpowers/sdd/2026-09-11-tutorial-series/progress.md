@@ -868,3 +868,14 @@ Task 16: fix round 1 셋 dispatched(resume).
 === USER 2026-09-28: "끝나면 푸시하고 보고해" ===
 Task 16: 086 fix round 1 DONE — e158765, 전부 반영, check 통과, 20.7/분.
 Task 16: 084 fix round 1 DONE — 1a63bc7, C3·I2(부분)·M6, check 통과, 21.9/분(75분). I2 부분: overview에서 crew→agents·input→crew·crew→result를 되살리면 +300px — 도구를 가진 두 에이전트→도구 화살표만 복원(904×988), 나머지는 경계(포함 관계)로. 재확인에서 '순서라서 sequence가 보여 주면 overview에서 빠져도 되는 것'인지 판정. 부수 효과: 1차 때 ~/.config/crewai도 생성(보고서 정정).
+
+=== USER 2026-09-29: (재로그인 후) "Day90까지 진행해". 사용자가 로드맵·원장을 직접 커밋·푸시함(cb9a5b4). 재개 지점 순서대로: 084~086 재확인 → 수정 → 그 뒤 Day 087~090(087 AI System Architect Agent, 088 AI Consultant Agent, 089 AI Product Launch Intelligence Agent, 090 Trust-Gated Multi-Agent Research Team). 이전 지시("앞에 작업 끝나면 진행")에 따라 순서대로. ===
+Task 16: 084~086 재확인 dispatched (resume ae03ab1255cc4ae83, fix-R16-round1.diff base bd75a0e) — 084 overview 세 관계가 순서인지 구조인지 판정 포함.
+Task 16: 084~086 재확인 DONE — 086 10/10 해결(+Minor 2: CRLF, Q&A 라벨) / 084 10/11(I2 부분) + Minor 4(uv 0.7.2에서는 anthropic 1.9.0 남음) — overview 세 관계는 구조(Crew(agents=…), 입력 필드, kickoff 결과)라 결함, 전부 살린 최소 배치 1062×1198 / 085 6/9 + Important 3(분할이 마지막 UI→user 누락·요약→사이드바 없음, I3 부분(라벨 접기·step 미갱신), max_rounds=13 '여유' 주장 틀림) + Minor 4.
+=== USER 2026-09-29: Day 084 overview → "보조 그림으로 (추천)": extra-crew.d2(구조 그림)에 입력→Crew→에이전트 4→결과를 화살표로, overview는 904×988 유지. ===
+Task 16: fix round 2 dispatched(resume): 084(extra-crew + Minor 4), 085(Important 3 + Minor 4), 086(Minor 2). 끝나면 짧은 재확인 → Day 087~090.
+Task 16: 086 fix round 2 DONE — a544d07(LF, Q&A 라벨), 내가 LF·check 확인 → 086 complete.
+Task 16: 084 fix round 2 DONE — df809f5, extra-crew.d2(구조 그림 789×583) + Minor 3 반영, N4(라벨이 묶음 테두리에 닿음) 미해결 — 고치면 task1 사실을 지우거나 904×988 결정을 깨야 함(노드 순서 바꿔도 같은 SVG) → Ruling: park(Minor, 사용자 결정과 충돌), check 통과, 21.7/분(85분). 또 홈에 CrewAI\scratchpad\*.db(빈 스키마)를 만들었다가 지움.
+Task 16: 085 fix round 2 DONE — bb0ff20, Important 3·Minor 4 반영, 이관·요약 함수·캐시 구조는 overview 대신 extra 그림(extra-swarm-handoff·extra-summary-tools)으로 — 사용자가 084에 고른 '보조 그림' 방식과 같음, check 통과, 21.1/분. 084·085 짧은 재확인 dispatched(fix-R16-round2.diff base a71b4d2).
+Task 16: 084~085 2차 재확인 DONE — 084 0 open(extra-crew 여섯 관계, N4 근거 유지) → complete. 085 open I1(캐시 화살표가 Assessment에서만 — 셋 모두 씀, 넣어도 857×836 통과) + M2(핸드오프 라벨 메커니즘, extra-summary-tools 문구) → fix round 3 dispatched.
+Task 16: 085 fix round 3 DONE — 14f58d9(캐시 화살표 셋 모두, 라벨 데이터 복원, 턴 단위 추가 분할 — sequence 메시지 33개 그대로(내가 셈), check 통과, 21.0/분) → 085 complete. Task 16(084~086) 전부 complete. 푸시 후 Day 087~090 dispatched(sonnet 넷, task-17-dayNNN-report.md).
