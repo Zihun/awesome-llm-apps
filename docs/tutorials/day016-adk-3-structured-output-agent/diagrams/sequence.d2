@@ -2,9 +2,9 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
+gemini: Gemini API (google-genai Client) { class: ext }
 adk_web: adk web 서버 { class: ext }
 agent: 선택된 root_agent (LlmAgent) { class: ours }
-gemini: Gemini API (google-genai Client) { class: ext }
 
 user -> adk_web: POST /run (앱 이름, 세션ID, 메시지)
 adk_web -> adk_web: 앱 이름이 유효한 식별자·점(.) 경로인지 검사
