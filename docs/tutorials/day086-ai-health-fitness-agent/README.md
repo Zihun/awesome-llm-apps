@@ -1,10 +1,10 @@
 # Day 086 · 🏋️‍♂️ AI Health & Fitness Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 70분(스텝마다 재현 명령을 직접 돌려 봐야 해서 읽는 시간보다 손으로 확인하는 시간이 더 걸립니다) · API 비용 대략 계획 생성 1건에 `gemini-2.5-flash-preview-05-20` 호출 2회(식단·운동) + 후속 질문마다 1회, Gemini 요금표 기준 수백 원 이하로 추정(대략치 — 키가 없어 실제 과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ ⚠ · 예상 소요 70분(스텝마다 재현 명령을 직접 돌려 봐야 해서 읽는 시간보다 손으로 확인하는 시간이 더 걸립니다) · API 비용 대략 계획 생성 1건에 호출 2회(식단·운동) + 후속 질문마다 1회, Gemini 요금표 기준 수백 원 이하로 추정 — 다만 코드가 박은 `gemini-2.5-flash-preview-05-20`은 Google 공식 폐기 표에서 **2025-11-18에 이미 종료**돼(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-28 확인, 권장 대체 `gemini-3.6-flash`) 엔드포인트 자체가 없으므로 키가 있어도 이 id 그대로는 호출이 실패할 가능성이 높습니다(대략치·위 비용도 대체 모델 기준 — 키가 없어 실제 과금·실제 오류는 확인하지 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent`
 
 ## 오늘 만들 것
 
-Day 078·079에 이어 "🚀 Advanced AI Agents" 볼륨의 세 번째 앱입니다. Day 078은 agno `Agent` 하나를 AgentOS로 서빙했고, Day 079는 agno `Team`으로 두 `Agent`를 묶어 위임했습니다. 오늘의 245줄짜리(마지막 줄에 개행이 없어 `wc -l`은 244로 셉니다) `health_agent.py`는 `Team`을 쓰지 않고 서로 전혀 모르는 독립된 `Agent` 세 개(Dietary Expert·Fitness Expert·이름 없는 Q&A 에이전트)를 Streamlit 버튼 클릭마다 새로 만들어 씁니다. 나이·체중·키·활동량·식단 선호·목표를 입력하면 Dietary Expert와 Fitness Expert가 각각 Gemini를 호출해 식단·운동 텍스트를 만드는데, 화면에 함께 뜨는 "이 계획이 좋은 이유"·"중요 고려사항"(식단)과 "목표"·"팁"(운동) 박스는 그 응답과 무관한 **고정 문자열**입니다(`health_agent.py:179,181-186`·`191,193-198`, 소스로 확인) — 사용자가 Keto를 고르든 Vegetarian을 고르든 "이 계획이 좋은 이유"는 항상 "고단백·건강한 지방·적당한 탄수화물"로 뜹니다. 실제로 입력에 따라 달라지는 것은 `meal_plan`·`routine` 두 필드(LLM 응답 그대로)뿐입니다. `requirements.txt` 3줄(`advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/requirements.txt:1-3`, 마지막 줄 개행 없음)은 구글의 옛 SDK `google-generativeai==0.8.3`을 선언하지만, agno의 `Gemini` 래퍼가 실제로 임포트하는 것은 새 통합 SDK `google.genai`라서(Day 079가 같은 원인을 이미 확인) 설치 그대로는 임포트부터 막힙니다(직접 재현, Step 1). 앱 자체 README도 "two phidata agents"라고 소개하는데(`advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/README.md:11`), 실제 코드는 `from agno.agent import Agent`만 쓰고 phidata는 어디에도 없습니다(README와 소스 대조로 확인 — phidata는 agno의 예전 이름입니다). 이 앱이 만드는 식단·운동 계획은 자격을 갖춘 영양사·트레이너의 검토를 거치지 않은 LLM 생성 텍스트이며, 화면·README 어디에도 의료 자문이 아니라는 고지문은 없습니다(소스 전체 검색으로 확인) — 이 문서가 소개하는 내용도 의학적 조언이 아니라 이 코드가 실제로 만드는 산출물을 그대로 설명한 것입니다. 아래는 완성된 아키텍처입니다.
+Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨의 **아홉 번째** 앱이자, agno를 쓰는 **네 번째** 날입니다(078·079·081에 이어 — 이 사이 080·082~085는 agno가 아닌 다른 프레임워크를 씁니다, `from agno`/`import agno` 전체 검색으로 확인). Day 078은 agno `Agent` 하나를 AgentOS로 서빙했고, Day 079는 agno `Team`으로 두 `Agent`를 묶어 위임했습니다. Day 081은 `Team` 편집자(Editor)가 `Agent` 둘(Searcher·Writer)을 멤버로 쓰는 구조였습니다(`advanced_ai_agents/single_agent_apps/ai_journalist_agent/journalist_agent.py:22-70`, 소스로 확인). 오늘의 245줄짜리(마지막 줄에 개행이 없어 `wc -l`은 244로 셉니다) `health_agent.py`는 `Team`을 쓰지 않고 서로 전혀 모르는 독립된 `Agent` 세 개(Dietary Expert·Fitness Expert·이름 없는 Q&A 에이전트)를 Streamlit 버튼 클릭마다 새로 만들어 씁니다. 나이·체중·키·활동량·식단 선호·목표를 입력하면 Dietary Expert와 Fitness Expert가 각각 Gemini를 호출해 식단·운동 텍스트를 만드는데, 화면에 함께 뜨는 "이 계획이 좋은 이유"·"중요 고려사항"(식단)과 "목표"·"팁"(운동) 박스는 그 응답과 무관한 **고정 문자열**입니다(`health_agent.py:179,181-186`·`191,193-198`, 소스로 확인) — 사용자가 Keto를 고르든 Vegetarian을 고르든 "이 계획이 좋은 이유"는 항상 "고단백·건강한 지방·적당한 탄수화물"로 뜹니다. 실제로 입력에 따라 달라지는 것은 `meal_plan`·`routine` 두 필드(LLM 응답 그대로)뿐입니다. `requirements.txt` 3줄(`advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/requirements.txt:1-3`, 마지막 줄 개행 없음)은 구글의 옛 SDK `google-generativeai==0.8.3`을 선언하지만, agno의 `Gemini` 래퍼가 실제로 임포트하는 것은 새 통합 SDK `google.genai`라서(Day 079가 같은 원인을 이미 확인) 설치 그대로는 임포트부터 막힙니다(직접 재현, Step 1). 앱 자체 README도 "two phidata agents"라고 소개하는데(`advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/README.md:11`), 실제 코드는 `from agno.agent import Agent`만 쓰고 phidata는 어디에도 없습니다(README와 소스 대조로 확인 — phidata는 agno의 예전 이름입니다). 이 앱이 만드는 식단·운동 계획은 자격을 갖춘 영양사·트레이너의 검토를 거치지 않은 LLM 생성 텍스트이며, 화면·README 어디에도 의료 자문이 아니라는 고지문은 없습니다(소스 전체 검색으로 확인) — 이 문서가 소개하는 내용도 의학적 조언이 아니라 이 코드가 실제로 만드는 산출물을 그대로 설명한 것입니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,9 +12,9 @@ Day 078·079에 이어 "🚀 Advanced AI Agents" 볼륨의 세 번째 앱입니�
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| Google AI Studio API 키 | Dietary Expert·Fitness Expert·Q&A 에이전트가 공유하는 `gemini-2.5-flash-preview-05-20` 모델 호출 인증. 사이드바 입력창에 직접 붙여넣는다(환경변수 아님) | https://aistudio.google.com/apikey 가입 후 발급 |
+| Google AI Studio API 키 | Dietary Expert·Fitness Expert·Q&A 에이전트가 공유하는 `gemini-2.5-flash-preview-05-20` 모델 호출 인증. 사이드바 입력창에 직접 붙여넣는다(환경변수 아님). 이 모델 id는 Google 공식 폐기 표 기준 **2025-11-18 종료**라 키를 넣어도 이 id 그대로는 실패할 가능성이 높다(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-28 확인, 권장 대체 `gemini-3.6-flash`) | https://aistudio.google.com/apikey 가입 후 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| 인터넷 연결 | PyPI 설치, Gemini API 접속 | 별도 설치 없음. 사내망이면 `generativelanguage.googleapis.com` 접속 허용 필요 |
+| 인터넷 연결 | PyPI 설치, Gemini API 접속, agno의 익명 사용 통계 전송(`os-api.agno.com`, Day 047 Step 5와 같은 사실) | 별도 설치 없음. 사내망이면 `generativelanguage.googleapis.com`·`os-api.agno.com` 접속 허용 필요 |
 
 ## 아키텍처 한눈에 보기
 
@@ -25,7 +25,7 @@ Day 078·079에 이어 "🚀 Advanced AI Agents" 볼륨의 세 번째 앱입니�
 | Dietary Expert (Agent) | 사용자 프로필로 식단 텍스트(`meal_plan`)만 생성 | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:143-153` |
 | Fitness Expert (Agent) | 사용자 프로필로 운동 텍스트(`routine`)만 생성 | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:155-165` |
 | Q&A 에이전트 (Agent) | 이름·지시문 없이, 맥락 + 질문으로 후속 답변 생성 | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:226` |
-| Gemini API (`gemini-2.5-flash-preview-05-20`) | 세 에이전트가 공유하는 추론 모델 | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:108` |
+| Gemini API (`gemini-2.5-flash-preview-05-20`, **2025-11-18 종료**) | 세 에이전트가 공유하는 추론 모델 | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:108` |
 | 세션 상태 (`st.session_state`) | `dietary_plan`·`fitness_plan`·`qa_pairs`·`plans_generated` 보관. 탭을 닫거나 새로고침하면 사라짐 | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:77-81`, `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:201-204` |
 
 ## 단계별 진행
@@ -86,7 +86,7 @@ During handling of the above exception, another exception occurred:
 ImportError: `google-genai` not installed. Please install it using `pip install google-genai`
 ```
 
-`requirements.txt`가 선언한 `google-generativeai==0.8.3`은 구글의 옛 SDK로, 설치하면 `google.generativeai` 모듈을 제공합니다(직접 확인: `python -c "import google.generativeai"`는 성공). 하지만 agno 3.0.11의 `agno.models.google.Gemini`가 내부에서 요구하는 것은 이름이 비슷한 별개의 새 통합 SDK `google.genai`입니다(`agno/utils/gemini.py`로 확인) — `google-generativeai`를 설치해도 `google.genai` 모듈은 생기지 않습니다. 같은 원인(agno의 `extra == "google"`이 `google-genai`를 요구)을 Day 079가 이미 확인했는데, 그날은 `requirements.txt`에 구글 SDK 줄 자체가 없었던 반면 오늘은 **틀린(폐기 예정인) 패키지**가 명시적으로 박혀 있다는 점이 다릅니다.
+`requirements.txt`가 선언한 `google-generativeai==0.8.3`은 구글의 옛 SDK로, 설치하면 `google.generativeai` 모듈을 제공합니다(직접 확인: `python -c "import google.generativeai"`는 성공). 하지만 agno 3.0.11의 `agno.models.google.Gemini`가 내부에서 요구하는 것은 이름이 비슷한 별개의 새 통합 SDK `google.genai`입니다(`agno/utils/gemini.py`로 확인) — `google-generativeai`를 설치해도 `google.genai` 모듈은 생기지 않습니다. 같은 원인(agno의 `extra == "google"`이 `google-genai`를 요구)을 Day 079가 이미 확인했는데, 그날은 `requirements.txt`에 구글 SDK 줄 자체가 없었던 반면 오늘은 **틀린(이미 폐기되어 지원이 끝난) 패키지**가 명시적으로 박혀 있다는 점이 다릅니다 — PyPI의 `google-generativeai` 페이지 자체가 "[Deprecated] … All support for this repository ended permanently on November 30, 2025."라고 적어 두었습니다(https://pypi.org/project/google-generativeai/, 2026-09-28 확인).
 
 ```bash
 uv pip install google-genai
@@ -141,7 +141,7 @@ st.set_page_config(
         st.success("API Key accepted!")
 ```
 
-99행의 `return`은 `main()` 함수 자체를 끝냅니다 — Day 079가 `if google_api_key and serp_api_key:` 블록으로 나머지 코드를 감싼 것과 달리, 이 앱은 키가 없으면 사이드바를 그린 시점에 바로 함수를 빠져나가는 방식입니다. 결과는 같습니다: 키가 없으면 제목·안내문·사이드바 외에는 아무것도 그려지지 않습니다.
+102행의 `return`은 `main()` 함수 자체를 끝냅니다 — Day 079가 `if google_api_key and serp_api_key:` 블록으로 나머지 코드를 감싼 것과 달리, 이 앱은 키가 없으면 사이드바를 그린 시점에 바로 함수를 빠져나가는 방식입니다. 결과는 같습니다: 키가 없으면 제목·안내문·사이드바 외에는 아무것도 그려지지 않습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -166,7 +166,7 @@ grep -n "success-box\|warning-box" health_agent.py
             gemini_model = Gemini(id="gemini-2.5-flash-preview-05-20", api_key=gemini_api_key)
 ```
 
-agno 3.0.11 기준 `Gemini`의 기본 id는 `gemini-3.7-flash`이지만(직접 확인: `Gemini().id`), 이 줄이 `"gemini-2.5-flash-preview-05-20"`(2025년 5월 날짜가 박힌 미리보기 스냅샷)로 덮어씁니다. 키 검증 위치는 Day 078의 OpenAI 경로와 다릅니다 — agno의 `OpenAIChat`은 키가 없으면 클라이언트를 만들기도 전에 자신의 예외를 던지는 반면(Day 078 Step 2), `Gemini.get_client()`(agno 소스 `agno/models/google/gemini.py`의 172~216행 부근, 소스로 확인)는 키가 없으면 `log_error(...)`만 찍고도 그대로 `genai.Client(**client_params)`를 호출합니다. 실제 검증은 `google.genai`의 `Client.__init__` 자신이 합니다: 키가 완전히 비어 있으면(`api_key=None`, 환경변수도 없음) `ValueError: No API key was provided...`를 던지지만(직접 재현), 이 앱의 사이드바 게이트(Step 2)는 빈 문자열을 이미 걸러내므로 실제로는 어떤 문자열이든(가짜 값이라도) `api_key`로 넘어가고, 그 경우 `Client(...)` 생성 자체는 조용히 성공합니다(직접 재현) — 진짜 인증 실패는 이 앱 코드 안이 아니라 첫 실제 요청이 Gemini 서버에 닿는 순간 일어날 것으로 보이며, 이 문서는 실제 키가 없어 그 지점은 재현하지 못했습니다.
+agno 3.0.11 기준 `Gemini`의 기본 id는 `gemini-3.7-flash`이지만(직접 확인: `Gemini().id`), 이 줄이 `"gemini-2.5-flash-preview-05-20"`(2025년 5월 날짜가 박힌 미리보기 스냅샷)로 덮어씁니다. 이 id는 이미 살아 있지 않습니다 — Google의 공식 Gemini 폐기 표는 `gemini-2.5-flash-preview-05-20`을 "Shutdown date: November 18, 2025, Recommended replacement: `gemini-3.6-flash`"로 올려 두었고, 종료 뒤에는 "it is completely turned off, and the endpoint is no longer available"라고 적습니다(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-28 확인). 즉 108행을 그대로 두면 키가 유효해도 실제 요청은 이 엔드포인트가 없어져 실패할 가능성이 높습니다 — 다만 키가 없어 이 실패 자체(오류 문구 등)는 이 문서에서 재현하지 못했습니다. 키 검증 위치는 Day 078의 OpenAI 경로와 다릅니다 — agno의 `OpenAIChat`은 키가 없으면 클라이언트를 만들기도 전에 자신의 예외를 던지는 반면(Day 078 Step 2), `Gemini.get_client()`(agno 소스 `agno/models/google/gemini.py`의 172~216행 부근, 소스로 확인)는 키가 없으면 `log_error(...)`만 찍고도 그대로 `genai.Client(**client_params)`를 호출합니다. 실제 검증은 `google.genai`의 `Client.__init__` 자신이 합니다: 키가 완전히 비어 있으면(`api_key=None`, 환경변수도 없음) `ValueError: No API key was provided...`를 던지지만(직접 재현), 이 앱의 사이드바 게이트(Step 2)는 빈 문자열을 이미 걸러내므로 실제로는 어떤 문자열이든(가짜 값이라도) `api_key`로 넘어가고, 그 경우 `Client(...)` 생성 자체는 조용히 성공합니다(직접 재현) — 진짜 인증 실패는 이 앱 코드 안이 아니라 첫 실제 요청이 Gemini 서버에 닿는 순간 일어날 것으로 보이며, 이 문서는 실제 키가 없어 그 지점은 재현하지 못했습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -272,7 +272,7 @@ grep -n "st.number_input\|st.selectbox" health_agent.py
                     )
 ```
 
-Day 078·079의 `description=`과 달리 이 두 `Agent`는 `role=`을 씁니다. `role`은 agno `Team` 멤버 전용이 아닙니다 — `Agent`가 단독으로 쓰여도 시스템 메시지를 만들 때 `agent.role`이 `None`이 아니면 `<your_role>...</your_role>` 태그로 그대로 끼워 넣습니다(agno 소스 `agno/agent/_messages.py`의 276~278행 부근, 소스로 확인). 두 에이전트는 `model=gemini_model`로 **같은** `Gemini` 객체를 공유하므로(직접 확인) 실제 클라이언트도 하나만 지연 생성됩니다 — 다만 둘은 서로의 `name`·`instructions`를 전혀 모르는 독립된 객체이고, 묶어 주는 `Team`도 없습니다(Day 079와의 차이).
+Day 078·079의 `description=`과 달리 이 두 `Agent`는 `role=`을 씁니다. `role`은 agno `Team` 멤버 전용이 아닙니다 — `Agent`가 단독으로 쓰여도 시스템 메시지를 만들 때 `agent.role`이 `None`이 아니면 `<your_role>...</your_role>` 태그로 그대로 끼워 넣습니다(agno 소스 `agno/agent/_messages.py`의 276~278행 부근, 소스로 확인). 두 에이전트는 `model=gemini_model`로 **같은** `Gemini` 객체를 공유하므로(직접 확인) 실제 클라이언트도 하나만 지연 생성됩니다 — 다만 둘은 서로의 `name`·`instructions`를 전혀 모르는 독립된 객체이고, 묶어 주는 `Team`도 없습니다(Day 079와의 차이). 두 에이전트 모두 `telemetry` 기본값은 `True`입니다(직접 확인) — agno가 `Agent.run()`마다 익명 실행 이벤트를 보내는 사실 자체는 Day 047 Step 5("agno의 익명 사용 통계")가 이미 다뤘으므로 여기서는 되풀이하지 않습니다. 끄려면 `AGNO_TELEMETRY=false`를 겁니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -361,10 +361,10 @@ def display_dietary_plan(plan_content):
 **확인.**
 
 ```bash
-grep -n '"why_this_plan_works"\|"important_considerations"\|"goals"\|"tips"\|\.content' health_agent.py | grep -v "def \|st\."
+sed -n '177,199p' health_agent.py
 ```
 
-직접 확인한 출력은 178·179·180·181·190·191·192·193행이며, `.content`가 붙는 것은 `meal_plan`·`routine` 두 줄뿐입니다.
+직접 확인한 출력은 위 Step 6 발췌(177~199행)와 글자까지 같습니다. 그 안에서 `.content`가 붙는 줄은 180행(`meal_plan`)·192행(`routine`) 둘뿐이고, `why_this_plan_works`(179행)·`important_considerations`(181~186행)·`goals`(191행)·`tips`(193~198행)는 모두 `.content`가 아닌 리터럴 문자열입니다.
 
 ### Step 7. 후속 질문 — 매번 새로 태어나는 범용 에이전트
 
@@ -434,7 +434,7 @@ qa 에이전트 이름: None
 uv run --no-project streamlit run health_agent.py
 ```
 
-(headless로 확인만 하려면 `--server.address localhost --server.headless true`를 붙입니다. `streamlit==1.40.2` 소스(`streamlit/web/bootstrap.py`의 172~185행 부근, `streamlit/net_util.py`)로 확인한 대로, 주소를 지정하지 않고 headless로 띄우면 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보내는데, `--server.address localhost`를 붙이면 `config.is_manually_set("server.address")`가 참이 되어 이 조회 자체를 건너뜁니다. 이 문서는 임의의 높은 포트(61987)로 headless 기동을 직접 재현했습니다 — 프록시를 걸어 외부 요청을 막은 채로 `_stcore/health`가 `200`을 돌려주고, 로그에 "Local URL" 한 줄만 찍히며 외부 IP 조회는 시도되지 않는 것을 직접 확인했습니다.)
+(headless로 확인만 하려면 `--server.address localhost --server.headless true`를 붙입니다. `streamlit==1.40.2` 소스(`streamlit/web/bootstrap.py`의 172~185행 부근, `streamlit/net_util.py`)로 확인한 대로, 주소를 지정하지 않고 headless로 띄우면 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보내는데, `--server.address localhost`를 붙이면 `config.is_manually_set("server.address")`가 참이 되어 이 조회 자체를 건너뜁니다. 이 문서는 임의의 높은 포트(61987)로 headless 기동을 직접 재현했습니다(`HOME`·`USERPROFILE`·`LOCALAPPDATA`·`APPDATA`를 모두 스크래치로 돌려, 실제 사용자 홈에 이미 있는 `~/.streamlit/credentials.toml`을 보지 않는 첫 실행 상태로 재현) — 프록시를 걸어 외부 요청을 막은 채로 `_stcore/health`가 `200`을 돌려주고, 로그에는 `Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.`와 `URL: http://localhost:61987` 두 줄만 찍히며 외부 IP 조회(`checkip.amazonaws.com`)는 한 번도 시도되지 않는 것을 직접 확인했습니다.)
 
 ## 요청 한 건이 흐르는 과정
 
@@ -451,7 +451,8 @@ uv run --no-project streamlit run health_agent.py
 - [ ] Dietary Expert·Fitness Expert가 같은 `Gemini` 객체를 공유하면서도 서로의 존재를 모르는 독립된 `Agent`라는 것을 확인했다
 - [ ] `dietary_plan`·`fitness_plan`의 네 필드 중 `meal_plan`·`routine`만 실제 LLM 응답이고, 나머지 둘은 고정 문자열이라는 것을 소스로 확인했다
 - [ ] `hasattr(run_response, 'content')`가 항상 참이라 "답을 못 만들었다" 분기가 도달 불가능한 죽은 코드라는 것을 직접 확인했다
-- [ ] (키가 있다면) `streamlit run health_agent.py`로 앱을 띄우고 실제 계획을 생성해 두 박스의 문구가 프로필과 무관하게 항상 같은지 비교했다
+- [ ] `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:108`의 `gemini-2.5-flash-preview-05-20`이 Google 공식 폐기 표 기준 2025-11-18 종료라는 것을 확인했다(공식 문서, 키가 없어 실행 자체는 확인 못함)
+- [ ] (키가 있다면) 108행을 권장 대체 `gemini-3.6-flash`로 바꾼 뒤 `streamlit run health_agent.py`로 앱을 띄우고 실제 계획을 생성해 두 박스의 문구가 프로필과 무관하게 항상 같은지 비교했다
 
 ## 문제 해결
 
@@ -460,13 +461,15 @@ uv run --no-project streamlit run health_agent.py
 | `python health_agent.py` 또는 `streamlit run`이 `ModuleNotFoundError: No module named 'google.genai'` → `ImportError: google-genai not installed`로 끝남(직접 확인) | `requirements.txt`가 구글의 옛 SDK `google-generativeai==0.8.3`을 선언하지만, agno의 `Gemini`가 요구하는 것은 별개의 새 SDK `google.genai`(agno `extra == "google"`, 소스로 확인) | 리포 코드는 고치지 않음 — 재현하려면 `uv pip install google-genai` 추가 설치 |
 | 앱 자체 README가 "two phidata agents"라고 소개함 | 실제 코드는 `agno.agent.Agent`를 사용(phidata는 agno의 예전 이름, README 갱신 안 됨, README와 소스 대조로 확인) | 이 문서는 실제 코드 기준 agno로 설명 |
 | 사용자가 어떤 식단 선호(Keto·Vegetarian 등)를 고르든 "이 계획이 좋은 이유"·"중요 고려사항"·"목표"·"팁" 박스 문구가 항상 동일함 | 이 네 필드가 `dietary_plan_response.content`/`fitness_plan_response.content`가 아니라 코드에 고정된 문자열(`health_agent.py:179,181-186,191,193-198`, 소스로 확인) | 코드는 고치지 않음 — 실제로 개인화되는 것은 `meal_plan`·`routine` 텍스트뿐임을 유의 |
-| Q&A에서 답변 생성이 실패해도 "Sorry, I couldn't generate a response at this time." 문구가 뜨는 것을 본 적이 없음 | `RunOutput`이 항상 `content` 필드(기본값 `None`)를 가지므로 `hasattr(run_response, 'content')`가 항상 참이라 231~232행 분기가 도달 불가능(직접 확인) | 코드는 고치지 않음 — 실패는 대신 `except Exception`(236행)이 잡아 `st.error`로 표시됨 |
+| Q&A에서 답변 생성이 실패해도 "Sorry, I couldn't generate a response at this time." 문구가 뜨는 것을 본 적이 없음 | `RunOutput`이 항상 `content` 필드(기본값 `None`)를 가지므로 `hasattr(run_response, 'content')`가 항상 참이라 231~232행 분기가 도달 불가능(직접 확인) | 코드는 고치지 않음 — 실패는 대신 `except Exception`(235행)이 잡아 `st.error`(236행)로 표시됨 |
+| 유효한 키를 넣고 계획을 생성해도 계획 생성·Q&A가 모두 모델 오류로 끝날 가능성이 높음 | `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:108`이 박은 `gemini-2.5-flash-preview-05-20`이 Google 공식 폐기 표 기준 2025-11-18에 이미 종료되어 엔드포인트가 꺼짐(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-28 확인 — 키가 없어 실제 오류 문구는 재현하지 못함) | 코드는 고치지 않음 — 재현하려면 108행의 `id`를 권장 대체 `gemini-3.6-flash`(또는 그 시점의 최신 안정 모델)로 바꿔서 실행 |
 
 ## 더 해보기
 
 - `google-genai` 설치 후 실제 키로 앱을 띄우고, `dietary_plan["why_this_plan_works"]`를 `meal_plan` 텍스트에서 실제로 뽑아내도록 바꿔(`advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:179`) 두 방식의 결과가 얼마나 달라지는지 비교해보기
 - Dietary Expert·Fitness Expert의 `role=`을 `description=`으로 바꾸고 `debug_mode=True`를 추가해, agno가 시스템 메시지에 넣는 태그(`<your_role>` vs `description` 위치)가 실제로 달라지는지 확인해보기
 - Q&A 에이전트(`health_agent.py:226`)에 `instructions=["Answer only using the given diet and fitness plan."]`처럼 지시문을 추가해, 범용 답변과 어떻게 달라지는지 비교해보기
+- `advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/health_agent.py:108`의 `id="gemini-2.5-flash-preview-05-20"`를 Google이 권장하는 대체 `id="gemini-3.6-flash"`(또는 그 시점의 최신 안정 모델)로 바꾼 뒤 실제 키로 실행해, 폐기된 id 그대로일 때와 어떻게 다른지 비교해보기
 
 ## 다음 날 예고
 
