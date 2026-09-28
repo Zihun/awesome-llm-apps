@@ -538,7 +538,7 @@ final session.state: {'topic': 'AI support platforms'}
 
 ```bash
 cd ai_agent_framework_crash_course/google_adk_crash_course/9_multi_agent_patterns/9_1_sequential_agent
-uv run --no-project streamlit run app.py --server.headless true --server.port 8998
+uv run --no-project streamlit run app.py --server.headless true --server.address localhost --server.port 8998
 ```
 
 **확인.** 다른 터미널에서:
