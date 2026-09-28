@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "Streamlit UI" { class: ours }
+search: "하이브리드 검색" { class: ext }
+rerank: 재순위화 { class: ext }
+
+search -> rerank: 상위 10개 재정렬
+rerank -> search: 정렬된 청크
+search -> ui: 있음/없음만 판정에 사용

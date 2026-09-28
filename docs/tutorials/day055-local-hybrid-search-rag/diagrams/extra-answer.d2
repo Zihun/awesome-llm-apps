@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "Streamlit UI" { class: ours }
+search: "하이브리드 검색" { class: ext }
+llm: "로컬 LLM" { class: ext }
+
+ui -> search: rag() 내부 재검색 — 임베딩·검색·재순위 반복 (20개 후보)
+search -> llm: 컨텍스트 + 프롬프트
+llm -> ui: 스트리밍 토큰
+ui -> user: 답변 표시
