@@ -1,0 +1,25 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+script: 스크립트 (main) { class: ours }
+wfgen: WorkFlowGenerator { class: ours }
+openai: OpenAI gpt-4o-mini { class: ext }
+verify: CodeVerification { class: ours }
+anthropic: Anthropic Claude { class: ext }
+wf: WorkFlow { class: ours }
+
+user -> script: python ai_Self-Evolving_agent.py
+script -> wfgen: generate_workflow(goal)
+wfgen -> openai: 목표 분해 요청
+openai -> wfgen: 워크플로우 그래프(JSON)
+wfgen -> script: workflow_graph
+script -> wf: execute()
+wf -> openai: 실행 요청
+openai -> wf: 생성된 코드(HTML)
+wf -> script: output
+script -> verify: execute(requirements, code)
+verify -> anthropic: 코드+요구사항
+anthropic -> verify: verified_code
+verify -> script: verified_code
+script -> script: index.html로 저장
