@@ -180,11 +180,11 @@ grep exit code: 1
 (직접 확인 — 아무 줄도 걸리지 않습니다. PowerShell도 출력 없음이 같은 결과입니다.)
 
 ```bash
-uv run --no-project streamlit run ai_data_visualisation_agent.py --server.headless true
+uv run --no-project streamlit run ai_data_visualisation_agent.py --server.headless true --server.address localhost
 ```
 
 ```powershell
-uv run --no-project streamlit run ai_data_visualisation_agent.py --server.headless true
+uv run --no-project streamlit run ai_data_visualisation_agent.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
