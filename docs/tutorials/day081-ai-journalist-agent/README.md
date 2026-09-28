@@ -154,7 +154,7 @@ sed -n '11,21p' journalist_agent.py
     )
 ```
 
-35~36행은 쉼표 없이 문자열 리터럴 두 개가 나란히 있습니다 — 파이썬이 인접한 문자열 리터럴을 자동으로 하나로 합치므로, `instructions` 리스트의 이 항목은 실제로는 "For each search term...analyze the results.From the results...to the topic."이 붙은 문자열 **하나**입니다(줄바꿈 없이 이어짐, 소스 들여쓰기·쉼표 위치로 확인). 리스트 항목이 하나 줄었을 뿐 프롬프트에 들어가는 문장 자체는 거의 같아 동작에 영향은 없습니다. 24행의 `role`은 33~38행의 `instructions`와 별개로, **Editor가 위임을 판단할 때 보는 멤버 소개**로 쓰입니다 — agno 소스(`_messages.py:122-123`, `agno/team/` 아래)로 확인하면, 멤버 목록을 만들 때 `role`이 있으면 `Role: {member.role}` 줄을 그 멤버의 설명 앞에 넣습니다. `SerpApiTools`가 기본값으로 노출하는 함수는 `search_google` 하나뿐이라는 것은 Day 012·079가 이미 확인했으므로 되풀이하지 않습니다.
+35~36행은 쉼표 없이 문자열 리터럴 두 개가 나란히 있습니다 — 파이썬이 인접한 문자열 리터럴을 자동으로 하나로 합치므로, `instructions` 리스트의 이 항목은 실제로는 "For each search term...analyze the results.From the results...to the topic."이 붙은 문자열 **하나**입니다(줄바꿈 없이 이어짐, 소스 들여쓰기·쉼표 위치로 확인). 리스트 항목이 하나 줄었을 뿐 프롬프트에 들어가는 문장 자체는 거의 같아 동작에 영향은 없습니다. 24행의 `role`은 33~38행의 `instructions`와 별개로, **Editor가 위임을 판단할 때 보는 멤버 소개**로 쓰입니다 — agno 소스(`_messages.py:136-137`, `agno/team/` 아래 — Searcher·Writer는 `Agent`이므로 멤버가 `Team`일 때의 122~123행이 아니라 이 else 분기가 해당합니다)로 확인하면, 멤버 목록을 만들 때 `role`이 있으면 `Role: {member.role}` 줄을 그 멤버의 설명(`Description:`) 앞에 넣습니다. `SerpApiTools`가 기본값으로 노출하는 함수는 `search_google` 하나뿐이라는 것은 Day 012·079가 이미 확인했으므로 되풀이하지 않습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -327,7 +327,7 @@ uv run --no-project streamlit run journalist_agent.py
 
 ## 요청 한 건이 흐르는 과정
 
-한 번의 기사 요청이 실제로는 네 단계를 거칩니다 — 아래 네 그림은 그 순서 그대로입니다(8명의 배우가 한 그림에 다 들어가면 폭이 넘쳐 앱의 실제 시간 경계로 나눴습니다 — 메시지는 모두 원래 순서 그대로 정확히 한 그림에 있습니다). agno 3.0.11의 `Team` 기본 모드는 `coordinate`이고, 위임은 팀 리더 **모델**이 `delegate_task_to_member(member_id, task)`라는 도구를 부르는 방식으로 일어납니다(Day 079가 이미 확인한 사실과 같습니다) — 그래서 Editor가 Searcher·Writer를 부르기 전마다 리더 자신의 GPT-4o 호출이 하나씩 있습니다.
+한 번의 기사 요청이 실제로는 여섯 단계를 거칩니다 — 아래 여섯 그림은 그 순서 그대로입니다(8명의 배우가 한 그림에 다 들어가면 폭이 넘쳐 앱의 실제 시간 경계로 나눴습니다 — 메시지는 모두 원래 순서 그대로 정확히 한 그림에 있습니다). agno 3.0.11의 `Team` 기본 모드는 `coordinate`이고, 위임은 팀 리더 **모델**이 `delegate_task_to_member(member_id, task)`라는 도구를 부르는 방식으로 일어납니다(Day 079가 이미 확인한 사실과 같습니다) — 그래서 Editor가 Searcher·Writer를 부르기 전마다 리더 자신의 GPT-4o 호출이 하나씩 있습니다.
 
 ![1단계: 요청 시작과 리더의 Searcher 위임](diagrams/sequence.svg)
 
@@ -341,13 +341,13 @@ uv run --no-project streamlit run journalist_agent.py
 
 3단계는 Searcher가 돌려준 URL 목록이 Editor의 GPT-4o 호출에 도구 결과로 들어가고, Editor가 이어서 `delegate_task_to_member(Writer, task)`를 받아 Writer에게 주제와 URL 목록을 위임한 뒤, Writer가 자신의 GPT-4o에 `read_article` 스키마를 보내 호출 요청을 받는 부분까지를 그립니다.
 
-![4단계: 기사 원문 읽기와 초안 작성, 반환](diagrams/extra-writer-fetch.svg)
+![4단계: Writer의 기사 원문 읽기](diagrams/extra-writer-fetch.svg)
 
-4단계(그리고 이어지는 초안 작성)는 Writer가 실제로 `read_article(url)`을 호출해 기사 원문 웹페이지에서 제목·저자·본문을 JSON으로 받는 부분을 그립니다. 이 JSON 구조 자체는 Step 4에서 본 `Newspaper4kTools.read_article`의 반환값과 같습니다.
+4단계는 Writer가 실제로 `read_article(url)`을 호출해 기사 원문 웹페이지에서 제목·저자·본문을 JSON으로 받는 부분을 그립니다. 이 JSON 구조 자체는 Step 4에서 본 `Newspaper4kTools.read_article`의 반환값과 같습니다.
 
 ![5단계: 초안 작성과 Editor 반환](diagrams/extra-writer-draft.svg)
 
-이어서 Writer는 받은 원문 전체를 자신의 GPT-4o에 넘겨 15문단 이상의 초안을 받고(62행 지시문이 요구하는 최소 분량), 그 초안을 Editor에 돌려줍니다.
+5단계는 Writer가 받은 원문 전체를 자신의 GPT-4o에 넘겨 15문단 이상의 초안을 받고(56행 지시문 "at a minimum, 15 paragraphs"가 요구하는 최소 분량), 그 초안을 Editor에 돌려주는 부분을 그립니다.
 
 ![6단계: 최종 종합과 화면 렌더링](diagrams/extra-synthesis.svg)
 
@@ -362,7 +362,7 @@ uv run --no-project streamlit run journalist_agent.py
 - [ ] 세 `instructions` 블록 모두에서 쉼표 없는 문자열 리터럴이 이어져 항목이 예상보다 적게 만들어진다는 것을 소스로 확인했다
 - [ ] `Editor(Team)`이 Day 079와 같은 `coordinate` 모드·`delegate_task_to_member` 메커니즘으로 동작한다는 것을 소스로 재확인했다
 - [ ] 이 앱에는 실행 버튼이 없고, `st.text_input`이 Enter 또는 포커스 아웃 시에만 값을 커밋한다는 것을 streamlit 소스로 확인했다
-- [ ] `uv run --no-project streamlit run journalist_agent.py --server.address localhost --server.headless true`로 헤드리스 기동까지 직접 확인했다(임의의 높은 포트 59417)
+- [ ] `uv run --no-project streamlit run journalist_agent.py --server.address localhost --server.headless true`로 헤드리스 기동까지 직접 확인했다(이 문서 작성 시 검증에는 `--server.port`로 임의의 높은 포트 59417을 추가로 지정했다 — 독자는 기본 포트 그대로 실행해도 된다)
 
 ## 문제 해결
 

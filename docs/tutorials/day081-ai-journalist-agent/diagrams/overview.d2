@@ -2,24 +2,22 @@
 direction: down
 
 user: 사용자 { class: person }
+ui: Streamlit UI (journalist_agent.py) { class: ours }
 
-app: "journalist_agent.py" {
-  class: group
-  ui: "1. Streamlit UI" { class: ours }
-  editor: "2. Editor (Team)" {
-    class: ours
-    searcher: Searcher (Agent) { class: ours }
-    writer: Writer (Agent) { class: ours }
-  }
+editor: "Editor (Team)" {
+  class: ours
+  searcher: Searcher (Agent) { class: ours }
+  writer: Writer (Agent) { class: ours }
 }
 
 openai: "OpenAI GPT-4o" { class: ext }
 serpapi: "SerpApi (search_google)" { class: ext }
 article_sites: "기사 원문 웹페이지 (read_article)" { class: ext }
 
-user -> app.ui: 키 2개 + 주제 입력
-app.editor -> openai: 위임 판단·결과 종합 호출
-app.editor.searcher -> serpapi: 검색 도구 호출
-app.editor.searcher -> openai: 모델 호출
-app.editor.writer -> article_sites: 기사 읽기 호출
-app.editor.writer -> openai: 모델 호출
+user -> ui: 키 2개 + 주제 입력
+ui -> editor: "run(query, stream=False)"
+editor -> openai: "delegate_task_to_member 스키마"
+editor.searcher -> serpapi: 검색어
+editor.searcher -> openai: "메시지 + search_google 스키마"
+editor.writer -> article_sites: "URL → 기사 JSON"
+editor.writer -> openai: "메시지 + read_article 스키마"

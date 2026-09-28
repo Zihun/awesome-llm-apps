@@ -9,7 +9,7 @@ searcher: Searcher { class: ours }
 
 사용자 -> ui: 키 2개·주제 입력 후 엔터
 ui -> editor: "run(query, stream=False)"
-editor -> openai: "입력(주제) + members=[Searcher,Writer] + gpt-4o 도구 스키마"
+editor -> openai: "입력(주제) + members=[Searcher,Writer] + delegate_task_to_member 스키마"
 openai -> editor: "delegate_task_to_member(Searcher, task)"
 editor -> searcher: 검색 위임 + 주제
 searcher -> openai: 메시지 + 지시문 + search_google 스키마
