@@ -304,16 +304,17 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/docs
 
 **목적.** 키 없이 `agent.run(...)`을 불렀을 때 정확히 어디서 실패하는지 직접 확인하고, 키가 있다면 AgentOS 컨트롤 플레인에서 무엇이 가능하고 무엇이 불가능한지 정리합니다.
 
-**할 일.** 먼저 키 없이 실제로 실행해 Step 2에서 예고한 실패 지점을 직접 봅니다. Step 1에서 `OPENAI_API_KEY`를 이미 export했다면 이 명령에서만 지워 실제 키로 요청이 나가지 않게 합니다. 앱 폴더에서:
+**할 일.** 먼저 키 없이 실제로 실행해 Step 2에서 예고한 실패 지점을 직접 봅니다. Step 1에서 `OPENAI_API_KEY`를 이미 export했더라도, 셸 전체가 아니라 이 파이썬 프로세스 안에서만 `os.environ.pop(...)`으로 지워 실제 키로 요청이 나가지 않게 합니다(bash·PowerShell 모두 같은 명령입니다). 앱 폴더에서:
 
 ```bash
-env -u OPENAI_API_KEY uv run --no-project python -c "import investment_agent as m; result = m.agent.run('Get the current AAPL stock price'); print('status:', result.status); print('content:', result.content)"
-```
-
-```powershell
-# Windows PowerShell
-Remove-Item Env:\OPENAI_API_KEY -ErrorAction SilentlyContinue
-uv run --no-project python -c "import investment_agent as m; result = m.agent.run('Get the current AAPL stock price'); print('status:', result.status); print('content:', result.content)"
+uv run --no-project python -c "
+import os
+os.environ.pop('OPENAI_API_KEY', None)
+import investment_agent as m
+result = m.agent.run('Get the current AAPL stock price')
+print('status:', result.status)
+print('content:', result.content)
+"
 ```
 
 직접 확인한 로그(발췌, 소켓 가로채기로 재현해 연결 시도 0건도 함께 확인):
