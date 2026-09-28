@@ -571,7 +571,7 @@ if google_api_key:
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 파일을 임포트하지 않고 소스를 AST로 파싱해 `st.title(...)` 호출 문자열만 뽑습니다(Streamlit 서버도, 모듈 임포트도 하지 않으므로 mem0 부작용이 없습니다). `st.func.value`가 `st` 자신인 호출만 걸러야 합니다 — 그냥 `attr == 'title'`로만 거르면 254행의 `st.sidebar.title("Candidate")`까지 같이 걸립니다.
+**확인.** 파일을 임포트하지 않고 소스를 AST로 파싱해 `st.title(...)` 호출 문자열만 뽑습니다(Streamlit 서버도, 모듈 임포트도 하지 않으므로 mem0 부작용이 없습니다). `n.func.value`가 `st` 자신인 호출만 걸러야 합니다 — 그냥 `attr == 'title'`로만 거르면 254행의 `st.sidebar.title("Candidate")`까지 같이 걸립니다.
 
 ```bash
 PYTHONIOENCODING=utf-8 uv run --no-project python -c "
@@ -709,11 +709,19 @@ uv run --no-project python -c "<위와 같은 코드>"
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 채팅창에 질문을 보내면, Streamlit UI는 곧바로 mem0 Memory에 `search(query, filters={"user_id": ...})`를 호출합니다. mem0는 먼저 질의를 Gemini로 임베딩한 뒤 그 벡터로 Qdrant에서 관련 메모리를 찾아 돌려주고(Step 4), UI는 이를 `format_memories`로 다듬어 질문과 합친 메시지를 `career_orchestrator`의 Runner에 넘깁니다. 오케스트레이터도 자신의 Gemini 모델 호출로 어느 전문가가 맡을지 정한 뒤 `transfer_to_agent`로 제어를 넘깁니다 — Day 021에서 확인했듯 이 전환에는 복귀 보장이 없고, 앱 지시문에도 되돌아가라는 문장은 없습니다. 다만 Step 3에서 확인했듯 ADK가 `resume_agent`에게 자동으로 얹는 지시문 자체에 "적합하지 않으면 부모 `career_orchestrator`에게 넘기라"는 문장이 있어, 실제로 되돌아갈지는 모델의 판단에 달려 있습니다(키가 없어 이 문서에서는 확인하지 못했습니다). 위 그림은 이력서 질문이 끝까지 `resume_agent`에 머무는 경우를 보여줍니다: 이 에이전트는 먼저 도구 호출을 결정하는 모델 호출을 하고, ADK가 로컬 함수 `get_candidate_resume`을 실행한 뒤, 그 결과를 포함한 두 번째 모델 호출로 최종 텍스트를 얻습니다. 이 텍스트가 그대로 UI에 최종 응답으로 돌아가 화면에 표시됩니다.
+사용자가 채팅창에 질문을 보내면, Streamlit UI는 곧바로 mem0 Memory에 `search(query, filters={"user_id": ...})`를 호출합니다. mem0는 먼저 질의를 Gemini로 임베딩한 뒤 그 벡터로 Qdrant에서 관련 메모리를 찾아 돌려주고(Step 4), UI는 이를 `format_memories`로 다듬어 질문과 합친 메시지를 `career_orchestrator`의 Runner에 넘깁니다. 오케스트레이터는 자신의 Gemini 모델 호출로 어느 전문가가 맡을지 정하고, Gemini는 `transfer_to_agent` 함수 호출로 응답합니다.
 
-![메모리 저장](diagrams/extra-save.svg)
+![resume_agent로 넘어간 뒤](diagrams/extra-handoff.svg)
 
-화면 표시가 끝난 뒤에도 왕복이 하나 더 남아 있습니다. UI는 사용자의 **질문만**(응답은 제외) `memory.add()`로 mem0에 다시 넘기고, mem0는 Gemini로 사실을 추출·임베딩한 뒤 Qdrant에 저장합니다 — 다음에 같은 사용자가 관련 질문을 하면 이 사실이 검색 결과에 포함됩니다. 이 저장 왕복을 별도 그림으로 뗀 것은 사용자 입장에서는 이미 화면에 답이 뜬 뒤에 조용히 일어나는, 응답과는 다른 시간대의 일이기 때문입니다. Step 3·4·5에서 확인했듯 이 문서는 가짜 키와 콜백 스텁으로 `Memory.from_config`·에이전트 구조·요청 안에 실리는 지시문까지만 재현했고, 실제 Gemini 응답·임베딩 요청은 보내지 않았습니다.
+Day 021에서 확인했듯 이 전환에는 복귀 보장이 없고, 앱 지시문에도 되돌아가라는 문장은 없습니다. 다만 Step 3에서 확인했듯 ADK가 `resume_agent`에게 자동으로 얹는 지시문 자체에 "적합하지 않으면 부모 `career_orchestrator`에게 넘기라"는 문장이 있어, 실제로 되돌아갈지는 모델의 판단에 달려 있습니다(키가 없어 이 문서에서는 확인하지 못했습니다). 위 그림은 이력서 질문이 끝까지 `resume_agent`에 머무는 경우를 보여줍니다: 이 에이전트는 먼저 도구 호출을 결정하는 모델 호출을 하고, ADK가 로컬 함수 `get_candidate_resume`을 실행한 뒤, 그 결과를 포함한 두 번째 모델 호출로 최종 텍스트를 얻습니다. 이 텍스트가 그대로 UI에 최종 응답으로 돌아가 화면에 표시됩니다. 오케스트레이터에서 `resume_agent`로 넘어가는 시점을 그림 두 장으로 나눈 것은 그 전환이 실제로 제어가 넘어가는 경계이기 때문입니다.
+
+![메모리 검색 저장 여부 확인](diagrams/extra-save.svg)
+
+화면 표시가 끝난 뒤에도 왕복이 남아 있습니다 — 사용자 입장에서는 이미 답을 본 뒤에 조용히 일어나는, 응답과는 다른 시간대의 일이라 별도 그림으로 뗐습니다. UI는 사용자의 **질문만**(응답은 제외) `memory.add()`로 mem0에 넘기고, mem0ai 2.0.14의 `add(infer=True)`는 소스로 확인한 순서 그대로 움직입니다(`mem0/memory/main.py`): 먼저 질의를 임베딩해 Qdrant에서 비슷한 기존 메모리가 있는지 검색합니다(중복 방지).
+
+![사실 추출과 저장](diagrams/extra-store.svg)
+
+이어서 Gemini에 한 번 더 요청해 이번 메시지에서 실제로 저장할 만한 사실을 추출하고(LLM 호출 1회), 추출된 사실 텍스트를 다시 Gemini로 임베딩한 뒤에야 Qdrant에 새 메모리로 저장합니다 — 임베딩(검색용)·LLM 추출·임베딩(저장용)·저장까지 Gemini API를 두 번 왕복하는 네 단계입니다. 다음에 같은 사용자가 관련 질문을 하면 이 사실이 검색 결과에 포함됩니다. Step 3·4·5에서 확인했듯 이 문서는 가짜 키와 콜백 스텁으로 `Memory.from_config`·에이전트 구조·요청 안에 실리는 지시문까지만 재현했고, 실제 Gemini 응답·임베딩 요청은 보내지 않았습니다.
 
 ## 실행 체크리스트
 

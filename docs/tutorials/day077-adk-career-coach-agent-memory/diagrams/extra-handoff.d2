@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+orchestrator: career_orchestrator { class: ours }
+resume: resume_agent { class: ours }
+gemini: Gemini API { class: ext }
+ui: Streamlit UI { class: ours }
+user: 사용자 { class: person }
+
+orchestrator -> resume: transfer_to_agent(resume_agent)
+resume -> gemini: 모델 호출 (도구 결정)
+gemini -> resume: 함수 호출 get_candidate_resume
+resume -> gemini: 모델 호출 (결과 포함)
+gemini -> resume: 최종 텍스트
+resume -> ui: 최종 응답
+ui -> user: 화면 표시
