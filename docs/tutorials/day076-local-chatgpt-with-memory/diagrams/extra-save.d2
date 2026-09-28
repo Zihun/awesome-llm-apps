@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ollama: Ollama 로컬 서버 (로컬) { class: ext }
+memory: mem0 Memory { class: ours }
+qdrant: Qdrant { class: store }
+
+memory -> ollama: 사실추출 요청(챗)
+memory -> ollama: 사실 임베딩 요청
+memory -> qdrant: 유사 메모리 검색·새 메모리 저장

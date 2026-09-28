@@ -1,6 +1,6 @@
 # Day 076 · 🗄️ Local ChatGPT Clone with Memory
 
-> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 95분(mem0ai가 오늘 설치 조합에서 세 가지 실패를 겪고, 그중 첫 번째는 실제 터미널 동작까지 갈라져(y/N 응답별로) 직접 재현이 많아진 날입니다 — 되풀이가 아니라 실패마다 다른 재현이라 시간이 늘었습니다) · API 비용 무료(로컬 — 채팅·임베딩·메모리 벡터 저장은 모두 Ollama·Qdrant로 처리하지만, "클라우드 호출이 전혀 없다"는 뜻은 아닙니다: litellm은 import 시점에 GitHub에서 가격표를 받으려 하고 mem0는 PostHog로 익명 통계를 보내려 합니다 — 둘 다 환경변수로 끌 수 있습니다, 아래에서 직접 확인) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory`
+> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 105분(mem0ai가 오늘 설치 조합에서 세 가지 실패를 겪고, 그중 첫 번째는 실제 터미널 동작까지 갈라져(y/N 응답별로) 직접 재현이 많아지고, 두 번째 `add()`의 내부 전개까지 그림으로 따로 확인하는 날입니다 — 되풀이가 아니라 실패·그림마다 다른 재현이라 시간이 늘었습니다) · API 비용 무료(로컬 — 채팅·임베딩·메모리 벡터 저장은 모두 Ollama·Qdrant로 처리하지만, "클라우드 호출이 전혀 없다"는 뜻은 아닙니다: litellm은 import 시점에 GitHub에서 가격표를 받으려 하고 mem0는 PostHog로 익명 통계를 보내려 합니다 — 둘 다 환경변수로 끌 수 있습니다, 아래에서 직접 확인) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory`
 
 ## 오늘 만들 것
 
@@ -10,7 +10,7 @@
 uv run --no-project streamlit run local_chatgpt_memory.py --server.address localhost --server.headless true
 ```
 
-(`--server.address localhost`가 없으면 Streamlit이 외부 IP 확인차 `checkip.amazonaws.com`에 요청을 보냅니다 — Day 060에서 확인한 동작.) 이 문서는 위 세 가지 우회 없이는 이 명령이 곧바로 죽으므로 직접 띄우지 않고, 아래 Step들에서 각 실패와 우회를 라이브러리 수준으로 재현합니다. 아래는 완성된 아키텍처입니다.
+(`--server.address localhost`가 없으면 Streamlit이 외부 IP 확인차 `checkip.amazonaws.com`에 요청을 보냅니다 — Day 060에서 확인한 동작.) 이 문서는 위 세 가지 우회 없이는 서버는 뜨지만 사용자명을 넣는 순간 화면이 멈추므로(서버 프로세스 자체가 죽는 것은 아닙니다 — 아래 Step 2에서 정확한 동작을 확인합니다) 직접 띄우지 않고, 아래 Step들에서 각 실패와 우회를 라이브러리 수준으로 재현합니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -88,7 +88,7 @@ print('qdrant-client', m.version('qdrant-client'))
 uv run --no-project python -c "import ollama"
 ```
 
-직접 확인한 출력(2026-09-28 기준). 다만 `litellm`은 오늘 최신판이 아닙니다 — 오늘 PyPI 최신은 1.103.0인데(`echo litellm | uv pip compile -`로 확인), `mem0ai==0.1.29`가 `openai>=1.33.0,<2.0.0`으로 상한을 묶어 두어 `openai>=1.99.5`를 요구하는 최신 litellm 대신 그 요구를 만족하는 마지막 세대인 1.80.0으로 밀립니다(직접 확인):
+직접 확인한 출력(2026-09-28 기준). 다만 `litellm`은 오늘 최신판이 아닙니다 — 오늘 PyPI 최신은 1.103.0인데(`echo litellm | uv pip compile -`로 확인), 이 최신판은 `openai>=2.20.0,<3.0.0`을 요구합니다(배포 메타데이터로 직접 확인). `mem0ai==0.1.29`는 `openai`를 `>=1.33.0,<2.0.0`으로 묶어 두므로, 그 상한 아래에서 동작하려면 `openai>=1.99.5`만 요구하는 litellm 1.80.0이 마지막 세대입니다(직접 확인):
 
 ```
 compiled
@@ -212,9 +212,9 @@ The 'ollama' library is required. Install it now? [y/N]: ...\.venv\Scripts\pytho
 Failed to install 'ollama'. Please install it manually using 'pip install ollama'.
 ```
 
-(종료 코드 1) 두 경로 모두 결국 `sys.exit(1)`로 끝나므로, 실제 Streamlit 앱에서는 이 시점에 스크립트 실행이 중단되고 화면은 "실행 중" 상태로 멈춘 채 남습니다 — `except Exception`으로 잡히는 종류의 실패가 아니라 프로세스 자체가 끝나는 것이므로, 새로고침해야 다시 시도할 수 있습니다.
+(종료 코드 1) 두 경로 모두 결국 `sys.exit(1)`(=`SystemExit`)로 끝납니다. `SystemExit`는 `Exception`의 하위 클래스가 아니어서(파이썬 언어 자체의 특성) 일반적인 `except Exception`으로는 잡히지 않습니다. Streamlit은 사용자 스크립트를 서버와 별도인 스크립트 스레드에서 실행하므로, 이 `SystemExit`는 **그 스레드만** 끝내고 **서버 프로세스는 계속 살아 있습니다** — 화면은 "실행 중" 상태로 멈춘 채 남고, 새로고침하면 스크립트가 처음부터 다시 실행되며 터미널에 같은 질문이 다시 뜹니다(프로세스 자체가 죽는 것이 아닙니다).
 
-`ollama` 패키지를 설치하면 이 `EOFError`는 사라지지만, 두 번째 문제가 남습니다. mem0ai 0.1.29의 `_ensure_model_exists()`(`mem0/llms/ollama.py`·`mem0/embeddings/ollama.py` 양쪽에 같은 코드가 있음, 패키지 소스로 확인)는 이렇게 모델이 이미 있는지 봅니다:
+`ollama` 패키지를 설치하면 이 설치 질문은 더 이상 뜨지 않지만, 두 번째 문제가 남습니다. mem0ai 0.1.29의 `_ensure_model_exists()`(`mem0/llms/ollama.py`·`mem0/embeddings/ollama.py` 양쪽에 같은 코드가 있음, 패키지 소스로 확인)는 이렇게 모델이 이미 있는지 봅니다:
 
 ```python
 local_models = self.client.list()["models"]
@@ -668,11 +668,24 @@ GET {'results': [{'id': '6554a7a4-...', 'memory': 'Replied that hiking is fun', 
 
 `results` 배열에 두 메모리가 모두 남습니다 — 134행의 두 번째 `add()`가 첫 번째를 지우지 않고 쌓는다는 뜻입니다.
 
+Step 6에서 띄운 스텁 서버는 다 쓰면 멈춥니다.
+
+```bash
+kill %1
+netstat -ano | grep :61076   # 아무 줄도 없어야 함
+```
+
+(PowerShell로 `Start-Process`를 썼다면 `Stop-Process -Name python`, 또는 `Get-Process python | Stop-Process`.)
+
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 메시지를 보내면 Streamlit UI는 먼저 mem0에 `add(prompt, user_id)`를 넘깁니다. mem0는 Ollama에 사실 추출을 요청하고(LLM 호출), 뽑힌 사실을 다시 Ollama에 임베딩으로 바꾼 뒤(별도 호출 — Qdrant가 임베딩을 만드는 것이 아닙니다), 그 벡터로 Qdrant에서 비슷한 기존 메모리를 검색하고 결과를 저장합니다. 이어서 UI는 `get_all(user_id)`로 그 사용자의 전체 메모리를 Qdrant에서 다시 조회해 컨텍스트 문자열을 만듭니다. UI는 이 컨텍스트와 프롬프트를 LiteLLM의 `completion(stream=True)` 호출에 넘기고, LiteLLM은 Ollama의 `POST /api/generate`로 요청해 토큰 스트림을 받아 UI에 청크 단위로 돌려줍니다. UI는 완성된 답변을 렌더링한 뒤, 그 답변을 다시 `add(assistant 응답, user_id)`로 mem0에 넘겨 같은 절차를 반복합니다. Step 2·6에서 직접 확인했듯, 오늘 기준 설치에서는 이 그림을 실제로 완주하기 전에 세 곳에서 막힙니다 — ① `Memory.from_config()` 자체가 `ollama` 패키지 부재로 `EOFError`, ② 우회해도 `_ensure_model_exists()`가 항상 `pull`을 시도, ③ 그것도 우회해 `Memory`를 만들어도 그림의 세 번째 화살표(mem0 → Qdrant "유사 메모리 검색")에서 `qdrant-client` 1.19.1에 없는 `.search()`를 불러 `AttributeError`. 세 가지를 모두 우회해야 그림 전체가 완주됩니다 — 그림 자체는 코드가 원래 의도한 구조를 보여줍니다.
+사용자가 메시지를 보내면 Streamlit UI는 먼저 mem0에 `add(prompt, user_id)`를 넘깁니다. mem0는 Ollama에 사실 추출을 요청하고(LLM 호출), 뽑힌 사실을 다시 Ollama에 임베딩으로 바꾼 뒤(별도 호출 — Qdrant가 임베딩을 만드는 것이 아닙니다), 그 벡터로 Qdrant에서 비슷한 기존 메모리를 검색하고 결과를 저장합니다. 이어서 UI는 `get_all(user_id)`로 그 사용자의 전체 메모리를 Qdrant에서 다시 조회해 컨텍스트 문자열을 만듭니다. UI는 이 컨텍스트와 프롬프트를 LiteLLM의 `completion(stream=True)` 호출에 넘기고, LiteLLM은 Ollama의 `POST /api/generate`로 요청해 토큰 스트림을 받아 UI에 청크 단위로 돌려줍니다. UI는 완성된 답변을 렌더링한 뒤, 그 답변을 다시 `add(assistant 응답, user_id)`로 mem0에 넘깁니다. Step 2·6에서 직접 확인했듯, 오늘 기준 설치에서는 이 그림을 실제로 완주하기 전에 세 곳에서 막힙니다 — ① `Memory.from_config()`를 만드는 순간 `ollama` 패키지 부재로 설치 질문이 뜨고(실제 앱은 터미널이 멈추고, 표준입력이 닫힌 자동화 실행만 `EOFError`), ② 우회해도 `_ensure_model_exists()`가 항상 `pull`을 시도, ③ 그것도 우회해 `Memory`를 만들어도 그림의 세 번째 화살표(mem0 → Qdrant "유사 메모리 검색")에서 `qdrant-client` 1.19.1에 없는 `.search()`를 불러 `AttributeError`. 세 가지를 모두 우회해야 그림 전체가 완주됩니다 — 그림 자체는 코드가 원래 의도한 구조를 보여줍니다.
+
+![응답을 다시 메모리에 저장](diagrams/extra-save.svg)
+
+마지막 `add(assistant 응답, user_id)`도 첫 번째 `add()`와 똑같은 절차(사실 추출 → 임베딩 → 검색·저장)를 그대로 반복합니다 — 다른 점은 이번 사실이 사용자의 말이 아니라 어시스턴트의 답변에서 뽑힌다는 것뿐입니다. 이 왕복을 별도 그림으로 뗀 것은 사용자 입장에서는 이미 화면에 답이 뜬 뒤 조용히 일어나는, 응답 렌더링과는 다른 시간대의 일이기 때문입니다(위 sequence.svg는 세로 상한 1500px 안에 들어가야 해서, 두 번째 `add()`의 내부 전개까지 한 그림에 넣으면 넘칩니다).
 
 ## 실행 체크리스트
 
