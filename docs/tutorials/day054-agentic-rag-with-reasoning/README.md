@@ -453,7 +453,7 @@ Confidence: 0.95
 **확인.** 키 없이도 서버 자체는 뜹니다.
 
 ```bash
-uv run --no-project streamlit run rag_reasoning_agent.py --server.headless true
+uv run --no-project streamlit run rag_reasoning_agent.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
@@ -466,7 +466,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 200
 ```
 
-(PowerShell이면 `curl` 대신: `(Invoke-WebRequest -Uri http://localhost:8501 -UseBasicParsing).StatusCode`. HTTP 200은 직접 확인. 다만 이 명령이 "네트워크 없음"은 아닙니다 — 다만 그 원인은 흔히 말하는 사용 통계 쪽이 아닙니다. `browser.gatherUsageStats`(기본값 `True`)는 옵션 정의일 뿐이고, 실제 전송 주소 `data.streamlit.io/metrics.json`은 프런트엔드 JS 번들 안에 있어 **브라우저가 화면을 열 때** 나가지, `curl`처럼 헤드리스로 서버만 두드릴 때는 나가지 않습니다(소스로 확인 — 이 문자열은 `streamlit/static/` 번들에만 있고 파이썬 쪽 코드에는 없습니다). 이 명령으로 실제 나가는 것은 헤드리스 기동 자체가 시도하는 외부 IP 조회입니다 — `net_util.py`가 `checkip.amazonaws.com`에 접속해 이 컴퓨터의 외부 IP를 알아내려 합니다(소스로 확인, `streamlit/net_util.py`·`streamlit/web/bootstrap.py`). 이 앱의 API 키와는 무관하게 `streamlit run`을 실행하는 순간부터입니다.)
+(PowerShell이면 `curl` 대신: `(Invoke-WebRequest -Uri http://localhost:8501 -UseBasicParsing).StatusCode`. HTTP 200은 직접 확인. 이 명령이 "네트워크 없음"은 아닙니다 — 다만 그 원인은 흔히 말하는 사용 통계 쪽이 아닙니다. `browser.gatherUsageStats`(기본값 `True`)는 옵션 정의일 뿐이고, 실제 전송 주소 `data.streamlit.io/metrics.json`은 프런트엔드 JS 번들 안에 있어 **브라우저가 화면을 열 때** 나가지, `curl`처럼 헤드리스로 서버만 두드릴 때는 나가지 않습니다(소스로 확인 — 이 문자열은 `streamlit/static/` 번들에만 있고 파이썬 쪽 코드에는 없습니다). 진짜 위험은 헤드리스 기동 자체가 시도하는 외부 IP 조회입니다 — `bootstrap.py`의 `_print_url`이 `server.address`가 지정되지 않았을 때만 `net_util.get_external_ip()`를 불러 `checkip.amazonaws.com`에 접속합니다(소스·직접 확인, streamlit 1.64.0 — `--server.address` 없이 헤드리스로 띄우면 프록시가 막힌 상태에서도 약 3초를 기다린 뒤 "Did not auto detect external IP"를 찍고 넘어갑니다). 위 명령은 `--server.address localhost`를 지정했으므로 이 조회 자체가 나가지 않습니다 — `config.is_manually_set("server.address")`가 참이 되어 `_print_url`이 다른 분기(로컬 URL만 출력)를 타기 때문입니다.)
 
 ## 요청 한 건이 흐르는 과정
 
@@ -482,7 +482,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8501
 - [ ] `knowledge.add_content(url=url)`가 오늘의 agno(3.0.10)에서 `AttributeError`로 멈춘다는 것을 직접 실행으로 확인했다 — 유효한 키가 있어도 이 지점을 넘지 못한다
 - [ ] `ReasoningTools`가 `think`·`analyze` 두 개의 평범한 파이썬 함수를 도구로 등록할 뿐이고, `add_instructions=True`가 안내문을 실제로 지시문에 합칠지를 결정한다는 것을 소스와 직접 실행으로 확인했다
 - [ ] "🧠 Reasoning Process" 패널의 `reasoning_content`가 (이 앱의 설정에서는) Gemini의 별도 사고 채널이 아니라 `think`/`analyze` 도구 호출 인수를 정리한 텍스트라는 것을 오프라인으로 재현했다
-- [ ] `streamlit run rag_reasoning_agent.py`가 키 없이도 HTTP 200으로 뜨지만, Streamlit 자체의 사용 통계 전송은 기본적으로 켜져 있어 이 실행이 네트워크와 완전히 무관하지는 않다는 것을 확인했다
+- [ ] `streamlit run rag_reasoning_agent.py`가 키 없이도 HTTP 200으로 뜨지만, `--server.address`를 빼면 헤드리스 기동이 `checkip.amazonaws.com`으로 외부 IP를 조회하려 든다는 것을 소스와 직접 실행으로 확인했다
 
 ## 문제 해결
 
