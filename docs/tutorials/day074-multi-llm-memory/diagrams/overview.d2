@@ -8,7 +8,7 @@ qdrant: Qdrant (로컬) { class: store }
 
 svc: "외부 LLM 제공자" {
   class: group
-  openai: OpenAI GPT-4o { class: ext }
+  openai: "OpenAI API (GPT-4o·임베딩·gpt-4o-mini)" { class: ext }
   claude: "Claude 3.5 Sonnet (Anthropic, litellm)" { class: ext }
 }
 

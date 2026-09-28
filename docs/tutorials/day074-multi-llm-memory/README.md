@@ -1,6 +1,6 @@
 # Day 074 · 🧠 Multi-LLM Application with Shared Memory
 
-> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 95분(세 겹의 크래시(env var·Qdrant 연결·qdrant-client 버전)와 리스트/딕셔너리 버그를 8단계에 걸쳐 직접 재현하고, 실제 앱 기동과 3단계로 나눈 시퀀스 그림까지 확인합니다) · API 비용 대략 $0.1 이하(OpenAI GPT-4o·Anthropic Claude 3.5 Sonnet API, 실제 키로 실행할 때) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory`
+> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 100분(세 겹의 크래시(env var·Qdrant 연결·qdrant-client 버전)와 리스트/딕셔너리 버그를 8단계에 걸쳐 직접 재현하고, 실제 앱 기동과 `add()` 내부의 유사 기억 검색까지 포함한 3단계 시퀀스 그림을 확인합니다) · API 비용 대략 $0.1 이하(OpenAI GPT-4o·Anthropic Claude 3.5 Sonnet API, 실제 키로 실행할 때) · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory`
 
 ## 오늘 만들 것
 
@@ -317,7 +317,7 @@ has query_points: True
             st.write("Answer: ", answer)
 ```
 
-두 분기 모두 같은 메시지 구조(`system` + `user`)를 만들고, `response.choices[0].message.content`로 같은 방식으로 답을 꺼냅니다 — 76행의 `completion()`은 5행에서 가져온 litellm의 최상위 함수로, Anthropic 모델 문자열(`claude-3-5-sonnet-20240620`)을 받으면 내부적으로 Anthropic Messages API를 부르고 OpenAI 호환 응답 객체로 감싸 돌려줍니다(소스로 확인, litellm 1.80.0). Step 2에서 내보낸 `ANTHROPIC_API_KEY` 환경 변수를 litellm이 이 시점에 읽습니다. `claude-3-5-sonnet-20240620`이 오늘(2026-09-28) Anthropic API에서 여전히 유효한 모델 ID인지는 실제 호출 없이는 확인하지 못했습니다. 이 문서는 실제 채팅 완성 호출은 보내지 않지만, **5행의 `from litellm import completion`(import 그 자체)이 네트워크를 탑니다** — litellm은 모듈을 불러오는 시점에 비용표를 `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`에서 받으려 시도합니다(소스로 확인, litellm 1.80.0 `__init__.py` 428행 · Day 053 Step 1에 같은 사실이 있습니다). `LITELLM_LOCAL_MODEL_COST_MAP=True`를 걸면 깃허브 대신 패키지에 내장된 백업 JSON을 씁니다(소스로 확인, `litellm_core_utils/get_model_cost_map.py`) — 이 문서의 나머지 명령은 모두 이 변수를 걸어 실행합니다.
+두 분기 모두 같은 메시지 구조(`system` + `user`)를 만들고, `response.choices[0].message.content`로 같은 방식으로 답을 꺼냅니다 — 76행의 `completion()`은 5행에서 가져온 litellm의 최상위 함수로, Anthropic 모델 문자열(`claude-3-5-sonnet-20240620`)을 받으면 내부적으로 Anthropic Messages API를 부르고 OpenAI 호환 응답 객체로 감싸 돌려줍니다(소스로 확인, litellm 1.80.0). Step 2에서 내보낸 `ANTHROPIC_API_KEY` 환경 변수를 litellm이 이 시점에 읽습니다. `claude-3-5-sonnet-20240620`이 오늘(2026-09-28) Anthropic API에서 여전히 유효한 모델 ID인지는 실제 호출 없이는 확인하지 못했습니다. 이 문서는 실제 채팅 완성 호출은 보내지 않지만, **5행의 `from litellm import completion`(import 그 자체)이 네트워크를 탑니다** — litellm은 모듈을 불러오는 시점에 비용표를 `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`에서 받으려 시도합니다(소스로 확인, litellm 1.80.0 `__init__.py` 428행 · Day 053 Step 1에 같은 사실이 있습니다). `LITELLM_LOCAL_MODEL_COST_MAP=True`를 걸면 깃허브 대신 패키지에 내장된 백업 JSON을 씁니다(소스로 확인, `litellm_core_utils/get_model_cost_map.py`) — Step 6의 확인 명령은 이 변수를 걸어 실행합니다. 다만 뒤의 "앱을 실제로 띄워보기"에서 `streamlit run`으로 앱을 실제로 켤 때는 이 변수를 걸지 않았으므로, 5행의 import가 이 조회를 다시 시도합니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -442,7 +442,7 @@ Uvicorn server started on localhost:58231
 
 ![3단계: 저장](diagrams/extra-save.svg)
 
-3단계는 `memory.add(answer, user_id=user_id)` 호출 하나가 내부적으로 여는 사실 추출(gpt-4o-mini)과 저장용 임베딩 두 차례의 OpenAI 왕복, 그리고 Qdrant 저장입니다(Step 7). 이 단계도 `add()`가 내부에서 다시 부르는 `.search()`가 Step 5와 같은 이유로 먼저 멈추므로, 오늘 설치 기준으로는 Qdrant 저장까지 가지 못합니다.
+3단계는 `memory.add(answer, user_id=user_id)` 호출 하나가 내부적으로 여는 사실 추출(gpt-4o-mini)과 저장용 임베딩 두 차례의 OpenAI 왕복, 그 뒤 새 사실마다 기존 메모리가 있는지 확인하는 Qdrant 유사 기억 검색, 그리고 새 포인트 저장입니다(Step 7). 이 단계도 `add()`가 내부에서 다시 부르는 `.search()`가 Step 5와 같은 이유로 먼저 멈추므로, 오늘 설치 기준으로는 Qdrant 저장까지 가지 못합니다. 이 유사 기억 검색 결과를 다시 `gpt-4o-mini`에 보여 ADD/UPDATE/DELETE 중 무엇으로 처리할지 판단하는 두 번째 LLM 호출도 있지만(073·075와 같은 구조), 아래 그림은 그 판단 호출은 생략했습니다.
 
 ## 실행 체크리스트
 
@@ -463,7 +463,7 @@ Uvicorn server started on localhost:58231
 |---|---|---|
 | 두 API 키를 넣자마자 `openai.OpenAIError: The api_key client option must be set ...` | 10행 `openai_api_key`가 지역 변수일 뿐 `os.environ["OPENAI_API_KEY"]`로 내보내지지 않음(14행은 Anthropic 키만 내보냄) — Mem0 기본 임베더가 환경 변수만 읽는다(`mem0/embeddings/openai.py` 17행) | 14행 곁에 `os.environ["OPENAI_API_KEY"] = openai_api_key`를 추가해야 한다(코드 수정은 이 문서 밖입니다) |
 | 위를 고쳐도 `qdrant_client.http.exceptions.ResponseHandlingException`(연결 거부) | 18-23행이 원격 Qdrant 서버(`localhost:6333`)를 기대하는데 아무 것도 떠 있지 않음 | 원본 README 안내대로 `docker run -p 6333:6333 -p 6334:6334 ... qdrant/qdrant`로 먼저 띄운다 |
-| Qdrant까지 띄워도 "Chat with LLM"을 누르면 `AttributeError: 'QdrantClient' object has no attribute 'search'` | `requirements.txt`가 `qdrant-client`를 고정하지 않아 mem0ai가 허용하는 범위(`>=1.9.1,<2.0.0`) 안에서 오늘 최신인 1.19.1이 설치되는데, 이 버전은 `.search()`를 `.query_points()`로 옮김 — mem0ai 0.1.29는 여전히 옛 이름을 부름(직접 확인, Day 073과 같은 원인) | 리포 코드는 고치지 않음 — 재현하려면 `uv pip install "qdrant-client==1.9.1"`(mem0ai가 선언한 하한, `.search()`가 남아 있음)로 내려 설치 |
+| Qdrant까지 띄워도 "Chat with LLM"을 누르면 `AttributeError: 'QdrantClient' object has no attribute 'search'` | `requirements.txt`가 `qdrant-client`를 고정하지 않아 mem0ai가 허용하는 범위(`>=1.9.1,<2.0.0`) 안에서 오늘 최신인 1.19.1이 설치되는데, 이 버전은 `.search()`를 `.query_points()`로 옮김 — mem0ai 0.1.29는 여전히 옛 이름을 부름(직접 확인, Day 073과 같은 원인) | 리포 코드는 고치지 않음 — 우회하려면 `uv pip install "qdrant-client==1.9.1"`(mem0ai가 선언한 하한, `.search()`가 남아 있음)로 내려 설치 |
 | 그렇게 내려도 답변에 과거 기억이 전혀 반영되지 않는다(에러 없음) | mem0ai 0.1.29 기본 `version="v1.0"`에서 `search()`가 dict가 아니라 list를 반환하는데 53행이 `"results" in relevant_memories`로 dict를 가정 — 리스트에 그 문자열 원소가 있을 리 없어 항상 거짓(Day 073 Step 7과 같은 원인) | `if relevant_memories:` + `for mem in relevant_memories:`처럼 오늘 버전의 반환 형태에 맞게 고쳐야 한다(코드 수정은 이 문서 밖입니다) |
 | 답변을 여러 번 받아도 "View My Memory"가 항상 "No learning history found" | 88행도 같은 dict 가정 버그(`get_all()`도 list 반환) — `get_all()`은 `.search()`가 아니라 이름이 바뀌지 않은 `.scroll()`을 쓰므로 `qdrant-client` 버전과 무관하게 이 문제만 남는다 | `if memories:` + `for mem in memories:`로 고친다 |
 | Claude를 선택해도 겉보기엔 아무 차이가 없다 | 35-45행에서 이 분기가 `client`를 실제로는 쓰이지 않는 두 번째 `Memory` 객체로 덮어쓴다 — 진짜 Claude 응답은 76행의 `completion()`이 만든다. 다만 rerun마다 `/tmp/qdrant`(Windows는 `C:\tmp\qdrant`)를 지웠다 새로 만드는 부작용은 남는다 | 이 대입은 지워도 동작에 영향이 없다(죽은 코드) |
