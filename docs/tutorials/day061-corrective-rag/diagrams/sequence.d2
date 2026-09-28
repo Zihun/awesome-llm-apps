@@ -14,12 +14,12 @@ ui -> graph: app.stream 실행
 graph -> openai: 질문 임베딩 요청
 graph -> qdrant: 임베딩 벡터로 유사도 검색
 qdrant -> graph: 검색된 문서
-graph -> claude: 문서 채점
+graph -> claude: claude-sonnet-4-5(temperature=0, max_tokens=1000)로 문서 채점
 claude -> graph: 채점 결과(no 판정 있음)
-graph -> claude: 질의 재작성 요청
+graph -> claude: claude-sonnet-4-5(temperature=0, max_tokens=1000)로 질의 재작성 요청
 graph -> tavily: 웹 검색
 tavily -> graph: 결과
-graph -> claude: 답변 생성
+graph -> claude: claude-sonnet-4-5로 답변 생성
 claude -> graph: 생성된 답변
 graph -> ui: 최종 답변
 ui -> user: 화면 표시
