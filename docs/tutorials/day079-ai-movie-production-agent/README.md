@@ -373,9 +373,21 @@ sed -n '76,85p' movie_production_agent.py
 
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+한 번의 "Develop Movie Concept" 클릭이 실제로는 세 단계를 거칩니다 — 아래 세 그림은 그 순서 그대로입니다.
 
-두 키를 넣고 아이디어를 적은 뒤 "Develop Movie Concept"를 누르면, Streamlit UI는 `movie_producer.run(input_text, stream=False)`를 호출합니다. MovieProducer는 먼저 ScriptWriter에게 각본 아웃라인을 위임하고, ScriptWriter는 Gemini를 한 번 호출해 아웃라인을 받습니다. 이어서 MovieProducer는 그 아웃라인과 함께 캐스팅 제안을 CastingDirector에 위임합니다. CastingDirector는 `search_google("배우명")`으로 SerpApi를 호출해 검색 결과 JSON을 받고, 그 결과를 Gemini에 다시 넘겨 캐스팅 제안 텍스트를 받습니다. 두 멤버의 결과가 모이면 MovieProducer 자신의 Gemini 호출(Step 5에서 본 `respond_directly=False` 기본값에 따른 종합 단계, 다이어그램에서는 지면 제약으로 별도 화살표 대신 마지막 응답 라벨에 반영했습니다)로 하나의 영화 컨셉으로 합쳐지고, 그 `response.content`가 Streamlit UI로 돌아와 `st.write()`로 화면에 렌더링됩니다.
+![1단계: 요청 시작과 ScriptWriter](diagrams/sequence.svg)
+
+1단계는 버튼 클릭이 MovieProducer의 `run()` 호출로 이어지고, ScriptWriter가 각본 아웃라인을 받아 돌려주는 부분만 그립니다.
+
+![2단계: CastingDirector와 도구 호출](diagrams/extra-casting.svg)
+
+2단계는 MovieProducer가 아웃라인을 들려 CastingDirector에 위임하고, CastingDirector가 SerpApi로 배우를 검색한 뒤 그 결과를 Gemini에 다시 넘겨 캐스팅 제안을 받는 부분만 그립니다.
+
+![3단계: 결과 종합과 반환](diagrams/extra-synthesis.svg)
+
+3단계는 MovieProducer 자신이 Gemini를 한 번 더 호출해 두 멤버의 결과를 하나의 영화 컨셉으로 종합하고, 그 결과가 Streamlit UI를 거쳐 화면에 렌더링되는 부분만 그립니다.
+
+두 키를 넣고 아이디어를 적은 뒤 "Develop Movie Concept"를 누르면, Streamlit UI는 `movie_producer.run(input_text, stream=False)`를 호출합니다. MovieProducer는 먼저 ScriptWriter에게 각본 아웃라인을 위임하고, ScriptWriter는 Gemini를 한 번 호출해 아웃라인을 받아 MovieProducer에 돌려줍니다. 이어서 MovieProducer는 그 아웃라인과 함께 캐스팅 제안을 CastingDirector에 위임합니다. CastingDirector는 `search_google(query, num_results=10)`으로 SerpApi를 호출해 검색 결과 JSON(`search_results`·`knowledge_graph` 등)을 받고, 그 결과를 Gemini에 다시 넘겨 캐스팅 제안 텍스트를 받아 MovieProducer에 돌려줍니다. 두 멤버의 결과가 모이면 MovieProducer 자신의 Gemini 호출(Step 5에서 본 `respond_directly=False` 기본값에 따른 종합 단계)로 하나의 영화 컨셉으로 합쳐지고, 그 `response.content`가 Streamlit UI로 돌아와 `st.write()`로 화면에 렌더링됩니다.
 
 ## 실행 체크리스트
 
