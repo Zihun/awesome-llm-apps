@@ -8,23 +8,16 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
-**멈춤 지점 (2026-09-27) — RAG 볼륨 끝(Day 058~070 작성 → 리뷰 → 수정 최대 3라운드 → 재확인 완료), 푸시함. 다음 볼륨(Day 071~)은 사용자 지시를 받고.**
+**멈춤 지점 (2026-09-28) — 재개 지점 작업(Task 13) 끝 + Day 071~080 작성·리뷰·수정 끝(Task 14), 푸시함. 다음(Day 081~)은 사용자 지시를 받고.**
 
-**다음 세션에 할 일 (사용자 결정 2026-09-27: "1. 순서대로 해. 2. 추천안 있으면 진행해. 3. 진행하지 말고 오늘 여기서 마무리 해")**
-1. 검사 21을 길이 비례 표본으로 고친다(`lib/edges.mjs` edgesThroughText — 작업 폴더 `edges-dense.mjs`가 그 모양, 테스트 1 추가).
-   그다음 걸리는 옛 볼륨 SVG 46개(대부분 001~056 sequence, 052 extra-ingest)를 재배치한다 — 배우 순서 전수 탐색(이번 볼륨 방식),
-   화살표 삭제·병합·라벨 접기 금지. 순서로 안 되는 날(061처럼)은 잰 근거와 함께 남긴다.
-2. 같은 묶음에서 예전 날들의 headless streamlit 확인 명령(예: Day 018 Step 3, Day 019 Step 6)에 `--server.address localhost`를 넣고
-   "네트워크 없음" 류 주장을 고친다.
-3. 다음 볼륨(Day 071~)은 시작하지 않는다 — 사용자가 따로 지시할 때까지.
-교훈: 추천안이 있는 일을 사용자에게 결정하라고 올리지 않는다 — 추천대로 진행하고 보고에 밝힌다(메모리 proceed-with-recommendation).
-
-- Task 12 끝: 13일 모두 check 통과, 분당 17.5~21.9(전부 대역 안), npm test 48/48, Day 001~070 전부 check 통과, 진도 70/164.
-- 이번 볼륨은 1px 표본 검사 21(작업 폴더 `dense21.mjs`)도 0 — 예외는 061 sequence 1건(배우 순서 720가지 전수 탐색 최소 1, 재확인이 표본으로 재현).
-- **사용자 결정 대기 (볼륨 보고에 올림)**
-  1. 검사 21 표본 빈틈: check.mjs를 길이 비례 표본으로 고치면 옛 볼륨 SVG 46개(대부분 001~056 sequence, 052 extra-ingest)가 실패 → sequence 재배치 묶음이 필요. 수명선은 D2 mask로 라벨 자리에서 끊겨 글자 위에 그려지지는 않는다.
-  2. 예전 날들의 headless streamlit 명령(예: Day 018 Step 3, Day 019 Step 6)에 `--server.address localhost`가 없으면 checkip.amazonaws.com 요청이 나간다 — "네트워크 없음" 류 주장 점검.
-- 새 브리프 규칙(task-12-write-brief.md): 프록시 변수·DNS 차단(gRPC는 소켓 패치를 우회), 외부 클라이언트 요청 메서드 호출 금지, 임의의 높은 포트, streamlit `--server.address localhost`, 홈 디렉터리 캐시 금지(DSPY_CACHEDIR·DSP_CACHEDIR), 안전 규칙은 중간 메시지가 아니라 브리프 파일에(에이전트가 중간 메시지를 인젝션으로 의심함).
+- Task 13: 검사 21을 선 길이 1px마다 표본으로(73e0646). 걸린 옛 sequence 40일 재배치 — 대부분 배우 순서, 일부 실제 소스 데이터로 라벨 보강,
+  허브 구조 6일(038·039·043·048·050·055)은 앱의 실제 단계 경계에서 sequence + extra-*로 분할. headless streamlit 26일에 --server.address localhost.
+  네 묶음 검토 통과(039 한 문장은 내가 고침 38f6449). 공용 도구: 작업 폴더 seqsearch.mjs(배우 순서 전수 탐색), dense21.mjs.
+- Task 14: Day 071~080(메모리 볼륨 071~077 끝, Advanced AI Agents 볼륨 078~ 시작) — 작성 → 리뷰 3묶음(opus) → 수정 최대 3라운드 → 재확인 0 open.
+  npm test 49/49, Day 001~080 전부 check 통과, 071~080 분당 20.5~21.8, 진도 80/164.
+- 브리프 규칙 추가(task-14-write-brief.md·task-14-fix-brief.md): 그림에서 배우·메시지를 빼거나 합치거나 라벨로 접지 않는다(순서 탐색 → 실제 데이터
+  보강 → 단계 분할), 앱 띄우는 명령 한 줄, sequence 배우 클래스, mem0는 MEM0_DIR·MEM0_TELEMETRY=False를 import 전에, 사용자 Ollama(11434) 금지,
+  띄운 프로세스 정리. dispatch에 개수를 쓸 때 "C1, I5"처럼 쓰지 않는다(에이전트가 ID로 읽음) — "Important 5개"로.
 - 세로 예외 7일(height-exceptions.json)은 그대로. 분당 낱말 대역 밖 13일(001·002·003·006·007·011·013·014·015·018·030·034·039)은 예전 볼륨 기존 상태.
 
 **내가 저지른 것 (되풀이하지 말 것)**
@@ -744,3 +737,77 @@ Task 12: 3차 재확인 b DONE (a71b92bc78e8ae356) — 064·065·066·070 모두
 Task 12: 3차 재확인 a DONE (a80f46a86f6dff6ba) — 059·060·061·062 모두 문제 없음(061 dense21 1은 무작위 20표본 0/20으로 최소 주장 재현). → 058~070 13일 전부 complete. 볼륨 마무리 시작.
 Task 12: complete — roadmap 70/164, npm test 48/48, Day 001~070 check 전부 통과, 058~070 분당 17.5~21.9. 재개 지점 갱신, 로드맵·원장 커밋 후 푸시.
 === USER 2026-09-27: 결정 — 1 검사 21 수정·재배치 "순서대로", 2 streamlit 점검 "추천안대로", 3 다음 볼륨은 하지 말고 오늘 마무리. 남은 에이전트 없음(백그라운드 잔여 1개 TaskStop). 재개 지점에 다음 세션 할 일 기록. ===
+
+## 2026-09-28 — Task 13(검사 21 재배치·streamlit) + Task 14(Day 071~080)
+
+=== USER 2026-09-28: "재개시점부터 진행하고 다음볼륨 중 Day 80 까지 진행해" — 재개 지점의 1·2를 하고, 이어서 Day 071~080 작성(운영 파라미터 그대로: 동시 4, 하루 2단계, 리뷰 10일마다, 푸시는 볼륨 끝(077)과 마지막(080), 보고는 끝에 한 번). ===
+Task 13: 73e0646 — 검사 21 표본을 선 길이 1px마다(최소 40점)로, 테스트 1 추가(49/49), 규격 §6-21 문구. 검사 17도 같은 방식으로 재 봤더니 변화 0이라 그대로 둠. 이제 옛 볼륨 39일 + 061의 sequence(052는 extra-ingest)가 check 실패.
+Task 13: 공용 도구 seqsearch.mjs(작업 폴더) — 배우 선언 순서를 전수(또는 표본) 탐색해 메모리에서 렌더, 검사 17·18·20·21·22·크기 상한으로 채점, 위반 0·이동 최소 순서를 보임(Day 001: 120개 중 3개, 50초).
+Task 13: headless streamlit에 --server.address 없는 옛 날 26일(한 줄 grep 기준: 002·003·004·005·006·007·012·013·018·019·022·024·030·035·038·039·041·043·044·046·049·051·052·053·054·057).
+Task 13: 공통 브리프 task-13-seqfix-brief.md. 네 묶음 dispatched(sonnet): A 001~016 13일(ac9841bec6afe3d32), B 017~035 13일(ac418eddb3a06cf6e), C 038~049 10일(a1d7b09b02c4b076e), D 050~061 9일(a4ef454bd440add3b) → task-13-{A,B,C,D}-report.md. 061은 라벨 보강(실제 데이터)까지 시도, 안 되면 근거 남기고 미커밋.
+Task 14: 작성 브리프 task-14-write-brief.md(= task-12 브리프 + 볼륨 여는 날(071·078) + 검사 21 1px·seqsearch). 작성자는 Task 13 묶음이 끝나는 자리마다.
+Task 13: 묶음 A DONE (ac9841bec6afe3d32) — 13일 13커밋, 개별 check 전부 통과(내가 재확인). 순서만: 001·002·003·005·006·011·012·014·016 / 순서 0건 없음 → 실제 데이터로 라벨 보강: 004 "(GPT-4o)", 007 max_actions_per_step, 015 anthropic 모델 문자열(1398/1400px) / 013 streamlit만. 검토에서 볼 것: 라벨 보강 셋, 015에 streamlit 수정이 들어갔다는 보고(T 표시 없던 날).
+Task 14: 071 dispatched (a94e7aa8b65074c4c, sonnet → task-14-day071-report.md).
+Task 13: 묶음 B DONE (ac418eddb3a06cf6e) — 13일 13커밋, 개별 check 전부 통과(재확인). 순서만: 018·019·022·030·033 / 순서 0건 없음 → 원래 순서 그대로 실제 소스 데이터로 라벨 보강: 017·020·021·029·031·032·035(폭 여유 017 12px, 021 10px) / 024 streamlit만. 018은 뒤늦게 커밋(3aeacb8). 검토에서 볼 것: 라벨 보강 7일의 정확성.
+Task 14: 072 dispatched (ad97bb24b3b2f492a, sonnet).
+Task 13: 묶음 D DONE (a4ef454bd440add3b) — 051 f3fa01c · 052 f41c7ca(extra-ingest) · 053 3914cf7(순서+보강+관계없는 중복 낱말 하나를 폭 때문에 줄임 — 검토 대상) · 054 af59d78(streamlit 네트워크 문단이 거꾸로였던 것도 고침) · 056 b06a98e · 057 36e90bf(streamlit만) · 061 016b380(드디어 0). 실패 둘: 050·055 — 원격 팔 4~5개인 허브 구조라 순서+보강으로는 폭 1400 안에서 불가(근거 보고서), 미커밋·폴더 깨끗.
+Ruling: 050·055는 sequence를 앱의 실제 단계 경계(적재/질의, 검색/답변 등)에서 sequence.d2 + extra-<단계>.d2로 나눈다 — 레버 5(Day 052 extra-ingest 선례), 메시지는 모두 정확히 한 그림에 원래 순서로, 삭제·병합·접기 없음 — 틀렸다면 그림 하나를 다시 합칠 뿐. D 작성자 재개(resume).
+실수: 073 작성자를 띄워 동시 5개가 됨 → 즉시 TaskStop(a6b764cca479f048c, 몇 초 만). 자리 나면 다시 띄운다.
+Task 14: 071 DONE — 7ec7e3f, check 통과, 20.7/분. LM Studio용 OpenAI 클라이언트(base_url 하드코딩), 매 턴 시스템 메시지 중복 버그를 가짜 서버+AppTest로 재현. 검토에서 볼 것: sequence에서 세션 상태 배우를 뺐다(overview엔 유지, "Day014 선례"라고 함 — 선례가 실제로 그런지, 메시지 삭제인지). 작성자가 남긴 가짜 서버 2개(127.0.0.1:58234, PID 34044·9584)를 내가 종료. 브리프 dispatch에 "끝내기 전에 띄운 서버를 멈춘다" 추가.
+Task 14: 073 dispatched (a3a3e7cdcd68b53e4). 지금 동시 4: C, D(050·055 분할), 072, 073.
+Task 13: 묶음 D 분할 DONE — 050 442b706(sequence + extra-search + extra-answer), 055 4247806(sequence + extra-rerank + extra-answer, 125→130분). 메시지는 모두 한 그림에 원래 순서로, 분할 뒤 sequence에 실제 소스 데이터 라벨 보강 1곳씩. 둘 다 check 통과. → Task 13 남은 것: C 묶음, 그 뒤 검토.
+Task 13: 검토 공통 브리프 review-13-brief.md(base 73e0646, 내용 보존·보탠 라벨의 사실·README·streamlit·check·PNG). 검토 A(001~016) dispatched (ac6e9e598076abb5d, sonnet → review-13-A.md). B·C·D 검토는 자리 나면. 지금 동시 4: C 묶음, 072, 073, 검토 A.
+Task 13: 검토 A DONE (ac6e9e598076abb5d) — 13일 모두 문제 없음(004·007·015 보탠 라벨은 소스 줄과 일치, 015 streamlit 건은 내 오해 — README 변경 없음). A complete. 검토 B(017~035) dispatched.
+Task 14: 072 DONE — 02c6e93, check 통과, 19.3/분. 오늘 의존성(mem0ai 2.2.1 등)에서 두 충돌 재현(Qdrant vector_store config의 model 필드 ValidationError, search/get_all의 최상위 user_id 거부), memory.add()가 어디서도 불리지 않아 View Memory는 늘 빔. 074 dispatched.
+Task 13: 묶음 C DONE 1차 (a1d7b09b02c4b076e) — 040 8dc591c(순서만) · 041 4922486(순서+보강) · 042 b9ae36a(순서+Ollama 모델 사실) · 044 ecab2a8(T) · 046 6ee58ce(T) · 049 711ec2f(순서+T). 실패 넷: 038·039·043·048(허브+잎 구조, 720 순서 전수·보강해도 폭 1400을 50~150px 넘음), 미커밋·깨끗. → 050·055와 같은 판정(단계별 분할)으로 C 작성자 재개.
+Task 14: 073 DONE — 968ad9b, check 통과, 19.5/분(90→65분). 오늘 해석되는 qdrant-client 1.19.1에서 .search() 제거 → memory.search() AttributeError(첫 동작), 1.9.1로 내려도 get_all/search가 v1.0에서 맨 리스트 반환·mem['text'] KeyError(키는 memory). **부수 효과**: import mem0이 홈에 ~/.mem0/을 만들고 posthog 통계 시도(프록시에 막힘) — 작성자가 3번 만들고 지웠다고 보고.
+Task 14: ~/.mem0/config.json(59B)이 11:45:29에 또 생김 — 지금 mem0를 쓰는 것은 074 작성자뿐. 브리프에 mem0 규칙(MEM0_DIR·MEM0_TELEMETRY=False를 import 전에, 끝에 ~/.mem0 없음 확인) 추가하고 074에 알림(브리프 파일로 검증하라고). 075 dispatched (a17f1ee8f89e12af5). 동시 4: C(분할), 검토 B, 074, 075.
+Task 13: 검토 B DONE (a3516b750bb8a9e8d) — 13일 모두 문제 없음(라벨 보강 8곳 소스 줄 일치, 폭 1388~1397/1400). B complete. 검토 D(050~061) dispatched.
+Task 13: 검토 D DONE (aa8f4750f69782a2b) — 9일 문제 없음(050·055 분할은 메시지 12/13개 정확히 1회·원순서). 061 Minor 1은 보고서 서술 오류(세 번째 메시지도 바뀌었는데 안 바꿨다고 씀) — 산출물 라벨은 소스와 일치 → Ruling: park(보고서 문구일 뿐, 산출물 결함 아님). D complete. 076 dispatched.
+Task 13: 묶음 C 분할 DONE — 038 7ec23e2(수집+요약+분석, 원래 순서로 0) · 039 ab18648(등록·수집+임베딩+답변) · 043 68b3eab(자막+임베딩+답변, 위치 문장 1 고침) · 048 4060565(수집·인덱싱+답변, extra에 실제 데이터 보강 1). 038·039·043 streamlit 포함. 10일 check 통과(재확인). 검토 C dispatched.
+Task 14: 075 DONE — d6942ff, check 통과, 20.6/분. mem0ai 0.1.29 + qdrant-client 1.19.1로 채팅 즉시 AttributeError(073과 같은 원인), get_all v1.0 리스트로 View My Memory 늘 빔, 39행 st.button이 사이드바가 아닌 본문(소스). MEM0_DIR 지정 — ~/.mem0는 이전부터 있었음(074 추정). 077 dispatched.
+Task 13: 검토 C DONE (a478596ec96f0566e) — 9일 문제 없음, 039 Important 1(세 그림 도입 문장이 세 단계를 모두 add() 안이라고 함 — 셋째는 app.query()) → 내가 직접 고침(한 문장, 소스 :32·:40 확인, check 통과). → Task 13 전부 complete(40일 재배치 + streamlit 26일).
+Task 14: 078 dispatched (a054477632df46e17, 볼륨 7 여는 날). 동시 4: 074, 076, 077, 078.
+Task 14: 074 DONE — 8d594e8, check 통과, 21.3/분. OPENAI_API_KEY를 env로 내보내지 않아 Memory.from_config가 Qdrant 전에 OpenAIError, Claude 분기의 Memory 생성은 죽은 코드(/tmp/qdrant), v1.0 리스트 반환으로 "results" 검사 늘 False. **~/.mem0/config.json(11:45:29)은 074가 규칙 전 import로 만듦 — 삭제는 권한 분류기가 막음. 내가 대신 지우지 않는다(권한 세탁) → 사용자 보고 항목: rm -rf ~/.mem0.** 검토에서 볼 것: 074가 075 앱에도 같은 OPENAI_API_KEY 미전달 패턴이 있다고 지적. 079 dispatched.
+Task 14: 076 DONE — 7ab65ea, check 통과, 19.1/분. requirements에 ollama 패키지 누락 → mem0가 input()으로 설치를 물어 EOFError, ollama 0.6.2 응답 스키마(name→model)로 mem0 0.1.29가 매번 pull 시도. 스텁 서버 61076으로 왕복 확인, 포트 정리. 주의: 사용자 PC의 실제 Ollama(11434)에 모델 목록을 물어본 것으로 보임(로컬·읽기만, 다운로드 없음) — 보고에 적는다. 080 dispatched(11434 사용 금지 명시).
+Task 14: 078 DONE — cb18f80, check 통과, 20.7/분(45→55분). Day 001 뼈대 재사용(가리킴), YFinanceTools() 기본은 현재가만 — 설명·지시문·앱 README는 애널리스트 추천·뉴스·재무를 약속(주요 문제 해결). 리뷰 071~075 dispatched (opus, review-11b-brief.md + task-14 규칙 → review-071-075.md). 동시 4: 077, 079, 080, 리뷰.
+Task 14: 077 DONE — dffe581, check 통과, 21.1/분. mem0ai 2.0.14로 이 앱은 Memory.from_config 성공·get_all 형식 일치(볼륨에서 처음), sub_agents만 사용(AgentTool 없음). 모델 문자열 gemini-3.7-flash 실재는 미확인. 리뷰 076~078 dispatched (opus → review-076-078.md). 079·080 리뷰는 둘 끝난 뒤.
+Task 14: 079 DONE 1차 — 4034e67, check 통과, 18.9/분. requirements에 google-genai(agno[google]) 누락으로 7행 ImportError, 앱 README는 Claude라 하나 코드는 Gemini 2.5 Flash, 시리즈 첫 agno Team(난이도 ★★★). **규칙 위반**: sequence에서 MovieProducer↔Gemini 종합 왕복을 빼고 최종 라벨로 접음 → 즉시 되살리라고 재개(분할 또는 실제 데이터 라벨 보강).
+Task 14: 리뷰 071~075 DONE (a119d87d988d430aa) → review-071-075.md. 5일 모두 ❌: C2 I10 M30 (071 I2 M8 / 072 I3 M5 / 073 I2 M5 / 074 C1 I3 M6 / 075 C1 M6). C: 074 버전 조합에서 search·add AttributeError인데 "에러 없음"이라 씀 / 075 키를 OPENAI_API_KEY로 안 넘겨 진짜 키로도 26행 OpenAIError. 071 세션 배우 제거는 불필요(24 중 4 순서가 0)·메시지 삭제. 074는 두 LLM 병합 + mem0→OpenAI 삭제. 공통 X1 앱 띄우는 명령 없음, X3 sequence 배우 클래스 없음.
+Ruling: X1·X3은 fix round에서 반영(선례 063-I2·064-I2). 규칙 강화: task-14-fix-brief.md(공통 수정 지시 — 삭제·병합·접기 금지, 순서 탐색 → 실제 데이터 보강 → 단계 분할) + 작성 브리프에 두 줄.
+Task 14: fix round 1 순서(자리 나는 대로): 074(재개함) → 075 → 071 → 072 → 073.
+Task 14: 079 수정 DONE — 8c750ba, 같은 원인으로 빠졌던 반환 화살표 둘까지 16메시지 전부 되살려 3단계 분할(sequence·extra-casting·extra-synthesis), extra-casting은 SerpApi 실제 시그니처로 라벨 보강, check 통과, 20.2/분. 075 fix round 1 dispatched(resume).
+Task 14: 리뷰 076~078 DONE (a9c9297b40ee4c7fe) → review-076-078.md. 3일 ❌: C2 I13 M20 (076 C1 I5 M7 / 077 C1 I4 M9 / 078 I4 M4). C: 076 m.add()가 073·075와 같은 원인 AttributeError(스텁이 잘못된 JSON이라 경로를 못 탐) / 077 Step 4 가짜 키 명령이 Qdrant 잠금 RuntimeError(키가 있으면 import만으로 get_memory). 078: 키 없을 때 실패 지점(ModelAuthenticationError·RunStatus.error), 볼륨 도입이 071과 어긋남, 079 예고의 모델 틀림.
+Task 14: fix round 1 대기열: 074·075 진행 중 → 076(재개함) → 077 → 071 → 072 → 073 → 078. 080 리뷰는 080 작성 뒤.
+Task 14: 080 DONE — 13cc2b2, check 통과, 12.1/분(대역 밖, 근거절: evoagentx 설치 3단계 실패 재현 — 064·069·070 선례). faiss-cpu==1.8.0.post1은 Python 3.13 휠 없음, extra 없는 evoagentx는 import 사슬이 ModuleNotFoundError, [all] 필요. 작성 10일 모두 끝. 리뷰 079~080 dispatched (opus → review-079-080.md).
+Task 14: 075 fix round 1 DONE — c774d6a, C1·M1~M6·X1·X3 반영, sequence를 sequence + extra-add-memory로 분할(extra는 ui를 자기-메시지로 바꿔 3배우 — 재확인에서 병합 여부 판정), check 통과, 20.4/분(65→85분). **사고**: MEM0_DIR 한 번 누락 → ~/.mem0/history.db(12KB, 13:05) 생성, 삭제는 샌드박스가 거부 — 사용자 보고(rm -rf ~/.mem0). 077 fix round 1 dispatched(resume).
+Task 14: 076 fix round 1 부분 DONE — 7239d12(C1 진짜 원인 재현·qdrant-client 1.9.1, 클라우드 호출 주장 정정, 스텁 코드 수록·Step 8 NameError, M7 임베딩 호출, 공통). 내 dispatch의 'C1, I5 and M7'(개수)을 ID로 읽어 I1·I2·I4·M1~M3·M5·M6을 남김 — 내 표현 탓. 나머지 전부 하라고 재개(round 1b). 교훈: 개수는 'C 1개, I 5개'처럼 쓴다.
+Task 14: 074 fix round 1 DONE — 4c6ee35, 전부 반영(C1·I1~I3·M1~M6·X1), sequence 3단계 분할(검색/답변/저장)+실제 데이터 보강, litellm 가격표 fetch 확인·LITELLM_LOCAL_MODEL_COST_MAP, check 통과, 21.7/분(70→95분). 071 fix round 1 dispatched(resume).
+Task 14: 리뷰 079~080 DONE (a2c0c6b1e1eba7afd) → review-079-080.md. 079 ❌ I4 M3(16메시지 흐름이 리더의 위임 결정 Gemini 호출 둘·CastingDirector의 search_google 요청 호출을 빠뜨림, 볼륨 여는 날 오기, 기본 Gemini id, 실행 명령) / 080 ❌ C1 I7 M9(검증 모델 claude-3-7-sonnet-20250219가 2026-02-19 퇴역 — 키 있는 독자는 OpenAI 비용만 내고 45행에서 죽음, 시간·근거절이 본문과 불일치, sequence에서 파일 배우 제거). 리뷰어가 13:28에 원본 앱 폴더에 __pycache__를 만들었다가 바로 지움(무시되는 파일).
+Ruling: 080 시간 — 설치 실패 사슬을 독자가 돌리는 단계로 만들고(실제 명령) 75~90분으로 정직하게 — 시리즈의 재현 중심 관례(064·069·070), 틀렸다면 단계 하나를 설명으로 되돌릴 뿐. 080 fix round 1 dispatched. 대기: 072 → 073 → 078 → 079.
+Task 14: 071 fix round 1 DONE — 65f2239, 전부 반영(세션 배우와 22·24·34행 메시지 복원, 현재 순서로 0, 1122×994), check 통과, 21.1/분(60→65분). 072 fix round 1 dispatched(resume).
+Task 14: 077 fix round 1 DONE — 1e49aec, 전부 반영(C1 명령 교체·재현, ADK 부모 전환 지시문 확인, 볼륨 회고 정정, mem0 안내, sequence에 라우팅·mem0 Gemini 호출 추가 → extra-save로 분할, 관통은 라벨 축약으로 — 재확인에서 뜻 보존 판정), check 통과, 20.1/분(65→100분). 073 fix round 1 dispatched(resume).
+Task 14: 072 fix round 1 DONE — d0324b2, 전부 반영(filters 뒤 TypeError, ~/.mem0·history.db 비호환 재현, 실행 명령, OpenAI 노드 라벨) — 라벨 변경으로 관통 재발 → sequence + extra-browse로 분할. check 통과, 20.9/분(50→65분). 072-I3의 073 표 추가는 073 작성자에게 넘김. 078 fix round 1 dispatched(resume).
+Task 14: 080 fix round 1 DONE — 82d3510, 전부 반영(C1 퇴역 명시·대체 모델 안내, Step 1 실제 명령, overview script 노드, outfile 배우 복원 → sequence/extra-execute/extra-verify 3분할, 미관찰 행 삭제), check 통과, 20.2/분(85분). 079 fix round 1 dispatched(resume). 이것이 마지막 수정 — 다음은 재확인(071~075, 076~078, 079~080).
+Task 14: 078 fix round 1 DONE — 04fa6df, 전부 반영(무키 실패는 agno ModelAuthenticationError·소켓 0, 실패 시연을 Step 6로, debug 로그 시점, 볼륨 도입의 071 구분, 079 예고 Gemini), M4의 선택 절반(overview 텔레메트리 노드)은 근거 적고 안 함, check 통과, 21.8/분(55→58분). 재확인은 073·076·079 끝난 뒤 묶음별로.
+Task 14: 073 fix round 1 DONE — 0122bfd, 전부 반영 + 072-I3 행, sequence + extra-add 분할, 두 라벨을 호출 이름(search()·add())으로 줄임(재확인 판정), check 통과, 20.9/분(65→75분). 073 작성자가 ~/.mem0를 지움 — 지금 ~/.mem0 없음(확인). 재확인 071~075 dispatched (resume a119d87d988d430aa, fix-R14a-round1.diff base 13cc2b2).
+Task 14: 079 fix round 1 DONE — 6129815, 전부 반영(누락 Gemini 호출 3개 포함 22메시지를 4파일로, 기본 id gemini-3.7-flash, 실행 명령), check 통과, 20.0/분(55→75분). 재확인 079~080 dispatched (resume a2c0c6b1e1eba7afd, fix-R14c-round1.diff). 남은 수정: 076 round 1b.
+Task 14: 071~075 재확인 DONE — 1차 발견은 075-M1(일부)만 빼고 해결. open: 071 M1(PowerShell 형태) / 072 M3 / 073 I1(라벨을 호출 이름으로 줄여 데이터 빠짐 — 3단계 분할이면 줄일 필요 없음) + M1 / 074 M3 / 075 I1(UI를 자기 메시지로 = 접기, 4배우 판도 0) + M3. fix round 2: 073·075 dispatched(resume). 071·072·074 Minor는 한 묶음 에이전트로(자리 나면).
+Task 14: 075 fix round 2 DONE — 57fed21, UI 배우 복원(1054×898, 0), add 내부 순서, 26행, 머리말 버튼 위치. check 통과, 20.5/분. 071·072·074 Minor 묶음 dispatched(sonnet → task-14-minors-071-072-074-report.md).
+Task 14: 079~080 재확인 DONE — C·I 모두 해결(079 22메시지·빠졌던 호출 포함, 080 14메시지·파일 배우 복원, 85분 정직). open: 079 N1(Minor, health 엔드포인트로는 스크립트 실행 미확인 → '동작으로 판단') / 080 Minor 5(R1·R2·N2·N3·N4). fix round 2: 080 작성자가 080 + 079 N1(별도 커밋) 처리.
+Task 14: 073 fix round 2 DONE — d47d629, 라벨을 소스 데이터로 되살리고 3단계 분할(검색 7·답변 5·저장 4, 리뷰어 측정 크기와 일치, 0), ${TMPDIR:-/tmp}, check 통과, 21.2/분. 073·075 round 2와 071·072·074 Minor 묶음이 끝나면 071~075 2차 재확인.
+Task 14: 076 fix round 1b DONE — 03ae734, 나머지 8건 전부(I1 터미널 y/N 흐름 재현 등), check 통과, 21.7/분(85→95분). 이 작성자도 MEM0_DIR 누락으로 ~/.mem0/history.db 생성·삭제 거부됐다고 보고 — 15:02 확인 시 ~/.mem0 없음(누군가 지움).
+Task 14: 071·072·074 Minor 묶음 DONE — aadc39a·a38bd35·dc1a30a(074 95→100분), 모두 check 통과. 080·079 fix round 2 DONE — 2e20c62(080, 90분 21.5)·fd18ea8(079) check 통과. 080 overview에서 AgentManager+WorkFlow를 폭 때문에 "재병합"했다고 함 — 재확인 판정.
+--- 사용자 "멈춘지점부터 다시 재개해"(15:02) → 재확인 셋 dispatched(resume): 076~078 1차(fix-R14b-round1.diff), 071~075 2차(fix-R14a-round2.diff), 079~080 2차(fix-R14c-round2.diff). ---
+Task 14: 071~075 2차 재확인 DONE — 다섯 날 모두 0 open(073 16메시지·075 8메시지 순서대로 한 번씩). 074는 100분으로 규격 60~90분 초과이나 근거절 있음 — 리뷰어 수용. → 071·072·073·074·075 complete.
+Task 14: 079~080 2차 재확인 DONE — 079 0 open → complete. 080 open 2: G1(Important, AgentManager·WorkFlow 병합 = 다른 파일의 구성요소 병합, 나눠도 973×990·0) + N5(재시도 대기는 분이 아니라 4~15초). 080 fix round 3 dispatched. 리뷰어가 _tools에 스크래치 SVG 2개를 잠깐 썼다가 지움(status 깨끗).
+Task 14: 080 3차 재확인 DONE — G1·N5 해결, 0 open → 079·080 complete. 남은 것: 076~078 재확인.
+Task 14: 076~078 1차 재확인 DONE — 076 I1(add 뒤 화살표 2개를 세로 상한 때문에 삭제) M3 / 077 I1(라우팅 라벨 둘이 transfer_to_agent 데이터 잃음) M3(extra-save 병합, README CRLF, 오타) / 078 M1(Step 6 무키 명령이 키를 안 지움) + M4 선택 절반의 근거 무효(Day 070 선례) → Ruling: 078도 텔레메트리 ext 노드 추가(선례 일관). 076·077·078 fix round 2 dispatched(resume).
+Task 14: 078 fix round 2 DONE — 8d6a9bb, env -u/Remove-Item으로 키 제거, overview에 텔레메트리 ext 노드(step5 -new), check 통과, 21.7/분(58→59분). 076·077 끝나면 셋 묶어 재확인.
+Task 14: 077 fix round 2 DONE — 089de80, transfer_to_agent 데이터 복원 → sequence + extra-handoff 분할, extra-save 병합을 add() 파이프라인 단계로(extra-save + extra-store), LF, 오타. check 통과, 20.6/분. 076만 남음.
+Task 14: 076 fix round 2 DONE — 4478f14, 지운 화살표 둘을 extra-save(3배우)로 되살림, I1 잔여·M1·스텁 종료 안내, check 통과, 20.9/분(95→105분). 076~078 2차 재확인 dispatched (resume a9c9297b40ee4c7fe, fix-R14b-round2.diff base d3c66e4).
+Task 14: 076~078 2차 재확인 DONE — 076 I1(PowerShell Stop-Process -Name python이 모든 python을 죽임) M1(이유절) / 077 M2(Qdrant 검색이 라벨 괄호 속, 724행 왕복 수) / 078 M1(Remove-Item이 세션 전체). 076 extra-save 3배우는 분할로 인정. fix round 3 셋 dispatched(resume).
+Task 14: 078 fix round 3 DONE — 2c6d62b, os.environ.pop을 -c 안으로(두 셸 공용), check 통과, 21.8/분.
+Task 14: 077 fix round 3 DONE — c17771e, Qdrant 검색을 extra-store 앞 메시지 쌍으로, 724행 정정, check 통과, 20.7/분.
+Task 14: 076 fix round 3 DONE — bdeae79(포트로 PID 찾아 그 프로세스만 종료, 이유절 정정). 076·077·078 round 3은 내가 해당 줄을 직접 확인(076:681-683, 077 extra-store 첫 메시지 쌍·724행, 078:218·312) → 076·077·078 complete. Task 14 작성 10일 전부 complete.
+Task 14: complete — roadmap 80/164, npm test 49/49, Day 001~080 check 전부 통과, 071~080 분당 20.5~21.8. 에이전트들이 원본 앱 폴더 8곳에 남긴 __pycache__(오늘 생성, .pyc만) 정리. ~/.mem0 없음. 재개 지점 갱신, 로드맵·원장 커밋 후 푸시.

@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 70 / 164일 완료
+진도: 80 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -156,21 +156,21 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 071](day071-llama3-stateful-chat/README.md) | 💬 Llama3 Stateful Chat | [advanced_llm_apps/llm_apps_with_memory_tutorials/llama3_stateful_chat](../../advanced_llm_apps/llm_apps_with_memory_tutorials/llama3_stateful_chat/) |
-| ⬜ | [Day 072](day072-ai-arxiv-agent-memory/README.md) | 💾 AI ArXiv Agent with Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory/) |
-| ⬜ | [Day 073](day073-llm-app-personalized-memory/README.md) | 📝 LLM App with Personalized Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/) |
-| ⬜ | [Day 074](day074-multi-llm-memory/README.md) | 🧠 Multi-LLM Application with Shared Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory/) |
-| ⬜ | [Day 075](day075-ai-travel-agent-memory/README.md) | 🛩️ AI Travel Agent with Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/ai_travel_agent_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/ai_travel_agent_memory/) |
-| ⬜ | [Day 076](day076-local-chatgpt-with-memory/README.md) | 🗄️ Local ChatGPT Clone with Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory/) |
-| ⬜ | [Day 077](day077-adk-career-coach-agent-memory/README.md) | 🎯 AI Career Coach with Memory (ADK Multi-Agent) | [advanced_llm_apps/llm_apps_with_memory_tutorials/adk_career_coach_agent_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/adk_career_coach_agent_memory/) |
+| ✅ | [Day 071](day071-llama3-stateful-chat/README.md) | 💬 Llama3 Stateful Chat | [advanced_llm_apps/llm_apps_with_memory_tutorials/llama3_stateful_chat](../../advanced_llm_apps/llm_apps_with_memory_tutorials/llama3_stateful_chat/) |
+| ✅ | [Day 072](day072-ai-arxiv-agent-memory/README.md) | 💾 AI ArXiv Agent with Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory/) |
+| ✅ | [Day 073](day073-llm-app-personalized-memory/README.md) | 📝 LLM App with Personalized Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/llm_app_personalized_memory/) |
+| ✅ | [Day 074](day074-multi-llm-memory/README.md) | 🧠 Multi-LLM Application with Shared Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/multi_llm_memory/) |
+| ✅ | [Day 075](day075-ai-travel-agent-memory/README.md) | 🛩️ AI Travel Agent with Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/ai_travel_agent_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/ai_travel_agent_memory/) |
+| ✅ | [Day 076](day076-local-chatgpt-with-memory/README.md) | 🗄️ Local ChatGPT Clone with Memory | [advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/local_chatgpt_with_memory/) |
+| ✅ | [Day 077](day077-adk-career-coach-agent-memory/README.md) | 🎯 AI Career Coach with Memory (ADK Multi-Agent) | [advanced_llm_apps/llm_apps_with_memory_tutorials/adk_career_coach_agent_memory](../../advanced_llm_apps/llm_apps_with_memory_tutorials/adk_career_coach_agent_memory/) |
 
 ### 볼륨 7. 🚀 Advanced AI Agents (Day 78–111, 34일)
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 078](day078-ai-investment-agent/README.md) | 📈 AI Investment Agent | [advanced_ai_agents/single_agent_apps/ai_investment_agent](../../advanced_ai_agents/single_agent_apps/ai_investment_agent/) |
-| ⬜ | [Day 079](day079-ai-movie-production-agent/README.md) | 🎬 AI Movie Production Agent | [advanced_ai_agents/single_agent_apps/ai_movie_production_agent](../../advanced_ai_agents/single_agent_apps/ai_movie_production_agent/) |
-| ⬜ | [Day 080](day080-ai-self-evolving-agent/README.md) | 🧬 AI Self-Evolving Agent | [advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent](../../advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent/) |
+| ✅ | [Day 078](day078-ai-investment-agent/README.md) | 📈 AI Investment Agent | [advanced_ai_agents/single_agent_apps/ai_investment_agent](../../advanced_ai_agents/single_agent_apps/ai_investment_agent/) |
+| ✅ | [Day 079](day079-ai-movie-production-agent/README.md) | 🎬 AI Movie Production Agent | [advanced_ai_agents/single_agent_apps/ai_movie_production_agent](../../advanced_ai_agents/single_agent_apps/ai_movie_production_agent/) |
+| ✅ | [Day 080](day080-ai-self-evolving-agent/README.md) | 🧬 AI Self-Evolving Agent | [advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent](../../advanced_ai_agents/multi_agent_apps/ai_self_evolving_agent/) |
 | ⬜ | [Day 081](day081-ai-journalist-agent/README.md) | 🗞️ AI Journalist Agent | [advanced_ai_agents/single_agent_apps/ai_journalist_agent](../../advanced_ai_agents/single_agent_apps/ai_journalist_agent/) |
 | ⬜ | [Day 082](day082-research-agent-gemini-interaction-api/README.md) | 🔬 AI Research Planner & Executor (Google Interactions API) | [advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api](../../advanced_ai_agents/single_agent_apps/research_agent_gemini_interaction_api/) |
 | ⬜ | [Day 083](day083-ai-deep-research-agent/README.md) | 🔍 AI Deep Research Agent | [advanced_ai_agents/single_agent_apps/ai_deep_research_agent](../../advanced_ai_agents/single_agent_apps/ai_deep_research_agent/) |
