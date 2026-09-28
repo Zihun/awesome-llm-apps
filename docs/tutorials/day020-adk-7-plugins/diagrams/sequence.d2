@@ -9,15 +9,15 @@ gemini: Gemini API { class: ext }
 agent: LlmAgent 실행 { class: ours }
 
 user -> ui: 메시지 입력
-ui -> plugin: run_agent() 호출 → on_user_message_callback
-plugin -> agent: before_run_callback 통과
+ui -> plugin: run_agent()→on_user_message_callback
+plugin -> agent: before_run_callback
 agent -> plugin: before_agent_callback
 plugin -> gemini: before_model_callback 통과, 모델 요청
 gemini -> plugin: 함수 호출 응답
-plugin -> tool: before_tool_callback
-tool -> plugin: 실행 결과 (after_tool_callback은 항상 실행)
+plugin -> tool: before_tool_callback(tool=calculator_tool, tool_args:operation,a,b) 확인
+tool -> plugin: 실행 결과
 plugin -> gemini: 결과를 담아 재요청
 gemini -> agent: 최종 텍스트
-agent -> plugin: after_agent_callback (미구현, 통과)
-plugin -> ui: after_run_callback 후 최종 텍스트 반환
+agent -> plugin: after_agent_callback
+plugin -> ui: after_run_callback 후 반환
 ui -> user: 화면에 표시
