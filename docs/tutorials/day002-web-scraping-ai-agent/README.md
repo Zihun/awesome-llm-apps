@@ -93,7 +93,7 @@ openai_access_token = st.text_input("OpenAI API Key", type="password")
 **확인.** 앱 폴더에서 서버를 headless로 띄웁니다.
 
 ```bash
-uv run --no-project streamlit run ai_scrapper.py --server.headless true
+uv run --no-project streamlit run ai_scrapper.py --server.headless true --server.address localhost
 ```
 
 다른 터미널에서:
