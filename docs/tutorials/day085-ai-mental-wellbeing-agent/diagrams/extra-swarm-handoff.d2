@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+assessment_agent: Assessment 에이전트 {
+  class: ours
+  update_assessment_overview: "update_assessment_overview: 요약 저장 → 사이드바 표시 → action_agent로 SwarmResult 이관" { class: ours }
+}
+action_agent: Action 에이전트 {
+  class: ours
+  update_action_overview: "update_action_overview: 요약 저장 → 사이드바 표시 → followup_agent로 SwarmResult 이관" { class: ours }
+}
+followup_agent: Follow-up 에이전트 {
+  class: ours
+  update_followup_overview: "update_followup_overview: 요약 저장 → 사이드바 표시 → assessment_agent로 SwarmResult 이관" { class: ours }
+}
+
+assessment_agent -> action_agent: 이관(1차 SwarmResult / 이후 AFTER_WORK 기본값)
+action_agent -> followup_agent: 이관(1차 SwarmResult / 이후 AFTER_WORK 기본값)
+followup_agent -> assessment_agent: 이관(1차 SwarmResult / 이후 AFTER_WORK 기본값)

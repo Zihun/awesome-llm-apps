@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+action_agent: Action 에이전트 { class: ours }
+assessment_agent: Assessment 에이전트 { class: ours }
+followup_agent: Follow-up 에이전트 { class: ours }
+gpt4o: GPT-4o { class: ext }
+
+assessment_agent -> gpt4o: 본문 지시
+gpt4o -> assessment_agent: Assessment 본문
+assessment_agent -> action_agent: AFTER_WORK(register_hand_off 기본값, 1바퀴 진입)
+action_agent -> gpt4o: 본문 지시
+gpt4o -> action_agent: Action 섹션 본문(1바퀴)
+action_agent -> followup_agent: AFTER_WORK 기본 이관
+followup_agent -> gpt4o: 시스템 프롬프트(본문 지시) + 누적 요약
+gpt4o -> followup_agent: Follow-up 섹션 본문(1바퀴)
+followup_agent -> assessment_agent: AFTER_WORK(2바퀴 시작)

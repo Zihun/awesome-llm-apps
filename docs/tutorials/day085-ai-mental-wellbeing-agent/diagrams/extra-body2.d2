@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+action_agent: Action 에이전트 { class: ours }
+followup_agent: Follow-up 에이전트 { class: ours }
+ui: Streamlit UI { class: ours }
+gpt4o: GPT-4o { class: ext }
+assessment_agent: Assessment 에이전트 { class: ours }
+
+assessment_agent -> gpt4o: 본문 지시
+gpt4o -> assessment_agent: Assessment 최종 본문
+assessment_agent -> action_agent: AFTER_WORK 이관
+action_agent -> gpt4o: 본문 지시
+gpt4o -> action_agent: Action 최종 본문
+action_agent -> followup_agent: AFTER_WORK 이관
+followup_agent -> gpt4o: 본문 지시
+gpt4o -> followup_agent: Follow-up 최종 본문
+followup_agent -> ui: max_rounds 소진, 반환(chat_history)

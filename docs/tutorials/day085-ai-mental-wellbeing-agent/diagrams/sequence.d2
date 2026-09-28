@@ -4,13 +4,18 @@ shape: sequence_diagram
 사용자: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
 assessment_agent: Assessment 에이전트 { class: ours }
-gpt4o: GPT-4o { class: ext }
 action_agent: Action 에이전트 { class: ours }
+followup_agent: Follow-up 에이전트 { class: ours }
+gpt4o: GPT-4o { class: ext }
 
-사용자 -> ui: 입력 6종 작성 후 지원 요청 버튼 클릭
+사용자 -> ui: 버튼 클릭
 ui -> assessment_agent: initiate_swarm_chat(task)
-assessment_agent -> gpt4o: 시스템 프롬프트 1차(요약 강제) + task
-gpt4o -> assessment_agent: update_assessment_overview 함수 호출(요약)
-assessment_agent -> gpt4o: 시스템 프롬프트 2차(tools 해제, 본문 작성 지시)
-gpt4o -> assessment_agent: Assessment 섹션 전체 텍스트
-assessment_agent -> action_agent: AFTER_WORK 이관
+assessment_agent -> gpt4o: 요약 강제 프롬프트 + task
+gpt4o -> assessment_agent: update_assessment_overview 호출
+assessment_agent -> action_agent: SwarmResult→action_agent
+action_agent -> gpt4o: 요약 강제 + 누적요약
+gpt4o -> action_agent: update_action_overview 호출
+action_agent -> followup_agent: SwarmResult(agent=followup_agent, context_variables) 이관
+followup_agent -> gpt4o: 요약 강제 프롬프트
+gpt4o -> followup_agent: update_followup_overview 호출
+followup_agent -> assessment_agent: SwarmResult→assessment_agent

@@ -1,14 +1,16 @@
 # Day 085 · 🧠 AI Mental Wellbeing Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 80분(단일 파일 226줄이지만 `pyautogen`이라는 이름을 둘러싼 버전 문제를 실제로 세 번 설치를 바꿔가며 재현해야 하고, 시퀀스 그림도 배우 사이 교차를 피하려 셋으로 나눠야 해 손으로 확인하는 시간이 읽는 시간보다 깁니다) · API 비용 대략 요청 1건에 gpt-4o 호출 최대 6회(에이전트 3개 × 2단계 — 1차 요약 강제, 2차 본문 작성이며 뒤로 갈수록 이전 에이전트의 요약이 시스템 프롬프트에 누적됨), OpenAI 공식 요금표 기준(직접 확인, 2026-09-28) gpt-4o 표준가 입력 $2.50/출력 $10.00(1M 토큰당) 대입 시 수백 원대로 추정(대략치 — 키가 없어 실제 호출 횟수·토큰 수는 확인 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 115분(단일 파일 226줄이지만 `pyautogen` 버전 문제를 0.6.1·0.7.3·0.7.4·0.7.6 네 버전으로 재현하고, 가짜 로컬 OpenAI 서버로 실제 호출 순서(9회)와 `max_rounds`를 10·12·13으로 바꿨을 때의 결과, 그리고 디스크 캐시 파일까지 직접 만들어 확인해야 했습니다 — 손으로 돌려 보는 시간이 읽는 시간보다 훨씬 깁니다) · API 비용 대략 요청 1건에 gpt-4o 호출 **9회**(에이전트 3개가 먼저 요약을 하나씩 내고 — 3회 — 그다음 본문 전체를 두 바퀴 다시 씁니다 — 6회, 화면에는 마지막 바퀴만 남습니다. 직접 확인, Step 1·"요청 한 건이 흐르는 과정"), OpenAI 공식 요금표 기준(직접 확인, 2026-09-28) gpt-4o 표준가 입력 $2.50/출력 $10.00(1M 토큰당) 대입 시 수백~천 원대로 추정(대략치 — 호출 횟수 9는 확인했지만 토큰 수는 키가 없어 확인 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent`
 
 ## 오늘 만들 것
 
-이 앱은 226줄 단일 파일 Streamlit 앱으로, 이 시리즈가 주로 다뤄 온 agno나 openai-agents가 아니라 Microsoft AutoGen에서 갈라져 나온 AG2(PyPI 패키지 이름은 지금도 `pyautogen`)의 Swarm 기능(`initiate_swarm_chat`)을 씁니다. 사용자가 감정 상태·수면 시간·스트레스 수준·지지 체계·최근 변화·현재 증상 6가지를 입력하면, `assessment_agent`(상황 평가) → `action_agent`(즉시 대처 계획) → `followup_agent`(장기 지원 전략) 세 `SwarmAgent`가 `AFTER_WORK` 핸드오프로 차례로 넘겨받아 각자 맡은 절을 씁니다. 앱 자체가 사이드바 경고와 자체 README에서 밝히듯 이 앱은 전문 정신건강 치료를 대신하지 않는 지원 도구이고(자살·자해 생각이나 심각한 위기 상황이면 미국 기준 988·911 안내가 붙어 있습니다), 이 문서도 그 틀을 넘어서는 조언은 만들지 않습니다 — 다루는 것은 AG2 Swarm이 세 에이전트를 어떻게 이어 붙이는가이지, 에이전트가 실제로 무슨 말을 쓰는지가 아닙니다(키가 없어 실행하지 못했습니다).
+이 앱은 226줄 단일 파일 Streamlit 앱으로, 이 시리즈가 주로 다뤄 온 agno나 openai-agents가 아니라 Microsoft AutoGen에서 갈라져 나온 AG2(예전 이름 AutoGen, 오늘 PyPI 이름은 `ag2` — 앱이 쓰는 `pyautogen`은 다른 이야기입니다, 바로 아래 문단)의 Swarm 기능(`initiate_swarm_chat`)을 씁니다. 사용자가 감정 상태·수면 시간·스트레스 수준·지지 체계·최근 변화·현재 증상 6가지를 입력하면, `assessment_agent`(상황 평가) → `action_agent`(즉시 대처 계획) → `followup_agent`(장기 지원 전략) 세 `SwarmAgent`가 차례로 넘겨받아 각자 맡은 절을 씁니다. 앱 자체가 사이드바 경고와 자체 README에서 밝히듯 이 앱은 전문 정신건강 치료를 대신하지 않는 지원 도구입니다 — 원문 그대로 옮기면 "thoughts of self-harm or severe crisis"(자해 생각이나 심각한 위기 상황)이면 미국 기준 988·911 안내가 붙어 있습니다. 코드에는 이런 표현을 미리 감지하거나 흐름을 바꾸는 장치가 없고(68~206행을 봐도 입력은 그대로 GPT-4o로 갑니다), 이 문서도 그 틀을 넘어서는 조언은 만들지 않습니다 — 다루는 것은 AG2 Swarm이 세 에이전트를 어떻게 이어 붙이는가이지, 에이전트가 실제로 무슨 말을 쓰는지가 아닙니다(실제 문장은 키가 없어 확인하지 못했지만, 호출 순서와 몇 번째 응답이 화면에 남는지는 가짜 로컬 서버로 끝까지 직접 확인했습니다, Step 1).
 
-`requirements.txt` 4줄(`autogen-agentchat`, `autogen-ext`, `pyautogen`, `streamlit`) 가운데 버전 고정은 하나도 없는데, 그대로 설치하면 이 앱은 아예 뜨지 못합니다 — 오늘(2026-09-28) `pyautogen`이라는 이름은 더 이상 AG2의 것이 아니라 Microsoft 자체 AutoGen(`autogen-agentchat` 기반 재설계)으로 가는 빈 프록시 패키지 0.10.0을 가리키고, 이 패키지는 `autogen` 최상위 모듈 자체를 만들지 않습니다(직접 확인: `import autogen`이 `ModuleNotFoundError`). 그렇다고 아무 옛날 버전이나 고정하면 되는 것도 아닙니다 — `pyautogen==0.7.6`은 `import autogen`까지는 되지만 그사이 `SwarmAgent`가 통째로 폐기(deprecated)되어 `register_hand_off`가 인스턴스 메서드에서 모듈 최상위 함수로 옮겨졌고(직접 확인: `AttributeError: 'SwarmAgent' object has no attribute 'register_hand_off'`), 이 앱의 196~198행은 정확히 그 메서드 형태(`assessment_agent.register_hand_off(...)`)로 호출합니다. 두 문제를 모두 피하고 코드 그대로 도는 버전은 `pyautogen==0.6.1`뿐임을 직접 확인했습니다(Step 1). `autogen-agentchat`·`autogen-ext`는 이 앱 코드 어디에서도 import되지 않고(그렙으로 확인), 오늘 버전 unpinned `pyautogen`이 Microsoft AutoGen을 딸려 오게 하면서 우연히 끌려온 패키지입니다.
+`requirements.txt` 4줄(`autogen-agentchat`, `autogen-ext`, `pyautogen`, `streamlit`) 가운데 버전 고정은 하나도 없는데, 그대로 설치하면 이 앱은 아예 뜨지 못합니다 — 오늘(2026-09-28) `pyautogen`이라는 이름은 AG2 자신의 것이 아니라 Microsoft 자체 AutoGen(`autogen-agentchat` 기반 재설계)으로 가는 빈 프록시 패키지 0.10.0을 가리키고, 이 패키지는 `autogen` 최상위 모듈 자체를 만들지 않습니다(직접 확인: `import autogen`이 `ModuleNotFoundError`). 앞의 두 줄(`autogen-agentchat`·`autogen-ext`)은 이 앱 코드가 import하지는 않지만(그렙으로 확인, 코드는 `from autogen import (...)` 한 줄뿐) `requirements.txt`가 직접 적어 넣어서 같이 설치되는 것입니다. 그렇다고 아무 옛날 버전이나 고정하면 되는 것도 아닙니다 — `pyautogen==0.7.4`부터 `SwarmAgent`가 통째로 폐기(deprecated)되어 `ConversableAgent`의 얇은 래퍼가 되고, 이 앱이 인스턴스 메서드로 부르는 `register_hand_off`(196~198행, `assessment_agent.register_hand_off(...)`)가 모듈 최상위 함수 `register_hand_off(agent, hand_to)`로 옮겨집니다 — `0.7.3`까지는 인스턴스 메서드 그대로이고 `0.7.4`부터 `AttributeError: 'SwarmAgent' object has no attribute 'register_hand_off'`로 막힌다는 것을 0.6.1·0.7.3·0.7.4 세 버전 모두 직접 재현해 확인했습니다(Step 1). 즉 이 앱 코드가 그대로 도는 범위는 `0.6.0`~`0.7.3`이고, 이 문서는 그중 `0.6.1`을 씁니다. `pyautogen==0.7.6`처럼 `openai`를 별도로 요구하는 버전에서는 `register_hand_off`보다 먼저 `SwarmAgent` 생성 자체가 `ImportError: Module 'openai' needed for autogen.oai.client.create_openai_client is missing`으로 막힌다는 것도 직접 확인했습니다(`openai`가 이미 깔려 있지 않다면요 — Step 1).
 
-완성하면 사이드바에 키 입력창과 위기 안내, 본문에 입력 폼과 "Get Support Plan" 버튼이 뜨고, 키가 있어 실행하면 평가·행동·후속 세 섹션이 expander로 차례로 펼쳐집니다. 아래는 완성된 아키텍처입니다.
+`pyautogen==0.6.1`에는 또 다른 부작용이 있습니다. 이 앱의 `llm_config`(126~128행)에 `cache_seed`가 없어 AG2 기본값(41)으로 디스크 캐시가 켜지고, **실행한 작업 폴더**에 `.cache/41/cache.db`(SQLite)가 생겨 사용자가 사이드바에 적은 감정 상태·증상 텍스트를 포함한 요청 전체와 모델 응답이 그대로 저장됩니다(직접 확인, Step 7) — 같은 입력을 다시 보내면 모델을 다시 부르지 않고 캐시로 답합니다. 민감한 개인 데이터를 다루는 앱이라 이 사실은 사전 준비와 Step 7에 다시 적어 둡니다.
+
+완성하면 사이드바에 키 입력창과 위기 안내, 본문에 입력 폼과 "Get Support Plan" 버튼이 뜨고, 키가 있어 실행하면 세 에이전트가 먼저 요약을 하나씩 내고(3회 호출) 이어서 본문 전체를 두 바퀴 다시 써서(6회 호출, 총 9회) 화면에는 마지막 바퀴만 평가·행동·후속 세 섹션으로 expander에 펼쳐집니다 — 이 순서는 가짜 로컬 OpenAI 서버로 직접 확인했습니다(Step 1, "요청 한 건이 흐르는 과정"). 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -19,6 +21,7 @@
 | OpenAI API 키 | 3개 에이전트(Assessment·Action·Follow-up)의 gpt-4o 호출 인증. 사이드바 입력창(`type="password"`)에 직접 붙여넣습니다(환경변수 아님) | https://platform.openai.com/ 가입 후 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | 인터넷 연결 | PyPI 설치, OpenAI API 호출 | 별도 설치 없음 |
+| (주의) 작업 폴더 쓰기 | pyautogen 0.6.1이 `cache_seed` 기본값(41)으로 `.cache/41/cache.db`에 요청·응답을 그대로 저장합니다(입력한 감정 상태·증상 텍스트 포함) | 앱을 실행하는 폴더에 자동 생성 — Step 7·"문제 해결" 참고 |
 
 ## 아키텍처 한눈에 보기
 
@@ -31,6 +34,7 @@
 | Follow-up 에이전트 | 장기 지원 전략을 제시하고 요약 후 Assessment에 이관 | `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent/ai_mental_wellbeing_agent.py:112-123`, `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent/ai_mental_wellbeing_agent.py:146-149`, `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent/ai_mental_wellbeing_agent.py:189-194` |
 | update_system_message_func | 매 턴마다 2단계(1차 요약 강제 tool_choice → 2차 tools 해제 후 본문 작성) 시스템 프롬프트를 새로 만듦 | `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent/ai_mental_wellbeing_agent.py:151-171` |
 | OpenAI API | 3개 에이전트의 실제 추론(gpt-4o) | 코드 없음 (외부 서비스) |
+| 디스크 캐시(`.cache/41/`) | `cache_seed` 미지정으로 AG2가 기본값(41)으로 켬 — 요청·응답(입력 텍스트 포함)을 작업 폴더의 SQLite에 저장 | 코드 없음 (`llm_config`에 `cache_seed` 자체가 없음, AG2 라이브러리 기본 동작) |
 
 ## 단계별 진행
 
@@ -69,7 +73,7 @@ uv run --no-project python -c "import autogen"
 ModuleNotFoundError: No module named 'autogen'
 ```
 
-이 앱의 2행(`from autogen import (SwarmAgent, ...)`)이 이 지점에서 곧바로 막힙니다. 옛 버전을 고정하면 될 것 같지만 아무 버전이나 되지는 않습니다 — `pyautogen==0.7.6`을 설치하면 `import autogen`은 되지만, `autogen/agentchat/contrib/swarm_agent.py`를 보면 `class SwarmAgent(ConversableAgent)`의 `__init__`이 `DeprecationWarning`만 던지고 끝나며 `register_hand_off`는 더 이상 이 클래스의 메서드가 아니라 같은 파일의 모듈 최상위 함수 `def register_hand_off(agent, hand_off)`로 옮겨져 있습니다(소스로 확인). 이 앱의 196~198행은 `assessment_agent.register_hand_off(AFTER_WORK(action_agent))`처럼 **인스턴스 메서드**로 부르므로 0.7.6에서는 실행 중 실패합니다. 인스턴스 메서드 형태가 아직 살아있는 버전을 찾아 `pyautogen==0.6.1`의 `swarm_agent.py`를 보면 `class SwarmAgent(ConversableAgent)` 안에 `def register_hand_off(self, ...)`가 그대로 정의되어 있고(소스로 확인), `UPDATE_SYSTEM_MESSAGE`·`SwarmResult`·`initiate_swarm_chat`·`AFTER_WORK`·`OpenAIWrapper`도 모두 최상위에서 그대로 임포트됩니다. `autogen-agentchat`·`autogen-ext`는 이 앱 코드 어디에도 `import`되지 않으며(그렙으로 확인 — `autogen_agentchat`·`autogen_ext` 매치 0건), unpinned `pyautogen`이 Microsoft AutoGen을 의존성으로 끌고 오며 우연히 같이 설치되는 것뿐입니다.
+이 앱의 2행(`from autogen import (SwarmAgent, ...)`)이 이 지점에서 곧바로 막힙니다. 옛 버전을 고정하면 될 것 같지만 아무 버전이나 되지는 않습니다 — `pyautogen==0.7.4`부터 설치하면 `import autogen`은 되지만, `autogen/agentchat/contrib/swarm_agent.py`를 보면 `class SwarmAgent(ConversableAgent)`의 `__init__`이 `DeprecationWarning`만 던지고 끝나며 `register_hand_off`는 더 이상 이 클래스의 메서드가 아니라 같은 파일의 모듈 최상위 함수 `def register_hand_off(agent, hand_to)`로 옮겨져 있습니다(소스로 확인 — 매개변수 이름은 `hand_off`가 아니라 `hand_to`입니다). 이 앱의 196~198행은 `assessment_agent.register_hand_off(AFTER_WORK(action_agent))`처럼 **인스턴스 메서드**로 부르므로 0.7.4 이상에서는 실행 중 실패합니다. `0.7.3`을 설치해 직접 재현하면 여전히 인스턴스 메서드로 동작하고, `0.7.4`로 올리면 곧바로 `AttributeError`가 납니다(둘 다 직접 확인). `pyautogen==0.6.1`의 `swarm_agent.py`를 보면 `class SwarmAgent(ConversableAgent)` 안에 `def register_hand_off(self, ...)`가 그대로 정의되어 있고(소스로 확인), `SwarmResult`·`initiate_swarm_chat`·`AFTER_WORK`·`OpenAIWrapper`도 모두 최상위에서 그대로 임포트됩니다 — 다만 `UPDATE_SYSTEM_MESSAGE`는 0.6.1에 아직 폐기 경고가 없는 이름입니다(대체 이름 `UpdateSystemMessage`와 `DeprecationWarning` 자체가 0.7.4에서 처음 생깁니다, `python -W always`로 직접 확인). `autogen-agentchat`·`autogen-ext`는 이 앱 코드 어디에도 `import`되지 않지만(그렙으로 확인 — `autogen_agentchat`·`autogen_ext` 매치 0건) `requirements.txt` 1·2행이 직접 적어 넣어 설치되는 것이지, unpinned `pyautogen`이 우연히 끌고 온 것이 아닙니다(오늘 `pyautogen 0.10.0`의 의존성은 `autogen-agentchat` 하나뿐입니다, 위에서 확인).
 
 `ai_mental_wellbeing_agent.py:1-12`
 
@@ -109,6 +113,51 @@ uv run --no-project python -m py_compile ai_mental_wellbeing_agent.py && echo OK
 ALL IMPORTS OK
 OK
 ```
+
+**덤 — 호출 순서 9회를 가짜 서버로 직접 확인.** 이 앱이 실제로 몇 번, 어떤 순서로 GPT-4o를 부르는지는 소스만 읽어서는 단정하기 어렵습니다(Step 5~7에서 볼 `SwarmResult`와 `AFTER_WORK`의 우선순위가 얽혀 있기 때문입니다). 그래서 `/v1/chat/completions`만 흉내 내는 로컬 서버(`tool_choice`가 강제되면 그 함수를 호출하는 응답을, 아니면 `## <Gen> Design (call #N)` 본문을 돌려줍니다)를 임의의 높은 포트에 띄우고, 앱 사본을 `OPENAI_BASE_URL`로 그 서버에 붙여 Streamlit `AppTest`로 "Get Support Plan"을 눌러 봤습니다(가짜 키, 프록시·네트워크 차단 변수를 걸어 외부로는 한 번도 나가지 않았습니다).
+
+```bash
+uv run --no-project python -c "
+import os
+os.environ['OPENAI_BASE_URL'] = 'http://127.0.0.1:<임의의 높은 포트>/v1'
+from streamlit.testing.v1 import AppTest
+at = AppTest.from_file('ai_mental_wellbeing_agent.py')
+at.run(timeout=60)
+at.sidebar.text_input[0].set_value('sk-fake-123')
+at.text_area[0].set_value('fake feeling text')
+at.button[0].click().run(timeout=120)
+print('sidebar success:', [s.value for s in at.sidebar.success])
+print('expanders:', {e.label: [m.value for m in e.markdown] for e in at.expander})
+"
+```
+
+직접 확인한 출력(요지 — 가짜 서버가 받은 9번째 요청까지 순서대로):
+
+```
+call 1  tool_choice=update_assessment_overview  (요약)
+call 2  tool_choice=update_action_overview      (요약)
+call 3  tool_choice=update_followup_overview    (요약)
+call 4  tools=null  Assessment 본문(1바퀴)
+call 5  tools=null  Action 본문(1바퀴)
+call 6  tools=null  Followup 본문(1바퀴)
+call 7  tools=null  Assessment 본문(2바퀴)
+call 8  tools=null  Action 본문(2바퀴)
+call 9  tools=null  Followup 본문(2바퀴)
+
+sidebar success: ['Assessment: FAKE assessment summary #1', 'Action Plan: FAKE action summary #2', 'Follow-up Strategy: FAKE followup summary #3']
+expanders: {'Situation Assessment': ['## Assessment Design (fake body, call #7)'],
+            'Action Plan & Resources': ['## Action Design (fake body, call #8)'],
+            'Long-term Support Strategy': ['## Followup Design (fake body, call #9)']}
+```
+
+요약(1~3)이 먼저 다 끝난 뒤에야 본문이 시작되고, 본문은 한 바퀴가 아니라 두 바퀴 돕니다 — 화면에 남는 것은 **두 번째 바퀴**(call #7~9)입니다. `max_rounds`만 바꿔 같은 방법으로 다시 돌려 보면(리포 코드는 고치지 않고 사본에서만):
+
+```
+max_rounds=10 → 호출 6회에서 멈춤. 화면 = Assessment 본문(call #4) / Action 본문(#5) / Followup 본문(#6) — 1바퀴가 정확히 남음
+max_rounds=12 → 호출 8회에서 멈춤. 화면 = Followup 본문(#6) / Assessment 본문(#7) / Action 본문(#8) — 세 섹션이 한 칸씩 밀려 어긋남
+```
+
+(둘 다 직접 확인. `13`이 특별한 값이 아니라 "두 바퀴(9회)가 다 돌고도 남는 가장 작은 값 중 하나"일 뿐이라는 뜻입니다 — 더 해보기에서 다른 값도 바꿔 볼 수 있습니다.) 이 순서가 왜 이렇게 되는지는 Step 5·7에서 봅니다.
 
 ### Step 2. 사이드바 — API 키 입력과 위기 안내
 
@@ -318,7 +367,9 @@ system_messages 키: ['action_agent', 'assessment_agent', 'followup_agent']
                     return SwarmResult(agent="assessment_agent", context_variables=context_variables)
 ```
 
-세 에이전트 모두 `llm_config`의 `model`이 `gpt-4o`로 못박혀 있습니다(126~128행). `context_variables`는 세 절(평가·행동·후속)을 담을 그릇이고, 세 `update_*_overview` 함수는 AG2가 "함수 도구"로 각 `SwarmAgent`에 등록할 콜백입니다 — 모델이 이 함수를 호출하면 요약이 `context_variables`에 쓰이고 동시에 `st.sidebar.success(...)`로 사이드바에 바로 표시되며, `SwarmResult(agent=...)`가 다음에 말할 에이전트 이름을 돌려줍니다. 이 `SwarmResult` 반환값이 곧 명시적 핸드오프입니다 — Step 7의 `register_hand_off(AFTER_WORK(...))`는 이 함수 호출이 **없을 때**의 기본 다음 에이전트를 정하는 것이고, 우선순위는 함수 호출 쪽이 높습니다.
+세 에이전트 모두 `llm_config`의 `model`이 `gpt-4o`로 못박혀 있습니다(126~128행). 130~134행의 지역 변수 `context_variables`는 세 절을 담을 그릇처럼 보이지만, 200~206행의 `initiate_swarm_chat(...)` 호출에는 `context_variables=` 인자가 없어서 실제로는 쓰이지 않는 죽은 코드입니다(직접 확인 — 스웜은 빈 딕셔너리로 시작합니다). 세 `update_*_overview` 함수가 매개변수로 받는 `context_variables`는 AG2 스웜이 내부에서 새로 만들어 주입하는 **별개의** 공용 딕셔너리이고, 동작은 같습니다(`.get(...)`이 빈 딕셔너리에서도 `None`을 돌려주기 때문입니다). 이 함수들은 AG2가 "함수 도구"로 각 `SwarmAgent`에 등록할 콜백입니다 — 모델이 이 함수를 호출하면 요약이 공용 딕셔너리에 쓰이고 동시에 `st.sidebar.success(...)`로 사이드바에 바로 표시되며, `SwarmResult(agent=...)`가 다음에 말할 에이전트 이름을 돌려줍니다.
+
+이 `SwarmResult` 반환값이 핵심입니다 — 함수 도구가 호출되면 AG2는 **그 결과가 나오자마자** `SwarmResult.agent`가 가리키는 에이전트로 넘어갑니다(소스로 확인, `swarm_agent.py`의 `_determine_next_agent`: 도구 호출 → 도구 실행 → `SwarmResult`가 있으면 그걸로 즉시 이관, 없을 때만 Step 7의 `register_hand_off(AFTER_WORK(...))` 기본값을 봅니다). 세 `update_*_overview`가 전부 이 경로로 실행되므로, **1차 턴(요약을 강제하는 턴)은 셋 다 함수 호출로 끝나 즉시 다음 에이전트로 넘어갑니다** — assessment→action→followup→assessment 순으로 요약 세 개가 먼저 다 나온 뒤에야, 함수 호출이 없는 2차 턴(본문 작성)이 같은 순서로 두 바퀴 돕니다. Step 1에서 가짜 서버로 직접 본 "요약 3회 → 본문 2바퀴(6회)" 순서가 바로 이 우선순위에서 나옵니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -372,7 +423,7 @@ SwarmResult 필드: ['values', 'agent', 'context_variables']
                 state_update = UPDATE_SYSTEM_MESSAGE(update_system_message_func)
 ```
 
-이 함수는 `agent.name`(예: `"assessment_agent"`)에서 밑줄 앞부분(`"assessment"`)을 떼어 `current_gen`으로 쓰고, `agent._context_variables`(AG2 내부 비공개 속성, 밑줄 접두사로 확인)에 그 값이 아직 `None`이면 **1차**로 판단해 `tool_choice`를 강제로 `update_{current_gen}_overview` 함수 호출로 고정합니다 — 모델이 2~3문장 요약만 만들고 반드시 그 함수를 부르게 만드는 장치입니다. 이미 값이 채워져 있으면(즉 그 에이전트가 이미 한 번 요약을 냈으면) **2차**로 판단해 `tools`를 꺼 함수 호출을 막고, 대신 `"## Assessment Design"` 같은 제목으로 시작하는 본문 전체를 쓰라고 지시합니다 — 이때 163행이 `agent._oai_messages`(역시 비공개 속성)의 마지막 대화 묶음을 첫 메시지 하나로 잘라, 직전 함수 호출 왕복이 다음 프롬프트에 섞이지 않게 합니다. 두 경우 모두 지금까지 채워진 `context_variables`의 요약들을 프롬프트 끝에 이어 붙이고, `agent.client`를 새 `OpenAIWrapper`로 다시 만든 뒤 이 문자열을 시스템 프롬프트로 돌려줍니다. `UPDATE_SYSTEM_MESSAGE`는 pyautogen 0.6.1에서도 이미 `DeprecationWarning`을 던지는 이름입니다(대체 이름은 `UpdateSystemMessage`) — 동작은 하지만 최신 API는 아닙니다.
+이 함수는 `agent.name`(예: `"assessment_agent"`)에서 밑줄 앞부분(`"assessment"`)을 떼어 `current_gen`으로 쓰고, `agent._context_variables`(AG2 내부 비공개 속성, 밑줄 접두사로 확인)에 그 값이 아직 `None`이면 **1차**로 판단해 `tool_choice`를 강제로 `update_{current_gen}_overview` 함수 호출로 고정합니다 — 모델이 2~3문장 요약만 만들고 반드시 그 함수를 부르게 만드는 장치입니다. 이미 값이 채워져 있으면(즉 그 에이전트가 이미 한 번 요약을 냈으면) **2차**로 판단해 `tools`를 꺼 함수 호출을 막고, 대신 `"## Assessment Design"` 같은 제목으로 시작하는 본문 전체를 쓰라고 지시합니다 — 이때 163행이 `agent._oai_messages`(역시 비공개 속성)의 마지막 대화 묶음을 첫 메시지 하나로 잘라, 직전 함수 호출 왕복이 다음 프롬프트에 섞이지 않게 합니다. 두 경우 모두 지금까지 채워진 `context_variables`의 요약들을 프롬프트 끝에 이어 붙이고, `agent.client`를 새 `OpenAIWrapper`로 다시 만든 뒤 이 문자열을 시스템 프롬프트로 돌려줍니다. `pyautogen==0.6.1`에서 `UPDATE_SYSTEM_MESSAGE`는 아직 폐기 경고가 없는 정식 이름입니다 — `python -W always`로 이 클래스를 직접 만들어 봐도 경고가 뜨지 않습니다(직접 확인). 대체 이름 `UpdateSystemMessage`와 `DeprecationWarning` 자체는 `0.7.4`부터 생깁니다(Step 1에서 이미 본 것과 같은 버전 경계입니다).
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -437,7 +488,9 @@ has _oai_messages: True
                 )
 ```
 
-세 `SwarmAgent`는 각자 `functions=`로 Step 5의 콜백 하나씩을 도구로 등록하고, `update_agent_state_before_reply=[state_update]`로 Step 6의 훅을 공유합니다. `register_hand_off(AFTER_WORK(...))` 세 줄이 assessment→action→followup→assessment 순환 고리를 만듭니다 — 이것은 함수 호출로 명시적 핸드오프가 없을 때만 쓰이는 **기본값**입니다. `initiate_swarm_chat`은 `initial_agent=assessment_agent`로 시작해 `max_rounds=13`까지 돕니다. 세 에이전트가 각각 1차(요약)·2차(본문) 두 번씩 응답하면 6턴이라 13라운드 안에 한 바퀴는 넉넉히 돕니다.
+세 `SwarmAgent`는 각자 `functions=`로 Step 5의 콜백 하나씩을 도구로 등록하고, `update_agent_state_before_reply=[state_update]`로 Step 6의 훅을 공유합니다. `register_hand_off(AFTER_WORK(...))` 세 줄이 assessment→action→followup→assessment 순환 고리를 만듭니다 — Step 5에서 본 대로 이것은 함수 호출로 명시적 `SwarmResult` 이관이 **없을 때만** 쓰이는 기본값입니다. `initiate_swarm_chat`은 `initial_agent=assessment_agent`로 시작해 `max_rounds=13`까지 돕니다. 실제로 몇 번 도는지는 Step 1에서 가짜 서버로 이미 확인했습니다 — 1차(요약, `SwarmResult`로 즉시 이관) 3회 + 2차(본문, `AFTER_WORK`로 이관) 두 바퀴 6회 = 9회이고, `max_rounds=13`은 시작 메시지 1개를 더해도 여유가 있어 두 바퀴를 다 돕니다(딱 맞는 값은 아니고, 10으로 줄이면 1바퀴에서, 12로 하면 한 칸 어긋난 채로 끝난다는 것도 Step 1에서 확인했습니다).
+
+**pyautogen 0.6.1의 디스크 캐시 — 감정 상태·증상 텍스트가 그대로 남습니다.** `llm_config`(126~128행)에 `cache_seed`가 없으면 AG2는 레거시 기본값(`LEGACY_DEFAULT_CACHE_SEED = 41`, `autogen/oai/client.py`, 소스로 확인)으로 디스크 캐시를 켭니다. 이 앱을 실행한 **작업 폴더**에 `.cache/41/cache.db`(SQLite)가 생기고, `Cache` 테이블의 각 행 `key`에는 그 호출의 시스템 프롬프트와 대화 내용이 통째로 들어갑니다 — 사이드바에 적은 감정 상태·증상 텍스트가 그대로 포함됩니다(직접 확인: 가짜 서버로 9회를 호출하자 `Cache` 테이블에 9행이 생겼고, 모든 행의 key에 입력 텍스트가 들어 있었습니다). 캐시가 있으면 같은 입력에 대해 모델을 다시 부르지 않고 캐시된 응답을 그대로 돌려줍니다(Step 1에서 `max_rounds`만 바꿔 다시 돌렸을 때 가짜 서버가 받은 요청이 0건이었던 것도 이 캐시 때문입니다). 리포 코드는 고치지 않으므로, 끄거나 지우는 법은 "문제 해결"에 정리했습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -470,7 +523,7 @@ print('3개 SwarmAgent 생성 + register_hand_off 3회 완료')
 3개 SwarmAgent 생성 + register_hand_off 3회 완료
 ```
 
-같은 코드를 `pyautogen==0.7.6`에서 실행하면 `assessment_agent.register_hand_off(...)` 줄에서 `AttributeError: 'SwarmAgent' object has no attribute 'register_hand_off'`로 실패한다는 것도 직접 확인했습니다(Step 1의 근거).
+같은 코드를 `pyautogen==0.7.4`(또는 그 이상)에서 실행하면 `assessment_agent.register_hand_off(...)` 줄에서 `AttributeError: 'SwarmAgent' object has no attribute 'register_hand_off'`로 실패한다는 것도 직접 확인했습니다(Step 1의 근거) — `0.7.6`처럼 `openai`를 별도로 요구하는 버전이라면 그 전에 `SwarmAgent(...)` 생성 자체가 `ImportError: Module 'openai' needed for autogen.oai.client.create_openai_client is missing`로 먼저 막힐 수 있습니다(이 venv에 `openai`가 이미 깔려 있지 않다면요, 마찬가지로 직접 확인).
 
 ### Step 8. 결과 표시
 
@@ -502,7 +555,7 @@ print('3개 SwarmAgent 생성 + register_hand_off 3회 완료')
                 st.error(f"An error occurred: {str(e)}")
 ```
 
-`chat_history[-3:]`는 대화 이력의 **마지막 세 메시지**가 정확히 평가·행동·후속의 2차(본문 작성) 응답 순서로 끝난다고 가정합니다 — Step 7에서 본 순환 구조(assessment→action→followup→assessment)와 각 에이전트의 1차/2차 두 단계를 감안하면 그럴듯하지만, 실제로 그 인덱스가 항상 맞는지는 키가 없어 실행으로 확인하지 못했습니다. 바깥의 넓은 `try/except Exception`은 이 인덱스가 어긋나거나(`IndexError`) API 요청이 실패하는 경우를 포함해 무엇이 나든 `st.error(f"An error occurred: {str(e)}")` 한 줄로 감쌉니다.
+`chat_history[-3:]`는 대화 이력의 **마지막 세 메시지**가 정확히 평가·행동·후속의 2차(본문 작성, 2바퀴) 응답 순서로 끝난다고 가정합니다. Step 1에서 가짜 로컬 서버로 직접 확인한 대로 `max_rounds=13`에서는 이 가정이 맞습니다(마지막 세 메시지가 정확히 call #7·#8·#9) — 다만 이건 `max_rounds`가 "본문 두 바퀴가 다 도는" 값일 때만 그렇습니다. 같은 방법으로 `max_rounds=10`이면 1바퀴만 돌고 끝나 우연히 맞고, `12`이면 한 칸 밀려 **Situation Assessment 칸에 Followup의 본문이 들어가는 식으로 어긋난다**는 것까지 직접 확인했습니다(내용은 맞지만 실제로는 GPT-4o가 만드는 문장이 아니라 가짜 서버의 자리표시 텍스트였습니다 — 실제 키로도 같은 인덱스 규칙이 적용될 것으로 보이지만 실제 응답 내용까지는 확인하지 못했습니다). 바깥의 넓은 `try/except Exception`은 이 인덱스가 어긋나거나(`IndexError`) API 요청이 실패하는 경우를 포함해 무엇이 나든 `st.error(f"An error occurred: {str(e)}")` 한 줄로 감쌉니다.
 
 이 앱을 실제로 띄우려면 앱 폴더에서 다음을 실행합니다.
 
@@ -540,44 +593,54 @@ error boxes: ['Please enter your OpenAI API key.']
 
 ## 요청 한 건이 흐르는 과정
 
-한 번의 요청은 실제로 세 에이전트가 순서대로 두 단계(1차 요약, 2차 본문)씩 응답하는 세 구간을 거칩니다 — 배우가 한 그림에 다 들어가면 GPT-4o를 사이에 둔 수명선이 다른 메시지 라벨을 가로질러, 앱의 실제 시간 경계(에이전트별 라운드)를 따라 세 그림으로 나눴습니다.
+한 번의 요청은 세 구간을 순서대로 거칩니다 — **요약 바퀴**(세 에이전트가 하나씩 요약만 냄) → **본문 1바퀴**(세 에이전트가 순서대로 본문 전체를 씀, 아직 화면에 남지 않음) → **본문 2바퀴**(같은 순서로 다시 쓰고, 이번 결과가 화면에 남음). Step 1에서 가짜 로컬 서버로 직접 확인한 순서 그대로입니다. 여섯 배우(사용자·UI·에이전트 셋·GPT-4o)가 한 그림에 다 들어가면 GPT-4o를 사이에 둔 수명선이 다른 메시지 라벨을 가로질러(검사 21), 이 세 구간이라는 앱의 실제 시간 경계를 따라 세 그림으로 나눴습니다 — 메시지는 하나도 지우지 않고 그대로 옮겼습니다.
 
-![1구간: Assessment 라운드](diagrams/sequence.svg)
+![1구간: 요약 바퀴](diagrams/sequence.svg)
 
-1구간은 버튼 클릭부터 Assessment 에이전트의 두 단계 응답이 끝나고 Action 에이전트로 제어가 넘어가기까지입니다. Streamlit UI가 `initiate_swarm_chat(task)`로 스웜을 시작시키면 Assessment 에이전트는 1차(요약 강제) 프롬프트로 GPT-4o를 불러 `update_assessment_overview` 함수 호출을 받고, 곧바로 2차(본문 작성) 프롬프트로 다시 불러 "Assessment 섹션" 전체 텍스트를 받습니다. 그다음 `AFTER_WORK` 기본 핸드오프로 Action 에이전트에 제어가 넘어갑니다.
+1구간은 버튼 클릭부터 세 에이전트가 요약을 하나씩 내기까지입니다. Streamlit UI가 `initiate_swarm_chat(task)`로 스웜을 시작시키면 Assessment 에이전트가 요약 강제 프롬프트로 GPT-4o를 불러 `update_assessment_overview` 도구 호출을 받고, 그 결과가 곧바로 `SwarmResult(agent=action_agent)`로 Action 에이전트에 이관됩니다(Step 5). Action·Follow-up도 같은 방식으로 요약을 내며 차례로 이관되고, Follow-up의 `SwarmResult`가 다시 Assessment로 돌아오면서 본문 라운드가 시작됩니다.
 
-![2구간: Action 라운드](diagrams/extra-action.svg)
+![2구간: 본문 1바퀴](diagrams/extra-body1.svg)
 
-2구간은 같은 두 단계가 Action 에이전트에서 반복되는 부분입니다. GPT-4o에 1차(요약)·2차(본문) 순서로 다시 요청해 `update_action_overview` 함수 호출과 "Action 섹션" 텍스트를 차례로 받고, `AFTER_WORK`로 Follow-up 에이전트에 넘깁니다.
+2구간은 같은 세 에이전트가 이번에는 함수 호출 없이(`tools=None`) 본문 전체를 쓰는 첫 번째 바퀴입니다. 함수 호출이 없으므로 다음 에이전트는 Step 7에서 등록한 `AFTER_WORK` 기본값으로 정해집니다 — 목적지는 요약 바퀴와 같은 순서(assessment→action→followup)지만, 이관 메커니즘 자체는 다릅니다. 이 바퀴의 결과는 아직 화면에 남지 않습니다.
 
-![3구간: Follow-up 라운드와 결과 표시](diagrams/extra-followup.svg)
+![3구간: 본문 2바퀴와 결과 반환](diagrams/extra-body2.svg)
 
-3구간은 Follow-up 에이전트가 같은 두 단계를 마친 뒤, Streamlit UI가 `chat_history`의 마지막 세 메시지를 받아 평가·행동·후속 세 섹션으로 화면에 표시하는 부분입니다. 세 그림 모두 실제로 어떤 텍스트가 오가는지는 키가 없어 확인하지 못했습니다 — 메시지의 존재와 순서만 소스로 확인한 것입니다.
+3구간은 같은 세 에이전트가 `AFTER_WORK`로 이관되며 본문을 한 번 더 쓰는 두 번째 바퀴입니다. Follow-up까지 끝나면 `max_rounds=13`이 다 돌아 `initiate_swarm_chat`이 반환되고, Streamlit UI는 `chat_history[-3:]`(바로 이 2바퀴의 세 메시지)를 평가·행동·후속 세 섹션으로 화면에 표시합니다(Step 8). 세 그림 모두 메시지의 존재·순서·어느 함수가 불리는지는 가짜 서버로 직접 확인했고, 실제 GPT-4o가 무슨 문장을 쓰는지는 키가 없어 확인하지 못했습니다.
+
+에이전트가 요약 도구를 호출한 뒤 실제로 어디로 이관되는지, 그리고 그 요약이 어떻게 사이드바에 뜨는지는 구조로 보면 더 분명합니다.
+
+![요약 도구와 이관 구조](diagrams/extra-swarm-handoff.svg)
+
+세 `update_*_overview` 도구가 각각 자기 에이전트 안에 있고, 요약을 사이드바에 표시한 뒤 다음 에이전트로 이관합니다(1차 턴은 이 경로, 이후 턴은 `AFTER_WORK` 기본값). 이 그림은 순서가 아니라 구조이므로 개요도·시퀀스와 달리 "누가 누구에게 이어지는가"만 보여줍니다.
 
 ## 실행 체크리스트
 
 - [ ] 격리된 가상환경에 `requirements.txt`를 그대로 설치하면 `import autogen`이 `ModuleNotFoundError`로 실패한다는 것을 확인했다
 - [ ] `pyautogen==0.6.1`로 버전을 고정하면 import와 `py_compile`이 모두 성공한다는 것을 확인했다
-- [ ] `pyautogen==0.7.6`처럼 더 새 버전은 `SwarmAgent.register_hand_off`가 인스턴스 메서드에서 빠져 이 앱 코드와 맞지 않는다는 것을 소스와 재현으로 확인했다
-- [ ] `update_system_message_func`가 `agent._context_variables` 값 유무로 1차(요약 강제)·2차(본문 작성)를 가른다는 것을 소스로 확인했다
+- [ ] `register_hand_off`가 인스턴스 메서드인 것은 `0.6.0`~`0.7.3`이고 `0.7.4`부터 모듈 함수로 바뀐다는 것을 0.6.1·0.7.3·0.7.4 세 버전 모두 재현해 확인했다
+- [ ] 가짜 로컬 OpenAI 서버로 실제 호출 순서(요약 3회 → 본문 1바퀴 3회 → 본문 2바퀴 3회, 총 9회)와 화면에 남는 것이 마지막 바퀴라는 것을 확인했다
+- [ ] `max_rounds`를 10·12로 바꾸면 각각 1바퀴가 남거나 세 섹션이 한 칸씩 밀려 어긋난다는 것을 확인했다
+- [ ] `pyautogen==0.6.1`이 작업 폴더에 `.cache/41/cache.db`를 만들고 입력 텍스트를 포함한 요청 전체를 저장한다는 것을 확인했다
 - [ ] `AppTest`로 첫 화면이 예외 없이 뜨고, 키 없이 버튼을 누르면 "Please enter your OpenAI API key." 오류만 뜬다는 것을 확인했다
-- [ ] 사이드바 위기 안내와 앱 자체 README 문구를 읽고 이 앱이 전문 치료를 대신하지 않는다는 것을 확인했다
-- [ ] (키가 있다면) 실제로 실행해 평가→행동→후속 세 섹션이 `chat_history[-3:]` 순서 그대로 채워지는지 확인했다
+- [ ] 사이드바 위기 안내와 앱 자체 README 문구를 읽고 이 앱이 전문 치료를 대신하지 않으며, 위기 표현을 감지하는 장치가 코드에 없다는 것을 확인했다
+- [ ] (키가 있다면) 실제로 실행해 평가→행동→후속 세 섹션이 `chat_history[-3:]` 순서 그대로 채워지는지, 실제 GPT-4o 응답이 가짜 서버와 같은 순서로 도착하는지 확인했다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `import autogen`이 `ModuleNotFoundError: No module named 'autogen'`로 실패(직접 확인) | `requirements.txt`의 `pyautogen`이 버전 고정 없이 오늘 Microsoft AutoGen(`autogen-agentchat` 기반)으로 가는 빈 프록시 패키지 0.10.0으로 풀림(직접 확인 — `pip show`로 의존성이 `autogen-agentchat` 하나뿐, `pyautogen/__init__.py`가 빈 파일) | `pyautogen==0.6.1`로 버전을 고정해 설치(리포 코드는 고치지 않음) |
-| `assessment_agent.register_hand_off(AFTER_WORK(...))`가 `AttributeError: 'SwarmAgent' object has no attribute 'register_hand_off'`로 실패(직접 확인, `pyautogen==0.7.6`에서) | 0.7.x부터 `SwarmAgent`가 통째로 폐기되어 `ConversableAgent`의 얇은 래퍼가 되었고, `register_hand_off`는 모듈 최상위 함수 `register_hand_off(agent, hand_off)`로 옮겨짐(소스로 확인, `swarm_agent.py`) | `pyautogen==0.6.1`처럼 `register_hand_off`가 아직 인스턴스 메서드인 버전을 씀(리포 코드는 고치지 않음) |
-| `requirements.txt`에 `autogen-agentchat`·`autogen-ext`가 있어 이 앱이 그 패키지를 쓰는 것처럼 보임 | 이 앱 코드는 `from autogen import (...)` 한 줄만 쓰고 두 패키지를 한 번도 import하지 않음(그렙으로 확인) — unpinned `pyautogen`이 Microsoft AutoGen을 의존성으로 끌어오며 우연히 같이 설치됨 | 무시해도 됨(리포 코드는 고치지 않음) |
+| `assessment_agent.register_hand_off(AFTER_WORK(...))`가 `AttributeError: 'SwarmAgent' object has no attribute 'register_hand_off'`로 실패(직접 확인, `pyautogen==0.7.4` 이상에서) | `0.7.4`부터 `SwarmAgent`가 통째로 폐기되어 `ConversableAgent`의 얇은 래퍼가 되었고, `register_hand_off`는 모듈 최상위 함수 `register_hand_off(agent, hand_to)`로 옮겨짐(소스로 확인, `swarm_agent.py`) — `0.6.0`~`0.7.3`은 인스턴스 메서드 그대로임(0.6.1·0.7.3 직접 재현) | `pyautogen==0.6.1`처럼 `register_hand_off`가 아직 인스턴스 메서드인 버전을 씀(리포 코드는 고치지 않음) |
+| `requirements.txt`에 `autogen-agentchat`·`autogen-ext`가 있어 이 앱이 그 패키지를 쓰는 것처럼 보임 | 이 앱 코드는 `from autogen import (...)` 한 줄만 쓰고 두 패키지를 한 번도 import하지 않음(그렙으로 확인) — 다만 unpinned `pyautogen`이 우연히 끌고 온 것이 아니라 `requirements.txt` 1·2행이 직접 적어 넣어 설치되는 것임(직접 확인) | 무시해도 됨(리포 코드는 고치지 않음) |
+| 화면에 안 보이던 `.cache/41/cache.db`가 작업 폴더에 생기고, 같은 입력을 다시 보내도 새 요청이 안 나감 | `llm_config`에 `cache_seed`가 없어 AG2 레거시 기본값(41)으로 디스크 캐시가 켜짐 — 감정 상태·증상 텍스트를 포함한 요청 전체가 SQLite에 저장되고, 같은 요청은 캐시로 답함(직접 확인, Step 7) | `llm_config`에 `"cache_seed": None`을 추가해 끄거나(리포 코드는 고치지 않으므로 "더 해보기"), `.cache/` 폴더를 지워서 비움 |
 | 앱 자체 README가 `.env`에 `AUTOGEN_USE_DOCKER=0`을 쓰라고 안내함 | 코드 5행이 `os.environ["AUTOGEN_USE_DOCKER"] = "0"`을 이미 실행마다 설정함(직접 확인, 소스) — `.env` 파일은 아무 효과가 없는 중복 지시(앱 README 오류) | `.env` 파일을 만들 필요 없음 |
 | `streamlit run`을 헤드리스로 띄우면 시작 중 외부로 IP 조회 요청이 나갈 수 있음 | `--server.address`를 지정하지 않으면 Streamlit이 자신의 외부 IP를 알아내려 `checkip.amazonaws.com`에 요청을 보냄(오늘 설치되는 1.64.0 포함, Day 060에서 확인) | `--server.headless true --server.address localhost`를 함께 지정 |
 
 ## 더 해보기
 
-- 최신 `ag2`(오늘 기준 0.9.9)로 올려보고, `register_hand_off(agent, condition)` 형태의 모듈 함수와 `UpdateSystemMessage`(대문자+언더스코어 이름 대신)로 이 앱의 세 호출부를 고쳐 여전히 같은 순환 핸드오프가 되는지 확인해보기
-- `max_rounds`를 13에서 더 늘리거나 줄여보고, `chat_history[-3:]`가 항상 평가·행동·후속 순서로 끝나는지, 아니면 다른 값이 필요한지 (키가 있다면) 직접 실행해 확인해보기
+- `llm_config`에 `"cache_seed": None`을 추가해 `.cache/41/cache.db`가 더는 생기지 않는지, 이미 생긴 캐시를 지우면 같은 입력에도 새 요청이 나가는지 확인해보기
+- 최신 `ag2`(오늘 기준 1.1.0)를 설치해 `import autogen`부터 실패하는 것을 직접 보고("This repository no longer ships the autogen import name"), 대신 `autogen`이 아직 남아 있는 마지막 0.x 버전(예: `0.9.9` — `register_hand_off(agent, hand_to)` 모듈 함수와 `UpdateSystemMessage`로 이 앱의 세 호출부를 고쳐야 함)으로 실행해보기
+- `max_rounds`를 13이 아닌 다른 값(11, 14 등)으로 바꿔가며 (키가 있거나 Step 1의 가짜 서버로) `chat_history[-3:]`가 언제 맞고 언제 어긋나는지 직접 표로 정리해보기
 - 입력을 OpenAI에 보내기 전에 위기 키워드를 미리 걸러 흐름을 바꾸는 지점을 어디에 넣을지 설계만 해보기(실제 문구나 조언은 만들지 않기 — 이 앱과 이 문서 모두 그 선을 넘지 않습니다)
 
 ## 다음 날 예고
