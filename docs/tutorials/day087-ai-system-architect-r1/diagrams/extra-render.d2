@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+session: 세션 상태 { class: store }
+
+ui -> session: assistant 메시지 append
+ui -> user: 최종 화면 렌더링

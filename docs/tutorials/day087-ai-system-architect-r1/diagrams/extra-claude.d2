@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit UI { class: ours }
+model_chain: ModelChain { class: ours }
+agent: agno Agent { class: ours }
+claude_api: Claude API { class: ext }
+
+ui -> model_chain: get_claude_response(prompt, deepseek_output) 호출
+model_chain -> agent: agent.run(message=질문+DeepSeek reasoning·분석) 호출
+agent -> claude_api: 시스템 프롬프트 + message
+claude_api -> agent: Messages 응답(content 블록)
+agent -> model_chain: RunOutput(.content) 반환
+model_chain -> ui: response 문자열 반환
