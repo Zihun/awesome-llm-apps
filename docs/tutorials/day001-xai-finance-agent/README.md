@@ -1,6 +1,6 @@
 # Day 001 · 📊 xAI Finance Agent
 
-> 볼륨 1 🌱 Starter AI Agents · 난이도 ★☆☆ · 예상 소요 75분(Step 7에서 멀티모델 변형 앱까지 설치·실행해 늘었습니다) · API 비용 대략 질문 10개에 수십 원 이하 (xAI 콘솔 요금표 기준, 대략치) · 원본 앱: `starter_ai_agents/xai_finance_agent`
+> 볼륨 1 🌱 Starter AI Agents · 난이도 ★☆☆ · 예상 소요 75분(Step 7에서 멀티모델 변형 앱까지 설치·실행해 늘었습니다) · API 비용 대략 질문 10개에 수백 원 이하 (코드의 `grok-4-1-fast`는 xAI가 `grok-4.3` 요금으로 자동 전환한다 — 입력 100만 토큰당 $1.25·출력 100만 토큰당 $2.50, "문제 해결" 참고, 대략치) · 원본 앱: `starter_ai_agents/xai_finance_agent`
 
 ## 오늘 만들 것
 
@@ -428,9 +428,17 @@ else:
 
 ![Step 7: 멀티모델 앱 구성](diagrams/extra-multi-model.svg)
 
-위 그림은 파일 안 구성 요소를 번호로만 보여 주고 호출 순서는 담지 않습니다 — 그 순서, 특히 방금 설명한 캐시 재생 버그는 아래 시퀀스가 대신 보여 줍니다. 첫 클릭(키 비움)이 `build_model`을 거쳐 `None`을 캐시에 남기고, 재클릭(키 입력함)은 `build_model`을 다시 부르지 않은 채 그 `None`과 경고를 그대로 재생하며, 캐시를 지운 뒤에야 실제로 에이전트가 만들어져 선택된 LLM까지 메시지가 갑니다.
+위 그림은 파일 안 구성 요소를 번호로만 보여 주고 호출 순서는 담지 않습니다 — 그 순서는 시간 구간 셋으로 나눈 아래 세 시퀀스가 대신 보여 줍니다. 앱의 실제 경계를 그대로 따른 구간입니다: (1) 키 없이 첫 클릭 + 키를 넣은 재클릭(둘 다 캐시된 `None`과 같은 경고로 끝남), (2) 캐시를 지운 뒤 `initialize_agent`가 실제로 `build_model`을 불러 에이전트를 새로 만드는 과정, (3) 그렇게 만들어진 에이전트가 실행 버튼을 받아 선택된 LLM까지 메시지를 보내고 답을 화면에 표시하는 과정.
 
-![Step 7: 멀티모델 앱의 캐시 재생 순서](diagrams/extra-multi-model-seq.svg)
+![Step 7: 첫 클릭과 재클릭 — 캐시 재생](diagrams/extra-multi-model-seq.svg)
+
+캐시를 지운 뒤에는 `initialize_agent`가 처음으로 `build_model`을 다시 불러 모델 객체를 얻고, 그것으로 `Agent(...)`를 만들어 캐시에 저장합니다.
+
+![Step 7: 캐시를 지운 뒤 에이전트를 새로 만드는 과정](diagrams/extra-multi-model-build.svg)
+
+이렇게 캐시에 오른 에이전트가 실제 실행을 맡습니다 — `agent.run(user_question)`이 선택된 LLM에 메시지와 도구 스키마를 보내고, 돌아온 답을 화면에 표시합니다.
+
+![Step 7: 실제 실행 — UI가 에이전트를 부르고 결과를 표시](diagrams/extra-multi-model-run.svg)
 
 **확인.** 키 없이 네 모델 생성자만 직접 호출해 봅니다(네트워크 요청이 아니라 객체 생성만).
 

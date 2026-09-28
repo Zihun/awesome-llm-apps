@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: 금융 에이전트 { class: ours }
+llm: 선택된 LLM { class: ext }
+
+ui -> agent: run(질문)
+agent -> llm: 메시지 + 도구 스키마
+llm -> agent: 답 (도구 호출 포함)
+agent -> ui: result.content
+ui -> user: st.markdown(결과)

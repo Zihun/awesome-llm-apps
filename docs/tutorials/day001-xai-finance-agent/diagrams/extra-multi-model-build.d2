@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+build: build_model() { class: ours }
+cache: initialize_agent { class: ours }
+agent: 금융 에이전트 { class: ours }
+
+user -> ui: Clear cache(C) + 재클릭
+ui -> cache: initialize_agent(model_name)
+cache -> build: build_model(model_name) — 네 분기 중 하나
+build -> cache: xAI/OpenAIChat/Gemini/Claude 객체
+cache -> agent: Agent(model, tools, instructions)
+cache -> ui: agent (캐시에 저장)
