@@ -5,6 +5,8 @@ gemini: Gemini API { class: ext }
 memory: mem0 Memory { class: ours }
 qdrant: Qdrant (온디스크) { class: store }
 
+memory -> qdrant: 유사 메모리 검색
+qdrant -> memory: 기존 메모리
 memory -> gemini: 사실 추출 (LLM 호출)
 gemini -> memory: 추출된 사실
 memory -> gemini: 새 사실 임베딩
