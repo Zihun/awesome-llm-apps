@@ -15,8 +15,8 @@ firecrawl_tool: FirecrawlTools { class: ours }
 openai: OpenAI API { class: ext }
 firecrawl_api: Firecrawl API { class: ext }
 
-team -> members: 위임
-members -> firecrawl_tool: 도구 호출
-firecrawl_tool -> firecrawl_api: 요청
-team -> openai: 리더 호출
-members -> openai: 멤버 호출
+team -> members: delegate_task_to_member(task)
+members -> firecrawl_tool: search_web·crawl_website·scrape_website
+firecrawl_tool -> firecrawl_api: app.search·crawl·scrape (HTTP)
+team -> openai: 메시지 + 위임 도구 스키마
+members -> openai: 메시지 + Firecrawl 도구 스키마

@@ -19,7 +19,7 @@ Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨의 열두 번째 앱이
 | OpenAI API 키 | 팀 리더와 세 전문 에이전트가 공유하는 `gpt-4o` 모델 호출 인증. 사이드바 입력창(`type="password"`)에 직접 붙여넣거나 `.env`의 `OPENAI_API_KEY`로 제공 | https://platform.openai.com/ 가입 후 발급 |
 | Firecrawl API 키 | 세 에이전트의 `FirecrawlTools`가 쓰는 검색·크롤링 API 인증(사이드바 또는 `FIRECRAWL_API_KEY`) | https://www.firecrawl.dev/ 가입 후 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| (주의) 실행 자체가 막혀 있음 | 두 키를 모두 넣는 순간 `FirecrawlTools` 생성자가 `TypeError`로 죽습니다(Step 3) — 오늘 버전 조합으로는 실제 키가 있어도 분석까지 갈 수 없습니다 | 재현하려면 코드의 `search=`·`crawl=`을 `enable_search=`·`enable_crawl=`로 고쳐야 합니다("더 해보기") |
+| (주의) 실행 자체가 막혀 있음 | 두 키를 모두 넣는 순간 `FirecrawlTools` 생성자가 `TypeError`로 죽습니다(Step 3) — `requirements.txt`가 허용하는 어떤 agno 버전으로도(최저 판 2.2.10부터 직접 확인) 실제 키가 있어도 분석까지 갈 수 없습니다 | 재현하려면 코드의 `search=`·`crawl=`을 `enable_search=`·`enable_crawl=`로 고쳐야 합니다("더 해보기") |
 | 인터넷 연결 | PyPI 설치, (코드를 고쳐 실행한다면) OpenAI·Firecrawl API 호출, agno의 익명 사용 통계 전송(Day 047 Step 5와 같은 사실 — 다만 이 앱은 크래시 때문에 `run()`에 도달하지 못해 오늘은 전송되지 않습니다) | 별도 설치 없음 |
 
 ## 아키텍처 한눈에 보기
@@ -29,11 +29,11 @@ Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨의 열두 번째 앱이
 | Streamlit UI | 페이지 설정, 사이드바 키 게이트, 회사명 입력, 3개 탭, 사이드바 상태판을 그림 | `product_launch_intelligence_agent.py:12-17`, `product_launch_intelligence_agent.py:23-42`, `product_launch_intelligence_agent.py:201-229` |
 | Intelligence Team (Team) | `mode` 미지정 → coordinate 기본값. `delegate_task_to_member` 도구로 멤버 하나에게 위임 후 결과를 통합 | `product_launch_intelligence_agent.py:113-129` |
 | Launch Analyst / Sentiment Specialist / Metrics Specialist (Agent) | 각자 `description`·`tools=[FirecrawlTools(...)]`을 갖는 독립 `Agent` 3개(같은 모델 id를 각자 새로 생성) | `product_launch_intelligence_agent.py:47-65`, `product_launch_intelligence_agent.py:68-87`, `product_launch_intelligence_agent.py:90-110` |
-| FirecrawlTools (도구) | 세 에이전트가 각자 만드는 검색·크롤링 도구 래퍼 — 오늘 버전에서 생성자 자체가 실패 | `product_launch_intelligence_agent.py:60,82,105` |
+| FirecrawlTools (도구) | 세 에이전트가 각자 만드는 검색·크롤링 도구 래퍼 — 허용된 어떤 agno 버전에서도 생성자 자체가 실패 | `product_launch_intelligence_agent.py:60,82,105` |
 | 외부 API (OpenAI gpt-4o · Firecrawl) | 실제 추론과 웹 검색·크롤링을 수행하는 서드파티 서비스 | 코드 없음 (외부 서비스) |
 | 세션 상태 | 탭별 응답 3종(`competitor_response`·`sentiment_response`·`metrics_response`) 보관 | `product_launch_intelligence_agent.py:232-237`, `:288,350,412` |
 
-전체 구조가 위 그림 하나에 다 들어가지 않아(세로 상한 1000px), 리더→멤버 위임과 멤버·도구·두 외부 API의 관계만 따로 그렸습니다.
+한 그림에 다 그리면 너무 길어져, 리더→멤버 위임과 멤버·도구·두 외부 API의 관계만 따로 그렸습니다.
 
 ![팀·도구·외부 API 구조](diagrams/extra-structure.svg)
 
@@ -278,24 +278,22 @@ functions: ['scrape_website', 'crawl_website', 'search_web']
 `mode=`가 없으면 agno 3.0.11에서 `TeamMode.coordinate`로 정해지고 리더가 `delegate_task_to_member(member_id, task)` 도구로 멤버를 고른다는 것은 Day 079 Step 5가 이미 소스(`agno/team/_init.py`·`agno/team/_default_tools.py`)로 확인했고, Day 081도 같은 사실을 가리키며 "멤버가 각자 도구를 갖고 리더 위임 뒤 도구 호출 루프를 한 번 더 돈다"는 것까지 다뤘습니다 — 여기서는 되풀이하지 않습니다. 오늘 다른 점 둘: (1) 멤버 셋이 각자 독립된 `OpenAIChat`·`FirecrawlTools`를 만들어 서로 아무것도 공유하지 않고(Step 3), (2) "어떤 멤버에게 시킬지"가 113-125행의 자연어 `instructions` 문구에만 의존합니다 — "경쟁사 분석 탭은 항상 Product Launch Analyst가 처리한다"는 코드가 아니라 프롬프트 수준의 약속입니다.
 
 ```bash
-uv run --no-project python -c "
-from agno.team import Team
-from agno.agent import Agent
-from agno.models.openai import OpenAIChat
-t = Team(members=[Agent(model=OpenAIChat(id='gpt-4o'))], model=OpenAIChat(id='gpt-4o'))
-print('mode:', t.mode)
-"
+grep -c 'OpenAIChat(id="gpt-4o")' product_launch_intelligence_agent.py
+grep -c 'FirecrawlTools(' product_launch_intelligence_agent.py
 ```
 
-직접 확인한 출력(이 앱의 `Team(...)` 호출과 같은 모양으로 재확인, Day 079와 같은 방법):
+직접 확인한 출력:
 
 ```
-mode: TeamMode.coordinate
+4
+3
 ```
+
+각각 리더 1개 + 멤버 3개가 `OpenAIChat`을 4번, `FirecrawlTools`를 3번(멤버마다 하나) 따로 만든다는 것과 일치합니다 — 아무것도 공유하지 않는다는 점이 이 앱만의 사실입니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** 위 명령으로 이 앱의 `Team(...)`도 `mode=`를 지정하지 않아 `coordinate`로 정해지는지 재확인합니다(가짜 최소 구성, 실제 키 없이).
+**확인.** 위 두 grep 결과가 각각 `4`·`3`인지 봅니다.
 
 ### Step 5. 탭 UI와 2단계 파이프라인 — 불릿 생성 후 다시 리포트로
 
@@ -402,7 +400,7 @@ echo "exit=$?"
 
 직접 확인한 출력은 빈 결과(`exit=1`)입니다 — 일치하는 줄이 없습니다.
 
-이 앱을 실제로 띄우려면 앱 폴더에서 다음을 실행합니다(오늘 버전 조합으로는 두 키를 모두 넣는 순간 Step 3의 `TypeError`로 멈춥니다).
+이 앱을 실제로 띄우려면 앱 폴더에서 다음을 실행합니다(허용된 어떤 agno 버전으로도 두 키를 모두 넣는 순간 Step 3의 `TypeError`로 멈춥니다).
 
 ```bash
 uv run --no-project streamlit run product_launch_intelligence_agent.py
