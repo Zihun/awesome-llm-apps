@@ -173,7 +173,7 @@ Runner InMemorySessionService True
 **할 일.** `app.py`는 headless로 띄워 화면이 실제로 뜨는지 확인합니다.
 
 ```bash
-uv run --no-project streamlit run app.py --server.headless true --server.port 8988
+uv run --no-project streamlit run app.py --server.headless true --server.address localhost --server.port 8988
 ```
 
 ```bash
