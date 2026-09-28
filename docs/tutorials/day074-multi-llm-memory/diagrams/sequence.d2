@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+qdrant: Qdrant (로컬) { class: store }
+mem0: Mem0 메모리 매니저 { class: ours }
+llm: "선택된 LLM (OpenAI/Claude)" { class: ext }
+ui: Streamlit UI { class: ours }
+
+user -> ui: 질문·사용자명 입력, LLM 선택
+ui -> mem0: search(query, user_id)
+mem0 -> qdrant: 임베딩 후 유사도 검색
+qdrant -> mem0: 관련 기억 목록(list)
+mem0 -> ui: relevant_memories
+ui -> llm: 채팅 완성 요청(GPT-4o 또는 Claude, 선택에 따라 분기)
+llm -> ui: 답변 텍스트
+ui -> mem0: add(answer, user_id)
+mem0 -> qdrant: 새 기억 벡터 저장
+ui -> user: 답변 표시
