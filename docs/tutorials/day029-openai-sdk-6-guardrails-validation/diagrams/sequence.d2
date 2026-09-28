@@ -2,13 +2,13 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-input_check: 입력 가드레일 { class: ours }
 protected: 보호 대상 에이전트 { class: ours }
-output_check: 출력 가드레일 { class: ours }
+input_check: 입력 가드레일 { class: ours }
 openai: OpenAI API { class: ext }
+output_check: 출력 가드레일 { class: ours }
 
 user -> protected: 질문
-protected -> input_check: 원본 입력 전달
+protected -> input_check: "원본 입력 전달 (input_guardrails=[math_homework_guardrail] 실행)"
 input_check -> openai: 분류 요청
 openai -> input_check: MathHomeworkCheck
 input_check -> protected: 트립 여부(거짓)
