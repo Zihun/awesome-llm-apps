@@ -454,11 +454,11 @@ EXCEPTION TEXT: 'async for' requires an object with __aiter__ method, got RunRes
 **할 일.** 먼저 `app.py`를 스트림릿으로 띄웁니다.
 
 ```bash
-uv run --no-project streamlit run app.py --server.headless true --server.port 8511
+uv run --no-project streamlit run app.py --server.headless true --server.address localhost --server.port 8511
 ```
 
 ```powershell
-uv run --no-project streamlit run app.py --server.headless true --server.port 8511
+uv run --no-project streamlit run app.py --server.headless true --server.address localhost --server.port 8511
 ```
 
 ![Step 6까지의 구성](diagrams/step6.svg)
