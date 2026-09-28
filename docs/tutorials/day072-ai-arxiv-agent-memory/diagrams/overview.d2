@@ -15,5 +15,5 @@ svc: "외부 서비스" {
 user -> ui: API 키·검색어·사용자명
 ui -> mem0: search()·get_all() 호출
 mem0 -> qdrant: 벡터 저장·유사도 검색
-mem0 -> svc: 질의 임베딩
+mem0 -> svc.openai: 질의 임베딩
 ui -> svc: 표 정리·브라우징 요청

@@ -66,7 +66,7 @@ from multion.client import MultiOn
 from openai import OpenAI
 ```
 
-64행의 `from mem0 import Memory`만으로도 mem0ai 2.2.1은 `MEM0_DIR` 환경 변수가 없으면 사용자 홈에 `~/.mem0/`를 만듭니다 — import 시점에 `os.makedirs(mem0_dir, exist_ok=True)`가 곧바로 실행되기 때문입니다(mem0ai 2.2.1 패키지 내부 `mem0/memory/setup.py` 10~12행, 소스로 확인. 가짜 홈에서 직접 재현: `~/.mem0/config.json`(59바이트)이 생겼습니다). 이 볼륨에서 mem0를 처음 쓰는 날이므로, 이 문서의 모든 mem0 관련 명령 앞에는 `MEM0_DIR`과 `MEM0_TELEMETRY=False`를 겁니다.
+3행의 `from mem0 import Memory`만으로도 mem0ai 2.2.1은 `MEM0_DIR` 환경 변수가 없으면 사용자 홈에 `~/.mem0/`를 만듭니다 — import 시점에 `os.makedirs(mem0_dir, exist_ok=True)`가 곧바로 실행되기 때문입니다(mem0ai 2.2.1 패키지 내부 `mem0/memory/setup.py` 10~12행, 소스로 확인. 가짜 홈에서 직접 재현: `~/.mem0/config.json`(59바이트)이 생겼습니다). 이 볼륨에서 mem0를 처음 쓰는 날이므로, 이 문서의 모든 mem0 관련 명령 앞에는 `MEM0_DIR`과 `MEM0_TELEMETRY=False`를 겁니다.
 
 ```bash
 export MEM0_DIR=<스크래치 경로>
@@ -167,7 +167,7 @@ print(at.exception[0].value)
 ```
 
 ```text
-pydantic_core._pydantic_core.ValidationError: 1 validation error for MemoryConfig
+1 validation error for MemoryConfig
 vector_store
   Value error, Extra fields not allowed: model. Please input only the following fields: host, embedding_model_dims,
   collection_name, api_key, on_disk, client, url, path, https, port
@@ -370,7 +370,7 @@ uv run --no-project streamlit run ai_arxiv_agent_memory.py --server.headless tru
 | 두 API 키를 넣자마자 화면에 `pydantic_core._pydantic_core.ValidationError`가 뜬다 | 18행 `vector_store.config`의 `"model": "gpt-4o-mini"`가 mem0ai 2.2.1의 QdrantConfig에 없는 필드 | 그 줄을 지운다(그래도 Qdrant 서버는 따로 필요합니다) |
 | `"model"` 줄을 지워도 `ResponseHandlingException`(연결 거부)이 난다 | `host`/`port`로 원격 접속을 시도하는데 로컬 6333번에 아무 것도 없음 | 원본 README 안내대로 `docker run -p 6333:6333 -p 6334:6334 ... qdrant/qdrant`로 먼저 띄운다 |
 | 위 두 가지를 고쳐도 검색·기억보기 버튼에서 `ValueError: Top-level entity parameters ...` | mem0ai 2.2.1부터 `search()`/`get_all()`이 `user_id`를 최상위 인자로 안 받고 `filters={"user_id": ...}`만 받음(56·62행) | 두 호출을 `memory.search(search_query, filters={"user_id": user_id}, top_k=3)`·`memory.get_all(filters={"user_id": user_id})` 형태로 오늘 API에 맞게 고쳐야 한다(코드 수정은 이 문서 밖입니다) |
-| `user_id`를 `filters`로 고쳐도 이번에는 `TypeError: string indices must be integers, not 'str'` | `search()`/`get_all()`이 리스트가 아니라 `{"results": [...]}` dict를 돌려주는데 56·62행은 그 dict를 그대로 `for mem in ...`으로 돈다 | `relevant_memories["results"]`처럼 `"results"` 키를 먼저 꺼내고, 각 항목은 `mem["text"]`가 아니라 `mem["memory"]`로 읽어야 한다 |
+| `user_id`를 `filters`로 고쳐도 이번에는 `TypeError: string indices must be integers, not 'str'` | `search()`/`get_all()`이 리스트가 아니라 `{"results": [...]}` dict를 돌려주는데 57·62행은 그 dict를 그대로 `for mem in ...`으로 돈다 | `relevant_memories["results"]`처럼 `"results"` 키를 먼저 꺼내고, 각 항목은 `mem["text"]`가 아니라 `mem["memory"]`로 읽어야 한다 |
 | 위 세 가지를 다 고쳐도 "View Memory"가 항상 비어 있다 | `memory.add(...)` 호출이 파일 어디에도 없다(grep 확인) — 검색해도 아무 것도 저장되지 않는다 | 검색 버튼 안에 `memory.add(f"검색어: {search_query}", user_id=user_id)` 같은 호출을 추가해야 실제로 기억이 쌓인다(원본 앱에는 없습니다) |
 
 ## 더 해보기
