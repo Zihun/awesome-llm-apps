@@ -1,10 +1,10 @@
 # Day 072 · 💾 AI ArXiv Agent with Memory
 
-> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 50분(오늘 풀리는 버전에서 두 크래시를 직접 재현하는 명령들을 포함합니다) · API 비용 대략 $0.1 이하(OpenAI GPT-4o-mini·임베딩 기준, 실제 키로 실행할 때) — MultiOn 브라우징 요금은 가입이 필요한 유료 상품이라 확인하지 못했습니다 · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory`
+> 볼륨 6 💾 LLM Apps with Memory · 난이도 ★★☆ · 예상 소요 65분(오늘 풀리는 버전에서 세 겹의 크래시를 직접 재현하는 명령들과 실제 앱 기동 확인을 포함합니다) · API 비용 대략 $0.1 이하(OpenAI GPT-4o-mini·임베딩 기준, 실제 키로 실행할 때) — MultiOn 브라우징 요금은 가입이 필요한 유료 상품이라 확인하지 못했습니다 · 원본 앱: `advanced_llm_apps/llm_apps_with_memory_tutorials/ai_arxiv_agent_memory`
 
 ## 오늘 만들 것
 
-이 앱은 OpenAI GPT-4o-mini와 MultiOn 브라우징 에이전트, 그리고 Mem0+Qdrant로 만든 사용자별 기억을 하나로 묶어 arXiv 논문을 찾아 표로 정리해 주는 65줄(마지막 줄에 개행이 없어 `wc -l`은 64로 세지만 편집기·GitHub에서는 65번째 줄까지 보입니다, 직접 확인) 단일 파일 Streamlit 앱입니다. 사이드바에 사용자명을 적어 두면 `Memory.search()`로 그 사용자의 과거 검색 맥락을 불러와 MultiOn에게 보낼 프롬프트에 섞고, `Memory.get_all()`로 지금까지 쌓인 기억을 사이드바에 나열하는 것이 이 볼륨의 핵심 개념입니다. 그런데 `requirements.txt` 4줄은 전부 버전 고정이 없어 오늘 그대로 설치하면 mem0ai 2.2.1·openai 3.19.2·multion 1.3.8·streamlit 1.64.0이 풀리고(직접 확인, 2026-09-28 기준), 이 조합 앞에서 이 앱은 두 API 키를 입력하는 순간부터 실행되지 않습니다. 먼저 13~24행의 `vector_store.config`에 있는 `"model": "gpt-4o-mini"` 필드가 mem0ai 2.2.1의 QdrantConfig에는 없는 필드라서 `Memory.from_config(config)`가 pydantic `ValidationError`를 곧바로 던집니다(직접 확인, Step 3) — Qdrant 서버가 떠 있는지조차 확인하기 전에 멈춥니다. 이 한 줄을 고쳐도 56·62행의 `memory.search(search_query, user_id=user_id, limit=3)`·`memory.get_all(user_id=user_id)`는 mem0ai 2.2.1이 더는 받지 않는 예전 호출 방식이라 `ValueError: Top-level entity parameters ... are not supported`로 막힙니다(직접 확인, Step 6·7). 게다가 이 파일 어디에도 `memory.add()` 호출이 없어서(grep 확인) 앞의 두 문제를 다 고쳐도 "View Memory"는 언제나 빈 목록입니다 — 원본 README가 내세우는 "Persistent memory of user interests and past searches" 기능은 애초에 코드에 없습니다. 완성하면 브라우저에는 API 키 입력창 2개, 사이드바의 사용자명·기억 보기 버튼, 검색창과 검색 버튼이 뜹니다. 아래는 완성된 아키텍처입니다.
+이 앱은 OpenAI GPT-4o-mini와 MultiOn 브라우징 에이전트, 그리고 Mem0+Qdrant로 만든 사용자별 기억을 하나로 묶어 arXiv 논문을 찾아 표로 정리해 주는 65줄(마지막 줄에 개행이 없어 `wc -l`은 64로 세지만 편집기·GitHub에서는 65번째 줄까지 보입니다, 직접 확인) 단일 파일 Streamlit 앱입니다. 사이드바에 사용자명을 적어 두면 `Memory.search()`로 그 사용자의 과거 검색 맥락을 불러와 MultiOn에게 보낼 프롬프트에 섞고, `Memory.get_all()`로 지금까지 쌓인 기억을 사이드바에 나열하는 것이 이 볼륨의 핵심 개념입니다. 그런데 `requirements.txt` 4줄은 전부 버전 고정이 없어 오늘 그대로 설치하면 mem0ai 2.2.1·openai 3.19.2·multion 1.3.8·streamlit 1.64.0이 풀리고(직접 확인, 2026-09-28 기준), 이 조합 앞에서 이 앱은 두 API 키를 입력하는 순간부터 실행되지 않습니다. 먼저 13~24행의 `vector_store.config`에 있는 `"model": "gpt-4o-mini"` 필드가 mem0ai 2.2.1의 QdrantConfig에는 없는 필드라서 `Memory.from_config(config)`가 pydantic `ValidationError`를 곧바로 던집니다(직접 확인, Step 3) — Qdrant 서버가 떠 있는지조차 확인하기 전에 멈춥니다. 이 한 줄을 고쳐도 56·62행의 `memory.search(search_query, user_id=user_id, limit=3)`·`memory.get_all(user_id=user_id)`는 mem0ai 2.2.1이 더는 받지 않는 예전 호출 방식이라 `ValueError: Top-level entity parameters ... are not supported`로 막힙니다(직접 확인, Step 6·7). 이 인자만 `filters={"user_id": ...}`로 고쳐도 mem0ai 2.2.1의 `search()`·`get_all()`은 리스트가 아니라 `{"results": [...]}` 형태의 dict를 돌려주므로, 57·62행의 `for mem in ...`은 dict를 돌며 키 문자열 `"results"` 하나만 만나고 곧장 `mem['text']`에서 `TypeError: string indices must be integers, not 'str'`로 죽습니다(직접 확인) — 항목이 쌓여 있었더라도 키는 `text`가 아니라 `memory`라서 어차피 실패합니다. 게다가 이 파일 어디에도 `memory.add()` 호출이 없어서(grep 확인) 세 문제를 모두 오늘 API에 맞게 고쳐도 아무 것도 저장되지 않습니다 — 원본 README가 내세우는 "Persistent memory of user interests and past searches" 기능은 애초에 코드에 없습니다. 완성하면 브라우저에는 API 키 입력창 2개, 사이드바의 사용자명·기억 보기 버튼, 검색창과 검색 버튼이 뜹니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -66,6 +66,20 @@ from multion.client import MultiOn
 from openai import OpenAI
 ```
 
+64행의 `from mem0 import Memory`만으로도 mem0ai 2.2.1은 `MEM0_DIR` 환경 변수가 없으면 사용자 홈에 `~/.mem0/`를 만듭니다 — import 시점에 `os.makedirs(mem0_dir, exist_ok=True)`가 곧바로 실행되기 때문입니다(mem0ai 2.2.1 패키지 내부 `mem0/memory/setup.py` 10~12행, 소스로 확인. 가짜 홈에서 직접 재현: `~/.mem0/config.json`(59바이트)이 생겼습니다). 이 볼륨에서 mem0를 처음 쓰는 날이므로, 이 문서의 모든 mem0 관련 명령 앞에는 `MEM0_DIR`과 `MEM0_TELEMETRY=False`를 겁니다.
+
+```bash
+export MEM0_DIR=<스크래치 경로>
+export MEM0_TELEMETRY=False
+```
+
+```powershell
+$env:MEM0_DIR="<스크래치 경로>"
+$env:MEM0_TELEMETRY="False"
+```
+
+같은 홈의 `~/.mem0/history.db`를 mem0ai 2.2.1과 0.1.29(Day 073~075가 씀)가 함께 쓰면, 2.2.1이 먼저 만든 이력 테이블 위에서 0.1.29의 `Memory.from_config`가 `sqlite3.OperationalError: no such column: prev_value`로 한 번 실패합니다(mem0ai 0.1.29 패키지 내부 `mem0/memory/storage.py` 58행의 `_migrate_history_table`, 직접 확인 — 같은 `MEM0_DIR`에서 2.2.1로 한 번 연 뒤 0.1.29로 다시 열면 재현됩니다. 두 번째 실행부터는 성공합니다) — 날마다 `MEM0_DIR`을 다르게 주면 피할 수 있습니다.
+
 ![Step 1까지의 구성](diagrams/step1.svg)
 
 **확인.**
@@ -98,7 +112,19 @@ if all(api_keys.values()):
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-**확인.** 키를 하나도 넣지 않고 앱을 실행하면 65행의 경고만 뜨고 그 밖에는 아무 것도 실행되지 않습니다(Step 7에서 함께 확인합니다).
+**확인.** 브라우저 없이 Streamlit `AppTest`로 키를 하나도 넣지 않은 채 실행합니다.
+
+```bash
+uv run --no-project python -c "
+from streamlit.testing.v1 import AppTest
+at = AppTest.from_file('ai_arxiv_agent_memory.py')
+at.run()
+print('warnings:', [w.value for w in at.warning])
+print('text_input labels:', [t.label for t in at.text_input])
+"
+```
+
+`warnings: ['Please enter your API keys to use this app.']`(65행)과 `text_input labels: ['Openai API Key', 'Multion API Key']`(9행의 `k.capitalize()` 표시 그대로)가 출력되고 예외는 없습니다(직접 확인).
 
 ### Step 3. Mem0 + Qdrant 메모리 초기화 — 그리고 즉시 나는 ValidationError
 
@@ -127,7 +153,18 @@ if all(api_keys.values()):
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 네트워크를 막고(가짜 프록시로 외부 접속을 차단) 두 키에 아무 문자열이나 넣어 Streamlit `AppTest`로 이 스크립트를 실행하면:
+**확인.** 네트워크를 막고(가짜 프록시로 외부 접속을 차단) 두 키에 아무 문자열이나 넣어 Streamlit `AppTest`로 이 스크립트를 실행합니다.
+
+```bash
+HTTPS_PROXY=http://127.0.0.1:9 HTTP_PROXY=http://127.0.0.1:9 uv run --no-project python -c "
+from streamlit.testing.v1 import AppTest
+at = AppTest.from_file('ai_arxiv_agent_memory.py')
+at.run()
+at.text_input[0].input('sk-fake-openai').run()
+at.text_input[1].input('fake-multion-key').run()
+print(at.exception[0].value)
+"
+```
 
 ```text
 pydantic_core._pydantic_core.ValidationError: 1 validation error for MemoryConfig
@@ -136,7 +173,7 @@ vector_store
   collection_name, api_key, on_disk, client, url, path, https, port
 ```
 
-가 24행에서 그대로 발생합니다(직접 확인). `"model"` 줄을 지운 config로 다시 시도하면 이번에는 `Memory.from_config()` 생성자 자체가 즉시 로컬 Qdrant(`localhost:6333`)에 접속을 시도하다가 서버가 없어 `ResponseHandlingException`(연결 거부)로 멈춥니다(직접 확인) — Qdrant를 실제로 띄우기 전에는 이 단계를 넘어갈 방법이 없습니다. 이 확인 과정에서 mem0가 기본적으로 `https://us.i.posthog.com`에 익명 사용 통계를 보내려 시도하는 것도 함께 관찰됩니다(프록시가 그 요청을 막았습니다) — mem0ai 2.2.1 패키지 내부 `mem0/memory/telemetry.py` 14행(저장소 밖)이 `MEM0_TELEMETRY` 환경 변수로 끌 수 있다고 밝히고 있습니다. Agno의 익명 통계(Day 047 Step 5)와 같은 종류의 사실이며, 이 앱은 "완전 로컬"이 아닙니다.
+가 24행에서 그대로 발생합니다(직접 확인. 발췌이며, `mem0/configs/vector_stores/qdrant.py`가 필드 이름을 `set()`으로 모아 나열하므로 뒤의 열 개 이름 순서는 실행마다 달라집니다 — 세 번 돌려 세 가지 순서를 직접 확인했습니다). `"model"` 줄을 지운 config로 다시 시도하면 이번에는 `Memory.from_config()` 생성자 자체가 즉시 로컬 Qdrant(`localhost:6333`)에 접속을 시도하다가 서버가 없어 `ResponseHandlingException`(연결 거부)로 멈춥니다(직접 확인) — Qdrant를 실제로 띄우기 전에는 이 단계를 넘어갈 방법이 없습니다. 이 확인 과정에서 mem0가 기본적으로 `https://us.i.posthog.com`에 익명 사용 통계를 보내려 시도하는 것도 함께 관찰됩니다(프록시가 그 요청을 막았습니다) — mem0ai 2.2.1 패키지 내부 `mem0/memory/telemetry.py` 14행(저장소 밖)이 `MEM0_TELEMETRY` 환경 변수로 끌 수 있다고 밝히고 있습니다. `Memory()` 생성 자체가 보내는 `mem0.init` 이벤트는 표본 추출 대상이 아닌 lifecycle 이벤트라 100% 전송됩니다(`mem0/memory/telemetry.py` 53~54행 `_LIFECYCLE_EVENTS`, `mem0/memory/main.py` 552행의 `capture_event("mem0.init", ...)`, 소스로 확인). mem0는 `add`·`get`·`get_all`·`search`가 처음 성공한 뒤에도 GitHub의 안내 설정(`https://raw.githubusercontent.com/mem0ai/mem0/main/mem0/memory/oss_notices_config.json`)을 한 번 더 가져오려 합니다(`mem0/memory/notices.py` 22~24행, 소스로 확인) — 이 조회도 `MEM0_TELEMETRY=False`면 함께 꺼집니다. Agno의 익명 통계(Day 047 Step 5)와 같은 종류의 사실이며, 이 앱은 "완전 로컬"이 아닙니다.
 
 ### Step 4. MultiOn·OpenAI 클라이언트는 죄가 없다 — 따로 떼어 확인
 
@@ -242,15 +279,21 @@ print('temperature' in inspect.signature(c.chat.completions.create).parameters)
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 로컬 온디스크 Qdrant로 살아있는 `Memory` 객체 하나를 따로 만들어 이 호출만 재현합니다(외부 API 요청 없이 재현 가능한 부분입니다).
+**확인.** 로컬 온디스크 Qdrant로 살아있는 `Memory` 객체 하나를 따로 만들어 이 호출만 재현합니다 — 키는 형식만 맞으면 되고, `MEM0_TELEMETRY`를 끄면 그 뒤로는 외부 요청 없이 재현할 수 있습니다.
 
 ```bash
-uv run --no-project python -c "
+OPENAI_API_KEY=sk-fake MEM0_DIR=<스크래치 경로> MEM0_TELEMETRY=False uv run --no-project python -c "
 from mem0 import Memory
 m = Memory.from_config({'vector_store': {'provider': 'qdrant', 'config': {'path': '<스크래치 경로>'}}})
 m.search('deep learning papers', user_id='tester', limit=3)
 "
 ```
+
+```powershell
+$env:OPENAI_API_KEY="sk-fake"; $env:MEM0_DIR="<스크래치 경로>"; $env:MEM0_TELEMETRY="False"
+```
+
+`OPENAI_API_KEY`를 빼면 mem0 2.2.1의 기본 임베더가 먼저 만들어지며 ``openai.OpenAIError: Missing credentials. Please pass an `api_key`, ...``가 먼저 나므로(직접 확인), 아래 `ValueError`를 보려면 반드시 키를 먼저 넣어야 합니다.
 
 ```text
 ValueError: Top-level entity parameters frozenset({'user_id'}) are not supported in search(). Use filters={'user_id': '...'} instead.
@@ -271,7 +314,7 @@ ValueError: Top-level entity parameters frozenset({'user_id'}) are not supported
         st.sidebar.write("\n".join([f"- {mem['text']}" for mem in memory.get_all(user_id=user_id)]))
 ```
 
-62행의 `memory.get_all(user_id=user_id)`도 Step 6과 같은 이유(`user_id` 최상위 인자 거부)로 mem0ai 2.2.1에서는 예외가 납니다. 더 근본적인 문제는 따로 있습니다 — 이 파일 65줄 전체에 `memory.add(...)` 호출이 단 한 번도 없습니다(`grep -n "memory\."` 결과 `search`와 `get_all`뿐, 직접 확인). 즉 두 API 오류를 모두 오늘 버전에 맞게 고치더라도 이 앱은 사용자의 검색어나 관심사를 **한 번도 저장하지 않으므로** "View Memory"는 항상 빈 목록을 보여 줍니다. 원본 README가 내세우는 "Persistent memory of user interests and past searches"는 이 코드에 구현되어 있지 않습니다.
+62행의 `memory.get_all(user_id=user_id)`도 Step 6과 같은 이유(`user_id` 최상위 인자 거부)로 mem0ai 2.2.1에서는 예외가 납니다. 그 인자를 `filters={"user_id": user_id}`로 고쳐도 62행의 `for mem in memory.get_all(...)`은 dict를 그대로 돌기 때문에 `mem['text']`에서 `TypeError`로 죽습니다(Step 6과 같은 원인, 직접 확인) — "View Memory"는 빈 목록을 보여 주는 것이 아니라 예외로 죽습니다. 이 두 가지를 dict 접근까지 고치더라도 더 근본적인 문제가 남습니다 — 이 파일 65줄 전체에 `memory.add(...)` 호출이 단 한 번도 없습니다(`grep -n "memory\."` 결과 `search`와 `get_all`뿐, 직접 확인). 즉 세 가지를 모두 오늘 API에 맞게 고치더라도 이 앱은 사용자의 검색어나 관심사를 **한 번도 저장하지 않으므로**, 그제서야 "View Memory"는 (죽지 않고) 빈 목록을 보여 줍니다. 원본 README가 내세우는 "Persistent memory of user interests and past searches"는 이 코드에 구현되어 있지 않습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -283,11 +326,33 @@ grep -n "memory\." ai_arxiv_agent_memory.py
 
 `memory.search(...)`(56행)와 `memory.get_all(...)`(62행) 두 줄만 나오고 `memory.add`는 나오지 않습니다(직접 확인).
 
+**앱을 실제로 띄우기.** 지금까지는 명령줄에서 개별 동작만 재현했습니다. 브라우저로 직접 열어보려면:
+
+```bash
+uv run --no-project streamlit run ai_arxiv_agent_memory.py
+```
+
+브라우저 탭이 자동으로 열리고 제목 "AI Research Agent with Memory 📚"와 API 키 입력창 2개가 뜹니다(키를 넣기 전까지는 아무 것도 호출되지 않으므로 비용도 없습니다). 이 문서는 브라우저를 열 수 없어 헤드리스 옵션과 다른 에이전트와 겹치지 않는 임의의 높은 포트로 같은 명령을 확인했습니다.
+
+```bash
+uv run --no-project streamlit run ai_arxiv_agent_memory.py --server.headless true --server.port 61414 --server.address localhost
+```
+
+`--server.address localhost`가 없으면 헤드리스 시작 배너가 외부 IP를 조회합니다(Streamlit 1.64.0, Day 060에서 확인한 것과 같은 동작) — 이 플래그가 그 조회도 막습니다. 직접 확인한 결과 `http://localhost:61414`는 HTTP 200을 돌려줬고 화면에는 키 입력창만 뜨며 예외는 없습니다 — 두 키를 실제로 입력하는 순간부터 Step 3의 크래시가 시작됩니다.
+
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+두 크래시가 없다고 가정했을 때 이 앱이 원래 의도한 요청 흐름은 실제로 두 단계를 거칩니다 — 아래 두 그림은 그 순서 그대로입니다.
 
-이 그림은 두 크래시가 없다고 가정했을 때 이 앱이 원래 의도한 요청 흐름입니다. 사용자가 검색어와 사용자명을 넣고 "Search for Papers"를 누르면, UI는 Mem0 매니저에게 `search()`를 호출하고, Mem0는 내부적으로 OpenAI 임베딩 모델에 질의를 벡터로 바꿔 달라고 요청한 뒤 그 벡터로 Qdrant에서 코사인 유사도 검색을 합니다. 돌아온 관련 기억은 UI로 전달되어 MultiOn에게 보낼 프롬프트에 섞이고, MultiOn은 arXiv.org를 브라우징한 결과(`BrowseOutput`)를 UI에 돌려줍니다. UI는 이 결과를 다시 OpenAI GPT-4o-mini에게 보내 마크다운 표로 정리한 뒤 사용자에게 보여 줍니다. 실제로는 Step 3·6·7에서 본 것처럼 이 흐름은 `Memory.from_config` 단계에서 이미 끊깁니다.
+![1단계: 기억 조회](diagrams/sequence.svg)
+
+1단계는 사용자가 검색어와 사용자명을 넣은 뒤 UI가 Mem0 매니저에게 `search()`를 호출하고, Mem0가 내부적으로 OpenAI 임베딩 모델(`text-embedding-3-small`)에 질의를 벡터로 바꿔 달라고 요청한 뒤 그 벡터로 Qdrant에서 코사인 유사도 검색을 해 관련 기억을 UI로 돌려주는 부분만 그립니다.
+
+![2단계: 브라우징과 표 정리](diagrams/extra-browse.svg)
+
+2단계는 UI가 MultiOn에게 브라우징을 맡기고, MultiOn이 arXiv.org를 탐색한 결과(`BrowseOutput`)를 돌려주면 UI가 이를 다시 OpenAI GPT-4o-mini에게 보내 마크다운 표로 정리한 뒤 사용자에게 보여 주는 부분만 그립니다(1단계에서 돌아온 `relevant_memories`는 이 단계의 `browse` 명령 프롬프트에 섞여 들어갑니다).
+
+실제로는 Step 3·6·7에서 본 것처럼 이 흐름은 1단계 이전, `Memory.from_config` 단계에서 이미 끊깁니다.
 
 ## 실행 체크리스트
 
@@ -302,15 +367,16 @@ grep -n "memory\." ai_arxiv_agent_memory.py
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 두 API 키를 넣자마자 화면에 `pydantic_core._pydantic_core.ValidationError`가 뜬다 | 19행 `vector_store.config`의 `"model": "gpt-4o-mini"`가 mem0ai 2.2.1의 QdrantConfig에 없는 필드 | 그 줄을 지운다(그래도 Qdrant 서버는 따로 필요합니다) |
+| 두 API 키를 넣자마자 화면에 `pydantic_core._pydantic_core.ValidationError`가 뜬다 | 18행 `vector_store.config`의 `"model": "gpt-4o-mini"`가 mem0ai 2.2.1의 QdrantConfig에 없는 필드 | 그 줄을 지운다(그래도 Qdrant 서버는 따로 필요합니다) |
 | `"model"` 줄을 지워도 `ResponseHandlingException`(연결 거부)이 난다 | `host`/`port`로 원격 접속을 시도하는데 로컬 6333번에 아무 것도 없음 | 원본 README 안내대로 `docker run -p 6333:6333 -p 6334:6334 ... qdrant/qdrant`로 먼저 띄운다 |
 | 위 두 가지를 고쳐도 검색·기억보기 버튼에서 `ValueError: Top-level entity parameters ...` | mem0ai 2.2.1부터 `search()`/`get_all()`이 `user_id`를 최상위 인자로 안 받고 `filters={"user_id": ...}`만 받음(56·62행) | 두 호출을 `memory.search(search_query, filters={"user_id": user_id}, top_k=3)`·`memory.get_all(filters={"user_id": user_id})` 형태로 오늘 API에 맞게 고쳐야 한다(코드 수정은 이 문서 밖입니다) |
+| `user_id`를 `filters`로 고쳐도 이번에는 `TypeError: string indices must be integers, not 'str'` | `search()`/`get_all()`이 리스트가 아니라 `{"results": [...]}` dict를 돌려주는데 56·62행은 그 dict를 그대로 `for mem in ...`으로 돈다 | `relevant_memories["results"]`처럼 `"results"` 키를 먼저 꺼내고, 각 항목은 `mem["text"]`가 아니라 `mem["memory"]`로 읽어야 한다 |
 | 위 세 가지를 다 고쳐도 "View Memory"가 항상 비어 있다 | `memory.add(...)` 호출이 파일 어디에도 없다(grep 확인) — 검색해도 아무 것도 저장되지 않는다 | 검색 버튼 안에 `memory.add(f"검색어: {search_query}", user_id=user_id)` 같은 호출을 추가해야 실제로 기억이 쌓인다(원본 앱에는 없습니다) |
 
 ## 더 해보기
 
 - `vector_store.config`에서 `"model"` 필드를 지우고 로컬 Qdrant Docker를 띄워 Step 3를 실제로 통과시켜 보세요.
-- `memory.search()`/`memory.get_all()` 호출을 `filters={"user_id": ...}` 형태로 고쳐 mem0ai 2.2.1과 맞추고, 어떤 예외가 사라지는지 확인해 보세요.
+- `memory.search()`/`memory.get_all()` 호출을 `filters={"user_id": ...}` 형태로 고치고, 이어서 `res["results"]`·`mem["memory"]`로 dict 접근까지 고쳐 두 예외를 순서대로 없애 보세요.
 - "Search for Papers" 버튼 안에 `memory.add(...)` 호출을 추가해 검색어가 실제로 기억에 쌓이게 만들고, "View Memory"로 확인해 보세요.
 
 ## 다음 날 예고

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+openai: OpenAI API { class: ext }
+ui: Streamlit UI { class: ours }
+multion: MultiOn 브라우징 에이전트 { class: ext }
+
+ui -> multion: browse(cmd, url=arxiv.org)
+multion -> ui: BrowseOutput(message)
+ui -> openai: 표 형식 정리 요청(gpt-4o-mini)
+openai -> ui: 마크다운 표
+ui -> user: 결과 표시
