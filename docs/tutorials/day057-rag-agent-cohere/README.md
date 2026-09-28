@@ -672,7 +672,7 @@ grep -n "post_process" rag_agent_cohere.py
 지금까지 이 문서는 함수를 하나씩 떼어 확인했을 뿐, 앱을 실제로 띄우는 스텝이 없었습니다. 키 없이도 화면 자체는 뜹니다.
 
 ```bash
-uv run --no-project streamlit run rag_agent_cohere.py --server.headless true
+uv run --no-project streamlit run rag_agent_cohere.py --server.headless true --server.address localhost
 ```
 
 키를 입력하지 않으면 `st.stop()`(80-82행)이 그 실행을 그 자리에서 멈추므로, 화면에 보이는 것은 사이드바의 자격증명 폼뿐입니다. 이것은 `AppTest`로 키 없이, 네트워크 없이 재현할 수 있습니다.
