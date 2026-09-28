@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+action_agent: Action 에이전트 { class: ours }
+followup_agent: Follow-up 에이전트 { class: ours }
+gpt4o: GPT-4o { class: ext }
+ui: Streamlit UI { class: ours }
+
+action_agent -> followup_agent: SwarmResult→followup_agent
+followup_agent -> gpt4o: 요약 강제 프롬프트
+gpt4o -> followup_agent: update_followup_overview 호출
+followup_agent -> ui: 사이드바 표시

@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: down
+
+ui: Streamlit UI { class: ours }
+assessment_agent: Assessment 에이전트 { class: ours }
+update_assessment_overview: update_assessment_overview { class: ours }
+action_agent: Action 에이전트 { class: ours }
+update_action_overview: update_action_overview { class: ours }
+followup_agent: Follow-up 에이전트 { class: ours }
+update_followup_overview: update_followup_overview { class: ours }
+
+assessment_agent -> update_assessment_overview: 호출(1차 턴)
+update_assessment_overview -> ui: 사이드바
+action_agent -> update_action_overview: 호출(1차 턴)
+update_action_overview -> ui: 사이드바
+followup_agent -> update_followup_overview: 호출(1차 턴)
+update_followup_overview -> ui: 사이드바

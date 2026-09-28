@@ -1,6 +1,6 @@
 # Day 085 · 🧠 AI Mental Wellbeing Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 115분(단일 파일 226줄이지만 `pyautogen` 버전 문제를 0.6.1·0.7.3·0.7.4·0.7.6 네 버전으로 재현하고, 가짜 로컬 OpenAI 서버로 실제 호출 순서(9회)와 `max_rounds`를 10·12·13으로 바꿨을 때의 결과, 그리고 디스크 캐시 파일까지 직접 만들어 확인해야 했습니다 — 손으로 돌려 보는 시간이 읽는 시간보다 훨씬 깁니다) · API 비용 대략 요청 1건에 gpt-4o 호출 **9회**(에이전트 3개가 먼저 요약을 하나씩 내고 — 3회 — 그다음 본문 전체를 두 바퀴 다시 씁니다 — 6회, 화면에는 마지막 바퀴만 남습니다. 직접 확인, Step 1·"요청 한 건이 흐르는 과정"), OpenAI 공식 요금표 기준(직접 확인, 2026-09-28) gpt-4o 표준가 입력 $2.50/출력 $10.00(1M 토큰당) 대입 시 수백~천 원대로 추정(대략치 — 호출 횟수 9는 확인했지만 토큰 수는 키가 없어 확인 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 120분(단일 파일 226줄이지만 `pyautogen` 버전 문제를 0.6.1·0.7.3·0.7.4·0.7.6·0.14.0·1.1.0 여섯 버전으로 재현하고, 가짜 로컬 OpenAI 서버로 실제 호출 순서(9회)와 `max_rounds`를 10·12·13·14로 바꿨을 때의 결과를 매번 새 작업 폴더에서 확인하고, 디스크 캐시 파일까지 직접 만들어 확인해야 했습니다 — 손으로 돌려 보는 시간이 읽는 시간보다 훨씬 깁니다) · API 비용 대략 요청 1건에 gpt-4o 호출 **9회**(에이전트 3개가 먼저 요약을 하나씩 내고 — 3회 — 그다음 본문 전체를 두 바퀴 다시 씁니다 — 6회, 화면에는 마지막 바퀴만 남습니다. 직접 확인, Step 1·"요청 한 건이 흐르는 과정"), OpenAI 공식 요금표 기준(직접 확인, 2026-09-28) gpt-4o 표준가 입력 $2.50/출력 $10.00(1M 토큰당) 대입 시 수백~천 원대로 추정(대략치 — 호출 횟수 9는 확인했지만 토큰 수는 키가 없어 확인 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent`
 
 ## 오늘 만들 것
 
@@ -8,7 +8,7 @@
 
 `requirements.txt` 4줄(`autogen-agentchat`, `autogen-ext`, `pyautogen`, `streamlit`) 가운데 버전 고정은 하나도 없는데, 그대로 설치하면 이 앱은 아예 뜨지 못합니다 — 오늘(2026-09-28) `pyautogen`이라는 이름은 AG2 자신의 것이 아니라 Microsoft 자체 AutoGen(`autogen-agentchat` 기반 재설계)으로 가는 빈 프록시 패키지 0.10.0을 가리키고, 이 패키지는 `autogen` 최상위 모듈 자체를 만들지 않습니다(직접 확인: `import autogen`이 `ModuleNotFoundError`). 앞의 두 줄(`autogen-agentchat`·`autogen-ext`)은 이 앱 코드가 import하지는 않지만(그렙으로 확인, 코드는 `from autogen import (...)` 한 줄뿐) `requirements.txt`가 직접 적어 넣어서 같이 설치되는 것입니다. 그렇다고 아무 옛날 버전이나 고정하면 되는 것도 아닙니다 — `pyautogen==0.7.4`부터 `SwarmAgent`가 통째로 폐기(deprecated)되어 `ConversableAgent`의 얇은 래퍼가 되고, 이 앱이 인스턴스 메서드로 부르는 `register_hand_off`(196~198행, `assessment_agent.register_hand_off(...)`)가 모듈 최상위 함수 `register_hand_off(agent, hand_to)`로 옮겨집니다 — `0.7.3`까지는 인스턴스 메서드 그대로이고 `0.7.4`부터 `AttributeError: 'SwarmAgent' object has no attribute 'register_hand_off'`로 막힌다는 것을 0.6.1·0.7.3·0.7.4 세 버전 모두 직접 재현해 확인했습니다(Step 1). 즉 이 앱 코드가 그대로 도는 범위는 `0.6.0`~`0.7.3`이고, 이 문서는 그중 `0.6.1`을 씁니다. `pyautogen==0.7.6`처럼 `openai`를 별도로 요구하는 버전에서는 `register_hand_off`보다 먼저 `SwarmAgent` 생성 자체가 `ImportError: Module 'openai' needed for autogen.oai.client.create_openai_client is missing`으로 막힌다는 것도 직접 확인했습니다(`openai`가 이미 깔려 있지 않다면요 — Step 1).
 
-`pyautogen==0.6.1`에는 또 다른 부작용이 있습니다. 이 앱의 `llm_config`(126~128행)에 `cache_seed`가 없어 AG2 기본값(41)으로 디스크 캐시가 켜지고, **실행한 작업 폴더**에 `.cache/41/cache.db`(SQLite)가 생겨 사용자가 사이드바에 적은 감정 상태·증상 텍스트를 포함한 요청 전체와 모델 응답이 그대로 저장됩니다(직접 확인, Step 7) — 같은 입력을 다시 보내면 모델을 다시 부르지 않고 캐시로 답합니다. 민감한 개인 데이터를 다루는 앱이라 이 사실은 사전 준비와 Step 7에 다시 적어 둡니다.
+`pyautogen==0.6.1`에는 또 다른 부작용이 있습니다. 이 앱의 `llm_config`(126~128행)에 `cache_seed`가 없어 AG2 기본값(41)으로 디스크 캐시가 켜지고, **실행한 작업 폴더**에 `.cache/41/cache.db`(SQLite)가 생겨 사용자가 본문 입력 폼(37~66행)에 적은 감정 상태·증상 텍스트를 포함한 요청 전체와 모델 응답이 그대로 저장됩니다(사이드바에는 API 키만 있습니다 — 직접 확인, Step 7) — 같은 입력을 다시 보내면 모델을 다시 부르지 않고 캐시로 답합니다. 민감한 개인 데이터를 다루는 앱이라 이 사실은 사전 준비와 Step 7에 다시 적어 둡니다.
 
 완성하면 사이드바에 키 입력창과 위기 안내, 본문에 입력 폼과 "Get Support Plan" 버튼이 뜨고, 키가 있어 실행하면 세 에이전트가 먼저 요약을 하나씩 내고(3회 호출) 이어서 본문 전체를 두 바퀴 다시 써서(6회 호출, 총 9회) 화면에는 마지막 바퀴만 평가·행동·후속 세 섹션으로 expander에 펼쳐집니다 — 이 순서는 가짜 로컬 OpenAI 서버로 직접 확인했습니다(Step 1, "요청 한 건이 흐르는 과정"). 아래는 완성된 아키텍처입니다.
 
@@ -114,7 +114,7 @@ ALL IMPORTS OK
 OK
 ```
 
-**덤 — 호출 순서 9회를 가짜 서버로 직접 확인.** 이 앱이 실제로 몇 번, 어떤 순서로 GPT-4o를 부르는지는 소스만 읽어서는 단정하기 어렵습니다(Step 5~7에서 볼 `SwarmResult`와 `AFTER_WORK`의 우선순위가 얽혀 있기 때문입니다). 그래서 `/v1/chat/completions`만 흉내 내는 로컬 서버(`tool_choice`가 강제되면 그 함수를 호출하는 응답을, 아니면 `## <Gen> Design (call #N)` 본문을 돌려줍니다)를 임의의 높은 포트에 띄우고, 앱 사본을 `OPENAI_BASE_URL`로 그 서버에 붙여 Streamlit `AppTest`로 "Get Support Plan"을 눌러 봤습니다(가짜 키, 프록시·네트워크 차단 변수를 걸어 외부로는 한 번도 나가지 않았습니다).
+**덤 — 호출 순서 9회를 가짜 서버로 직접 확인.** 이 앱이 실제로 몇 번, 어떤 순서로 GPT-4o를 부르는지는 소스만 읽어서는 단정하기 어렵습니다(Step 5~7에서 볼 `SwarmResult`와 `AFTER_WORK`의 우선순위가 얽혀 있기 때문입니다). 그래서 `/v1/chat/completions`만 흉내 내는 로컬 서버를 임의의 높은 포트에 띄우고, 앱 사본을 `OPENAI_BASE_URL`로 그 서버에 붙여 Streamlit `AppTest`로 "Get Support Plan"을 눌러 봤습니다(가짜 키, 프록시·네트워크 차단 변수를 걸어 외부로는 한 번도 나가지 않았습니다). 이 서버는 이 문서가 재현용으로 직접 만든 것이라 리포에는 없습니다 — 아래 명령을 그대로 실행해도 서버가 없으면 연결 오류만 납니다. 독자가 재현하려면 다음 로직으로 `fake_openai.py`를 먼저 만들어야 합니다: `http.server.BaseHTTPRequestHandler`로 `POST /v1/chat/completions`를 받아 요청 JSON의 `tool_choice`가 특정 함수를 가리키면 그 함수를 호출하는 `tool_calls` 응답(OpenAI 형식)을, `tool_choice`가 없으면 `## <Gen> Design (fake body, call #N)` 같은 평문 응답을 돌려주고, 호출마다 번호를 매겨 기록만 하면 됩니다(요청을 실제로 채점하거나 해석하지는 않습니다).
 
 ```bash
 uv run --no-project python -c "
@@ -150,14 +150,16 @@ expanders: {'Situation Assessment': ['## Assessment Design (fake body, call #7)'
             'Long-term Support Strategy': ['## Followup Design (fake body, call #9)']}
 ```
 
-요약(1~3)이 먼저 다 끝난 뒤에야 본문이 시작되고, 본문은 한 바퀴가 아니라 두 바퀴 돕니다 — 화면에 남는 것은 **두 번째 바퀴**(call #7~9)입니다. `max_rounds`만 바꿔 같은 방법으로 다시 돌려 보면(리포 코드는 고치지 않고 사본에서만):
+요약(1~3)이 먼저 다 끝난 뒤에야 본문이 시작되고, 본문은 한 바퀴가 아니라 두 바퀴 돕니다 — 화면에 남는 것은 **두 번째 바퀴**(call #7~9)입니다. `max_rounds`만 바꿔 같은 방법으로 다시 돌려 보면(리포 코드는 고치지 않고 사본에서만, **매번 새 작업 폴더 + 새로 띄운 가짜 서버**를 썼습니다 — 같은 폴더를 재사용하면 Step 7에서 볼 pyautogen 0.6.1의 디스크 캐시가 이전 실행의 응답을 그대로 돌려줘 결과가 섞입니다):
 
 ```
-max_rounds=10 → 호출 6회에서 멈춤. 화면 = Assessment 본문(call #4) / Action 본문(#5) / Followup 본문(#6) — 1바퀴가 정확히 남음
-max_rounds=12 → 호출 8회에서 멈춤. 화면 = Followup 본문(#6) / Assessment 본문(#7) / Action 본문(#8) — 세 섹션이 한 칸씩 밀려 어긋남
+max_rounds=10 → 호출 6회. 화면 = Assessment(call #4) / Action(#5) / Followup(#6) — 1바퀴가 정확히 남음
+max_rounds=12 → 호출 8회. 화면 = Followup(#6) / Assessment(#7) / Action(#8) — 한 칸씩 밀려 어긋남
+max_rounds=13 → 호출 9회. 화면 = Assessment(#7) / Action(#8) / Followup(#9) — 2바퀴가 정확히 남음
+max_rounds=14 → 호출 10회. 화면 = Action(#8) / Followup(#9) / Assessment(#10) — 한 칸씩 밀려 어긋남
 ```
 
-(둘 다 직접 확인. `13`이 특별한 값이 아니라 "두 바퀴(9회)가 다 돌고도 남는 가장 작은 값 중 하나"일 뿐이라는 뜻입니다 — 더 해보기에서 다른 값도 바꿔 볼 수 있습니다.) 이 순서가 왜 이렇게 되는지는 Step 5·7에서 봅니다.
+(넷 다 직접 확인. 메시지 수는 시작 1 + 요약·도구 실행 6 + 본문 3k이므로, 세 섹션이 맞는 값은 `max_rounds`가 `7+3k`(= 10, 13, 16…)일 때뿐입니다. `13`은 "여유가 있는" 값이 아니라 **본문 두 바퀴가 정확히 다 끝나는 값**이고, 바로 다음 정수인 `14`는 어긋납니다.) 이 순서가 왜 이렇게 되는지는 Step 5·7에서 봅니다.
 
 ### Step 2. 사이드바 — API 키 입력과 위기 안내
 
@@ -488,9 +490,9 @@ has _oai_messages: True
                 )
 ```
 
-세 `SwarmAgent`는 각자 `functions=`로 Step 5의 콜백 하나씩을 도구로 등록하고, `update_agent_state_before_reply=[state_update]`로 Step 6의 훅을 공유합니다. `register_hand_off(AFTER_WORK(...))` 세 줄이 assessment→action→followup→assessment 순환 고리를 만듭니다 — Step 5에서 본 대로 이것은 함수 호출로 명시적 `SwarmResult` 이관이 **없을 때만** 쓰이는 기본값입니다. `initiate_swarm_chat`은 `initial_agent=assessment_agent`로 시작해 `max_rounds=13`까지 돕니다. 실제로 몇 번 도는지는 Step 1에서 가짜 서버로 이미 확인했습니다 — 1차(요약, `SwarmResult`로 즉시 이관) 3회 + 2차(본문, `AFTER_WORK`로 이관) 두 바퀴 6회 = 9회이고, `max_rounds=13`은 시작 메시지 1개를 더해도 여유가 있어 두 바퀴를 다 돕니다(딱 맞는 값은 아니고, 10으로 줄이면 1바퀴에서, 12로 하면 한 칸 어긋난 채로 끝난다는 것도 Step 1에서 확인했습니다).
+세 `SwarmAgent`는 각자 `functions=`로 Step 5의 콜백 하나씩을 도구로 등록하고, `update_agent_state_before_reply=[state_update]`로 Step 6의 훅을 공유합니다. `register_hand_off(AFTER_WORK(...))` 세 줄이 assessment→action→followup→assessment 순환 고리를 만듭니다 — Step 5에서 본 대로 이것은 함수 호출로 명시적 `SwarmResult` 이관이 **없을 때만** 쓰이는 기본값입니다. `initiate_swarm_chat`은 `initial_agent=assessment_agent`로 시작해 `max_rounds=13`까지 돕니다. 실제로 몇 번 도는지는 Step 1에서 가짜 서버로 이미 확인했습니다 — 1차(요약, `SwarmResult`로 즉시 이관) 3회 + 2차(본문, `AFTER_WORK`로 이관) 두 바퀴 6회 = 9회이고, `max_rounds=13`은 "여유가 있는" 값이 아니라 **본문 두 바퀴가 정확히 다 끝나는 값**입니다(10으로 줄이면 1바퀴에서 정확히 끝나고, 12·14로 하면 한 칸 어긋난 채로 끝난다는 것도 Step 1에서 확인했습니다).
 
-**pyautogen 0.6.1의 디스크 캐시 — 감정 상태·증상 텍스트가 그대로 남습니다.** `llm_config`(126~128행)에 `cache_seed`가 없으면 AG2는 레거시 기본값(`LEGACY_DEFAULT_CACHE_SEED = 41`, `autogen/oai/client.py`, 소스로 확인)으로 디스크 캐시를 켭니다. 이 앱을 실행한 **작업 폴더**에 `.cache/41/cache.db`(SQLite)가 생기고, `Cache` 테이블의 각 행 `key`에는 그 호출의 시스템 프롬프트와 대화 내용이 통째로 들어갑니다 — 사이드바에 적은 감정 상태·증상 텍스트가 그대로 포함됩니다(직접 확인: 가짜 서버로 9회를 호출하자 `Cache` 테이블에 9행이 생겼고, 모든 행의 key에 입력 텍스트가 들어 있었습니다). 캐시가 있으면 같은 입력에 대해 모델을 다시 부르지 않고 캐시된 응답을 그대로 돌려줍니다(Step 1에서 `max_rounds`만 바꿔 다시 돌렸을 때 가짜 서버가 받은 요청이 0건이었던 것도 이 캐시 때문입니다). 리포 코드는 고치지 않으므로, 끄거나 지우는 법은 "문제 해결"에 정리했습니다.
+**pyautogen 0.6.1의 디스크 캐시 — 감정 상태·증상 텍스트가 그대로 남습니다.** `llm_config`(126~128행)에 `cache_seed`가 없으면 AG2는 레거시 기본값(`LEGACY_DEFAULT_CACHE_SEED = 41`, `autogen/oai/client.py`, 소스로 확인)으로 디스크 캐시를 켭니다. 이 앱을 실행한 **작업 폴더**에 `.cache/41/cache.db`(SQLite)가 생기고, `Cache` 테이블의 각 행 `key`에는 그 호출의 시스템 프롬프트와 대화 내용이 통째로 들어갑니다 — 본문 입력 폼에 적은 감정 상태·증상 텍스트가 그대로 포함됩니다(직접 확인: 가짜 서버로 9회를 호출하자 `Cache` 테이블에 9행이 생겼고, 모든 행의 key에 입력 텍스트가 들어 있었습니다). 캐시가 있으면 같은 입력에 대해 모델을 다시 부르지 않고 캐시된 응답을 그대로 돌려줍니다 — 그래서 Step 1의 `max_rounds` 재현마다 **작업 폴더와 가짜 서버를 매번 새로 만들었습니다**(같은 폴더를 재사용하면 AG2가 이전 실행에서 캐시한 응답을 그대로 돌려줘, 가짜 서버가 실제로 받는 새 요청 수와 화면에 뜨는 "call #" 번호가 서로 다른 것을 가리키게 됩니다). 리포 코드는 고치지 않으므로, 끄거나 지우는 법은 "문제 해결"에 정리했습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -593,25 +595,41 @@ error boxes: ['Please enter your OpenAI API key.']
 
 ## 요청 한 건이 흐르는 과정
 
-한 번의 요청은 세 구간을 순서대로 거칩니다 — **요약 바퀴**(세 에이전트가 하나씩 요약만 냄) → **본문 1바퀴**(세 에이전트가 순서대로 본문 전체를 씀, 아직 화면에 남지 않음) → **본문 2바퀴**(같은 순서로 다시 쓰고, 이번 결과가 화면에 남음). Step 1에서 가짜 로컬 서버로 직접 확인한 순서 그대로입니다. 여섯 배우(사용자·UI·에이전트 셋·GPT-4o)가 한 그림에 다 들어가면 GPT-4o를 사이에 둔 수명선이 다른 메시지 라벨을 가로질러(검사 21), 이 세 구간이라는 앱의 실제 시간 경계를 따라 세 그림으로 나눴습니다 — 메시지는 하나도 지우지 않고 그대로 옮겼습니다.
+한 번의 요청은 세 구간을 순서대로 거칩니다 — **요약 바퀴**(세 에이전트가 하나씩 요약을 내고 사이드바에 표시) → **본문 1바퀴**(세 에이전트가 순서대로 본문 전체를 씀, 아직 화면에 남지 않음) → **본문 2바퀴**(같은 순서로 다시 쓰고, 이번 결과가 화면에 남음). Step 1에서 가짜 로컬 서버로 직접 확인한 순서 그대로입니다. 여섯 배우(사용자·UI·에이전트 셋·GPT-4o)가 한 그림에 다 들어가면 GPT-4o를 사이에 둔 수명선이 다른 메시지 라벨을 가로질러(검사 21), 이 세 구간이라는 앱의 실제 시간 경계를 따라 나눴습니다 — 구간마다 한 그림에 다 안 들어가 다시 둘로 나눈 곳도 있습니다. 메시지는 하나도 지우지 않고 그대로 옮겼습니다.
 
-![1구간: 요약 바퀴](diagrams/sequence.svg)
+![1-1: 요약 — Assessment·Action](diagrams/sequence.svg)
 
-1구간은 버튼 클릭부터 세 에이전트가 요약을 하나씩 내기까지입니다. Streamlit UI가 `initiate_swarm_chat(task)`로 스웜을 시작시키면 Assessment 에이전트가 요약 강제 프롬프트로 GPT-4o를 불러 `update_assessment_overview` 도구 호출을 받고, 그 결과가 곧바로 `SwarmResult(agent=action_agent)`로 Action 에이전트에 이관됩니다(Step 5). Action·Follow-up도 같은 방식으로 요약을 내며 차례로 이관되고, Follow-up의 `SwarmResult`가 다시 Assessment로 돌아오면서 본문 라운드가 시작됩니다.
+1-1은 버튼 클릭부터 Assessment·Action이 요약을 내기까지입니다. Streamlit UI가 `initiate_swarm_chat(task)`로 스웜을 시작시키면 Assessment 에이전트가 요약 강제 프롬프트로 GPT-4o를 불러 `update_assessment_overview` 도구 호출을 받고, 그 요약을 사이드바에 표시한 뒤 `SwarmResult(agent=action_agent)`로 Action 에이전트에 이관됩니다(Step 5). Action도 같은 방식으로 요약을 내고 사이드바에 표시한 뒤 Follow-up에 이관합니다.
 
-![2구간: 본문 1바퀴](diagrams/extra-body1.svg)
+![1-2: 요약 — Follow-up과 본문 라운드 진입](diagrams/extra-summary-followup.svg)
 
-2구간은 같은 세 에이전트가 이번에는 함수 호출 없이(`tools=None`) 본문 전체를 쓰는 첫 번째 바퀴입니다. 함수 호출이 없으므로 다음 에이전트는 Step 7에서 등록한 `AFTER_WORK` 기본값으로 정해집니다 — 목적지는 요약 바퀴와 같은 순서(assessment→action→followup)지만, 이관 메커니즘 자체는 다릅니다. 이 바퀴의 결과는 아직 화면에 남지 않습니다.
+1-2는 Follow-up이 같은 방식으로 요약을 내고 사이드바에 표시하는 부분입니다. Follow-up의 `SwarmResult`가 다시 Assessment로 돌아오면서 본문 라운드가 시작됩니다.
 
-![3구간: 본문 2바퀴와 결과 반환](diagrams/extra-body2.svg)
+![2-1: 본문 1바퀴 — Assessment](diagrams/extra-body1a.svg)
 
-3구간은 같은 세 에이전트가 `AFTER_WORK`로 이관되며 본문을 한 번 더 쓰는 두 번째 바퀴입니다. Follow-up까지 끝나면 `max_rounds=13`이 다 돌아 `initiate_swarm_chat`이 반환되고, Streamlit UI는 `chat_history[-3:]`(바로 이 2바퀴의 세 메시지)를 평가·행동·후속 세 섹션으로 화면에 표시합니다(Step 8). 세 그림 모두 메시지의 존재·순서·어느 함수가 불리는지는 가짜 서버로 직접 확인했고, 실제 GPT-4o가 무슨 문장을 쓰는지는 키가 없어 확인하지 못했습니다.
+2-1은 요약 바퀴의 마지막 이관을 이어받아 Assessment가 이번에는 함수 호출 없이(`tools=None`) 본문 전체를 쓰는 부분입니다. 함수 호출이 없으므로 다음 에이전트는 Step 7에서 등록한 `AFTER_WORK` 기본값으로 정해집니다 — 목적지는 요약 바퀴와 같은 순서지만 이관 메커니즘 자체는 다릅니다.
 
-에이전트가 요약 도구를 호출한 뒤 실제로 어디로 이관되는지, 그리고 그 요약이 어떻게 사이드바에 뜨는지는 구조로 보면 더 분명합니다.
+![2-2: 본문 1바퀴 — Action·Follow-up](diagrams/extra-body1b.svg)
 
-![요약 도구와 이관 구조](diagrams/extra-swarm-handoff.svg)
+2-2는 Action·Follow-up이 같은 방식으로 본문을 쓰고 `AFTER_WORK`로 이관되는 부분입니다. 이 바퀴의 결과는 아직 화면에 남지 않습니다 — Follow-up의 마지막 이관이 본문 2바퀴를 엽니다.
 
-세 `update_*_overview` 도구가 각각 자기 에이전트 안에 있고, 요약을 사이드바에 표시한 뒤 다음 에이전트로 이관합니다(1차 턴은 이 경로, 이후 턴은 `AFTER_WORK` 기본값). 이 그림은 순서가 아니라 구조이므로 개요도·시퀀스와 달리 "누가 누구에게 이어지는가"만 보여줍니다.
+![3-1: 본문 2바퀴 — Assessment·Action](diagrams/extra-body2a.svg)
+
+3-1은 본문 1바퀴의 마지막 이관을 이어받아 Assessment·Action이 `AFTER_WORK`로 이관되며 본문을 한 번 더 쓰는 부분입니다.
+
+![3-2: 본문 2바퀴 — Follow-up과 결과 반환](diagrams/extra-body2b.svg)
+
+3-2는 Action에서 Follow-up으로 이관된 뒤, Follow-up이 마지막 본문을 쓰고 `max_rounds=13`이 다 돌아 `initiate_swarm_chat`이 반환되는 부분입니다. Streamlit UI는 `chat_history[-3:]`(바로 이 2바퀴의 세 메시지)를 받아 평가·행동·후속 세 섹션으로 화면에 표시합니다(Step 8). 여섯 그림 모두 메시지의 존재·순서·어느 함수가 불리는지는 가짜 서버로 직접 확인했고, 실제 GPT-4o가 무슨 문장을 쓰는지는 키가 없어 확인하지 못했습니다.
+
+에이전트가 요약 도구를 호출한 뒤 실제로 어디로 이관되는지, 그리고 그 요약이 어떻게 사이드바에 뜨는지는 구조로 보면 더 분명합니다 — 아래 두 그림은 순서가 아니라 구조이므로 개요도와 마찬가지로 "누가 누구에게 이어지는가"만 보여줍니다.
+
+![요약 도구 호출과 사이드바 표시](diagrams/extra-summary-tools.svg)
+
+세 `update_*_overview` 도구가 각각 자기 에이전트 안에 있고, 1차 턴에 호출되어 사이드바에 요약을 표시합니다(Step 5).
+
+![이관 구조와 디스크 캐시](diagrams/extra-swarm-handoff.svg)
+
+세 에이전트가 이루는 이관 고리(1차 턴은 `SwarmResult`, 이후는 `AFTER_WORK` 기본값)와, Step 7에서 볼 디스크 캐시(`.cache/41/cache.db`)에 요청·응답이 저장되는 것을 함께 보여줍니다.
 
 ## 실행 체크리스트
 
@@ -619,7 +637,7 @@ error boxes: ['Please enter your OpenAI API key.']
 - [ ] `pyautogen==0.6.1`로 버전을 고정하면 import와 `py_compile`이 모두 성공한다는 것을 확인했다
 - [ ] `register_hand_off`가 인스턴스 메서드인 것은 `0.6.0`~`0.7.3`이고 `0.7.4`부터 모듈 함수로 바뀐다는 것을 0.6.1·0.7.3·0.7.4 세 버전 모두 재현해 확인했다
 - [ ] 가짜 로컬 OpenAI 서버로 실제 호출 순서(요약 3회 → 본문 1바퀴 3회 → 본문 2바퀴 3회, 총 9회)와 화면에 남는 것이 마지막 바퀴라는 것을 확인했다
-- [ ] `max_rounds`를 10·12로 바꾸면 각각 1바퀴가 남거나 세 섹션이 한 칸씩 밀려 어긋난다는 것을 확인했다
+- [ ] `max_rounds`를 10·12·14로 바꾸면 각각 1바퀴가 정확히 남거나(10) 한 칸씩 밀려 어긋난다는(12·14) 것을 확인했다 — 13만 본문 두 바퀴가 정확히 맞는 값이다
 - [ ] `pyautogen==0.6.1`이 작업 폴더에 `.cache/41/cache.db`를 만들고 입력 텍스트를 포함한 요청 전체를 저장한다는 것을 확인했다
 - [ ] `AppTest`로 첫 화면이 예외 없이 뜨고, 키 없이 버튼을 누르면 "Please enter your OpenAI API key." 오류만 뜬다는 것을 확인했다
 - [ ] 사이드바 위기 안내와 앱 자체 README 문구를 읽고 이 앱이 전문 치료를 대신하지 않으며, 위기 표현을 감지하는 장치가 코드에 없다는 것을 확인했다
@@ -639,8 +657,8 @@ error boxes: ['Please enter your OpenAI API key.']
 ## 더 해보기
 
 - `llm_config`에 `"cache_seed": None`을 추가해 `.cache/41/cache.db`가 더는 생기지 않는지, 이미 생긴 캐시를 지우면 같은 입력에도 새 요청이 나가는지 확인해보기
-- 최신 `ag2`(오늘 기준 1.1.0)를 설치해 `import autogen`부터 실패하는 것을 직접 보고("This repository no longer ships the autogen import name"), 대신 `autogen`이 아직 남아 있는 마지막 0.x 버전(예: `0.9.9` — `register_hand_off(agent, hand_to)` 모듈 함수와 `UpdateSystemMessage`로 이 앱의 세 호출부를 고쳐야 함)으로 실행해보기
-- `max_rounds`를 13이 아닌 다른 값(11, 14 등)으로 바꿔가며 (키가 있거나 Step 1의 가짜 서버로) `chat_history[-3:]`가 언제 맞고 언제 어긋나는지 직접 표로 정리해보기
+- 최신 `ag2`(오늘 기준 1.1.0)를 설치해 `import autogen`부터 실패하는 것을 직접 보고("This repository no longer ships the autogen import name"), 대신 스웜 API(`initiate_swarm_chat`·모듈 함수 `register_hand_off(agent, hand_to)`)가 아직 남아 있는 0.x(예: `0.9.9`)로 이 앱의 세 호출부를 `UpdateSystemMessage`와 함께 고쳐 실행해보기(참고: `ag2==0.14.0`처럼 `autogen` 이름공간 자체는 더 늦게까지 남아 있는 버전도 있지만, `register_hand_off`·`initiate_swarm_chat`은 이미 빠져 있어 이 앱에는 못 씁니다 — 직접 확인)
+- Step 1은 `max_rounds` 10·12·13·14만 확인했습니다. 11이나 16처럼 다른 값도 (키가 있거나 Step 1의 가짜 서버로) 돌려보고, "`7+3k`일 때만 맞는다"는 공식이 실제로도 맞는지 직접 표로 정리해보기
 - 입력을 OpenAI에 보내기 전에 위기 키워드를 미리 걸러 흐름을 바꾸는 지점을 어디에 넣을지 설계만 해보기(실제 문구나 조언은 만들지 않기 — 이 앱과 이 문서 모두 그 선을 넘지 않습니다)
 
 ## 다음 날 예고
