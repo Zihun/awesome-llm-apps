@@ -6,5 +6,6 @@
   "day023": { "maxHeight": 1212, "reason": "사용자 → root → research → MCP 서버 → Firecrawl 클라우드 6층 — 가로로 두면 라벨을 최소로 줄여도 폭 1322px" },
   "day025": { "maxHeight": 1040, "reason": "여러 단계의 실제 호출 체인" },
   "day027": { "maxHeight": 1075, "reason": "여러 단계의 실제 호출 체인" },
-  "day034": { "maxHeight": 1070, "reason": "Realtime API와 STT·Chat·TTS를 서로 다른 외부 서비스로 나눠 그렸다" }
+  "day034": { "maxHeight": 1070, "reason": "Realtime API와 STT·Chat·TTS를 서로 다른 외부 서비스로 나눠 그렸다" },
+  "day081": { "maxHeight": 1008, "reason": "사용자 → UI → Editor 팀(Searcher·Writer) → OpenAI·SerpApi·기사 웹페이지의 호출 관계 7개를 모두 두면 1008px — 레버 9가지로도 줄이면 선이 라벨을 지난다(사용자 허락 2026-09-28)" }
 }
