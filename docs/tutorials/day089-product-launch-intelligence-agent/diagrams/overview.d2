@@ -3,21 +3,19 @@ direction: down
 
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
+team: Intelligence Team { class: ours }
 
-pipeline: Product Intelligence Team 구성 {
+members: 3인 전문 에이전트 {
   class: group
-  grid-columns: 5
-  team: Intelligence Team { class: ours }
+  grid-columns: 3
   launch: Launch Analyst { class: ours }
   sentiment: Sentiment Specialist { class: ours }
   metrics: Metrics Specialist { class: ours }
-  firecrawl_tool: FirecrawlTools { class: ours }
 }
 
-ext_api: 외부 API (OpenAI·Firecrawl) { class: ext }
 session: 세션 상태 { class: store }
 
 user -> ui: 키·회사명 입력
-ui -> pipeline: team.run
-pipeline -> ext_api: API 호출
+ui -> team: team.run(프롬프트)
+team -> members: 위임(delegate_task_to_member)
 ui -> session: 응답 저장

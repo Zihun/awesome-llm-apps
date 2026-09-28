@@ -4,6 +4,10 @@ shape: sequence_diagram
 openai: OpenAI API { class: ext }
 launch: Product Launch Analyst { class: ours }
 team: Product Intelligence Team { class: ours }
+ui: Streamlit UI { class: ours }
 
-openai -> launch: 태그 붙은 불릿 16개
+openai -> launch: 태그 붙은 불릿 (최대 16개, Positioning·Strength·Weakness·Learning)
 launch -> team: RunOutput.content (위임 결과)
+team -> openai: 위임 결과 포함 재요청 (최종 통합)
+openai -> team: 최종 불릿 텍스트
+team -> ui: RunOutput.content (bullets)

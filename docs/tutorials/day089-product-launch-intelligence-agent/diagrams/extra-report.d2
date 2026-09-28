@@ -7,7 +7,7 @@ team: Product Intelligence Team { class: ours }
 openai: OpenAI API { class: ext }
 
 ui -> team: team.run(리포트 변환 프롬프트)
-team -> openai: 형식 변환 요청 (도구 미사용)
+team -> openai: 형식 변환 요청 (+ 위임 도구 스키마)
 openai -> team: 마크다운 리포트
 team -> ui: RunOutput.content (report)
 ui -> user: 세션 상태 저장 + 화면 렌더링

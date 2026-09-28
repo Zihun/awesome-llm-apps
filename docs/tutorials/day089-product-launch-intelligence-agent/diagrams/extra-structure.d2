@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+team: Intelligence Team { class: ours }
+
+members: 3인 전문 에이전트 {
+  class: group
+  grid-columns: 3
+  launch: Launch Analyst { class: ours }
+  sentiment: Sentiment Specialist { class: ours }
+  metrics: Metrics Specialist { class: ours }
+}
+
+firecrawl_tool: FirecrawlTools { class: ours }
+openai: OpenAI API { class: ext }
+firecrawl_api: Firecrawl API { class: ext }
+
+team -> members: 위임
+members -> firecrawl_tool: 도구 호출
+firecrawl_tool -> firecrawl_api: 요청
+team -> openai: 리더 호출
+members -> openai: 멤버 호출
