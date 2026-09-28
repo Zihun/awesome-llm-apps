@@ -2,23 +2,19 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-tool: deep_research 도구 { class: ours }
-research: 조사 에이전트 { class: ours }
 ui: Streamlit UI { class: ours }
-elaborate: 정교화 에이전트 { class: ours }
+research: 조사 에이전트 { class: ours }
 openai: OpenAI API { class: ext }
+tool: deep_research 도구 { class: ours }
 
 user -> ui: 키·주제 입력, 클릭
 ui -> research: Runner.run(research_agent, topic)
-research -> openai: 지시문 + 도구 스키마
-openai -> research: tool_call deep_research(...)
+research -> openai: 주제 + 지시문 + 도구 스키마
+openai -> research: "tool_call deep_research(query, max_depth=3, time_limit=180, max_urls=10)"
 research -> tool: 도구 실행
-tool -> research: "AttributeError -> success: False (직접 확인)"
+tool -> user: "Deep research error(st.error)"
+tool -> research: AttributeError -> success: False
 research -> openai: 도구 오류 결과 전달
 openai -> research: 초기 보고서(final_output)
 research -> ui: initial_report
-ui -> elaborate: Runner.run(elaboration_agent, ...)
-elaborate -> openai: 정교화 요청
-openai -> elaborate: enhanced_report
-elaborate -> ui: enhanced_report
-ui -> user: 보고서 표시·다운로드
+ui -> user: 1차 보고서 표시(st.expander)

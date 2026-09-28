@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+elaborate: 정교화 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+
+ui -> elaborate: "Runner.run(elaboration_agent, 주제 + 1차 보고서)"
+elaborate -> openai: 주제 + 1차 보고서 정교화 요청
+openai -> elaborate: enhanced_report
+elaborate -> ui: enhanced_report
+ui -> user: 보고서 표시·다운로드

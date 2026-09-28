@@ -1,10 +1,10 @@
 # Day 083 · 🔍 AI Deep Research Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 60분(단일 파일이라 읽을 산문 자체는 짧지만, openai-agents SDK와 firecrawl 패키지 소스를 직접 뒤져 확인해야 하는 명령이 6개 Step에 걸쳐 있어 손으로 돌려 보는 시간이 큽니다) · API 비용 대략 조사 1회에 OpenAI 공식 요금표 기준 gpt-5.6-luna 표준가 입력 $0.20/출력 $0.75(1M 토큰당)로 추정하면 수십 원 이하, Firecrawl API는 오늘 버전에서 도구가 항상 실패해 실제로는 호출되지 않습니다(키가 없어 실제 과금은 확인 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_deep_research_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 65분(단일 파일이지만 openai-agents SDK와 firecrawl 패키지 소스를 직접 뒤져 확인해야 하는 명령이 6개 Step에 걸쳐 있고, `deep_research` 도구가 옮겨진 게 아니라 폐기된 API라는 것까지 소스·공식 문서로 겹쳐 확인해야 해 손으로 돌려 보는 시간이 큽니다) · API 비용 대략 조사 1회에 OpenAI 공식 요금표 기준 gpt-5.6-luna 표준가 입력 $0.20/출력 $1.20(1M 토큰당, 짧은 컨텍스트 기준)로 추정하면 수십 원 이하, Firecrawl API는 오늘 버전에서 도구가 항상 실패해 실제로는 호출되지 않습니다(키가 없어 실제 과금은 확인 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_deep_research_agent`
 
 ## 오늘 만들 것
 
-이 앱은 185줄(마지막 줄에 개행이 없어 `wc -l`은 184로 세지만 편집기·GitHub에서는 185번째 줄까지 보입니다, 직접 확인) 단일 파일 Streamlit 앱으로, agno가 아니라 Day 013이 이미 배운 OpenAI 자체의 Agents SDK(`openai-agents` 패키지, import 이름은 `agents`)를 씁니다. `Agent`·`Runner.run`·`@function_tool` 같은 어휘 자체는 Day 013이 이미 다뤘으므로 여기서는 되풀이하지 않습니다. 이 앱이 다른 점은 구조가 훨씬 단순하다는 것입니다 — 에이전트는 핸드오프도 pydantic `output_type`도 없이 둘뿐이고(조사 에이전트, 정교화 에이전트), 둘 다 `model=`을 지정하지 않아 openai-agents 0.22.3이 고르는 기본값(`gpt-5.6-luna`, `agents/models/default_models.py` 103행, 소스로 확인)을 그대로 씁니다. 조사 에이전트가 쥔 도구는 Firecrawl의 "딥 리서치" 엔드포인트를 부르도록 설계된 `deep_research` 하나뿐인데, 오늘 `requirements.txt`가 버전을 고정하지 않아 풀리는 firecrawl 4.45.0에서는 이 도구가 항상 실패합니다 — `FirecrawlApp(...)`(실제로는 `firecrawl.client.Firecrawl`의 별칭)의 최상위 인스턴스에는 `deep_research` 메서드가 없고, 그 메서드는 `.v1` 프록시 아래로 옮겨져 있습니다(직접 확인, Step 3). 앱 코드의 넓은 `try/except`가 이 `AttributeError`를 잡아 `{"success": False, "error": ...}`로 감싸 돌려주므로 화면이 죽지는 않지만, 앱 자체 README가 내세우는 "자동으로 웹을 검색하고 내용을 추출해 종합한다"는 첫 기능은 오늘 설치로는 실현되지 않습니다. `requirements.txt` 4줄에는 `firecrawl`과 `firecrawl-py`가 나란히 적혀 있는데, 오늘 이 둘은 완전히 같은 배포판(같은 파일, 동일 SHA-256)이라 한 줄이 다른 줄이 이미 설치한 파일을 그대로 덮어씁니다(직접 확인). 키 입력은 Day 013(환경변수)과 달리 사이드바 텍스트 입력창입니다. 4행에서 `trace`를 가져오지만 실제로 쓰는 코드는 한 줄도 없는데(그렙으로 확인), openai-agents SDK는 `Runner.run()`마다 자동으로 트레이스 컨텍스트를 열고(`agents/run.py` 750~759행, 소스로 확인) 기본값 `tracing_disabled=False`(`agents/run_config.py` 397행, 소스로 확인)로 남아 있어, `set_default_openai_key(key)`가 기본 인자 `use_for_tracing=True`로 같은 키를 트레이싱에도 씁니다(소스로 확인) — 코드가 트레이스를 한 번도 요청한 적이 없어도 나가는 셈입니다(Step 4). 완성하면 사이드바에 키 2개, 본문에 주제 입력창과 Start Research 버튼이 뜨고, 실행하면(실제로는 도구 실패를 안은 채) 1차 보고서 확장 패널과 정교화된 최종 보고서, 다운로드 버튼이 나타납니다. 아래는 완성된 아키텍처입니다.
+이 앱은 185줄(마지막 줄에 개행이 없어 `wc -l`은 184로 세지만 편집기·GitHub에서는 185번째 줄까지 보입니다, 직접 확인) 단일 파일 Streamlit 앱으로, agno가 아니라 Day 013이 이미 배운 OpenAI 자체의 Agents SDK(`openai-agents` 패키지, import 이름은 `agents`)를 씁니다. `Agent`·`Runner.run`·`@function_tool` 같은 어휘 자체는 Day 013이 이미 다뤘으므로 여기서는 되풀이하지 않습니다. 이 앱이 다른 점은 구조가 훨씬 단순하다는 것입니다 — 에이전트는 핸드오프도 pydantic `output_type`도 없이 둘뿐이고(조사 에이전트, 정교화 에이전트), 둘 다 `model=`을 지정하지 않아 openai-agents 0.22.3이 고르는 기본값(`gpt-5.6-luna`, `agents/models/default_models.py` 103행, 소스로 확인)을 그대로 씁니다. 조사 에이전트가 쥔 도구는 Firecrawl의 "딥 리서치" 엔드포인트를 부르도록 설계된 `deep_research` 하나뿐인데, 오늘 `requirements.txt`가 버전을 고정하지 않아 풀리는 firecrawl 4.45.0에서는 이 도구가 항상 실패합니다 — `FirecrawlApp(...)`(실제로는 `firecrawl.client.Firecrawl`의 별칭)의 최상위 인스턴스에는 `deep_research` 메서드가 없습니다(직접 확인, Step 3). 그 메서드가 남아 있는 `.v1` 프록시로 옮겨 불러도 문제가 끝나지 않습니다 — Firecrawl 자신이 그 메서드를 **폐기(deprecated)** 표시해 뒀기 때문입니다. `firecrawl/v1/client.py`의 `deep_research` 독스트링에는 `.. deprecated:: /v1/deep-research is deprecated. Use /v2/search for web research...`가 적혀 있고 호출할 때마다 `DeprecationWarning`을 던집니다(소스로 확인). Firecrawl 공식 문서(https://docs.firecrawl.dev/features/alpha/deep-research)는 이 레거시 v1 API가 2025-06-30로 종료됐고 그 뒤로는 더 이상 유지보수되지 않는다고 밝힙니다. 앱 코드의 넓은 `try/except`가 실제로 일어나는 `AttributeError`를 잡아 `{"success": False, "error": ...}`로 감싸 돌려주지만, 그 전에 85행의 `st.error(...)`가 화면에 빨간 오류 상자("Deep research error: ...")를 먼저 그립니다 — 화면이 죽지는 않지만 조용히 넘어가지도 않습니다. 앱 자체 README가 내세우는 "자동으로 웹을 검색하고 내용을 추출해 종합한다"는 첫 기능은 오늘 설치로는 실현되지 않습니다. `requirements.txt` 4줄에는 `firecrawl`과 `firecrawl-py`가 나란히 적혀 있는데, 오늘 이 둘은 완전히 같은 배포판(같은 파일, 동일 SHA-256)이라 한 줄이 다른 줄이 이미 설치한 파일을 그대로 덮어씁니다(직접 확인). 키 입력은 Day 013(환경변수)과 달리 사이드바 텍스트 입력창입니다. 4행에서 `trace`를 가져오지만 실제로 쓰는 코드는 한 줄도 없는데(그렙으로 확인), openai-agents SDK는 `Runner.run()`마다 자동으로 트레이스 컨텍스트를 열고(`agents/run.py` 750~759행, 소스로 확인) 기본값 `tracing_disabled=False`(`agents/run_config.py` 397행, 소스로 확인)로 남아 있어, `set_default_openai_key(key)`가 기본 인자 `use_for_tracing=True`로 같은 키를 트레이싱에도 씁니다(소스로 확인) — 코드가 트레이스를 한 번도 요청한 적이 없어도 나가는 셈입니다(Step 4). 완성하면 사이드바에 키 2개, 본문에 주제 입력창과 Start Research 버튼이 뜨고, 실행하면(실제로는 도구 실패를 안은 채) 1차 보고서 확장 패널과 정교화된 최종 보고서, 다운로드 버튼이 나타납니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -175,7 +175,7 @@ async def deep_research(query: str, max_depth: int, time_limit: int, max_urls: i
         return {"error": str(e), "success": False}
 ```
 
-`@function_tool`이 비동기 함수를 도구로 감싸 JSON 스키마를 만드는 메커니즘은 Day 013이 이미 다뤘으므로 되풀이하지 않습니다. 여기서 새로 볼 것은 72행의 `firecrawl_app.deep_research(...)` 호출입니다. `FirecrawlApp`은 오늘 firecrawl 4.45.0에서 `firecrawl.client.Firecrawl`의 별칭일 뿐인데, 이 클래스의 `__init__`은 `scrape`·`crawl`·`search` 같은 메서드는 인스턴스 속성으로 직접 붙이면서도 `deep_research`는 붙이지 않습니다 — 그 메서드는 `self.v1 = V1Proxy(self._v1_client)`를 통해 `firecrawl_app.v1.deep_research`로만 노출됩니다(`firecrawl/client.py`, 소스로 확인). 즉 72행이 부르는 `firecrawl_app.deep_research`는 오늘 버전엔 아예 없는 이름입니다. 게다가 `.v1.deep_research`로 바꿔 불러도 73행의 `params=params`(딕셔너리 통짜 전달)는 맞지 않습니다 — 오늘 버전의 시그니처는 `max_depth`·`time_limit`·`max_urls`를 키워드 인자로 각각 받습니다(`inspect.signature`로 직접 확인). 84행의 넓은 `try/except Exception`이 이 `AttributeError`까지 잡아 `{"error": ..., "success": False}`로 돌려주므로, 도구를 부른 모델은 예외가 아니라 실패를 알리는 평범한 딕셔너리를 받습니다.
+`@function_tool`이 비동기 함수를 도구로 감싸 JSON 스키마를 만드는 메커니즘은 Day 013이 이미 다뤘으므로 되풀이하지 않습니다. 여기서 새로 볼 것은 72행의 `firecrawl_app.deep_research(...)` 호출입니다. `FirecrawlApp`은 오늘 firecrawl 4.45.0에서 `firecrawl.client.Firecrawl`의 별칭일 뿐인데, 이 클래스의 `__init__`은 `scrape`·`crawl`·`search` 같은 메서드는 인스턴스 속성으로 직접 붙이면서도 `deep_research`는 붙이지 않습니다 — 그 메서드는 `self.v1 = V1Proxy(self._v1_client)`를 통해 `firecrawl_app.v1.deep_research`로만 노출됩니다(`firecrawl/client.py`, 소스로 확인). 즉 72행이 부르는 `firecrawl_app.deep_research`는 오늘 버전엔 아예 없는 이름입니다. 그런데 `.v1.deep_research`는 단순히 "옮겨진" 최신 메서드가 아니라 **폐기된 v1 호환 API**입니다 — `firecrawl/v1/client.py`의 `deep_research` 정의(2619행)를 보면 독스트링에 `.. deprecated:: /v1/deep-research is deprecated. Use /v2/search for web research, or the v2 research paper index (search_papers()) for scientific literature.`가 있고, 함수 본문 맨 앞에서 `warnings.warn(..., DeprecationWarning, stacklevel=2)`를 실제로 던집니다(소스로 확인). Firecrawl 공식 문서(https://docs.firecrawl.dev/features/alpha/deep-research)에 따르면 이 레거시 v1 API는 2025-06-30에 종료됐고 그 뒤로는 더 이상 유지보수되지 않습니다 — 이 문서가 §4가 요구하는 "폐기된 API"에 해당합니다. 게다가 `.v1.deep_research`로 바꿔 불러도 73행의 `params=params`(딕셔너리 통짜 전달)는 맞지 않습니다 — 오늘 버전의 시그니처는 `max_depth`·`time_limit`·`max_urls`를 키워드 인자로 각각 받습니다(`inspect.signature`로 직접 확인). 84행의 넓은 `try/except Exception`이 이 `AttributeError`까지 잡지만, 그 직전 85행의 `st.error(f"Deep research error: {str(e)}")`가 먼저 실행되어 화면에 빨간 오류 상자를 그립니다 — 이 도구는 `asyncio.run(...)` 안에서도 Streamlit 스크립트와 같은 스레드로 돌기 때문에 `st.error`가 예외 없이 그대로 그려집니다(소스로 판단, 키가 없어 실제 화면은 보지 못했습니다). 이후 도구는 예외가 아니라 `{"error": ..., "success": False}` 딕셔너리를 돌려주므로, 도구를 부른 모델은 실패를 알리는 평범한 값을 받습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -200,6 +200,25 @@ except AttributeError as e:
 has deep_research on instance: False
 has deep_research on .v1: True
 AttributeError: 'Firecrawl' object has no attribute 'deep_research'
+```
+
+`.v1.deep_research`가 폐기 표시라는 것도 실제 요청 없이(소스만 읽어) 확인합니다.
+
+```bash
+uv run --no-project python -c "
+import inspect
+from firecrawl.v1.client import V1FirecrawlApp
+src = inspect.getsource(V1FirecrawlApp.deep_research)
+print('deprecated docstring:', '.. deprecated::' in src)
+print('DeprecationWarning raised:', 'warnings.warn' in src and 'DeprecationWarning' in src)
+"
+```
+
+직접 확인한 출력:
+
+```
+deprecated docstring: True
+DeprecationWarning raised: True
 ```
 
 ### Step 4. 두 에이전트 정의 — 모델을 지정하지 않고, 트레이스는 기본으로 나간다
@@ -389,6 +408,18 @@ if st.button("Start Research", disabled=not (openai_api_key and firecrawl_api_ke
 
 버튼 자체는 두 키와 주제가 모두 채워져야 눌리게 되어 있지만(`disabled=`), 안쪽의 경고문 두 줄은 버튼이 이미 눌린 뒤(즉 셋이 모두 채워진 뒤)에만 평가되므로 실제로는 걸릴 일이 없는 죽은 방어 코드입니다(읽기로 확인). `asyncio.run(...)`이 동기 Streamlit 스크립트 안에서 새 이벤트 루프를 만들어 두 번의 `await Runner.run(...)`을 순서대로 끝내고, 결과는 `report_placeholder`에 표시된 뒤 `st.download_button`으로 `{주제}_report.md` 파일이 됩니다.
 
+이 앱을 실제로 띄우려면 앱 폴더에서 다음을 실행합니다.
+
+```bash
+uv run --no-project streamlit run deep_research_openai.py
+```
+
+확인용으로 헤드리스 실행만 해 본다면 외부 IP 조회 요청을 막기 위해 `--server.address`를 함께 붙입니다.
+
+```bash
+uv run --no-project streamlit run deep_research_openai.py --server.headless true --server.address localhost
+```
+
 ![Step 6까지의 구성](diagrams/step6.svg)
 
 **확인.** 두 키와 주제를 모두 채웠을 때 버튼이 활성화되는 것만 확인합니다(실제 클릭은 OpenAI에 요청을 보내므로 이 문서는 하지 않습니다).
@@ -416,14 +447,20 @@ button disabled: [('Start Research', False)]
 
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+한 번의 조사 요청은 실제로 `run_research_process` 안의 두 구간(1차 조사, 정교화)을 거칩니다 — 아래 두 그림은 그 순서 그대로입니다.
 
-사용자가 사이드바에 키 2개를 넣고 주제를 입력해 Start Research를 누르면, Streamlit UI는 `Runner.run(research_agent, topic)`으로 조사 에이전트를 시작시킵니다. 조사 에이전트는 지시문과 `deep_research` 도구 스키마를 OpenAI API에 보내고, 모델이 `tool_call deep_research(...)`을 요청하면 도구가 실행됩니다 — 여기서 Step 3이 확인한 대로 `firecrawl_app.deep_research`가 오늘 버전엔 없어 `AttributeError`가 나고, 도구 자신의 `try/except`가 이를 잡아 `success: False`로 되돌립니다(직접 확인). 조사 에이전트는 이 실패 결과를 다시 OpenAI에 보내 초기 보고서(`final_output`)를 받고, Streamlit UI는 그 텍스트를 `initial_report`로 넘겨받아 확장 패널에 표시합니다. 이어서 UI는 `Runner.run(elaboration_agent, ...)`으로 정교화 에이전트를 부르고, 도구 없이 OpenAI 모델만으로 확장된 보고서(`enhanced_report`)를 받아 다시 UI에 돌려주면, UI는 이를 화면에 표시하고 다운로드 버튼을 띄웁니다. 이 그림은 도구 실패 이후 모델이 실제로 어떤 문장을 만드는지까지는 보여주지 않습니다 — 키가 없어 실행으로 확인하지 못했습니다.
+![1단계: 조사와 도구 실패](diagrams/sequence.svg)
+
+1단계는 Start Research 클릭부터 1차 보고서가 화면에 뜨기까지입니다. Streamlit UI는 `Runner.run(research_agent, topic)`으로 조사 에이전트를 시작시키고, 조사 에이전트는 주제와 지시문, `deep_research` 도구 스키마를 OpenAI API에 보냅니다. 모델이 `tool_call deep_research(query, max_depth=3, time_limit=180, max_urls=10)`을 요청하면 도구가 그 인자 그대로 실행됩니다 — 여기서 Step 3이 확인한 대로 `firecrawl_app.deep_research`가 오늘 버전엔 없어 `AttributeError`가 나고, 도구의 85행 `st.error(...)`가 먼저 화면에 빨간 오류 상자를 그린 뒤(`tool -> 사용자`), 도구 자신의 `try/except`가 이를 잡아 `success: False`로 조사 에이전트에 되돌립니다(직접 확인). 조사 에이전트는 이 실패 결과를 다시 OpenAI에 보내 초기 보고서(`final_output`)를 받고, Streamlit UI는 그 텍스트를 `initial_report`로 넘겨받아 `st.expander`로 화면에 표시합니다.
+
+![2단계: 정교화와 최종 표시](diagrams/extra-elaboration.svg)
+
+2단계는 주제와 1차 보고서를 담은 `elaboration_input`을 `Runner.run(elaboration_agent, ...)`으로 정교화 에이전트에 넘기는 부분입니다. 정교화 에이전트는 도구 없이 같은 데이터를 OpenAI에 다시 보내 확장된 보고서(`enhanced_report`)를 받고, Streamlit UI에 돌려주면 UI는 이를 화면에 표시하고 다운로드 버튼을 띄웁니다. 이 그림들은 도구 실패 이후 모델이 실제로 어떤 문장을 만드는지까지는 보여주지 않습니다 — 키가 없어 실행으로 확인하지 못했습니다.
 
 ## 실행 체크리스트
 
 - [ ] 격리된 가상환경에 `requirements.txt`를 설치했고, `firecrawl`과 `firecrawl-py`가 오늘 동일 배포판이라는 것을 확인했다
-- [ ] `firecrawl_app.deep_research(...)`가 오늘 firecrawl 4.45.0에서 `AttributeError`로 실패하고, 그 메서드가 `.v1.deep_research`로 옮겨졌다는 것을 직접 확인했다
+- [ ] `firecrawl_app.deep_research(...)`가 오늘 firecrawl 4.45.0에서 `AttributeError`로 실패하고, `.v1.deep_research`는 옮겨진 최신 메서드가 아니라 2025-06-30에 종료된 폐기(v1) API라는 것을 소스(독스트링·`DeprecationWarning`)와 Firecrawl 공식 문서로 확인했다
 - [ ] `.v1.deep_research`로 바꿔도 `params=` 딕셔너리 전달은 오늘 버전의 키워드 인자 시그니처와 맞지 않는다는 것을 `inspect.signature`로 확인했다
 - [ ] 두 에이전트 모두 `model=`을 지정하지 않아 openai-agents 0.22.3의 기본값(`gpt-5.6-luna`)을 쓴다는 것을 소스와 실행으로 확인했다
 - [ ] `trace`를 가져오기만 하고 부르지 않아도 `Runner.run()`마다 트레이스가 기본으로 열리고, `set_default_openai_key`가 같은 키를 트레이싱에도 쓴다는 것을 소스로 확인했다
@@ -434,14 +471,15 @@ button disabled: [('Start Research', False)]
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `firecrawl_app.deep_research(...)` 호출이 `AttributeError: 'Firecrawl' object has no attribute 'deep_research'`로 실패(직접 확인) | 오늘 설치되는 firecrawl 4.45.0의 `Firecrawl.__init__`이 `deep_research`를 최상위 인스턴스가 아니라 `.v1` 프록시(`V1Proxy`)에만 붙임(`firecrawl/client.py`, 소스로 확인) | `firecrawl_app.v1.deep_research(query=query, max_depth=max_depth, time_limit=time_limit, max_urls=max_urls, on_activity=on_activity)`로 바꾸고 반환 객체(`V1DeepResearchStatusResponse`)에 맞게 딕셔너리 첨자 접근도 고쳐야 함(리포 코드는 고치지 않음) |
+| `firecrawl_app.deep_research(...)` 호출이 `AttributeError: 'Firecrawl' object has no attribute 'deep_research'`로 실패(직접 확인) | 오늘 설치되는 firecrawl 4.45.0의 `Firecrawl.__init__`이 `deep_research`를 최상위 인스턴스가 아니라 `.v1` 프록시(`V1Proxy`)에만 붙이고, 그 `.v1.deep_research`마저 2025-06-30에 종료된 **폐기(deprecated) v1 API**임(독스트링·`DeprecationWarning`, Firecrawl 공식 문서로 확인) | `firecrawl_app.search(...)`(v2 검색) 또는 `search_papers(...)`(학술 문헌)처럼 Firecrawl이 안내하는 대체 API로 바꿔야 함(리포 코드는 고치지 않음) — `.v1.deep_research(query=query, max_depth=max_depth, time_limit=time_limit, max_urls=max_urls, on_activity=on_activity)`로 임시 우회해도 `DeprecationWarning`이 남고 언제 끊겨도 이상하지 않음 |
 | `requirements.txt`에 `firecrawl`과 `firecrawl-py`가 나란히 있어 뭔가 충돌하는 것처럼 보임 | 오늘 두 패키지는 완전히 같은 배포판(동일 SHA-256)이라 충돌이 아니라 중복 설치(직접 확인) | 실행에는 지장 없음 — 리포 코드는 고치지 않음, 원한다면 한 줄만 남겨도 됨 |
 | Start Research 버튼이 계속 비활성 | `disabled=not (openai_api_key and firecrawl_api_key and research_topic)`이 셋 모두를 요구함(직접 확인) | 사이드바에 키 2개, 본문에 주제를 모두 입력 |
+| 조사를 시작하면 화면에 빨간 "Deep research error: ..." 오류 상자가 뜸 | `deep_research` 도구의 85행 `st.error(...)`가 `AttributeError`를 딕셔너리로 감싸기 **전에** 화면에 먼저 그려짐(소스로 판단, 키가 없어 실제 화면은 보지 못함) | 오류 상자는 무시해도 됨 — 도구는 이어서 `{"success": False, ...}`를 돌려주고 에이전트가 이를 이어받음(리포 코드는 고치지 않음) |
 | `trace()`를 한 번도 부르지 않았는데 OpenAI 트레이스 대시보드에 실행 기록이 남을 수 있음 | openai-agents가 `Runner.run()`마다 자동으로 트레이스 컨텍스트를 열고(`agents/run.py`, 소스로 확인) 기본값 `tracing_disabled=False`로 남아 있으며, `set_default_openai_key(key)`도 기본 `use_for_tracing=True`라 같은 키를 트레이싱에 씀(소스로 확인) | `OPENAI_AGENTS_DISABLE_TRACING=true` 환경변수를 설정하거나 `Runner.run(..., run_config=RunConfig(tracing_disabled=True))`로 호출을 바꿔야 함(리포 코드는 고치지 않음) |
 
 ## 더 해보기
 
-- `firecrawl_app.deep_research(...)`를 `firecrawl_app.v1.deep_research(...)`로 바꾸고 키워드 인자·반환 객체 접근까지 고쳐, 실제 키로 도구가 성공하는지 확인해보기
+- `firecrawl_app.deep_research(...)`를 폐기되지 않은 `firecrawl_app.search(...)`(v2 검색)로 바꿔보고, 도구의 반환값 처리(`results['data']['finalAnalysis']` 등)를 새 응답 구조에 맞게 고쳐 실제 키로 성공하는지 확인해보기
 - `Runner.run(research_agent, topic, run_config=RunConfig(tracing_disabled=True))`처럼 트레이스를 꺼 보고, `OPENAI_AGENTS_DISABLE_TRACING=true`와 비교해 두 방법이 같은 효과인지 확인해보기
 - `elaboration_agent`에 `tools=[deep_research]`를 추가해 정교화 단계도 새 정보를 검색할 수 있게 바꿔보고, 지시문을 어떻게 고쳐야 하는지 생각해보기
 
