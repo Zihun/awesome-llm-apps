@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+adk_web: adk web 서버 { class: ext }
+agent: 컨설턴트 에이전트 (root_agent) { class: ours }
+local_tools: 로컬 분석 도구 { class: ours }
+search_tool: Perplexity 검색 도구 { class: ours }
+runner: Runner + 세션 서비스 { class: ours }
+gemini: Gemini API (gemini-2.5-flash) { class: ext }
+perplexity: Perplexity API (sonar) { class: ext }
+
+user -> adk_web: 질문 텍스트
+adk_web -> agent: root_agent 조회
+agent -> local_tools
+agent -> search_tool
+agent -> runner
+agent -> gemini
+search_tool -> perplexity

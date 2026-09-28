@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adk_web: adk web 서버 { class: ext }
+agent: 컨설턴트 에이전트 (root_agent) { class: ours }
+gemini: Gemini API { class: ext }
+perplexity: Perplexity API (sonar) { class: ext }
+
+user -> adk_web: 질문 텍스트 (POST /run)
+adk_web -> agent: 임포트해 둔 root_agent 조회
+agent -> gemini: instruction + 도구 선언 + 질문
+gemini -> agent: function_call: perplexity_search(query)
+agent -> perplexity: POST 요청
+perplexity -> agent: JSON 응답
+agent -> gemini: function_response 전달
