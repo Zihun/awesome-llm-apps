@@ -359,7 +359,7 @@ add() calls: 2
 
 ## 요청 한 건이 흐르는 과정
 
-`add()` 한 번이 실제로는 세 단계를 거치므로, 아래 세 그림은 그 순서 그대로입니다.
+URL을 넣고 질문 하나를 던지는 과정은 세 단계를 거칩니다 — 앞의 두 단계는 `app.add()`(`advanced_llm_apps/chat_with_X_tutorials/chat_with_substack/chat_substack.py:32`) 안에서, 마지막 단계는 따로 부르는 `app.query()`(`advanced_llm_apps/chat_with_X_tutorials/chat_with_substack/chat_substack.py:40`)에서 일어납니다. 아래 세 그림은 그 순서 그대로입니다.
 
 ![1단계: URL 등록과 게시글 수집](diagrams/sequence.svg)
 
