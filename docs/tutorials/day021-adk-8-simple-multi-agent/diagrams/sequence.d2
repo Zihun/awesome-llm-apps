@@ -11,7 +11,7 @@ critic: critic_agent { class: ours }
 
 user -> ui: 연구 주제
 ui -> coordinator: run_async
-coordinator -> gemini: 모델 호출 (도구 2개 등록)
+coordinator -> gemini: gemini-3-flash-preview 모델 호출 (AgentTool 등 도구 2개)
 gemini -> coordinator: 함수 호출 research_agent
 coordinator -> research: AgentTool 실행 (중첩 Runner·새 세션)
 research -> gemini: 모델 호출
@@ -20,6 +20,6 @@ research -> coordinator: function_response
 coordinator -> gemini: 모델 호출 (조사 결과 포함)
 gemini -> coordinator: 함수 호출 transfer_to_agent
 coordinator -> summarizer: 제어 이전 (복귀 없음)
-summarizer -> critic: 동료 전환 (모델 결정)
+summarizer -> critic: 동료 전환
 critic -> ui: 최종 응답
 ui -> user: 화면 표시
