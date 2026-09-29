@@ -1,10 +1,12 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-budget: BudgetAnalysisAgent { class: ours }
+coordinator: FinanceCoordinatorAgent { class: ours }
 savings: SavingsStrategyAgent { class: ours }
 gemini: Gemini API { class: ext }
+store: InMemorySessionService { class: store }
 
-budget -> savings: 같은 세션으로 다음 순서 진행
+coordinator -> savings: 2번째 자식 run_async (같은 세션)
 savings -> gemini: 모델 호출 (SavingsStrategy 스키마)
-gemini -> savings: JSON 응답 → state.savings_strategy
+gemini -> savings: JSON 응답
+coordinator -> store: state_delta 반영 (savings_strategy)

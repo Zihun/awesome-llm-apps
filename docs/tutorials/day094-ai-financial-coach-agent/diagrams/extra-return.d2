@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+coordinator: FinanceCoordinatorAgent { class: ours }
+store: InMemorySessionService { class: store }
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+
+coordinator -> store: get_session
+coordinator -> store: delete_session
+coordinator -> ui: 결과 3종
+ui -> user: 탭별 시각화

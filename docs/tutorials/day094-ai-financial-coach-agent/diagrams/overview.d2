@@ -1,22 +1,19 @@
 ...@../../_tools/theme
 direction: down
 
-front: "브라우저 쪽" {
-  class: group
-  grid-columns: 2
-  user: 사용자 { class: person }
-  ui: Streamlit UI (ai_financial_coach_agent.py) { class: ours }
-}
+user: 사용자 { class: person }
+ui: Streamlit UI (ai_financial_coach_agent.py) { class: ours }
 
-coordinator: "재무 코디네이터 (FinanceCoordinatorAgent, SequentialAgent)" {
+coordinator: "재무 코디네이터 (FinanceCoordinatorAgent)" {
   class: group
   budget: 예산 분석 (BudgetAnalysisAgent) { class: ours }
   savings: 저축 전략 (SavingsStrategyAgent) { class: ours }
   debt: 부채 상환 (DebtReductionAgent) { class: ours }
+  store: 세션 (InMemorySessionService) { class: store }
 }
 
 gemini: Gemini API (gemini-2.5-flash) { class: ext }
 
-front -> coordinator: 소득·지출·부채 JSON
+user -> ui: 입력 + 분석 버튼
+ui <-> coordinator: analyze_finances / 예산·저축·부채 JSON 3종
 coordinator -> gemini: 모델 호출 3회 (스키마 각각 다름)
-coordinator -> front: 예산·저축·부채 JSON 3종

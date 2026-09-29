@@ -1,14 +1,12 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-savings: SavingsStrategyAgent { class: ours }
+coordinator: FinanceCoordinatorAgent { class: ours }
 debt: DebtReductionAgent { class: ours }
 gemini: Gemini API { class: ext }
-ui: Streamlit UI { class: ours }
-user: 사용자 { class: person }
+store: InMemorySessionService { class: store }
 
-savings -> debt: 같은 세션으로 마지막 순서 진행
+coordinator -> debt: 3번째 자식 run_async (같은 세션)
 debt -> gemini: 모델 호출 (DebtReduction 스키마)
-gemini -> debt: JSON 응답 → state.debt_reduction
-debt -> ui: 결과 3종 반환
-ui -> user: 탭별 파이·바 차트로 시각화
+gemini -> debt: JSON 응답
+coordinator -> store: state_delta 반영 (debt_reduction)
