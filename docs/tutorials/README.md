@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 90 / 164일 완료
+진도: 93 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -181,9 +181,9 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 088](day088-ai-consultant-agent/README.md) | 🤝 AI Consultant Agent | [advanced_ai_agents/single_agent_apps/ai_consultant_agent](../../advanced_ai_agents/single_agent_apps/ai_consultant_agent/) |
 | ✅ | [Day 089](day089-product-launch-intelligence-agent/README.md) | 🚀 AI Product Launch Intelligence Agent | [advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent](../../advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent/) |
 | ✅ | [Day 090](day090-trust-gated-agent-team/README.md) | 🛡️ Trust-Gated Multi-Agent Research Team | [advanced_ai_agents/multi_agent_apps/trust_gated_agent_team](../../advanced_ai_agents/multi_agent_apps/trust_gated_agent_team/) |
-| ⬜ | [Day 091](day091-ai-sales-intelligence-agent-team/README.md) | 👨🏻‍💼 AI Sales Intelligence Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team/) |
-| ⬜ | [Day 092](day092-ai-vc-due-diligence-agent-team/README.md) | 📊 AI VC Due Diligence Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team/) |
-| ⬜ | [Day 093](day093-ai-fraud-investigation-agent/README.md) | 🔍 AI Fraud Investigation Agent | [advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent](../../advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent/) |
+| ✅ | [Day 091](day091-ai-sales-intelligence-agent-team/README.md) | 👨🏻‍💼 AI Sales Intelligence Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team/) |
+| ✅ | [Day 092](day092-ai-vc-due-diligence-agent-team/README.md) | 📊 AI VC Due Diligence Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team/) |
+| ✅ | [Day 093](day093-ai-fraud-investigation-agent/README.md) | 🔍 AI Fraud Investigation Agent | [advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent](../../advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent/) |
 | ⬜ | [Day 094](day094-ai-financial-coach-agent/README.md) | 💰 AI Financial Coach Agent | [advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent](../../advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/) |
 | ⬜ | [Day 095](day095-ai-home-renovation-agent/README.md) | 🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro | [advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent](../../advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent/) |
 | ⬜ | [Day 096](day096-devpulse-ai/README.md) | 🧠 DevPulse AI - Multi-Agent Signal Intelligence | [advanced_ai_agents/multi_agent_apps/devpulse_ai](../../advanced_ai_agents/multi_agent_apps/devpulse_ai/) |

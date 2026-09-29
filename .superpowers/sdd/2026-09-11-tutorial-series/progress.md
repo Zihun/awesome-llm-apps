@@ -903,3 +903,22 @@ Task 17: 087~088 재확인 DONE — 087 원래 11건 해결 + 새 4(I1: Step 5 '
 Task 17: 087 fix round 2 DONE — b99b5f8(agno<2 시연을 별도 .venv-1x로 — 앱 .venv 그대로 확인, 2.2.10 재현, Step 7 health 확인), check 통과, 21.6/분 → 내가 해당 줄 확인, 087 complete.
 Task 17: 088 fix round 2 DONE — 0e52095(perplexity_search 배우 복원 → sequence + extra-search 재분할, /run_sse, Step 7 cd, Perplexity 노드는 Step 5에서 extra-tools 위치를 밝힘, extra-tools의 '감쌈' 화살표 둘 제거 — 같은 관계가 overview·step3에 화살표로 있음 → Ruling: 수용(내용 손실 없음), 래퍼 함수 셋 정정), check 통과, 21.6/분 → 088 complete. Task 17(087~090) 전부 complete.
 Task 17: 마무리 — npm test 49/49, Day 001~090 check 전부 통과, roadmap 90/164, ~/.adk·~/.mem0 없음, 원본 앱 폴더 캐시 없음. 재개 지점 갱신, 커밋·푸시·보고.
+
+=== USER 2026-09-29: "Day091 부터 Day093 까지 진행해" ===
+Task 18: 091 Sales Intelligence Team(adc3143dc0fe6d6ba), 092 VC Due Diligence Team(ab690636d720d22b4), 093 Fraud Investigation(a8ae4e0fea708861e) dispatched (sonnet, task-18-dayNNN-report.md; streamlit 로그도 스크래치로 — st.log 사고). 리뷰는 셋 끝난 뒤 한 묶음(opus) → 수정 → 재확인 → roadmap·푸시·보고.
+Task 18: 092 DONE 1차 — ff04a80, check 통과, 17.8/분. LlmAgent가 SequentialAgent를 sub_agents로 받는 패턴, 도구 셋 중 차트만 키 없이 성공(나머지 둘은 함수 안에서 genai.Client 직접 생성 → ValueError). **규칙 위반**: overview에서 root_agent와 pipeline을 한 노드로 병합 → 분리·보조 구조 그림으로 고치라고 재개.
+Task 18: 092 분리 DONE — 15578b3, root_agent·pipeline 분리(transfer_to_agent 화살표, 431×835), google_search·artifacts는 overview에서 extra-pipeline/analysis/outputs로 — 리뷰에서 판정(구조 관계가 화살표로 그려졌는지), check 통과.
+Task 18: 091 DONE — 20a75db, check 통과, 18.1/분. LlmAgent→SequentialAgent sub_agents 첫 사례(092도 같은 '첫' 주장 — 리뷰에서 정리), output_key 둘은 다시 안 읽힘, tools.py가 genai.Client 직접 생성, tools.py import만으로 outputs/ 생성(원본 폴더에 한 번 생겨 지움).
+Task 18: 093 DONE — b007450, check 통과, 17.9/분. sequence 4장 분할(33메시지), 정부 사이트로 가는 도구 셋은 실행 안 하고 소스로만. 리뷰 091~093 dispatched (opus → review-091-093.md).
+Task 18: 리뷰 091~093 DONE (a5003381a0d87eda8) → review-091-093.md. 셋 다 ❌: 091 C2 I5 M6(adk 명령이 적힌 대로 안 돌아감, gemini-3-pro(-image)-preview 종료 미기재, 호출 12회+, google_search는 Gemini 내장, 화살표 누락·라벨 접기, step 공개, /run_sse) / 092 C1 I6 M5('첫' 주장 틀림(091이 먼저), 여섯 번째 ADK 날, 직접 Client 날 목록, 호출 13회+, 라벨 접기, sequence가 사용자 응답 없이 끝남, step -new) / 093 I6 M9(agno 텔레메트리, 직접 확인 출력 셋 틀림, 65% 가정을 법적 결론처럼, 용량식 라벨, Maps 요청 병합). 091 '첫' 주장은 맞음. fix round 1 셋 dispatched(resume).
+Task 18: 093 fix round 1 DONE — f92f0ee, I6·M9(M9 부분: google 노드 식별자는 폭 초과로 일반 이름 유지, 근거 기록), Maps 요청 분리로 33→37메시지(extra-street-view·extra-places-info), check 통과, 21.4/분(60→65분).
+Task 18: 092 fix round 1 DONE — 26d08ff, 전부 반영(모델 종료 출처·날짜, 091이 먼저, 호출 13회 스텁 재현, google_search는 gemini_api→google_search, 도구 우회 호출 화살표 → extra-outputs·extra-infographic, sequence + extra-execution으로 사용자 응답까지, step -new), check 통과, 20.8/분(65→75분).
+Task 18: 091 fix round 1 DONE 부분 — 1838a4e(C2·I 대부분·M 대부분). 그러나 extra-research에서 google_search 노드를 gemini 라벨로 접음(= 접기, 금지) + M6 보류 → round 1b로 되돌려 보냄(092가 26d08ff에서 같은 화살표를 실제로 그림).
+Task 18: 091 fix round 1b DONE — 0e0cc82(extra-research를 1·2로 나눠 gemini→google_search 실제 화살표, artifacts를 store로 통일), check 통과, 21.5/분. 091~093 재확인 dispatched(fix-R18-round1.diff base b007450).
+Task 18: 091~093 재확인 DONE — 091 C 해결, I3(라벨 '요청' 축약, overview 파이프라인→Gemini 삭제·라벨 접기) M5 / 092 I3(4~7단계→Gemini 없음·삭제, 실행 sequence 10호출을 한 메시지로, 명령 없는 직접 확인 출력) M4 / 093 I1(\u 이스케이프가 커밋에 0개 — 편집 도구가 풀었을 가능성) M1. fix round 2 셋 dispatched. 리뷰어의 스크래치 venv를 누군가(작성자) 14:40에 pydantic 재설치로 깨뜨림 — 영향 없음.
+Task 18: 093 fix round 2 DONE — 99bda08(원인: 편집 도구가 \u 시퀀스를 실제 문자로 풀어 씀 → 파이썬 raw 문자열로 기록), 내가 README에 \u00d7 등 실제로 있음·check 통과 확인 → 093 complete.
+Task 18: 092 fix round 2 DONE — 6b8fc25, 4~7단계→Gemini 화살표 복원(+extra-riskmemo), 실행 sequence를 4장(29호출, 사용자 응답까지), run_sse 정정, 직접 확인 스크립트 수록, check 통과, 21.3/분(80분). 091 끝나면 091·092 짧은 재확인.
+Task 18: 091 fix round 2 DONE — 7fe1857(I4-b 라벨 복원, 4~7단계→gemini 실제 화살표(extra-synthesis, extra-generation1·2), Minor 5), check 통과, 21.8/분(95분). 091·092 짧은 재확인 dispatched(fix-R18-round2.diff base 0e0cc82).
+Task 18: 091~092 2차 재확인 DONE — 091 0 open → complete. 092 Minor 2(251행 문구, tools_dict 확인 스크립트가 2단계부터 실제 Gemini 호출 — 키 있는 독자 과금) → fix round 3 dispatched.
+Task 18: 092 fix round 3 DONE — 95a1be4(251행 문구, tools_dict 확인 스크립트가 CompanyResearchAgent 확인 직후 멈추게 — 가짜 키로 요청 없음 확인), check 통과, 21.3/분(85분) → 092 complete. 재현 중 가짜 키 요청 시도는 프록시(127.0.0.1:9) 터널에서 ConnectError — Google에 닿지 않음(DNS 차단은 없었으나 프록시 경유라 대상 호스트를 클라이언트가 조회하지 않음). Task 18(091~093) 전부 complete.
+Task 18: 마무리 — npm test 49/49, Day 001~093 check 전부 통과, 091~093 분당 21.3~21.8, roadmap 93/164, ~/.adk 없음, 원본 앱 폴더 부산물 없음. 커밋·푸시·보고.
