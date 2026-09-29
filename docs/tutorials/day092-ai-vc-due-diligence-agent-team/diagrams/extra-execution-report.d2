@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+pipeline: DueDiligencePipeline { class: ours }
+gemini_api: Gemini API { class: ext }
+artifacts: 저장소 { class: store }
+
+pipeline -> gemini_api: 6단계 instruction (도구 선언)
+gemini_api -> pipeline: function_call generate_html_report
+pipeline -> gemini_api: HTML 프롬프트 (flash, Client() 직접)
+gemini_api -> pipeline: HTML 텍스트
+pipeline -> artifacts: HTML 저장
+pipeline -> gemini_api: 6단계 함수 응답 + 요약 요청
+gemini_api -> pipeline: html_report_result 텍스트

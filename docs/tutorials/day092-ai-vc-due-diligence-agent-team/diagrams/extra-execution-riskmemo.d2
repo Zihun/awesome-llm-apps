@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+pipeline: DueDiligencePipeline { class: ours }
+gemini_api: Gemini API { class: ext }
+
+pipeline -> gemini_api: 4단계 instruction (RiskAssessmentAgent)
+gemini_api -> pipeline: risk_assessment 텍스트
+pipeline -> gemini_api: 5단계 instruction (InvestorMemoAgent)
+gemini_api -> pipeline: investor_memo 텍스트

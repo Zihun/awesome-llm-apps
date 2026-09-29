@@ -2,12 +2,13 @@
 direction: down
 
 stage5: 5. 투자 메모 { class: ours }
-stage6: 6. 리포트 (ADK 경유 2회) { class: ours }
+stage6: 6. 리포트 생성 { class: ours }
 tool_html: generate_html_report { class: ours }
 gemini_api: Gemini API { class: ext }
 artifacts: 저장소 (아티팩트+outputs/) { class: store }
 
 stage5 -> stage6: investor_memo
+stage6 -> gemini_api: instruction (2회: 도구 결정+요약)
 stage6 -> tool_html: function_call
-tool_html -> gemini_api: Client() 직접 호출
+tool_html -> gemini_api: HTML 프롬프트 (flash, Client() 직접)
 tool_html -> artifacts: HTML

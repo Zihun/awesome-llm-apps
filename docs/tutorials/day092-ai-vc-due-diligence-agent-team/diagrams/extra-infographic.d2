@@ -2,12 +2,13 @@
 direction: down
 
 stage5: 5. 투자 메모 { class: ours }
-stage7: 7. 인포그래픽 (ADK 경유 2회) { class: ours }
+stage7: 7. 인포그래픽 생성 { class: ours }
 tool_infographic: generate_infographic { class: ours }
 gemini_api: Gemini API { class: ext }
 artifacts: 저장소 (아티팩트+outputs/) { class: store }
 
 stage5 -> stage7: investor_memo
+stage7 -> gemini_api: instruction (2회: 도구 결정+요약)
 stage7 -> tool_infographic: function_call
-tool_infographic -> gemini_api: Client() 직접 호출
+tool_infographic -> gemini_api: 인포그래픽 프롬프트 (TEXT+IMAGE)
 tool_infographic -> artifacts: 이미지

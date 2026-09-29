@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gemini_api: Gemini API { class: ext }
+pipeline: DueDiligencePipeline { class: ours }
+artifacts: 저장소 { class: store }
+
+pipeline -> gemini_api: 1단계 instruction (CompanyResearchAgent)
+gemini_api -> pipeline: company_info 텍스트
+pipeline -> gemini_api: 2단계 instruction (MarketAnalysisAgent)
+gemini_api -> pipeline: market_analysis 텍스트
+pipeline -> gemini_api: 3단계 instruction (도구 선언)
+gemini_api -> pipeline: function_call generate_financial_chart
+pipeline -> artifacts: 차트 PNG 저장 (save_artifact)
+pipeline -> gemini_api: 3단계 함수 응답 + 요약 요청
+gemini_api -> pipeline: financial_model 텍스트

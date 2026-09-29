@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+adk_web: adk web { class: ext }
+pipeline: DueDiligencePipeline { class: ours }
+gemini_api: Gemini API { class: ext }
+artifacts: 저장소 { class: store }
+user: 사용자 { class: person }
+
+pipeline -> gemini_api: 7단계 instruction (도구 선언)
+gemini_api -> pipeline: function_call generate_infographic
+pipeline -> gemini_api: 인포그래픽 프롬프트 (TEXT+IMAGE, Client() 직접)
+gemini_api -> pipeline: 이미지+텍스트
+pipeline -> artifacts: 이미지 저장
+pipeline -> gemini_api: 7단계 함수 응답 + 요약 요청
+gemini_api -> pipeline: infographic_result 텍스트
+pipeline -> adk_web: 단계별 이벤트 스트림 (7단계 전체)
+adk_web -> user: 응답 스트림 (SSE)
