@@ -1,0 +1,10 @@
+...@../../_tools/theme
+direction: down
+
+stage1: 1. 기업 리서치 { class: ours }
+stage2: 2. 시장 분석 { class: ours }
+google_search: Google 검색 { class: ext }
+
+stage1 -> stage2: company_info
+stage1 -> google_search: 도구 호출
+stage2 -> google_search: 도구 호출

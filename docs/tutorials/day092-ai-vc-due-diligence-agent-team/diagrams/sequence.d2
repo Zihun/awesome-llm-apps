@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adk_web: adk web { class: ext }
+root_agent: root_agent { class: ours }
+gemini_api: Gemini API { class: ext }
+pipeline: DueDiligencePipeline { class: ours }
+
+user -> adk_web: 회사명/URL 전송 (POST /run_sse)
+adk_web -> root_agent: root_agent 조회 (인프로세스)
+root_agent -> gemini_api: instruction + transfer_to_agent 스키마
+gemini_api -> root_agent: function_call transfer_to_agent(DueDiligencePipeline)
+root_agent -> pipeline: 파이프라인에 제어 이관

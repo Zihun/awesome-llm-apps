@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+adk_web: adk web 서버 { class: ext }
+agent: 에이전트 (root_agent → Pipeline) { class: ours }
+google_search: Google 검색 { class: ext }
+gemini_api: Gemini API { class: ext }
+artifacts: 저장소 (아티팩트+outputs) { class: store }
+
+user -> adk_web: 회사명 또는 URL
+adk_web -> agent: 자체 Runner로 실행
+agent -> gemini_api: instruction + 도구 선언
+agent -> google_search: 도구 호출
+agent -> artifacts: 생성물 저장
