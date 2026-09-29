@@ -242,10 +242,10 @@ print(m.calculate_max_capacity(900))
 "
 ```
 
-직접 확인한 출력(한 줄, 가공 없이 그대로 — `json.dumps` 기본값 `ensure_ascii=True`라 `×`·`÷`가 `×`·`÷`로 이스케이프됩니다):
+직접 확인한 출력(한 줄, 가공 없이 그대로 — `json.dumps` 기본값 `ensure_ascii=True`라 `×`·`÷`가 `\u00d7`·`\u00f7`로 이스케이프됩니다. 실제 파일에는 아래 그대로 `\u00d7`·`\u00f7` 여섯 글자가 들어 있습니다):
 
 ```json
-{"status": "ok", "building_sqft": 900.0, "usable_ratio": 0.65, "usable_sqft": 585.0, "sqft_per_child_required": 35, "max_legal_capacity": 16, "state": "IL", "regulation": "IL DCFS Title 89, Part 407", "calculation": "900 sqft × 0.65 usable ratio = 585 usable sqft ÷ 35 sqft/child = 16 children max"}
+{"status": "ok", "building_sqft": 900.0, "usable_ratio": 0.65, "usable_sqft": 585.0, "sqft_per_child_required": 35, "max_legal_capacity": 16, "state": "IL", "regulation": "IL DCFS Title 89, Part 407", "calculation": "900 sqft \u00d7 0.65 usable ratio = 585 usable sqft \u00f7 35 sqft/child = 16 children max"}
 ```
 
 ### Step 4. 선택 도구 3종 — Google Maps(지오코딩·스트리트뷰·Places)
@@ -332,12 +332,12 @@ print(m.get_places_info('예시 주소', '예시 상호'))
 "
 ```
 
-직접 확인한 출력(세 줄 모두 `"status": "no_key"`, 가공 없이 그대로 — 한글 `예시 주소`도 `ensure_ascii=True`라 `예시 주소`로 이스케이프됩니다):
+직접 확인한 출력(세 줄 모두 `"status": "no_key"`, 가공 없이 그대로 — 한글 `예시 주소`도 `ensure_ascii=True`라 `\uc608\uc2dc \uc8fc\uc18c`로 이스케이프됩니다. 실제 파일에는 아래 그대로 `\uc608\uc2dc \uc8fc\uc18c` 열두 글자가 들어 있습니다):
 
 ```json
-{"status": "no_key", "address": "예시 주소", "note": "No Google Maps API key configured. Geocoding unavailable."}
-{"status": "no_key", "address": "예시 주소", "note": "No Google Maps API key. Street View unavailable."}
-{"status": "no_key", "address": "예시 주소", "note": "No Google Maps API key. Places lookup unavailable."}
+{"status": "no_key", "address": "\uc608\uc2dc \uc8fc\uc18c", "note": "No Google Maps API key configured. Geocoding unavailable."}
+{"status": "no_key", "address": "\uc608\uc2dc \uc8fc\uc18c", "note": "No Google Maps API key. Street View unavailable."}
+{"status": "no_key", "address": "\uc608\uc2dc \uc8fc\uc18c", "note": "No Google Maps API key. Places lookup unavailable."}
 ```
 
 ### Step 5. 사업자 등록 확인 — Google 키로 막히지 않는 도구 중 하나
