@@ -1,0 +1,29 @@
+...@../../_tools/theme
+direction: down
+
+person: 사용자 { class: person }
+cli: CLI 실행기 (main.py) { class: ours }
+ui: Streamlit UI (streamlit_app.py) { class: ours }
+
+pipeline: "파이프라인 (adapters/ · agents/)" {
+  class: ours
+  grid-rows: 2
+  grid-gap: 16
+  gh: "GitHub 어댑터\n(github.py)" { class: ours }
+  arxiv: "ArXiv 어댑터\n(arxiv.py)" { class: ours }
+  hn: "HackerNews 어댑터\n(hackernews.py)" { class: ours }
+  medium: "Medium 어댑터\n(medium.py)" { class: ours }
+  hf: "HuggingFace 어댑터\n(huggingface.py)" { class: ours }
+  collector: "1. SignalCollector\n(signal_collector.py)" { class: ours }
+  relevance: "2. RelevanceAgent\n(relevance_agent.py)" { class: ours }
+  risk: "3. RiskAgent\n(risk_agent.py)" { class: ours }
+  synthesis: "4. SynthesisAgent\n(synthesis_agent.py)" { class: ours }
+}
+
+openai: OpenAI API { class: ext }
+
+person -> cli: 터미널에서 실행
+person -> ui: 브라우저 접속
+cli -> pipeline: collect_signals() 호출
+ui -> pipeline: 소스별 fetch_* 직접 호출
+pipeline -> openai: Relevance·Risk의 gpt-4.1-mini 호출 (Synthesis는 미호출)

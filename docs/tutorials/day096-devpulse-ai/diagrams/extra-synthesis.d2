@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+synthesis: SynthesisAgent { class: ours }
+
+ui -> synthesis: synthesize(assessed)
+synthesis -> ui: 다이제스트 dict (LLM 미호출 — Step 6)
+ui -> user: 요약·추천·신호 카드 렌더링
