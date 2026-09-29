@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+root: 코디네이터 (root_agent) { class: ours }
+pipeline: 배틀카드 파이프라인 { class: ours }
+adk_web: adk web 서버 { class: ext }
+user: 사용자 { class: person }
+
+root -> pipeline: 제어 이관 (복귀 보장 없음)
+pipeline -> adk_web: 7단계 텍스트 이벤트 (마지막 comparison_chart_agent)
+adk_web -> user: 이벤트 스트림 표시 (7개 모두)
