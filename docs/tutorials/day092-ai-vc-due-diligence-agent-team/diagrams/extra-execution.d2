@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gemini_api: Gemini API { class: ext }
+pipeline: DueDiligencePipeline { class: ours }
+adk_web: adk web { class: ext }
+user: 사용자 { class: person }
+
+pipeline -> gemini_api: 7단계 instruction (스텁 확인, ADK 경유 10회)
+gemini_api -> pipeline: 단계별 텍스트/function_call 응답
+pipeline -> gemini_api: 6·7단계 도구 안 직접 Client() 호출(2회, ADK 우회)
+pipeline -> adk_web: 마지막 단계 텍스트 (InfographicGeneratorAgent)
+adk_web -> user: 응답 스트림

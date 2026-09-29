@@ -10,4 +10,4 @@ gemini_api: Gemini API { class: ext }
 user -> adk_web: 회사명 또는 URL
 adk_web -> root_agent: 자체 Runner로 실행
 root_agent -> pipeline: transfer_to_agent (자동 생성)
-root_agent -> gemini_api: instruction (8개 에이전트 공통)
+root_agent -> gemini_api: instruction + transfer_to_agent 스키마

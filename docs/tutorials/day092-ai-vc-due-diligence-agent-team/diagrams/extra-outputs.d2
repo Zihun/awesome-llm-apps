@@ -1,15 +1,13 @@
 ...@../../_tools/theme
-direction: right
+direction: down
 
 stage5: 5. 투자 메모 { class: ours }
-stage6: 6. 리포트 생성 { class: ours }
-stage7: 7. 인포그래픽 생성 { class: ours }
+stage6: 6. 리포트 (ADK 경유 2회) { class: ours }
+tool_html: generate_html_report { class: ours }
 gemini_api: Gemini API { class: ext }
-artifacts: 아티팩트 저장 { class: store }
+artifacts: 저장소 (아티팩트+outputs/) { class: store }
 
 stage5 -> stage6: investor_memo
-stage5 -> stage7: investor_memo
-stage6 -> gemini_api: instruction + 도구 선언
-stage7 -> gemini_api: instruction + 도구 선언
-stage6 -> artifacts: HTML (Client() 직접 호출, ADK 우회)
-stage7 -> artifacts: 이미지 (Client() 직접 호출, ADK 우회)
+stage6 -> tool_html: function_call
+tool_html -> gemini_api: Client() 직접 호출
+tool_html -> artifacts: HTML

@@ -5,9 +5,11 @@ stage2: 2. 시장 분석 { class: ours }
 stage3: 3. 재무 모델링 { class: ours }
 stage4: 4. 리스크 평가 { class: ours }
 stage5: 5. 투자 메모 { class: ours }
-artifacts: 아티팩트 저장 { class: store }
+gemini_api: Gemini API { class: ext }
+artifacts: 저장소 (아티팩트+outputs/) { class: store }
 
 stage2 -> stage3: +market_analysis
 stage3 -> stage4: +financial_model
 stage4 -> stage5: +risk_assessment
+stage3 -> gemini_api: instruction (2회: 도구 결정+요약)
 stage3 -> artifacts: 차트 PNG (save_artifact)

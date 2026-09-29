@@ -1,12 +1,14 @@
 # Day 092 · 📊 AI VC Due Diligence Agent Team
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 60분(google-adk 2.10.0 site-packages 소스로 자동 전환 대상 규칙을 직접 확인하고, 도구 3개를 가짜 `ToolContext`로 하나씩 실행해 보고, `adk web`을 격리 환경에서 띄워 확인하는 손 작업이 섞여 있습니다) · API 비용 대략 분석 1건에 Gemini 호출 최소 7회(파이프라인 각 단계 1회씩, 2단계는 `google_search` 왕복이 더해짐) + 리포트·인포그래픽 도구 안의 직접 `Client()` 호출 2회 — 키가 없어 실측 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 75분(도구 3개를 가짜 `ToolContext`로, 파이프라인 전체를 스텁 콜백으로 직접 실행해 실제 호출 횟수와 최종 응답 경로를 확인하고, `google_search`가 클라이언트 왕복이 아님을 `llm_request`로 직접 들여다보고, 서비스 종료된 모델을 공식 문서로 재확인하고, `adk web`을 격리 환경에서 띄워 확인하는 손 작업이 읽는 시간만큼 듭니다) · API 비용 대략 분석 1건에 Gemini 호출 최소 13회(코디네이터 1 + 1·2·4·5단계 각 1 + 3·6·7단계 각 2 + 도구 안 직접 `Client()` 호출 2, 스텁 실행으로 직접 확인 — 3~5단계·인포그래픽 도구 모델은 이미 서비스 종료라 실제 키로도 3단계에서 막힘) — 키가 없어 원화 실측은 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team`
 
 ## 오늘 만들 것
 
-Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨에서 google-adk를 쓰는 다섯 번째 자리입니다(Day 014~023 크래시 코스, Day 067, Day 077, Day 088에 이어 — Day 088 README의 확인 그대로, 그 사이 089·090·091은 다른 프레임워크입니다). Day 088의 `ai_consultant_agent`는 `LlmAgent` 하나에 도구 3개를 얹은 단일 에이전트였지만, 오늘의 `agent.py`(386줄)는 `LlmAgent` 8개를 두 겹으로 묶습니다 — 코디네이터 `root_agent` 하나가 `SequentialAgent`인 `due_diligence_pipeline` 하나를 `sub_agents=`로 받고, 그 파이프라인이 다시 리서치→시장분석→재무모델링→리스크평가→투자메모→리포트생성→인포그래픽생성 순서로 서브 에이전트 7개를 순서대로 실행합니다. `SequentialAgent` 자체의 동작(같은 세션을 공유하는 `for`문, 전환 불가)은 Day 022가 이미 소스로 확인했고, `sub_agents=`가 자동으로 `transfer_to_agent` 도구를 만드는 것은 Day 021이 이미 확인했습니다 — 오늘 새로운 것은 그 자동 전환의 **대상이 다른 `LlmAgent`가 아니라 `SequentialAgent`(워크플로 에이전트) 자신**이라는 점입니다. google-adk 2.10.0 소스(`google/adk/flows/llm_flows/extensions/_agent_transfer.py`)를 직접 읽어 `_get_transfer_targets`가 대상의 타입을 가리지 않고 `sub_agents`를 그대로 전환 대상에 넣는다는 것을 확인했습니다(Step 2).
+Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨에서 google-adk를 쓰는 **여섯 번째** 자리입니다(Day 014~023 크래시 코스, Day 067, Day 077, Day 088, Day 091에 이어 — 볼륨 안에서는 088·091 다음 세 번째입니다). 코디네이터 `root_agent`(`LlmAgent`) 하나가 자신의 `sub_agents`에 다른 `LlmAgent`가 아니라 `SequentialAgent`(`due_diligence_pipeline`) 자체를 넣고 `transfer_to_agent`로 제어를 통째로 넘기는 구조인데, 이 패턴을 이 시리즈에서 처음 쓴 것은 오늘이 아니라 **바로 전날 Day 091**입니다 — Day 091 README:7과 Step 2·6이 이미 이 조합을 "처음"으로 확인·설명했고(Day 001~090 전체를 `LlmAgent`의 `sub_agents`에 워크플로 에이전트가 들어간 예로 검색해도 없다는 것이 근거), google-adk 2.10.0의 `_get_transfer_targets`(`google/adk/flows/llm_flows/extensions/_agent_transfer.py`, site-packages)가 전환 대상의 타입을 가리지 않는다는 것도 Day 091이 이미 소스로 확인했습니다. 오늘의 386줄짜리 `agent.py`는 Day 091과 같은 코디네이터→`SequentialAgent` 구조를 7단계(리서치→시장분석→재무모델링→리스크평가→투자메모→리포트생성→인포그래픽생성)로 반복합니다. 오늘 새로 보는 것은 구조 자체가 아니라, ① 파이프라인 3개 도구 중 키 없이도 끝까지 도는 유일한 도구(matplotlib 로컬 차트), ② docstring이 광고하지만 실제로는 안 쓰이는 `BuiltInCodeExecutor` 죽은 임포트, ③ 6·7단계가 5단계의 출력만 각자 독립적으로 읽고 서로의 결과는 읽지 않는다는 것입니다(Step 2, Step 4).
 
-`tools.py`(280줄)의 도구 3개도 서로 다른 성격입니다. `generate_financial_chart`는 matplotlib로 로컬에서 차트를 그리고 `tool_context.save_artifact`로 저장할 뿐이라 키 없이도 끝까지 실행됩니다(Step 4, 직접 확인) — 반면 `generate_html_report`·`generate_infographic`은 ADK가 관리하는 모델 호출을 아예 쓰지 않고, 함수 안에서 `google.genai`의 `Client()`를 직접 새로 만들어 `client.aio.models.generate_content()`를 호출합니다(`tools.py:161-165`, `tools.py:237-244`) — ADK의 `LlmAgent` 흐름을 완전히 우회하는 별도의 API 호출입니다. 이 저장소 코드가 직접 `Client()`를 만드는 것은 Day 060(RAG 라우팅)이 마지막이었는데, 그때는 임베딩 호출이었고 이번은 **텍스트/이미지 생성**입니다. 아래는 완성 아키텍처입니다.
+`tools.py`(280줄)의 도구 3개도 서로 다른 성격입니다. `generate_financial_chart`는 matplotlib로 로컬에서 차트를 그리고 `tool_context.save_artifact`로 저장할 뿐이라 키 없이도 끝까지 실행됩니다(Step 4, 직접 확인) — 반면 `generate_html_report`·`generate_infographic`은 ADK가 관리하는 모델 호출과는 별개로 함수 안에서 `google.genai`의 `Client()`를 직접 새로 만들어 `client.aio.models.generate_content()`를 호출합니다(`tools.py:161-165`, `tools.py:237-244`) — Day 091의 `generate_battle_card_html`·`generate_comparison_chart`(바로 전날, 같은 텍스트·이미지 생성 구조)와 같은 패턴입니다. 이 저장소에서 `google.genai.Client()`를 직접 만드는 날은 이 둘 말고도 여럿입니다 — Day 062·065·067·082·091이 모두 같은 방식을 씁니다(전체 검색으로 확인).
+
+다만 3~5단계가 쓰는 `gemini-3-pro-preview`(`agent.py:103,156,198`)와 인포그래픽 도구의 `gemini-3-pro-image-preview`(`tools.py:239`)는 **이미 서비스가 종료됐습니다** — Google 공식 "Model deprecations" 문서(https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-29 확인)에 `gemini-3-pro-preview`는 2026-03-09 종료(대체 `gemini-3.1-pro-preview`), `gemini-3-pro-image-preview`는 2026-06-25 종료(대체 `gemini-3-pro-image`)로 명시되어 있고, 1·2·6·7단계의 `gemini-3-flash-preview`만 종료일 미발표입니다(같은 문서 — Day 082 README가 같은 표를 먼저 확인했습니다). 즉 실제 키를 넣어도 3단계(`FinancialModelingAgent`)에서 막힙니다. 아래는 완성 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -14,7 +16,7 @@ Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨에서 google-adk를 쓰
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| Google AI Studio API 키 (`GOOGLE_API_KEY`, 또는 `GEMINI_API_KEY`) | 파이프라인 8개 에이전트가 공유하는 `gemini-3-flash-preview`·`gemini-3-pro-preview` 호출과, `tools.py`가 직접 만드는 `Client()`의 `gemini-3-pro-image-preview` 호출까지 모두 이 키로 인증한다. 이 앱엔 Streamlit이 없어 `adk web`을 띄우기 **전에** 셸 환경변수로 설정하거나 앱 폴더 안에 `.env`로 둔다 — `load_dotenv_for_agent` 메커니즘은 Day 088에서 이미 확인했다. 이 문서는 키를 발급하지 않고 없을 때 어디서 멈추는지만 확인한다 | https://aistudio.google.com/apikey. `gemini-3-*-preview` 계열은 2026-09-29 기준 이 저장소가 실제로 요청하는 모델명이며, 프리뷰이므로 접근 제한이나 이름 변경 가능성이 있다(소스로 확인, 발급은 하지 않았다) |
+| Google AI Studio API 키 (`GOOGLE_API_KEY`, 또는 `GEMINI_API_KEY`) | 파이프라인 8개 에이전트가 공유하는 `gemini-3-flash-preview`·`gemini-3-pro-preview` 호출과, `tools.py`가 직접 만드는 `Client()`의 `gemini-3-pro-image-preview` 호출까지 모두 이 키로 인증한다. 이 앱엔 Streamlit이 없어 `adk web`을 띄우기 **전에** 셸 환경변수(`export GOOGLE_API_KEY=...`, PowerShell은 `$env:GOOGLE_API_KEY="..."`)로 설정하거나 앱 폴더 안에 `.env`로 둔다 — `load_dotenv_for_agent` 메커니즘은 Day 088에서 이미 확인했다. 이 문서는 키를 발급하지 않고 없을 때 어디서 멈추는지만 확인한다 | https://aistudio.google.com/apikey. **`gemini-3-pro-preview`(2026-03-09)·`gemini-3-pro-image-preview`(2026-06-25)는 이미 서비스 종료됐다**(Google 공식 "Model deprecations" 문서, https://ai.google.dev/gemini-api/docs/deprecations, 2026-09-29 확인) — 발급해도 3단계에서 막힌다. `gemini-3-flash-preview`만 종료일 미발표 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | 인터넷 연결 | PyPI 설치, 키가 있다면 Gemini API·Google 검색 접속 | 별도 설치 없음 |
 
@@ -103,9 +105,9 @@ compile-ok
 
 (리포 안 원본 폴더에서 `py_compile`을 실행하면 그 폴더에 `__pycache__`가 생깁니다 — 이 문서는 저장소 밖 스크래치 사본에서 확인했습니다.)
 
-### Step 2. 코디네이터와 SequentialAgent — 전환 대상이 이번엔 다른 LlmAgent가 아니다
+### Step 2. 코디네이터와 SequentialAgent — Day 091과 같은 구조
 
-**목적.** `root_agent`가 `sub_agents=[due_diligence_pipeline]`로 워크플로 에이전트 하나를 자동 전환 대상으로 삼는다는 것을, google-adk 소스로 직접 확인합니다.
+**목적.** `root_agent`가 `sub_agents=[due_diligence_pipeline]`로 `SequentialAgent`를 자동 전환 대상으로 삼는다는 것을 이 앱의 코드로 확인합니다. 이 조합(`LlmAgent`의 `sub_agents`에 워크플로 에이전트를 넣고 `transfer_to_agent`로 통째로 넘기는 것) 자체는 Day 091이 이 시리즈에서 처음 확인했고, 전환 대상의 타입을 가리지 않는다는 것도 Day 091이 이미 `_get_transfer_targets` 소스로 확인했으므로 여기서는 되풀이하지 않습니다.
 
 **할 일.** 파이프라인과 코디네이터 선언을 봅니다.
 
@@ -168,14 +170,14 @@ After analysis, summarize key findings and mention the generated artifacts.
 )
 ```
 
-`sub_agents=`가 있으면 ADK의 `AutoFlow`가 자동으로 `transfer_to_agent` 도구를 만든다는 것은 Day 021이 이미 확인했습니다. 그 전환 대상을 고르는 함수가 대상의 타입을 가리는지는 google-adk 2.10.0 패키지 내부의 `_get_transfer_targets`(`google/adk/flows/llm_flows/extensions/_agent_transfer.py`, site-packages, 소스로 확인)를 직접 읽어 확인했습니다 — "Sub-agents of the current agent, excluding those in 'single_turn' mode"라고만 적혀 있고 `LlmAgent`인지 `SequentialAgent`인지는 묻지 않습니다. `root_agent`의 유일한 서브 에이전트는 `SequentialAgent`인 `due_diligence_pipeline`이므로, `root_agent`가 만드는 `transfer_to_agent` 도구의 유일한 대상은 이 워크플로 에이전트 자신입니다 — Day 021·077의 사례는 전환 대상이 전부 다른 `LlmAgent`였다는 점이 다릅니다.
+`sub_agents=`가 있으면 ADK의 `AutoFlow`가 자동으로 `transfer_to_agent` 도구를 만든다는 것(Day 021), 그 대상 선택 함수 `_get_transfer_targets`가 `LlmAgent`인지 `SequentialAgent`인지를 가리지 않는다는 것(Day 091, `google/adk/flows/llm_flows/extensions/_agent_transfer.py` 소스로 확인)은 모두 앞 날이 이미 확인했습니다. 오늘 다른 점은 파이프라인의 크기와 순서뿐입니다 — Day 091의 `battle_card_pipeline`도 7단계였지만 "경쟁사 리서치→기능 분석→포지셔닝→SWOT→반박 스크립트→배틀카드→비교 차트"였고, 오늘은 "기업 리서치→시장 분석→재무 모델링→리스크 평가→투자 메모→리포트→인포그래픽"입니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
 **확인.**
 
 ```bash
-uv run --no-project --python .venv/Scripts/python.exe python -c "
+uv run --no-project --python .venv python -c "
 import sys; sys.path.insert(0, '..')
 from ai_vc_due_diligence_agent_team import root_agent
 print('root:', root_agent.name, root_agent.model)
@@ -186,7 +188,7 @@ print('pipeline stages:', [a.name for a in pipeline.sub_agents])
 "
 ```
 
-(부모 폴더에서 패키지로 임포트해야 하므로 `sys.path`에 상위 폴더를 넣거나, `cd ..` 후 실행합니다 — Day 088 Step 2와 같은 이유입니다.)
+(패키지로 임포트하려면 상위 폴더가 `sys.path`에 있어야 하므로 위처럼 코드 안에서 넣거나, 앱 폴더의 **부모** 폴더로 `cd ..` 한 뒤 실행합니다 — Day 088 Step 2와 같은 이유입니다. `--python .venv`는 디렉터리를 가리키므로 Windows·macOS·Linux 어디서나 그 환경의 인터프리터를 찾습니다 — `.venv/Scripts/python.exe`처럼 OS별 하위 경로를 쓰지 않습니다.)
 
 ```
 root: DueDiligenceAnalyst gemini-3-flash-preview
@@ -244,14 +246,20 @@ Be thorough but realistic about what's publicly available for early-stage compan
 )
 ```
 
-`market_analysis_agent`(`agent.py:67-94`)도 같은 모양으로 `tools=[google_search]`를 쓰고, 지시문 안에 `{company_info}`를 넣어 앞 단계의 `output_key` 값을 그대로 읽습니다. 두 에이전트 모두 도구가 `google_search` 하나뿐입니다 — Day 088의 `ai_consultant_agent`는 11행에서 같은 도구를 임포트만 하고 `tools=[...]`엔 끝내 넣지 않았지만, 이 앱은 실제로 사용합니다.
+`market_analysis_agent`(`agent.py:67-94`)도 같은 모양으로 `tools=[google_search]`를 쓰고, 지시문 안에 `{company_info}`를 넣어 앞 단계의 `output_key` 값을 그대로 읽습니다. 두 에이전트 모두 도구가 `google_search` 하나뿐입니다 — Day 088의 `ai_consultant_agent`는 11행에서 같은 도구를 임포트만 하고 `tools=[...]`엔 끝내 넣지 않았지만, 이 앱은 실제로 등록합니다. 다만 "등록"과 "앱이 직접 왕복한다"는 다릅니다 — `google_search`는 google-adk 2.10.0 패키지 내부의 `GoogleSearchTool`(`tools/google_search_tool.py`, site-packages, 소스로 확인 — 클래스 docstring이 "A built-in tool that is automatically invoked by Gemini models"라고 명시하고, `process_llm_request`는 요청에 `types.Tool(google_search=types.GoogleSearch())`를 얹기만 한다)이라 **Gemini 모델 내부에서** 도는 그라운딩이고, 이 프로세스가 별도로 Google에 요청을 보내지 않습니다. 스텁으로 `CompanyResearchAgent`의 `llm_request`를 직접 찍어 보면 `tools_dict`는 빈 `{}`이고(클라이언트 쪽 함수 도구가 아니라는 뜻) `config.tools`에만 `Tool(google_search=...)`가 실려 나갑니다(직접 확인, 아래).
+
+이 스텝의 overview에는 `google_search`가 없습니다(Step 4에서 만드는 `gemini_api` 노드가 8개 에이전트를 대표합니다) — 1·2단계가 `google_search`를 쓰는 정확한 구조는 아래 확장 그림에 있습니다.
+
+![리서치 단계 구조](diagrams/extra-pipeline.svg)
 
 ![Step 3까지의 구성](diagrams/step3.svg)
+
+(Step 2에서 이미 `root_agent`·`pipeline`을 모두 공개했으므로 이 그림은 Step 2와 같은 상태입니다 — 이번 Step의 실제 주제는 위 확장 그림입니다.)
 
 **확인.**
 
 ```bash
-uv run --no-project --python .venv/Scripts/python.exe python -c "
+uv run --no-project --python .venv python -c "
 import sys; sys.path.insert(0, '..')
 from ai_vc_due_diligence_agent_team.agent import company_research_agent, market_analysis_agent
 for a in (company_research_agent, market_analysis_agent):
@@ -262,6 +270,15 @@ for a in (company_research_agent, market_analysis_agent):
 ```
 CompanyResearchAgent | tools: ['google_search'] | output_key: company_info
 MarketAnalysisAgent | tools: ['google_search'] | output_key: market_analysis
+```
+
+`google_search`가 클라이언트 쪽 함수 도구가 아니라는 것은 `before_model_callback`으로 `llm_request`를 직접 들여다보면 확인됩니다(`InMemoryRunner`로 `root_agent`부터 실행, 코디네이터는 `transfer_to_agent`를 부르도록 스텁):
+
+```
+CompanyResearchAgent tools_dict keys: []
+CompanyResearchAgent config.tools: [Tool(
+  google_search=GoogleSearch(...)
+)]
 ```
 
 ### Step 4. 재무 차트는 키 없이 되고, 리포트·인포그래픽은 `Client()`에서 막힌다
@@ -314,7 +331,7 @@ OUTPUTS_DIR.mkdir(exist_ok=True)
 **확인.** 세 도구 모두 `async def`라 진짜 `ToolContext` 대신 `save_artifact`만 흉내 내는 가짜 객체로 직접 호출합니다.
 
 ```bash
-uv run --no-project --python .venv/Scripts/python.exe python -c "
+uv run --no-project --python .venv python -c "
 import sys; sys.path.insert(0, '..')
 import asyncio
 from ai_vc_due_diligence_agent_team.tools import generate_financial_chart, generate_html_report, generate_infographic
@@ -339,13 +356,32 @@ asyncio.run(main())
 "
 ```
 
+표준 출력(stdout):
+
 ```
 chart: success {'year_5_bear': '$3.4M', 'year_5_base': '$48.6M', 'year_5_bull': '$170.1M'}
 html_report: {'status': 'error', 'message': 'No API key was provided. Please pass a valid API key. Learn how to create an API key at https://ai.google.dev/gemini-api/docs/api-key.'}
 infographic: {'status': 'error', 'message': 'No API key was provided. Please pass a valid API key. Learn how to create an API key at https://ai.google.dev/gemini-api/docs/api-key.'}
 ```
 
-`generate_financial_chart`는 키가 전혀 없는 이 환경에서도 끝까지 성공하고 PNG를 `outputs/`에 저장합니다 — 파이프라인 7단계 중 키 없이 완주하는 유일한 단계입니다. 나머지 둘은 함수 안의 `Client()` 생성자 자체가 `ValueError`로 멈추고, 그 예외를 함수가 직접 잡아 오류 dict로 바꿉니다.
+같은 실행의 표준 에러(stderr)에는 `logger.error` 두 줄과, `Client()` 생성이 실패해 내부 HTTP 클라이언트가 끝내 만들어지지 않은 채 가비지 컬렉션되면서 나는 트레이스백 두 개가 함께 찍힙니다(직접 확인, 실행에는 영향 없음):
+
+```
+Error generating HTML report: No API key was provided. Please pass a valid API key. Learn how to create an API key at https://ai.google.dev/gemini-api/docs/api-key.
+Task exception was never retrieved
+future: <Task finished name='Task-...' coro=<BaseApiClient.aclose() done, ...> exception=AttributeError("'BaseApiClient' object has no attribute '_async_httpx_client'")>
+Traceback (most recent call last):
+  ...
+AttributeError: 'BaseApiClient' object has no attribute '_async_httpx_client'
+Error generating infographic: No API key was provided. Please pass a valid API key. Learn how to create an API key at https://ai.google.dev/gemini-api/docs/api-key.
+(같은 트레이스백이 인포그래픽 쪽에서 한 번 더)
+```
+
+`generate_financial_chart`는 키가 전혀 없는 이 환경에서도 끝까지 성공하고 PNG를 `outputs/`에 저장합니다 — **세 도구 중** 키 없이 끝까지 도는 유일한 도구입니다(3단계 자신도 `LlmAgent`라 Gemini 없이는 이 도구를 부를 함수 호출 자체가 나오지 않으므로, "파이프라인 7단계 중 유일하게 완주"는 아닙니다 — Step 5가 코디네이터 자체에서 멈추는 것을 보여줍니다). 나머지 둘은 함수 안의 `Client()` 생성자 자체가 `ValueError`로 멈추고, 그 예외를 함수가 직접 잡아 오류 dict로 바꿉니다.
+
+3단계가 이 차트 도구를 어떻게 부르고 어디로 이어지는지, 6·7단계가 각각 `Client()`를 직접 만드는 지점까지는 아래 확장 그림에 있습니다.
+
+![분석 단계 구조](diagrams/extra-analysis.svg)
 
 ### Step 5. `adk web`으로 띄우기 — 이번에도 첫 추론에서 멈춘다
 
@@ -398,26 +434,50 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 사용자가 회사명이나 URL을 보내면 `adk web`은 `POST /run_sse`로 `root_agent`를 인프로세스에서 조회합니다(Day 088과 같은 메커니즘). `root_agent`는 지시문과 함께 자동 생성된 `transfer_to_agent` 스키마를 Gemini에 보내고, 소스로 확인한 대로라면 Gemini는 `function_call: transfer_to_agent(DueDiligencePipeline)`을 돌려줘야 합니다 — 이 문서는 키가 없어 이 지점 대신 Step 5에서 확인한 `ValueError`만 실제로 관찰했습니다. 전환이 성공했다면 제어는 `DueDiligencePipeline`으로 넘어가 1단계(`CompanyResearchAgent`)부터 시작합니다.
 
+파이프라인 내부와 최종 응답이 사용자에게 돌아가는 과정은 이어지는 그림입니다.
+
+![파이프라인 실행과 응답 반환](diagrams/extra-execution.svg)
+
+키가 없어 실제 Gemini 응답은 볼 수 없으므로, 이 흐름 전체를 `before_model_callback`으로 스텁 처리해(각 단계에 미리 정한 텍스트/`function_call`을 흘려보냄, Day 091 Step 6과 같은 방식) `InMemoryRunner`로 직접 실행했습니다 — 실제 파이프라인 코드는 한 줄도 고치지 않았습니다.
+
+```
+event authors: ['DueDiligenceAnalyst', 'DueDiligenceAnalyst', 'CompanyResearchAgent', 'MarketAnalysisAgent',
+  'FinancialModelingAgent', 'FinancialModelingAgent', 'FinancialModelingAgent', 'RiskAssessmentAgent',
+  'InvestorMemoAgent', 'ReportGeneratorAgent', 'ReportGeneratorAgent', 'ReportGeneratorAgent',
+  'InfographicGeneratorAgent', 'InfographicGeneratorAgent', 'InfographicGeneratorAgent']
+ADK model calls: 11 ['DueDiligenceAnalyst', 'CompanyResearchAgent', 'MarketAnalysisAgent',
+  'FinancialModelingAgent', 'FinancialModelingAgent', 'RiskAssessmentAgent', 'InvestorMemoAgent',
+  'ReportGeneratorAgent', 'ReportGeneratorAgent', 'InfographicGeneratorAgent', 'InfographicGeneratorAgent']
+FINAL author: InfographicGeneratorAgent | text: InfographicGeneratorAgent SUMMARY after tool.
+```
+
+ADK가 관리하는 모델 호출은 코디네이터 1 + (1·2·4·5단계 각 1, 도구를 안 부르거나 `google_search` 그라운딩만 쓰는 단계) + (3·6·7단계 각 2, 도구 호출을 정하는 호출과 함수 응답 뒤 요약하는 호출) = **11회**입니다. 여기에 6·7단계의 도구 함수 안에서 직접 `Client()`를 만드는 호출 2회를 더하면 이번 요청 하나가 Gemini에 닿는 횟수는 **최소 13회**입니다(직접 실행 — 위 `event authors` 목록에서 `ReportGeneratorAgent`·`InfographicGeneratorAgent`가 3번씩 등장하는 것은 함수 호출 이벤트 사이에 도구 실행 이벤트가 끼어서입니다). 1단계는 2단계와 같은 도구(`google_search`) 하나만 씁니다. `SequentialAgent`의 `for`문은 순서만 강제할 뿐 6단계가 7단계의 결과를 읽거나 그 반대로 읽는 일은 없습니다(agent.py의 각 `instruction`을 대조해 확인, M5) — 마지막 스테이지(`InfographicGeneratorAgent`)의 텍스트가 그대로 최종 응답이 되고, 코디네이터가 다시 실행돼 요약하는 일은 Day 091과 마찬가지로 일어나지 않습니다.
+
+1·2단계, 3~5단계, 6·7단계 각각이 정확히 무엇과 연결되는지는 세 확장 그림에 나눠 그렸습니다.
+
 ![리서치 단계](diagrams/extra-pipeline.svg)
 
-1·2단계는 `google_search`를 왕복하며 `company_info`를 만들고 그 값을 그대로 이어받아 `market_analysis`를 만듭니다(Step 3). 이어서 3~5단계는 상태를 계속 누적합니다.
+1·2단계는 각자 `google_search`가 실린 요청을 Gemini에 보낼 뿐이고, 실제 검색은 **Gemini 모델 내부**에서 그라운딩으로 처리됩니다(`gemini_api -> google_search`, 공통 4) — 이 프로세스가 Google에 직접 왕복하는 것이 아닙니다. 이어서 3~5단계는 상태를 계속 누적합니다.
 
-![분석·메모 단계](diagrams/extra-analysis.svg)
+![분석 단계](diagrams/extra-analysis.svg)
 
-3단계(`FinancialModelingAgent`)만 `generate_financial_chart`로 차트 PNG를 아티팩트에 남기고(Step 4에서 키 없이 확인한 바로 그 경로), 4·5단계는 도구 없이 순수 추론만으로 `risk_assessment`·`investor_memo`를 쌓습니다. 마지막 두 단계는 `investor_memo`를 공통 입력으로 받아 독립적으로 갈라집니다 — `SequentialAgent`의 `for`문이 6번을 7번보다 먼저 실행할 뿐, 7단계가 6단계의 출력을 읽지는 않습니다(agent.py의 각 `instruction`을 대조해 확인).
+3단계(`FinancialModelingAgent`)만 `generate_financial_chart`로 차트 PNG를 아티팩트에 남기고(Step 4에서 키 없이 확인한 바로 그 경로), 4·5단계는 도구 없이 순수 추론만으로 `risk_assessment`·`investor_memo`를 쌓습니다.
 
-![출력 단계](diagrams/extra-outputs.svg)
+![리포트 생성](diagrams/extra-outputs.svg)
+![인포그래픽 생성](diagrams/extra-infographic.svg)
 
-6·7단계는 각자 ADK 경유로 한 번(도구 호출을 결정하는 자신의 추론), 그리고 도구 함수 안에서 `Client()`로 또 한 번, Gemini에 두 경로로 도달합니다 — Step 4에서 직접 실행해 본 그 `ValueError`가 실제 파이프라인 안에서도 같은 지점에서 발생합니다.
+6·7단계는 각자 `investor_memo`를 독립적으로 받아, 자신의 추론으로 도구를 부르기로 정한 뒤(ADK 경유 2회) 그 도구 함수 안에서 **별도로** `Client()`를 직접 만들어 Gemini에 한 번 더 닿습니다(ADK 우회) — Step 4에서 직접 실행해 본 그 `ValueError`가 실제 파이프라인 안에서도 같은 지점에서 발생합니다.
 
 ## 실행 체크리스트
 
 - [ ] `uv venv && uv pip install -r requirements.txt`로 설치하고 `google-adk 2.10.0`·`google-genai 2.25.0`을 확인했다
+- [ ] 3~5단계·인포그래픽 도구가 쓰는 `gemini-3-pro-preview`·`gemini-3-pro-image-preview`가 이미 서비스 종료됐다는 것을 Google 공식 문서로 확인했다
 - [ ] `BuiltInCodeExecutor`가 임포트만 되고 실제로는 쓰이지 않는다는 것을 전체 검색으로 확인했다
-- [ ] `root_agent.sub_agents`의 유일한 원소가 `SequentialAgent`이고, google-adk 소스로 이것이 유효한 전환 대상임을 확인했다
-- [ ] `CompanyResearchAgent`·`MarketAnalysisAgent`가 `google_search`를 실제로 `tools=[...]`에 넣어 쓴다는 것을 확인했다
+- [ ] `root_agent.sub_agents`의 유일한 원소가 `SequentialAgent`이고, 이 패턴 자체는 Day 091이 처음 확인했다는 것을 README로 확인했다
+- [ ] `CompanyResearchAgent`·`MarketAnalysisAgent`가 `google_search`를 `tools=[...]`에 넣어 쓰지만, 그것이 Gemini 내부 그라운딩이라 앱이 직접 왕복하지 않는다는 것을 `tools_dict`로 확인했다
 - [ ] `generate_financial_chart`를 가짜 `ToolContext`로 직접 호출해 키 없이 성공한다는 것을 확인했다
 - [ ] `generate_html_report`·`generate_infographic`이 함수 안의 `Client()` 생성자에서 막힌다는 것을 확인했다
+- [ ] 스텁 콜백으로 파이프라인 전체를 돌려 Gemini 호출이 최소 13회라는 것과 마지막 단계의 텍스트가 최종 응답이 된다는 것을 확인했다
 - [ ] `adk web`을 앱 폴더 안에서 띄우고 `/list-apps`·`/run`으로 Day 014·088과 같은 `ValueError` 지점을 재현했다
 
 ## 문제 해결
@@ -433,7 +493,7 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 - `generate_html_report`·`generate_infographic`의 `Client()` 호출부(`tools.py:161`, `tools.py:237`)를 `Client(api_key=...)`로 바꿔 명시적으로 키를 넘기도록 고쳐보고, ADK 자신의 모델 라우팅을 거치는 나머지 6개 에이전트와 실패 지점이 달라지는지 비교해보기
 - `BuiltInCodeExecutor`를 `financial_modeling_agent`에 실제로 `code_executor=`로 연결해보고, `generate_financial_chart` 함수 도구 없이도 같은 차트 계산이 재현되는지 Day 022의 방식으로 확인해보기
-- 실제 `GOOGLE_API_KEY`를 발급받아 `adk web`으로 전체 7단계를 완주시켜보고, 6단계(`ReportGeneratorAgent`)가 정말 5단계의 `investor_memo`만 읽고 7단계의 결과와는 무관하게 실행되는지 이벤트 로그로 확인해보기
+- 실제 `GOOGLE_API_KEY`를 발급받아(단, 3~5단계 모델은 이미 종료됐으므로 `agent.py:103,156,198`을 `gemini-3.1-pro-preview`로, `tools.py:239`를 `gemini-3-pro-image`로 먼저 바꿔야 3단계를 넘어간다) `adk web`으로 전체 7단계를 완주시켜보고, 6단계(`ReportGeneratorAgent`)가 정말 5단계의 `investor_memo`만 읽고 7단계의 결과는 읽지 않는지 이벤트 로그로 확인해보기
 
 ## 다음 날 예고
 
