@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gemini_pro_image: gemini-3-pro-image-preview (서비스 종료) { class: ext }
+gen_tool: 렌더링 생성 도구 (generate_renovation_rendering) { class: ours }
+store: 세션 상태 + 아티팩트 저장소 { class: store }
+
+gen_tool -> gemini_pro_image: generate_content_stream, response_modalities IMAGE+TEXT
+gemini_pro_image -> gen_tool: 이미지 청크 스트림
+gen_tool -> store: save_artifact + 버전 갱신

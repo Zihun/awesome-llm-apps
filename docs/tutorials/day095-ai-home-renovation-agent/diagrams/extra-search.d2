@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+visual_assessor: 시각 분석 에이전트 (VisualAssessor) { class: ours }
+gemini: Gemini API (gemini-3-flash-preview) { class: ext }
+search_agent: 검색 에이전트 (SearchAgent) { class: ours }
+
+visual_assessor -> gemini: instruction + 도구 선언 + 사진
+gemini -> visual_assessor: function_call SearchAgent(query)
+search_agent -> gemini: instruction + google_search 선언
+gemini -> search_agent: 그라운딩된 검색 결과

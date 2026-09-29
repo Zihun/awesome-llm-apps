@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+util_tools: 보조 도구 (calculate_timeline) { class: ours }
+design_planner: 디자인 플래너 (DesignPlanner) { class: ours }
+gemini: Gemini API (gemini-3-flash-preview) { class: ext }
+
+design_planner -> util_tools: calculate_timeline(scope, room_type)
+util_tools -> design_planner: 일정 문자열
+design_planner -> gemini: function_response
+gemini -> design_planner: DESIGN COMPLETE 텍스트

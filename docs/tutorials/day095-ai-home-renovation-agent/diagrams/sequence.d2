@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+adk_web: adk web 서버 { class: ext }
+user: 사용자 { class: person }
+pipeline: 계획 파이프라인 (PlanningPipeline) { class: ours }
+coordinator: 코디네이터 (root_agent) { class: ours }
+gemini: Gemini API (gemini-3-flash-preview) { class: ext }
+
+user -> adk_web: 텍스트+이미지 (POST /run)
+adk_web -> coordinator: root_agent 조회 (인프로세스)
+coordinator -> gemini: instruction + transfer_to_agent 선언
+gemini -> coordinator: function_call transfer_to_agent(PlanningPipeline)
+coordinator -> pipeline: 제어 이관 (복귀 보장 없음)

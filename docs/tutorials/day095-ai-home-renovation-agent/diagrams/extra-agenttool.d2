@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+visual_assessor: 시각 분석 에이전트 (VisualAssessor) { class: ours }
+search_agent: 검색 에이전트 (SearchAgent) { class: ours }
+
+visual_assessor -> search_agent: AgentTool 호출
+search_agent -> visual_assessor: AgentTool 반환 (텍스트)

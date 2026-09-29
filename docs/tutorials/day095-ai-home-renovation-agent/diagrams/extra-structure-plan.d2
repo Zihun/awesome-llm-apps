@@ -1,0 +1,9 @@
+...@../../_tools/theme
+direction: down
+
+design_planner: 2. 디자인 플래너 (DesignPlanner) { class: ours }
+flash: gemini-3-flash-preview { class: ext }
+util_tools: 보조 도구 (calculate_timeline) { class: ours }
+
+design_planner -> flash: instruction + 도구 선언
+design_planner -> util_tools: calculate_timeline 호출

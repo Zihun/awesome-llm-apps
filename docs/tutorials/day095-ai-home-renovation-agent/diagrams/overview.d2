@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+
+adk_web: adk web 서버 {
+  class: group
+  coordinator: 코디네이터 (HomeRenovationPlanner) { class: ours }
+}
+
+info_agent: 정보 안내 (InfoAgent) { class: ours }
+rendering_editor: 렌더링 수정 (RenderingEditor) { class: ours }
+
+pipeline: 계획 파이프라인 (PlanningPipeline) 3단계 {
+  class: group
+  visual_assessor: 1. 시각 분석 { class: ours }
+  design_planner: 2. 디자인 플래너 { class: ours }
+  project_coordinator: 3. 프로젝트 코디네이터 { class: ours }
+}
+
+user -> adk_web: 채팅 메시지 (텍스트/이미지)
+adk_web.coordinator -> info_agent: transfer_to_agent
+adk_web.coordinator -> rendering_editor: transfer_to_agent
+adk_web.coordinator -> pipeline: transfer_to_agent (선언 순서대로 실행)
