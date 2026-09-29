@@ -2,8 +2,6 @@
 direction: right
 
 gen_tool: 생성 도구 { class: ours }
-edit_tool: 편집 도구 { class: ours }
-list_tool: 목록 도구 { class: ours }
 
 pro_preview: gemini-3-pro-preview (종료) { class: ext }
 pro_image: gemini-3-pro-image-preview (종료) { class: ext }
@@ -12,8 +10,5 @@ store: 세션 상태 + 아티팩트 저장소 { class: store }
 
 gen_tool -> pro_preview: 프롬프트 재작성 요청
 gen_tool -> pro_image: 이미지 생성 요청
-edit_tool -> pro_image: 이미지 편집 요청
-
-gen_tool <-> store: 버전·참조 읽기 → 버전 기록+저장
-edit_tool <-> store: 원본 읽기(load_artifact) → 새 버전 저장
-list_tool -> store: 버전 조회
+store -> gen_tool: 버전·참조 읽기
+gen_tool -> store: 버전 기록+저장

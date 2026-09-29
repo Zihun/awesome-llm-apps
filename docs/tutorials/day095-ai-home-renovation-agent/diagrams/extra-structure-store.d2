@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: right
+
+edit_tool: 편집 도구 { class: ours }
+list_tool: 목록 도구 { class: ours }
+
+pro_image: gemini-3-pro-image-preview (종료) { class: ext }
+
+store: 세션 상태 + 아티팩트 저장소 { class: store }
+
+edit_tool -> pro_image: 이미지 편집 요청
+store -> edit_tool: 원본 읽기(load_artifact)
+edit_tool -> store: 새 버전 저장
+list_tool -> store: 버전 조회

@@ -1,6 +1,6 @@
 # Day 095 · 🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(모델 서비스 종료) · 예상 소요 67분(Step마다 함수를 직접 호출해 보고, 부모 폴더에서 `--python`으로 가상환경을 직접 가리키는 실행법을 손으로 맞춰 보고, `adk web`까지 띄워 어디서 멈추는지 확인하는 손 시간이 듭니다) · API 비용 대략 계획 한 건에 Gemini 호출 최소 10회(코디네이터 1 + VisualAssessor 2 + SearchAgent 1(그라운딩 과금 별도) + DesignPlanner 2 + ProjectCoordinator 2 + 렌더링 도구 자체 호출 2) — 렌더링에 쓰는 모델 둘이 이미 서비스 종료라 실제 키로도 그 단계에서 막혀 실측은 못합니다 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(모델 서비스 종료) · 예상 소요 70분(Step마다 함수를 직접 호출해 보고, 부모 폴더에서 `--python`으로 가상환경을 직접 가리키는 실행법을 셸별로 맞춰 보고, `adk web`까지 띄워 어디서 멈추는지 확인하는 손 시간이 듭니다) · API 비용 대략 계획 한 건에 Gemini 호출 최소 10회(코디네이터 1 + VisualAssessor 2 + SearchAgent 1(그라운딩 과금 별도) + DesignPlanner 2 + ProjectCoordinator 2 + 렌더링 도구 자체 호출 2) — 렌더링에 쓰는 모델 둘이 이미 서비스 종료라 실제 키로도 그 단계에서 막혀 실측은 못합니다 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent`
 
 ## 오늘 만들 것
 
@@ -32,17 +32,19 @@
 | Pydantic 입력 모델 | 도구 하나가 인자 여러 개 대신 모델 하나(`inputs`)를 받는 방식 — ADK의 `JSON_SCHEMA_FOR_FUNC_DECL` 기능(기본 켜짐)은 이를 `parameters_json_schema`로 실을지만 정할 뿐, 꺼도 `parameters`에 같은 중첩 구조가 만들어진다(Step 6에서 확인) | `advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent/tools.py:104-117` |
 | 세션 상태 + 아티팩트 저장소 | `tool_context.state`의 버전 카운터와 `tool_context.save_artifact`의 이미지 바이트 | 코드 없음 (google-adk `ToolContext` — 직접 확인) |
 
-완성 아키텍처에는 코디네이터가 세 대상 중 어디로 보내는지와 `PlanningPipeline`의 3단계 존재만 남기고, 각 에이전트가 실제로 어떤 도구·모델을 부르는지는 따로 그렸습니다 — 한 그림에 다 넣으면 코디네이터·3단계·도구·Gemini 두 모델·검색·저장소가 층층이 쌓여 너무 길어지기 때문입니다. 아래 네 그림이 overview의 각 노드 하나에 정확히 대응합니다.
+완성 아키텍처에는 코디네이터가 세 대상 중 어디로 보내는지와 `PlanningPipeline`의 3단계 존재만 남기고, 각 에이전트가 실제로 어떤 도구·모델을 부르는지는 따로 그렸습니다 — 한 그림에 다 넣으면 코디네이터·3단계·도구·Gemini 두 모델·검색·저장소가 층층이 쌓여 너무 길어지기 때문입니다. 아래 다섯 그림이 overview의 각 노드 하나에 정확히 대응합니다.
 
 1. 코디네이터·`InfoAgent`·`RenderingEditor`가 각각 flash를 부르는 관계(둘의 편집·목록 도구 포함).
 2. `VisualAssessor`(1단계)가 `SearchAgent`·견적 도구·flash를 부르는 관계 — `google_search`는 `SearchAgent`가 있는 이 그림에 있습니다(flash 안에서 내장 실행되는 것이라 `SearchAgent` 호출일 때만 켜집니다).
 3. `DesignPlanner`(2단계)·`ProjectCoordinator`(3단계)가 일정·생성·편집·목록 도구와 flash를 부르는 관계.
-4. 렌더링 도구가 실제로 `gemini-3-pro-preview`·`gemini-3-pro-image-preview`·저장소와 만나는 지점(저장소에서 버전·참조 이미지를 읽는 것도 포함).
+4. 생성 도구가 실제로 `gemini-3-pro-preview`·`gemini-3-pro-image-preview`·저장소와 만나는 지점(저장소에서 버전·참조 이미지를 읽는 것도 포함).
+5. 편집·목록 도구가 `gemini-3-pro-image-preview`·저장소와 만나는 지점(편집 도구는 원본을 `load_artifact`로 먼저 읽습니다).
 
 ![코디네이터·InfoAgent·RenderingEditor의 도구·모델 호출](diagrams/extra-structure.svg)
 ![VisualAssessor의 도구·모델 호출](diagrams/extra-structure-visual.svg)
 ![DesignPlanner·ProjectCoordinator의 도구·모델 호출](diagrams/extra-structure-pipeline.svg)
-![렌더링 도구가 실제로 부르는 두 모델과 저장소](diagrams/extra-structure-models.svg)
+![생성 도구가 실제로 부르는 두 모델과 저장소](diagrams/extra-structure-models.svg)
+![편집·목록 도구가 실제로 부르는 모델과 저장소](diagrams/extra-structure-store.svg)
 
 ## 단계별 진행
 
@@ -165,6 +167,8 @@ print(estimate_renovation_cost('kitchen', 'moderate', 120))
 "
 ```
 
+(PowerShell은 같은 줄 앞에 환경변수를 따로 설정합니다: `$env:PYTHONIOENCODING="utf-8"; uv run --no-project --python ai_home_renovation_agent/.venv python -c "..."`.)
+
 ```
 💰 Estimated Cost: $18,000 - $30,000 (moderate kitchen renovation, ~120 sq ft)
 ```
@@ -193,6 +197,8 @@ from ai_home_renovation_agent.agent import calculate_timeline
 print(calculate_timeline('moderate', 'kitchen'))
 "
 ```
+
+(PowerShell은 `$env:PYTHONIOENCODING="utf-8"; uv run --no-project --python ai_home_renovation_agent/.venv python -c "..."`처럼 환경변수를 세미콜론으로 이어 씁니다.)
 
 ```
 ⏱️ Estimated Timeline: 3-6 weeks (includes some structural work)
@@ -248,12 +254,18 @@ uv run --no-project adk web --no_use_local_storage .
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 다른 터미널에서 목록과 세션을 봅니다. Windows PowerShell은 `curl`을 `Invoke-WebRequest`의 별칭으로 미리 정의해 두므로 `curl.exe`로 씁니다.
+**확인.** 다른 터미널에서 목록과 세션을 봅니다. Windows PowerShell은 `curl`을 `Invoke-WebRequest`의 별칭으로 미리 정의해 두므로 `curl.exe`로 씁니다(macOS/Linux는 `curl.exe`가 없으므로 그냥 `curl`을 씁니다).
 
 ```bash
 curl.exe http://127.0.0.1:8000/list-apps
 curl.exe -X POST http://127.0.0.1:8000/apps/ai_home_renovation_agent/users/u1/sessions/s1 -H "Content-Type: application/json" -d '{}'
 curl.exe -X POST http://127.0.0.1:8000/run -H "Content-Type: application/json" -d '{"appName":"ai_home_renovation_agent","userId":"u1","sessionId":"s1","newMessage":{"role":"user","parts":[{"text":"hi, what do you do?"}]}}'
+```
+
+Windows PowerShell 5.1은 네이티브 명령에 인자를 넘길 때 홑따옴표 문자열 안의 큰따옴표까지 명령줄 재구성 과정에서 벗겨내 위 JSON을 깨뜨립니다. PowerShell에서는 큰따옴표로 감싸고 안쪽 큰따옴표를 역슬래시로 이스케이프합니다(Day 088과 같은 처리).
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8000/run -H "Content-Type: application/json" -d "{\"appName\":\"ai_home_renovation_agent\",\"userId\":\"u1\",\"sessionId\":\"s1\",\"newMessage\":{\"role\":\"user\",\"parts\":[{\"text\":\"hi, what do you do?\"}]}}"
 ```
 
 목록은 `["ai_home_renovation_agent"]`, 세션 생성은 성공합니다(직접 확인, 격리 포트 사용). `/run`은 키가 없으면 `HomeRenovationPlanner`가 첫 모델 호출(`gemini-3-flash-preview`)을 만드는 순간 `ValueError: No API key was provided. Please pass a valid API key.`로 끊깁니다 — Day 014·088에서 이미 본 `google-genai`의 같은 오류입니다(직접 확인).
@@ -285,7 +297,7 @@ curl.exe -X POST http://127.0.0.1:8000/run -H "Content-Type: application/json" -
 10. **`ProjectCoordinator`가 `adk web`에 최종 응답 이벤트를 보내고, `adk web`이 계획 텍스트와 아티팩트 패널을 사용자에게 표시합니다.**
     ![사용자에게 최종 응답](diagrams/extra-reply.svg)
 
-키가 없어 이 문서는 Step 7에서 확인한 첫 Gemini 호출 지점 이후는 실제로 관찰하지 못했습니다 — 위 9단계는 소스(`agent.py`·`tools.py`)와 ADK의 알려진 흐름(Day 014·021·022·077)으로 구성한 것입니다.
+키가 없어 이 문서는 Step 7에서 확인한 첫 Gemini 호출 지점 이후는 실제로 관찰하지 못했습니다 — 위 10단계는 소스(`agent.py`·`tools.py`)와 ADK의 알려진 흐름(Day 014·021·022·077)으로 구성한 것입니다.
 
 ## 실행 체크리스트
 
