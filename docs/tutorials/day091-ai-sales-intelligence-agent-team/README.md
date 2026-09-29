@@ -1,10 +1,10 @@
 # Day 091 · 👨🏻‍💼 AI Sales Intelligence Agent Team
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠ · 예상 소요 90분(Step마다 스텁 콜백으로 파이프라인 7단계를 직접 실행해 보고, 서비스 종료된 모델 둘을 SDK 소스로 재확인하고, `adk web`까지 띄워 확인하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 배틀카드 1건에 Gemini 호출이 **최소 12회**(코디네이터 1 + 1~5단계 5 + 6·7단계 각 2(도구 선택 + 함수 응답 요약) + 도구 안 직접 `Client()` 호출 2) 들어가는 구조지만 `gemini-3-*-preview` 요금표를 확인하지 못해 원화 추정은 하지 않습니다(키가 없어 실제 과금도 확인 못함) — 게다가 3~7단계가 쓰는 모델 둘은 **이미 서비스가 종료돼** 키를 넣어도 3단계에서 멈춥니다(아래) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠(모델 서비스 종료) · 예상 소요 95분(Step마다 스텁 콜백으로 파이프라인 7단계를 직접 실행해 보고, 서비스 종료된 모델 둘을 SDK 소스로 재확인하고, `adk web`까지 띄워 확인하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 배틀카드 1건에 Gemini 호출이 **최소 12회**(코디네이터 1 + 1~5단계 5 + 6·7단계 각 2(도구 선택 + 함수 응답 요약) + 도구 안 직접 `Client()` 호출 2) 들어가는 구조지만 `gemini-3-*-preview` 요금표를 확인하지 못해 원화 추정은 하지 않습니다(키가 없어 실제 과금도 확인 못함) — 게다가 3~5단계와 7단계 도구가 쓰는 모델 둘은 **이미 서비스가 종료돼** 키를 넣어도 3단계에서 멈춥니다(아래) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team`
 
 ## 오늘 만들 것
 
-Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨의 열네 번째 앱입니다. Day 088(AI Consultant Agent)에 이어 이 볼륨에서 두 번째로 `google-adk`를 쓰는 날이고(078~087·089·090은 agno·EvoAgentX·OpenAI Agents SDK·CrewAI·AG2·프레임워크 없음 등 다른 조합이었습니다 — Day 090 README가 078~089를 프레임워크별로 정리해 뒀습니다), 시리즈 전체로 보면 Day 014~023 크래시 코스, Day 067, Day 077, Day 088에 이어 다섯 번째로 이 프레임워크를 다루는 자리입니다. 오늘의 441줄짜리 `agent.py`(마지막 줄은 빈 줄, `wc -l` 그대로)는 `LlmAgent` 7개를 `SequentialAgent`로 묶어 "경쟁사 리서치 → 기능 분석 → 포지셔닝 분석 → SWOT → 반박 스크립트 → 배틀카드 생성 → 비교 차트 생성" 순서를 선언 순서 그대로 강제합니다(Day 022가 이미 확인한 `SequentialAgent`의 `for`문 실행 방식 그대로). 다만 이번 조합은 이 시리즈에서 처음 나오는 것입니다 — 코디네이터(`root_agent`, `LlmAgent`)가 자신의 `sub_agents`에 다른 `LlmAgent`가 아니라 이 `SequentialAgent` 자체를 넣고, `transfer_to_agent`(Day 021이 확인한 자동 주입 도구)로 제어를 통째로 넘깁니다. Day 001~090 앱 소스 전체에서 `LlmAgent`의 `sub_agents`에 워크플로 에이전트(`SequentialAgent`·`LoopAgent`·`ParallelAgent`)가 들어간 예를 찾아도 없습니다(전체 검색으로 직접 확인 — google-adk를 쓰는 Day 014~023·067·077·088의 `sub_agents`는 전부 다른 `LlmAgent`이거나 워크플로 에이전트 자신이 `Runner`의 루트입니다) — 그래서 이 조합은 오늘이 처음입니다. (참고로 `SequentialAgent`와 `output_key`가 같은 파일에 함께 있는 앱은 리포 전체에 6곳— 이 앱과 Day 092의 원본 앱을 포함합니다 — 이지만, `sub_agents`에 워크플로 에이전트를 넣는 패턴 자체는 그중에도 이 앱이 처음 보여줍니다.) Step 6에서 "워크플로 에이전트로 전환하면 무슨 일이 일어나는가"를 스텁 콜백으로 직접 실행해 확인합니다. 또 하나, 7단계 중 마지막 두 단계(`battle_card_generator_agent`, `comparison_chart_agent`)는 ADK가 자동으로 부르는 모델 호출과는 별개로, 자신의 커스텀 도구 안에서 `google.genai.Client()`를 직접 만들어 **두 번째** Gemini 호출을 겁니다 — 하나는 HTML 배틀카드 텍스트를, 하나는 `response_modalities=["TEXT","IMAGE"]`로 실제 비교 인포그래픽 이미지를 생성합니다(이미지 생성 자체는 Day 082가 이미 다뤘지만, `response_modalities`를 명시적으로 요청 설정에 넣는 것은 오늘 처음입니다 — Step 5에서 비교합니다). **다만 이 여섯 곳 중 넷(포지셔닝·SWOT·반박 스크립트 단계와 비교 차트 도구)이 쓰는 `gemini-3-pro-preview`·`gemini-3-pro-image-preview`는 Day 082가 이미 "서비스 종료"로 확인한 바로 그 모델입니다** — Google 공식 "Model deprecations" 문서(https://ai.google.dev/gemini-api/docs/deprecations, Day 082가 2026-09-28에 확인)에 따르면 `gemini-3-pro-preview`는 2026-03-09에, `gemini-3-pro-image-preview`는 2026-06-25에 이미 종료됐고, 이 문서를 쓰며 설치한 google-genai 2.25.0의 모델 목록(`_gaos/types/interactions/model.py`)에도 이 두 이름은 없고 대체 모델 `gemini-3.1-pro-preview`·`gemini-3-pro-image`만 있습니다(직접 확인, 2026-09-29 — Day 082의 확인과 같은 파일, 같은 결과). 즉 키를 넣어도 3단계(`positioning_analyzer_agent`)에서 멈춰 배틀카드·차트는 끝까지 나오지 않습니다 — Step 5·문제 해결에서 다시 짚습니다. 완성 아키텍처는 다음과 같습니다.
+Day 078에서 시작한 "🚀 Advanced AI Agents" 볼륨의 열네 번째 앱입니다. Day 088(AI Consultant Agent)에 이어 이 볼륨에서 두 번째로 `google-adk`를 쓰는 날이고(078~087·089·090은 agno·EvoAgentX·OpenAI Agents SDK·CrewAI·AG2·프레임워크 없음 등 다른 조합이었습니다 — Day 090 README가 078~089를 프레임워크별로 정리해 뒀습니다), 시리즈 전체로 보면 Day 014~023 크래시 코스, Day 067, Day 077, Day 088에 이어 다섯 번째로 이 프레임워크를 다루는 자리입니다. 오늘의 441줄짜리 `agent.py`(마지막 줄은 빈 줄, `wc -l` 그대로)는 `LlmAgent` 7개를 `SequentialAgent`로 묶어 "경쟁사 리서치 → 기능 분석 → 포지셔닝 분석 → SWOT → 반박 스크립트 → 배틀카드 생성 → 비교 차트 생성" 순서를 선언 순서 그대로 강제합니다(Day 022가 이미 확인한 `SequentialAgent`의 `for`문 실행 방식 그대로). 다만 이번 조합은 이 시리즈에서 처음 나오는 것입니다 — 코디네이터(`root_agent`, `LlmAgent`)가 자신의 `sub_agents`에 다른 `LlmAgent`가 아니라 이 `SequentialAgent` 자체를 넣고, `transfer_to_agent`(Day 021이 확인한 자동 주입 도구)로 제어를 통째로 넘깁니다. Day 001~090 앱 소스 전체에서 `LlmAgent`의 `sub_agents`에 워크플로 에이전트(`SequentialAgent`·`LoopAgent`·`ParallelAgent`)가 들어간 예를 찾아도 없습니다(전체 검색으로 직접 확인 — google-adk를 쓰는 Day 014~023·067·077·088의 `sub_agents`는 전부 다른 `LlmAgent`이거나 워크플로 에이전트 자신이 `Runner`의 루트입니다) — 그래서 이 조합은 오늘이 처음입니다. (참고로 `SequentialAgent`와 `output_key`가 같은 파일에 함께 있는 앱은 리포 전체에 6곳— 이 앱과 Day 092의 원본 앱을 포함합니다 — 이지만, `sub_agents`에 워크플로 에이전트를 넣는 패턴 자체는 그중에도 이 앱이 처음 보여줍니다.) Step 6에서 "워크플로 에이전트로 전환하면 무슨 일이 일어나는가"를 스텁 콜백으로 직접 실행해 확인합니다. 또 하나, 7단계 중 마지막 두 단계(`battle_card_generator_agent`, `comparison_chart_agent`)는 ADK가 자동으로 부르는 모델 호출과는 별개로, 자신의 커스텀 도구 안에서 `google.genai.Client()`를 직접 만들어 **두 번째** Gemini 호출을 겁니다 — 하나는 HTML 배틀카드 텍스트를, 하나는 `response_modalities=["TEXT","IMAGE"]`로 실제 비교 인포그래픽 이미지를 생성합니다(이미지 생성 자체는 Day 082가 이미 다뤘지만, `response_modalities`를 명시적으로 요청 설정에 넣는 것은 오늘 처음입니다 — Step 5에서 비교합니다). **다만 오늘 앱의 7단계 중 넷(포지셔닝·SWOT·반박 스크립트 단계와 비교 차트 도구 — 앞 문단의 "6곳"과는 별개로, 이 앱 하나 안에서의 얘기입니다)이 쓰는 `gemini-3-pro-preview`·`gemini-3-pro-image-preview`는 Day 082가 이미 "서비스 종료"로 확인한 바로 그 모델입니다** — Google 공식 "Model deprecations" 문서(https://ai.google.dev/gemini-api/docs/deprecations, Day 082가 2026-09-28에 확인)에 따르면 `gemini-3-pro-preview`는 2026-03-09에, `gemini-3-pro-image-preview`는 2026-06-25에 이미 종료됐고, 이 문서를 쓰며 설치한 google-genai 2.25.0의 모델 목록(`_gaos/types/interactions/model.py`)에도 이 두 이름은 없고 대체 모델 `gemini-3.1-pro-preview`·`gemini-3-pro-image`만 있습니다(직접 확인, 2026-09-29 — Day 082의 확인과 같은 파일, 같은 결과). 즉 키를 넣어도 3단계(`positioning_analyzer_agent`)에서 멈춰 배틀카드·차트는 끝까지 나오지 않습니다 — Step 5·문제 해결에서 다시 짚습니다. 완성 아키텍처는 다음과 같습니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -188,7 +188,7 @@ competitor_research_agent = LlmAgent(
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-세 단계가 각자 Gemini를 부르고(위 그림), 그 호출 안에서 Gemini가 검색을 그라운딩하는 모습은 아래처럼 별도로 그렸습니다 — `google_search`를 별도 노드로 두되 화살표는 언제나 Gemini에서 나가야 방향이 사실과 맞습니다.
+위 그림(개요)은 파이프라인 전체를 한 상자로 묶어 "각 단계가 Gemini 호출"이라고만 적어 뒀습니다 — 어느 단계가 정확히 무엇을 보내는지는 아래에 단계별로 풀었습니다. `google_search`는 별도 노드로 두되 화살표는 언제나 Gemini에서 나가야 방향이 사실과 맞습니다.
 
 ![리서치 1~2단계](diagrams/extra-research1.svg)
 
@@ -236,7 +236,7 @@ asyncio.run(main())
 ProductFeatureAgent saw: 'COMPETITOR PROFILE:\nCOMPETITORRESEARCHAGENT OUTPUT\n\nUse'
 ```
 
-캔 응답 `COMPETITORRESEARCHAGENT OUTPUT`이 `{competitor_profile}` 자리에 그대로 들어간 것을 직접 확인했습니다 — 파이썬 f-string이 아니라 ADK 자신의 템플리팅이 실제로 작동한다는 뜻입니다. 이 스텁 스크립트는 Step 4·6에서도 재사용합니다.
+캔 응답 `COMPETITORRESEARCHAGENT OUTPUT`이 `{competitor_profile}` 자리에 그대로 들어간 것을 직접 확인했습니다 — 파이썬 f-string이 아니라 ADK 자신의 템플리팅이 실제로 작동한다는 뜻입니다.
 
 ### Step 4. 합성 2단계 — 도구 없이 이전 결과만 종합
 
@@ -266,7 +266,9 @@ POSITIONING INTEL:
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-이번 단계에서 5단계(`objection_handler_agent`)까지는 아직 새 산출물이 없습니다 — 산출물 저장은 다음 Step에서 시작됩니다.
+위 그림도 파이프라인을 한 상자로 묶었을 뿐이라, 4·5단계 각자가 Gemini에 무엇을 보내는지는 3단계를 다리로 이어 아래에 풀었습니다 — 이번 단계에서 5단계(`objection_handler_agent`)까지는 아직 새 산출물이 없습니다(산출물 저장은 다음 Step부터).
+
+![합성 2단계](diagrams/extra-synthesis.svg)
 
 **확인.**
 
@@ -350,12 +352,14 @@ grep -c '"gemini-3-pro-preview"\|"gemini-3-pro-image-preview"' ai_sales_intellig
 grep -n '"gemini-3.1-pro-preview"\|"gemini-3-pro-image"' ai_sales_intelligence_agent_team/.venv/Lib/site-packages/google/genai/_gaos/types/interactions/model.py
 ```
 
+(macOS/Linux에서 `uv pip install`이 만드는 경로는 `.venv/lib/python3.x/site-packages`로 다릅니다 — 위 경로는 Windows의 `uv venv` 기준입니다.)
+
 직접 확인한 출력:
 
 ```
 0
-        "gemini-3.1-pro-preview",
-        "gemini-3-pro-image",
+48:        "gemini-3.1-pro-preview",
+54:        "gemini-3-pro-image",
 ```
 
 두 옛 이름은 SDK의 모델 목록 어디에도 없고(카운트 0), 대체 이름만 있습니다(2026-09-29 확인) — Day 082가 같은 파일로 확인한 것과 같은 결과입니다. 키를 넣어도 3단계(`positioning_analyzer_agent`, `gemini-3-pro-preview`)에서 멈추므로, 6·7단계의 이 두 번째 Gemini 호출까지는 실제로 도달하지 못합니다. 문제 해결에 다시 적습니다.
@@ -364,9 +368,11 @@ grep -n '"gemini-3.1-pro-preview"\|"gemini-3-pro-image"' ai_sales_intelligence_a
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-두 도구가 각자 커스텀 함수를 부르고, 그 함수 내부에서 별도의 `Client()`로 Gemini를 다시 부른 뒤 저장하는 자세한 구조는 아래에 따로 그렸습니다.
+두 단계 각자 자신의 ADK 모델 호출(도구를 쓸지 정하고, 함수 응답 뒤 요약하는 2회)과, 그 도구 함수 내부의 별도 `Client()` 호출까지 합쳐 두 장으로 나눠 그렸습니다 — 한 장에 다 넣으면 화살표가 몰려 겹칩니다.
 
-![산출물 생성 2단계](diagrams/extra-generation.svg)
+![6단계: 배틀카드 생성](diagrams/extra-generation1.svg)
+
+![7단계: 비교 차트 생성](diagrams/extra-generation2.svg)
 
 **확인.** 키 없이 두 도구를 직접 호출해 어디서 멈추는지 봅니다(스크래치로 복사한 사본에서 실행 — `outputs/` 생성 때문입니다, Step 1 참고).
 
@@ -394,9 +400,9 @@ chart: {'status': 'error', 'message': 'No API key was provided. Please pass a va
 
 ```
 Error generating battle card: No API key was provided. ...
+Error generating comparison infographic: No API key was provided. ...
 Task exception was never retrieved
 ...AttributeError("'BaseApiClient' object has no attribute '_async_httpx_client'")
-Error generating comparison infographic: No API key was provided. ...
 Task exception was never retrieved
 ...AttributeError("'BaseApiClient' object has no attribute '_async_httpx_client'")
 ```
@@ -477,7 +483,7 @@ text events:
  - ComparisonChartAgent | COMPARISON CHART TEXT.
 ```
 
-`root_agent`가 `transfer_to_agent(BattleCardPipeline)`를 부른 뒤로는 **이번 요청 안에서는** 두 번 다시 등장하지 않고, 7단계 **전부**가 각자 텍스트 이벤트를 냅니다 — 마지막 것만 나는 게 아닙니다. 코디네이터 지시문이 약속한 "After analysis, summarize key findings"를 코디네이터 자신이 실행할 자리는 이번 요청 안엔 없습니다. Day 021의 `LlmAgent → LlmAgent` 전환은 대상이 마음먹으면(지시문에 그렇게 적으면) 같은 요청 안에서도 되돌아올 **가능성**이라도 있었지만, `SequentialAgent`는 `LlmAgent`가 아니어서 애초에 `transfer_to_agent` 도구 자체가 없습니다(Day 022가 확인한 것과 같은 이유) — 이번 요청 안에서 되돌아올 길이 없습니다. 다만 이것이 "영원히 못 돌아온다"는 뜻은 아닙니다 — 같은 세션에 **다음** 메시지를 새로 보내면 `adk web`은 다시 `root_agent`부터 시작합니다(세션이 대화 기록을 유지할 뿐, 마지막으로 전환된 에이전트를 기억해 두는 것은 아니기 때문입니다).
+`root_agent`가 `transfer_to_agent(BattleCardPipeline)`를 부른 뒤로는 **이번 요청 안에서는** 두 번 다시 등장하지 않고, 7단계 **전부**가 각자 텍스트 이벤트를 냅니다 — 마지막 것만 나는 게 아닙니다. 코디네이터 지시문이 약속한 "After analysis, summarize key findings"를 코디네이터 자신이 실행할 자리는 이번 요청 안엔 없습니다. Day 021의 `LlmAgent → LlmAgent` 전환은 대상이 마음먹으면(지시문에 그렇게 적으면) 같은 요청 안에서도 되돌아올 **가능성**이라도 있었지만, `SequentialAgent`는 `LlmAgent`가 아니어서 애초에 `transfer_to_agent` 도구 자체가 없습니다(Day 022가 확인한 것과 같은 이유) — 이번 요청 안에서 되돌아올 길이 없습니다. 다만 이것이 "영원히 못 돌아온다"는 뜻은 아닙니다 — 같은 세션에 **다음** 메시지를 새로 보내면 `adk web`은 다시 `root_agent`부터 시작합니다. 이유는 세션이 마지막 작성자를 잊어서가 아니라(오히려 ADK는 마지막 작성자를 **기억해서 이어가려고 먼저 시도**합니다) 그 작성자가 이어받을 자격이 없기 때문입니다 — google-adk 2.10.0의 `_find_agent_to_run`(`runners.py`, 소스로 확인)은 "마지막에 답한 `LlmAgent`가 에이전트 계층 전체로 전환 가능하면" 그 에이전트를 이어서 쓰는데, `is_transferable_across_agent_tree`(`agents/_agent_router.py`, 소스로 확인)는 조상을 부모 쪽으로 타고 올라가며 전부 `disallow_transfer_to_parent` 필드를 가진 `LlmAgent`인지 확인합니다. `ComparisonChartAgent`의 부모는 이 필드가 없는 `SequentialAgent`라 이 검사가 그 자리에서 `False`로 끝나고, 그래서 이어받지 못한 채 `root_agent`로 되돌아갑니다.
 
 ### Step 7. `adk web`으로 띄우기 — 첫 Gemini 호출에서 멈춘다
 
@@ -490,7 +496,7 @@ cd ai_sales_intelligence_agent_team
 uv run --no-project adk web --no_use_local_storage .
 ```
 
-(저장소 루트에서 곧바로 시작한다면 `cd advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team`을 씁니다. `--no_use_local_storage`는 Day 088에서 이미 다룬 대로 홈 디렉터리에 로컬 세션·아티팩트 파일을 만들지 않게 합니다.)
+(저장소 루트에서 곧바로 시작한다면 `cd advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team`을 씁니다. `--no_use_local_storage`는 Day 088도 이미 쓴 적이 있는 플래그입니다(088:409) — 다만 이 옵션이 막는 로컬 저장소는 홈 디렉터리가 아니라 **에이전트 폴더 자신의 `.adk/`**입니다. google-adk 2.10.0의 `cli/utils/dot_adk_folder.py`(소스로 확인)를 보면 `DotAdkFolder.dot_adk_dir`가 `agent_dir / ".adk"`이고 그 안에 `session.db`·`artifacts/`를 둡니다 — 이 옵션 없이 띄우면 `ai_sales_intelligence_agent_team/.adk/`가 생긴다는 뜻입니다.)
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -531,7 +537,7 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 ![파이프라인 실행과 응답](diagrams/extra-transfer.svg)
 
-여기서부터 7단계가 이어지는 자세한 과정은 시간 경계별로 그림에 나눠 뒀습니다 — 리서치 3단계는 위 [리서치 1~2단계](diagrams/extra-research1.svg)·[리서치 2~3단계](diagrams/extra-research2.svg), 합성 2단계는 [합성 2단계](diagrams/extra-synthesis.svg), 산출물 생성 2단계는 [산출물 생성 2단계](diagrams/extra-generation.svg)입니다. Step 6이 직접 실행으로 확인했듯 **7단계 전부**가 각자 텍스트 이벤트를 내고, `adk_web`은 이 이벤트들을 스트림으로 그대로 사용자에게 돌려줍니다 — 코디네이터가 다시 실행되어 요약하는 일은 일어나지 않고, 마지막으로 화면에 남는 것은 `comparison_chart_agent`의 글입니다. 이 문서는 키가 없어 실제 Gemini 응답까지는 관찰하지 못했고, Step 1~7에서 직접 실행한 것은 의존성 설치·소스 구조·상태 템플리팅·전환 메커니즘·`adk web`의 실제 정지 지점까지입니다.
+여기서부터 7단계가 이어지는 자세한 과정은 시간 경계별로 그림에 나눠 뒀습니다 — 리서치 3단계는 위 [리서치 1~2단계](diagrams/extra-research1.svg)·[리서치 2~3단계](diagrams/extra-research2.svg), 합성 2단계는 [합성 2단계](diagrams/extra-synthesis.svg), 산출물 생성 2단계는 [6단계: 배틀카드 생성](diagrams/extra-generation1.svg)·[7단계: 비교 차트 생성](diagrams/extra-generation2.svg)입니다. Step 6이 직접 실행으로 확인했듯 **7단계 전부**가 각자 텍스트 이벤트를 내고, `adk_web`은 이 이벤트들을 스트림으로 그대로 사용자에게 돌려줍니다 — 코디네이터가 다시 실행되어 요약하는 일은 일어나지 않고, 마지막으로 화면에 남는 것은 `comparison_chart_agent`의 글입니다. 이 문서는 키가 없어 실제 Gemini 응답까지는 관찰하지 못했고, Step 1~7에서 직접 실행한 것은 의존성 설치·소스 구조·상태 템플리팅·전환 메커니즘·`adk web`의 실제 정지 지점까지입니다.
 
 ## 실행 체크리스트
 

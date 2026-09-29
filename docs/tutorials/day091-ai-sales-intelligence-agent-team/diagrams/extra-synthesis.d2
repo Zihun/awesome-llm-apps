@@ -5,7 +5,11 @@ stage3: "3. 포지셔닝 분석" { class: ours }
 stage4: "4. SWOT 분석 (도구 없음)" { class: ours }
 stage5: "5. 반박 스크립트 (도구 없음)" { class: ours }
 stage6: "6. 배틀카드 생성" { class: ours }
+gemini: Gemini API { class: ext }
 
 stage3 -> stage4: +positioning_intel
 stage4 -> stage5: +swot_analysis
 stage5 -> stage6: +objection_scripts
+
+stage4 -> gemini: "instruction + {positioning_intel}"
+stage5 -> gemini: "instruction + {swot_analysis}"

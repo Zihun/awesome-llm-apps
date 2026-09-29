@@ -9,6 +9,6 @@ search: google_search { class: ext }
 
 stage1 -> stage2: competitor_profile
 
-stage1 -> gemini: 모델 호출
-stage2 -> gemini: 모델 호출
+stage1 -> gemini: "instruction"
+stage2 -> gemini: "instruction + {competitor_profile}"
 gemini -> search: 검색 그라운딩 (내장)
