@@ -202,7 +202,7 @@ def safe_tool_wrapper(tool_func):
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-`safe_tool_wrapper`가 실제로 감싸는 도구는 둘(로컬 분석 도구, Perplexity 검색 도구)이고 각각 받는 인자가 다릅니다 — 개요 그림 한 장에 다 넣으면 너무 빽빽해져서, 이 관계만 따로 그렸습니다.
+`safe_tool_wrapper`는 `consultant_tools` 리스트에서 함수 셋(`analyze_market_data`, `generate_strategic_recommendations`, `perplexity_search`) 각각을 따로 감쌉니다(216~220행) — 개요·Step 그림에서는 앞의 둘을 "로컬 분석 도구" 한 묶음으로 그렸으니 도구 묶음은 둘, 감싸는 함수는 셋입니다. `agent`가 실제로 호출할 때 넘기는 인자는 함수마다 다른데, 개요 그림 한 장에 다 넣으면 너무 빽빽해져서 아래에 따로 그렸습니다 — Perplexity API로 실제로 나가는 연결도 이 그림에 있습니다.
 
 ![도구 호출 구조](diagrams/extra-tools.svg)
 
@@ -343,6 +343,8 @@ def perplexity_search(query: str, system_prompt: str = "Be precise and concise. 
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
+이 Step이 실제로 닿는 외부 서비스(Perplexity API)는 개요·Step 그림에는 없습니다 — Step 3에서 본 [도구 호출 구조](diagrams/extra-tools.svg)에 `search_tool -> Perplexity API (sonar)` 화살표로 그려져 있습니다.
+
 **확인.**
 
 ```bash
@@ -400,12 +402,14 @@ Runner | InMemorySessionService
 
 **목적.** 이 앱을 실제로 띄우고, 키 없이 세션을 만들면 정확히 어디서 멈추는지 Day 014와 같은 방식으로 직접 확인합니다. 이번엔 `single_agent_apps` 전체가 아니라 `ai_consultant_agent` 폴더 하나만 가리켜, 그 옆의 수십 개 다른 앱을 건드리지 않는 실행 방법도 함께 확인합니다.
 
-**할 일.** `ai_consultant_agent` 폴더 **안에서** 실행합니다.
+**할 일.** `ai_consultant_agent` 폴더 **안에서** 실행합니다. Step 2~6을 그대로 이어 왔다면 지금 `single_agent_apps`에 있으므로 한 단계만 더 들어갑니다.
 
 ```bash
-cd advanced_ai_agents/single_agent_apps/ai_consultant_agent
+cd ai_consultant_agent
 uv run --no-project adk web --no_use_local_storage .
 ```
+
+(저장소 루트에서 곧바로 시작한다면 `cd advanced_ai_agents/single_agent_apps/ai_consultant_agent`를 씁니다.)
 
 `adk` 계열 명령을 대화형 터미널(`sys.stdin.isatty()`)에서 처음 실행하면 Day 014에서 이미 본 텔레메트리 동의 프롬프트가 뜨고, 답하면 `~/.adk/config.json`에 동의 여부가 저장됩니다 — 이건 문제가 아니라 정상 설정 파일입니다(`google/adk/utils/_telemetry_config.py`, 프롬프트 문구도 "This is OFF by default"). 이 경로는 `pathlib.Path.home()`인데, 이 함수는 Windows에서 `USERPROFILE`, macOS/Linux에서 `HOME` 환경변수를 그대로 따르므로(소스로 확인) 위치를 스크래치로 돌리고 싶으면 그 변수를 바꾸면 됩니다 — "고정 경로"가 아닙니다. 또한 이 동의 코드 자체가 `sys.stdin.isatty()`일 때만 실행되므로(`cli_tools_click.py`), 이 문서처럼 비대화형으로 `adk web`만 띄우면 아무 파일도 쓰지 않습니다(직접 확인) — 파일이 생기는 것은 프롬프트에 답하거나 `adk telemetry enable`/`disable`을 직접 칠 때뿐입니다. `.`을 `single_agent_apps`가 아니라 이 폴더 자체로 준 것은 `adk web --help`가 밝히는 대로 이 버전의 AGENTS_DIR이 "여러 에이전트가 든 폴더"뿐 아니라 "에이전트 폴더 하나를 직접 가리키는 경로"도 받기 때문입니다(직접 확인 — 저장소에는 없는 가짜 옆 폴더를 스크래치에 만들어 두고 `/list-apps`를 불러도 그 폴더는 목록에 없었습니다).
 
@@ -444,7 +448,11 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 ADK 개발자 웹 UI로 질문을 보내면 실제로는 `POST /run_sse`로 스트리밍 응답을 받습니다(google-adk 2.10.0의 웹 UI 번들 `cli/browser/main-45TAU4AN.js`에서 `runSse()`가 이 경로를 부르는 것을 확인) — 이 문서의 Step 7 `curl` 명령이 쓰는 `/run`은 스트리밍이 아닌 대안 경로입니다. 어느 쪽이든 서버는 `agent_loader.py`로 이미 찾아 둔 `root_agent`를 조회해(Step 6에서 확인했듯 이때 `adk web` 자신의 Runner·세션 서비스를 새로 만듭니다), Gemini에 instruction과 세 도구의 선언을 담아 첫 추론을 요청합니다. 지시문이 시킨 순서대로 Gemini가 먼저 `perplexity_search`의 `function_call`을 돌려주면, `root_agent`는 `safe_tool_wrapper`(그림의 "도구 안전 래퍼")가 감싼 실제 함수를 실행합니다 — 이 순간에만 `POST /chat/completions`로 Perplexity에 진짜 HTTPS 요청이 나갑니다. 결과가 `bytes` 없는 dict로 정리되어 Gemini에 `function_response`로 돌아가면, 이어서 두 번째 그림(아래)이 시작됩니다.
+사용자가 ADK 개발자 웹 UI로 질문을 보내면 실제로는 `POST /run_sse`로 스트리밍 응답을 받습니다(google-adk 2.10.0의 웹 UI 번들 `cli/browser/main-45TAU4AN.js`에서 `runSse()`가 이 경로를 부르는 것을 확인) — 이 문서의 Step 7 `curl` 명령이 쓰는 `/run`은 스트리밍이 아닌 대안 경로입니다. 어느 쪽이든 서버는 `agent_loader.py`로 이미 찾아 둔 `root_agent`를 조회해(Step 6에서 확인했듯 이때 `adk web` 자신의 Runner·세션 서비스를 새로 만듭니다), Gemini에 instruction과 세 도구의 선언을 담아 첫 추론을 요청합니다. 지시문이 시킨 순서대로 Gemini가 먼저 `perplexity_search`의 `function_call`을 돌려주면, 이어서 두 번째 그림(아래)이 시작됩니다.
+
+![Perplexity 검색 라운드트립](diagrams/extra-search.svg)
+
+`root_agent`는 `safe_tool_wrapper`(그림의 "안전 래퍼")가 감싼 `perplexity_search`(그림의 "검색 도구")를 실행합니다 — 이 순간에만 `POST /chat/completions`로 Perplexity에 진짜 HTTPS 요청이 나갑니다. 결과가 `bytes` 없는 dict로 정리되어 Gemini에 `function_response`로 돌아가면, 세 번째 그림(아래)이 시작됩니다.
 
 ![로컬 분석 라운드트립](diagrams/extra-analysis.svg)
 

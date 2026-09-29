@@ -2,18 +2,11 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-wrapper: 도구 안전 래퍼 (safe_tool_wrapper) { class: ours }
-perplexity: Perplexity API (sonar) { class: ext }
-adk_web: adk web 서버 { class: ext }
-agent: 컨설턴트 에이전트 (root_agent) { class: ours }
+adk_web: adk web { class: ext }
+agent: 컨설턴트 에이전트 { class: ours }
 gemini: Gemini API { class: ext }
 
-user -> adk_web: 질문 텍스트 (POST /run)
+user -> adk_web: 질문 텍스트 (POST /run_sse)
 adk_web -> agent: root_agent 조회 (인프로세스)
 agent -> gemini: instruction + 도구 선언 + 질문
 gemini -> agent: function_call: perplexity_search(query)
-agent -> wrapper: perplexity_search 호출 위임
-wrapper -> perplexity: POST /chat/completions
-perplexity -> wrapper: JSON 응답 (content, citations)
-wrapper -> agent: bytes 없는 dict 반환
-agent -> gemini: function_response 전달, 다음 추론 요청

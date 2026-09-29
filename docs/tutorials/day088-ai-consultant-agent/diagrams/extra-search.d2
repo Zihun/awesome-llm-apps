@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gemini: Gemini API { class: ext }
+agent: 컨설턴트 에이전트 { class: ours }
+wrapper: 안전 래퍼 { class: ours }
+search_tool: 검색 도구 { class: ours }
+perplexity: Perplexity API { class: ext }
+
+agent -> wrapper: perplexity_search 호출 위임
+wrapper -> search_tool: 함수 호출
+search_tool -> perplexity: POST /chat/completions
+perplexity -> search_tool: JSON 응답 (content, citations)
+search_tool -> wrapper: dict 반환
+wrapper -> agent: bytes 없는 dict 반환
+agent -> gemini: function_response 전달, 다음 추론 요청
