@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: Surelock Homes { class: ours }
+openrouter: OpenRouter { class: ext }
+dcfs: IL DCFS { class: ext }
+
+user -> ui: ZIP 선택 + 실행 클릭
+ui -> agent: agent.run(query, stream=True)
+agent -> openrouter: 시스템 프롬프트(약 5,200자) + 도구 7개 스키마 + query
+openrouter -> agent: tool_call search_childcare_providers
+agent -> dcfs: GET ProviderLookup.aspx
+dcfs -> agent: ViewState 폼 필드
+agent -> dcfs: POST __EVENTTARGET=ASPxSearch
+dcfs -> agent: CSV 응답(공급자 목록)
+agent -> openrouter: tool 결과: providers 배열

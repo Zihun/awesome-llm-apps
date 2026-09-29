@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+openrouter: OpenRouter { class: ext }
+agent: Surelock Homes { class: ours }
+cook: Cook County { class: ext }
+
+openrouter -> agent: tool_call get_property_data
+agent -> cook: GET PIN 조회(prop_address_full)
+cook -> agent: pin
+agent -> cook: GET char_bldg_sf
+cook -> agent: building_sqft
+agent -> openrouter: tool 결과: building_sqft
+openrouter -> agent: tool_call calculate_max_capacity
+agent -> agent: usable_sqft×0.65÷35 계산
+agent -> openrouter: tool 결과: max_legal_capacity

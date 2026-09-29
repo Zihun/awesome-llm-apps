@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+ui: Streamlit { class: ours }
+agent: Surelock Homes { class: ours }
+openrouter: OpenRouter { class: ext }
+t_cap: 용량 계산 { class: ours }
+dcfs: IL DCFS { class: ext }
+cook: Cook County { class: ext }
+google: Google Maps { class: ext }
+sos: IL SOS { class: ext }
+
+user -> ui: 키·ZIP 선택
+ui -> agent: 조사 지시
+agent -> openrouter: 프롬프트
+agent -> t_cap: 면적
+agent -> dcfs: ZIP
+agent -> cook: 주소
+agent -> google: 주소
+agent -> sos: 상호

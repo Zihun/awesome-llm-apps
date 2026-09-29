@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+agent: Surelock Homes { class: ours }
+openrouter: OpenRouter { class: ext }
+sos: IL SOS { class: ext }
+
+openrouter -> agent: tool_call check_business_registration(name)
+agent -> sos: GET entitysearch
+sos -> agent: HTTP 403 또는 등록정보
+agent -> openrouter: tool 결과: status
+openrouter -> agent: 조사 서술 텍스트(스트리밍)
+agent -> ui: chunk마다 markdown 누적
+ui -> user: 실시간 서술 렌더링
