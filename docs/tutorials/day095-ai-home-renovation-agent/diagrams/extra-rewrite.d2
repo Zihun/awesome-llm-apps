@@ -1,8 +1,0 @@
-...@../../_tools/theme
-shape: sequence_diagram
-
-gen_tool: 렌더링 생성 도구 (generate_renovation_rendering) { class: ours }
-gemini_pro_preview: gemini-3-pro-preview (서비스 종료) { class: ext }
-
-gen_tool -> gemini_pro_preview: client.models.generate_content (프롬프트 재작성)
-gemini_pro_preview -> gen_tool: SLC 구조 프롬프트 텍스트

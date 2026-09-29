@@ -3,6 +3,9 @@ shape: sequence_diagram
 
 visual_assessor: 시각 분석 에이전트 (VisualAssessor) { class: ours }
 search_agent: 검색 에이전트 (SearchAgent) { class: ours }
+gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
-visual_assessor -> search_agent: AgentTool 호출
+visual_assessor -> search_agent: AgentTool 호출 (query)
+search_agent -> gemini: instruction + google_search 선언
+gemini -> search_agent: 그라운딩된 검색 결과
 search_agent -> visual_assessor: AgentTool 반환 (텍스트)

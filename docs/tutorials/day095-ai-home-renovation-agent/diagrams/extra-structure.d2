@@ -2,15 +2,15 @@
 direction: down
 
 coordinator: 코디네이터 (HomeRenovationPlanner) { class: ours }
-rendering_editor: 렌더링 수정 에이전트 (RenderingEditor) { class: ours }
-edit_tool: 렌더링 편집 도구 (edit_renovation_rendering) { class: ours }
-util_tools: 보조 도구 (list_renovation_renderings) { class: ours }
+info_agent: 정보 안내 (InfoAgent) { class: ours }
+rendering_editor: 렌더링 수정 (RenderingEditor) { class: ours }
+edit_tool: 편집 도구 (edit_renovation_rendering) { class: ours }
+list_tool: 목록 도구 (list_renovation_renderings) { class: ours }
 
 flash: gemini-3-flash-preview { class: ext }
-google_search: google_search { class: ext }
 
 coordinator -> flash: instruction + transfer_to_agent 선언
+info_agent -> flash: instruction
 rendering_editor -> flash: instruction + 편집 도구 선언
-rendering_editor -> edit_tool: edit_renovation_rendering 호출
-rendering_editor -> util_tools: list_renovation_renderings 호출
-flash -> google_search: 내장 그라운딩 (search_agent 단계)
+rendering_editor -> edit_tool: 호출
+rendering_editor -> list_tool: 호출

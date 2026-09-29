@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen_tool: 렌더링 생성 도구 (generate_renovation_rendering) { class: ours }
+project_coordinator: 프로젝트 코디네이터 (ProjectCoordinator) { class: ours }
+gemini: Gemini API (gemini-3-flash-preview) { class: ext }
+
+gen_tool -> project_coordinator: 성공 메시지 반환
+project_coordinator -> gemini: function_response
+gemini -> project_coordinator: 최종 계획 텍스트

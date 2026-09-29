@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+visual_assessor: 1. 시각 분석 (VisualAssessor) { class: ours }
+search_agent: 검색 에이전트 (SearchAgent) { class: ours }
+estimate: 견적 도구 (estimate_renovation_cost) { class: ours }
+
+flash: gemini-3-flash-preview { class: ext }
+google_search: google_search { class: ext }
+
+visual_assessor -> flash: instruction + 도구 선언 + 사진
+visual_assessor -> search_agent: AgentTool 호출-복귀
+visual_assessor -> estimate: estimate_renovation_cost 호출
+search_agent -> flash: instruction + google_search 선언
+flash -> google_search: 내장 그라운딩 (SearchAgent 호출일 때)

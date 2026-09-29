@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+project_coordinator: 프로젝트 코디네이터 (ProjectCoordinator) { class: ours }
+adk_web: adk web 서버 { class: ext }
+user: 사용자 { class: person }
+
+project_coordinator -> adk_web: 최종 응답 이벤트
+adk_web -> user: 계획 텍스트 + 아티팩트 패널

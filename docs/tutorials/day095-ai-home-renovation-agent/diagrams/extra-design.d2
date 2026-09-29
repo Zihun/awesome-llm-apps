@@ -1,10 +1,10 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-visual_assessor: 시각 분석 에이전트 (VisualAssessor) { class: ours }
+pipeline: 계획 파이프라인 (PlanningPipeline) { class: ours }
 design_planner: 디자인 플래너 (DesignPlanner) { class: ours }
 gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
-visual_assessor -> design_planner: 대화 기록 공유 (SequentialAgent, output_key 없음)
+pipeline -> design_planner: 호출 (2단계, SequentialAgent)
 design_planner -> gemini: instruction + calculate_timeline 선언 + 대화 기록
 gemini -> design_planner: function_call calculate_timeline(scope, room_type)

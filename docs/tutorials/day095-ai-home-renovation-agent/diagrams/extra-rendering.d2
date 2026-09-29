@@ -1,10 +1,10 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-design_planner: 디자인 플래너 (DesignPlanner) { class: ours }
+pipeline: 계획 파이프라인 (PlanningPipeline) { class: ours }
 project_coordinator: 프로젝트 코디네이터 (ProjectCoordinator) { class: ours }
 gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
-design_planner -> project_coordinator: 대화 기록 공유
+pipeline -> project_coordinator: 호출 (3단계, SequentialAgent)
 project_coordinator -> gemini: instruction + 렌더링 도구 선언 + 대화 기록
 gemini -> project_coordinator: function_call generate_renovation_rendering(prompt, aspect_ratio, asset_name)

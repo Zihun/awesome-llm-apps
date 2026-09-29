@@ -7,4 +7,5 @@ gemini: Gemini API (gemini-3-flash-preview) { class: ext }
 
 visual_assessor -> util_tools: estimate_renovation_cost(room_type, scope, sqft)
 util_tools -> visual_assessor: 견적 문자열
-visual_assessor -> gemini: function_response ×2 → "ASSESSMENT COMPLETE"
+visual_assessor -> gemini: function_response ×2
+gemini -> visual_assessor: ASSESSMENT COMPLETE 텍스트
