@@ -3,13 +3,11 @@ direction: down
 
 user: 사용자 (브라우저) { class: person }
 adk_web: adk web 서버 { class: ext }
-agent: 에이전트 (root_agent → Pipeline) { class: ours }
-google_search: Google 검색 { class: ext }
+root_agent: 코디네이터 (root_agent) { class: ours }
+pipeline: 파이프라인 (SequentialAgent) { class: ours }
 gemini_api: Gemini API { class: ext }
-artifacts: 저장소 (아티팩트+outputs) { class: store }
 
 user -> adk_web: 회사명 또는 URL
-adk_web -> agent: 자체 Runner로 실행
-agent -> gemini_api: instruction + 도구 선언
-agent -> google_search: 도구 호출
-agent -> artifacts: 생성물 저장
+adk_web -> root_agent: 자체 Runner로 실행
+root_agent -> pipeline: transfer_to_agent (자동 생성)
+root_agent -> gemini_api: instruction (8개 에이전트 공통)
