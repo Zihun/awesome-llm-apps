@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adk_web: adk web 서버 { class: ext }
+gemini: Gemini API { class: ext }
+root: 코디네이터 (root_agent) { class: ours }
+pipeline: 배틀카드 파이프라인 { class: ours }
+
+user -> adk_web: 질문 텍스트 (POST /run)
+adk_web -> root: root_agent 조회 (인프로세스)
+root -> gemini: instruction + transfer_to_agent 선언
+gemini -> root: function_call transfer_to_agent(BattleCardPipeline)
+root -> pipeline: 제어 이관 (복귀 보장 없음)
+pipeline -> adk_web: 마지막 스테이지 텍스트 (comparison_chart_agent)
+adk_web -> user: 응답 반환 (코디네이터가 아닌 마지막 스테이지의 글)

@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+stage6: "6. 배틀카드 생성 (battle_card_generator_agent)" { class: ours }
+stage7: "7. 비교 차트 생성 (comparison_chart_agent)" { class: ours }
+
+html_tool: "generate_battle_card_html" { class: ours }
+chart_tool: "generate_comparison_chart" { class: ours }
+artifacts: 산출물 저장 (Artifacts+outputs/) { class: file }
+
+stage6 -> stage7: battle_card_result (stage7은 참조 안 함)
+
+stage6 -> html_tool: 데이터 조립 후 호출
+stage7 -> chart_tool: 데이터 조립 후 호출
+html_tool -> artifacts: HTML 저장
+chart_tool -> artifacts: PNG 저장

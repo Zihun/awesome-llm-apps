@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+
+adk_web: adk web 서버 (프로세스 경계) {
+  class: group
+  root: 코디네이터 (BattleCardAnalyst) { class: ours }
+}
+
+pipeline: 배틀카드 파이프라인 (SequentialAgent, 7단계, output_key 체인) { class: ours }
+
+gemini: Gemini API (gemini-3-*) { class: ext }
+search: google_search { class: ext }
+artifacts: 산출물 저장 (Artifacts+outputs/) { class: file }
+
+user -> adk_web: 질문 텍스트 (경쟁사+제품)
+adk_web.root -> pipeline: transfer_to_agent (자동 주입, root도 gemini 호출 후 결정)
+pipeline -> search: 검색 질의 (리서치 3단계)
+pipeline -> gemini: 모델 호출 (도구 내부 포함)
+pipeline -> artifacts: HTML/PNG 저장

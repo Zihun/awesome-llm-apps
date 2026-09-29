@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+stage1: "1. 경쟁사 리서치" { class: ours }
+stage2: "2. 제품 기능 분석" { class: ours }
+stage3: "3. 포지셔닝 분석" { class: ours }
+
+search: google_search { class: ext }
+
+stage1 -> stage2: competitor_profile
+stage2 -> stage3: +feature_analysis
+
+stage1 -> search: 검색 질의
+stage2 -> search: 검색 질의
+stage3 -> search: 검색 질의
