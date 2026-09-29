@@ -6,7 +6,7 @@ cli: CLI 실행기 (main.py) { class: ours }
 ui: Streamlit UI (streamlit_app.py) { class: ours }
 
 pipeline: "파이프라인 (adapters/ · agents/)" {
-  class: ours
+  class: group
   grid-rows: 2
   grid-gap: 16
   gh: "GitHub 어댑터\n(github.py)" { class: ours }
@@ -20,10 +20,22 @@ pipeline: "파이프라인 (adapters/ · agents/)" {
   synthesis: "4. SynthesisAgent\n(synthesis_agent.py)" { class: ours }
 }
 
+sources: "외부 데이터 소스" {
+  class: group
+  grid-columns: 5
+  grid-gap: 16
+  gh_api: GitHub API { class: ext }
+  arxiv_api: ArXiv API { class: ext }
+  hn_api: "HackerNews API" { class: ext }
+  medium_rss: "블로그 RSS(4개)" { class: ext }
+  hf_api: HuggingFace Hub API { class: ext }
+}
+
 openai: OpenAI API { class: ext }
 
 person -> cli: 터미널에서 실행
 person -> ui: 브라우저 접속
 cli -> pipeline: collect_signals() 호출
 ui -> pipeline: 소스별 fetch_* 직접 호출
+pipeline -> sources: HTTP GET (인증 불필요)
 pipeline -> openai: Relevance·Risk의 gpt-4.1-mini 호출 (Synthesis는 미호출)

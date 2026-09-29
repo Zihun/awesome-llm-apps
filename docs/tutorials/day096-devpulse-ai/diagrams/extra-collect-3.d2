@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit UI { class: ours }
+hf: HuggingFace 어댑터 { class: ours }
+hf_api: HuggingFace Hub API { class: ext }
+
+ui -> hf: fetch_huggingface_models(limit) 호출
+hf -> hf_api: GET /api/models
+hf_api -> hf: "JSON (모델 목록)"
+hf -> ui: 신호 dict 리스트

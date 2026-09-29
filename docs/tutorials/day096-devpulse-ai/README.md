@@ -1,6 +1,6 @@
 # Day 096 · 🧠 DevPulse AI - Multi-Agent Signal Intelligence
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 60분 · API 비용 대략 (키 없으면 무료 — 휴리스틱 폴백만 사용. 키가 있으면 신호 하나당 gpt-4.1-mini를 2회(Relevance·Risk) 호출하므로 기본값 기준 신호 20여 개 × 2회로 $0.01 미만으로 추정 — 대략치, 키가 없어 실제 과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/devpulse_ai`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 65분(수집 단계가 소스 5개로 나뉘어 그림이 3장 늘었습니다) · API 비용 대략 (키 없으면 무료 — 휴리스틱 폴백만 사용. 키가 있으면 신호 하나당 gpt-4.1-mini를 2회(Relevance·Risk) 호출하므로, 기본값(`DEFAULT_SIGNAL_LIMIT=5`) 기준 최대 신호 32개(Medium 어댑터가 피드 4개 각각에서 최대 3개씩, 최대 12개를 보태므로 — `advanced_ai_agents/multi_agent_apps/devpulse_ai/adapters/medium.py:37`) × 2회 = 최대 64회 호출로 $0.01~0.02 정도로 추정 — 대략치, 키가 없어 실제 과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/devpulse_ai`
 
 ## 오늘 만들 것
 
@@ -14,7 +14,7 @@ DevPulseAI는 GitHub·ArXiv·HackerNews·Medium·HuggingFace 다섯 개 공개 �
 |---|---|---|
 | OpenAI API 키 (선택) | `RelevanceAgent`·`RiskAgent`·`SynthesisAgent`가 만드는 `OpenAIChat` 인증. 없어도 파이프라인은 휴리스틱 폴백으로 끝까지 동작 | https://platform.openai.com/ 가입 후 발급 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| 인터넷 연결 | PyPI 설치, (실제로 실행하면) GitHub·ArXiv·HackerNews·Medium RSS·HuggingFace 공개 API 호출(인증 불필요), 키가 있으면 OpenAI API 호출 | 별도 설치 없음 |
+| 인터넷 연결 | PyPI 설치, (실제로 실행하면) GitHub·ArXiv·HackerNews·HuggingFace 공개 API 호출과 블로그 RSS 피드 4개(Medium 태그 2개·Netflix 기술 블로그·`engineering.fb.com`, `advanced_ai_agents/multi_agent_apps/devpulse_ai/adapters/medium.py:13-18`) 호출(모두 인증 불필요), 키가 있으면 OpenAI API 호출 | 별도 설치 없음 |
 
 ## 아키텍처 한눈에 보기
 
@@ -23,6 +23,7 @@ DevPulseAI는 GitHub·ArXiv·HackerNews·Medium·HuggingFace 다섯 개 공개 �
 | CLI 실행기 (main.py) | `collect_signals()`로 5개 어댑터를 순서대로 호출한 뒤 4단계 파이프라인을 실행하고 콘솔에 다이제스트를 출력 | `advanced_ai_agents/multi_agent_apps/devpulse_ai/main.py:47-74`, `advanced_ai_agents/multi_agent_apps/devpulse_ai/main.py:98-129` |
 | Streamlit 대시보드 (streamlit_app.py) | 소스·신호 수 사이드바, 어댑터를 직접(인라인으로) 호출해 파이프라인을 실행하고 결과를 카드로 렌더링 | `advanced_ai_agents/multi_agent_apps/devpulse_ai/streamlit_app.py:83-98`, `advanced_ai_agents/multi_agent_apps/devpulse_ai/streamlit_app.py:117-138` |
 | 신호 수집 어댑터 5종 (adapters/) | GitHub·ArXiv·HackerNews·Medium·HuggingFace 각각의 공개 API를 호출해 표준 스키마 dict로 변환하는 유틸리티(LLM 없음) | `advanced_ai_agents/multi_agent_apps/devpulse_ai/adapters/github.py:13-51` (다른 4개 파일도 같은 패턴) |
+| 외부 데이터 소스 5곳 | GitHub API(`api.github.com`)·ArXiv API(`export.arxiv.org`)·HackerNews Algolia API·블로그 RSS 4피드(Medium 태그 2개·Netflix·`engineering.fb.com`)·HuggingFace Hub API. 모두 인증 불필요 | 코드 없음 (외부 서비스) |
 | SignalCollector (유틸리티) | `source:id` 복합 키로 중복을 제거하고 통일된 스키마로 정규화 — agno `Agent`를 쓰지 않는 것이 의도된 설계 | `advanced_ai_agents/multi_agent_apps/devpulse_ai/agents/signal_collector.py:34-65` |
 | RelevanceAgent | gpt-4.1-mini로 신호를 0~100점 채점, 실패 시 stars/points 기반 휴리스틱 | `advanced_ai_agents/multi_agent_apps/devpulse_ai/agents/relevance_agent.py:40-86` |
 | RiskAgent | gpt-4.1-mini로 보안 위험·breaking change를 평가, 실패 시 키워드 매칭 휴리스틱 | `advanced_ai_agents/multi_agent_apps/devpulse_ai/agents/risk_agent.py:44-90` |
@@ -58,7 +59,7 @@ feedparser
 streamlit>=1.30
 ```
 
-다른 여러 날의 `agno>=2.2.10`와 달리 이 앱은 `agno`에 **버전 하한이 전혀 없습니다** — 어떤 버전이 나와도 그대로 설치됩니다. 이 문서를 쓰며 설치했을 때는 **agno 3.0.11**, **openai 3.20.0**, **httpx 0.28.1**, **feedparser 6.0.14**, **streamlit 1.64.0**이 받아졌습니다(직접 확인). 이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 환경 대신 루트의 `.venv`를 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
+다른 여러 날의 `agno>=2.2.10`와 달리 이 앱은 `agno`에 **버전 하한이 전혀 없습니다** — 어떤 버전이 나와도 그대로 설치됩니다. 이 문서를 쓰며 설치했을 때는 **agno 3.0.11**, **openai 3.20.0**, **httpx 0.28.1**, **feedparser 6.0.14**, **streamlit 1.64.0**이 받아졌습니다(직접 확인). 이 저장소는 루트에 `pyproject.toml`이 있어 `uv run`이 방금 만든 가상환경 대신 루트 **프로젝트** 환경을 쓰므로, 이후 `uv run` 명령에는 모두 `--no-project`를 붙입니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -68,6 +69,8 @@ streamlit>=1.30
 uv run --no-project python -c "import agno; print(agno.__version__)"
 uv run --no-project python -m py_compile main.py streamlit_app.py verify.py agents/*.py adapters/*.py
 ```
+
+(PowerShell은 네이티브 인자의 글롭을 펼치지 않으므로 `Get-ChildItem agents,adapters -Filter *.py -Recurse | ForEach-Object { uv run --no-project python -m py_compile $_.FullName }`처럼 파일을 먼저 펼쳐 넘깁니다.)
 
 `3.0.11`이 출력되고(설치 시점에 따라 다를 수 있습니다) `py_compile`은 아무 출력 없이 끝납니다(직접 확인).
 
@@ -119,7 +122,7 @@ def fetch_github_trending(limit: int = 5) -> List[Dict[str, Any]]:
             signals.append(signal)
 ```
 
-`arxiv.py`·`hackernews.py`·`medium.py`·`huggingface.py`도 같은 모양입니다 — `httpx.get`(Medium만 `feedparser.parse`) 한 번으로 공개 API·RSS를 읽고, 응답을 표준 스키마 dict로 옮겨 담을 뿐 판단이나 언어 이해가 없습니다. 다섯 API 모두 인증이 필요 없습니다(소스로 확인 — 헤더에 토큰을 넣는 코드가 없습니다). 이 문서는 규칙상 이 함수들을 실제로 호출해 네트워크 요청을 내보내지 않습니다.
+`arxiv.py`·`hackernews.py`·`huggingface.py`도 같은 모양으로 `httpx.get` 한 번씩입니다. `medium.py`만 다른 세 소스와 달리 `feedparser.parse()`를 소스 하나당 한 번이 아니라 `FEEDS` 목록의 피드 4개(`advanced_ai_agents/multi_agent_apps/devpulse_ai/adapters/medium.py:13-18`)마다 한 번씩, 총 4번 호출합니다(`advanced_ai_agents/multi_agent_apps/devpulse_ai/adapters/medium.py:33-35`). 다섯 파일 모두 응답을 표준 스키마 dict로 옮겨 담을 뿐 판단이나 언어 이해가 없습니다. 다섯 API 모두 인증이 필요 없습니다(소스로 확인 — 헤더에 토큰을 넣는 코드가 없습니다). 이 문서는 외부 API를 호출하지 않고 소스만으로 확인했습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -228,7 +231,7 @@ print(len(c.collect(dup)), hasattr(c, 'agent'))
             return self._fallback_score(signal, str(e))
 ```
 
-이 코드의 의도는 "`run()`이 예외를 던지면 폴백"입니다. 그런데 agno 3.0.11에서 `OPENAI_API_KEY`가 없을 때 `self.agent.run(...)`은 예외를 던지지 않고 `RunOutput(status=RunStatus.error, content="OPENAI_API_KEY not set. ...")`를 **정상 반환**합니다(직접 확인, 아래) — 그래서 82~84행의 `try` 블록은 성공하고, `_parse_response`가 이 오류 문자열을 JSON으로 파싱하려다 실패해서야 `_fallback_score`로 떨어집니다(`relevance_agent.py:96-104`). 결과(휴리스틱 점수)는 같지만 **거치는 경로가 코드 주석과 다릅니다**.
+이 코드의 의도는 "`run()`이 예외를 던지면 폴백"입니다. 그런데 agno 3.0.11에서 `OPENAI_API_KEY`가 없을 때 `self.agent.run(...)`은 예외를 던지지 않고 `RunOutput(status=RunStatus.error, content="OPENAI_API_KEY not set. ...")`를 **정상 반환**합니다(직접 확인, 아래) — 그래서 82~84행의 `try` 블록은 성공하고, `_parse_response`가 이 오류 문자열을 JSON으로 파싱하려다 실패해서야 `_fallback_score`로 떨어집니다(`relevance_agent.py:96-104`). 결과(휴리스틱 점수)는 같지만 **거치는 경로가 코드 주석과 다릅니다** — 그래서 `_fallback_score`가 받는 `error` 인자는 실제 인증 오류 문구가 아니라 `_parse_response`가 남긴 `"Parse error"` 고정 문자열입니다(`relevance_agent.py:104`). `reasoning` 필드에서 실제 오류 문구를 볼 수 없는 것은 이 때문이며 정상 동작입니다 — 실제 오류 문구를 보려면 아래처럼 `agent.run()`의 반환값을 직접 출력해야 합니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -252,8 +255,12 @@ print(a.score({'source': 'github', 'title': 'example/repo', 'description': 'test
 ERROR   Model authentication error from OpenAI API: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
 ERROR   Error in Agent run: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
 RunOutput RunStatus.error 'OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.'
+ERROR   Model authentication error from OpenAI API: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
+ERROR   Error in Agent run: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
 {'score': 50, 'reasoning': 'Heuristic score (LLM unavailable: Parse error)'}
 ```
+
+앞의 `a.agent.run(...)` 호출과 뒤의 `a.score(...)` 호출이 각자 독립적으로 로컬 인증 확인을 거치므로 `ERROR` 두 줄이 한 번씩, 총 네 줄 찍힙니다 — `score()`가 내부에서 `_fallback_score`로 떨어지기 직전에 겪는 오류가 바로 이 두 번째 쌍입니다.
 
 ### Step 5. RiskAgent — 위험 평가와 키워드 폴백
 
@@ -332,7 +339,7 @@ print(a._fallback_assessment({'title': 'GPT-5 Breaking Changes in API'}, 'no key
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 원본 앱이 제공하는 `verify.py`로 지금까지 만든 유틸리티+3개 에이전트 전체를 모의 데이터로 검증합니다(네트워크·API 키 불필요):
+**확인.** 원본 앱이 제공하는 `verify.py`로 지금까지 만든 유틸리티+3개 에이전트의 기본 동작을 모의 데이터로 확인합니다(네트워크·API 키 불필요). 다만 `verify.py`의 Relevance·Risk 검증(`verify.py:126-129`, `verify.py:151`)은 `score()`/`assess()`가 아니라 `_fallback_score`/`_fallback_assessment`를 **직접** 호출합니다 — Step 4·5에서 직접 확인한, `agent.run()`을 거쳐 JSON 파싱 실패로 떨어지는 실제 경로는 타지 않습니다:
 
 ```bash
 uv run --no-project python verify.py
@@ -449,7 +456,13 @@ def collect_signals(limit: Optional[int] = None) -> List[Dict[str, Any]]:
     digest = synthesis.synthesize(assessed)
 ```
 
-이 앱은 이 시리즈 규칙상 실제 공개 API를 호출하는 실행은 하지 않았습니다 — 대신 5개 `fetch_*` 함수를 로컬 고정 데이터로 바꿔 같은 오케스트레이션 코드를 돌려, 키 없이도 파이프라인 전체(수집→정규화→관련성→위험→종합)가 끝까지 도는 것을 직접 확인했습니다. `OPENAI_API_KEY`가 없다는 경고, `[1/4]`~`[4/4]` 진행 로그, 그리고 Step 4~5에서 본 것과 같은 agno 인증 오류 로그가 각 신호마다 찍힌 뒤 다이제스트가 정상적으로 출력되는 것도 확인했습니다.
+이 문서는 실제 공개 API를 호출하는 실행 대신, 5개 `fetch_*` 함수를 로컬 고정 데이터로 바꿔 같은 오케스트레이션 코드를 돌려 확인했습니다 — 키 없이도 파이프라인 전체(수집→정규화→관련성→위험→종합)가 끝까지 도는 것을 직접 확인했습니다. `OPENAI_API_KEY`가 없다는 경고, `[1/4]`~`[4/4]` 진행 로그, 그리고 Step 4~5에서 본 것과 같은 agno 인증 오류 로그가 각 신호마다 찍힌 뒤 다이제스트가 정상적으로 출력되는 것도 확인했습니다.
+
+독자가 직접 실제 API로 실행하려면(공개 API 다섯 곳에 실제로 네트워크 요청이 나갑니다):
+
+```bash
+uv run --no-project python main.py
+```
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -500,20 +513,37 @@ run_button = st.sidebar.button("🚀 Run Intelligence Pipeline", use_container_w
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
-**확인.** 셸 PATH의 루트 `.venv\Scripts`를 먼저 빼고, headless로 기동합니다.
+**확인.** 앱을 띄우는 명령은 한 줄입니다.
 
 ```bash
-export PATH=$(echo "$PATH" | tr ":" "\n" | grep -v "/.venv" | paste -sd:)
-uv run --no-project streamlit run streamlit_app.py --server.headless true --server.address localhost
+uv run --no-project streamlit run streamlit_app.py
 ```
 
-`--server.address localhost`를 빼면 Streamlit이 기동하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보냅니다(Day 060에서 확인한 사실과 같습니다). 브라우저로 `http://localhost:8501`에 접속하면 "🧠 DevPulseAI – Signal Intelligence Demo" 제목과 사이드바가 보입니다(직접 확인 — 임의의 높은 포트로 헤드리스 기동해 `/_stcore/health`가 `ok`를 반환하는 것과 초기 HTML이 정상 반환되는 것을 확인했습니다).
+브라우저로 `http://localhost:8501`에 접속하면 "🧠 DevPulseAI – Signal Intelligence Demo" 제목과 사이드바(키 입력·소스 다중 선택·신호 수 슬라이더·Run 버튼)가 보입니다 — 브라우저를 직접 열어 보는 대신 Streamlit의 `AppTest`(`from streamlit.testing.v1 import AppTest`)로 스크립트를 실행해 `at.title[0].value == "🧠 DevPulseAI – Signal Intelligence Demo"`, 사이드바 위젯이 `TextInput`·`Multiselect`·`Slider`·`Button` 네 개, `at.exception`이 빈 목록임을 직접 확인했습니다.
+
+확인용으로 헤드리스 기동만 할 때는 `--server.headless true --server.address localhost`를 붙입니다(`--server.address localhost`를 빼면 Streamlit이 기동하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 요청을 보냅니다 — Day 060에서 확인한 사실과 같습니다). 이때는 `/_stcore/health`가 `ok`를 반환하고 초기 HTML이 정상 반환되는 것까지만 직접 확인했습니다(헤드리스 HTML만으로는 브라우저가 그리는 제목까지는 보이지 않습니다).
 
 ## 요청 한 건이 흐르는 과정
 
+실제 시간 경계를 따라 세 단계로 나눠 그렸습니다 — 수집(소스 5개) → 정규화·채점·평가 → 종합. 메시지는 어느 그림에도 정확히 한 번씩, 원래 순서 그대로 있습니다.
+
+사용자가 Run을 누르면 UI는 선택된 소스마다 `fetch_*` 함수를 순서대로 부릅니다(`streamlit_app.py:124-138`). 처음 두 소스는 이렇습니다.
+
+![수집 1/3 — GitHub·ArXiv](diagrams/extra-collect-1.svg)
+
+이어서 HackerNews와 Medium입니다. Medium은 소스 하나인데도 `FEEDS` 목록의 피드 4개를 각각 `feedparser.parse()`로 부릅니다(위 Step 2에서 다룬 그대로입니다).
+
+![수집 2/3 — HackerNews·Medium](diagrams/extra-collect-2.svg)
+
+마지막 소스는 HuggingFace입니다.
+
+![수집 3/3 — HuggingFace](diagrams/extra-collect-3.svg)
+
+다섯 소스에서 모은 원시 신호는 `SignalCollector.collect()`로 정규화·중복 제거를 거친 뒤 관련성·위험 단계로 넘어갑니다.
+
 ![요청 시퀀스](diagrams/sequence.svg)
 
-Streamlit에서 "Run Intelligence Pipeline"을 누르면 UI가 `SignalCollector.collect()`를 호출해 정규화·중복 제거를 마칩니다(5개 어댑터의 원시 신호 수집 자체는 Step 2·7에서 다뤘으므로 여기서는 되풀이하지 않습니다). 이어서 `RelevanceAgent.score_batch()`가 신호마다 gpt-4.1-mini를 호출해 관련성 점수를 받고, `RiskAgent.assess_batch()`가 같은 방식으로 위험도를 평가합니다. 이 그림은 키가 있다고 가정한 정상 경로입니다 — 키가 없을 때 이 두 단계가 실제로 어떻게 되는지는 Step 4·5의 "직접 확인" 출력을 참고하세요.
+`RelevanceAgent.score_batch()`가 신호마다 gpt-4.1-mini를 호출해 관련성 점수를 받고, `RiskAgent.assess_batch()`가 같은 방식으로 위험도를 평가합니다. 이 그림은 키가 있다고 가정한 정상 경로입니다 — 키가 없을 때 이 두 단계가 실제로 어떻게 되는지는 Step 4·5의 "직접 확인" 출력을 참고하세요.
 
 마지막 종합 단계는 따로 그렸습니다.
 
@@ -525,6 +555,7 @@ Streamlit에서 "Run Intelligence Pipeline"을 누르면 UI가 `SignalCollector.
 
 - [ ] 격리된 venv에 `requirements.txt`를 설치하고 `agno.__version__`을 확인했다
 - [ ] 5개 어댑터가 같은 표준 스키마(dict)를 반환하는 유틸리티 함수임을 소스로 확인했다
+- [ ] 5개 외부 데이터 소스(GitHub·ArXiv·HackerNews·블로그 RSS 4피드·HuggingFace)가 모두 인증 없이 호출된다는 것을 소스로 확인했다
 - [ ] `SignalCollector`에 `.agent` 속성이 없음을 직접 실행해 확인했다
 - [ ] 키 없이 `RelevanceAgent.score()`가 `RunOutput(status=error)` → JSON 파싱 실패 → 휴리스틱 순으로 폴백한다는 것을 직접 확인했다
 - [ ] `RiskAgent`의 키워드 폴백이 "Breaking"을 MEDIUM으로 분류하는 것을 직접 확인했다
@@ -536,9 +567,8 @@ Streamlit에서 "Run Intelligence Pipeline"을 누르면 UI가 `SignalCollector.
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| Windows 콘솔에서 `python verify.py`(또는 `main.py`) 실행 시 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f50d'...`로 즉시 중단됨(직접 확인) | 스크립트가 🔍·📡 같은 이모지를 `print()`로 출력하는데, Windows 콘솔 기본 코드페이지(cp949)에 그 글자가 없음 | 실행 전 `PYTHONUTF8=1`을 설정하거나 `chcp 65001`로 콘솔 코드페이지를 UTF-8로 바꾼 뒤 실행 |
+| Git Bash(mintty)에서나 출력을 파이프로 넘길 때 `python verify.py`(또는 `main.py`) 실행 시 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f50d'...`로 즉시 중단됨(직접 확인) | 스크립트가 🔍·📡 같은 이모지를 `print()`로 출력하는데, 표준출력이 진짜 Windows 콘솔이 아니면(mintty·파이프) 파이썬이 콘솔의 UTF-8 API(PEP 528, 3.6+) 대신 시스템 코드페이지(cp949)로 인코딩을 시도함. 네이티브 명령 프롬프트·PowerShell의 대화형 콘솔에서는 재현되지 않습니다 | 실행 전 `PYTHONUTF8=1`(PowerShell은 `$env:PYTHONUTF8=1`)을 설정하거나 `chcp 65001`로 코드페이지를 바꾼 뒤 실행 |
 | 랜딩 화면(Run 버튼을 누르기 전)에서 로고 자리가 깨진 이미지로 보임 | `streamlit_app.py:208`의 `st.image(...)`가 가리키는 `.../devpulse_ai/assets/logo.png`가 원본 리포에 존재하지 않음(직접 확인 — 해당 URL은 HTTP 404, 이 앱 폴더에도 `assets/` 디렉터리가 없음) | 무시해도 나머지 기능에는 영향 없음(`st.image`는 URL을 그대로 `<img src>`에 넘길 뿐 서버 쪽에서 내려받지 않으므로 Python 예외는 나지 않습니다) |
-| `RelevanceAgent`·`RiskAgent`의 폴백이 항상 `"reasoning": "... Parse error"`로만 찍히고 실제 인증 오류 문구가 안 보임 | `score()`/`assess()`의 `except Exception as e: ... str(e)` 경로가 아니라 `_parse_response`의 JSON 파싱 실패 경로로 빠지기 때문(Step 4 참고) — 오류 문구 자체는 `response.content`에 있지만 `_fallback_score`/`_fallback_assessment`로 전달되지 않음 | 정상 동작입니다. 실제 오류를 보려면 Step 4의 확인 명령처럼 `agent.run()`의 반환값을 직접 출력 |
 
 ## 더 해보기
 

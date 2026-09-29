@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+arxiv_api: ArXiv API { class: ext }
+gh_api: GitHub API { class: ext }
+gh: GitHub 어댑터 { class: ours }
+ui: Streamlit UI { class: ours }
+arxiv: ArXiv 어댑터 { class: ours }
+
+user -> ui: 소스 선택 + Run 클릭
+ui -> gh: fetch_github_trending(limit) 호출
+gh -> gh_api: GET /search/repositories
+gh_api -> gh: "JSON (트렌딩 저장소)"
+gh -> ui: 신호 dict 리스트
+ui -> arxiv: fetch_arxiv_papers(limit) 호출
+arxiv -> arxiv_api: GET /api/query
+arxiv_api -> arxiv: Atom XML (논문 목록)
+arxiv -> ui: 신호 dict 리스트

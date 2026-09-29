@@ -1,21 +1,19 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자 { class: person }
 collector: SignalCollector { class: ours }
-openai: OpenAI API { class: ext }
-relevance: RelevanceAgent { class: ours }
 ui: Streamlit UI { class: ours }
+relevance: RelevanceAgent { class: ours }
+openai: OpenAI API { class: ext }
 risk: RiskAgent { class: ours }
 
-user -> ui: 소스 선택 + Run 클릭
 ui -> collector: collect(raw_signals)
 collector -> ui: 정규화·중복 제거된 신호
 ui -> relevance: score_batch(normalized)
-relevance -> openai: gpt-4.1-mini 호출 (관련성 채점)
+relevance -> openai: "신호마다 gpt-4.1-mini 호출 (관련성 채점)"
 openai -> relevance: "JSON (score, reasoning)"
 relevance -> ui: relevance 필드가 붙은 신호
 ui -> risk: assess_batch(scored)
-risk -> openai: gpt-4.1-mini 호출 (위험 평가)
+risk -> openai: "신호마다 gpt-4.1-mini 호출 (위험 평가)"
 openai -> risk: "JSON (risk_level, concerns)"
 risk -> ui: risk 필드가 붙은 신호

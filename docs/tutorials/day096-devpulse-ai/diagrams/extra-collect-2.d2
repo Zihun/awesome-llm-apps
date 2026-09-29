@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+medium: Medium 어댑터 { class: ours }
+ui: Streamlit UI { class: ours }
+hn: HackerNews 어댑터 { class: ours }
+hn_api: HackerNews API { class: ext }
+medium_rss: 블로그 RSS { class: ext }
+
+ui -> hn: fetch_hackernews_stories(limit) 호출
+hn -> hn_api: GET /search_by_date
+hn_api -> hn: "JSON (스토리 목록)"
+hn -> ui: 신호 dict 리스트
+ui -> medium: "fetch_medium_blogs(limit=min(limit,3)) 호출"
+medium -> medium_rss: feedparser.parse() x4 피드
+medium_rss -> medium: RSS 항목
+medium -> ui: 신호 dict 리스트
