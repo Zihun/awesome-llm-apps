@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+runner: Runner { class: ours }
+store: InMemorySessionService { class: store }
+coordinator: FinanceCoordinatorAgent { class: ours }
+budget: BudgetAnalysisAgent { class: ours }
+gemini: Gemini API { class: ext }
+
+runner -> coordinator: run_async
+coordinator -> budget: 1번째 자식 run_async
+budget -> gemini: 모델 호출 (BudgetAnalysis 스키마)
+gemini -> budget: JSON 응답
+runner -> store: append_event (state_delta: budget_analysis)

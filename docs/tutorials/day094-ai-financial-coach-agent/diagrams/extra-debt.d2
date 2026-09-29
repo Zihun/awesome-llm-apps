@@ -4,9 +4,10 @@ shape: sequence_diagram
 coordinator: FinanceCoordinatorAgent { class: ours }
 debt: DebtReductionAgent { class: ours }
 gemini: Gemini API { class: ext }
+runner: Runner { class: ours }
 store: InMemorySessionService { class: store }
 
 coordinator -> debt: 3번째 자식 run_async (같은 세션)
 debt -> gemini: 모델 호출 (DebtReduction 스키마)
 gemini -> debt: JSON 응답
-coordinator -> store: state_delta 반영 (debt_reduction)
+runner -> store: append_event (state_delta: debt_reduction)

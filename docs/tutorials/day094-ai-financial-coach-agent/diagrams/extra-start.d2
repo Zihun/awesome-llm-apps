@@ -1,0 +1,7 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+analyze: analyze_finances { class: ours }
+runner: Runner { class: ours }
+
+analyze -> runner: run_async(financial_data JSON)

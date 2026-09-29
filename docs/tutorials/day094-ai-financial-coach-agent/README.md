@@ -1,6 +1,6 @@
 # Day 094 · 💰 AI Financial Coach Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 75분 · API 비용 대략 $0.01 이하로 추정 — 요청 1건당 `gemini-2.5-flash` 호출 3회(에이전트당 1회, 구조화된 JSON 출력) 기준, 공식 요금표 입력 $0.30/출력 $2.50(1M 토큰당, https://ai.google.dev/gemini-api/docs/pricing, 2026-09-29 확인) 대입, 실제 토큰 수는 키가 없어 확인하지 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 80분(`analyze_finances`·`Runner`·`FinanceCoordinatorAgent`를 실제로 분리해 그리고 세션 저장소로 가는 두 경로를 대조하는 그림이 여섯 장으로 늘어 손으로 확인하는 시간이 깁니다) · API 비용 대략 $0.01 이하로 추정 — 요청 1건당 `gemini-2.5-flash` 호출 3회(에이전트당 1회, 구조화된 JSON 출력) 기준, 공식 요금표 입력 $0.30/출력 $2.50(1M 토큰당, https://ai.google.dev/gemini-api/docs/pricing, 2026-09-29 확인) 대입, 실제 토큰 수는 키가 없어 확인하지 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent`
 
 ## 오늘 만들 것
 
@@ -35,6 +35,10 @@ Day 088(AI Consultant Agent)·091(AI Sales Intelligence Agent Team)·092(AI VC D
 | 키별 기본값 대체 (`_create_default_results`) | 성공 경로에서도 state 키가 비었거나 JSON 파싱에 실패하면 그 키만 규칙 기반 값으로 조용히 대체(252-254행) | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:293-355` |
 | Streamlit UI (`main`) | 입력 폼·분석 버튼·결과 탭·plotly 시각화 | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:612-965` |
 | Gemini API (`gemini-2.5-flash`) | 세 에이전트의 실제 추론 수행 | 코드 없음 (외부 서비스) |
+
+완성 아키텍처는 `analyze_finances`·`Runner`를 하나로 뭉뚱그려 "세션 생성·조회·삭제·state_delta"라고만 적었습니다 — 실제로는 이 둘이 세션 저장소에 닿는 경로가 다릅니다(`analyze_finances`는 `create_session`·`get_session`·`delete_session`을, `Runner.run_async`는 이벤트마다 `append_event`로 `state_delta`를 반영). 그 구분을 화살표로 그리면 다음과 같습니다.
+
+![세션 저장소로 가는 두 경로](diagrams/extra-structure.svg)
 
 ## 단계별 진행
 
@@ -516,23 +520,31 @@ uv run --no-project streamlit run ai_financial_coach_agent.py --server.headless 
 
 ## 요청 한 건이 흐르는 과정
 
-한 번의 "분석하기" 클릭이 실제로는 네 단계를 거칩니다 — 아래 네 그림은 그 순서 그대로입니다. 세 단계 모두에서 실제로 Gemini를 부르고 상태를 저장하는 쪽은 `BudgetAnalysisAgent`·`SavingsStrategyAgent`·`DebtReductionAgent` 자신이지만, 세션 생성·조회·삭제와 `state_delta` 반영은 `FinanceCoordinatorAgent`(`SequentialAgent`)가 감싸는 `analyze_finances`·`Runner`의 몫이라 코디네이터를 통해서만 `InMemorySessionService`에 닿습니다.
+한 번의 "분석하기" 클릭이 실제로는 여섯 단계를 거칩니다 — 아래 여섯 그림은 그 순서 그대로입니다. 세 진짜 일꾼(`BudgetAnalysisAgent`·`SavingsStrategyAgent`·`DebtReductionAgent`)은 코디네이터(`FinanceCoordinatorAgent`, `SequentialAgent`)가 순서대로 실행할 뿐 `session_service`를 한 번도 부르지 않습니다(그렙 확인, `SequentialAgent`·`BaseAgent`에 `session_service` 참조 0건) — 세션 생성·조회·삭제는 `FinanceAdvisorSystem.analyze_finances` 메서드가, `state_delta` 반영은 `Runner.run_async`가 이벤트마다 부르는 `append_event`가 맡습니다(google-adk 0.1.0 `runners.py:199` 소스로 확인). 그래서 아래 그림은 `analyze_finances`·`Runner`·`FinanceCoordinatorAgent`를 서로 다른 배우로 그립니다.
 
-![1단계: 세션 생성과 예산 분석](diagrams/sequence.svg)
+![1단계: 요청 접수](diagrams/sequence.svg)
 
-1단계는 사용자 입력이 `analyze_finances` 호출로 이어져 `create_session`으로 세션이 만들어지고, 코디네이터가 첫 자식(`BudgetAnalysisAgent`)을 `run_async`로 실행해 Gemini를 부른 뒤 그 응답을 `state_delta`로 세션에 반영하는 부분까지를 그립니다.
+1단계는 사용자 입력이 `analyze_finances` 호출로 이어지고, `analyze_finances`가 `create_session`으로 세션을 만드는 부분까지를 그립니다.
 
-![2단계: 저축 전략, 같은 세션으로 이어짐](diagrams/extra-savings.svg)
+![2단계: Runner에 실행을 넘김](diagrams/extra-start.svg)
 
-2단계는 `SequentialAgent`가 같은 세션으로 두 번째 자식(`SavingsStrategyAgent`)을 실행하는 부분만 그립니다 — 새 세션이 아니라 1단계와 **같은 세션**입니다(Day 022 확인).
+2단계는 `analyze_finances`가 `Runner.run_async(financial_data JSON)`을 부르는 부분만 그립니다 — 소득·지출·부채 전체가 이 호출의 인자로 Gemini 쪽에 전달됩니다(위 "로컬 처리" 문구와 다른 바로 그 지점).
 
-![3단계: 부채 상환](diagrams/extra-debt.svg)
+![3단계: 예산 분석](diagrams/extra-budget.svg)
 
-3단계는 마지막 자식(`DebtReductionAgent`)을 같은 방식으로 실행하고 `state_delta`를 반영하는 부분만 그립니다.
+3단계는 `Runner`가 코디네이터를 `run_async`로 구동하고, 코디네이터가 첫 자식(`BudgetAnalysisAgent`)을 실행해 Gemini를 부른 뒤, `Runner`가 그 응답을 `append_event`로 세션에 반영하는 부분까지를 그립니다.
 
-![4단계: 결과 조회·세션 삭제·화면 반영](diagrams/extra-return.svg)
+![4단계: 저축 전략, 같은 세션으로 이어짐](diagrams/extra-savings.svg)
 
-4단계는 세 자식이 모두 끝난 뒤 코디네이터가 `get_session`으로 세 결과를 꺼내고, `finally`의 `delete_session`으로 세션을 지운 뒤, 결과를 Streamlit UI로 돌려줘 탭별로 시각화하는 부분을 그립니다.
+4단계는 코디네이터가 같은 세션으로 두 번째 자식(`SavingsStrategyAgent`)을 실행하는 부분만 그립니다 — 새 세션이 아니라 1단계와 **같은 세션**입니다(Day 022 확인).
+
+![5단계: 부채 상환](diagrams/extra-debt.svg)
+
+5단계는 마지막 자식(`DebtReductionAgent`)을 같은 방식으로 실행하고 `Runner`가 `state_delta`를 반영하는 부분만 그립니다.
+
+![6단계: 결과 조회·세션 삭제·화면 반영](diagrams/extra-return.svg)
+
+6단계는 세 자식이 모두 끝난 뒤 `analyze_finances`가 `get_session`으로 세 결과를 꺼내고, `finally`의 `delete_session`으로 세션을 지운 뒤, 결과를 Streamlit UI로 돌려줘 탭별로 시각화하는 부분을 그립니다. `analyze_finances`·`Runner`가 각각 세션 저장소와 정확히 어떤 메서드로 이어지는지는 아키텍처 그림 아래의 별도 구조도(`extra-structure.svg`)에 따로 정리했습니다.
 
 ## 실행 체크리스트
 
@@ -540,6 +552,7 @@ uv run --no-project streamlit run ai_financial_coach_agent.py --server.headless 
 - [ ] `BudgetAnalysis`·`DebtReduction`의 `model_json_schema()`가 `$defs`·`$ref`로 중첩 구조를 담는 것을 확인했다
 - [ ] 세 `LlmAgent` 생성 시 `output_schema cannot co-exist with agent transfer configurations` 경고가 뜨고 `disallow_transfer_to_parent`·`disallow_transfer_to_peers`가 `True`로 바뀌는 것을 확인했다
 - [ ] `FinanceCoordinatorAgent`가 `SequentialAgent`이고 `Runner`가 감싸는 `LlmAgent` 없이 이를 직접 구동하며, `InMemorySessionService`도 `__init__`에서 함께 만들어진다는 것을 확인했다
+- [ ] `analyze_finances`(create/get/delete_session)·`Runner`(run_async, append_event)·`FinanceCoordinatorAgent`(자식 실행)가 세션 저장소에 닿는 경로가 서로 다르고, `SequentialAgent`는 `session_service` 참조가 0건이라는 것을 그렙으로 확인했다
 - [ ] 키 없이 `analyze_finances`를 호출하면 `google.genai.Client()`에서 `ValueError: No API key was provided`로 끝난다는 것을 확인했다
 - [ ] 저장소에 내장된 샘플 CSV로 `parse_csv_transactions`·`validate_csv_format`이 키 없이도 동작하고, `_create_default_results`가 성공 경로에서도 키별 기본값 대체에 쓰인다는 것을 확인했다
 - [ ] `uv run --no-project streamlit run ai_financial_coach_agent.py --server.headless true --server.address localhost`로 서버가 뜨고, 종료 후 포트가 비었다는 것을 확인했다

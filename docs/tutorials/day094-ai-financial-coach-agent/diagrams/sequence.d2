@@ -3,15 +3,9 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 ui: Streamlit UI { class: ours }
-coordinator: FinanceCoordinatorAgent { class: ours }
+analyze: analyze_finances { class: ours }
 store: InMemorySessionService { class: store }
-gemini: Gemini API { class: ext }
-budget: BudgetAnalysisAgent { class: ours }
 
 user -> ui: 입력 + 분석 버튼
-ui -> coordinator: analyze_finances 호출
-coordinator -> store: create_session(initial_state)
-coordinator -> budget: 1번째 자식 run_async
-budget -> gemini: 모델 호출 (BudgetAnalysis 스키마)
-gemini -> budget: JSON 응답
-coordinator -> store: state_delta 반영 (budget_analysis)
+ui -> analyze: analyze_finances 호출
+analyze -> store: create_session(initial_state)

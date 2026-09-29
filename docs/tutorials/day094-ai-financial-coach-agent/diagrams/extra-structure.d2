@@ -1,0 +1,12 @@
+...@../../_tools/theme
+direction: down
+
+ui: Streamlit UI { class: ours }
+analyze: analyze_finances { class: ours }
+runner: Runner { class: ours }
+store: 세션 저장소 (InMemorySessionService) { class: store }
+
+ui -> analyze: 호출
+analyze -> store: create_session · get_session · delete_session
+analyze -> runner: run_async(financial_data JSON)
+runner -> store: append_event (state_delta)
