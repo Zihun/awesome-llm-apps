@@ -16,6 +16,6 @@ gemini: Gemini API (gemini-2.5-flash) { class: ext }
 
 user -> ui: 입력 + 분석 버튼
 ui -> store: 세션 생성·조회·삭제·state_delta (자세히는 별도 그림)
-ui -> coordinator: 실행 호출
+ui -> coordinator: financial_data
 coordinator -> gemini: 모델 호출 3회 (스키마 각각 다름)
 coordinator -> ui: 결과 3종

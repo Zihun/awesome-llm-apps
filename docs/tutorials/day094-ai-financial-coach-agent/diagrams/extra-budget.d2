@@ -7,6 +7,8 @@ coordinator: FinanceCoordinatorAgent { class: ours }
 budget: BudgetAnalysisAgent { class: ours }
 gemini: Gemini API { class: ext }
 
+runner -> store: get_session
+runner -> store: append_event (사용자 메시지)
 runner -> coordinator: run_async
 coordinator -> budget: 1번째 자식 run_async
 budget -> gemini: 모델 호출 (BudgetAnalysis 스키마)

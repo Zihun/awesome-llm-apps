@@ -36,9 +36,9 @@ Day 088(AI Consultant Agent)·091(AI Sales Intelligence Agent Team)·092(AI VC D
 | Streamlit UI (`main`) | 입력 폼·분석 버튼·결과 탭·plotly 시각화 | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:612-965` |
 | Gemini API (`gemini-2.5-flash`) | 세 에이전트의 실제 추론 수행 | 코드 없음 (외부 서비스) |
 
-완성 아키텍처는 `analyze_finances`·`Runner`를 하나로 뭉뚱그려 "세션 생성·조회·삭제·state_delta"라고만 적었습니다 — 실제로는 이 둘이 세션 저장소에 닿는 경로가 다릅니다(`analyze_finances`는 `create_session`·`get_session`·`delete_session`을, `Runner.run_async`는 이벤트마다 `append_event`로 `state_delta`를 반영). 그 구분을 화살표로 그리면 다음과 같습니다.
+완성 아키텍처는 `analyze_finances`·`Runner`를 하나로 뭉뚱그려 "세션 생성·조회·삭제·state_delta"라고만 적었습니다 — 실제로는 이 둘이 세션 저장소에 닿는 경로가 다르고, `Runner`가 코디네이터를 구동하는 관계도 `coordinator` 상자 안에 숨어 있습니다. `analyze_finances`는 `create_session`·`get_session`·`delete_session`을 직접 부르고, `Runner.run_async`는 시작할 때 자기 몫의 `get_session`을 한 번 더 부른 뒤(google-adk 0.1.0 `runners.py:175`) 사용자 메시지(`financial_data` JSON)를 `append_event`로 세션에 넣고(`runners.py:186-192`가 부르는 `runners.py:244`), 코디네이터를 `run_async`로 구동하며(`runners.py:196-197`), 코디네이터가 내보내는 이벤트마다 다시 `append_event`로 `state_delta`를 반영합니다(`runners.py:199`). 이 네 관계를 화살표로 그리면 다음과 같습니다.
 
-![세션 저장소로 가는 두 경로](diagrams/extra-structure.svg)
+![세션 저장소로 가는 두 경로, Runner→코디네이터 구동](diagrams/extra-structure.svg)
 
 ## 단계별 진행
 
@@ -532,7 +532,7 @@ uv run --no-project streamlit run ai_financial_coach_agent.py --server.headless 
 
 ![3단계: 예산 분석](diagrams/extra-budget.svg)
 
-3단계는 `Runner`가 코디네이터를 `run_async`로 구동하고, 코디네이터가 첫 자식(`BudgetAnalysisAgent`)을 실행해 Gemini를 부른 뒤, `Runner`가 그 응답을 `append_event`로 세션에 반영하는 부분까지를 그립니다.
+3단계는 `Runner`가 자기 몫의 `get_session`을 부르고, 사용자 메시지(`financial_data` JSON)를 `append_event`로 세션에 넣은 뒤, 코디네이터를 `run_async`로 구동하는 부분부터 시작합니다 — 코디네이터가 첫 자식(`BudgetAnalysisAgent`)을 실행해 Gemini를 부른 뒤, `Runner`가 그 응답을 다시 `append_event`로 세션에 반영하는 부분까지를 그립니다.
 
 ![4단계: 저축 전략, 같은 세션으로 이어짐](diagrams/extra-savings.svg)
 
