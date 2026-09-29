@@ -8,9 +8,14 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
-**멈춤 지점 (2026-09-28 밤) — 사용자 "모두 커밋 푸시하고 다음 작업 순서 progress 메모리에 남겨". Day 086까지 작성·푸시(진도 86/164). 084~086은 fix round 1까지 커밋, 재확인 전.**
+**멈춤 지점 (2026-09-29) — Day 090까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 90/164). 다음(Day 091~)은 사용자 지시를 받고.**
 
-**다음 작업 순서 (재개하면 이 순서대로)**
+- Task 16(084~086)·Task 17(087~090) 모두 complete. npm test 49/49, Day 001~090 전부 check 통과, 087~090 분당 20.4~21.6.
+- 사용자 결정(2026-09-29): overview에 다 못 넣는 **구조 관계**는 보조 구조 그림(extra-*.d2, 화살표로)에 그린다 — 084 extra-crew, 085 extra-swarm-handoff·extra-summary-tools, 089 extra-structure, 088 extra-tools. 브리프에 반영됨.
+- 브리프 규칙 추가: google-adk는 HOME·USERPROFILE을 스크래치로(`~/.adk`). 원본 앱 폴더 `__pycache__`는 작성자들이 계속 남김 — 끝날 때마다 내가 확인·삭제(가드된 rm).
+- 아래 "다음 작업 순서"는 2026-09-28 밤의 것으로, 모두 끝났다.
+
+**(끝남) 2026-09-28 밤의 다음 작업 순서**
 1. **084~086 fix round 1 재확인** — 리뷰어 ae03ab1255cc4ae83을 SendMessage로 재개(없으면 새 opus 리뷰어 + review-11b-brief.md + review-084-086.md).
    diff: `mk R16-round1 3b1d656 docs/tutorials/day084-* docs/tutorials/day085-* docs/tutorials/day086-*` (수정 커밋 086 e158765 · 084 1a63bc7 · 085 a71b4d2).
    판정할 것: 084 overview에서 crew→agents·input→crew·crew→result를 +300px 때문에 못 되살림(도구 가진 두 에이전트→도구만 복원, 904×988).
@@ -879,3 +884,22 @@ Task 16: 084 fix round 2 DONE — df809f5, extra-crew.d2(구조 그림 789×583)
 Task 16: 085 fix round 2 DONE — bb0ff20, Important 3·Minor 4 반영, 이관·요약 함수·캐시 구조는 overview 대신 extra 그림(extra-swarm-handoff·extra-summary-tools)으로 — 사용자가 084에 고른 '보조 그림' 방식과 같음, check 통과, 21.1/분. 084·085 짧은 재확인 dispatched(fix-R16-round2.diff base a71b4d2).
 Task 16: 084~085 2차 재확인 DONE — 084 0 open(extra-crew 여섯 관계, N4 근거 유지) → complete. 085 open I1(캐시 화살표가 Assessment에서만 — 셋 모두 씀, 넣어도 857×836 통과) + M2(핸드오프 라벨 메커니즘, extra-summary-tools 문구) → fix round 3 dispatched.
 Task 16: 085 fix round 3 DONE — 14f58d9(캐시 화살표 셋 모두, 라벨 데이터 복원, 턴 단위 추가 분할 — sequence 메시지 33개 그대로(내가 셈), check 통과, 21.0/분) → 085 complete. Task 16(084~086) 전부 complete. 푸시 후 Day 087~090 dispatched(sonnet 넷, task-17-dayNNN-report.md).
+Task 17: 087(acfd2afd218b33573)·088(ad76e6344e5300a59)·089(aab8fde21030be173)·090(aae36ea7889f0b754) dispatched (sonnet, 보조 구조 그림 패턴 허용 명시). 리뷰는 넷 끝난 뒤 한 묶음.
+Task 17: 087 DONE — 5f1159c, check 통과, 18.7/분. agno 3.0.11에서 Agent.run(message=)가 TypeError(input 필요) 재현, claude-3-5-sonnet-20241022 퇴역. 리뷰에서 볼 것: sequence '라벨 축약'(메시지 14개 보존 주장).
+Task 17: 089 DONE — 40446ad, check 통과, 18.1/분. FirecrawlTools(search=, crawl=)가 agno 3.0.11에서 TypeError(enable_search=) — 키 입력 즉시 죽음(AppTest), requirements에 openai 없음, J/K/L 단축키 미연결.
+Task 17: 090 DONE — a6a4f32, check 통과, 17.6/분. TrustRegistry·AuditTrail 단독 실행, AppTest로 무키·전원 차단 경로에서 OpenAI 요청 0. sequence + extra-pipeline 분할. 리뷰에서 볼 것: '중복 agent_id를 줄이는' 라벨 조정.
+Task 17: 088 DONE — e60fd0b, check 통과, 17.4/분. sequence + extra-analysis 분할. 부수 효과: 원본 앱 폴더 __pycache__ 생성→삭제, google-adk 2.10.0이 ~/.adk/config.json을 고정 경로로 만듦(두 번 생성·삭제, README 문제 해결에 기록). 리뷰 087~088, 089~090 두 묶음 dispatched(opus).
+Task 17: 리뷰 089~090 DONE (a2f7be817623d24eb) → review-089-090.md. 089 ❌ I6 M7(overview가 OpenAI·Firecrawl 병합·관계 삭제, sequence에 Firecrawl 배우 없음, 라벨 보강 없이 5분할, extra-report 서술 모순, agno 여섯 번째 날, 079·081 재교육) / 090 ❌ I5 M7(agent_id 삭제로 데이터 소실 — id+reason 라벨로 0 가능, '볼륨 첫 프레임워크 없는 앱' 틀림, Step 4 출력, checkip 재확인 근거 없음, javascript: 링크 주장 거짓). 원본 앱 폴더 __pycache__ 3곳 내가 지움. fix round 1 둘 dispatched(resume). 087~088 리뷰 진행 중.
+=== USER 2026-09-29: "끝나면 푸시하고 보고해" (087~090) ===
+Task 17: 리뷰 087~088 DONE (aaabf8ce0c7d552f9) → review-087-088.md. 087 ❌ I4 M7(TypeError 원인이 버전 드리프트가 아니라 모든 버전에서 실패 — 2.2.10도 input, 라벨 축약으로 message= 소실 → 3분할이면 0, 세션 쓰기 둘 병합) / 088 ❌ C1 I6 M9(Step 2~6 실행 위치와 venv 불일치로 ModuleNotFoundError, 분할 전에 래퍼 배우·왕복 삭제(18→14)·검색 도구 누락, overview 래퍼 노드 삭제·라벨 없는 화살표 5, step3~5 한 칸씩 어긋남, ~/.adk 주장 부정확, 'Day 014~023 이후 첫 ADK' 틀림(067·077)). fix round 1 둘 dispatched(resume). 동시 4: 087·088·089·090 수정.
+Task 17: 090 fix round 1 DONE — bf9b689, I5·M5 반영(agent_id+reason 라벨 1282×1082 0, 첫 프레임워크 없는 앱 주장 정정, Step 4 슬라이스 [:45]로, checkip는 Day 060 가리킴, javascript: 정정, max_tokens는 SDK docstring), M4·M6은 근거 남기고 미반영(폭·높이 초과), check 통과, 20.8/분.
+Task 17: 087 fix round 1 DONE — 9d3df88, 전부 반영(모든 agno 버전에서 실패로 원인 정정, sequence 3분할로 message= 라벨·세션 쓰기 둘 복원), check 통과, 20.5/분(65→75분).
+Task 17: 089 fix round 1 DONE — 14e7c21, 전부 반영(overview 실제 관계 + 전체 구조는 extra-structure 751×916, extra-tool-call에 Firecrawl API, integrate+finalize 병합(1073×598), 사실 정정들), check 통과, 20.3/분. 089~090 재확인 dispatched(fix-R17b-round1.diff base e60fd0b).
+Task 17: 089~090 재확인 DONE — Important 모두 해결. open: 089 M4, 090 M5(M4·M6은 리뷰어가 통과하는 대안을 찾음). 089 sequence 4분할 유지(더 합치면 720 순서 모두 실패) — Ruling: 수용(브리프의 '셋으로 나눠도 된다'는 상한이 아님). fix round 2 둘 dispatched.
+Task 17: 089 fix round 2 DONE — 831d944(Minor 4), 내가 문구 0건·check 통과 확인 → 089 complete.
+Task 17: 090 fix round 2 DONE — 70f07dc(Minor 5, 리뷰어 측정과 일치), check 통과 → 090 complete. 088 fix round 1 DONE — ad048d4(C1 --python 경로, 18메시지 복원 → sequence + extra-analysis, overview 래퍼 노드·라벨 7 + extra-tools, step 하이라이트, ~/.adk 정정, 067·077 ADK, adk web 자체 Runner), check 통과, 20.7/분(73분).
+=== USER 2026-09-29: "중지된 시점에서부터 재개해." → 088 에이전트 잔여 작업 TaskStop, 087~088 재확인 dispatched (resume aaabf8ce0c7d552f9, fix-R17a-round1.diff base e60fd0b). ===
+Task 17: 087~088 재확인 DONE — 087 원래 11건 해결 + 새 4(I1: Step 5 'uv pip install agno<2 --no-deps'가 앱 .venv를 1.8.4로 내림), 088 C 해결(--python 명령 그대로 동작) + Minor 6. 메시지 수 087 15·088 18 순서대로. fix round 2 둘 dispatched(resume).
+Task 17: 087 fix round 2 DONE — b99b5f8(agno<2 시연을 별도 .venv-1x로 — 앱 .venv 그대로 확인, 2.2.10 재현, Step 7 health 확인), check 통과, 21.6/분 → 내가 해당 줄 확인, 087 complete.
+Task 17: 088 fix round 2 DONE — 0e52095(perplexity_search 배우 복원 → sequence + extra-search 재분할, /run_sse, Step 7 cd, Perplexity 노드는 Step 5에서 extra-tools 위치를 밝힘, extra-tools의 '감쌈' 화살표 둘 제거 — 같은 관계가 overview·step3에 화살표로 있음 → Ruling: 수용(내용 손실 없음), 래퍼 함수 셋 정정), check 통과, 21.6/분 → 088 complete. Task 17(087~090) 전부 complete.
+Task 17: 마무리 — npm test 49/49, Day 001~090 check 전부 통과, roadmap 90/164, ~/.adk·~/.mem0 없음, 원본 앱 폴더 캐시 없음. 재개 지점 갱신, 커밋·푸시·보고.

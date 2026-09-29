@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 86 / 164일 완료
+진도: 90 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -177,10 +177,10 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 084](day084-ai-meeting-agent/README.md) | 📑 AI Meeting Agent | [advanced_ai_agents/single_agent_apps/ai_meeting_agent](../../advanced_ai_agents/single_agent_apps/ai_meeting_agent/) |
 | ✅ | [Day 085](day085-ai-mental-wellbeing-agent/README.md) | 🧠 AI Mental Wellbeing Agent | [advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent](../../advanced_ai_agents/multi_agent_apps/ai_mental_wellbeing_agent/) |
 | ✅ | [Day 086](day086-ai-health-fitness-agent/README.md) | 🏋️‍♂️ AI Health & Fitness Agent | [advanced_ai_agents/single_agent_apps/ai_health_fitness_agent](../../advanced_ai_agents/single_agent_apps/ai_health_fitness_agent/) |
-| ⬜ | [Day 087](day087-ai-system-architect-r1/README.md) | 🏗️ AI System Architect Agent | [advanced_ai_agents/single_agent_apps/ai_system_architect_r1](../../advanced_ai_agents/single_agent_apps/ai_system_architect_r1/) |
-| ⬜ | [Day 088](day088-ai-consultant-agent/README.md) | 🤝 AI Consultant Agent | [advanced_ai_agents/single_agent_apps/ai_consultant_agent](../../advanced_ai_agents/single_agent_apps/ai_consultant_agent/) |
-| ⬜ | [Day 089](day089-product-launch-intelligence-agent/README.md) | 🚀 AI Product Launch Intelligence Agent | [advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent](../../advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent/) |
-| ⬜ | [Day 090](day090-trust-gated-agent-team/README.md) | 🛡️ Trust-Gated Multi-Agent Research Team | [advanced_ai_agents/multi_agent_apps/trust_gated_agent_team](../../advanced_ai_agents/multi_agent_apps/trust_gated_agent_team/) |
+| ✅ | [Day 087](day087-ai-system-architect-r1/README.md) | 🏗️ AI System Architect Agent | [advanced_ai_agents/single_agent_apps/ai_system_architect_r1](../../advanced_ai_agents/single_agent_apps/ai_system_architect_r1/) |
+| ✅ | [Day 088](day088-ai-consultant-agent/README.md) | 🤝 AI Consultant Agent | [advanced_ai_agents/single_agent_apps/ai_consultant_agent](../../advanced_ai_agents/single_agent_apps/ai_consultant_agent/) |
+| ✅ | [Day 089](day089-product-launch-intelligence-agent/README.md) | 🚀 AI Product Launch Intelligence Agent | [advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent](../../advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent/) |
+| ✅ | [Day 090](day090-trust-gated-agent-team/README.md) | 🛡️ Trust-Gated Multi-Agent Research Team | [advanced_ai_agents/multi_agent_apps/trust_gated_agent_team](../../advanced_ai_agents/multi_agent_apps/trust_gated_agent_team/) |
 | ⬜ | [Day 091](day091-ai-sales-intelligence-agent-team/README.md) | 👨🏻‍💼 AI Sales Intelligence Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team/) |
 | ⬜ | [Day 092](day092-ai-vc-due-diligence-agent-team/README.md) | 📊 AI VC Due Diligence Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team/) |
 | ⬜ | [Day 093](day093-ai-fraud-investigation-agent/README.md) | 🔍 AI Fraud Investigation Agent | [advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent](../../advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent/) |
