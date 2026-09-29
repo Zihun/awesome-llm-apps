@@ -1,6 +1,6 @@
 # Day 092 · 📊 AI VC Due Diligence Agent Team
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 80분(도구 3개를 가짜 `ToolContext`로, 파이프라인 전체를 스텁 콜백으로 직접 실행해 실제 호출 순서·횟수와 `/run_sse`가 어떤 이벤트를 스트리밍하는지 확인하고, `google_search`가 클라이언트 왕복이 아님을 `llm_request`로 직접 들여다보고, 서비스 종료된 모델을 공식 문서로 재확인하고, `adk web`을 격리 환경에서 띄워 확인하는 손 작업이 읽는 시간보다 깁니다) · API 비용 대략 분석 1건에 Gemini 호출 최소 13회(코디네이터 1 + 1·2·4·5단계 각 1 + 3·6·7단계 각 2 + 도구 안 직접 `Client()` 호출 2, 스텁 실행으로 직접 확인 — 3~5단계·인포그래픽 도구 모델은 이미 서비스 종료라 실제 키로도 3단계에서 막힘) — 키가 없어 원화 실측은 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 85분(도구 3개를 가짜 `ToolContext`로, 파이프라인 전체를 스텁 콜백으로 직접 실행해 실제 호출 순서·횟수와 `/run_sse`가 어떤 이벤트를 스트리밍하는지 확인하고, `google_search`가 클라이언트 왕복이 아님을 실제 요청 없이 안전하게 확인하고, 서비스 종료된 모델을 공식 문서로 재확인하고, `adk web`을 격리 환경에서 띄워 확인하는 손 작업이 읽는 시간보다 깁니다) · API 비용 대략 분석 1건에 Gemini 호출 최소 13회(코디네이터 1 + 1·2·4·5단계 각 1 + 3·6·7단계 각 2 + 도구 안 직접 `Client()` 호출 2, 스텁 실행으로 직접 확인 — 3~5단계·인포그래픽 도구 모델은 이미 서비스 종료라 실제 키로도 3단계에서 막힘) — 키가 없어 원화 실측은 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team`
 
 ## 오늘 만들 것
 
@@ -248,7 +248,7 @@ Be thorough but realistic about what's publicly available for early-stage compan
 
 `market_analysis_agent`(`agent.py:67-94`)도 같은 모양으로 `tools=[google_search]`를 쓰고, 지시문 안에 `{company_info}`를 넣어 앞 단계의 `output_key` 값을 그대로 읽습니다. 두 에이전트 모두 도구가 `google_search` 하나뿐입니다 — Day 088의 `ai_consultant_agent`는 11행에서 같은 도구를 임포트만 하고 `tools=[...]`엔 끝내 넣지 않았지만, 이 앱은 실제로 등록합니다. 다만 "등록"과 "앱이 직접 왕복한다"는 다릅니다 — `google_search`는 google-adk 2.10.0 패키지 내부의 `GoogleSearchTool`(`tools/google_search_tool.py`, site-packages, 소스로 확인 — 클래스 docstring이 "A built-in tool that is automatically invoked by Gemini models"라고 명시하고, `process_llm_request`는 요청에 `types.Tool(google_search=types.GoogleSearch())`를 얹기만 한다)이라 **Gemini 모델 내부에서** 도는 그라운딩이고, 이 프로세스가 별도로 Google에 요청을 보내지 않습니다. 스텁으로 `CompanyResearchAgent`의 `llm_request`를 직접 찍어 보면 `tools_dict`는 빈 `{}`이고(클라이언트 쪽 함수 도구가 아니라는 뜻) `config.tools`에만 `Tool(google_search=...)`가 실려 나갑니다(직접 확인, 아래).
 
-이 스텝의 overview에는 `google_search`가 없습니다(Step 4에서 만드는 `gemini_api` 노드가 8개 에이전트를 대표합니다) — 1·2단계가 `google_search`를 쓰는 정확한 구조는 아래 확장 그림에 있습니다.
+이 스텝의 overview에는 `google_search`가 없습니다(overview의 `gemini_api` 노드는 `root_agent` 자신의 호출만 그린 것이고, 1~7단계 각각이 Gemini에 닿는 화살표는 "요청 한 건이 흐르는 과정"의 확장 그림들에 따로 있습니다) — 1·2단계가 `google_search`를 쓰는 정확한 구조는 아래 확장 그림에 있습니다.
 
 ![리서치 단계 구조](diagrams/extra-pipeline.svg)
 
@@ -272,7 +272,7 @@ CompanyResearchAgent | tools: ['google_search'] | output_key: company_info
 MarketAnalysisAgent | tools: ['google_search'] | output_key: market_analysis
 ```
 
-`google_search`가 클라이언트 쪽 함수 도구가 아니라는 것은 `before_model_callback`으로 `llm_request`를 직접 들여다보면 확인됩니다. 코디네이터는 `transfer_to_agent`를 부르도록, `CompanyResearchAgent`는 `llm_request`를 찍고 가짜 텍스트를 돌려주도록 스텁을 얹은 뒤 `InMemoryRunner`로 실행합니다(그 다음 단계부터는 스텁이 없어 실제로 Gemini를 부르다 키가 없어 `ValueError`로 멈춥니다 — Step 5와 같은 지점).
+`google_search`가 클라이언트 쪽 함수 도구가 아니라는 것은 `before_model_callback`으로 `CompanyResearchAgent`의 `llm_request`를 직접 들여다보면 확인됩니다. 이 콜백은 값을 찍은 뒤 곧바로 예외를 던져 파이프라인을 그 자리에서 멈춥니다 — `MarketAnalysisAgent`를 포함해 다른 어떤 단계도 실행되지 않고, `generate_html_report`·`generate_infographic`처럼 `Client()`를 직접 만드는 도구(Step 4)에는 아예 도달하지 않습니다. 그래서 실제 `GOOGLE_API_KEY`를 넣고 돌려도 이 명령은 Gemini에 요청을 보내지 않습니다 — 가짜 키를 넣고 직접 확인했습니다(스크래치 사본, 프록시로 격리): `Client()`를 실제로 만드는 두 도구 근처에도 가지 못한 채 `Stop` 예외로 끝나고, 네트워크 시도 자체가 없었습니다.
 
 ```bash
 uv run --no-project --python .venv python -c "
@@ -283,6 +283,9 @@ from google.adk.runners import InMemoryRunner
 from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 
+class Stop(Exception):
+    pass
+
 def fn_call(name, args):
     return types.Content(role='model', parts=[types.Part(function_call=types.FunctionCall(name=name, args=args))])
 
@@ -292,7 +295,7 @@ def root_cb(ctx, llm_request):
 def company_cb(ctx, llm_request):
     print('tools_dict keys:', list(llm_request.tools_dict.keys()))
     print('config.tools:', llm_request.config.tools)
-    return LlmResponse(content=types.Content(role='model', parts=[types.Part(text='STOP HERE')]))
+    raise Stop('inspected the request; no other stage runs')
 
 root_agent.before_model_callback = root_cb
 company_research_agent.before_model_callback = company_cb
@@ -304,20 +307,27 @@ async def main():
     try:
         async for event in runner.run_async(user_id='u', session_id='s', new_message=msg):
             pass
-    except Exception as e:
-        print('stopped:', type(e).__name__)
+    except BaseException as e:
+        cur = e
+        while cur.__cause__ is not None:
+            cur = cur.__cause__
+        print('stopped cleanly:', type(cur).__name__)
 
 asyncio.run(main())
-"
+" 2> stderr.log
 ```
+
+표준 출력(stdout, 명령이 실제로 찍는 줄바꿈 그대로):
 
 ```
 tools_dict keys: []
 config.tools: [Tool(
   google_search=GoogleSearch()
 )]
-stopped: ValueError
+stopped cleanly: Stop
 ```
+
+표준 에러(`stderr.log`)에는 세 가지가 순서대로 찍힙니다 — ① 캐시 설정 안내 한 줄("has no context_cache_config"), ② `transfer_to_agent` 도구의 실험적 기능 `UserWarning`, ③ 일부러 던진 `Stop`이 `SequentialAgent`·`Runner`를 타고 올라가며 ADK가 두 겹으로 감싸 찍는 "Node execution failed"·"Root node … failed" 트레이스백(직접 확인, 종료 코드는 0). 실행 결과나 위 stdout에는 영향을 주지 않는 프레임워크 로그입니다.
 
 ### Step 4. 재무 차트는 키 없이 되고, 리포트·인포그래픽은 `Client()`에서 막힌다
 
