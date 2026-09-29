@@ -120,7 +120,7 @@ uv run --no-project streamlit run ai_system_architect_r1.py --server.headless tr
   URL: http://localhost:58731
 ```
 
-다른 터미널에서 `curl -o /dev/null -w "%{http_code}" http://localhost:58731/`는 `200`을 돌려주었고, 로그에 예외는 찍히지 않았습니다(직접 확인). 이 재현은 이미 `~/.streamlit/credentials.toml`이 있는 홈에서 돌려 위 두 줄만 찍혔습니다 — `~/.streamlit`이 아예 없는 첫 실행이라면 그 앞에 `Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.` 줄이 먼저 찍힐 수 있습니다(streamlit 1.64.0 소스로 확인, 저장소 밖 패키지라 경로는 인용하지 않습니다).
+다른 터미널에서 `curl -o /dev/null -w "%{http_code}" http://localhost:58731/`는 `200`을 돌려주었고, 로그에 예외는 찍히지 않았습니다(직접 확인). 이 재현은 이미 `~/.streamlit/credentials.toml`이 있는 홈에서 돌려 위 출력만 찍혔습니다 — `~/.streamlit`이 아예 없는 첫 실행이라면 그 앞에 `Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.` 줄이 먼저 찍힐 수 있습니다(streamlit 1.64.0 소스로 확인, 저장소 밖 패키지라 경로는 인용하지 않습니다).
 
 ### Step 3. ModelChain 초기화 — 두 클라이언트와 agno 에이전트, 그리고 조용히 죽어있는 필드들
 
@@ -329,7 +329,10 @@ print('agno', m.version('agno'))
 from agno.agent import Agent
 from agno.models.anthropic import Claude
 agent = Agent(model=Claude(id='claude-3-5-sonnet-20241022', api_key='dummy-key'), markdown=True)
-agent.run(message='hello world')
+try:
+    agent.run(message='hello world')
+except TypeError as e:
+    print('TypeError:', e)
 "
 ```
 
@@ -340,7 +343,25 @@ agno 2.2.10
 TypeError: Agent.run() missing 1 required positional argument: 'input'
 ```
 
-반대로 `message=`를 그대로 받는 agno 1.x(`agno<2`, 마지막 1.8.4)에는 12행이 임포트하는 `agno.run.agent` 모듈 자체가 없어 더 일찍, 임포트 단계에서 막힙니다(직접 확인: `uv pip install "agno<2" --no-deps` 후 `python -c "import agno.run.agent"`가 `ModuleNotFoundError: No module named 'agno.run.agent'`). 즉 이 코드는 `agno>=2.2.10`을 만족하는 범위 안에서 버전을 어디에 고정해도 고쳐지지 않습니다.
+반대로 `message=`를 그대로 받는 agno 1.x(`agno<2`, 마지막 1.8.4)에는 12행이 임포트하는 `agno.run.agent` 모듈 자체가 없어 더 일찍, 임포트 단계에서 막힙니다. 이것도 Step 1의 `.venv`를 건드리지 않도록 이름을 다르게 준 별도 환경에서 확인합니다 — `agno<2`는 오늘 이 코드가 필요로 하는 `agno>=2.2.10`과 정반대이므로, 이름 없이 `uv pip install "agno<2"`를 치면 방금 만든 앱 가상환경 자체가 1.8.4로 내려갑니다.
+
+```bash
+uv venv .venv-1x && uv pip install --python .venv-1x "agno<2" --no-deps
+uv run --no-project --python .venv-1x python -c "
+try:
+    import agno.run.agent
+except ModuleNotFoundError as e:
+    print('ModuleNotFoundError:', e)
+"
+```
+
+직접 확인한 출력:
+
+```
+ModuleNotFoundError: No module named 'agno.run.agent'
+```
+
+즉 이 코드는 `agno>=2.2.10`을 만족하는 범위 안에서 버전을 어디에 고정해도 고쳐지지 않습니다.
 
 ### Step 6. 채팅 흐름 조립 — 세션 상태와 `chat_input`
 
@@ -417,7 +438,15 @@ uv run --no-project streamlit run ai_system_architect_r1.py
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 헤드리스 기동 자체는 Step 2에서 이미 직접 확인했습니다(포트 58731, HTTP 200). 여기서는 지금까지 다룬 두 갈래 — 키가 없을 때와 있을 때 — 가 각각 어디서 멈추는지 정리합니다. 키 두 개를 비워 두고 채팅창에 아무 말이나 보내면 296행의 "⚠️ Please enter both API keys in the sidebar."만 뜨고 멈춘다는 것은 소스로 확인했습니다(브라우저 자동화 없이는 클릭을 재현할 수 없어 "직접 확인"이 아닙니다). 키를 둘 다 유효하게 넣더라도, DeepSeek 호출까지는 성공할 가능성이 있지만 그다음 `self.agent.run(message=...)`에서 Step 5가 재현한 `TypeError`로 멈춘다는 것은 키·네트워크와 무관하게 이미 직접 확인했습니다(그 `TypeError`는 `requirements.txt`의 하한·오늘의 최신판·1.x 모두에서 같은 결론이라는 것도 Step 5에서 확인했습니다).
+**확인.** 헤드리스 기동 자체는 Step 2에서 이미 직접 확인했습니다(포트 58731, HTTP 200). 여기서는 Streamlit의 런타임 준비 상태를 알려주는 별도 엔드포인트로 한 번 더 확인합니다.
+
+```bash
+curl -o /dev/null -w "%{http_code}" http://localhost:58731/_stcore/health
+```
+
+직접 확인한 출력: `200`(본문은 `ok`). 브라우저로 같은 주소를 직접 열면 제목 "🤖 AI System Architect Advisor with R1"(251행)과 프롬프트 작성 가이드(254행), 사이드바의 입력창 2개(277-278행), 맨 아래 채팅 입력창(294행)이 보입니다(소스로 확인 — 브라우저 자동화 없이는 화면 렌더링 자체를 재현할 수 없어 "직접 확인"이 아닙니다).
+
+지금까지 다룬 두 갈래 — 키가 없을 때와 있을 때 — 가 각각 어디서 멈추는지 정리합니다. 키 두 개를 비워 두고 채팅창에 아무 말이나 보내면 296행의 "⚠️ Please enter both API keys in the sidebar."만 뜨고 멈춘다는 것은 소스로 확인했습니다(브라우저 자동화 없이는 클릭을 재현할 수 없어 "직접 확인"이 아닙니다). 키를 둘 다 유효하게 넣더라도, DeepSeek 호출까지는 성공할 가능성이 있지만 그다음 `self.agent.run(message=...)`에서 Step 5가 재현한 `TypeError`로 멈춘다는 것은 키·네트워크와 무관하게 이미 직접 확인했습니다(그 `TypeError`는 `requirements.txt`의 하한·오늘의 최신판·1.x 모두에서 같은 결론이라는 것도 Step 5에서 확인했습니다).
 
 ## 요청 한 건이 흐르는 과정
 
