@@ -922,3 +922,22 @@ Task 18: 091 fix round 2 DONE — 7fe1857(I4-b 라벨 복원, 4~7단계→gemini
 Task 18: 091~092 2차 재확인 DONE — 091 0 open → complete. 092 Minor 2(251행 문구, tools_dict 확인 스크립트가 2단계부터 실제 Gemini 호출 — 키 있는 독자 과금) → fix round 3 dispatched.
 Task 18: 092 fix round 3 DONE — 95a1be4(251행 문구, tools_dict 확인 스크립트가 CompanyResearchAgent 확인 직후 멈추게 — 가짜 키로 요청 없음 확인), check 통과, 21.3/분(85분) → 092 complete. 재현 중 가짜 키 요청 시도는 프록시(127.0.0.1:9) 터널에서 ConnectError — Google에 닿지 않음(DNS 차단은 없었으나 프록시 경유라 대상 호스트를 클라이언트가 조회하지 않음). Task 18(091~093) 전부 complete.
 Task 18: 마무리 — npm test 49/49, Day 001~093 check 전부 통과, 091~093 분당 21.3~21.8, roadmap 93/164, ~/.adk 없음, 원본 앱 폴더 부산물 없음. 커밋·푸시·보고.
+
+=== USER 2026-09-29: "Day 096 까지 진행해" ===
+Task 19: 094 Financial Coach(acdac966bad1ab388), 095 Home Renovation Nano Banana(aaacd4ae95fa2c265), 096 DevPulse AI(a8a31da7298adff91) dispatched (sonnet, task-19-dayNNN-report.md; dispatch에 반복 위반 네 가지(병합·삭제·접기·데이터 잃는 축약) 금지와 \u 이스케이프 주의 명시). 리뷰는 셋 끝난 뒤 한 묶음(opus).
+Task 19: 094 DONE — 97e9707, check 통과, 18.1/분. google-adk==0.1.0 그대로 설치하면 deprecated 패키지 누락으로 import 실패, matplotlib 미사용, output_schema가 전환 설정 자동 잠금. 원본 폴더 __pycache__ 한 번 생성→삭제(자진 신고).
+Task 19: 096 DONE — 91fc179, check 통과, 18.8/분(75→60분). SynthesisAgent가 만든 agno Agent를 run하지 않음(결정적 로직), except 폴백은 agno 3.0.11에서 죽은 코드(RunOutput status=error), 로고 URL 404, cp949 콘솔 UnicodeEncodeError. 리뷰에서 볼 것: sequence '9배우·18메시지 → 7배우'로 줄였다는 말(배우 삭제인지).
+Task 19: 095 1차 — 미커밋, overview·step 1049px(+49). 작성자가 세로 예외 1060을 요청 → Ruling: 예외 대신 사용자가 승인한 '보조 구조 그림' 방식으로(084·089·092 선례) — 추천안이 있으니 묻지 않고 진행(메모리 proceed-with-recommendation), 틀렸다면 예외를 물으면 됨. 작성자 재개. 발견: gemini-3-pro(-image)-preview 종료, requirements에 google-genai 누락, SequentialAgent-in-sub_agents 세 번째 사례.
+Task 19: 095 DONE — 0604974, overview 1085×787(PlanningPipeline 묶음), 관계 20개를 보조 구조 그림 5장으로(삭제·병합 없음 주장), __pycache__ 지움, check 통과, 18.8/분. 리뷰 094~096 dispatched (opus → review-094-096.md).
+Task 19: 리뷰 094~096 DONE (ad8e815ba47294256) → review-094-096.md. 셋 다 ❌: 094 I4 M10(_create_default_results 죽은 코드 아님, 앱의 '로컬 처리·전송 없음' 문구 거짓 — 입력 숫자가 Gemini로 감, Step 5 출력, sequence가 Runner·SequentialAgent·세션 빼고 없는 호출 그림) / 095 C1 I6 M11(Step 2~6 venv 문제, JSON_SCHEMA 주장 틀림, 모델 교체 안내에 tools.py:396 누락, step4~6 동일, 구조 그림에 관계 둘 누락·google_search 위치, sequence 분할이 순서 깨고 메시지 누락) / 096 I3 M12(수집 단계 배우 2·메시지 4 삭제·다섯 소스 중 GitHub만, overview에 외부 소스 없음, Step 8 독자 명령에 격리 PATH). fix round 1 셋 dispatched(resume).
+Task 19: 096 fix round 1 DONE — 091c0d3, 수집 단계 복원(extra-collect-1/2/3, 다섯 소스 모두), overview에 외부 소스 5 묶음(1183×994), Step 8 격리 PATH 제거, Minor 12, check 통과, 20.6/분(60→65분).
+Task 19: 095 fix round 1 DONE — 6dc4069, 전부 반영(C1 cd+--python, 구조 그림 4장, 순서 보존 분할·최종 응답 복원), check 통과, 21.9/분(67분). PNG 육안 확인은 안 함(작성자: 래스터라이저 없음 — rereview-11c-brief.md의 headless Chrome 명령을 못 찾은 듯) → 재확인 리뷰어가 PNG로 봄.
+Task 19: 094 fix round 1 DONE — 1bb2922, 전부 반영(sequence 4장 재작성: 코디네이터·세션 서비스 포함), check 통과, 21.4/분(75분). 094~096 재확인 dispatched(fix-R19-round1.diff base 0604974).
+Task 19: 094~096 재확인 DONE — 094 새 Important 2(sequence가 analyze_finances·Runner·SequentialAgent를 한 배우로 병합, overview가 세션 저장소를 코디네이터 묶음 안으로 + 화살표 둘을 <->로 병합) / 095 C·I 해결 + Minor 4(Step 2~6 그대로 동작, 구조 4장·11분할 37메시지 순서대로) / 096 Minor 1. fix round 2 셋 dispatched.
+--- 세션 한도(429, 20:10 재설정)로 094·095·096 fix round 2 끊김(미커밋 변경 없음) → 사용자 "중지된 시점에서부터 재개해" → 셋 SendMessage로 재개. ---
+Task 19: 096 fix round 2 DONE — 0cc0b43(348행과 문제 해결 표 일치), check 통과 → 096 complete.
+Task 19: 095 fix round 2 DONE — ca0b7bc(Minor 4), check 통과, 21.8/분 → 095 complete.
+Task 19: 094 fix round 2 DONE — d9c2fce(배우 셋 분리·세션 호출 귀속, 빠졌던 run_async 메시지 복원 19→21, 6장 분할, overview 저장소 독립·화살표 둘, extra-structure), check 통과, 21.3/분(80분). 094 짧은 재확인 dispatched.
+Task 19: 094 2차 재확인 — Important 둘 해결, 새 Minor 2(Runner get_session·세션 쓰기·Runner→코디네이터 미표시, overview 코디네이터 화살표 라벨 없음) → fix round 3 dispatched.
+Task 19: 094 fix round 3 DONE — ac25acd(Runner get_session·append_event·Runner→코디네이터 run_async, overview 라벨 financial_data), check 통과, 22.0/분 → 094 complete. Task 19(094~096) 전부 complete.
+Task 19: 마무리 — npm test 49/49, Day 001~096 check 전부 통과, 094~096 분당 20.8~22.0, roadmap 96/164, 원본 앱 폴더·홈 부산물 없음. 커밋·푸시·보고.
