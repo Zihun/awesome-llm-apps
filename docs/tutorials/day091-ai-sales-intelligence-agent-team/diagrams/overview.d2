@@ -12,7 +12,7 @@ pipeline: 배틀카드 파이프라인 (SequentialAgent, 7단계, 각 단계가 
 
 gemini: Gemini API { class: ext }
 search: google_search { class: ext }
-artifacts: 산출물 저장 (Artifacts+outputs/) { class: file }
+artifacts: 산출물 저장소 (Artifacts+outputs/) { class: store }
 
 user -> adk_web: 질문 텍스트 (경쟁사+제품)
 adk_web.root -> gemini: instruction + transfer 선언

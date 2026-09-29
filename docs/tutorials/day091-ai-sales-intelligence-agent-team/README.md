@@ -190,7 +190,11 @@ competitor_research_agent = LlmAgent(
 
 세 단계가 각자 Gemini를 부르고(위 그림), 그 호출 안에서 Gemini가 검색을 그라운딩하는 모습은 아래처럼 별도로 그렸습니다 — `google_search`를 별도 노드로 두되 화살표는 언제나 Gemini에서 나가야 방향이 사실과 맞습니다.
 
-![리서치 3단계](diagrams/extra-research.svg)
+![리서치 1~2단계](diagrams/extra-research1.svg)
+
+세 단계를 `google_search`까지 한 장에 그리면 세로 1027px로 상한(1000px)을 넘겨, 2단계를 다리로 겹쳐 두 장으로 나눴습니다.
+
+![리서치 2~3단계](diagrams/extra-research2.svg)
 
 **확인.** Gemini 호출은 재현할 수 없으므로 Day 019~021처럼 `before_model_callback`으로 모델 응답을 흉내 내, `{competitor_profile}` 템플릿이 실제로 이전 단계 값으로 채워지는지 **파이프라인 전체**(`battle_card_pipeline`)를 스텁으로 돌려 직접 봅니다 — 1단계만 따로 돌리면 아직 아무 상태도 없어 템플릿 자체가 없으므로, 2단계 이상이 실제로 뭘 받는지 봐야 합니다.
 
@@ -527,7 +531,7 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 ![파이프라인 실행과 응답](diagrams/extra-transfer.svg)
 
-여기서부터 7단계가 이어지는 자세한 과정은 시간 경계별로 세 그림에 나눠 뒀습니다 — 리서치 3단계는 위 [리서치 3단계](diagrams/extra-research.svg), 합성 2단계는 [합성 2단계](diagrams/extra-synthesis.svg), 산출물 생성 2단계는 [산출물 생성 2단계](diagrams/extra-generation.svg)입니다. Step 6이 직접 실행으로 확인했듯 **7단계 전부**가 각자 텍스트 이벤트를 내고, `adk_web`은 이 이벤트들을 스트림으로 그대로 사용자에게 돌려줍니다 — 코디네이터가 다시 실행되어 요약하는 일은 일어나지 않고, 마지막으로 화면에 남는 것은 `comparison_chart_agent`의 글입니다. 이 문서는 키가 없어 실제 Gemini 응답까지는 관찰하지 못했고, Step 1~7에서 직접 실행한 것은 의존성 설치·소스 구조·상태 템플리팅·전환 메커니즘·`adk web`의 실제 정지 지점까지입니다.
+여기서부터 7단계가 이어지는 자세한 과정은 시간 경계별로 그림에 나눠 뒀습니다 — 리서치 3단계는 위 [리서치 1~2단계](diagrams/extra-research1.svg)·[리서치 2~3단계](diagrams/extra-research2.svg), 합성 2단계는 [합성 2단계](diagrams/extra-synthesis.svg), 산출물 생성 2단계는 [산출물 생성 2단계](diagrams/extra-generation.svg)입니다. Step 6이 직접 실행으로 확인했듯 **7단계 전부**가 각자 텍스트 이벤트를 내고, `adk_web`은 이 이벤트들을 스트림으로 그대로 사용자에게 돌려줍니다 — 코디네이터가 다시 실행되어 요약하는 일은 일어나지 않고, 마지막으로 화면에 남는 것은 `comparison_chart_agent`의 글입니다. 이 문서는 키가 없어 실제 Gemini 응답까지는 관찰하지 못했고, Step 1~7에서 직접 실행한 것은 의존성 설치·소스 구조·상태 템플리팅·전환 메커니즘·`adk web`의 실제 정지 지점까지입니다.
 
 ## 실행 체크리스트
 

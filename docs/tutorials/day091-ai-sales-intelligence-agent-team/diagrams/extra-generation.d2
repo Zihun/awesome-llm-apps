@@ -6,14 +6,14 @@ stage7: "7. 비교 차트 생성 (comparison_chart_agent)" { class: ours }
 
 chart_tool: "generate_comparison_chart" { class: ours }
 html_tool: "generate_battle_card_html" { class: ours }
-artifacts: 산출물 저장 (Artifacts+outputs/) { class: file }
 gemini: Gemini API { class: ext }
+artifacts: 산출물 저장소 (Artifacts+outputs/) { class: store }
 
 stage6 -> stage7: battle_card_result (stage7은 참조 안 함)
 
 stage6 -> html_tool: 데이터 조립 후 호출
 stage7 -> chart_tool: 데이터 조립 후 호출
 chart_tool -> gemini: TEXT+IMAGE
-html_tool -> gemini: 프롬프트
+html_tool -> gemini: 요청
 chart_tool -> artifacts: PNG 저장
 html_tool -> artifacts: HTML 저장
