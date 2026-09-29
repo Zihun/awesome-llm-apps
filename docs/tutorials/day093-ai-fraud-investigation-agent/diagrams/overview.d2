@@ -2,17 +2,17 @@
 direction: right
 
 user: 사용자 { class: person }
-ui: Streamlit { class: ours }
+ui: Streamlit UI { class: ours }
 agent: Surelock Homes { class: ours }
 openrouter: OpenRouter { class: ext }
-t_cap: 용량 계산 { class: ours }
-dcfs: IL DCFS { class: ext }
-cook: Cook County { class: ext }
+t_cap: "용량 계산\n(calculate_\nmax_capacity)" { class: ours }
+dcfs: "IL DCFS\n(search_\nchildcare_\nproviders)" { class: ext }
+cook: "Cook County\n(get_\nproperty_\ndata)" { class: ext }
 google: Google Maps { class: ext }
-sos: IL SOS { class: ext }
+sos: "IL SOS\n(check_\nbusiness_\nregistration)" { class: ext }
 
 user -> ui: 키·ZIP 선택
-ui -> agent: 조사 지시
+ui -> agent: 지시
 agent -> openrouter: 프롬프트
 agent -> t_cap: 면적
 agent -> dcfs: ZIP

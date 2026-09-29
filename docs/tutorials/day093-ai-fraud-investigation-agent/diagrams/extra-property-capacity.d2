@@ -12,5 +12,5 @@ agent -> cook: GET char_bldg_sf
 cook -> agent: building_sqft
 agent -> openrouter: tool 결과: building_sqft
 openrouter -> agent: tool_call calculate_max_capacity
-agent -> agent: usable_sqft×0.65÷35 계산
+agent -> agent: building_sqft×0.65÷35 계산
 agent -> openrouter: tool 결과: max_legal_capacity

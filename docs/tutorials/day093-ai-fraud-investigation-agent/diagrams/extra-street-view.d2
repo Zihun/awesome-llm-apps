@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+openrouter: OpenRouter { class: ext }
+agent: Surelock Homes { class: ours }
+google: Google Maps { class: ext }
+
+openrouter -> agent: tool_call get_street_view
+agent -> google: GET streetview/metadata(방향 1개당)
+google -> agent: capture_date
+agent -> google: GET streetview(이미지)
+google -> agent: image_bytes
+agent -> openrouter: tool 결과: images_captured

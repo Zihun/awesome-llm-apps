@@ -1,10 +1,10 @@
 # Day 093 · 🔍 AI Fraud Investigation Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 60분(단일 파일이지만 외부 연동이 4곳 — IL DCFS·Cook County·Google Maps·IL SOS — 이라 각 도구가 키 유무에 따라 어디서 멈추는지 하나씩 직접 호출해 확인하는 손 시간이 듭니다) · API 비용 정확한 도구 호출 횟수는 키가 없어 확인하지 못함(대략치) — OpenRouter의 `anthropic/claude-sonnet-4.6` 요금은 프롬프트 $3·완성 $15(1M 토큰당, openrouter.ai 모델 페이지 확인, 2026-09-29)이고 시스템 프롬프트만 약 5,200자(직접 확인)이며 공급자마다 누적 대화가 다시 전송되므로, ZIP 하나(공급자 최대 100곳까지 조사 대상)를 완주하면 수천 원대까지도 갈 수 있음 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 65분(단일 파일이지만 외부 연동이 4곳 — IL DCFS·Cook County·Google Maps·IL SOS — 이라 각 도구가 키 유무에 따라 어디서 멈추는지 하나씩 직접 호출해 확인하고, `json.dumps`의 이스케이프·지연 평가된 타입 힌트처럼 실제 출력을 한 글자씩 대조하는 손 시간이 듭니다) · API 비용 정확한 도구 호출 횟수는 키가 없어 확인하지 못함(대략치) — OpenRouter의 `anthropic/claude-sonnet-4.6` 요금은 프롬프트 $3·완성 $15(1M 토큰당, openrouter.ai 모델 페이지 확인, 2026-09-29)이고 시스템 프롬프트만 약 5,200자(직접 확인)이며 공급자마다 누적 대화가 다시 전송되므로, ZIP 하나(공급자 최대 100곳까지 조사 대상)를 완주하면 수천 원대까지도 갈 수 있음 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_fraud_investigation_agent`
 
 ## 오늘 만들 것
 
-Day 078에서 연 "🚀 Advanced AI Agents" 볼륨이 이어집니다. Day 078~090 가운데 OpenRouter를 LLM 제공자로 쓴 날은 없었습니다(각 날짜 README로 확인) — 오늘의 935줄(`wc -l` 기준, 마지막 줄 개행 있음) `fraud_investigation_agent.py`는 agno의 `OpenRouter` 모델 클래스(`OpenAILike`를 상속해 OpenRouter의 OpenAI 호환 엔드포인트를 호출 — 소스로 확인, agno 3.0.11)로 기본값 `anthropic/claude-sonnet-4.6`을 부르는 이 볼륨 첫 사례입니다. 앱은 시카고 Cook County의 보조금 지원 어린이집(subsidized childcare provider) 인허가 기록을 조사하는 자율 에이전트 "Surelock Homes"를 만듭니다. 핵심 아이디어는 건축법규가 물리 법칙이라는 것입니다 — Illinois DCFS Title 89 Part 407은 어린이 1명당 실사용 35 sq ft를 요구하고 실사용 면적은 총면적의 65%로 어림잡으므로, 900 sq ft 건물은 서류상 정원이 얼마든 최대 16명까지만 합법입니다(직접 확인: `calculate_max_capacity(900)` → `max_legal_capacity: 16`). 에이전트는 이 계산 하나로 끝나지 않고 7개 도구로 Illinois DCFS 라이선싱 사이트(ASP.NET ViewState 스크레이핑), Cook County Assessor의 Socrata 오픈데이터(인증 불필요, 4단계 폴백), Google Maps(지오코딩·스트리트뷰·Places, 선택), Illinois 국무장관실(Secretary of State) 사업자 등록을 교차 대조하며 추론을 실시간으로 서술합니다 — 시스템 프롬프트 자체가 "서술이 곧 산출물"이라고 못박습니다. 같은 프롬프트는 "fraud"라는 단어 사용을 명시적으로 금지하고 "requires further investigation"·"exhibits anomalies"만 쓰도록 강제합니다(직접 확인: 시스템 프롬프트에 `NEVER` 지침과 "fraud" 언급이 함께 존재함). 이 튜토리얼도 같은 이유로 실제 공급자 이름이나 주소를 조사 대상으로 실행하지 않습니다 — 키가 없어 실행할 수 없다는 점 외에도, 이 앱의 출력은 어디까지나 조사 단서(investigative lead)이지 법적 결론이 아니라는 점을 가드레일 절이 스스로 반복해서 밝히고 있기 때문입니다(`fraud_investigation_agent.py:136`, "All findings are investigation leads, not evidence for prosecution"). 조사 범위는 데모용으로 Cook County, Illinois의 ZIP 코드 10개로 고정되어 있습니다(앱 README로 확인).
+Day 078에서 연 "🚀 Advanced AI Agents" 볼륨이 이어집니다. Day 078~090 가운데 OpenRouter를 LLM 제공자로 쓴 날은 없었습니다(각 날짜 README로 확인) — 오늘의 935줄(`wc -l` 기준, 마지막 줄 개행 있음) `fraud_investigation_agent.py`는 agno의 `OpenRouter` 모델 클래스(`OpenAILike`를 상속해 OpenRouter의 OpenAI 호환 엔드포인트를 호출 — 소스로 확인, agno 3.0.11)로 기본값 `anthropic/claude-sonnet-4.6`을 부르는 이 볼륨 첫 사례입니다. 앱은 시카고 Cook County의 보조금 지원 어린이집(subsidized childcare provider) 인허가 기록을 조사하는 자율 에이전트 "Surelock Homes"를 만듭니다. 핵심 아이디어는 건축법규가 물리 법칙이라는 것입니다 — 앱의 시스템 프롬프트는 Illinois DCFS Title 89 Part 407 기준이라며 어린이 1명당 실사용 35 sq ft, 실사용 면적은 총면적의 65%라는 값을 못박아 두고(`fraud_investigation_agent.py:95-101`, 앱 프롬프트 기준 — 규정 원문은 확인하지 않았습니다), 이 가정대로 계산하면 900 sq ft 건물은 서류상 정원이 얼마든 최대 16명입니다(직접 확인: `calculate_max_capacity(900)` → `max_legal_capacity: 16`). 에이전트는 이 계산 하나로 끝나지 않고 7개 도구로 Illinois DCFS 라이선싱 사이트(ASP.NET ViewState 스크레이핑), Cook County Assessor의 Socrata 오픈데이터(인증 불필요, 4단계 폴백), Google Maps(지오코딩·스트리트뷰·Places, 선택), Illinois 국무장관실(Secretary of State) 사업자 등록을 교차 대조하며 추론을 실시간으로 서술합니다 — 시스템 프롬프트 자체가 "서술이 곧 산출물"이라고 못박습니다. 같은 프롬프트는 "fraud"라는 단어 사용을 명시적으로 금지하고 "requires further investigation"·"exhibits anomalies"만 쓰도록 강제합니다(직접 확인: 시스템 프롬프트에 `NEVER` 지침과 "fraud" 언급이 함께 존재함). 이 튜토리얼도 같은 이유로 실제 공급자 이름이나 주소를 조사 대상으로 실행하지 않습니다 — 키가 없어 실행할 수 없다는 점 외에도, 이 앱의 출력은 어디까지나 조사 단서(investigative lead)이지 법적 결론이 아니라는 점을 가드레일 절이 스스로 반복해서 밝히고 있기 때문입니다(`fraud_investigation_agent.py:136`, "All findings are investigation leads, not evidence for prosecution"). 조사 범위는 데모용으로 Cook County, Illinois의 ZIP 코드 10개로 고정되어 있습니다(앱 README로 확인). 이 볼륨의 다른 agno 날들(078·079·086·087·089)과 마찬가지로, `agent.run()`이 성공할 때마다 agno가 익명 사용 통계를 자체 API로 보냅니다 — Day 047 Step 5와 같은 사실입니다(소스로 확인 — agno 3.0.11의 `agent/agent.py`가 `telemetry: bool = True`를 선언합니다. `AGNO_TELEMETRY=false`로 끌 수 있습니다).
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,8 +12,8 @@ Day 078에서 연 "🚀 Advanced AI Agents" 볼륨이 이어집니다. Day 078~0
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| OpenRouter API 키 | agno Agent가 LLM(기본 `anthropic/claude-sonnet-4.6`)을 호출하는 데 필요. 없으면 사이드바의 "Start Investigation" 버튼 자체가 비활성화된다(`fraud_investigation_agent.py:807-812`) | openrouter.ai 가입 후 발급 — 무료 티어로 데모 가능(앱 README) |
-| Google Maps API 키 (선택) | `geocode_address`·`get_street_view`·`get_places_info` 3개 도구가 동작하려면 필요. 없으면 각 도구가 즉시 `"status": "no_key"`를 반환하고 건너뛴다(직접 확인) | console.cloud.google.com에서 Geocoding·Places·Street View Static API 활성화 후 키 발급 |
+| OpenRouter API 키 | agno Agent가 LLM(기본 `anthropic/claude-sonnet-4.6`)을 호출하는 데 필요. 없으면 사이드바의 "Start Investigation" 버튼 자체가 비활성화된다(`fraud_investigation_agent.py:807-812`) | openrouter.ai 가입 후 발급 — 앱 README는 무료 티어로 충분하다고 적지만, 사이드바가 제공하는 모델 5개(`fraud_investigation_agent.py:776-787`)는 모두 유료 ID라(`:free` 접미사 없음) 최소한의 크레딧 충전이 필요하다(소스로 확인) |
+| Google Maps API 키 (선택) | `geocode_address`·`get_street_view`·`get_places_info` 3개 도구가 동작하려면 필요. 없으면 각 도구가 즉시 `"status": "no_key"`를 반환하고 건너뛴다(직접 확인) | console.cloud.google.com에서 Geocoding·Places·Street View Static API 활성화 후 키 발급. `get_places_info`는 구형 Places API(`maps/api/place/findplacefromtext`·`place/details`, `fraud_investigation_agent.py:607`·`fraud_investigation_agent.py:635`) 엔드포인트를 쓰는데, Google 공식 문서는 2025-03-01부터 새 프로젝트에는 이 구버전을 열어 주지 않고 Places API(New)로 유도한다고 밝힌다(developers.google.com/maps/legacy, 2026-09-29 확인) — 새로 발급한 키는 `REQUEST_DENIED`를 받을 수 있다 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 
 ## 아키텍처 한눈에 보기
@@ -45,6 +45,8 @@ uv pip install -r requirements.txt
 uv run --no-project python -m py_compile fraud_investigation_agent.py
 ```
 
+pip만 쓴다면 `uv venv`·`uv pip install` 대신 `python -m venv .venv`·`pip install -r requirements.txt`.
+
 `requirements.txt:1-5`:
 
 ```
@@ -63,7 +65,7 @@ beautifulsoup4>=4.14.3
 uv run --no-project python -c "import agno; print(agno.__version__)"
 ```
 
-직접 확인한 출력: `3.0.11` — 선언된 하한 `agno>=2.5.9`보다 훨씬 위지만, `agno.models.openrouter.OpenRouter`와 `Agent(..., compress_tool_results=True)`는 이 버전에서 그대로 동작합니다(직접 확인, Step 7).
+직접 확인한 출력: `3.0.11` — 선언된 하한 `agno>=2.5.9`보다 훨씬 위입니다. `agno.models.openrouter.OpenRouter`·`Agent(..., compress_tool_results=True)` 조합이 이 버전에서 실제로 동작하는지는 Step 7에서 가짜 키로 생성자만 확인합니다.
 
 ### Step 2. 정체성과 가드레일 — 시스템 프롬프트
 
@@ -118,7 +120,7 @@ print('NEVER' in p, 'fraud' in p.lower())
 "
 ```
 
-직접 확인한 출력: `True True` — `NEVER` 지침이 있으면서도, 그 지침이 금지하는 단어 "fraud" 자체는 프롬프트 안에 (금지 대상으로) 등장합니다. 이 명령은 `import`만으로 파일 전체를 실행하므로 `missing ScriptRunContext! ... bare mode` 경고가 여러 줄 함께 출력됩니다(무해함 — "문제 해결" 참고).
+직접 확인한 출력: `True True` — `NEVER` 지침이 있으면서 "fraud"라는 단어 자체도 프롬프트 안에 있다는 것만 이 출력으로 확인됩니다. "fraud"는 가드레일의 금지 대상으로만 나오는 게 아닙니다 — 정체성 절도 에이전트를 "an autonomous fraud investigation agent"(`:52`)라 부르고, 도메인 지식 절에는 "KNOWN FRAUD PATTERNS"(`:103`)라는 제목이 있습니다. 이 명령은 `import`만으로 파일 전체를 실행하므로 `missing ScriptRunContext! ... bare mode` 경고가 여러 줄 함께 출력됩니다(무해함 — "문제 해결" 참고).
 
 ### Step 3. 키 없이도 항상 도는 도구 3종 — DCFS·Socrata·건축법규 계산
 
@@ -240,13 +242,10 @@ print(m.calculate_max_capacity(900))
 "
 ```
 
-직접 확인한 출력(줄바꿈은 가독성을 위해 추가):
+직접 확인한 출력(한 줄, 가공 없이 그대로 — `json.dumps` 기본값 `ensure_ascii=True`라 `×`·`÷`가 `×`·`÷`로 이스케이프됩니다):
 
 ```json
-{"status": "ok", "building_sqft": 900.0, "usable_ratio": 0.65, "usable_sqft": 585.0,
- "sqft_per_child_required": 35, "max_legal_capacity": 16, "state": "IL",
- "regulation": "IL DCFS Title 89, Part 407",
- "calculation": "900 sqft × 0.65 usable ratio = 585 usable sqft ÷ 35 sqft/child = 16 children max"}
+{"status": "ok", "building_sqft": 900.0, "usable_ratio": 0.65, "usable_sqft": 585.0, "sqft_per_child_required": 35, "max_legal_capacity": 16, "state": "IL", "regulation": "IL DCFS Title 89, Part 407", "calculation": "900 sqft × 0.65 usable ratio = 585 usable sqft ÷ 35 sqft/child = 16 children max"}
 ```
 
 ### Step 4. 선택 도구 3종 — Google Maps(지오코딩·스트리트뷰·Places)
@@ -333,7 +332,7 @@ print(m.get_places_info('예시 주소', '예시 상호'))
 "
 ```
 
-직접 확인한 출력(세 줄 모두 `"status": "no_key"`):
+직접 확인한 출력(세 줄 모두 `"status": "no_key"`, 가공 없이 그대로 — 한글 `예시 주소`도 `ensure_ascii=True`라 `예시 주소`로 이스케이프됩니다):
 
 ```json
 {"status": "no_key", "address": "예시 주소", "note": "No Google Maps API key configured. Geocoding unavailable."}
@@ -341,11 +340,11 @@ print(m.get_places_info('예시 주소', '예시 상호'))
 {"status": "no_key", "address": "예시 주소", "note": "No Google Maps API key. Places lookup unavailable."}
 ```
 
-### Step 5. 사업자 등록 확인 — 키가 없어도 항상 실제로 요청이 나가는 도구
+### Step 5. 사업자 등록 확인 — Google 키로 막히지 않는 도구 중 하나
 
-**목적.** 7개 도구 중 유일하게 어떤 키와도 무관하게 항상 실제 정부 API를 호출하는 `check_business_registration`의 방화벽 차단 처리를 확인합니다.
+**목적.** `check_business_registration`은 Step 3의 두 도구(`search_childcare_providers`·`get_property_data`)와 마찬가지로 어떤 키와도 무관하게 항상 실제 정부 API를 호출하는 도구입니다 — 이 셋 중 마지막으로, IL 국무장관실의 방화벽 차단(403) 처리 방식을 확인합니다.
 
-**할 일.** 이 함수는 `_google_key()`도, OpenRouter 키도 확인하지 않습니다 — `name` 인자만 있으면 바로 IL 국무장관실 엔드포인트에 요청을 보냅니다. 코드 자체가 403이 나올 수 있다고 미리 주석으로 밝혀 둡니다:
+**할 일.** 이 함수는 `_google_key()`도, OpenRouter 키도 확인하지 않습니다 — `name` 인자만 있으면 바로 IL 국무장관실 엔드포인트에 요청을 보냅니다. 코드 자체가 403이 나올 수 있다고 미리 주석으로 밝혀 둡니다. 이 방화벽 차단은 어떤 키(OpenRouter도 Google도)를 넣어도 사라지지 않습니다 — IL 국무장관실 API 자체가 CDN 뒤에서 막혀 있기 때문입니다:
 
 `fraud_investigation_agent.py:696-712`:
 
@@ -369,7 +368,7 @@ print(m.get_places_info('예시 주소', '예시 상호'))
             })
 ```
 
-다른 6개 도구와 달리 이 도구는 키 유무와 무관하게 항상 네트워크로 나가므로, 이 문서에서는 직접 실행하지 않고 소스로만 확인합니다.
+Step 4의 Google Maps 도구 3종과 달리 이 도구는(그리고 Step 3의 두 도구도 마찬가지로) 키 검사 없이 항상 네트워크로 나가므로, 이 문서에서는 직접 실행하지 않고 소스로만 확인합니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -383,7 +382,7 @@ print(inspect.signature(m.check_business_registration))
 "
 ```
 
-직접 확인한 출력: `(name: str, state: str = 'IL') -> str`
+직접 확인한 출력: `(name: 'str', state: 'str' = 'IL') -> 'str'` — 파일 10행의 `from __future__ import annotations` 때문에 타입 힌트가 문자열로 지연 평가되어, `inspect.signature`가 보여 주는 주석에도 따옴표가 붙습니다(소스로 확인).
 
 ### Step 6. Streamlit 사이드바 — 키 입력·모델 선택·ZIP 선택
 
@@ -429,7 +428,13 @@ print(inspect.signature(m.check_business_registration))
 uv run --no-project streamlit run fraud_investigation_agent.py --server.headless true --server.address localhost
 ```
 
-직접 확인(격리된 포트로 재현): 뜬 포트에 `curl`하면 `HTTP 200`이 오고, 홈 디렉터리에는 새 파일이 생기지 않습니다. 키를 입력하지 않은 상태이므로 화면의 "Start Investigation" 버튼은 비활성 상태입니다(소스로 확인, `disabled=not openrouter_key`).
+브라우저로 `http://localhost:8501`을 열거나, 다음 명령으로 헬스체크만 확인합니다:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8501/_stcore/health
+```
+
+기대 출력: `200`. 직접 확인(격리된 포트로 재현): 뜬 포트에 헬스체크하면 `200`이 오고, 홈 디렉터리에는 새 파일이 생기지 않습니다. 키를 입력하지 않은 상태이므로 화면의 "Start Investigation" 버튼은 비활성 상태입니다(소스로 확인, `disabled=not openrouter_key`).
 
 ### Step 7. 에이전트 조립과 스트리밍 실행
 
@@ -466,7 +471,7 @@ uv run --no-project streamlit run fraud_investigation_agent.py --server.headless
         )
 ```
 
-agno의 `Agent.tools`는 `Toolkit`·`Function` 객체뿐 아니라 일반 파이썬 함수(`Callable`)도 그대로 받습니다(소스로 확인, `agno/agent/agent.py`의 `tools` 타입 힌트 `Optional[Union[List[Union[Toolkit, Callable, Function, Dict]], ...]]`, agno 3.0.11) — 그래서 이 7개 함수는 별도 데코레이터 없이 리스트에 그대로 들어갑니다. 응답은 스트리밍으로 받아 청크마다 화면에 누적합니다:
+agno의 `Agent.tools`는 `Toolkit`·`Function` 객체뿐 아니라 일반 파이썬 함수(`Callable`)도 그대로 받습니다(소스로 확인, `agno/agent/agent.py`의 `tools` 타입 힌트 `Optional[Union[List[Union[Toolkit, Callable, Function, Dict]], ...]]`, agno 3.0.11) — 그래서 이 7개 함수는 별도 데코레이터 없이 리스트에 그대로 들어갑니다. 이 `Agent(...)`가 실제로 만들어지고 `run()`이 성공할 때마다 agno가 익명 사용 통계를 자체 API로 보냅니다 — Day 047 Step 5에서 이미 다룬 사실이고(`AGNO_TELEMETRY=false`로 끌 수 있습니다), agno 3.0.11의 `agent/agent.py`(`telemetry: bool = True`)로 재확인했습니다. 응답은 스트리밍으로 받아 청크마다 화면에 누적합니다 — `instructions`가 "조사하면서 서술하라"고 명시하고(`fraud_investigation_agent.py:75`, `fraud_investigation_agent.py:893`) `stream=True`이므로, 실제로는 서술이 도구 호출들 사이사이에도 흘러나옵니다(전부 끝난 뒤에만 나오는 것이 아닙니다):
 
 `fraud_investigation_agent.py:904-917`:
 
@@ -501,9 +506,23 @@ print(getattr(ev, 'content', None))
 
 직접 확인한 출력: `hello` — agno 3.0.11의 스트리밍 이벤트 클래스(`@dataclass`)가 `content` 필드를 갖고 있어, `getattr(chunk, 'content', None)` 패턴이 실제로 값을 얻습니다. 키가 없으므로 `agent.run(...)` 자체는 실행하지 않았습니다 — OpenRouter 호출은 소스로만 확인했습니다.
 
+가짜 키로 `Agent(...)` 생성자까지만 확인합니다(네트워크 요청 없음):
+
+```bash
+uv run --no-project python -c "
+from agno.agent import Agent
+from agno.models.openrouter import OpenRouter
+model = OpenRouter(id='anthropic/claude-sonnet-4.6', api_key='fake', max_tokens=16384)
+agent = Agent(model=model, tools=[], description='x', compress_tool_results=True)
+print(type(agent).__name__, agent.compress_tool_results, type(model).__bases__[0].__name__, model.base_url)
+"
+```
+
+직접 확인한 출력: `Agent True OpenAILike https://openrouter.ai/api/v1`
+
 ## 요청 한 건이 흐르는 과정
 
-공급자 한 곳을 심층 조사하는 대표적인 한 사이클은 메시지가 33개로 많아 한 그림에 담으면 세로 상한(1500px)을 크게 넘습니다. 그래서 앱의 실제 시간 경계 — 공급자 검색 → 자산·용량 계산 → Google Maps 시각 조사 → 사업자 등록 확인·서술 — 네 구간으로 나누어 원래 순서 그대로 그렸습니다. 실제 조사에서는 이 전체가 공급자 수만큼(ZIP당 최대 100곳) 반복됩니다.
+공급자 한 곳을 심층 조사하는 대표적인 한 사이클은 메시지가 37개로 많아 한 그림에 담으면 세로 상한(1500px)을 크게 넘습니다. 그래서 앱의 실제 시간 경계 — 공급자 검색 → 자산·용량 계산 → 스트리트뷰 → Places 조회 → 사업자 등록 확인·서술 — 다섯 구간으로 나누어 원래 순서 그대로 그렸습니다. 각 구간의 요청·응답은 실제 코드가 보내는 것만큼 나눠 그렸습니다 — 예를 들어 스트리트뷰는 메타데이터 조회와 이미지 조회가 서로 다른 두 번의 HTTP 요청이라 두 메시지 쌍으로 그렸습니다. 실제 조사에서는 이 전체가 공급자 수만큼(ZIP당 최대 100곳) 반복됩니다.
 
 ### 1) 공급자 검색
 
@@ -515,19 +534,25 @@ print(getattr(ev, 'content', None))
 
 ![요청 시퀀스 2 — 자산·용량](diagrams/extra-property-capacity.svg)
 
-OpenRouter가 `get_property_data`를 선택하면 에이전트는 Cook County Socrata에 PIN 조회 → 면적 조회로 두 번 왕복합니다. 건물 면적을 받으면 OpenRouter는 `calculate_max_capacity`를 선택하고, 이번에는 외부 호출 없이 에이전트 자신이 계산합니다(자기 메시지) — 이 두 도구가 함께 "물리적으로 불가능한 정원"을 만들어 냅니다.
+OpenRouter가 `get_property_data`를 선택하면 에이전트는 Cook County Socrata에 PIN 조회 → 면적 조회로 두 번 왕복합니다. 건물 면적을 받으면 OpenRouter는 `calculate_max_capacity`를 선택하고, 이번에는 외부 호출 없이 에이전트 자신이 계산합니다(자기 메시지) — 이 두 도구가 함께 앱의 가정대로 "물리적으로 불가능한 정원"을 계산해 냅니다.
 
-### 3) Google Maps 시각 조사
+### 3) 스트리트뷰
 
-![요청 시퀀스 3 — Google Maps](diagrams/extra-google-maps.svg)
+![요청 시퀀스 3 — 스트리트뷰](diagrams/extra-street-view.svg)
 
-OpenRouter가 `get_street_view`·`get_places_info`를 차례로 선택하면 에이전트는 Google Maps에 각각 한 번씩 왕복합니다(Google 키가 없으면 이 구간 전체가 `"status": "no_key"`로 즉시 끝납니다 — Step 4).
+OpenRouter가 `get_street_view`를 선택하면 에이전트는 Google Maps에 두 번 왕복합니다 — 먼저 메타데이터(`streetview/metadata`)로 촬영일을 확인하고, 이미지가 있을 때만 실제 이미지(`streetview`)를 받습니다. 이 쌍이 방향(N/E/S/W)마다 반복되지만 그림은 대표로 한 방향만 보입니다(Google 키가 없으면 이 구간 전체가 `"status": "no_key"`로 즉시 끝납니다 — Step 4).
 
-### 4) 사업자 등록 확인과 서술 마무리
+### 4) Places 조회
 
-![요청 시퀀스 4 — 등록 확인·서술](diagrams/extra-registration-narration.svg)
+![요청 시퀀스 4 — Places](diagrams/extra-places-info.svg)
 
-마지막으로 `check_business_registration`이 IL SOS에 왕복합니다(403이면 수동 조회 링크를 대신 받습니다 — Step 5). 도구 호출이 모두 끝나면 OpenRouter는 서술 텍스트를 스트리밍으로 돌려주고, 에이전트는 청크마다 UI에 누적해 사용자가 실시간으로 읽습니다.
+OpenRouter가 `get_places_info`를 선택하면 에이전트는 Google Maps에 다시 두 번 왕복합니다 — 후보를 찾는 `findplacefromtext`와, 영업상태·평점·리뷰를 받는 `place/details`는 서로 다른 요청입니다.
+
+### 5) 사업자 등록 확인과 서술 마무리
+
+![요청 시퀀스 5 — 등록 확인·서술](diagrams/extra-registration-narration.svg)
+
+마지막으로 `check_business_registration`이 IL SOS에 왕복합니다(403이면 수동 조회 링크를 대신 받습니다 — Step 5). 도구 호출이 모두 끝나면 OpenRouter는 마지막 서술 텍스트를 스트리밍으로 돌려주고, 에이전트는 청크마다 UI에 누적해 사용자가 실시간으로 읽습니다 — 실제로는 `stream=True`이고 프롬프트가 "조사하면서 서술하라"고 지시하므로, 서술은 이 그림 이전의 각 도구 호출 사이사이에도 이미 흘러나오고 있었습니다(그림은 마지막 구간만 대표로 보입니다).
 
 ## 실행 체크리스트
 
@@ -536,15 +561,14 @@ OpenRouter가 `get_street_view`·`get_places_info`를 차례로 선택하면 에
 - [ ] `calculate_max_capacity(900)`을 직접 호출해 `max_legal_capacity: 16`을 확인했다
 - [ ] Google 키를 비운 채 `geocode_address`·`get_street_view`·`get_places_info`가 모두 `"status": "no_key"`를 반환하는 것을 확인했다
 - [ ] OpenRouter 키를 입력하지 않은 상태에서 "Start Investigation" 버튼이 비활성화되는 것을 화면에서 확인했다
-- [ ] (키가 있다면) ZIP 하나를 골라 실행하고, 서술이 스트리밍되며 Street View 이미지가 표시되는지 확인한다
+- [ ] (키가 있다면) ZIP 하나를 골라 실행하고, 서술이 스트리밍되며 Street View 이미지가 표시되는지 확인한다 — 실제 공급자 이름·주소가 나오는 출력은 앱 자신의 가드레일대로 조사 단서일 뿐이니 공유·게시하지 않는다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `python -c "import fraud_investigation_agent"`처럼 순수 파이썬으로 임포트하면 `missing ScriptRunContext! ... bare mode` 경고가 여러 줄 반복 출력된다(직접 확인) | 이 파일은 `if __name__ == "__main__":` 가드 없이 750행부터 최상위에서 `st.*` 위젯을 바로 호출한다 — Streamlit 런타임 밖에서는 위젯 호출마다 경고만 남기고 무해하게 넘어간다 | 이 경고는 `streamlit run`이 아니라 검증용으로 순수 파이썬 임포트를 할 때만 나타나며 무시해도 된다. 실제 앱 구동은 `uv run --no-project streamlit run fraud_investigation_agent.py`로 한다 |
-| 사업자 등록 확인 도구가 유효한 키로 실행해도 실제 등록 정보 대신 `"status": "blocked"`만 돌려줄 가능성이 높다 | IL 국무장관실 API가 CDN 방화벽 뒤에 있어 403을 돌려줄 수 있다고 코드 주석에 이미 적혀 있다(`fraud_investigation_agent.py:697`, `fraud_investigation_agent.py:703-712`) | 코드가 이미 이 경우를 처리해 수동 조회 링크(`https://apps.ilsos.gov/corporatellc/`)를 함께 돌려준다 — 별도 수정 없이 예상된 동작이다 |
-| `requirements.txt`의 `agno>=2.5.9` 하한을 그대로 설치하면 훨씬 최신 버전이 잡힌다(직접 확인: 3.0.11) | 하한만 선언되어 있고 상한이 없다 | 오늘 확인한 3.0.11에서는 `agno.models.openrouter.OpenRouter`·`compress_tool_results`·`tools=[Callable, ...]` 모두 그대로 동작한다(직접 확인) — 실행에 지장은 없으며 참고만 한다 |
+| `requirements.txt`의 `agno>=2.5.9` 하한을 그대로 설치하면 훨씬 최신 버전이 잡힌다(직접 확인: 3.0.11) | 하한만 선언되어 있고 상한이 없다 | 오늘 확인한 3.0.11에서는 `agno.models.openrouter.OpenRouter`·`compress_tool_results`·`tools=[Callable, ...]` 모두 그대로 동작한다(직접 확인, Step 7의 `Agent(...)` 생성자 확인) — 실행에 지장은 없으며 참고만 한다 |
 
 ## 더 해보기
 
