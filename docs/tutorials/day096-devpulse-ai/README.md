@@ -345,7 +345,7 @@ print(a._fallback_assessment({'title': 'GPT-5 Breaking Changes in API'}, 'no key
 uv run --no-project python verify.py
 ```
 
-Windows 콘솔에서는 이모지 출력 때문에 `PYTHONUTF8=1`을 앞에 붙여야 합니다(문제 해결 참고). 직접 확인한 출력(`PYTHONUTF8=1` 포함, 2회차 실행 — 1회차는 임포트 캐시가 없어 약간 더 걸립니다):
+Git Bash(mintty)에서나 출력을 파이프로 넘길 때는 이모지 출력 때문에 `PYTHONUTF8=1`(PowerShell은 `$env:PYTHONUTF8=1`)을 앞에 붙여야 합니다 — 네이티브 명령 프롬프트·PowerShell의 대화형 콘솔에서는 재현되지 않습니다(문제 해결 참고). 직접 확인한 출력(`PYTHONUTF8=1` 포함, 2회차 실행 — 1회차는 임포트 캐시가 없어 약간 더 걸립니다):
 
 ```text
 ============================================================
