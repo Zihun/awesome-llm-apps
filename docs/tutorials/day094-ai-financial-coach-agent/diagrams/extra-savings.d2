@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+budget: BudgetAnalysisAgent { class: ours }
+savings: SavingsStrategyAgent { class: ours }
+gemini: Gemini API { class: ext }
+
+budget -> savings: 같은 세션으로 다음 순서 진행
+savings -> gemini: 모델 호출 (SavingsStrategy 스키마)
+gemini -> savings: JSON 응답 → state.savings_strategy

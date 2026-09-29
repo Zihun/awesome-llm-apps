@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit UI { class: ours }
+budget: BudgetAnalysisAgent { class: ours }
+gemini: Gemini API { class: ext }
+
+user -> ui: 소득·지출·부채 입력 + 분석 버튼
+ui -> budget: analyze_finances → Runner.run_async 1번째
+budget -> gemini: 모델 호출 (BudgetAnalysis 스키마)
+gemini -> budget: JSON 응답 → state.budget_analysis

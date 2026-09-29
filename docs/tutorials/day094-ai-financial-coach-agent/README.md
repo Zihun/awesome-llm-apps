@@ -1,10 +1,14 @@
 # Day 094 · 💰 AI Financial Coach Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 (작성 필요) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 70분 · API 비용 대략 $0.01 이하로 추정 — 요청 1건당 `gemini-2.5-flash` 호출 3회(에이전트당 1회, 구조화된 JSON 출력) 기준, 공식 요금표 입력 $0.30/출력 $2.50(1M 토큰당, https://ai.google.dev/gemini-api/docs/pricing, 2026-09-29 확인) 대입, 실제 토큰 수는 키가 없어 확인하지 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent`
 
 ## 오늘 만들 것
 
-(작성 필요)
+Day 088(AI Consultant Agent)·091(AI Sales Intelligence Agent Team)·092(AI VC Due Diligence Agent Team)에 이어 이 볼륨에서 **네 번째**로 google-adk를 쓰는 자리입니다(078~093 전체 README를 `google.adk` 문자열로 검색해 확인 — 088·091·092만 걸립니다). 시리즈 전체로는 **일곱 번째**(Day 014~023 크래시 코스, Day 067, Day 077, Day 088, Day 091, Day 092에 이어)입니다. 091·092는 코디네이터 `LlmAgent`가 `sub_agents`에 `SequentialAgent`를 넣고 `transfer_to_agent`로 제어를 통째로 넘기는 간접 구조였지만, 오늘의 968줄짜리(마지막 줄에 개행이 없어 `wc -l`은 967로 셉니다) `ai_financial_coach_agent.py`는 그런 감싸는 `LlmAgent` 없이 **`SequentialAgent`(`FinanceCoordinatorAgent`) 자체를 `Runner`에 직접 물립니다** — Day 022의 `9_1_sequential_agent`(`Runner`가 `SequentialAgent`를 바로 구동)와 같은 형태이고, `transfer_to_agent`라는 문자열은 이 파일 어디에도 없습니다(그렙 확인).
+
+예산 분석→저축 전략→부채 상환, 세 전문 `LlmAgent`가 이 순서로 실행되며 각자 중첩된 Pydantic 모델을 `output_schema`로 강제합니다. `output_schema`·`output_key` 자체는 Day 016이 이미 다뤘지만, 오늘 스키마는 `List[SpendingCategory]`나 `PayoffPlans`(그 안에 `PayoffPlan`이 둘) 처럼 **모델 안에 모델이 들어가는 중첩 구조**라는 점이 새롭습니다(Step 2, 직접 확인). 세 에이전트를 만들 때마다 "output_schema cannot co-exist with agent transfer configurations"라는 경고도 뜨는데, Day 022가 이미 확인했듯 `SequentialAgent`의 자식은 애초에 전환 대상이 없어 이 경고 없이도 전환은 불가능합니다 — 그래도 생성자가 이를 별도로, 보수적으로 잠근다는 것을 직접 실행으로 확인합니다(Step 3).
+
+`requirements.txt`가 고정한 `google-adk==0.1.0`은 실제로 설치하면 `deprecated` 패키지가 없어 첫 `import google.adk`부터 깨지는 실제 패키징 버그가 있고(Step 1, 직접 확인), 목록에 있는 `matplotlib`은 앱 코드 어디에서도 쓰이지 않습니다(그렙 확인 — 시각화는 전부 `plotly`가 맡습니다). 키 없이 실제로 파이프라인을 돌리면 `analyze_finances`가 `google.genai`의 `Client()` 생성자에서 `ValueError`로 멈춥니다 — 088·091·092와 같은 지점입니다(Step 5, 직접 확인). 이 앱이 만드는 예산·저축·부채 조언은 Gemini가 그때그때 생성하는 일반적인 제안일 뿐 자격을 가진 재무 상담사의 조언이 아니며, 앱 자신의 코드에도 이를 밝히는 문구는 없습니다(전체 검색으로 확인) — 이 문서에서 입력하는 소득·지출·부채 숫자는 앱이 사이드바에서 내려받게 해 주는 예시 CSV(Step 6)뿐이고, 실제 개인 재무 정보는 넣지 않습니다. 완성 아키텍처는 다음과 같습니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,46 +16,505 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| (작성 필요) | | |
+| Google AI Studio API 키 (`GOOGLE_API_KEY`) | 세 에이전트 모두의 `gemini-2.5-flash` 호출 인증(동일한 키 하나). 이 문서는 키를 발급하지 않고 구조와 실패 지점만 확인합니다 | https://aistudio.google.com/apikey 에서 발급 후 앱 폴더의 `.env`에 `GOOGLE_API_KEY=...`로 설정 (이 실습에서는 생략 가능) |
+| uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
+| 인터넷 연결 | PyPI에서 `google-adk`·`Deprecated` 등 설치, 키가 있다면 Gemini API 접속 | 별도 설치 없음 |
 
 ## 아키텍처 한눈에 보기
 
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
-| (작성 필요) | | |
+| Pydantic 출력 스키마 (`BudgetAnalysis` 외 8개) | 세 에이전트 응답의 모양을 못박음. `SpendingCategory`·`PayoffPlans` 등 중첩 모델 포함 | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:28-87` |
+| 예산 분석 에이전트 (`BudgetAnalysisAgent`, `LlmAgent`) | 지출을 분류하고 절감안을 `BudgetAnalysis` 스키마로 생성 | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:103-135` |
+| 저축 전략 에이전트 (`SavingsStrategyAgent`, `LlmAgent`) | `state['budget_analysis']`를 이어받아 비상금·저축 배분 산출 | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:137-161` |
+| 부채 상환 에이전트 (`DebtReductionAgent`, `LlmAgent`) | avalanche·snowball 두 상환 계획 계산 | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:163-187` |
+| 재무 코디네이터 (`FinanceCoordinatorAgent`, `SequentialAgent`) | 세 에이전트를 선언 순서대로 끝까지 실행(Day 022 확인 그대로) | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:189-197` |
+| `Runner` + `InMemorySessionService` | 세션 생성→`run_async` 소비→세션 삭제까지 `analyze_finances`가 직접 구동(Day 077과 같은 직접 구동 패턴) | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:199-203` |
+| CSV 파싱·검증 (`parse_csv_transactions`, `validate_csv_format`) | 업로드된 거래 내역을 표준 형식으로 변환. 순수 pandas라 키 없이도 동작 | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:516-580` |
+| 오프라인 폴백 (`_create_default_results`) | 파이프라인 예외 시 규칙 기반 기본값 생성(실제로는 예외 발생 시 `raise`가 먼저 실행돼 도달하지 않음, Step 5) | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:293-355` |
+| Streamlit UI (`main`) | 입력 폼·분석 버튼·결과 탭·plotly 시각화 | `advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:612-965` |
+| Gemini API (`gemini-2.5-flash`) | 세 에이전트의 실제 추론 수행 | 코드 없음 (외부 서비스) |
 
 ## 단계별 진행
 
-### Step 1. (작성 필요)
+### Step 1. 환경 만들기 — google-adk 0.1.0의 숨은 의존성 버그
 
-**목적.** (작성 필요)
+**목적.** 의존성을 설치하고, `requirements.txt`가 고정한 아주 오래된 `google-adk==0.1.0`이 실제로 무엇을 받아오는지, 그리고 그대로 import가 되는지 확인합니다.
 
-**할 일.** (작성 필요)
+**할 일.**
+
+```bash
+cd advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent
+uv venv
+uv pip install -r requirements.txt
+```
+
+(pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. 이 저장소는 루트에 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다.)
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/requirements.txt:1-7`
+
+```text
+google-adk==0.1.0
+streamlit>=1.28.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+numpy==1.26.4
+python-dotenv>=1.0.0
+plotly>=5.15.0
+```
+
+7줄 중 버전이 고정된 것은 `google-adk`·`numpy`뿐입니다. `matplotlib`은 설치되지만 이 앱 코드 어디에서도 `import matplotlib`이 없습니다(그렙 확인) — 화면의 파이·바 차트는 전부 `plotly.express`·`plotly.graph_objects`가 그립니다. 이대로 설치한 뒤 `google.adk`를 임포트하면 실제로 실패합니다.
+
+```bash
+uv run --no-project python -c "import google.adk"
+```
+
+직접 확인한 출력(패키지 내부 경로는 마지막 줄만 옮깁니다 — google-adk 0.1.0 소스로 확인하면 `tools/base_tool.py`의 `from deprecated import deprecated` 줄에서 끝납니다):
+
+```
+ModuleNotFoundError: No module named 'deprecated'
+```
+
+`google-adk` 0.1.0의 패키지 메타데이터(`METADATA`의 `Requires-Dist`)를 직접 열어 보면 `authlib`·`fastapi`·`google-genai`·`pydantic` 등은 있지만 `deprecated`(또는 `Deprecated`)는 목록에 없습니다 — 그런데 `tools/base_tool.py`는 이 모듈을 직접 임포트합니다. 이 버전 자체의 패키징 버그이고, 리포 코드를 고쳐서 될 일이 아니므로 빠진 패키지를 따로 설치합니다.
+
+```bash
+uv pip install Deprecated
+uv run --no-project python -m py_compile ai_financial_coach_agent.py && echo compiled
+uv run --no-project python -c "
+import streamlit, pandas, numpy, plotly, google.adk, google.genai
+print('streamlit', streamlit.__version__)
+print('pandas', pandas.__version__)
+print('numpy', numpy.__version__)
+print('plotly', plotly.__version__)
+print('google-adk', google.adk.__version__)
+print('google-genai', google.genai.__version__)
+" 2>/dev/null
+```
+
+직접 확인한 출력:
+
+```
+compiled
+streamlit 1.64.0
+pandas 3.0.6
+numpy 1.26.4
+plotly 7.1.0
+google-adk 0.1.0
+google-genai 2.25.0
+```
+
+(PowerShell은 마지막 줄의 `2>/dev/null` 대신 `2>$null`을 씁니다.) `google-adk`는 `requirements.txt`가 고정한 그대로 0.1.0이 설치되고, `google-genai`는 버전을 고정하지 않아 이 문서를 쓴 시점(2026-09-29) 기준 2.25.0이 받아졌습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
-**확인.** (작성 필요)
+**확인.** 위 여섯 줄(`compiled`부터 `google-genai 2.25.0`까지)이 그대로 찍히면 다음 스텝으로 넘어갈 준비가 된 것입니다.
+
+### Step 2. Pydantic 출력 스키마 — 모델 안에 모델이 들어가는 중첩 구조
+
+**목적.** 세 에이전트가 강제할 응답 모양을 Pydantic으로 어떻게 선언하는지, 그리고 Day 016의 `EmailContent`·`SupportTicket`과 달리 이번 스키마는 **다른 `BaseModel`을 필드 타입으로 품는 중첩 구조**라는 것을 확인합니다.
+
+**할 일.** `SpendingCategory`→`BudgetAnalysis` 체인을 봅니다.
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:28-42`
+
+```python
+class SpendingCategory(BaseModel):
+    category: str = Field(..., description="Expense category name")
+    amount: float = Field(..., description="Amount spent in this category")
+    percentage: Optional[float] = Field(None, description="Percentage of total spending")
+
+class SpendingRecommendation(BaseModel):
+    category: str = Field(..., description="Category for recommendation")
+    recommendation: str = Field(..., description="Recommendation details")
+    potential_savings: Optional[float] = Field(None, description="Estimated monthly savings")
+
+class BudgetAnalysis(BaseModel):
+    total_expenses: float = Field(..., description="Total monthly expenses")
+    monthly_income: Optional[float] = Field(None, description="Monthly income")
+    spending_categories: List[SpendingCategory] = Field(..., description="Breakdown of spending by category")
+    recommendations: List[SpendingRecommendation] = Field(..., description="Spending recommendations")
+```
+
+`spending_categories: List[SpendingCategory]`처럼 필드 타입 자체가 다른 `BaseModel`입니다. 부채 쪽은 한 단계 더 들어갑니다 — `PayoffPlans` 하나가 `PayoffPlan` 두 개(avalanche·snowball)를 품습니다.
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:74-87`
+
+```python
+class PayoffPlans(BaseModel):
+    avalanche: PayoffPlan = Field(..., description="Highest interest first method")
+    snowball: PayoffPlan = Field(..., description="Smallest balance first method")
+
+class DebtRecommendation(BaseModel):
+    title: str = Field(..., description="Title of recommendation")
+    description: str = Field(..., description="Details of recommendation")
+    impact: Optional[str] = Field(None, description="Expected impact of this action")
+
+class DebtReduction(BaseModel):
+    total_debt: float = Field(..., description="Total debt amount")
+    debts: List[Debt] = Field(..., description="List of all debts")
+    payoff_plans: PayoffPlans = Field(..., description="Debt payoff strategies")
+    recommendations: Optional[List[DebtRecommendation]] = Field(None, description="Recommendations for debt reduction")
+```
+
+`output_schema`·`output_key`가 `LlmAgent`에 어떻게 붙는지, 결과가 `event.actions.state_delta`의 어디에 들어가는지는 Day 016이 이미 소스로 확인했으므로 되풀이하지 않습니다. 여기서 새로 보는 것은 Pydantic이 이 중첩을 `model_json_schema()`에서 `$defs`·`$ref`로 정확히 풀어낸다는 것뿐입니다.
+
+![Step 2까지의 구성](diagrams/step2.svg)
+
+**확인.**
+
+```bash
+uv run --no-project python -c "
+from ai_financial_coach_agent import BudgetAnalysis, DebtReduction
+s1 = BudgetAnalysis.model_json_schema()
+print(s1['properties']['spending_categories']['items'])
+s2 = DebtReduction.model_json_schema()
+print(s2['properties']['payoff_plans'])
+print(sorted(s2['\$defs'].keys()))
+"
+```
+
+직접 확인한 출력:
+
+```
+{'$ref': '#/$defs/SpendingCategory'}
+{'$ref': '#/$defs/PayoffPlans', 'description': 'Debt payoff strategies'}
+['Debt', 'DebtRecommendation', 'PayoffPlan', 'PayoffPlans']
+```
+
+### Step 3. 세 `LlmAgent` — `output_schema`가 자동으로 잠그는 것
+
+**목적.** `BudgetAnalysisAgent`·`SavingsStrategyAgent`·`DebtReductionAgent` 셋을 실제로 만들어 보고, `output_schema`가 있으면 google-adk가 전환(`transfer_to_agent`) 관련 설정을 생성 시점에 자동으로 잠근다는 것을 직접 실행으로 확인합니다.
+
+**할 일.** 세 에이전트는 지시문 길이만 다를 뿐 같은 모양입니다 — 첫 번째의 앞뒤만 봅니다.
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:103-106`
+
+```python
+        self.budget_analysis_agent = LlmAgent(
+            name="BudgetAnalysisAgent",
+            model="gemini-2.5-flash",
+            description="Analyzes financial data to categorize spending patterns and recommend budget improvements",
+```
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:133-135`
+
+```python
+            output_schema=BudgetAnalysis,
+            output_key="budget_analysis"
+        )
+```
+
+`savings_strategy_agent`(137-161)·`debt_reduction_agent`(163-187)도 같은 여섯 인자(`name`·`model`·`description`·`instruction`·`output_schema`·`output_key`) 순서입니다. 셋을 실제로 만들면 로그에 경고가 뜹니다.
+
+![Step 3까지의 구성](diagrams/step3.svg)
+
+**확인.**
+
+```bash
+uv run --no-project python -W ignore -c "
+from ai_financial_coach_agent import FinanceAdvisorSystem
+system = FinanceAdvisorSystem()
+print(system.budget_analysis_agent.output_schema.__name__, system.budget_analysis_agent.output_key)
+print(system.budget_analysis_agent.disallow_transfer_to_parent, system.budget_analysis_agent.disallow_transfer_to_peers)
+" 2>&1
+```
+
+직접 확인한 출력:
+
+```
+WARNING:google.adk.agents.llm_agent:Invalid config for agent BudgetAnalysisAgent: output_schema cannot co-exist with agent transfer configurations. Setting disallow_transfer_to_parent=True, disallow_transfer_to_peers=True
+WARNING:google.adk.agents.llm_agent:Invalid config for agent SavingsStrategyAgent: output_schema cannot co-exist with agent transfer configurations. Setting disallow_transfer_to_parent=True, disallow_transfer_to_peers=True
+WARNING:google.adk.agents.llm_agent:Invalid config for agent DebtReductionAgent: output_schema cannot co-exist with agent transfer configurations. Setting disallow_transfer_to_parent=True, disallow_transfer_to_peers=True
+BudgetAnalysis budget_analysis
+True True
+```
+
+(`-W ignore`는 이 임포트가 함께 끌고 오는, 이 앱과 무관한 `google-cloud-aiplatform`의 `FutureWarning`만 지웁니다 — 위 `WARNING:` 세 줄은 `logging` 모듈이 찍는 것이라 그대로 남습니다.) 세 경고 모두 똑같이 `disallow_transfer_to_parent`·`disallow_transfer_to_peers`를 `True`로 바꿉니다. 다만 Day 022가 `SequentialAgent`의 자식은 부모가 `LlmAgent`가 아니라서 애초에 `_get_transfer_targets`의 조건이 성립하지 않아 전환 대상 자체가 없다는 것을 소스로 확인했으므로, 이 경고가 없었어도 세 에이전트는 서로 건너뛸 수 없었습니다 — `output_schema`의 이 자동 잠금은 이 파이프라인에서는 이미 불가능한 일을 한 번 더 막는 보수적인 안전장치입니다.
+
+### Step 4. `SequentialAgent` 코디네이터 — `Runner`가 직접 구동
+
+**목적.** 세 에이전트를 묶는 `FinanceCoordinatorAgent`가 `SequentialAgent`이고, `Runner`가 이를 (091·092처럼 감싸는 `LlmAgent` 없이) 직접 구동한다는 것을 확인합니다.
+
+**할 일.**
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:189-203`
+
+```python
+        self.coordinator_agent = SequentialAgent(
+            name="FinanceCoordinatorAgent",
+            description="Coordinates specialized finance agents to provide comprehensive financial advice",
+            sub_agents=[
+                self.budget_analysis_agent,
+                self.savings_strategy_agent,
+                self.debt_reduction_agent
+            ]
+        )
+        
+        self.runner = Runner(
+            agent=self.coordinator_agent,
+            app_name=APP_NAME,
+            session_service=self.session_service
+        )
+```
+
+`SequentialAgent._run_async_impl`이 `sub_agents`를 인덱스로 순회하며 앞 에이전트를 완전히 끝까지 소비한 뒤에야 다음으로 넘어간다는 것, 넷(여기서는 셋) 다 같은 세션을 공유해 뒤 에이전트가 앞 에이전트의 대화 기록을 그대로 본다는 것은 Day 022가 이미 소스(`google/adk/agents/sequential_agent.py`)로 확인했습니다 — 오늘 버전(0.1.0)도 같은 파일·같은 로직임을 이 문서를 준비하며 직접 대조했습니다. 되풀이하지 않고, 오늘 다른 점(감싸는 `LlmAgent` 없음)만 확인합니다.
+
+![Step 4까지의 구성](diagrams/step4.svg)
+
+**확인.**
+
+```bash
+uv run --no-project python -W ignore -c "
+from ai_financial_coach_agent import FinanceAdvisorSystem
+system = FinanceAdvisorSystem()
+print(type(system.coordinator_agent).__name__, [a.name for a in system.coordinator_agent.sub_agents])
+print(type(system.runner).__name__, type(system.runner.session_service).__name__)
+" 2>&1 | tail -2
+```
+
+직접 확인한 출력:
+
+```
+SequentialAgent ['BudgetAnalysisAgent', 'SavingsStrategyAgent', 'DebtReductionAgent']
+Runner InMemorySessionService
+```
+
+### Step 5. `analyze_finances` — 세션 생성부터 삭제까지, 키 없을 때 멈추는 지점
+
+**목적.** 요청 한 번이 세션 생성 → `Runner.run_async` 소비 → 결과 조회 → 세션 삭제로 이어지는 과정을 코드로 확인하고, 키가 없을 때 정확히 어느 줄에서 멈추는지 직접 실행으로 확인합니다. `Runner`·세션 서비스를 직접 구동하는 패턴 자체는 Day 077이 이미 다뤘으므로 되풀이하지 않습니다.
+
+**할 일.**
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:205-222`
+
+```python
+    async def analyze_finances(self, financial_data: Dict[str, Any]) -> Dict[str, Any]:
+        session_id = f"finance_session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        try:
+            initial_state = {
+                "monthly_income": financial_data.get("monthly_income", 0),
+                "dependants": financial_data.get("dependants", 0),
+                "transactions": financial_data.get("transactions", []),
+                "manual_expenses": financial_data.get("manual_expenses", {}),
+                "debts": financial_data.get("debts", [])
+            }
+            
+            session = self.session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=session_id,
+                state=initial_state
+            )
+```
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:258-266`
+
+```python
+        except Exception as e:
+            logger.exception(f"Error during finance analysis: {str(e)}")
+            raise
+        finally:
+            self.session_service.delete_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=session_id
+            )
+```
+
+`finally` 블록이라 **예외가 나도 세션은 항상 삭제**됩니다 — `InMemorySessionService`이므로 프로세스가 떠 있는 동안만 존재하는 세션이지만, 실패한 세션이 메모리에 쌓이지 않게 하는 것이 이 블록의 역할입니다. `except`의 `raise`가 먼저 실행되므로, 상위 표(`_create_default_results`)는 이 경로에서는 호출만 되고 실제로 쓰이지는 않습니다(변수 `default_results`는 만들어지지만 결과에 반영되기 전에 예외가 올라갑니다).
+
+![Step 5까지의 구성](diagrams/step5.svg)
+
+**확인.**
+
+```bash
+uv run --no-project python -W ignore -c "
+import asyncio
+from ai_financial_coach_agent import FinanceAdvisorSystem
+system = FinanceAdvisorSystem()
+data = {'monthly_income': 4000.0, 'dependants': 1, 'manual_expenses': {'Housing': 1200.0}, 'debts': []}
+try:
+    asyncio.run(system.analyze_finances(data))
+except Exception as e:
+    print(type(e).__name__, str(e)[:70])
+" 2>&1 | tail -2
+```
+
+직접 확인한 출력(패키지 내부 경로는 생략 — `site-packages/google/genai/_api_client.py`의 `BaseApiClient.__init__`에서 끝납니다):
+
+```
+ValueError: No API key was provided. Please pass a valid API key. Learn how to create an API key at https://ai.google.dev/gemini-api/docs/api-key.
+ValueError No API key was provided. Please pass a valid API key. Learn how to create an API key at ht
+```
+
+Day 088·091·092가 키 없이 멈추던 지점(`google.genai`의 `Client()` 생성자)과 정확히 같습니다 — 이번에는 그 앞에 `SequentialAgent`의 첫 자식(`BudgetAnalysisAgent`)이 있을 뿐, 예외가 발생하는 층은 같습니다.
+
+### Step 6. 전처리와 오프라인 폴백 — 모델 없이도 도는 부분
+
+**목적.** CSV 파싱·검증과 세션 전처리는 순수 pandas·csv 코드라 키 없이도 끝까지 실행된다는 것을, 저장소 안에 실제로 있는 샘플 데이터로 확인합니다.
+
+**할 일.** 사이드바가 내려주는 샘플 CSV는 코드에 그대로 박혀 있습니다.
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:637-640`
+
+```python
+        sample_csv = """Date,Category,Amount
+2024-01-01,Housing,1200.00
+2024-01-02,Food,150.50
+2024-01-03,Transportation,45.00"""
+```
+
+세션에 들어온 거래 내역·수동 입력을 정리하는 함수도 짧습니다.
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:268-281`
+
+```python
+    def _preprocess_transactions(self, session):
+        transactions = session.state.get("transactions", [])
+        if not transactions:
+            return
+        
+        df = pd.DataFrame(transactions)
+        
+        if 'Date' in df.columns:
+            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
+        
+        if 'Category' in df.columns and 'Amount' in df.columns:
+            category_spending = df.groupby('Category')['Amount'].sum().to_dict()
+            session.state["category_spending"] = category_spending
+            session.state["total_spending"] = df['Amount'].sum()
+```
+
+![Step 6까지의 구성](diagrams/step6.svg)
+
+**확인.** 위 샘플 CSV 그대로 `parse_csv_transactions`·`validate_csv_format`을 돌립니다(둘 다 `LlmAgent`를 전혀 부르지 않습니다).
+
+```bash
+uv run --no-project python -c "
+from ai_financial_coach_agent import parse_csv_transactions, validate_csv_format
+sample_csv = '''Date,Category,Amount
+2024-01-01,Housing,1200.00
+2024-01-02,Food,150.50
+2024-01-03,Transportation,45.00'''
+class F:
+    def __init__(self, t): self.b = t.encode(); self.p = 0
+    def read(self): return self.b[self.p:]
+    def seek(self, p): self.p = p
+print(validate_csv_format(F(sample_csv)))
+print(parse_csv_transactions(sample_csv.encode())['category_totals'])
+"
+```
+
+직접 확인한 출력:
+
+```
+(True, 'CSV format is valid')
+[{'Category': 'Food', 'Amount': 150.5}, {'Category': 'Housing', 'Amount': 1200.0}, {'Category': 'Transportation', 'Amount': 45.0}]
+```
+
+`_create_default_results`(293-355, 규칙 기반 폴백 — Step 5에서 본 것처럼 실제로는 예외 경로에서 쓰이지 않습니다)도 순수 계산입니다.
+
+```bash
+uv run --no-project python -W ignore -c "
+from ai_financial_coach_agent import FinanceAdvisorSystem
+import json
+data = {'monthly_income': 4000.0, 'manual_expenses': {'Housing': 1200.0, 'Food': 400.0}, 'debts': []}
+system = FinanceAdvisorSystem()
+print(json.dumps(system._create_default_results(data)['budget_analysis']))
+" 2>&1 | tail -1
+```
+
+직접 확인한 출력:
+
+```
+{"total_expenses": 1600.0, "monthly_income": 4000.0, "spending_categories": [{"category": "Housing", "amount": 1200.0, "percentage": 75.0}, {"category": "Food", "amount": 400.0, "percentage": 25.0}], "recommendations": [{"category": "General", "recommendation": "Consider reviewing your expenses carefully", "potential_savings": 160.0}]}
+```
+
+### Step 7. Streamlit로 띄우기 — 헤드리스 확인과 실행 체크리스트
+
+**목적.** 앱을 실제로 띄우는 명령과, 키가 없을 때 메인 화면이 어디서 멈추는지 소스로 확인합니다.
+
+**할 일.** 키 확인 자체는 사이드바보다 먼저가 아니라 **사이드바를 다 그린 뒤** 메인 영역에서 일어납니다.
+
+`advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/ai_financial_coach_agent.py:649-651`
+
+```python
+    if not GEMINI_API_KEY:
+        st.error("🔑 GOOGLE_API_KEY not found in environment variables. Please add it to your .env file.")
+        return
+```
+
+소스로 확인하면, 사이드바(제목·안내문·CSV 템플릿 다운로드 버튼)는 `GOOGLE_API_KEY` 유무와 무관하게 항상 그려지고, 메인 영역만 이 `st.error` 한 줄을 띄운 뒤 `return`으로 끝나 탭도 입력 폼도 전혀 렌더링되지 않습니다. 앱을 띄우는 명령은 한 줄입니다.
+
+```bash
+uv run --no-project streamlit run ai_financial_coach_agent.py
+```
+
+이 명령을 그대로 실행하면 브라우저 탭이 열리고 위 화면(키가 없으면 오류 문구만)이 뜹니다 — 이 문서는 브라우저를 열 수 없어 같은 명령에 헤드리스 옵션만 더해, 다른 에이전트와 겹치지 않는 임의의 높은 포트(61234, 49152~65535 범위)로 직접 확인했습니다.
+
+```bash
+uv run --no-project streamlit run ai_financial_coach_agent.py --server.headless true --server.port 61234 --server.address localhost
+```
+
+`--server.address localhost`가 없으면 헤드리스 시작 배너가 외부 IP를 조회하려고 `checkip.amazonaws.com`에 요청을 보냅니다(Day 060에서 이미 확인한 동작) — 이 문서는 그 요청도 함께 막았습니다. 직접 확인한 콘솔 출력(정규식이 raw string이 아니라 `SyntaxWarning`도 함께 뜹니다 — 문제 해결 절 참고):
+
+```
+<unknown>:533: SyntaxWarning: invalid escape sequence '\$'
+<unknown>:574: SyntaxWarning: invalid escape sequence '\$'
+
+  You can now view your Streamlit app in your browser.
+
+  URL: http://localhost:61234
+```
+
+키 없이도 서버 자체는 뜨고 HTTP 요청에 정상 응답합니다(`curl -s -o /dev/null -w '%{http_code}' http://localhost:61234` → `200`, 직접 확인). 확인이 끝나면 이 프로세스는 반드시 종료합니다(`Ctrl+C`, 또는 이 문서처럼 백그라운드로 띄웠다면 해당 PID를 종료 — 이 문서에서는 종료 후 `netstat`으로 포트가 비었음도 확인했습니다).
+
+![Step 7까지의 구성](diagrams/step7.svg)
+
+**확인.** 위 `URL: http://localhost:61234` 줄과 `200` 응답이 그대로 나오면, 그리고 종료 뒤 `netstat -ano | grep 61234`에 `LISTENING` 줄이 없으면 이 스텝은 끝입니다.
 
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+한 번의 "분석하기" 클릭이 실제로는 세 단계를 거칩니다 — 아래 세 그림은 그 순서 그대로입니다.
 
-(작성 필요)
+![1단계: 예산 분석](diagrams/sequence.svg)
+
+1단계는 사용자 입력이 `Runner.run_async`를 거쳐 첫 번째 에이전트(`BudgetAnalysisAgent`)가 Gemini를 부르고 `state.budget_analysis`를 받는 부분만 그립니다.
+
+![2단계: 저축 전략, 같은 세션으로 이어짐](diagrams/extra-savings.svg)
+
+2단계는 `SequentialAgent`가 같은 세션으로 다음 자식(`SavingsStrategyAgent`)에게 넘어가는 부분만 그립니다 — 새 세션이 아니라 1단계와 **같은 세션의 대화 기록**을 이어받습니다(Day 022 확인).
+
+![3단계: 부채 상환과 최종 반환](diagrams/extra-debt.svg)
+
+3단계는 마지막 자식(`DebtReductionAgent`)까지 끝난 뒤 `get_session`으로 세 결과를 한 번에 꺼내 Streamlit이 탭별로 시각화하는 부분까지를 그립니다.
 
 ## 실행 체크리스트
 
-- [ ] (작성 필요)
+- [ ] `uv pip install -r requirements.txt` 후 `import google.adk`가 `deprecated` 누락으로 실패하고, `uv pip install Deprecated`로 해결됨을 직접 확인했다
+- [ ] `BudgetAnalysis`·`DebtReduction`의 `model_json_schema()`가 `$defs`·`$ref`로 중첩 구조를 담는 것을 확인했다
+- [ ] 세 `LlmAgent` 생성 시 `output_schema cannot co-exist with agent transfer configurations` 경고가 뜨고 `disallow_transfer_to_parent`·`disallow_transfer_to_peers`가 `True`로 바뀌는 것을 확인했다
+- [ ] `FinanceCoordinatorAgent`가 `SequentialAgent`이고 `Runner`가 감싸는 `LlmAgent` 없이 이를 직접 구동한다는 것을 확인했다
+- [ ] 키 없이 `analyze_finances`를 호출하면 `google.genai.Client()`에서 `ValueError: No API key was provided`로 끝난다는 것을 확인했다
+- [ ] 저장소에 내장된 샘플 CSV로 `parse_csv_transactions`·`validate_csv_format`이 키 없이도 동작한다는 것을 확인했다
+- [ ] `uv run --no-project streamlit run ai_financial_coach_agent.py --server.headless true --server.address localhost`로 서버가 뜨고, 종료 후 포트가 비었다는 것을 확인했다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| (작성 필요) | | |
+| `uv pip install -r requirements.txt` 후 `import google.adk`가 `ModuleNotFoundError: No module named 'deprecated'`로 실패 | google-adk==0.1.0의 패키지 메타데이터가 `deprecated`를 의존성으로 선언하지 않음(직접 확인, site-packages의 `METADATA`) | `uv pip install Deprecated`를 추가로 설치 |
+| `requirements.txt`의 `matplotlib`이 설치는 되지만 실행에 아무 영향이 없음 | 시각화는 전부 `plotly`(`px`·`go`)로 되어 있고 `import matplotlib`이 코드 어디에도 없음(그렙 확인) | 무시해도 됨 — 설치 시간만 늘어남 |
+| 키 없이 "분석하기"를 누르면 어디서 멈추는지 헷갈림 | Streamlit 메인 영역은 `GEMINI_API_KEY`가 없으면 `st.error` 한 줄만 띄우고 즉시 `return`하지만(649-651), `FinanceAdvisorSystem`을 직접 호출하면 `google.genai.Client()` 생성자의 `ValueError`까지 감(Step 5) | `.env`에 `GOOGLE_API_KEY` 설정 |
+| 실행 중 콘솔에 `SyntaxWarning: invalid escape sequence '\$'`가 두 번 뜸 | `df['Amount'].replace('[\$,]', '', regex=True)`의 정규식 문자열이 raw string(`r'...'`)이 아님(533·574행, 직접 확인) | 동작에는 지장 없음(경고일 뿐) — 고치려면 `r'[\$,]'`로 바꾸면 되지만 이 문서는 리포 코드를 고치지 않음 |
 
 ## 더 해보기
 
-- (작성 필요)
+- 실제 키로 파이프라인을 끝까지 돌려, `_create_default_results`의 규칙 기반 기본값(예: 비상금 = 지출의 6배)과 Gemini가 실제로 계산한 값이 얼마나 다른지 비교해 보세요.
+- CSV 업로드 경로와 수동 입력 경로가 각각 만드는 `financial_data` 딕셔너리(`transactions` vs `manual_expenses`)를 직접 찍어 비교하고, `_preprocess_transactions`·`_preprocess_manual_expenses` 중 어느 쪽이 불리는지 확인해 보세요.
+- `output_schema`가 있는 `LlmAgent`를 이 앱 밖에서 다른 `LlmAgent`의 `sub_agents=`로 붙여 보고(Day 021의 구조), Step 3에서 본 자동 잠금 때문에 Day 021이 확인한 자동 전환 지시문이 실제로 빠지는지 확인해 보세요.
 
 ## 다음 날 예고
 
-[Day 095 · 🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro](../day095-ai-home-renovation-agent/README.md) — (작성 필요)
+[Day 095 · 🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro](../day095-ai-home-renovation-agent/README.md) — Nano Banana Pro 이미지 모델을 쓰는 AI 홈 리노베이션 에이전트입니다.
