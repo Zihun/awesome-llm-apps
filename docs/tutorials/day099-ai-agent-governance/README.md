@@ -1,12 +1,12 @@
 # Day 099 · 🛡️ AI Agent Governance - Policy-Based Sandboxing
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 80분(Step마다 함수를 직접 호출해 보고, 임시 폴더로 승인 y·n 두 경우를 돌리고, 데모를 두 번 돌려 /workspace 동작을 확인하고, 시퀀스 일곱 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 $0.02 안팎, 상한 $0.10 — LLM 데모의 요청 3건(`gpt-4`, 입력 약 130토큰, 출력 최대 `max_tokens=500`)에 모델 페이지의 입력 $30·출력 $60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4, 2026-09-30 확인)을 대입한 대략치이고 키가 없어 실제 토큰 수는 확인하지 못함(키 없이 정책 엔진만 돌리는 실행은 무료) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_agent_governance`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 85분(Step마다 함수를 직접 호출해 보고, 임시 폴더로 승인 y·n 두 경우를 돌리고, 데모를 두 번 돌려 /workspace 동작을 확인하고, 시퀀스 일곱 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 $0.02 안팎, 상한 $0.10 — LLM 데모의 요청 3건(`gpt-4`, 입력 약 130토큰, 출력 최대 `max_tokens=500`)에 모델 페이지의 입력 $30·출력 $60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4, 2026-09-30 확인)을 대입한 대략치이고 키가 없어 실제 토큰 수는 확인하지 못함(키 없이 정책 엔진만 돌리는 실행은 무료) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_agent_governance`
 
 ## 오늘 만들 것
 
 에이전트가 고른 도구 호출을 **실행하기 전에** 규칙으로 걸러 내는 거버넌스 계층입니다. "위험한 일은 하지 마"라고 LLM에게 부탁하는 대신(확률적 안전), 도구 함수를 `governed_tool` 데코레이터로 감싸 호출 직전에 `PolicyEngine`이 파일 경로·네트워크 도메인·분당 횟수·사람 승인 규칙을 차례로 물어 ALLOW·DENY·REQUIRE_APPROVAL 중 하나를 결정론적으로 냅니다. 앱은 `ai_agent_governance.py` 한 파일(편집기 기준 613줄)이고 `openai`와 `pyyaml`만 씁니다. Day 019의 ADK `before_tool_callback`이나 Day 029의 OpenAI SDK 가드레일이 프레임워크가 정해 둔 자리에 검사를 꽂았다면, 여기서는 그 자리를 데코레이터 하나로 직접 만듭니다. 감사 로그도 Day 090의 해시체인과 달리 메모리 리스트일 뿐입니다(소스로 확인: 파일에 `hash`·`verify`가 없음).
 
-키 없이 `python ai_agent_governance.py`를 돌리면 정책 엔진과 시험 케이스 다섯 건이 끝까지 돕니다. `gpt-4`가 도구 호출 문장을 만드는 LLM 데모는 `OPENAI_API_KEY`가 있을 때만 이어지므로(소스로 확인, `ai_agent_governance.py:589-607`) 이 문서는 Step 7에서 가짜 응답으로 같은 코드를 태웁니다. 이 앱은 학습용 예시이지 보안 경계가 아닙니다. 문서의 ALLOW·DENY는 예시 정책의 결과일 뿐 어떤 시스템의 안전도 보증하지 않으며, 경로를 문자열 접두사로 비교하고 `path`·`file_path`가 아닌 인자 이름은 검사하지 않는 구멍을 Step 2에서 직접 확인합니다.
+키 없이 `python ai_agent_governance.py`를 돌리면 정책 엔진과 시험 케이스 다섯 건이 끝까지 돕니다. 다만 이 데모는 파일 시스템 루트에 `/workspace` 폴더를 만드니 Step 6의 주의를 먼저 읽으세요. `gpt-4`가 도구 호출 문장을 만드는 LLM 데모는 `OPENAI_API_KEY`가 있을 때만 이어지므로(소스로 확인, `ai_agent_governance.py:589-607`) 이 문서는 Step 7에서 가짜 응답으로 같은 코드를 태웁니다. 이 앱은 학습용 예시이지 보안 경계가 아닙니다. 문서의 ALLOW·DENY는 예시 정책의 결과일 뿐 어떤 시스템의 안전도 보증하지 않으며, 경로를 문자열 접두사로 비교하고 `path`·`file_path`가 아닌 인자 이름은 검사하지 않는 구멍을 Step 2에서 직접 확인합니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -46,11 +46,11 @@ $env:PYTHONIOENCODING = "utf-8"
 | OpenAI API (`gpt-4`) | 유일한 외부 서비스. 키가 있을 때만 호출된다 | `ai_agent_governance.py:462-469` |
 | 로컬 파일 시스템 | 파일 도구와 데모가 읽고 쓰고 지운다 | `ai_agent_governance.py:398`, `ai_agent_governance.py:404`, `ai_agent_governance.py:411`, `ai_agent_governance.py:569-572` |
 
-위 그림은 한 파일 안의 부품과 바깥 세계(사용자·OpenAI·파일 시스템)의 경계만 그립니다. 부품끼리의 호출은 네 장으로 나눠 그렸습니다. 진입부가 부르는 것입니다.
+위 그림은 한 파일 안의 부품과 바깥 세계(사용자·OpenAI·파일 시스템)의 경계만 그립니다. 부품끼리의 호출은 네 장으로 나눠 그렸습니다. 진입부가 부르는 것입니다. `main`과 `GovernedAgent`가 같은 래퍼를 부릅니다.
 
 ![진입부의 호출 구조](diagrams/extra-structure-entry.svg)
 
-래퍼 뒤의 정책 엔진입니다.
+래퍼 뒤의 정책 엔진입니다. `main`은 `get_audit_log()`로 감사 항목을 읽습니다.
 
 ![정책 엔진의 구조](diagrams/extra-structure-engine.svg)
 
@@ -497,7 +497,7 @@ allow default
 
 **목적.** 도구 함수를 감싸 호출 직전에 엔진의 결정을 집행하는 데코레이터와, REQUIRE_APPROVAL일 때 사람에게 묻는 함수를 봅니다.
 
-**할 일.** `governed_tool(policy_engine, require_interactive_approval=True)`(`ai_agent_governance.py:349`)는 데코레이터 공장입니다. 감싼 함수가 불릴 때마다 `Action`을 만들어 엔진에 묻고, DENY면 `PolicyViolation`을 던지고, REQUIRE_APPROVAL이면 `get_human_approval`(`ai_agent_governance.py:340-346`)이 `input()`으로 받은 답이 `y`일 때만 통과시킵니다(Enter만 쳐도 거부). 통과하면 `✅ ALLOWED`를 찍고 원래 함수를 부릅니다.
+**할 일.** `governed_tool(policy_engine, require_interactive_approval=True)`(`ai_agent_governance.py:349`)는 데코레이터 공장입니다. 감싼 함수가 불릴 때마다 `Action`을 만들어 엔진에 묻고, DENY면 `PolicyViolation`을 던지고, REQUIRE_APPROVAL이면 `get_human_approval`(`ai_agent_governance.py:340-346`)이 `input()`으로 받은 답이 `y`(대소문자 무관)일 때만 통과시킵니다(Enter만 쳐도 거부, 소스로 확인). 통과하면 `✅ ALLOWED`를 찍고 원래 함수를 부릅니다.
 
 `advanced_ai_agents/single_agent_apps/ai_agent_governance/ai_agent_governance.py:357-385`
 
