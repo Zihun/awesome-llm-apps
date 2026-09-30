@@ -1,12 +1,17 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
+agent: "GovernedAgent" { class: ours }
 user: "사용자" { class: person }
 wrapper: "governed_tool 래퍼" { class: ours }
 tool: "delete_file 도구" { class: ours }
 disk: "로컬 파일 시스템" { class: store }
+main: "데모 (main)" { class: ours }
 
 wrapper -> user: "print(\"ALLOWED: Action 'delete_file'\nrequires human approval\")"
 wrapper -> tool: "func(path=\"/workspace/temp.txt\")"
 tool -> disk: "os.remove(path)"
 tool -> wrapper: "\"Successfully deleted\n/workspace/temp.txt\""
+wrapper -> agent: "반환값\n\"Successfully deleted\n/workspace/temp.txt\""
+agent -> main: "\"Tool result:\nSuccessfully deleted\n/workspace/temp.txt\""
+main -> user: "print(\"Result:\nTool result:\nSuccessfully deleted\n/workspace/temp.txt\")"

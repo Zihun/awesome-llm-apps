@@ -1,12 +1,12 @@
 # Day 099 · 🛡️ AI Agent Governance - Policy-Based Sandboxing
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 85분(Step마다 함수를 직접 호출해 보고, 임시 폴더로 승인 y·n 두 경우를 돌리고, 데모를 두 번 돌려 /workspace 동작을 확인하고, 시퀀스 일곱 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 $0.02 안팎, 상한 $0.10 — LLM 데모의 요청 3건(`gpt-4`, 입력 약 130토큰, 출력 최대 `max_tokens=500`)에 모델 페이지의 입력 $30·출력 $60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4, 2026-09-30 확인)을 대입한 대략치이고 키가 없어 실제 토큰 수는 확인하지 못함(키 없이 정책 엔진만 돌리는 실행은 무료) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_agent_governance`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 95분(Step마다 함수를 직접 호출해 보고, 임시 폴더로 승인 y·n 두 경우를 돌리고, /workspace가 없는지 확인한 뒤 데모를 두 번 돌려 동작을 보고 폴더를 치우고, 시퀀스 여섯 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 $0.02 안팎, 상한 $0.10 — LLM 데모의 요청 3건(`gpt-4`, 입력 약 130토큰, 출력 최대 `max_tokens=500`)에 모델 페이지의 입력 $30·출력 $60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4, 2026-09-30 확인)을 대입한 대략치이고 키가 없어 실제 토큰 수는 확인하지 못함(키 없이 정책 엔진만 돌리는 실행은 무료) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_agent_governance`
 
 ## 오늘 만들 것
 
 에이전트가 고른 도구 호출을 **실행하기 전에** 규칙으로 걸러 내는 거버넌스 계층입니다. "위험한 일은 하지 마"라고 LLM에게 부탁하는 대신(확률적 안전), 도구 함수를 `governed_tool` 데코레이터로 감싸 호출 직전에 `PolicyEngine`이 파일 경로·네트워크 도메인·분당 횟수·사람 승인 규칙을 차례로 물어 ALLOW·DENY·REQUIRE_APPROVAL 중 하나를 결정론적으로 냅니다. 앱은 `ai_agent_governance.py` 한 파일(편집기 기준 613줄)이고 `openai`와 `pyyaml`만 씁니다. Day 019의 ADK `before_tool_callback`이나 Day 029의 OpenAI SDK 가드레일이 프레임워크가 정해 둔 자리에 검사를 꽂았다면, 여기서는 그 자리를 데코레이터 하나로 직접 만듭니다. 감사 로그도 Day 090의 해시체인과 달리 메모리 리스트일 뿐입니다(소스로 확인: 파일에 `hash`·`verify`가 없음).
 
-키 없이 `python ai_agent_governance.py`를 돌리면 정책 엔진과 시험 케이스 다섯 건이 끝까지 돕니다. 다만 이 데모는 파일 시스템 루트에 `/workspace` 폴더를 만드니 Step 6의 주의를 먼저 읽으세요. `gpt-4`가 도구 호출 문장을 만드는 LLM 데모는 `OPENAI_API_KEY`가 있을 때만 이어지므로(소스로 확인, `ai_agent_governance.py:589-607`) 이 문서는 Step 7에서 가짜 응답으로 같은 코드를 태웁니다. 이 앱은 학습용 예시이지 보안 경계가 아닙니다. 문서의 ALLOW·DENY는 예시 정책의 결과일 뿐 어떤 시스템의 안전도 보증하지 않으며, 경로를 문자열 접두사로 비교하고 `path`·`file_path`가 아닌 인자 이름은 검사하지 않는 구멍을 Step 2에서 직접 확인합니다.
+키 없이 `python ai_agent_governance.py`를 돌리면 정책 엔진과 시험 케이스 다섯 건이 끝까지 돕니다. 다만 이 데모는 파일 시스템 루트에 `/workspace` 폴더를 만들고, 그 폴더가 이미 있으면 안의 `data.txt`·`report.md`를 말없이 덮어씁니다(직접 확인). 돌리기 전에 Step 6의 주의를 읽고 그 폴더가 없는지부터 확인하세요. `gpt-4`가 도구 호출 문장을 만드는 LLM 데모는 `OPENAI_API_KEY`가 있을 때만 이어지므로(소스로 확인, `ai_agent_governance.py:589-607`) 이 문서는 Step 7에서 가짜 응답으로 같은 코드를 태웁니다. 이 앱은 학습용 예시이지 보안 경계가 아닙니다. 문서의 ALLOW·DENY는 예시 정책의 결과일 뿐 어떤 시스템의 안전도 보증하지 않으며, 경로를 문자열 접두사로 비교하고 `path`·`file_path`가 아닌 인자 이름은 검사하지 않는 구멍을 Step 2에서 직접 확인합니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -18,7 +18,7 @@
 | Python | 앱 README는 3.8+라고 적지만(`README.md:36`) 이 저장소는 3.11~3.13이 기준이다. 이 문서는 3.13.3으로 확인했고, 3.12부터는 `datetime.utcnow()` 폐기 경고가 뜬다(Step 6) | 공통 사전 준비와 같음 |
 | OpenAI API 키 (선택) | `GovernedAgent`가 `gpt-4`를 부를 때만 필요하다(`ai_agent_governance.py:443`, `ai_agent_governance.py:462`). 키가 없어도 정책 엔진과 시험 케이스는 모두 돈다 | https://platform.openai.com/api-keys 에서 발급 (이 문서는 쓰지 않음) |
 
-앱이 이모지를 `print`하는데, 표준출력을 파이프로 받으면 Windows의 콘솔 인코딩(`cp949` 등)이 이모지를 못 써서 첫 줄에서 죽습니다(직접 확인, 문제 해결 첫 행). 아래 출력은 모두 UTF-8로 잡았으니 셸을 먼저 이렇게 맞춰 두세요.
+앱이 이모지를 `print`하는데, 표준출력을 파이프로 받으면 Windows의 기본 인코딩(`cp949` 등, 로캘의 ANSI 코드 페이지)이 이모지를 못 써서 첫 줄에서 죽습니다(직접 확인, 문제 해결 첫 행). 아래 출력은 모두 UTF-8로 잡았으니 셸을 먼저 이렇게 맞춰 두세요.
 
 ```bash
 export PYTHONIOENCODING=utf-8
@@ -46,7 +46,11 @@ $env:PYTHONIOENCODING = "utf-8"
 | OpenAI API (`gpt-4`) | 유일한 외부 서비스. 키가 있을 때만 호출된다 | `ai_agent_governance.py:462-469` |
 | 로컬 파일 시스템 | 파일 도구와 데모가 읽고 쓰고 지운다 | `ai_agent_governance.py:398`, `ai_agent_governance.py:404`, `ai_agent_governance.py:411`, `ai_agent_governance.py:569-572` |
 
-위 그림은 한 파일 안의 부품과 바깥 세계(사용자·OpenAI·파일 시스템)의 경계만 그립니다. 부품끼리의 호출은 네 장으로 나눠 그렸습니다. 진입부가 부르는 것입니다. `main`과 `GovernedAgent`가 같은 래퍼를 부릅니다.
+위 그림은 한 파일 안의 부품과 바깥 세계(사용자·OpenAI·파일 시스템)의 경계만 그립니다. 부품끼리의 관계는 다섯 장으로 나눠 그렸습니다. 먼저 사용자와 진입부 사이의 실행과 출력입니다.
+
+![사용자와 진입부의 입출력](diagrams/extra-structure-io.svg)
+
+진입부가 부르는 것입니다. `main`과 `GovernedAgent`가 같은 래퍼를 부릅니다.
 
 ![진입부의 호출 구조](diagrams/extra-structure-entry.svg)
 
@@ -85,7 +89,7 @@ openai>=1.0.0
 pyyaml>=6.0
 ```
 
-상한이 없어서 이 문서를 만들 때는 Python 3.13.3, openai 3.22.1, pyyaml 6.0.3이 깔렸습니다(직접 확인, 아래 첫 명령). 앱이 쓰는 `OpenAI()`와 `chat.completions.create(model, messages, max_tokens)`는 이 새 메이저에도 그대로 있었습니다(소스로 확인: 설치된 openai의 `chat/completions/completions.py`. 다만 그 문서 문자열은 `max_tokens`를 `max_completion_tokens`로 대체될 폐기 예정 인자라고 적습니다).
+상한이 없어서 이 문서를 만들 때는 Python 3.13.3, openai 3.22.1, pyyaml 6.0.3이 깔렸습니다(직접 확인, 아래 첫 명령). 앱이 쓰는 `OpenAI()`와 `chat.completions.create(model, messages, max_tokens)`는 이 새 메이저에도 그대로 있었습니다(소스로 확인: 설치된 openai의 `openai/resources/chat/completions/completions.py`. 다만 그 문서 문자열은 `max_tokens`를 `max_completion_tokens`로 대체될 폐기 예정 인자라고 적습니다).
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -566,7 +570,7 @@ PolicyViolation: ❌ DENIED: Domain 'evil.example' not in allowlist
 fetch
 ```
 
-래퍼는 `@wraps`로 원래 이름(`fetch`)을 지킵니다. 이제 앱의 `delete_file`에 승인 규칙을 걸고 임시 폴더의 파일을 지우려는 호출에 답을 표준입력으로 줍니다. `echo n |`은 어느 셸에서나 돕니다.
+래퍼는 `@wraps`로 원래 이름(`fetch`)을 지킵니다. 이제 앱의 `delete_file`에 승인 규칙을 걸고 임시 폴더의 파일을 지우려는 호출에 답을 표준입력으로 줍니다. 도구 다섯 개는 Step 6에서 보고, 여기서는 그중 `delete_file`과 실제 파일을 빌려 씁니다(그림에서 둘이 이 Step에 켜지는 까닭입니다). `echo n |`은 bash에서 확인했고 PowerShell에서도 같은 형태로 쓸 수 있습니다(실행해 보지 못함).
 
 ```bash
 echo n | uv run --no-project python -c "
@@ -704,7 +708,17 @@ note.txt exists: False
                     f.write("Test data")
 ```
 
-**주의: 이 데모는 파일 시스템 루트에 폴더를 만듭니다.** 다섯째 케이스를 준비하려고 `main()`이 `os.makedirs("/workspace")`와 `/workspace/data.txt` 쓰기를 직접 합니다(`ai_agent_governance.py:569-572`). Windows에서는 현재 드라이브 루트에 `C:\workspace` 같은 폴더가 생기고(직접 확인: 가상 드라이브에서 `Z:\workspace`가 생겼습니다), root가 아닌 Linux·macOS에서는 권한 오류가 날 수 있습니다(소스로 확인, 실행해 보지 못했고 오류는 `except Exception`이 받아 `Error: ...`로 찍습니다). 이 문서는 스크래치 폴더를 가상 드라이브로 잡아 그 안에서 돌렸습니다. 폴더가 싫다면 이 Step은 읽기만 해도 됩니다. Step 7은 `main()`을 부르지 않습니다.
+**주의: 이 데모는 파일 시스템 루트에 폴더를 만들고, 이미 있으면 그 안의 파일을 덮어씁니다.** `main()`은 `os.makedirs("/workspace", exist_ok=True)`로 폴더를 만들고 `/workspace/data.txt`를 쓰며(`ai_agent_governance.py:569-572`), 둘째 시험 케이스의 `write_file`은 `/workspace/report.md`를 씁니다(`ai_agent_governance.py:404`, `ai_agent_governance.py:559`). `exist_ok=True`와 쓰기 모드(`"w"`) 때문에 폴더가 이미 있으면 아무 경고 없이 두 파일이 새로 쓰입니다. 직접 확인: 미리 넣어 둔 `my notes`와 `my data`가 `# Analysis Report`와 `Test data`로 바뀌었고, 첫 실행인데도 `[Errno 2]`가 나지 않았습니다. Windows에서는 현재 드라이브 루트에 `C:\workspace` 같은 폴더가 생기고(직접 확인: 가상 드라이브에서 `Z:\workspace`), root가 아닌 Linux·macOS에서는 권한 오류가 날 수 있으며, `/workspace`를 작업 폴더로 쓰는 컨테이너에서 root로 돌리면 같은 덮어쓰기가 일어납니다(소스로 확인, 실행해 보지 못함). 키가 있으면 LLM 데모의 둘째 요청(`ai_agent_governance.py:598`)이 모델이 고른 경로에 파일을 쓸 수도 있습니다(소스로 확인). 그래서 **먼저 그 폴더가 없는지 확인하고, 없을 때만 돌리세요.** 드라이브 문자는 실행하는 위치에 맞추고(Linux·macOS는 `ls -d /workspace`, 돌려 보지 못함), bash는 폴더가 없으면 `No such file or directory`를 냅니다(직접 확인). PowerShell은 `False`를 내야 합니다(실행해 보지 못함).
+
+```bash
+ls -d /c/workspace
+```
+
+```powershell
+Test-Path C:\workspace
+```
+
+이 문서는 스크래치 폴더를 가상 드라이브로 잡아 그 안에서 돌렸습니다. 폴더를 만들고 싶지 않다면 데모 명령은 건너뛰고 아래 출력만 읽어도 됩니다. 바로 아래의 흉내 도구 확인은 `/workspace`를 건드리지 않고, Step 7도 `main()`을 부르지 않습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -802,7 +816,7 @@ Z:\app\ai_agent_governance.py:198: DeprecationWarning: datetime.datetime.utcnow(
 ✅ Demo complete!
 ```
 
-세 가지를 짚습니다. 첫째, `write_file`이 정책을 통과해 `✅ ALLOWED`가 찍히고도 `[Errno 2]`로 실패합니다. `/workspace`는 다섯째 케이스에서야 생기기 때문이며, 한 번 더 돌리면 그 줄이 `   Result: Successfully wrote 18 characters to /workspace/report.md`로 바뀝니다(직접 확인). 감사표는 실패와 무관하게 `write_file`을 `ALLOW`로 적고(결정만 남고 실행 결과는 남지 않습니다) 사유는 50자에서 잘립니다(`ai_agent_governance.py:586`). 둘째, `DeprecationWarning`이 세 번 나옵니다. `datetime.utcnow()`가 Python 3.12부터 폐기 예정이기 때문입니다(직접 확인: 3.11.12에서는 없고 3.12.10·3.13.3에서 나옵니다). 앱 파일이 `__main__`일 때만 화면에 나와서 임포트하는 앞의 명령에서는 보이지 않았습니다. 셋째, `💡 Set OPENAI_API_KEY ...`가 키 없는 실행의 끝입니다. 키가 있으면 여기서 Step 7의 LLM 데모가 이어집니다.
+세 가지를 짚습니다. 첫째, `write_file`이 정책을 통과해 `✅ ALLOWED`가 찍히고도 `[Errno 2]`로 실패합니다. `/workspace`가 아직 없어서입니다. 폴더는 다섯째 케이스에서야 생기므로 한 번 더 돌리면 그 줄이 `   Result: Successfully wrote 18 characters to /workspace/report.md`로 바뀝니다(직접 확인). 폴더가 이미 있었다면 첫 실행부터 이 줄이 나옵니다(직접 확인, 위 주의). 감사표는 실패와 무관하게 `write_file`을 `ALLOW`로 적고(결정만 남고 실행 결과는 남지 않습니다) 사유는 50자에서 잘립니다(`ai_agent_governance.py:586`). 둘째, `DeprecationWarning`이 세 번 나옵니다. `datetime.utcnow()`가 Python 3.12부터 폐기 예정이기 때문입니다(직접 확인: 3.11.12에서는 없고 3.12.10·3.13.3에서 나옵니다). 앱 파일이 `__main__`일 때만 화면에 나와서 임포트하는 앞의 명령에서는 보이지 않았습니다. 셋째, `💡 Set OPENAI_API_KEY ...`가 키 없는 실행의 끝입니다. 키가 있으면 여기서 Step 7의 LLM 데모가 이어집니다. 끝나면 그 폴더가 **원래 없었을 때만** 지웁니다(bash `rm -r /c/workspace`, PowerShell `Remove-Item -Recurse C:\workspace`, 드라이브는 실행한 곳에 맞춥니다). 원래 있던 폴더라면 덮어쓴 두 파일은 되돌릴 수 없습니다.
 
 ### Step 7. LLM 에이전트 붙이기 — GovernedAgent
 
@@ -914,7 +928,7 @@ gpt-4 500 ['system', 'user'] False
 
 ## 요청 한 건이 흐르는 과정
 
-실제로 돌려 본 것은 키 없는 경로뿐이라, 이 시퀀스는 LLM 데모의 요청 한 건을 소스에서 따라간 것입니다(소스로 확인). 앱 README의 예시 요청 `Delete /workspace/temp.txt`를 골랐습니다. `demo_requests`에는 없지만(`ai_agent_governance.py:596-600`) 규칙 넷을 모두 지나고 사람 승인까지 받아 가장 많은 부품을 거칩니다. 시험 케이스와 감사표는 이 요청 앞에서 이미 끝났고, 모델의 응답 문장은 시스템 프롬프트가 요구한 형식에 맞춘 예이며, 그림의 출력 문구에서는 이모지를 뺐습니다. 메시지 34개를 일곱 장으로 나눈 것은 한 배우가 셋 이상과 주고받는 구간을 한 장에 그리면 수명선이 다른 메시지의 글자를 지나기 때문이고, 나눈 구간은 시간순으로 이어집니다. 고리 모양 화살표는 배우가 자기 안에서 하는 처리(파싱, 허용 기억, 시각 기록)입니다. 첫 장은 요청과 LLM 호출입니다. 스크립트가 요청을 찍고(`ai_agent_governance.py:603`) `run`이 시스템 프롬프트와 요청을 `gpt-4`에 보내 `TOOL:` 문장을 받습니다.
+실제로 돌려 본 것은 키 없는 경로뿐이라, 이 시퀀스는 LLM 데모의 요청 한 건을 소스에서 따라간 것입니다(소스로 확인). 앱 README의 예시 요청 `Delete /workspace/temp.txt`를 골랐습니다. `demo_requests`에는 없지만(`ai_agent_governance.py:596-600`) 규칙 넷을 모두 지나고 사람 승인까지 받아 가장 많은 부품을 거칩니다. `/workspace/temp.txt`가 미리 있다고 가정합니다. 데모는 이 파일을 만들지 않으므로 없으면 여섯째 장의 `os.remove`가 실패해 `Tool error: [WinError 2] ...`가 돌아옵니다(직접 확인). 시험 케이스와 감사표는 이 요청 앞에서 이미 끝났고, 모델의 응답 문장은 시스템 프롬프트가 요구한 형식에 맞춘 예이며, 그림의 출력 문구에서는 이모지를 뺐습니다. 메시지 34개를 여섯 장으로 나눈 것은 `extra-*` 그림의 세로 상한(1000px)이 한 장에 메시지 8~9개까지만 허락하고, 넷째·다섯째 장을 합친 8개짜리도 배우를 어떻게 세워도 수명선이 다른 메시지의 글자를 지나서입니다(직접 확인: 배우 순서 120개 모두 탈락). 나눈 구간은 시간순으로 이어집니다. 고리 모양 화살표는 배우가 자기 안에서 하는 처리(파싱, 허용 기억, 시각 기록)입니다. 첫 장은 요청과 LLM 호출입니다. 스크립트가 요청을 찍고(`ai_agent_governance.py:603`) `run`이 시스템 프롬프트와 요청을 `gpt-4`에 보내 `TOOL:` 문장을 받습니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -926,21 +940,17 @@ gpt-4 500 ['system', 'user'] False
 
 ![나머지 규칙 셋](diagrams/extra-rules.svg)
 
-넷째 장은 기록과 결정 전달입니다. 엔진이 결정을 `audit_log`에 더하고 `AUDIT:` 줄을 표준에러로 찍은 뒤 래퍼에 돌려줍니다. 규칙 하나가 DENY를 냈다면 엔진은 둘째 장에서 곧바로 이 장으로 왔을 것이고, 래퍼는 다섯째·여섯째 장 없이 `PolicyViolation`을 던집니다(`ai_agent_governance.py:257-258`, `ai_agent_governance.py:370-371`).
+넷째 장은 기록과 결정 전달입니다. 엔진이 결정(`REQUIRE_APPROVAL`)을 `audit_log`에 더하고 `AUDIT:` 줄을 표준에러로 찍은 뒤 래퍼에 돌려줍니다. 규칙 하나가 DENY를 냈다면 엔진은 둘째 장에서 곧바로 이 장으로 왔을 것이고, 래퍼는 다섯째 장의 승인과 여섯째 장의 실행 없이 `PolicyViolation`을 던집니다(`ai_agent_governance.py:257-258`, `ai_agent_governance.py:370-371`). 이때 여섯째 장은 반환 절반만 일어나고, `Tool result:` 없이 예외 메시지 문자열이 그대로 `main`까지 갑니다(`ai_agent_governance.py:504-505`, Step 7의 `❌ DENIED` 출력).
 
 ![감사 기록과 결정 전달](diagrams/extra-record.svg)
 
-다섯째 장은 사람 승인입니다. 래퍼가 승인 프롬프트를 부르면 프롬프트가 요청 내용을 찍고 `input()`으로 기다립니다. `y`이면 `True`가 돌아가고, 아니면 `False`라 래퍼가 `PolicyViolation`을 던져 여섯째 장 없이 일곱째 장의 문자열이 그 예외 메시지가 됩니다.
+다섯째 장은 사람 승인입니다. 래퍼가 승인 프롬프트를 부르면 프롬프트가 요청 내용을 찍고 `input()`으로 기다립니다. `y`이면 `True`가 돌아가고, 아니면 `False`라 래퍼가 `PolicyViolation`을 던져 여섯째 장의 실행 없이 반환 절반만 예외 메시지와 함께 일어납니다.
 
 ![사람 승인](diagrams/extra-approval.svg)
 
-여섯째 장은 실행입니다. 래퍼가 `✅ ALLOWED`를 찍고 원래 `delete_file`을 부르며, 이 함수가 `os.remove`로 파일을 지웁니다.
+여섯째 장은 실행과 반환입니다. 래퍼가 `✅ ALLOWED`를 찍고 원래 `delete_file`을 부르면 이 함수가 `os.remove`로 파일을 지웁니다. 도구의 문자열은 래퍼에서 `GovernedAgent`로, 거기서 `main`으로 돌아오며 `Tool result:`가 붙고, `main`이 결과를 찍습니다(`ai_agent_governance.py:604-605`).
 
-![도구 실행](diagrams/extra-execute.svg)
-
-일곱째 장은 반환입니다. 문자열이 래퍼에서 `GovernedAgent`로, 거기서 `main`으로 돌아오며 `Tool result:`가 붙고 `main`이 결과를 찍습니다(`ai_agent_governance.py:604-605`).
-
-![결과 반환](diagrams/extra-return.svg)
+![도구 실행과 결과 반환](diagrams/extra-execute.svg)
 
 ## 실행 체크리스트
 
@@ -951,19 +961,19 @@ gpt-4 500 ['system', 'user'] False
 - [ ] Step 4에서 `delete_file`이 `require_approval`, `execute_code`가 `allow default`로 나오는 것을 봤다
 - [ ] Step 5에서 승인 `n`이면 파일이 남고 `y`이면 지워지며, 두 경우 감사 로그가 같다는 것을 봤다
 - [ ] Step 6에서 흉내 도구 둘이 문자열만 돌려주는 것을 봤다
-- [ ] (`/workspace` 폴더가 생겨도 괜찮다면) `uv run --no-project python ai_agent_governance.py`를 두 번 돌려 첫 실행에서만 `[Errno 2]`가 나는 것을 봤다
+- [ ] (`/workspace`가 없는지 확인했고 폴더가 생겨도 괜찮다면) `uv run --no-project python ai_agent_governance.py`를 두 번 돌려 첫 실행에서만 `[Errno 2]`가 나는 것을 보고, 원래 없던 폴더를 지웠다
 - [ ] Step 7의 가짜 응답으로 `q=a, b`가 `q=a`로 잘려 실행되는 것을 봤다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 앱을 파이프로 받아 실행하면 첫 `print`에서 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f6e1' in position 0: illegal multibyte sequence`(`ai_agent_governance.py:515`) | 앱이 이모지를 찍는데 표준출력이 파이프일 때 Windows 콘솔 인코딩이 이모지를 못 쓴다(직접 확인) | `PYTHONIOENCODING=utf-8`을 설정한다(사전 준비) |
-| 첫 실행에서 `write_file`이 `✅ ALLOWED` 다음에 `Error: [Errno 2] No such file or directory: '/workspace/report.md'` | `/workspace`가 다섯째 케이스에서야 만들어진다(`ai_agent_governance.py:569-572`). 정책 통과와 파일 쓰기 성공은 별개다(직접 확인) | 두 번째 실행부터 성공한다. 그 폴더가 싫다면 데모는 읽기만 하고 넘어간다 |
+| 앱을 파이프로 받아 실행하면 첫 `print`에서 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f6e1' in position 0: illegal multibyte sequence`(`ai_agent_governance.py:515`) | 앱이 이모지를 찍는데 표준출력이 파이프일 때 Python은 콘솔이 아니라 로캘의 기본 인코딩을 쓰고, Windows에서는 그 `cp949` 등이 이모지를 못 쓴다(직접 확인: 파이프로 받으면 `sys.stdout.encoding`과 `locale.getpreferredencoding()`이 모두 `cp949`) | `PYTHONIOENCODING=utf-8`을 설정한다(사전 준비) |
+| `/workspace`가 없는 상태의 첫 실행에서 `write_file`이 `✅ ALLOWED` 다음에 `Error: [Errno 2] No such file or directory: '/workspace/report.md'` | `/workspace`가 다섯째 케이스에서야 만들어진다(`ai_agent_governance.py:569-572`). 정책 통과와 파일 쓰기 성공은 별개다. 폴더가 이미 있으면 이 오류 대신 `report.md`와 `data.txt`가 말없이 덮어써진다(직접 확인) | 두 번째 실행부터 성공한다. 먼저 폴더가 있는지 확인하고(Step 6), 폴더가 싫다면 데모 명령은 건너뛰고 출력만 읽는다 |
 | `DeprecationWarning: datetime.datetime.utcnow() is deprecated ...`가 세 번 뜬다 | Python 3.12부터 폐기 예정인 API를 쓴다(`ai_agent_governance.py:50`, `ai_agent_governance.py:198`, `ai_agent_governance.py:276`). 3.11.12에서는 경고가 없었다(직접 확인) | 무시하거나 3.11로 실행한다. 복사본에서 `datetime.now(timezone.utc)`로 바꿔 볼 수 있다 |
 | `GovernedAgent(...)`가 `openai.OpenAIError: Missing credentials ...` | `OpenAI()`가 키를 요구한다(`ai_agent_governance.py:443`). `main()`은 `os.getenv`로 먼저 막아 이 예외까지 오지 않는다(직접 확인) | 키를 설정하거나 Step 7처럼 `OpenAI`를 갈아 끼운다 |
 | 앱 README의 `tools:`(`allowed`·`denied`) 절을 넣어도 `execute_code`·`send_email`이 막히지 않는다 | `from_yaml`은 `filesystem`·`network`·`execution`만 읽는다(`ai_agent_governance.py:305-326`, Step 4에서 직접 확인) | 직접 규칙을 만들어 잇는다(더 해보기) |
-| 앱 README의 "Example Output"과 실제 출력이 다르다 | 예시의 `Loading policy: workspace_sandbox.yaml`, `outside allowed directories`, `PENDING`, `[Y/n]`(`README.md:94-107`)은 이 코드의 출력이 아니다. 실제로는 `Loading policy configuration...`, `matches denied pattern`, 대화형 프롬프트 `[y/N]`이 찍힌다(Step 5·6에서 직접 확인) | 예시 대신 이 문서의 출력을 기준으로 삼는다 |
+| 앱 README의 "Example Output"과 실제 출력이 다르다 | 예시는 `/etc/passwd`에 `outside allowed directories`를 붙이지만(`README.md:94-97`) 이 코드는 `matches denied pattern '/etc'`를 낸다(`outside allowed directories`는 `/var/log/syslog` 같은 경로에 나온다, Step 2에서 직접 확인). 예시의 `Loading policy: workspace_sandbox.yaml`은 코드의 `Loading policy configuration...`과 다르고 `[Y/n]`은 실제 프롬프트 `[y/N]`과 다르다(Step 5·6에서 직접 확인). `PENDING`은 앱 안에서 닿지 않는 분기(`ai_agent_governance.py:378`)의 문구다 | 예시 대신 이 문서의 출력을 기준으로 삼는다 |
 | `/workspace-evil/x`가 허용되고 `/homework/x`가 거부된다 | 경로를 `startswith`로 문자열 접두사 비교한다(`ai_agent_governance.py:113`, `ai_agent_governance.py:122`, Step 2에서 직접 확인) | 경로 성분 단위로 비교한다(더 해보기) |
 
 ## 더 해보기

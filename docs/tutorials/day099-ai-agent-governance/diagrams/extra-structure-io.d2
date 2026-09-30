@@ -1,0 +1,10 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+main: 데모 (main) { class: ours }
+agent: GovernedAgent { class: ours }
+
+user -> main: "python ai_agent_governance.py 실행"
+main -> user: "print: 시험 결과 · 감사표 · User·Result 줄"
+agent -> user: "print: Agent response 줄"
