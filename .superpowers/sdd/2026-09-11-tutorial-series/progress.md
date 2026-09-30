@@ -8,7 +8,22 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
-**멈춤 지점 (2026-09-29) — Day 090까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 90/164). 다음(Day 091~)은 사용자 지시를 받고.**
+**멈춤 지점 (2026-10-01 00:05) — 사용자 "이번 작업은 여기까지만이야". Day 096까지 푸시(3df566a). Day 097·098은 리뷰·수정·재확인 끝(미푸시). Day 099는 작성 커밋(488ed41·7ba3cd6), 리뷰는 거의 끝난 상태에서 내가 TaskStop.**
+
+**다음 작업 순서 (재개하면 이 순서대로)**
+1. **Day 099 fix round 1** — review-099.md(❌ C0 I2 M9, 거의 완성: 리뷰어가 마지막 step PNG 두 장을 보기 직전에 멈춤).
+   I1: `extra-record`의 `append(AuditEntry)` 축약이 데이터 손실 — 두 줄 라벨이면 지금 순서 그대로 통과(검사 21이 이제 `<tspan>`을 읽음, 77334a3).
+   I2: `/workspace` 경고가 "폴더를 만든다"만 말함 — 이미 있으면 그 안의 파일을 덮어쓴다는 사실을 앞에 써야 함.
+   작성자 a5b1ffd73e2b54677을 SendMessage로 재개(없으면 새 sonnet 작성자 + task-14-fix-brief.md). 데모는 드라이브 루트에 /workspace를 만듦 — subst 스크래치 드라이브에서만.
+2. 짧은 재확인(**가벼운 모델 = sonnet**, 사용자 승인 2026-10-01) → roadmap(99/164)·원장 커밋·**푸시(097~099 함께)**·한 번 보고.
+3. Day 100~는 사용자 지시를 받고. **새 운영 파라미터(사용자 승인 2026-10-01): 한 묶음에 4일을 병렬로, 재확인은 가벼운 모델(sonnet), 첫 리뷰는 opus 유지.**
+
+**Day 097~099 기록 (Task 20)**
+- 097 Earnings Call Analyst: 02e5a52 → fix 9d863c3 → ef8bb75, 재확인 통과. 098 AI News & Podcast(beifong): e9f8d09·4d77bbe → c6b62ff → 6329ead, 재확인 통과. 099 AI Agent Governance: 488ed41·7ba3cd6, 리뷰 I2 M9 대기.
+- 도구: 77334a3 검사 21이 두 줄 `<tspan>` 라벨을 읽음(Day 097 리뷰에서 오탐 재현) — 테스트 50/50.
+- 하네스가 작성자의 보고서 파일 쓰기를 거부하는 일이 생김("subagents should return findings as text") — 요약은 답신으로 받고 내가 보고서에 옮김.
+
+**멈춤 지점 (2026-09-29) — Day 090까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 90/164).**
 
 - Task 16(084~086)·Task 17(087~090) 모두 complete. npm test 49/49, Day 001~090 전부 check 통과, 087~090 분당 20.4~21.6.
 - 사용자 결정(2026-09-29): overview에 다 못 넣는 **구조 관계**는 보조 구조 그림(extra-*.d2, 화살표로)에 그린다 — 084 extra-crew, 085 extra-swarm-handoff·extra-summary-tools, 089 extra-structure, 088 extra-tools. 브리프에 반영됨.
@@ -941,3 +956,23 @@ Task 19: 094 fix round 2 DONE — d9c2fce(배우 셋 분리·세션 호출 귀�
 Task 19: 094 2차 재확인 — Important 둘 해결, 새 Minor 2(Runner get_session·세션 쓰기·Runner→코디네이터 미표시, overview 코디네이터 화살표 라벨 없음) → fix round 3 dispatched.
 Task 19: 094 fix round 3 DONE — ac25acd(Runner get_session·append_event·Runner→코디네이터 run_async, overview 라벨 financial_data), check 통과, 22.0/분 → 094 complete. Task 19(094~096) 전부 complete.
 Task 19: 마무리 — npm test 49/49, Day 001~096 check 전부 통과, 094~096 분당 20.8~22.0, roadmap 96/164, 원본 앱 폴더·홈 부산물 없음. 커밋·푸시·보고.
+
+=== USER 2026-09-30: "Day 097 부터 Day 098 까지 진행해" ===
+Task 20: 097 Earnings Call Analyst(a16628896c45b60f2 — YouTube oEmbed·youtube_transcript_api·sec.gov 호출 금지, tests는 스크래치에서만), 098 AI News & Podcast "beifong"(a019478f8e1e349d7 — 170파일, browser_use·Slack·크롤·TTS 실행 금지, web/ npm 금지, 요청 경로 하나에 집중) dispatched (sonnet, task-20-dayNNN-report.md). 리뷰는 둘 끝난 뒤 한 묶음(opus).
+Task 20: 097 DONE — 02e5a52, check 통과, 21.4/분(95분), 앱 tests 20개 스크래치·차단에서 통과. 발견: .env.example 자리표시자도 통과, .env 첫 줄 우선, cp949 UnicodeDecodeError, youtube-transcript-api 1.x에서 RuntimeError 도달 불가, 카드 검증 실패 조용히 탈락, 인용문 검증 없음, 투자 조언 아님 문구 없음. 볼 것: 사용자↔UI 양방향 화살표 하나, sequence 16장(94메시지), 작성자 주장 '검사 21이 두 줄 라벨을 오탐' — 리뷰어가 재현. 리뷰 097 dispatched(opus → review-097.md).
+Task 20: 리뷰 097 DONE (aace882e873e830f7) → review-097.md. ❌ I4 M11: overview <-> 병합 둘(나누면 1120×1011, 11px 초과), server→adk_runtime 관계 없음, youtube-transcript-api RuntimeError는 1.2.0부터만 도달 불가(1.1.1에서 재현), '카드 0개' 행이 모델 호출 실패를 조용히 삼키는 경우(agent.py:111-114)를 놓침. 16장 94메시지는 순서대로·거의 최소 분할. **도구 버그 확인**: 두 줄 연결선 라벨은 <tspan>으로 렌더되어 connectionsOf 정규식이 못 읽음 → 자기 라벨을 남의 것으로 봐 검사 21 오탐(재현 5건).
+Ruling: 097 overview는 11px 세로 예외 대신 사용자가 승인한 보조 구조 그림 방식 — overview엔 요청 방향 화살표(데이터 라벨), 양방향은 extra 구조 그림에 각각 — 모든 관계가 화살표로 남음, 틀렸다면 사용자에게 예외를 물으면 됨. 097 fix round 1 dispatched(resume). 검사 21 tspan 버그는 내가 도구에서 고침(TDD).
+Task 20: 검사 21 tspan 오탐 수정 — connectionsOf가 <tspan> 줄 라벨을 읽음 + 테스트 1(50/50), Day 001~098 전부 통과. 커밋.
+Task 20: 098 DONE — e9f8d09 + 4d77bbe, 예약 경로(소스→기사→분석→임베딩·FAISS→검색→스크랩→대본→오디오→저장→재생), 그림 27장(구조 10·시퀀스 17), check 통과, 20.0/분(120→100분). 작성자 보고: uv가 실제 ~\AppData\Local\uv\cache에 패키지 캐시를 씀 — uv의 표준 공용 캐시(사용자와 모든 에이전트가 늘 쓰던 곳)라 사고 아님으로 판단. 리뷰 098 dispatched(opus → review-098.md).
+Task 20: 097 fix round 1 DONE — 9d863c3, I1(조정: overview엔 UI→사용자·UI→서버, 네 방향은 extra-structure)·I2~I4·M11(M5 범위 축소, 밝힘), check 통과, 21.5/분(95→120분), 그림 28장. 작성자 보고서 쓰기는 하네스가 거부('subagents should return findings as text') → 내가 답신을 보고서 §9에 옮김. 097 재확인 dispatched(fix-R20a-round1.diff base 02e5a52).
+=== USER 2026-09-30: "Day 099 진행해" (내 조사 명령은 사용자가 거부 → 조사 없이 바로 투입) ===
+Task 20: 099 작성 dispatched (a5b1ffd73e2b54677, sonnet, task-20-day099-report.md — 외부 서비스 목록화 후 실행 금지, <-> 병합 금지 추가). 097 재확인·098 리뷰 진행 중.
+Task 20: 097 재확인 DONE — 15건 중 M5 부분 외 전부 해결, Important 0. 남은 Minor: M5(모듈 시작 문지기 호출 넷을 그려야 함 — 리뷰어가 통과 배치 제시), README:816 자기모순, N1(선택: overview에 사용자↔UI 양방향 = 1061px 예외 필요) → Ruling: N1은 하지 않음(보조 구조 그림이 이미 덮음), M5·816만 fix round 2. 검사 21 수정 확인(5건 0, 14/14).
+Task 20: 리뷰 098 DONE (a0c46ba1e99146b08) → review-098.md. ❌ I4 M13(명령 22개·출력 20개는 글자 그대로 재현): 무키 주장 틀림(main이 먼저 exit 1), 배너 단계(매 주기 gpt-4o→DALL·E 3→이미지 다운로드) 누락, extra-studio 화살표·DB 누락, overview에서 사용자 노드 뺌. Ruling: overview엔 UI→사용자 단방향(1168×990) + 양방향은 보조 구조 그림 — 097과 같은 방식, 예외 없음. 098 fix round 1 dispatched(resume).
+Task 20: 097 fix round 2 DONE — ef8bb75(M5 문지기 호출 넷을 리뷰어 배치대로, :816 모순 해소), 내가 check 통과·새 파일 확인 → 097 complete(Minor는 리뷰어 제시 배치 그대로라 재확인 생략).
+Task 20: 098 fix round 1 DONE — c6b62ff, I4·M13 반영(더 적은 분할 제안만 근거 남기고 미반영), check 통과, 20.8/분(120분). 요약을 보고서에 옮김. 098 재확인 dispatched(fix-R20b-round1.diff base 4d77bbe).
+Task 20: 098 재확인 DONE — ✅ Important 0, Minor 2(외부 검색 서비스·Tailwind CDN이 어느 구조 그림에도 없음, 다듬기) → fix round 2 dispatched(resume).
+Task 20: 099 DONE — 488ed41 + 7ba3cd6, AI Agent Governance, check 통과, 20.8/분(85분), README 명령 14블록 재대조 일치. 외부 서비스는 OpenAI뿐(미호출, mock). 데모가 드라이브 루트에 /workspace를 만들어 subst Z: 위 스크래치에서 실행 — C:\workspace·D:\workspace·Z: 없음(내가 확인). 볼 것: extra-record 라벨 append(AuditEntry(REQUIRE_APPROVAL))→append(AuditEntry) 축약(데이터 손실 의심), overview 화살표 8개. 리뷰 099 dispatched(opus → review-099.md).
+=== USER 2026-09-30: "중지된 시점에서부터 재개해." — 두 에이전트 모두 끝나 있었음. 098 round 2 + 099 리뷰로 이어감. ===
+Task 20: 098 fix round 2 DONE — 6329ead(검색 서비스 넷·Tailwind CDN·파비콘을 구조 그림에 화살표로, 다듬기), 내가 check 통과·새 파일 확인 → 098 complete.
+=== USER 2026-10-01: "그래 다음부턴 그렇게 해 그런데 이번 작업은 여기까지만이야" → 099 리뷰어 즉시 TaskStop(리뷰 파일은 거의 완성). 새 운영 파라미터(4일 병렬, 재확인 sonnet) 재개 지점·메모리에 기록. 원장만 로컬 커밋, 099가 리뷰 전이라 푸시는 하지 않음. ===
