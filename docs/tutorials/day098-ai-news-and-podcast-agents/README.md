@@ -56,7 +56,7 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
 
-`requirements.txt`는 236줄짜리 `pip freeze` 결과라 252개 패키지가 깔리고 가상환경이 2.3GB가 됩니다. 제 환경에서는 uv 캐시가 있는 상태로 40초가 걸리지 않았습니다(직접 확인). Python은 3.11이나 3.12를 씁니다 — 3.13과 3.14 가상환경에서 휠만 허용해(`--no-build`) 해석해 보면 3.13은 `blis==1.2.1`, 3.14는 `aiohttp==3.11.18`에서 막혔습니다(직접 확인). 이 저장소는 루트에 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 진입점 `main.py`는 시작할 때(lifespan) 폴더 넷을 만들고 SQLite 표를 초기화하며, 마지막에 `../web/build`가 있는지만 봅니다.
+`requirements.txt`는 236줄짜리 `pip freeze` 결과라 252개 패키지가 깔리고 가상환경이 2.3GB가 됩니다. 제 환경에서는 일부가 uv 캐시에 이미 있는 상태로 40초가 걸리지 않았습니다(직접 확인). Python은 3.11이나 3.12를 씁니다 — 3.13과 3.14 가상환경에서 휠만 허용해(`--no-build`) 해석해 보면 3.13은 `blis==1.2.1`, 3.14는 `aiohttp==3.11.18`에서 막혔습니다(직접 확인). 이 저장소는 루트에 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 진입점 `main.py`는 시작할 때(lifespan) 폴더 다섯 곳을 만들고 SQLite 표를 초기화하며, 마지막에 `../web/build`가 있는지만 봅니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:22-36`
 
@@ -660,7 +660,7 @@ def search_agent_run(query: str) -> str:
 
 우리 DB에서 찾은 기사는 스크랩이 필요 없다고 표시돼 있어 본문 대신 `description`, 곧 Step 4의 AI 요약이 대본 재료가 됩니다(소스로 확인, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/scrape_agent.py:70-85`). 이 스크랩 단계는 실제 브라우저를 열 수 있어 돌리지 않았습니다.
 
-`agents/`에 같은 이름의 에이전트 네 개가 세션용으로 한 벌 더 있어 헷갈리기 쉽습니다. 예약 경로는 세션과 무관한 `tools/pipeline/`을 쓰고, `agents/`는 Studio의 도구입니다. 검색 에이전트는 Studio 쪽에 도구 둘(`search_articles`·`run_browser_search`)과 지시문 두 줄이 더 있습니다(소스로 확인). 이 앱의 agno는 1.4.2인데, 에이전트 실행이 끝날 때마다 `api.agno.com`으로 실행 통계를 보내고 `AGNO_TELEMETRY=false`로 끕니다(소스로 확인, `agno/agent/agent.py`·`agno/cli/settings.py`). Day 047 Step 5의 「agno의 익명 사용 통계」 단락은 agno 3.0.10을 다룬 것이지만 같은 환경변수를 씁니다. 검색·대본·배너가 각각 새 `Agent`를 만들어 부르므로 팟캐스트 한 편에 최소 세 번 나갑니다.
+`agents/`에 같은 이름의 에이전트 네 개가 세션용으로 한 벌 더 있어 헷갈리기 쉽습니다. 예약 경로는 세션과 무관한 `tools/pipeline/`을 쓰고, `agents/`는 Studio의 도구입니다. 검색 에이전트는 Studio 쪽에 도구 둘(`search_articles`·`run_browser_search`)이 더 있고 지시문도 두 줄이 다릅니다(태그 목록에 `browser_search` 추가, 브라우저 검색 안내 한 줄 추가, 소스로 확인). 이 앱의 agno는 1.4.2인데, 에이전트 실행이 끝날 때마다 `api.agno.com`으로 실행 통계를 보내고 `AGNO_TELEMETRY=false`로 끕니다(소스로 확인, `agno/agent/agent.py`·`agno/cli/settings.py`). Day 047 Step 5의 「agno의 익명 사용 통계」 단락은 agno 3.0.10을 다룬 것이지만 같은 환경변수를 씁니다. 검색·대본·배너가 각각 새 `Agent`를 만들어 부르므로 팟캐스트 한 편에 최소 세 번 나갑니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -1059,7 +1059,7 @@ TTS 선택기가 엔진을 골라 대사를 음성으로 받아 옵니다. 그�
 | 설치 때 `spacy==3.8.5` yanked 경고 | 고정한 버전이 PyPI에서 철회됨(직접 확인) | 경고일 뿐 설치는 끝까지 됨 |
 | `python main.py --host ... --port ...`가 인자를 무시하고 `0.0.0.0:7000`으로 뜸 | `main.py`가 인자를 읽지 않고 호스트를 `0.0.0.0`으로 고정함(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:185-187`) | 로컬 실습에는 `uvicorn main:app --host 127.0.0.1`로 띄운다 |
 | 포트를 바꿨더니 UI는 뜨는데 목록이 비어 있음 | UI 번들에 API 주소 `http://localhost:7000`이 박혀 있음(직접 확인) | 포트를 7000으로 두거나 `web/src/services/api.js`를 고쳐 다시 빌드 — 이 문서는 빌드하지 않음 |
-| Redis 없이 Studio에서 메시지를 보내면 1분 넘게 매달렸다 500 | Celery의 Redis 결과 백엔드가 재연결을 20번 시도한 뒤 포기하고(직접 확인, 아래 명령) `chat`이 오류 응답을 만듦 | Redis를 띄우거나 예약 경로만 쓴다 |
+| Redis 없이 Studio에서 메시지를 보내면 1분 넘게 매달렸다 500 | Celery의 Redis 결과 백엔드가 기본값 20번(소스로 확인, `celery/backends/base.py`) 재연결을 시도한 뒤 포기하고 `chat`이 오류 응답을 만듦(직접 확인, 아래 명령) | Redis를 띄우거나 예약 경로만 쓴다 |
 | `python -m integrations.slack.chat`이 ImportError | `slack_bolt`가 `requirements.txt`에 없음(직접 확인, 아래 명령) | `pip install slack_bolt` 후 `SLACK_BOT_TOKEN`·`SLACK_APP_TOKEN` 설정 |
 | 소스를 만들려다 409를 받았는데 목록에는 소스가 하나 더 있음 | `create_source`가 소스를 먼저 넣고 피드 추가에서 실패해도 되돌리지 않음(Step 2) | 목록에서 피드 없는 소스를 삭제 |
 | `ELEVENSLAB_API_KEY`를 넣었는데 ElevenLabs 엔진이 키가 없다고 함 | 환경변수 이름이 철자 그대로 `ELEVENSLAB`이어야 함(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/utils/tts_engine_selector.py:48`) | `ELEVENLABS_API_KEY`가 아니라 `ELEVENSLAB_API_KEY`로 설정 |
