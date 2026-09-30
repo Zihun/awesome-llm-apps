@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+net: "NetworkPolicy" { class: ours }
+engine: "PolicyEngine" { class: ours }
+arule: "ApprovalRequiredPolicy" { class: ours }
+rate: "RateLimitPolicy" { class: ours }
+
+engine -> net: "evaluate(action)"
+net -> engine: "None"
+engine -> rate: "evaluate(action)"
+rate -> rate: "지금 시각을\naction_history에 기록"
+rate -> engine: "None"
+engine -> arule: "evaluate(action)"
+arule -> engine: "PolicyResult(REQUIRE_APPROVAL,\n\"Action 'delete_file' requires human approval\")"

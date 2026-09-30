@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "데모 (main)" { class: ours }
+agent: "GovernedAgent" { class: ours }
+llm: "OpenAI API (gpt-4)" { class: ext }
+
+user -> main: "python ai_agent_governance.py\n(OPENAI_API_KEY 있음)"
+main -> user: "print(\"User: Delete /workspace/temp.txt\")"
+main -> agent: "run(\"Delete /workspace/temp.txt\")"
+agent -> llm: "chat.completions.create(model=gpt-4,\nmax_tokens=500, messages=[system, user])"
+llm -> agent: "응답 예: TOOL: delete_file(path=\"/workspace/temp.txt\")"

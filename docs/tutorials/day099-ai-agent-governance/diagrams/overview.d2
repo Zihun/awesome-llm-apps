@@ -1,0 +1,57 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+
+app: "ai_agent_governance.py (한 파일)" {
+  class: group
+  grid-columns: 4
+  grid-gap: 8
+  entry: 진입부 {
+    class: group
+    grid-rows: 3
+    grid-gap: 8
+    main: "데모 (main)" { class: ours }
+    agent: GovernedAgent { class: ours }
+    yaml: "정책 YAML (policy_yaml)" { class: file }
+  }
+  gov: 거버넌스 계층 {
+    class: group
+    grid-rows: 2
+    grid-gap: 8
+    wrapper: "governed_tool\n래퍼" { class: ours }
+    approval: "승인 프롬프트\n(get_human_approval)" { class: ours }
+  }
+  pe: 정책 엔진 {
+    class: group
+    grid-columns: 2
+    grid-gap: 8
+    engine: PolicyEngine { class: ours }
+    fs: FilesystemPolicy { class: ours }
+    net: NetworkPolicy { class: ours }
+    rate: RateLimitPolicy { class: ours }
+    appr: ApprovalRequiredPolicy { class: ours }
+    audit: "감사 로그 (audit_log)" { class: store }
+  }
+  tools: 도구 {
+    class: group
+    grid-columns: 2
+    grid-gap: 8
+    read_file: read_file { class: ours }
+    write_file: write_file { class: ours }
+    delete_file: delete_file { class: ours }
+    web_request: web_request { class: ours }
+    execute_shell: execute_shell { class: ours }
+  }
+}
+llm: "OpenAI API (gpt-4)" { class: ext }
+disk: "로컬 파일 시스템 (/workspace)" { class: store }
+
+user -> app: "python ai_agent_governance.py 실행"
+user -> app: "y / n (승인 프롬프트의 답)"
+app -> user: "print 출력 · AUDIT 로그"
+app -> user: "승인 프롬프트"
+app -> llm: "chat.completions.create (gpt-4)"
+llm -> app: "TOOL: ... 텍스트"
+app -> disk: "파일 도구의 open · os.remove"
+disk -> app: "파일 내용"

@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+agent: "GovernedAgent" { class: ours }
+wrapper: "governed_tool 래퍼" { class: ours }
+engine: "PolicyEngine" { class: ours }
+fs: "FilesystemPolicy" { class: ours }
+
+agent -> user: "print(\"Agent response:\nTOOL: delete_file(\npath=...)\")"
+agent -> agent: "정규식으로 이름과\nkwargs 파싱"
+agent -> wrapper: "tools[\"delete_file\"](\npath=\"/workspace/temp.txt\")"
+wrapper -> engine: "evaluate(Action(\ndelete_file, kwargs={path}))"
+engine -> fs: "evaluate(action)"
+fs -> engine: "PolicyResult(ALLOW,\n허용 디렉터리 /workspace 안)"
+engine -> engine: "허용은 기억만 하고\n다음 규칙으로"

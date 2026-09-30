@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+audit: "감사 로그 (audit_log)" { class: store }
+user: "사용자" { class: person }
+engine: "PolicyEngine" { class: ours }
+wrapper: "governed_tool 래퍼" { class: ours }
+
+engine -> audit: "append(AuditEntry)"
+engine -> user: "logger.info(\"AUDIT: REQUIRE_APPROVAL -\ndelete_file - ...\")"
+engine -> wrapper: "PolicyResult(REQUIRE_APPROVAL,\n\"Action 'delete_file' requires human approval\")"

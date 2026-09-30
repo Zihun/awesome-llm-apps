@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+wrapper: "governed_tool 래퍼" { class: ours }
+agent: "GovernedAgent" { class: ours }
+main: "데모 (main)" { class: ours }
+user: "사용자" { class: person }
+
+wrapper -> agent: "반환값\n\"Successfully deleted\n/workspace/temp.txt\""
+agent -> main: "\"Tool result:\nSuccessfully deleted\n/workspace/temp.txt\""
+main -> user: "print(\"Result:\nTool result:\nSuccessfully deleted\n/workspace/temp.txt\")"

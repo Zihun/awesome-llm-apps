@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+main: 데모 (main) { class: ours }
+agent: GovernedAgent { class: ours }
+llm: OpenAI API (gpt-4) { class: ext }
+wrapper: governed_tool 래퍼 { class: ours }
+disk: 로컬 파일 시스템 { class: store }
+
+main -> agent: "run(request)"
+agent -> main: "\"Tool result: ...\" 문자열"
+agent -> llm: "chat.completions.create"
+llm -> agent: "TOOL: ... 텍스트"
+main -> wrapper: "tools[name](**kwargs)\n(시험 케이스 5건)"
+agent -> wrapper: "tools[name](**kwargs)\n(LLM이 고른 호출)"
+wrapper -> main: "결과 문자열 · PolicyViolation"
+wrapper -> agent: "결과 문자열 · PolicyViolation"
+main -> disk: "os.makedirs · data.txt 쓰기\n(시험용 파일)"

@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+wrapper: "governed_tool 래퍼" { class: ours }
+prompt: "승인 프롬프트\n(get_human_approval)" { class: ours }
+user: "사용자" { class: person }
+
+wrapper -> prompt: "get_human_approval(action)"
+prompt -> user: "print(\"APPROVAL REQUIRED\nAction: delete_file\nArgs: {...}\")"
+prompt -> user: "input(\"Approve? [y/N]: \")"
+user -> prompt: "y"
+prompt -> wrapper: "True"

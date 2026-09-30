@@ -1,0 +1,27 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+wrapper: governed_tool 래퍼 { class: ours }
+approval: "승인 프롬프트\n(get_human_approval)" { class: ours }
+tools: 도구 {
+  class: group
+  grid-rows: 5
+  grid-gap: 8
+  read_file: read_file { class: ours }
+  write_file: write_file { class: ours }
+  delete_file: delete_file { class: ours }
+  web_request: web_request { class: ours }
+  execute_shell: execute_shell { class: ours }
+}
+disk: 로컬 파일 시스템 { class: store }
+
+disk -> tools: "파일 내용"
+tools -> disk: "파일 도구의\nopen · os.remove"
+tools -> wrapper: "반환 문자열"
+wrapper -> tools: "func(*args, **kwargs)"
+wrapper -> user: "ALLOWED 출력"
+user -> approval: "y / n"
+approval -> user: "승인 프롬프트\n(print · input)"
+approval -> wrapper: "True / False"
+wrapper -> approval: "get_human_approval(action)"

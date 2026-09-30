@@ -1,0 +1,37 @@
+...@../../_tools/theme
+direction: down
+
+yaml: 정책 YAML (policy_yaml) { class: file }
+main: 데모 (main) { class: ours }
+agent: GovernedAgent { class: ours }
+llm: OpenAI API (gpt-4) { class: ext }
+engine: PolicyEngine { class: ours }
+wrapper: governed_tool 래퍼 { class: ours }
+rules: 정책 규칙 4종 {
+  class: group
+  grid-columns: 2
+  grid-gap: 8
+  fs: FilesystemPolicy { class: ours }
+  net: NetworkPolicy { class: ours }
+  rate: RateLimitPolicy { class: ours }
+  appr: ApprovalRequiredPolicy { class: ours }
+}
+tools: 도구 5종 (create_governed_tools) {
+  class: group
+  grid-columns: 3
+  grid-gap: 8
+  read_file: read_file { class: ours }
+  write_file: write_file { class: ours }
+  delete_file: delete_file { class: ours }
+  web_request: web_request { class: ours }
+  execute_shell: execute_shell { class: ours }
+}
+
+agent -> tools: "create_governed_tools(policy_engine)"
+main -> agent: "GovernedAgent(policy_engine)"
+main -> tools: "create_governed_tools(policy_engine)"
+agent -> llm: "OpenAI() 클라이언트 생성\n(요청은 아직 없음)"
+main -> engine: "from_yaml(policy_yaml)"
+wrapper -> tools: "각 도구를 @governed_tool(policy_engine)로 감쌈"
+yaml -> engine: "yaml.safe_load(yaml_content)\n의 policies 섹션"
+engine -> rules: "섹션별 규칙 생성 후 add_rule:\nfilesystem, network, execution"

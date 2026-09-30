@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+
+main: 데모 (main) { class: ours }
+user: 사용자 { class: person }
+wrapper: governed_tool 래퍼 { class: ours }
+engine: PolicyEngine { class: ours }
+rules: 정책 규칙 4종 {
+  class: group
+  grid-columns: 2
+  grid-gap: 8
+  fs: FilesystemPolicy { class: ours }
+  net: NetworkPolicy { class: ours }
+  rate: RateLimitPolicy { class: ours }
+  appr: ApprovalRequiredPolicy { class: ours }
+}
+audit: 감사 로그 (audit_log) { class: store }
+
+wrapper -> engine: "evaluate(Action)"
+engine -> wrapper: "PolicyResult"
+engine -> rules: "evaluate(action)\n(rules 리스트 순서대로)"
+rules -> engine: "PolicyResult 또는 None"
+engine -> audit: "AuditEntry 추가"
+engine -> user: "AUDIT 로그 줄\n(표준에러)"
+main -> engine: "get_audit_log()"
+engine -> main: "감사 항목 딕셔너리 목록"
