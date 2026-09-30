@@ -10,3 +10,5 @@ runtime -> gemini: 오디오 바이트 + 전사 프롬프트
 gemini -> runtime: "JSON {segments: [{start, duration, text}]}"
 runtime -> ingest: 최종 텍스트
 ingest -> ingest: parse_transcribed_segments(text)
+ingest -> runtime: parse_json_object(text)
+runtime -> ingest: dict

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+user: 투자자 (브라우저) { class: person }
+ui: 프런트엔드 (app.js) { class: ours }
+server: FastAPI 세션 서버 (server.py) { class: ours }
+
+user -> ui: URL 입력 · Analyze · 카드 공개 버튼
+ui -> user: 진행 막대 · 리서치 팩 · 카드 (잠금 · 공개)
+ui -> server: "GET /health · POST /api/sessions · GET /api/sessions/{id}"
+server -> ui: 화면 파일 · /health 응답 · 세션 JSON

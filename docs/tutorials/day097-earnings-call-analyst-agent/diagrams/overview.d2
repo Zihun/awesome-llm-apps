@@ -13,11 +13,9 @@ youtube: YouTube (oEmbed·자막·오디오) { class: ext }
 sec: SEC EDGAR (티커 표·제출 목록) { class: ext }
 gemini: Gemini (Vertex AI 또는 API 키) { class: ext }
 
-ui <-> user: URL 입력 · 카드 열람
-(ui <-> user)[0].style.font-size: 12
-ui <-> server: 화면 파일 · /health · 세션 API
-(ui <-> server)[0].style.font-size: 12
-ui -> player: iframe_api · seekTo · getCurrentTime
+ui -> user: 진행 막대 · 카드 표시
+ui -> server: /health · 세션 API 요청
+ui -> player: new YT.Player · seekTo · getCurrentTime
 server -> sessions: 진행 상태 · 결과 저장
 server -> ingest: 메타데이터 · 자막 수집
 server -> research: 리서치 팩 생성

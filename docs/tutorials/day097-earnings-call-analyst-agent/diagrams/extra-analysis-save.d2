@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+runtime: "ADK 실행기\n(adk_runtime.py)" { class: ours }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+sessions: "세션 저장소\n(sessions)" { class: store }
+
+server -> runtime: has_adk_credentials()
+runtime -> server: True 또는 False
+server -> runtime: adk_auth_mode()
+runtime -> server: "api_key · vertex_ai · missing 중 하나"
+server -> sessions: "AnalysisSession 저장 (status: ready 또는 partial, diagnostics)"
+server -> sessions: "status: ready (100%)"

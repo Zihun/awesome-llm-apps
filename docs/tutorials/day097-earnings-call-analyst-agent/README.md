@@ -1,6 +1,6 @@
 # Day 097 · 📡 Earnings Call Analyst Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 95분(그림이 스물다섯 장이고 확인 명령이 열네 개라 읽고 돌려 보는 시간이 깁니다) · API 비용 대략 (키 없이는 무료 — 이 문서의 확인은 모두 그렇습니다. 키가 있으면 분석 한 번에 Gemini를 세 번 안팎 부릅니다: 회사 정체 추론 1회, 뉴스 검색 1회(티커를 찾았을 때만), 분석가 카드 1회, 자막이 없으면 오디오 5분 조각마다 1회 더. 대략치이고 단가는 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 120분(그림이 스물여덟 장이고 확인 명령이 열다섯 개라 읽고 돌려 보는 시간이 깁니다) · API 비용 대략 (키 없이는 무료 — 이 문서의 확인은 모두 그렇습니다. 키가 있으면 분석 한 번에 Gemini를 세 번 안팎 부릅니다: 회사 정체 추론 1회, 뉴스 검색 1회(티커를 찾았을 때만), 분석가 카드 1회, 자막이 없으면 오디오 5분 조각마다 1회 더. 대략치이고 단가는 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent`
 
 ## 오늘 만들 것
 
@@ -8,9 +8,11 @@
 
 이름은 "단일 에이전트"지만 ADK `LlmAgent`가 넷 있고(직접 확인, Step 1) 서로를 부르지 않습니다. 순수 파이썬 코드가 `adk_runtime.py`의 실행 함수로 하나씩 돌립니다. 이 볼륨의 여섯 번째 google-adk 앱(088·091·092·094·095 다음)이라 `LlmAgent`는 [Day 014](../day014-adk-1-starter-agent/README.md), `Runner`는 [Day 018](../day018-adk-5-memory-agent/README.md)에 맡기고, 오늘은 이 앱만의 것 — 조용히 물러나는 자격증명 문지기, 소리 없이 버려지는 카드, 검증 없는 인용문 앵커링, 폴링 서버 — 을 봅니다.
 
-이 문서는 YouTube·SEC·Gemini에 요청을 보내지 않습니다. 확인은 손으로 쓴 가짜 자막과 가짜 응답으로 했고 "Example Corp(EXM)"은 지어낸 회사입니다. 카드는 LLM이 쓴 글이라 권위가 없고, 앱의 코드·화면·README 어디에도 투자 조언이 아니라는 문구가 없습니다(`advice`·`disclaim`·`not financial`을 소스에서 검색해 확인). 이 앱의 출력을 투자 판단에 쓰지 마세요.
+이 문서의 확인 명령은 YouTube·SEC·Gemini에 요청을 보내지 않습니다(Step 7에서 브라우저로 화면을 여는 일만 예외이고, 그 절에 적었습니다). 확인은 손으로 쓴 가짜 자막과 가짜 응답으로 했고 "Example Corp(EXM)"은 지어낸 회사입니다. 카드는 LLM이 쓴 글이라 권위가 없고, 앱의 코드·화면·README 어디에도 투자 조언이 아니라는 문구가 없습니다(`advice`·`disclaim`·`not financial`을 소스에서 검색해 확인). 이 앱의 출력을 투자 판단에 쓰지 마세요.
 
 ![완성 아키텍처](diagrams/overview.svg)
+
+이 그림은 관계마다 화살표를 하나만 그렸습니다. 사용자 쪽은 화면이 보여 주는 방향, 서버 쪽은 요청 방향입니다. 되돌아오는 방향까지 화살표 넷으로 그린 그림은 아래 "아키텍처 한눈에 보기"에 있습니다.
 
 ## 사전 준비
 
@@ -36,7 +38,11 @@
 | 스키마 (schemas.py) | 세그먼트·청크·카드·리서치 팩·세션의 pydantic 모델 | `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/schemas.py:20-115` |
 | Gemini · YouTube · SEC EDGAR · YouTube 플레이어 | 외부 서비스. 앱은 요청만 보내고 결과는 검증하지 않습니다 | 코드 없음 (외부 서비스) |
 
-개요 그림에서 Gemini로 가는 세 화살표(ADK)는 모두 아래 경로를 지납니다. 에이전트 넷은 `run_adk_agent_text`·`run_adk_agent_content`를 거치고, 이 함수가 호출마다 새 `InMemorySessionService`와 `Runner`를 만듭니다.
+개요 그림은 화면 쪽 관계를 한 방향씩만 그렸습니다. 서로 다른 데이터를 나르는 두 방향을 화살표 넷으로 따로 그리면 아래와 같습니다. 사용자는 URL과 버튼 클릭을 화면에 넣고, 화면은 진행 막대·리서치 팩·카드를 보여 줍니다. 화면은 `/health`와 세션 API를 요청하고, 서버는 화면 파일과 JSON으로 답합니다.
+
+![화면과 서버가 주고받는 것](diagrams/extra-structure.svg)
+
+개요 그림에서 Gemini로 가는 세 화살표(ADK)는 모두 아래 경로를 지납니다. 에이전트 넷은 `run_adk_agent_text`·`run_adk_agent_content`를 거치고, 이 함수가 호출마다 새 `InMemorySessionService`와 `Runner`를 만듭니다. 서버도 같은 모듈의 `has_adk_credentials()`·`adk_auth_mode()`를 불러 `/health` 응답과 결과 진단 값을 정합니다(Step 2, Step 6).
 
 ![ADK 에이전트 배선](diagrams/extra-agents.svg)
 
@@ -135,7 +141,7 @@ def adk_auth_mode() -> str:
     return "missing"
 ```
 
-`GOOGLE_API_KEY`(`GEMINI_API_KEY`도 별칭, `adk_runtime.py:76-78`)가 있거나 Vertex 플래그가 참이고 `GOOGLE_CLOUD_PROJECT`가 비어 있지 않으면 통과입니다. **값이 진짜인지는 보지 않습니다.** 거짓이면 앱이 조용히 물러납니다. 정체 추론은 휴리스틱으로(`research.py:90-91`), 뉴스와 분석 카드는 빈 목록으로(`research.py:169-170`, `agent.py:48-52`) 가고 오디오 전사만 예외를 던집니다(`youtube_ingest.py:151-154`). 키 없는 서버가 에러 없이 카드 0장짜리 "완료"를 내는 까닭입니다(Step 6).
+`GOOGLE_API_KEY`(`GEMINI_API_KEY`도 별칭, `adk_runtime.py:76-78`)가 있거나 Vertex 플래그가 참이고 `GOOGLE_CLOUD_PROJECT`가 비어 있지 않으면 통과입니다. **값이 진짜인지는 보지 않습니다.** 거짓이면 앱이 조용히 물러납니다. 정체 추론은 휴리스틱으로(`research.py:90-91`), 뉴스와 분석 카드는 빈 목록으로(`research.py:169-170`, `agent.py:48-52`) 가고 오디오 전사만 예외를 던집니다(`youtube_ingest.py:151-154`). 키 없는 서버가 에러 없이 카드 0장짜리 "완료"를 내는 까닭입니다(Step 6). 키가 있어도 모델 호출이 실패하면 같은 모양이 됩니다(Step 5).
 
 `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/.env.example:1-4`
 
@@ -168,7 +174,7 @@ _load_env()
 
 이 로더는 `agent.py` 등을 임포트하기 전에(`server.py:38-49`) 돌아야 합니다. 세 파일이 모델 이름과 조각 길이를 임포트 시점에 한 번만 읽기 때문입니다.
 
-실행은 `run_adk_agent_content_async`(`adk_runtime.py:23-63`)가 맡습니다. 호출마다 새 `InMemorySessionService`와 `Runner`를 만들고 `run_async`를 돌며 텍스트가 든 **마지막 이벤트**의 글을 돌려줍니다(Runner는 Day 018, `run_async` 소비는 Day 094에서 다뤘습니다). 동기 `run_adk_agent_text`는 `asyncio.run`으로 감싸(`adk_runtime.py:66-67`) 이벤트 루프가 도는 스레드에서는 부를 수 없습니다. 서버가 모든 단계를 `asyncio.to_thread`로 부르는 까닭입니다(Step 6).
+실행은 `run_adk_agent_content_async`(`adk_runtime.py:23-63`)가 맡습니다. 호출마다 새 `InMemorySessionService`와 `Runner`를 만들고 `run_async`를 돌며 텍스트가 든 **마지막 이벤트**의 글을 돌려줍니다(Runner는 Day 018, `run_async` 소비는 Day 094에서 다뤘습니다). 동기 `run_adk_agent_text`는 `asyncio.run`으로 감싸(`adk_runtime.py:66-67`) 이벤트 루프가 도는 스레드에서는 부를 수 없습니다. 서버가 모든 단계를 `asyncio.to_thread`로 부르는 까닭입니다(Step 6). 이 실행기는 개요 그림에 없고 위 "ADK 에이전트 배선" 그림의 가운데 상자입니다. 아래 그림에서 새로 켜지는 것은 실행기가 부르는 Gemini입니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -249,7 +255,7 @@ final: hello
 
 ### Step 3. 영상 수집 — URL에서 자막과 청크까지
 
-**목적.** URL이 영상 ID·자막·청크가 되는 길을 확인하고, 이 앱이 의존하는 `youtube-transcript-api` 1.x에서 코드의 두 경로 중 어느 쪽이 도는지 봅니다.
+**목적.** URL이 영상 ID·자막·청크가 되는 길을 확인하고, 이 앱이 의존하는 `youtube-transcript-api`가 1.2.0 이상(오늘 설치된 1.2.4)일 때 코드의 두 경로 중 어느 쪽이 도는지 봅니다.
 
 **할 일.**
 
@@ -295,7 +301,7 @@ def fetch_transcript(video_id: str) -> list[TranscriptSegment]:
 
 `extract_video_id`(`youtube_ingest.py:52-73`)는 11자 ID나 `watch?v=`·`youtu.be`·`/live/`·`/embed/`·`/shorts/` URL만 받고 아니면 `ValueError`를 냅니다. 호스트 검사가 `endswith("youtube.com")`이라 `evilyoutube.com`도 통과합니다. oEmbed 요청이 실패하면 예외를 삼키고 제목을 "Untitled earnings call"로 두니(`youtube_ingest.py:76-95`) 제목이 없어도 파이프라인은 계속됩니다.
 
-자막은 위 발췌대로 옛 `get_transcript`를 먼저 시도하고 `AttributeError`면 새 `fetch`로 갑니다. `requirements.txt`가 `>=0.6.2`라 오늘은 1.2.4가 설치되고, 여기에는 `get_transcript`가 없어 언제나 둘째 경로입니다. 그런데 `fetch`가 던진 예외는 `except AttributeError:` 핸들러 **안에서** 난 것이라 같은 `try`의 `except Exception`에 잡히지 않습니다. "자막을 못 불렀다"는 친절한 `RuntimeError`(`youtube_ingest.py:119-122`)는 1.x에서 나올 수 없고 원래 예외가 나갑니다. 서버는 어떤 예외든 잡아 오디오 전사로 넘어갑니다(`server.py:146`).
+자막은 위 발췌대로 옛 `get_transcript`를 먼저 시도하고 `AttributeError`면 새 `fetch`로 갑니다. `requirements.txt`가 `>=0.6.2`라 오늘은 1.2.4가 설치되고, 여기에는 `get_transcript`가 없어 언제나 둘째 경로입니다. 그런데 `fetch`가 던진 예외는 `except AttributeError:` 핸들러 **안에서** 난 것이라 같은 `try`의 `except Exception`에 잡히지 않습니다. "자막을 못 불렀다"는 친절한 `RuntimeError`(`youtube_ingest.py:119-122`)는 1.2.0 이상에서는 나올 수 없고 원래 예외가 나갑니다. 1.2.0 미만은 다릅니다. 1.0.3(`_api.py:268`)과 1.1.1(`_api.py:255`) 휠에는 폐기 예고된 `get_transcript`가 남아 있어 첫 경로가 돌고, 그 안의 실패는 `except Exception`이 잡아 이 `RuntimeError`가 나옵니다(두 휠을 받아 소스를 읽고, 같은 스텁으로 두 경우를 돌려 확인). `>=0.6.2`라 오래된 환경에는 1.2.0 미만이 남아 있을 수 있습니다. 서버는 어떤 예외든 잡아 오디오 전사로 넘어갑니다(`server.py:146`).
 
 `chunk_transcript`(`youtube_ingest.py:261-289`)는 조각을 `window_seconds`(서버는 42, 기본 45)를 넘기 전까지 묶습니다. 오디오 폴백 `transcribe_audio_with_adk`(`youtube_ingest.py:148-234`)는 YouTube 다운로드와 Gemini 호출이 필요해 이 문서에서 실행하지 않았습니다(흐름은 아래 시퀀스 그림). 같은 폴백을 한 함수로 묶은 `load_transcript`(`youtube_ingest.py:135-145`)는 서버가 부르지 않고 테스트만 부릅니다(소스 검색으로 확인).
 
@@ -367,7 +373,7 @@ except Exception as exc:
 ConnectionError | captions endpoint unreachable (stub)
 ```
 
-친절한 `RuntimeError` 대신 스텁이 던진 원래 예외가 나옵니다.
+설치된 1.2.4에서는 친절한 `RuntimeError` 대신 스텁이 던진 원래 예외가 나옵니다.
 
 ### Step 4. 리서치 팩 — 정체 추론, SEC, 뉴스
 
@@ -507,11 +513,24 @@ def generate_insights(
 
 자격증명이 없으면 곧바로 `[]`입니다(테스트가 못 박습니다 — `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/tests/test_core_contracts.py:209-222`). 청크는 `select_signal_chunks`(`agent.py:55-63`)가 고릅니다. 청크마다 `revenue`·`guidance`·`margin` 같은 스무 개 키워드가 나온 횟수와 숫자 8개당 1점(최대 6)으로 점수를 매기고(`agent.py:148-174`) 앞 네 청크에 3점을 더해 상위 64개를 시간순으로 되돌립니다. 키워드는 `lower.count(term)`이라 낱말 경계 없이 세므로 `ai`는 "remain" 안의 `ai`도 셉니다(소스로 확인, 더 해보기).
 
-모델은 프롬프트(`agent.py:77-110`)대로 `{"insights": [...]}` JSON만 돌려주고, 카드마다 pydantic 모델(`schemas.py:37-77`)로 검증합니다. 아래 발췌의 `except Exception: continue`가 핵심입니다. 검증에 걸린 카드는 예외도 로그도 없이 사라집니다. 소스로 보면 `severity`가 `high`·`medium`·`low`가 아닌 것, `confidence`가 0~1 밖인 것, `mini_viz.rows`에 숫자가 든 것(문자열이어야 합니다), `citations`에 `label`이 없는 것, `start_time`이 숫자가 아닌 것이 여기서 버려지고, 제목이 없거나 (에이전트, 반올림한 시각, 소문자 제목)이 같은 카드는 그 뒤에서 걸러집니다(`agent.py:191-200`). 반대로 `agent`는 여섯 이름이 아니어도 통과합니다(`Union[AgentName, str]`).
+모델은 프롬프트(`agent.py:77-110`)대로 `{"insights": [...]}` JSON만 돌려주어야 하고, 아래 발췌가 그 답을 받습니다. 소리 없이 물러나는 곳이 둘 있습니다.
 
-`advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/agent.py:120-145`
+첫째는 모델 호출입니다(`agent.py:111-114`). 호출이 예외를 던지면(키나 프로젝트가 틀렸거나, 모델 이름이 폐기됐거나, 할당량이 찼거나) `except Exception: return []`가 삼켜 카드 0장이 됩니다. 응답이 JSON이 아니어도 `parse_json_object`가 `{}`를 돌려줘 결과가 같습니다. 문지기는 이미 통과한 뒤라 이때도 진단의 `analysis_engine`은 `adk`입니다(아래 확인과 Step 6). 정체 추론(`research.py:103-108`)과 뉴스 검색(`research.py:196-199`)의 모델 호출도 같은 식으로 삼켜져, 각각 휴리스틱 결과만, 빈 뉴스만 남습니다.
+
+둘째는 카드마다 pydantic 모델(`schemas.py:37-77`)로 검증하는 `except Exception: continue`(`agent.py:143-144`)입니다. 검증에 걸린 카드는 예외도 로그도 없이 사라집니다. 소스로 보면 `severity`가 `high`·`medium`·`low`가 아닌 것, `confidence`가 0~1 밖인 것, `mini_viz.rows`에 숫자가 든 것(문자열이어야 합니다), `citations`에 `label`이 없는 것, `start_time`이 숫자가 아닌 것이 여기서 버려집니다. 제목이나 인용문이 비었거나(`agent.py:145`) (에이전트, 반올림한 시각, 소문자 제목)이 같은 카드는(`agent.py:191-200`) 그 뒤에서 걸러집니다. 반대로 `agent`는 여섯 이름이 아니어도 통과합니다(`Union[AgentName, str]`).
+
+`advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/agent.py:111-145`
 
 ```python
+    try:
+        payload = parse_json_object(run_adk_agent_text(root_agent, prompt))
+    except Exception:
+        return []
+
+    raw_insights = payload.get("insights", [])
+    if not isinstance(raw_insights, list):
+        return []
+
     events: list[InsightEvent] = []
     for raw in raw_insights:
         if not isinstance(raw, dict):
@@ -585,7 +604,38 @@ for c in cards:
 11.65 18.0 filing_grounder | Guidance was raised to fifteen percent
 ```
 
-카드 다섯 장 중 둘만 남았습니다. 사라진 셋은 `severity: critical`, 숫자가 든 `rows`, 앞 카드와 제목이 같은 카드입니다. 남은 `numbers_reconciler` 카드의 인용문은 자막에 실제로 있어서 11.65~18.0초(`Revenue grew…` 조각의 12초 − 0.35, 조각 끝 18초)에 앉았습니다. 그런데 `filing_grounder` 카드의 "Guidance was raised to fifteen percent"는 **자막에 없는 문장**인데도 같은 조각에 앉았습니다. 낱말 `percent` 하나가 겹쳤을 뿐입니다. 코드는 인용문이 자막에 있는지 검증하지 않고 어딘가에 앵커합니다. 그래서 "인용문에 앵커된 카드"는 가장 비슷한 조각에 시각이 맞춰진 카드이지 검증된 인용문이 아닙니다. 숫자·인용·피어·제출 서류는 모두 모델의 주장이니 영상과 SEC 원문으로 대조해야 하고, 이 앱은 투자 조언 도구가 아닙니다.
+카드 다섯 장 중 둘만 남았습니다. 사라진 셋은 `severity: critical`, 숫자가 든 `rows`, 앞 카드와 제목이 같은 카드입니다. 남은 `numbers_reconciler` 카드의 인용문은 자막에 실제로 있어서 11.65~18.0초(`Revenue grew…` 조각의 12초 − 0.35, 조각 끝 18초)에 앉았습니다. 그런데 `filing_grounder` 카드의 "Guidance was raised to fifteen percent"는 **자막에 없는 문장**인데도 같은 조각에 앉았습니다. 낱말 `percent` 하나가 겹쳤을 뿐입니다. 코드는 인용문이 자막에 있는지 검증하지 않고 어딘가에 앵커합니다. 그래서 "인용문에 앵커된 카드"는 가장 비슷한 조각에 시각이 맞춰진 카드이지 검증된 인용문이 아닙니다. 화면도 출처(`citations`)가 없는 카드마다 `Transcript anchored`라고 적어(`app.js:486`) 이 오해를 거듭니다. 숫자·인용·피어·제출 서류는 모두 모델의 주장이니 영상과 SEC 원문으로 대조해야 하고, 이 앱은 투자 조언 도구가 아닙니다.
+
+모델 호출이 실패하는 경우도 같은 방식으로 확인합니다. 이번에는 문지기를 참으로 두고 `run_adk_agent_text`를 예외를 던지는 가짜로 바꿔 끼웁니다.
+
+```bash
+uv run --no-project --python earnings_call_analyst_agent/.venv python -c "
+from unittest.mock import patch
+from earnings_call_analyst_agent import agent
+from earnings_call_analyst_agent.schemas import ResearchPack, TranscriptSegment, VideoMetadata
+from earnings_call_analyst_agent.youtube_ingest import chunk_transcript
+
+chunks = chunk_transcript([TranscriptSegment(start=0, duration=6, text='Revenue grew twelve percent.')], window_seconds=42)
+
+def failing_call(*args, **kwargs):
+    error = RuntimeError('API key not valid (stub)')
+    print('model call raised:', type(error).__name__, '|', error)
+    raise error
+
+with patch.object(agent, 'has_adk_credentials', return_value=True), patch.object(agent, 'run_adk_agent_text', failing_call):
+    cards = agent.generate_insights(VideoMetadata(video_id='abcDEF12345', title='Example Q3 earnings call'), ResearchPack(company='Example Co', ticker='EXM'), chunks)
+print('cards:', cards)
+"
+```
+
+직접 확인한 출력:
+
+```text
+model call raised: RuntimeError | API key not valid (stub)
+cards: []
+```
+
+첫 줄은 가짜가 예외를 던지며 스스로 찍은 것이고, 앱은 아무것도 찍지 않은 채 `[]`를 돌려줍니다. 앱에는 이 예외를 보여 주는 곳이 없습니다. 실제 서버에서 보려면 `agent.py:113`의 `except Exception:` 바로 아래에 `import traceback; traceback.print_exc()` 한 줄을 임시로 넣고 서버 터미널을 봅니다. 카드가 검증에서 버려지는 곳(`agent.py:143`)에도 같은 줄을 넣으면 탈락 사유가 찍힙니다(위 카드 다섯 장이면 `ValidationError` 둘). 스크래치 사본에서 두 곳 모두 이 줄로 예외가 찍히는 것을 확인했습니다.
 
 ### Step 6. FastAPI 세션 서버 — 응답은 먼저, 분석은 뒤에서
 
@@ -633,16 +683,17 @@ async def _run_session(session_id: str) -> None:
 
 `POST /api/sessions`(`server.py:102-114`)는 URL만 `extract_video_id`로 검사해 틀리면 400을, 맞으면 `RuntimeSession`을 딕셔너리에 넣고 `BackgroundTasks`로 `_run_session`을 예약한 뒤 `session_id`를 곧바로 돌려줍니다. 분석은 위 함수가 응답 **뒤에** 돌립니다. 단계마다 동기 함수를 `asyncio.to_thread`로 스레드에 내보내고 `_set_status`로 진행률을 쌓습니다. 10(영상 확인) → 25(자막) → 45(리서치) → 70(분석) → 100(완료)이고, 오디오로 넘어가면 32와 34·38 이상·62가 끼어듭니다. 브라우저는 `GET /api/sessions/{id}`를 1.5초마다 불러 이 필드를 읽습니다.
 
-결과 조립(`server.py:169-186`)에서 눈여겨볼 것이 셋입니다. 카드가 없으면 `AnalysisSession.status`는 `partial`인데 폴링 응답 맨 위의 `status`는 그래도 `ready`입니다(`server.py:187`). `diagnostics`에 `analysis_engine`과 `auth_mode`가 담기지만 화면은 그리지 않습니다(`app.js`에 `diagnostics` 참조가 없음 — 소스 검색으로 확인). 그리고 `sessions`는 프로세스 메모리의 dict라 서버를 재시작하면 사라지고, 지우는 코드가 없어 쌓이기만 합니다.
+결과 조립(`server.py:169-186`)에서 눈여겨볼 것이 셋입니다. 카드가 없으면 `AnalysisSession.status`는 `partial`인데 폴링 응답 맨 위의 `status`는 그래도 `ready`입니다(`server.py:187`). `diagnostics`에 `analysis_engine`과 `auth_mode`가 담기지만 화면은 그리지 않고(`app.js`에 `diagnostics` 참조가 없음 — 소스 검색으로 확인), `analysis_engine`은 문지기 `has_adk_credentials()`만 본 값이라 모델 호출이 실패했는지는 말해 주지 않습니다(`server.py:183`). 그리고 `sessions`는 프로세스 메모리의 dict라 서버를 재시작하면 사라지고, 지우는 코드가 없어 쌓이기만 합니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 부모 폴더에서 실행합니다. `server`가 이름으로 임포트해 둔 네트워크 함수 셋(`fetch_video_metadata`·`fetch_transcript`·`build_research_pack`)을 가짜로 바꿔 끼우고, FastAPI `TestClient`로 진짜 라우트를 부릅니다. `_set_status`를 감싸 상태 전이도 기록합니다. `generate_insights`는 진짜이고 키가 없으니 `[]`를 돌려줍니다. `-W ignore`는 `TestClient`가 내는 경고를 숨깁니다(문제 해결 참고).
+**확인.** 부모 폴더에서 실행합니다. `server`가 이름으로 임포트해 둔 네트워크 함수 셋(`fetch_video_metadata`·`fetch_transcript`·`build_research_pack`)을 가짜로 바꿔 끼우고, FastAPI `TestClient`로 진짜 라우트를 부릅니다. `_set_status`를 감싸 상태 전이도 기록합니다. `generate_insights`는 진짜이고 키가 없으니 `[]`를 돌려줍니다. 마지막 세션은 키가 있는데 모델 호출이 실패하는 경우로, `GOOGLE_API_KEY`에 가짜 값을 넣고 `agent.run_adk_agent_text`를 예외를 던지는 가짜로 바꿉니다. `-W ignore`는 `TestClient`가 내는 경고를 숨깁니다(문제 해결 참고).
 
 ```bash
 uv run --no-project --python earnings_call_analyst_agent/.venv python -W ignore -c "
 import os
 from fastapi.testclient import TestClient
+from earnings_call_analyst_agent import agent
 from earnings_call_analyst_agent.live_demo import server
 from earnings_call_analyst_agent.schemas import ResearchPack, TranscriptSegment, VideoMetadata
 
@@ -666,6 +717,16 @@ session_id = client.post('/api/sessions', json={'youtube_url': 'https://youtu.be
 print(trace)
 body = client.get('/api/sessions/' + session_id).json()
 print(body['status'], body['progress'], body['data']['status'], body['data']['diagnostics'])
+print(repr(body['error']), body['message'])
+
+os.environ['GOOGLE_API_KEY'] = 'fake-key'
+def failing_call(*args, **kwargs):
+    raise RuntimeError('API key not valid (stub)')
+agent.run_adk_agent_text = failing_call
+session_id = client.post('/api/sessions', json={'youtube_url': 'https://youtu.be/abcDEF12345'}).json()['session_id']
+body = client.get('/api/sessions/' + session_id).json()
+print(body['status'], body['progress'], body['data']['status'], body['data']['diagnostics'])
+print(repr(body['error']), body['message'])
 "
 ```
 
@@ -676,9 +737,12 @@ print(body['status'], body['progress'], body['data']['status'], body['data']['di
 400
 [('metadata', 10), ('transcript', 25), ('research', 45), ('analysis', 70), ('ready', 100)]
 ready 100 partial {'transcript_segments': 2, 'transcript_source': 'youtube_captions', 'chunks': 1, 'insights': 0, 'analysis_engine': 'adk_unavailable', 'auth_mode': 'missing'}
+'' Ready with transcript and research; no high-signal insights were emitted.
+ready 100 partial {'transcript_segments': 2, 'transcript_source': 'youtube_captions', 'chunks': 1, 'insights': 0, 'analysis_engine': 'adk', 'auth_mode': 'api_key'}
+'' Ready with transcript and research; no high-signal insights were emitted.
 ```
 
-첫 줄은 `/health`, 둘째 줄은 잘못된 URL의 400, 셋째 줄은 진행률 전이입니다. 마지막 줄에서 폴링 응답은 `ready 100`인데 `data.status`는 `partial`이고 진단 값이 `adk_unavailable`·`missing`을 말합니다.
+첫 줄은 `/health`, 둘째 줄은 잘못된 URL의 400, 셋째 줄은 진행률 전이입니다. 넷째 줄에서 폴링 응답은 `ready 100`인데 `data.status`는 `partial`이고 진단 값이 `adk_unavailable`·`missing`을 말합니다. 다섯째 줄은 화면 아래 상태 문구가 되는 `message`이고 `error`는 빈 문자열입니다. 여섯째·일곱째 줄은 가짜 키와 실패하는 모델 호출을 넣은 두 번째 세션입니다. 키가 없을 때와 같은 `ready 100`·`partial`·같은 문구에 `error`도 비어 있고, 달라진 것은 진단이 `analysis_engine: adk`·`auth_mode: api_key`라고 말하는 것뿐입니다. 실패한 모델 호출은 응답 어디에도 남지 않습니다.
 
 ### Step 7. 프런트엔드와 실행 — 재생 시각에 맞춘 공개
 
@@ -712,13 +776,13 @@ function revealDueInsights(currentTime) {
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 앱을 띄우는 명령은 한 줄입니다. 부모 폴더 `single_agent_apps`에서 실행합니다. 앱 README의 `PYTHONPATH=.. python -m uvicorn …`은 앱 폴더 안에서 쓰는 bash 형태이고, 부모 폴더에서는 `PYTHONPATH`가 필요 없어 PowerShell에서도 같은 줄이 돕니다.
+**확인.** 앱을 띄우는 명령은 한 줄입니다. 부모 폴더 `single_agent_apps`에서 실행합니다. 앱 README의 `PYTHONPATH=.. python -m uvicorn …`은 앱 폴더 안에서 쓰는 bash 형태이고, 부모 폴더에서는 `PYTHONPATH`가 필요 없어 PowerShell에서도 같은 줄이 돌 것입니다. 이 문서의 명령은 bash에서 돌려 확인했고 PowerShell에서는 실행해 보지 못했습니다.
 
 ```bash
 uv run --no-project --python earnings_call_analyst_agent/.venv python -m uvicorn earnings_call_analyst_agent.live_demo.server:app --host 127.0.0.1 --port 4188
 ```
 
-브라우저로 http://127.0.0.1:4188 에 접속해 URL을 붙여 넣습니다(키가 없으면 카드는 0장이고 헤더에 위 문구가 보입니다). 실제 URL을 넣으면 YouTube(oEmbed·자막)에, 티커를 찾으면 SEC에도 요청이 나갑니다. 다른 터미널에서 두 응답을 봅니다. Windows PowerShell은 `curl`을 `Invoke-WebRequest`의 별칭으로 미리 정의해 두므로 `curl.exe`로 씁니다(macOS/Linux는 `curl`).
+브라우저로 http://127.0.0.1:4188 에 접속해 URL을 붙여 넣습니다(키가 없으면 카드는 0장이고 헤더에 위 문구가 보입니다). 여기서부터는 밖으로 요청이 나갑니다. 화면을 여는 것만으로 브라우저가 YouTube의 `iframe_api`를 받고, 실제 URL을 넣으면 YouTube(oEmbed·자막)에, 티커를 찾으면 SEC에도 요청이 나갑니다. 셸이나 `.env`에 키(또는 Vertex 설정)가 있으면 분석 때 Gemini도 불러 과금됩니다. 다른 터미널에서 두 응답을 봅니다. Windows PowerShell은 `curl`을 `Invoke-WebRequest`의 별칭으로 미리 정의해 두므로 `curl.exe`로 씁니다(macOS/Linux는 `curl`).
 
 ```bash
 curl.exe -s -w "\n" http://127.0.0.1:4188/health
@@ -749,13 +813,17 @@ uv run --no-project python -m pytest -q
 
 ## 요청 한 건이 흐르는 과정
 
-시간 경계를 따라 그림을 나눴습니다. 그림 순서가 시간 순서이고 메시지는 어느 그림에도 정확히 한 번씩, 원래 순서로 있습니다. 화살표가 제자리로 돌아오는 메시지는 그 모듈 안에서 도는 처리입니다. 단계마다 서버가 세션 저장소에 `status:`를 쓰고, 프런트엔드는 1.5초마다 폴링하지만 같은 메시지라 첫 폴링과 결과를 받는 마지막 폴링만 그렸습니다. 키가 있고 티커를 찾았을 때의 정상 경로입니다.
+시간 경계를 따라 그림을 나눴습니다. 그림 순서가 시간 순서이고, 서버·모듈·외부 서비스 사이의 호출은 어느 그림에도 정확히 한 번씩, 원래 순서로 있습니다. 화살표가 제자리로 돌아오는 메시지는 그 모듈 안에서 도는 처리입니다. 단계마다 서버가 세션 저장소에 `status:`를 쓰고, 프런트엔드는 1.5초마다 폴링하지만 같은 메시지라 첫 폴링과 결과를 받는 마지막 폴링만 그렸습니다. 키가 있고 티커를 찾았을 때의 정상 경로입니다. 그리지 않은 것이 둘입니다. 모듈이 시작할 때 문지기를 부르는 줄(정체 추론 `research.py:90`, 뉴스 `research.py:169`, 분석 `agent.py:48`, 오디오 전사 `youtube_ingest.py:151`)은 서버가 부르는 두 곳(`/health`와 결과 진단)만 그렸습니다. 실행기가 안에서 세션 서비스를 만드는 일은 위 "ADK 에이전트 배선" 그림에 있습니다.
 
 ### 1. 화면 열기와 요청 접수
 
-브라우저가 화면 파일과 YouTube의 `iframe_api` 스크립트를 받고, 프런트엔드가 `/health`로 헤더의 한 줄을 정합니다.
+브라우저가 화면 파일 셋과 YouTube의 `iframe_api` 스크립트를 받습니다. `index.html`에 적힌 순서(`styles.css`, `iframe_api`, `app.js`)로 그렸고 실제로는 병렬로 받을 수 있으며, 주소 뒤의 `?v=…` 꼬리표는 뺐습니다.
 
 ![화면 열기](diagrams/extra-load.svg)
+
+이어서 프런트엔드가 `/health`로 헤더의 한 줄을 정합니다. 서버는 응답을 만들면서 실행기의 문지기를 둘 다 부릅니다(`server.py:92-93`).
+
+![/health와 문지기](diagrams/extra-health.svg)
 
 Analyze를 누르면 프런트엔드가 진행 막대를 4%로 올리고 `POST`를 보냅니다. 서버는 URL을 검사하고 세션을 만든 뒤 `session_id`를 곧바로 돌려줍니다.
 
@@ -782,11 +850,11 @@ Analyze를 누르면 프런트엔드가 진행 막대를 4%로 올리고 `POST`�
 
 ![오디오 전사 시작](diagrams/extra-audio-start.svg)
 
-yt-dlp가 오디오를 받고 ffmpeg가 300초 조각으로 자릅니다. 마지막 두 메시지는 조각을 시작할 때마다 되풀이됩니다.
+yt-dlp가 오디오를 받고 이 PC의 ffmpeg가 300초 조각으로 자릅니다. 마지막 두 메시지는 조각을 시작할 때마다 되풀이됩니다.
 
 ![오디오 내려받기와 분할](diagrams/extra-audio-download.svg)
 
-조각마다 `transcription_agent`가 Gemini에 오디오를 보내고 JSON 세그먼트를 돌려받습니다.
+조각마다 `transcription_agent`가 Gemini에 오디오를 보내고 JSON 세그먼트를 돌려받습니다. 돌려받은 글은 `parse_transcribed_segments`가 `parse_json_object`로 읽어 세그먼트로 만듭니다.
 
 ![조각 전사](diagrams/extra-audio-chunks.svg)
 
@@ -798,13 +866,13 @@ yt-dlp가 오디오를 받고 ffmpeg가 300초 조각으로 자릅니다. 마지
 
 ### 3. 리서치 팩
 
-`build_research_pack`이 먼저 휴리스틱으로, 자격증명이 있으면 `identity_agent`로 회사를 추정합니다.
+`build_research_pack`이 먼저 휴리스틱으로, 자격증명이 있으면 `identity_agent`로 회사를 추정합니다. 첫 그림은 모델의 답이 실행기에서 돌아오는 데까지입니다.
 
 ![정체 추론](diagrams/extra-identity.svg)
 
-티커가 나오면 SEC에 두 번 묻습니다.
+답을 `parse_json_object`로 읽어 휴리스틱 위에 덮어쓰고, 티커가 나오면 SEC에 두 번 묻습니다.
 
-![SEC 제출 목록](diagrams/extra-filings.svg)
+![정체 확정과 SEC 제출 목록](diagrams/extra-filings.svg)
 
 그다음 `market_news_agent`가 뉴스를 찾고 조립된 `ResearchPack`이 서버로 돌아갑니다.
 
@@ -816,9 +884,13 @@ yt-dlp가 오디오를 받고 ffmpeg가 300초 조각으로 자릅니다. 마지
 
 ![카드 생성](diagrams/extra-analysis.svg)
 
-돌아온 글은 파싱·검증·중복 제거·인용문 재정렬을 거쳐 서버로 가고, 서버가 결과를 저장한 뒤 `ready`로 올립니다.
+돌아온 글은 `parse_json_object`로 읽고 검증·중복 제거·인용문 재정렬을 거쳐 서버로 갑니다.
 
-![결과 저장](diagrams/extra-analysis-done.svg)
+![카드 검증](diagrams/extra-analysis-done.svg)
+
+서버는 결과를 조립하면서 진단 값을 만들려고 문지기를 다시 부르고(`server.py:183-184`), 저장한 뒤 `ready`로 올립니다.
+
+![결과 저장](diagrams/extra-analysis-save.svg)
 
 ### 5. 결과와 재생
 
@@ -836,9 +908,10 @@ yt-dlp가 오디오를 받고 ffmpeg가 300초 조각으로 자릅니다. 마지
 - [ ] 부모 폴더에서 `--python earnings_call_analyst_agent/.venv`로 패키지를 임포트하고 `LlmAgent` 넷을 확인했다
 - [ ] `has_adk_credentials()`가 `.env.example`의 자리표시자 값도 통과시키고, `.env`는 첫 줄이 이긴다는 것을 확인했다
 - [ ] 로컬 `BaseAgent`로 `run_adk_agent_text`가 마지막 텍스트 이벤트를 돌려주는 것을 확인했다
-- [ ] `youtube-transcript-api` 1.x에 `get_transcript`가 없어 `fetch` 경로로 가고, 친절한 `RuntimeError`가 나오지 않는 것을 확인했다
+- [ ] `youtube-transcript-api` 1.2.0 이상(오늘은 1.2.4)에는 `get_transcript`가 없어 `fetch` 경로로 가고, 친절한 `RuntimeError`가 나오지 않는 것을 확인했다(1.0.3·1.1.1에서는 다르다는 것은 휠 소스로 확인)
 - [ ] 티커가 없으면 SEC·뉴스를 건너뛰고 `notes`만 남는다는 것을 확인했다
 - [ ] 가짜 모델 응답 카드 다섯 장 중 둘만 남고, 자막에 없는 인용문도 어딘가에 앵커된다는 것을 확인했다
+- [ ] 모델 호출이 실패하면 `generate_insights`가 예외를 삼키고 `[]`를 돌려주며, 그때도 서버 진단이 `analysis_engine: adk`라고 답하는 것을 확인했다
 - [ ] `TestClient`로 진행률이 10→25→45→70→100으로 흐르고 카드가 없으면 `partial`이라는 것을 확인했다
 - [ ] 앱을 띄워 `/health`와 없는 세션의 404 본문을 확인했다
 - [ ] `pytest -q`에서 20개가 통과했다
@@ -848,10 +921,10 @@ yt-dlp가 오디오를 받고 ffmpeg가 300초 조각으로 자릅니다. 마지
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 앱 폴더 안에서 임포트하면 `ImportError: attempted relative import with no known parent package`(직접 확인) | 소스가 상대 임포트라 패키지의 부모 폴더에서 임포트해야 합니다 | 부모 폴더 `single_agent_apps`에서 `--python earnings_call_analyst_agent/.venv`로 실행 |
-| 한국어 Windows에서 `.env`에 한글 주석을 쓰고 서버를 임포트하면 `UnicodeDecodeError: 'cp949' codec can't decode byte 0xed in position 2: illegal multibyte sequence`(직접 확인) | `_load_env`가 `read_text()`를 인코딩 없이 불러(`advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/live_demo/server.py:28`) 로케일 인코딩(cp949)으로 읽습니다 | `.env`를 ASCII로만 쓰거나 실행 전에 `PYTHONUTF8=1`(PowerShell은 `$env:PYTHONUTF8=1`) |
+| 한국어 Windows에서 `.env`에 한글 주석을 쓰면 서버가 뜨지 않고 `uvicorn`이 `UnicodeDecodeError: 'cp949' codec can't decode byte 0xed in position 2: illegal multibyte sequence`를 찍고 끝납니다(직접 확인. 바이트와 위치는 주석이 `# 한글 주석`일 때의 값이고 내용에 따라 달라집니다) | `_load_env`가 `read_text()`를 인코딩 없이 불러(`advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/live_demo/server.py:28`) 로케일 인코딩(cp949)으로 읽습니다 | `.env`를 ASCII로만 쓰거나 실행 전에 `PYTHONUTF8=1`(PowerShell은 `$env:PYTHONUTF8=1`) |
 | `cp .env.example .env`만 했는데 `has_adk_credentials()`가 True, `adk_auth_mode()`가 `vertex_ai`(Step 2, 직접 확인) | 기본 파일의 Vertex 블록이 켜져 있고 문지기는 값을 확인하지 않습니다 | 쓰지 않을 방식의 줄은 지우고 하나만 남기기 |
 | Option 2(API 키)를 주석 해제했는데 `GOOGLE_GENAI_USE_VERTEXAI`가 여전히 `True`(Step 2, 직접 확인) | `setdefault`라 같은 키가 두 번이면 첫 줄이 이깁니다. google-genai 2.25.0 소스상 프로젝트와 키가 함께 있으면 프로젝트가 이깁니다(소스로 확인) | Option 1의 세 줄을 지우거나 주석 처리 |
-| 분석이 "완료"인데 카드가 0장 — `data.status`가 `partial`, 메시지가 `Ready with transcript and research; no high-signal insights were emitted.`(Step 6, 직접 확인) | 자격증명이 없어 `generate_insights`가 `[]`이거나(Step 2), 모델 카드가 검증에서 전부 버려졌습니다(Step 5) | `/health`의 `auth_mode`가 `missing`이 아닌지 먼저 보고, 검증 탈락은 `_generate_with_adk`의 `except Exception: continue`에서 예외를 출력해 확인 |
+| 분석이 "완료"인데 카드가 0장 — `data.status`가 `partial`, 메시지가 `Ready with transcript and research; no high-signal insights were emitted.`(Step 6, 직접 확인) | 셋 중 하나입니다. (1) 자격증명이 없어 `generate_insights`가 `[]`입니다(Step 2). (2) 자격증명은 통과했는데 모델 호출이 실패했습니다. 키나 프로젝트가 틀렸거나 자리표시자이거나(위 두 행), 모델 이름이 폐기됐거나, 할당량이 찼을 때입니다. `agent.py:111-114`가 예외를 삼켜 `[]`를 돌려주고 `analysis_engine`은 문지기만 본 값이라 `adk`로 남습니다(Step 5·6, 직접 확인). (3) 모델 카드가 검증에서 전부 버려졌습니다(Step 5) | `/health`의 `auth_mode`가 `missing`이 아닌지 먼저 봅니다(1). 키가 있는데도 0장이면 `agent.py:113`의 `except Exception:` 바로 아래에 `import traceback; traceback.print_exc()`를 임시로 넣고 서버 터미널에서 예외를 봅니다(2). (3)은 `agent.py:143`의 `except Exception:` 아래에 같은 줄을 넣습니다. 확인한 뒤 줄은 지우세요 |
 | `TestClient`를 임포트하면 ``StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.``(직접 확인) | 설치된 starlette 1.7.0이 httpx 기반 `TestClient`를 폐기 예고합니다 | 경고일 뿐 동작은 정상입니다. Step 6은 `-W ignore`로 숨깁니다 |
 | `--port`에 고른 번호에서 `[winerror 10013]`(Windows에서 60649로 직접 확인) | Windows가 예약해 둔 포트 범위입니다 | `netsh int ipv4 show excludedportrange protocol=tcp`로 범위를 보고 피하기 |
 
@@ -859,7 +932,7 @@ yt-dlp가 오디오를 받고 ffmpeg가 300초 조각으로 자릅니다. 마지
 
 - 인용문 검증기를 붙여 보세요. `_generate_with_adk`가 카드를 만든 뒤(`agent.py:120-145`) `_normalize_text`(`agent.py:288-289`)로 정규화한 인용문이 자막 전체에 있는지 보고, 없으면 카드를 버리거나 `confidence`를 낮춥니다. Step 5의 가짜 응답으로 "자막에 없는 문장" 카드가 사라지는지 확인합니다.
 - `agent._chunk_signal_score('We remain calm')`이 몇 점인지 찍어 보고 0이 아니면 왜인지 찾아보세요(`agent.py:148-174`의 `count`). 낱말 경계를 지키게 고친 뒤 점수를 비교합니다.
-- `_is_low_quality_news_title`(`research.py:234-237`)은 제목 끝의 ` - reddit` 같은 접미사만 봅니다. 모델이 `source: 'Reddit'`만 채우고 제목에는 붙이지 않으면 어떻게 될까요? Step 4처럼 `run_adk_agent_text`를 가짜로 바꿔 끼워 확인하고 `source`도 보게 고쳐 보세요.
+- `_is_low_quality_news_title`(`research.py:234-237`)은 제목 끝의 ` - reddit` 같은 접미사만 봅니다. 모델이 `source: 'Reddit'`만 채우고 제목에는 붙이지 않으면 어떻게 될까요? Step 5처럼 `research`의 `has_adk_credentials`와 `run_adk_agent_text`를 바꿔 끼우고 `research.fetch_adk_grounded_news('EXM', 'Example Corp')`를 불러 확인한 뒤 `source`도 보게 고쳐 보세요.
 
 ## 다음 날 예고
 

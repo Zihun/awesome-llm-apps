@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 투자자 (브라우저) { class: person }
+ui: "프런트엔드\n(app.js)" { class: ours }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+runtime: "ADK 실행기\n(adk_runtime.py)" { class: ours }
+
+ui -> server: GET /health
+server -> runtime: adk_auth_mode()
+runtime -> server: "api_key · vertex_ai · missing 중 하나"
+server -> runtime: has_adk_credentials()
+runtime -> server: True 또는 False
+server -> ui: "{ok, has_adk_credentials, has_google_key, auth_mode}"
+ui -> user: 헤더 한 줄 (Vertex AI · Gemini API key · 자격증명 없음)
