@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ffmpeg: ffmpeg { class: ext }
+youtube: YouTube { class: ext }
+ingest: "영상 수집\n(youtube_ingest.py)" { class: ours }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+sessions: "세션 저장소\n(sessions)" { class: store }
+
+ingest -> youtube: "yt-dlp extract_info(download=True, worstaudio)"
+youtube -> ingest: 오디오 파일 (m4a 또는 webm)
+ingest -> ffmpeg: 300초 mp3로 분할
+ffmpeg -> ingest: chunk_000.mp3 ...
+ingest -> server: "on_progress(38+, 'Transcribing audio chunk i of n...')"
+server -> sessions: "status: transcript (38%~)"

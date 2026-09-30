@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+player: YouTube 플레이어 { class: ext }
+user: 투자자 (브라우저) { class: person }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+ui: "프런트엔드\n(app.js)" { class: ours }
+
+user -> server: "GET / 와 /static/* (접속)"
+server -> user: index.html · app.js · styles.css
+user -> player: GET https://www.youtube.com/iframe_api
+player -> user: iframe_api 스크립트 (YT.Player)
+ui -> server: GET /health
+server -> ui: "{ok, has_adk_credentials, has_google_key, auth_mode}"

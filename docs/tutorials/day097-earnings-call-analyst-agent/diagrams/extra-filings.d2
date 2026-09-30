@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+research: "리서치 팩\n(research.py)" { class: ours }
+sec: SEC EDGAR { class: ext }
+
+research -> sec: "GET files/company_tickers.json (User-Agent)"
+sec -> research: 티커 -> CIK 표 (lru_cache)
+research -> sec: "GET submissions/CIK{cik}.json"
+sec -> research: "최근 제출 목록 (form, accessionNumber, ...)"
+research -> research: 10-K · 10-Q · 8-K 각 1건 -> ResearchDocument

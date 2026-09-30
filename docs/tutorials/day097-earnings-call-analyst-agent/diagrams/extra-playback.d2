@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 투자자 { class: person }
+ui: "프런트엔드\n(app.js)" { class: ours }
+player: YouTube 플레이어 { class: ext }
+
+ui -> player: getCurrentTime() (0.5초마다)
+player -> ui: 재생 시각 (초)
+ui -> user: 재생 시각 이하의 start_time 카드 공개
+user -> ui: Jump to quote 클릭
+ui -> player: seekTo(start_time) + playVideo()

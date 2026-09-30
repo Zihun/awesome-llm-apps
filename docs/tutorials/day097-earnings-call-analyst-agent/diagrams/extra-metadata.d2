@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+server: "FastAPI 서버\n(server.py)" { class: ours }
+ingest: "영상 수집\n(youtube_ingest.py)" { class: ours }
+youtube: YouTube { class: ext }
+
+server -> ingest: extract_video_id(youtube_url)
+ingest -> server: video_id
+server -> ingest: fetch_video_metadata(url, video_id)
+ingest -> youtube: "GET /oembed?url=...watch?v={video_id}&format=json"
+youtube -> ingest: "{title, author_name, thumbnail_url} (실패하면 {})"
+ingest -> server: VideoMetadata

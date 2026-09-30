@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 투자자 (브라우저) { class: person }
+ui: "프런트엔드\n(app.js)" { class: ours }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+sessions: "세션 저장소\n(sessions)" { class: store }
+ingest: "영상 수집\n(youtube_ingest.py)" { class: ours }
+
+user -> ui: URL 입력 후 Analyze 클릭
+ui -> user: 진행 막대 4% (Creating analysis session)
+ui -> server: "POST /api/sessions {youtube_url}"
+server -> ingest: extract_video_id(youtube_url)
+ingest -> server: video_id (11자)
+server -> sessions: "sessions[session_id] = RuntimeSession(youtube_url, status: queued)"
+server -> ui: "200 {session_id}"

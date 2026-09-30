@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+player: YouTube 플레이어 { class: ext }
+ui: "프런트엔드\n(app.js)" { class: ours }
+user: 투자자 (브라우저) { class: person }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+sessions: "세션 저장소\n(sessions)" { class: store }
+
+ui -> server: "GET /api/sessions/{id} (폴링)"
+server -> sessions: sessions.get(session_id)
+sessions -> server: RuntimeSession (data 포함)
+server -> ui: "{status: ready, progress: 100, data}"
+ui -> player: "new YT.Player('player', {videoId})"
+ui -> user: 리서치 팩 · 카드 목록 렌더링 (미공개 카드는 잠김)

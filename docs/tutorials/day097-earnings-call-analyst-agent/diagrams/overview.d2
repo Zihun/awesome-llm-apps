@@ -1,0 +1,29 @@
+...@../../_tools/theme
+direction: down
+
+user: 투자자 (브라우저) { class: person }
+ui: 프런트엔드 (app.js) { class: ours }
+player: YouTube 플레이어 (iframe_api) { class: ext }
+server: FastAPI 세션 서버 (server.py) { class: ours }
+sessions: 세션 저장소 (sessions 딕셔너리) { class: store }
+ingest: 영상 수집 (youtube_ingest.py) { class: ours }
+research: 리서치 팩 (research.py) { class: ours }
+analyst: 분석가 (agent.py) { class: ours }
+youtube: YouTube (oEmbed·자막·오디오) { class: ext }
+sec: SEC EDGAR (티커 표·제출 목록) { class: ext }
+gemini: Gemini (Vertex AI 또는 API 키) { class: ext }
+
+ui <-> user: URL 입력 · 카드 열람
+(ui <-> user)[0].style.font-size: 12
+ui <-> server: 화면 파일 · /health · 세션 API
+(ui <-> server)[0].style.font-size: 12
+ui -> player: iframe_api · seekTo · getCurrentTime
+server -> sessions: 진행 상태 · 결과 저장
+server -> ingest: 메타데이터 · 자막 수집
+server -> research: 리서치 팩 생성
+server -> analyst: 분석 카드 생성
+ingest -> youtube: oEmbed · 자막 · 오디오
+research -> sec: 티커 표 · 제출 목록
+ingest -> gemini: 오디오 전사 (ADK)
+research -> gemini: 정체 추론 · 뉴스 검색 (ADK)
+analyst -> gemini: 분석 프롬프트 (ADK)

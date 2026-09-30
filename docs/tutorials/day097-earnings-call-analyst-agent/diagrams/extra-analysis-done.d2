@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+analyst: "분석가\n(agent.py)" { class: ours }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+sessions: "세션 저장소\n(sessions)" { class: store }
+
+analyst -> analyst: parse_json_object(text) 후 InsightEvent 검증 · 중복 제거
+analyst -> analyst: _realign_event_times(events, chunks)
+analyst -> server: "list[InsightEvent]"
+server -> sessions: "AnalysisSession 저장 (status: ready 또는 partial)"
+server -> sessions: "status: ready (100%)"

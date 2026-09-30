@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+sessions: "세션 저장소\n(sessions)" { class: store }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+ingest: "영상 수집\n(youtube_ingest.py)" { class: ours }
+youtube: YouTube { class: ext }
+
+server -> sessions: "status: transcript (25%)"
+server -> ingest: fetch_transcript(video_id)
+ingest -> youtube: "YouTubeTranscriptApi().fetch(id, ['en', 'en-US'])"
+youtube -> ingest: "자막 조각 (text, start, duration)"
+ingest -> server: "list[TranscriptSegment]"
+server -> ingest: chunk_transcript(transcript, window_seconds=42)
+ingest -> server: "list[TranscriptChunk]"
+server -> sessions: "status: research (45%)"

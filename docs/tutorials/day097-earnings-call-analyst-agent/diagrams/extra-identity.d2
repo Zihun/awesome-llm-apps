@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+server: "FastAPI 서버\n(server.py)" { class: ours }
+research: "리서치 팩\n(research.py)" { class: ours }
+runtime: "ADK 실행기\n(adk_runtime.py)" { class: ours }
+gemini: Gemini { class: ext }
+
+server -> research: build_research_pack(metadata, transcript)
+research -> research: _infer_identity_heuristically(제목 · 채널 · 자막)
+research -> runtime: run_adk_agent_text(identity_agent, prompt)
+runtime -> gemini: 정체 추론 프롬프트 (제목 · 채널 · 자막 앞 4000자)
+gemini -> runtime: "JSON {company, ticker, fiscal_period, peers, confidence}"
+runtime -> research: 최종 텍스트
+research -> research: parse_json_object(text) 후 휴리스틱 위에 덮어쓰기

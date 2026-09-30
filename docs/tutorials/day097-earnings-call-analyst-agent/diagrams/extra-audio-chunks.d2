@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ingest: "영상 수집\n(youtube_ingest.py)" { class: ours }
+runtime: "ADK 실행기\n(adk_runtime.py)" { class: ours }
+gemini: Gemini { class: ext }
+
+ingest -> runtime: "run_adk_agent_content(transcription_agent, 오디오 Part + 프롬프트)"
+runtime -> gemini: 오디오 바이트 + 전사 프롬프트
+gemini -> runtime: "JSON {segments: [{start, duration, text}]}"
+runtime -> ingest: 최종 텍스트
+ingest -> ingest: parse_transcribed_segments(text)

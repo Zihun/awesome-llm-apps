@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 투자자 (브라우저) { class: person }
+ui: "프런트엔드\n(app.js)" { class: ours }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+sessions: "세션 저장소\n(sessions)" { class: store }
+
+server -> sessions: "sessions[session_id]"
+sessions -> server: RuntimeSession
+server -> sessions: "status: metadata (10%)"
+ui -> server: "GET /api/sessions/{id} (1.5초마다 반복)"
+server -> sessions: sessions.get(session_id)
+sessions -> server: RuntimeSession
+server -> ui: "{status, progress, message, error}"
+ui -> user: 진행 막대 · 단계 표시 · 상태 문구

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+sessions: "세션 저장소\n(sessions)" { class: store }
+server: "FastAPI 서버\n(server.py)" { class: ours }
+ingest: "영상 수집\n(youtube_ingest.py)" { class: ours }
+
+ingest -> server: "on_progress(62, 'Audio transcription complete...')"
+server -> sessions: "status: transcript (62%)"
+ingest -> server: "list[TranscriptSegment] (start + 조각 오프셋)"

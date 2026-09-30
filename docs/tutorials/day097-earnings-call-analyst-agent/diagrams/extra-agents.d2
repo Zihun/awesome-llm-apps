@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: down
+
+transcription: "오디오 전사 (transcription_agent)\nyoutube_ingest.py" { class: ours }
+identity: "정체 추론 (identity_agent)\nresearch.py" { class: ours }
+news: "뉴스 검색 (market_news_agent)\nresearch.py" { class: ours }
+root: "분석가 (root_agent)\nagent.py" { class: ours }
+
+runtime: "ADK 실행기 (adk_runtime.py)\nrun_adk_agent_text · run_adk_agent_content" { class: ours }
+adk_session: "InMemorySessionService\n(호출마다 새로 만듦)" { class: store }
+gemini_3: "Gemini (gemini-3-flash-preview)" { class: ext }
+gemini_25: "Gemini (gemini-2.5-flash)\n+ google_search 그라운딩" { class: ext }
+
+transcription -> runtime: 오디오 Part + 전사 프롬프트
+identity -> runtime: 제목 · 채널 · 자막 앞 4000자
+news -> runtime: 회사 · 티커 뉴스 프롬프트
+root -> runtime: 리서치 컨텍스트 + 청크 프롬프트
+runtime -> adk_session: create_session (uuid 세션)
+runtime -> gemini_3: 전사 · 정체 추론 · 분석 호출
+runtime -> gemini_25: 뉴스 검색 호출
