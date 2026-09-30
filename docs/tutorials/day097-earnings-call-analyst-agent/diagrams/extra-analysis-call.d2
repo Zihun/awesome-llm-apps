@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+analyst: "분석가\n(agent.py)" { class: ours }
+runtime: "ADK 실행기\n(adk_runtime.py)" { class: ours }
+gemini: Gemini { class: ext }
+
+analyst -> runtime: run_adk_agent_text(root_agent, prompt)
+runtime -> gemini: 분석 프롬프트 (청크 64개 이하)
+gemini -> runtime: "JSON {insights: [최대 24개]}"
+runtime -> analyst: 최종 텍스트

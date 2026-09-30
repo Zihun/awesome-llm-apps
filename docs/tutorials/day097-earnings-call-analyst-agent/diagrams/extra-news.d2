@@ -1,16 +1,13 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-server: "FastAPI 서버\n(server.py)" { class: ours }
 research: "리서치 팩\n(research.py)" { class: ours }
 runtime: "ADK 실행기\n(adk_runtime.py)" { class: ours }
 gemini: Gemini { class: ext }
 
+research -> runtime: has_adk_credentials()
+runtime -> research: "True"
 research -> runtime: run_adk_agent_text(market_news_agent, 회사 · 티커 프롬프트)
 runtime -> gemini: 뉴스 검색 프롬프트 + google_search
 gemini -> runtime: "JSON {items: [{title, source, url, summary}]}"
 runtime -> research: 최종 텍스트
-research -> runtime: parse_json_object(text)
-runtime -> research: dict
-research -> research: URL · 중복 · 제목 끝 출처 거르기
-research -> server: ResearchPack

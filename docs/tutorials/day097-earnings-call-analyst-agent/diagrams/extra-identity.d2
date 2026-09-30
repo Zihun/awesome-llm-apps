@@ -8,6 +8,8 @@ gemini: Gemini { class: ext }
 
 server -> research: build_research_pack(metadata, transcript)
 research -> research: _infer_identity_heuristically(제목 · 채널 · 자막)
+research -> runtime: has_adk_credentials()
+runtime -> research: "True"
 research -> runtime: run_adk_agent_text(identity_agent, prompt)
 runtime -> gemini: 정체 추론 프롬프트 (제목 · 채널 · 자막 앞 4000자)
 gemini -> runtime: "JSON {company, ticker, fiscal_period, peers, confidence}"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+server: "FastAPI 서버\n(server.py)" { class: ours }
+research: "리서치 팩\n(research.py)" { class: ours }
+runtime: "ADK 실행기\n(adk_runtime.py)" { class: ours }
+
+research -> runtime: parse_json_object(text)
+runtime -> research: dict
+research -> research: URL · 중복 · 제목 끝 출처 거르기
+research -> server: ResearchPack

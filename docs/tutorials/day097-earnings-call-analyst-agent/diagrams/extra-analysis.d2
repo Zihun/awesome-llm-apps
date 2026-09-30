@@ -5,12 +5,9 @@ sessions: "세션 저장소\n(sessions)" { class: store }
 server: "FastAPI 서버\n(server.py)" { class: ours }
 analyst: "분석가\n(agent.py)" { class: ours }
 runtime: "ADK 실행기\n(adk_runtime.py)" { class: ours }
-gemini: Gemini { class: ext }
 
 server -> sessions: "status: analysis (70%)"
 server -> analyst: generate_insights(metadata, research, chunks)
 analyst -> analyst: select_signal_chunks(chunks, 64)
-analyst -> runtime: run_adk_agent_text(root_agent, prompt)
-runtime -> gemini: 분석 프롬프트 (청크 64개 이하)
-gemini -> runtime: "JSON {insights: [최대 24개]}"
-runtime -> analyst: 최종 텍스트
+analyst -> runtime: has_adk_credentials()
+runtime -> analyst: "True"

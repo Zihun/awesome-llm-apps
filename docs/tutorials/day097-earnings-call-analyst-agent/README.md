@@ -1,6 +1,6 @@
 # Day 097 · 📡 Earnings Call Analyst Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 120분(그림이 스물여덟 장이고 확인 명령이 열다섯 개라 읽고 돌려 보는 시간이 깁니다) · API 비용 대략 (키 없이는 무료 — 이 문서의 확인은 모두 그렇습니다. 키가 있으면 분석 한 번에 Gemini를 세 번 안팎 부릅니다: 회사 정체 추론 1회, 뉴스 검색 1회(티커를 찾았을 때만), 분석가 카드 1회, 자막이 없으면 오디오 5분 조각마다 1회 더. 대략치이고 단가는 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 125분(그림이 서른 장이고 확인 명령이 열다섯 개라 읽고 돌려 보는 시간이 깁니다) · API 비용 대략 (키 없이는 무료 — 이 문서의 확인은 모두 그렇습니다. 키가 있으면 분석 한 번에 Gemini를 세 번 안팎 부릅니다: 회사 정체 추론 1회, 뉴스 검색 1회(티커를 찾았을 때만), 분석가 카드 1회, 자막이 없으면 오디오 5분 조각마다 1회 더. 대략치이고 단가는 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent`
 
 ## 오늘 만들 것
 
@@ -813,7 +813,7 @@ uv run --no-project python -m pytest -q
 
 ## 요청 한 건이 흐르는 과정
 
-시간 경계를 따라 그림을 나눴습니다. 그림 순서가 시간 순서이고, 서버·모듈·외부 서비스 사이의 호출은 어느 그림에도 정확히 한 번씩, 원래 순서로 있습니다. 화살표가 제자리로 돌아오는 메시지는 그 모듈 안에서 도는 처리입니다. 단계마다 서버가 세션 저장소에 `status:`를 쓰고, 프런트엔드는 1.5초마다 폴링하지만 같은 메시지라 첫 폴링과 결과를 받는 마지막 폴링만 그렸습니다. 키가 있고 티커를 찾았을 때의 정상 경로입니다. 그리지 않은 것이 둘입니다. 모듈이 시작할 때 문지기를 부르는 줄(정체 추론 `research.py:90`, 뉴스 `research.py:169`, 분석 `agent.py:48`, 오디오 전사 `youtube_ingest.py:151`)은 서버가 부르는 두 곳(`/health`와 결과 진단)만 그렸습니다. 실행기가 안에서 세션 서비스를 만드는 일은 위 "ADK 에이전트 배선" 그림에 있습니다.
+시간 경계를 따라 그림을 나눴습니다. 그림 순서가 시간 순서이고, 서버·모듈·외부 서비스 사이의 호출은 어느 그림에도 정확히 한 번씩, 원래 순서로 있습니다. 화살표가 제자리로 돌아오는 메시지는 그 모듈 안에서 도는 처리입니다. 단계마다 서버가 세션 저장소에 `status:`를 쓰고, 프런트엔드는 1.5초마다 폴링하지만 같은 메시지라 첫 폴링과 결과를 받는 마지막 폴링만 그렸습니다. 키가 있고 티커를 찾았을 때의 정상 경로라서, 모듈이 시작할 때 부르는 문지기는 `True`로 돌아오는 쪽만 그렸습니다. 문지기 호출은 모듈 네 곳(정체 추론 `research.py:90`, 뉴스 `research.py:169`, 분석 `agent.py:48`, 오디오 전사 `youtube_ingest.py:151`)과 서버 두 곳(`/health`, 결과 진단) 모두 그렸습니다. 실행기가 안에서 세션 서비스를 만드는 호출만은 시퀀스 대신 위 "ADK 에이전트 배선" 그림의 화살표가 맡습니다.
 
 ### 1. 화면 열기와 요청 접수
 
@@ -846,7 +846,7 @@ Analyze를 누르면 프런트엔드가 진행 막대를 4%로 올리고 `POST`�
 <details>
 <summary>자막이 없을 때 — 오디오 전사(그림 4장)</summary>
 
-자막 요청이 실패하면 서버가 32%로 올리고 `transcribe_audio_with_adk`를 스레드에서 부릅니다. 스레드의 `on_progress` 콜백은 서버의 `_set_status_from_thread`(`server.py:207-210`)로 세션 상태를 갱신합니다.
+자막 요청이 실패하면 서버가 32%로 올리고 `transcribe_audio_with_adk`를 스레드에서 부릅니다. 이 함수는 먼저 실행기의 문지기를 확인하고(`youtube_ingest.py:151`, 거짓이면 예외를 던집니다) 34%를 알립니다. 스레드의 `on_progress` 콜백은 서버의 `_set_status_from_thread`(`server.py:207-210`)로 세션 상태를 갱신합니다.
 
 ![오디오 전사 시작](diagrams/extra-audio-start.svg)
 
@@ -866,7 +866,7 @@ yt-dlp가 오디오를 받고 이 PC의 ffmpeg가 300초 조각으로 자릅니�
 
 ### 3. 리서치 팩
 
-`build_research_pack`이 먼저 휴리스틱으로, 자격증명이 있으면 `identity_agent`로 회사를 추정합니다. 첫 그림은 모델의 답이 실행기에서 돌아오는 데까지입니다.
+`build_research_pack`이 먼저 휴리스틱으로 회사를 추정하고, 문지기(`research.py:90`)가 참이면 `identity_agent`에 묻습니다. 첫 그림은 모델의 답이 실행기에서 돌아오는 데까지입니다.
 
 ![정체 추론](diagrams/extra-identity.svg)
 
@@ -874,15 +874,23 @@ yt-dlp가 오디오를 받고 이 PC의 ffmpeg가 300초 조각으로 자릅니�
 
 ![정체 확정과 SEC 제출 목록](diagrams/extra-filings.svg)
 
-그다음 `market_news_agent`가 뉴스를 찾고 조립된 `ResearchPack`이 서버로 돌아갑니다.
+그다음 뉴스입니다. 여기도 문지기(`research.py:169`)가 먼저이고, 참이면 `market_news_agent`가 `google_search`로 뉴스를 찾습니다. 그림이 길어져 모델의 답이 돌아오는 데서 둘로 나눴습니다.
 
 ![뉴스 검색](diagrams/extra-news.svg)
 
+답을 `parse_json_object`로 읽어 URL·중복·제목 끝 출처를 거르고, 조립된 `ResearchPack`이 서버로 돌아갑니다.
+
+![뉴스 거르기](diagrams/extra-news-result.svg)
+
 ### 4. 분석
 
-분석가가 청크를 골라 `root_agent`에 보냅니다.
+분석가가 청크를 고르고 문지기(`agent.py:48`)를 확인합니다. 모델을 부르기 전과 후로 그림을 나눴습니다.
 
-![카드 생성](diagrams/extra-analysis.svg)
+![청크 고르기](diagrams/extra-analysis.svg)
+
+문지기가 참이면 분석가가 프롬프트를 만들어 `root_agent`에 보냅니다.
+
+![카드 생성](diagrams/extra-analysis-call.svg)
 
 돌아온 글은 `parse_json_object`로 읽고 검증·중복 제거·인용문 재정렬을 거쳐 서버로 갑니다.
 
