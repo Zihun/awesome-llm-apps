@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 164일 일정
 
-진도: 96 / 164일 완료
+진도: 99 / 164일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -187,9 +187,9 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 094](day094-ai-financial-coach-agent/README.md) | 💰 AI Financial Coach Agent | [advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent](../../advanced_ai_agents/multi_agent_apps/ai_financial_coach_agent/) |
 | ✅ | [Day 095](day095-ai-home-renovation-agent/README.md) | 🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro | [advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent](../../advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent/) |
 | ✅ | [Day 096](day096-devpulse-ai/README.md) | 🧠 DevPulse AI - Multi-Agent Signal Intelligence | [advanced_ai_agents/multi_agent_apps/devpulse_ai](../../advanced_ai_agents/multi_agent_apps/devpulse_ai/) |
-| ⬜ | [Day 097](day097-earnings-call-analyst-agent/README.md) | 📡 Earnings Call Analyst Agent | [advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent](../../advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/) |
-| ⬜ | [Day 098](day098-ai-news-and-podcast-agents/README.md) | 🎧 AI Social Media News and Podcast Agent | [advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents](../../advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/) |
-| ⬜ | [Day 099](day099-ai-agent-governance/README.md) | 🛡️ AI Agent Governance - Policy-Based Sandboxing | [advanced_ai_agents/single_agent_apps/ai_agent_governance](../../advanced_ai_agents/single_agent_apps/ai_agent_governance/) |
+| ✅ | [Day 097](day097-earnings-call-analyst-agent/README.md) | 📡 Earnings Call Analyst Agent | [advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent](../../advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/) |
+| ✅ | [Day 098](day098-ai-news-and-podcast-agents/README.md) | 🎧 AI Social Media News and Podcast Agent | [advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents](../../advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/) |
+| ✅ | [Day 099](day099-ai-agent-governance/README.md) | 🛡️ AI Agent Governance - Policy-Based Sandboxing | [advanced_ai_agents/single_agent_apps/ai_agent_governance](../../advanced_ai_agents/single_agent_apps/ai_agent_governance/) |
 | ⬜ | [Day 100](day100-ai-customer-support-agent/README.md) | 🛒 AI Customer Support Agent with Memory | [advanced_ai_agents/single_agent_apps/ai_customer_support_agent](../../advanced_ai_agents/single_agent_apps/ai_customer_support_agent/) |
 | ⬜ | [Day 101](day101-ai-email-gtm-reachout-agent/README.md) | 🚀 AI Email GTM Reachout Agent | [advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent](../../advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/) |
 | ⬜ | [Day 102](day102-ai-personal-finance-agent/README.md) | 💰 AI Personal Finance Planner | [advanced_ai_agents/single_agent_apps/ai_personal_finance_agent](../../advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/) |

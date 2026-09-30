@@ -8,7 +8,7 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
-**멈춤 지점 (2026-10-01 00:05) — 사용자 "이번 작업은 여기까지만이야". Day 096까지 푸시(3df566a). Day 097·098은 리뷰·수정·재확인 끝(미푸시). Day 099는 작성 커밋(488ed41·7ba3cd6), 리뷰는 거의 끝난 상태에서 내가 TaskStop.**
+**멈춤 지점 (2026-10-01) — Day 099까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 99/164). 다음(Day 100~)은 사용자 지시를 받고. 아래 '다음 작업 순서' 1·2는 끝남.**
 
 **다음 작업 순서 (재개하면 이 순서대로)**
 1. **Day 099 fix round 1** — review-099.md(❌ C0 I2 M9, 거의 완성: 리뷰어가 마지막 step PNG 두 장을 보기 직전에 멈춤).
@@ -976,3 +976,8 @@ Task 20: 099 DONE — 488ed41 + 7ba3cd6, AI Agent Governance, check 통과, 20.8
 === USER 2026-09-30: "중지된 시점에서부터 재개해." — 두 에이전트 모두 끝나 있었음. 098 round 2 + 099 리뷰로 이어감. ===
 Task 20: 098 fix round 2 DONE — 6329ead(검색 서비스 넷·Tailwind CDN·파비콘을 구조 그림에 화살표로, 다듬기), 내가 check 통과·새 파일 확인 → 098 complete.
 === USER 2026-10-01: "그래 다음부턴 그렇게 해 그런데 이번 작업은 여기까지만이야" → 099 리뷰어 즉시 TaskStop(리뷰 파일은 거의 완성). 새 운영 파라미터(4일 병렬, 재확인 sonnet) 재개 지점·메모리에 기록. 원장만 로컬 커밋, 099가 리뷰 전이라 푸시는 하지 않음. ===
+=== USER 2026-10-01: "099 까지는 하던걸 끝내고 멈추라는거였는데" — 내 오해(즉시 중지로 읽음). 099 리뷰어 재개(마지막 PNG 둘), 099 fix round 1 병렬 dispatched(resume a5b1ffd73e2b54677). 끝나면 sonnet 재확인 → roadmap 99 → 097~099 푸시 → 보고 → 멈춤. 메모리 wrap-up-means-stop에 '범위 한정은 중지가 아님' 추가. ===
+Task 20: 리뷰 099 완료 (a4443d0c5f4031f6f) — ❌ C0 I2 M9, 새 발견 없음(step2·3 PNG 정상, '추가 발견'은 M2·I1 보강만). 099 fix round 1 진행 중.
+Task 20: 099 fix round 1 DONE — de26a02 + 871e683(I2·M9 전부, 선택 합치기만 근거 남기고 미반영), check 통과, 21.3/분(95분). 요약을 보고서 §11에 옮김. 재확인 dispatched(sonnet — 새 운영 파라미터, fix-R20c-round1.diff base 7ba3cd6).
+Task 20: 099 재확인 — 사용자가 시간을 두 번 물어 sonnet 재확인(10분째, 아직 파일 읽는 중)을 TaskStop하고 내가 직접 확인: extra-record 라벨 append(AuditEntry(REQUIRE_APPROVAL)) 복원, README :9·:711에 덮어쓰기 경고가 명령 앞에, C:·D:·G:\workspace 없음, check 통과 → 099 complete. Task 20(097~099) 전부 complete.
+Task 20: 마무리 — npm test 50/50, Day 001~099 check 전부 통과, 097~099 분당 21.1~21.7, roadmap 99/164. 커밋·푸시·보고 후 멈춤(Day 100~는 지시를 받고).
