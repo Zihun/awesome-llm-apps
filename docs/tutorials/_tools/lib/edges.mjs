@@ -196,14 +196,16 @@ const textWidth = (text) => [...text].reduce((sum, ch) => sum + charWidth(ch), 0
 
 /** 연결선 하나를 점의 나열(0.5px 이내로 붙은 점은 합친다)과 자기 라벨로 바꾼다.
  *  라벨이 있으면 path 바로 뒤 <text x=… y=…>가 자기 것이다(그 사이에 다른 원소가 오지
- *  않는다 — 실제 D2 마크업 확인). */
+ *  않는다 — 실제 D2 마크업 확인). 두 줄 이상 라벨은 D2가 줄마다 <tspan>으로 나눠 쓴다 —
+ *  이것을 못 읽으면 자기 라벨 상자를 남의 것으로 보고 검사 21이 오탐한다(2026-09-30 Day 097). */
 function connectionsOf(svg) {
-  const re = /<path d="([^"]+)"[^>]*class="connection[^"]*"[^>]*\/>\s*(?:<text x="([^"]+)" y="([^"]+)"[^>]*>([^<]*)<\/text>)?/g;
+  const re = /<path d="([^"]+)"[^>]*class="connection[^"]*"[^>]*\/>\s*(?:<text x="([^"]+)" y="([^"]+)"[^>]*>((?:[^<]|<tspan[^>]*>[^<]*<\/tspan>)*)<\/text>)?/g;
   const out = [];
   for (const m of svg.matchAll(re)) {
     const raw = pathPoints(m[1]);
     const pts = raw.filter((p, i) => i === 0 || Math.hypot(p[0] - raw[i - 1][0], p[1] - raw[i - 1][1]) > 0.5);
-    const label = m[2] !== undefined ? { x: Number(m[2]), y: Number(m[3]), text: decodeEntities(m[4]) } : null;
+    const lines = m[4] === undefined ? null : m[4].replace(/<\/tspan>\s*<tspan[^>]*>/g, "\n").replace(/<\/?tspan[^>]*>/g, "");
+    const label = m[2] !== undefined ? { x: Number(m[2]), y: Number(m[3]), text: decodeEntities(lines) } : null;
     out.push({ pts, label });
   }
   return out;

@@ -135,6 +135,16 @@ test("edgesThroughText: a long lifeline passing behind a short label between 40 
   assert.equal(edgesThroughText(lifeline).length, 1);
 });
 
+test("edgesThroughText: a two-line label (D2 <tspan> lines) still counts as the line's own label", () => {
+  // D2 0.7은 두 줄 라벨을 <text><tspan>…</tspan><tspan>…</tspan></text>로 쓴다. 이것을 못 읽으면
+  // 자기 라벨 상자를 남의 것으로 보고 오탐한다(2026-09-30 Day 097 리뷰에서 재현).
+  const twoLine = '<path d="M 0 0 L 100 0" class="connection" /><text x="50" y="4"><tspan x="50" dy="0">위 줄</tspan><tspan x="50" dy="15">아래 줄</tspan></text>';
+  assert.equal(edgesThroughText(twoLine + mask([[40, -9, 20, 33]])).length, 0);
+  // 남의 두 줄 라벨을 지나면 여전히 잡는다.
+  const other = edge("M 0 0 L 100 0") + '<path d="M 500 500 L 501 500" class="connection" /><text x="50" y="4"><tspan x="50" dy="0">B</tspan><tspan x="50" dy="15">C</tspan></text>';
+  assert.equal(edgesThroughText(other + mask([[40, -9, 20, 33]])).length, 1);
+});
+
 test("labelCollisions: a label overlapping a leaf shape is reported, a far label is not, two overlapping labels are reported", () => {
   const onShape = leaf("ours", '<rect x="0" y="0" width="60" height="40" />') + mask([[10, 10, 20, 20]]);
   assert.equal(labelCollisions(onShape).length, 1);
