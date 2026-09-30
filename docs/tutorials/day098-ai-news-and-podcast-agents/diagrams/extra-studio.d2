@@ -32,14 +32,15 @@ result: "결과" {
 
 ext: "외부 서비스" {
   class: group
-  grid-rows: 2
+  grid-rows: 3
   grid-gap: 8
   openai: "OpenAI API" { class: ext }
   browser: "Chromium" { class: ext }
+  search: "검색 서비스\n(Google News · DuckDuckGo ·\nWikipedia · Jikan)" { class: ext }
 }
 
 worker -> redis: "작업 수신 · 결과 · 락"
 worker -> sessions: "대화 기록 · 세션 상태"
 worker -> articles: "검색 도구 읽기"
 worker -> result: "저장 · 오디오 · 배너"
-worker -> ext: "gpt-4o · DALL·E · TTS · 브라우저 검색·스크랩"
+worker -> ext: "gpt-4o · DALL·E · TTS · 검색어 · 브라우저 검색·스크랩"

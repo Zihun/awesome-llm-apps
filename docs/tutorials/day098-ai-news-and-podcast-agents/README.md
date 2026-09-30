@@ -1,6 +1,6 @@
 # Day 098 · 🎧 AI Social Media News and Podcast Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 120분(그림이 서른두 장이고 명령이 스물세 개인 데다 2.3GB 설치가 있어 읽고 돌려 보는 시간이 깁니다) · API 비용 대략 이 문서의 실습은 무료(키·Redis·Chromium·네트워크 없이 가짜 입력으로 진행). 앱을 키로 실제 돌리면 기사 분석(gpt-4o)·임베딩·검색과 대본(gpt-4o-mini)·배너(gpt-4o + DALL·E 3)·음성이 모두 과금되고, 팟캐스트 한 편은 TTS 엔진에 따라 로컬 Kokoro 무료부터 ElevenLabs의 수 달러까지 벌어지며 기사 분석은 기사 하나에 최대 수 센트로 어림합니다(공개 요금표를 오늘 확인하지 못한 대략치, 키가 없어 실제 과금도 확인하지 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 120분(그림이 서른세 장이고 명령이 스물세 개인 데다 2.3GB 설치가 있어 읽고 돌려 보는 시간이 깁니다) · API 비용 대략 이 문서의 실습은 무료(키·Redis·Chromium·네트워크 없이 가짜 입력으로 진행). 앱을 키로 실제 돌리면 기사 분석(gpt-4o)·임베딩·검색과 대본(gpt-4o-mini)·배너(gpt-4o + DALL·E 3)·음성이 모두 과금되고, 팟캐스트 한 편은 TTS 엔진에 따라 로컬 Kokoro 무료부터 ElevenLabs의 수 달러까지 벌어지며 기사 분석은 기사 하나에 최대 수 센트로 어림합니다(공개 요금표를 오늘 확인하지 못한 대략치, 키가 없어 실제 과금도 확인하지 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents`
 
 ## 오늘 만들 것
 
@@ -41,9 +41,9 @@
 | 웹 UI | React 19 페이지 13개 — Home·Sources·Articles·Podcasts·Studio·Voyager(작업·설정)·Social. 소스(`web/src`)와 미리 빌드한 `web/build`가 모두 저장소에 있고 백엔드는 `web/build`를 서빙 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/App.js:1-142`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/services/api.js:1-18` |
 | 그 밖 | 데모 데이터 내려받기·압축, API를 부르는 스크립트형 테스트, 인트로 음악 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/bootstrap_demo.py:54-64`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/pack_demo.py:8-21`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tests/agent_agno_test.py:1-12`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/static/musics/intro_audio.mp3` |
 
-개요 그림은 사용자 쪽 관계를 한 방향(화면 → 사용자)만 그렸습니다. 서로 다른 데이터를 나르는 두 방향을 화살표 넷으로 따로 그리면 아래와 같습니다. 사용자는 소스·작업 등록과 재생 조작을 화면에 넣고, 화면은 목록과 재생 화면을 보여 줍니다. 화면은 `/api/*`를 요청하고, 백엔드는 화면 파일·JSON·오디오 조각으로 답합니다.
+개요 그림은 사용자 쪽 관계를 한 방향(화면 → 사용자)만 그렸습니다. 서로 다른 데이터를 나르는 두 방향을 화살표 넷으로 따로 그리면 아래와 같습니다. 사용자는 소스·작업 등록과 재생 조작을 화면에 넣고, 화면은 목록과 재생 화면을 보여 줍니다. 화면은 `/api/*`를 요청하고, 백엔드는 화면 파일·JSON·오디오 조각으로 답합니다. 개요에 자리가 없는 바깥 관계도 이 그림에 더했습니다. 화면은 Tailwind 스크립트를 CDN에서 받고, 팟캐스트 상세 화면은 출처 도메인마다 Google 파비콘 서비스에서 아이콘을 받습니다.
 
-![화면과 백엔드가 주고받는 것](diagrams/extra-structure.svg)
+![화면이 사용자·백엔드·바깥 서비스와 주고받는 것](diagrams/extra-structure.svg)
 
 ## 단계별 진행
 
@@ -190,7 +190,7 @@ sources.db ['categories', 'source_categories', 'source_feeds', 'sources']
 tasks.db ['podcast_configs', 'task_executions', 'tasks']
 ```
 
-`agent_sessions.db`가 비어 있는 것은 정상입니다 — agno의 `SqliteStorage`는 파일만 만들고 표는 첫 사용 때 만듭니다(소스로 확인, agno 1.4.2 `agno/storage/sqlite.py`). 소스 등록은 `POST /api/sources/`입니다. 저장 함수는 소스·카테고리·피드를 하나씩 따로 넣습니다.
+`agent_sessions.db`가 비어 있는 것은 정상입니다 — agno의 `SqliteStorage`는 파일만 만들고 표는 첫 사용 때 만듭니다(소스로 확인, agno 1.4.2 `agno/storage/sqlite.py`). `social_media.db`의 `posts`는 소셜 스크래퍼가 채우는 표라 이 문서에서는 비어 있고, 생성기의 검색 도구가 읽는 Step 6에서 다시 나옵니다(소스로 확인). 소스 등록은 `POST /api/sources/`입니다. 저장 함수는 소스·카테고리·피드를 하나씩 따로 넣습니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/source_service.py:158-181`
 
@@ -588,7 +588,11 @@ def search_agent_run(query: str) -> str:
         return []
 ```
 
-생성기는 이 결과를 받아 스크랩하고, 본문이 100자를 넘는 것만 대본 재료로 남깁니다.
+도구 일곱 개가 닿는 곳은 아래 그림과 같습니다. 뉴스·웹·Wikipedia·애니 검색 넷은 바깥 서비스에 검색어를 보내 링크와 요약을 받고, `embedding_search`와 소셜 도구 둘은 우리 저장소를 읽습니다. 이 문서는 그 서비스들을 부르지 않았습니다(소스로 확인 — `google_news_discovery.py`·`wikipedia_search.py`·`jikan_search.py`와 agno의 `DuckDuckGoTools`). 흐름 절은 그중 `embedding_search`만 따라갑니다.
+
+![검색 도구가 닿는 곳](diagrams/extra-search-tools.svg)
+
+검색이 끝나면 생성기는 그 결과를 받아 스크랩하고, 본문이 100자를 넘는 것만 대본 재료로 남깁니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/podcast_generator_processor.py:56-100`
 
@@ -1007,7 +1011,7 @@ print(scheduler.MAX_WORKERS, scheduler.DEFAULT_TASK_TIMEOUT)
 
 이 작업은 실습용입니다. 실습이 끝나면 `databases/`와 `podcasts/`를 지우세요. 실습용 소스(`example.com`)와 작업이 남아 있으면 나중에 스케줄러를 켤 때 그 작업이 곧바로 `https://example.com/feed.xml`을 받으러 갑니다(`last_run`이 비어 있어서, 소스로 확인).
 
-Studio 경로는 처리기 대신 Celery 워커가 `agent_chat`을 실행합니다. 워커가 읽고 쓰는 것은 첫째 그림에, FastAPI가 Redis·세션 저장소·파일과 주고받는 것은 둘째 그림에 정리했습니다. Redis 없이 Studio에 메시지를 보내 보는 명령은 문제 해결에 있습니다.
+Studio 경로는 처리기 대신 Celery 워커가 `agent_chat`을 실행합니다. 워커가 읽고 쓰는 것(검색 도구가 부르는 바깥 검색 서비스 포함)은 첫째 그림에, FastAPI가 Redis·세션 저장소·파일과 주고받는 것은 둘째 그림에 정리했습니다. Redis 없이 Studio에 메시지를 보내 보는 명령은 문제 해결에 있습니다.
 
 ![Studio 워커의 프로세스와 저장소](diagrams/extra-studio.svg)
 
@@ -1086,7 +1090,7 @@ AI 분석이 gpt-4o로 요약·분류를 만들어 기사를 완성합니다.
 
 ![배너 만들기](diagrams/extra-banner.svg)
 
-이미지는 URL로 오므로 에이전트가 그림마다 내려받습니다.
+이미지는 URL로 오므로 에이전트가 그림마다 내려받아 곧바로 씁니다. 아래 두 그림은 그림 하나마다 되풀이되는 한 반복입니다(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/image_generate_agent.py:38-48`, 소스로 확인).
 
 ![배너 내려받기](diagrams/extra-banner-get.svg)
 

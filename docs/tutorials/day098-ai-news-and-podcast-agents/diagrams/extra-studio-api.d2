@@ -16,7 +16,7 @@ sessions: "세션 저장소" {
 
 media: "podcasts/\n(audio · images · recordings)" { class: file }
 
-ui -> api: "/api/podcast-agent/* (session · chat · status · 목록 · 기록 · 삭제)"
+ui -> api: "/api/podcast-agent/* (session · chat · status · languages · 목록 · 기록 · 삭제)"
 slack -> api: "/api/podcast-agent/* (session · chat · status)"
 api -> redis: "delay() · lock_info · AsyncResult"
 api -> sessions: "세션 조회 · 목록 · 기록 · 삭제"

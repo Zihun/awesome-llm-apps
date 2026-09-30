@@ -4,8 +4,12 @@ direction: down
 user: 사용자 { class: person }
 ui: "웹 UI (web/build)" { class: ours }
 api: "FastAPI 백엔드\n(main.py · routers/ · services/)" { class: ours }
+cdn: "Tailwind CDN\n(cdn.jsdelivr.net)" { class: ext }
+google: "Google 파비콘 서비스\n(www.google.com/s2/favicons)" { class: ext }
 
 user -> ui: 소스·작업 등록 · 재생 조작
 ui -> user: 소스·기사·팟캐스트 목록 · 재생 화면
 ui -> api: "GET · POST /api/* (JSON)"
 api -> ui: 화면 파일 · JSON · 오디오 조각
+ui -> cdn: "Tailwind 스크립트 받기"
+ui -> google: "출처 도메인 → 파비콘 이미지 (상세 화면)"

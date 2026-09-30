@@ -1,0 +1,30 @@
+...@../../_tools/theme
+direction: down
+
+agent: "검색 에이전트·도구\n(pipeline/search_agent.py,\ntools/*.py)" { class: ours }
+
+web: "검색 서비스" {
+  class: group
+  grid-rows: 2
+  grid-gap: 8
+  news: "Google News\n(gnews)" { class: ext }
+  ddg: "DuckDuckGo\n(duckduckgo_search)" { class: ext }
+  wiki: "Wikipedia API\n(en.wikipedia.org)" { class: ext }
+  jikan: "Jikan API\n(애니)" { class: ext }
+}
+
+local: "우리 저장소" {
+  class: group
+  grid-rows: 2
+  grid-gap: 8
+  faiss: "FAISS 색인" { class: store }
+  tracking: "feed_tracking.db" { class: store }
+  sources: "sources.db" { class: store }
+  social: "social_media.db" { class: store }
+}
+
+openai: "OpenAI API\n(gpt-4o-mini · 임베딩)" { class: ext }
+
+agent -> web: "검색어 → 링크·요약 (google_news_discovery · DuckDuckGoTools · wikipedia_search · jikan_search)"
+agent -> local: "embedding_search · social_media_search 둘 읽기"
+agent -> openai: "도구 고르기 · 질의 임베딩"
