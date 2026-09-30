@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+tts: "TTS 선택기·엔진\n(utils/tts_engine_selector.py,\ntext_to_audio_*.py)" { class: ours }
+eleven: "ElevenLabs API" { class: ext }
+
+gen -> tts: "generate_podcast_audio(script, output_path, tts_engine, language_code)"
+tts -> eleven: "client.voices.get_all()"
+eleven -> tts: "음성 목록"
+tts -> eleven: "client.generate(text, voice, model, stream=True) — 대사마다"
+eleven -> tts: "mp3 조각"

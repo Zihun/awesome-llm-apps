@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+sources: "sources.db" { class: store }
+site: "뉴스 사이트\n(RSS)" { class: ext }
+feed: "1. 피드 처리기\n(feed_processor.py)" { class: ours }
+tracking: "feed_tracking.db" { class: store }
+
+feed -> sources: "get_active_feeds(limit=100)"
+sources -> feed: "feed_url 목록"
+feed -> tracking: "get_feed_tracking_info(feed_id)"
+tracking -> feed: "last_etag · last_modified · entry_hash"
+feed -> site: "feedparser.parse(feed_url, etag=etag, modified=modified)"
+site -> feed: "RSS XML (또는 304)"
+feed -> tracking: "store_feed_entries → feed_entries"
+feed -> tracking: "update_feed_tracking (etag · modified · 해시)"

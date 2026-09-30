@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+site: "기사 사이트" { class: ext }
+url: "2. 기사 수집 처리기\n(url_processor.py)" { class: ours }
+tracking: "feed_tracking.db" { class: store }
+
+url -> tracking: "get_uncrawled_entries (pending · failed)"
+tracking -> url: "항목 링크 (최대 20건)"
+url -> site: "requests.get(link, timeout=10)"
+site -> url: "HTML"
+url -> tracking: "store_crawled_article (raw_content · metadata)"
+url -> tracking: "update_entry_status (success · failed)"

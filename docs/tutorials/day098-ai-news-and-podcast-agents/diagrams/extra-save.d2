@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+podcasts: "podcasts.db" { class: store }
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+tts: "TTS 선택기·엔진\n(utils/tts_engine_selector.py,\ntext_to_audio_*.py)" { class: ours }
+files: "podcasts/audio" { class: file }
+
+tts -> files: "sf.write(podcasts/audio/podcast_YYYYMMDD_HHMMSS.wav)"
+tts -> gen: "WAV 경로 (abspath)"
+gen -> podcasts: "INSERT podcasts (title · content_json · audio_path 외 8열)"

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+search: "검색 에이전트\n(pipeline/search_agent.py)" { class: ours }
+openai: "OpenAI API" { class: ext }
+
+search -> openai: "tool 결과 (Found N, results: JSON · 유사도 0.85 이상)"
+openai -> search: "SearchResults JSON (items: url · title · description · source_name · tool_used · published_date · is_scrapping_required)"
+search -> gen: "items (is_scrapping_required)"

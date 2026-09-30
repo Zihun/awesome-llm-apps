@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+tracking: "feed_tracking.db" { class: store }
+ai: "3. AI 분석 처리기\n(ai_analysis_processor.py)" { class: ours }
+openai: "OpenAI API" { class: ext }
+
+ai -> tracking: "get_unprocessed_articles"
+tracking -> ai: "raw_content · metadata"
+ai -> openai: "chat.completions gpt-4o (JSON)"
+openai -> ai: "categories · summary · content"
+ai -> tracking: "update_article_status (summary · content · categories · processed=1)"

@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+scrape: "스크랩 에이전트\n(pipeline/scrape_agent.py)" { class: ours }
+chromium: "Chromium\n(Playwright)" { class: ext }
+site: "기사 사이트" { class: ext }
+
+gen -> scrape: "scrape_agent_run(prompt, items)"
+scrape -> chromium: "chromium.launch(headless=True, args=[--no-sandbox, --disable-setuid-sandbox])"
+scrape -> chromium: "page.goto(url, timeout=20000)"
+chromium -> site: "HTTP GET"
+site -> chromium: "HTML"
+chromium -> scrape: "page.url (final_url)"
+scrape -> site: "newspaper.article(final_url)"
+site -> scrape: "HTML"
+scrape -> gen: "full_text · published_date"

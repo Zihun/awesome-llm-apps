@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+tasks: "tasks.db" { class: store }
+sched: "스케줄러\n(scheduler.py)" { class: ours }
+job: "작업 프로세스\n(python -m processors.*)" { class: ours }
+
+sched -> tasks: "get_pending_tasks() — 1분마다"
+tasks -> sched: "실행할 작업 (command)"
+sched -> tasks: "INSERT task_executions (running)"
+sched -> job: "subprocess.Popen(command, shell=True)"
+job -> sched: "종료 코드 · stdout · stderr"
+sched -> tasks: "update_task_execution (status · error_message · output)"
+sched -> tasks: "update_task_last_run (last_run)"

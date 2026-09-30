@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+tasks: "tasks.db\n(podcast_configs)" { class: store }
+
+gen -> tasks: "get_all_podcast_configs(active_only=True)"
+tasks -> gen: "활성 설정 목록"
+gen -> tasks: "get_podcast_config(config_id) — 설정마다"
+tasks -> gen: "prompt · time_range_hours · limit_articles · tts_engine · language_code · podcast_script_prompt · image_prompt"

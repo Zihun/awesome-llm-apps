@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "웹 UI\n(PodcastDetail.js)" { class: ours }
+api: "FastAPI\n(podcast_router.py)" { class: ours }
+podcasts: "podcasts.db" { class: store }
+
+user -> ui: "/podcasts/2 열기"
+ui -> api: "GET /api/podcasts/by-identifier/2"
+api -> podcasts: "SELECT 메타 열 (content · sources 제외)"
+podcasts -> api: "메타 행 (audio_path 포함)"
+api -> podcasts: "SELECT sources_json"
+podcasts -> api: "sources_json"
+api -> podcasts: "SELECT content_json"
+podcasts -> api: "content_json"
+api -> ui: "JSON (podcast · content · audio_url · sources · banner_images)"

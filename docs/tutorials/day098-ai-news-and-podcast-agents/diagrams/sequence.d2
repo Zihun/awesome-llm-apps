@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+search: "검색 에이전트\n(pipeline/search_agent.py)" { class: ours }
+openai: "OpenAI API" { class: ext }
+faiss: "FAISS 색인\n(article_index.faiss ·\narticle_id_map.npy)" { class: store }
+
+gen -> search: "search_agent_run(prompt)"
+search -> openai: "gpt-4o-mini + 도구 7개 (JSON 모드)"
+openai -> search: "tool_call: embedding_search(prompt)"
+search -> openai: "client.embeddings.create(input=prompt, model=text-embedding-3-small)"
+openai -> search: "질의 벡터 (1536차원)"
+search -> faiss: "faiss.read_index(article_index.faiss)"
+faiss -> search: "색인"
+search -> faiss: "np.load(article_id_map.npy)"
+faiss -> search: "id 맵"
+search -> faiss: "search(top_k=20)"
+faiss -> search: "거리 D · 기사 id"

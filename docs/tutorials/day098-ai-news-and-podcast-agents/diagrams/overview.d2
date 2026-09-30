@@ -1,0 +1,51 @@
+...@../../_tools/theme
+direction: down
+
+ui: "웹 UI (web/build)" { class: ours }
+api: "FastAPI 백엔드\n(main.py · routers/ · services/)" { class: ours }
+sched: "스케줄러\n(scheduler.py)" { class: ours }
+
+processors: "처리기 (processors/ · 서브프로세스)" {
+  class: group
+  grid-rows: 2
+  grid-columns: 3
+  grid-gap: 8
+  feed: "1. 피드\n(feed_processor.py)" { class: ours }
+  url: "2. 기사 수집\n(url_processor.py)" { class: ours }
+  ai: "3. AI 분석\n(ai_analysis_processor.py)" { class: ours }
+  emb: "4. 임베딩\n(embedding_processor.py)" { class: ours }
+  idx: "5. 색인\n(faiss_indexing_processor.py)" { class: ours }
+  gen: "6. 팟캐스트 생성\n(podcast_generator_processor.py)" { class: ours }
+}
+
+ext: "외부 서비스" {
+  class: group
+  grid-rows: 2
+  grid-columns: 3
+  grid-gap: 8
+  news: "뉴스 사이트\n(RSS · 기사)" { class: ext }
+  openai: "OpenAI API" { class: ext }
+  browser: "Chromium\n(Playwright)" { class: ext }
+  elevenlabs: "ElevenLabs API" { class: ext }
+  kokoro: "Kokoro\n(로컬 모델)" { class: ext }
+}
+
+stores: "저장소" {
+  class: group
+  grid-rows: 2
+  grid-columns: 3
+  grid-gap: 8
+  sources: "sources.db" { class: store }
+  tracking: "feed_tracking.db" { class: store }
+  tasks: "tasks.db" { class: store }
+  podcasts: "podcasts.db" { class: store }
+  faiss: "FAISS 색인" { class: store }
+  media: "podcasts/\n(오디오 · 배너)" { class: file }
+}
+
+ui -> api: "HTTP JSON (포트 7000)"
+api -> stores: "SQLite 조회·쓰기 · 오디오 서빙"
+sched -> stores: "tasks.db 작업 조회·실행 기록"
+sched -> processors: "python -m processors.*"
+processors -> stores: "표 읽기·쓰기 · FAISS · 파일"
+processors -> ext: "RSS · 사이트 · OpenAI · Chromium · TTS"

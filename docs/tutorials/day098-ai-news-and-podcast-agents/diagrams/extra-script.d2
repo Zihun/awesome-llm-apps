@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+script: "대본 에이전트\n(pipeline/script_agent.py)" { class: ours }
+openai: "OpenAI API" { class: ext }
+
+gen -> script: "script_agent_run(prompt, confirmed, language_name)"
+script -> openai: "gpt-4o-mini JSON 모드 (PodcastScript)"
+openai -> script: "title · sections[].dialog[] (ALEX · MORGAN)"
+script -> gen: "podcast_data (+ sources)"

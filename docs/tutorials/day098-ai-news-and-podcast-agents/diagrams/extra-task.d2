@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "웹 UI\n(Voyager.js)" { class: ours }
+api: "FastAPI\n(task_router.py)" { class: ours }
+tasks: "tasks.db" { class: store }
+
+ui -> api: "POST /api/tasks/ (name · task_type · frequency · frequency_unit)"
+api -> tasks: "INSERT tasks (command)"
