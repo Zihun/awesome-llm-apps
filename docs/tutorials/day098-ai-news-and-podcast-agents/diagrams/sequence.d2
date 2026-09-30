@@ -2,7 +2,7 @@
 shape: sequence_diagram
 
 gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
-search: "검색 에이전트\n(pipeline/search_agent.py)" { class: ours }
+search: "검색 에이전트·도구\n(pipeline/search_agent.py,\ntools/embedding_search.py)" { class: ours }
 openai: "OpenAI API" { class: ext }
 faiss: "FAISS 색인\n(article_index.faiss ·\narticle_id_map.npy)" { class: store }
 
@@ -16,4 +16,4 @@ faiss -> search: "색인"
 search -> faiss: "np.load(article_id_map.npy)"
 faiss -> search: "id 맵"
 search -> faiss: "search(top_k=20)"
-faiss -> search: "거리 D · 기사 id"
+faiss -> search: "거리 D · 색인 번호"

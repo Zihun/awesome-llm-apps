@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: "웹 UI (web/build)" { class: ours }
+api: "FastAPI 백엔드\n(main.py · routers/ · services/)" { class: ours }
+
+user -> ui: 소스·작업 등록 · 재생 조작
+ui -> user: 소스·기사·팟캐스트 목록 · 재생 화면
+ui -> api: "GET · POST /api/* (JSON)"
+api -> ui: 화면 파일 · JSON · 오디오 조각

@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+image: "배너 에이전트\n(pipeline/image_generate_agent.py)" { class: ours }
+openai: "OpenAI API\n(gpt-4o · DALL·E 3)" { class: ext }
+
+gen -> image: "image_generation_agent_run(image_query, podcast_data)"
+image -> openai: "gpt-4o + DalleTools (query · 대본 JSON)"
+openai -> image: "tool_call: create_image(prompt) — 그림마다"
+image -> openai: "images.generate(model=dall-e-3, n=1, size=1024x1024) — 그림마다"
+openai -> image: "이미지 URL — 그림마다"
+image -> openai: "tool 결과 (이미지 URL) — 그림마다"
+openai -> image: "응답 텍스트"

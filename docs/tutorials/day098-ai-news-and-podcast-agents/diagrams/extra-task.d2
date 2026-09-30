@@ -6,4 +6,9 @@ api: "FastAPI\n(task_router.py)" { class: ours }
 tasks: "tasks.db" { class: store }
 
 ui -> api: "POST /api/tasks/ (name · task_type · frequency · frequency_unit)"
+api -> tasks: "SELECT task_type (check_task_exists)"
+tasks -> api: "같은 종류의 작업 (없으면 통과)"
 api -> tasks: "INSERT tasks (command)"
+api -> tasks: "SELECT 새 작업 (get_task)"
+tasks -> api: "작업 행"
+api -> ui: "201 Task JSON (task_type · command · last_run)"

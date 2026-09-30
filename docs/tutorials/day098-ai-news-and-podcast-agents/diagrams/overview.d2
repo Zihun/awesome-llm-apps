@@ -2,14 +2,15 @@
 direction: down
 
 ui: "웹 UI (web/build)" { class: ours }
+user: 사용자 { class: person }
 api: "FastAPI 백엔드\n(main.py · routers/ · services/)" { class: ours }
 sched: "스케줄러\n(scheduler.py)" { class: ours }
 
 processors: "처리기 (processors/ · 서브프로세스)" {
   class: group
-  grid-rows: 2
-  grid-columns: 3
-  grid-gap: 8
+  grid-rows: 3
+  grid-columns: 2
+  grid-gap: 4
   feed: "1. 피드\n(feed_processor.py)" { class: ours }
   url: "2. 기사 수집\n(url_processor.py)" { class: ours }
   ai: "3. AI 분석\n(ai_analysis_processor.py)" { class: ours }
@@ -22,7 +23,7 @@ ext: "외부 서비스" {
   class: group
   grid-rows: 2
   grid-columns: 3
-  grid-gap: 8
+  grid-gap: 4
   news: "뉴스 사이트\n(RSS · 기사)" { class: ext }
   openai: "OpenAI API" { class: ext }
   browser: "Chromium\n(Playwright)" { class: ext }
@@ -33,14 +34,16 @@ ext: "외부 서비스" {
 stores: "저장소" {
   class: group
   grid-rows: 2
-  grid-columns: 3
-  grid-gap: 8
+  grid-columns: 4
+  grid-gap: 4
   sources: "sources.db" { class: store }
   tracking: "feed_tracking.db" { class: store }
   tasks: "tasks.db" { class: store }
   podcasts: "podcasts.db" { class: store }
   faiss: "FAISS 색인" { class: store }
   media: "podcasts/\n(오디오 · 배너)" { class: file }
+  social: "social_media.db" { class: store }
+  jobs: "scheduler.sqlite\n(APScheduler)" { class: store }
 }
 
 ui -> api: "HTTP JSON (포트 7000)"
@@ -49,3 +52,4 @@ sched -> stores: "tasks.db 작업 조회·실행 기록"
 sched -> processors: "python -m processors.*"
 processors -> stores: "표 읽기·쓰기 · FAISS · 파일"
 processors -> ext: "RSS · 사이트 · OpenAI · Chromium · TTS"
+ui -> user: "목록 · 재생 화면"

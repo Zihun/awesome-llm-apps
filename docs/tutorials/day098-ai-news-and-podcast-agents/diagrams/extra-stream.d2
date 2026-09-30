@@ -1,10 +1,13 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
+google: "Google 파비콘 서비스\n(www.google.com/s2/favicons)" { class: ext }
 ui: "웹 UI\n(PodcastDetail.js)" { class: ours }
 api: "FastAPI\n(main.py)" { class: ours }
 files: "podcasts/audio" { class: file }
 
+ui -> google: "GET /s2/favicons?domain=<출처 도메인>&sz=64 — 출처마다(최대 4)"
+google -> ui: "파비콘 이미지"
 ui -> api: "GET /stream-audio/{파일명} (Range)"
 api -> files: "파일 읽기 (64KB씩)"
 files -> api: "바이트 조각"

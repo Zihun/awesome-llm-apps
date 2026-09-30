@@ -2,7 +2,7 @@
 shape: sequence_diagram
 
 gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
-search: "검색 에이전트\n(pipeline/search_agent.py)" { class: ours }
+search: "검색 에이전트·도구\n(pipeline/search_agent.py,\ntools/embedding_search.py)" { class: ours }
 openai: "OpenAI API" { class: ext }
 
 search -> openai: "tool 결과 (Found N, results: JSON · 유사도 0.85 이상)"

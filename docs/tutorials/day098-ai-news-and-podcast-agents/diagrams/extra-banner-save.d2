@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gen: "생성기\n(podcast_generator_\nprocessor.py)" { class: ours }
+image: "배너 에이전트\n(pipeline/image_generate_agent.py)" { class: ours }
+files: "podcasts/images" { class: file }
+
+image -> files: "podcast_banner_<uuid>.png 쓰기 — 그림마다"
+image -> gen: "banner_images · banner_url"

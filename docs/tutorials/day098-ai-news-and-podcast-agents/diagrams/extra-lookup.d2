@@ -2,7 +2,7 @@
 shape: sequence_diagram
 
 tracking: "feed_tracking.db\n(crawled_articles)" { class: store }
-search: "검색 에이전트\n(pipeline/search_agent.py)" { class: ours }
+search: "검색 에이전트·도구\n(pipeline/search_agent.py,\ntools/embedding_search.py)" { class: ours }
 sources: "sources.db\n(sources)" { class: store }
 
 search -> tracking: "get_article_details(ids)"

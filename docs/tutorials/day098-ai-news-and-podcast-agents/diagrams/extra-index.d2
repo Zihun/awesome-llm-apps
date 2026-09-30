@@ -5,9 +5,9 @@ tracking: "feed_tracking.db" { class: store }
 idx: "5. 색인 처리기\n(faiss_indexing_processor.py)" { class: ours }
 faiss: "FAISS 색인" { class: store }
 
-idx -> faiss: "np.load(article_id_map.npy)"
+idx -> faiss: "np.load(article_id_map.npy) — 파일이 있으면"
 faiss -> idx: "id 맵"
-idx -> faiss: "faiss.read_index(article_index.faiss)"
+idx -> faiss: "faiss.read_index(article_index.faiss) — 파일이 있으면"
 faiss -> idx: "기존 색인"
 idx -> tracking: "get_embeddings_not_in_index"
 tracking -> idx: "벡터 BLOB · article_id"

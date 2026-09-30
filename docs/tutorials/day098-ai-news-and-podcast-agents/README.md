@@ -1,10 +1,10 @@
 # Day 098 · 🎧 AI Social Media News and Podcast Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 100분(그림이 스물일곱 장이고 명령이 스물두 개인 데다 2.3GB 설치가 있어 읽고 돌려 보는 시간이 깁니다) · API 비용 대략 이 문서의 실습은 무료(키·Redis·Chromium·네트워크 없이 가짜 입력으로 진행). 앱을 키로 실제 돌리면 기사 분석(gpt-4o)·임베딩·검색과 대본(gpt-4o-mini)·배너(gpt-4o + DALL·E 3)·음성이 모두 과금되고, 팟캐스트 한 편은 TTS 엔진에 따라 로컬 Kokoro 무료부터 ElevenLabs의 수 달러까지 벌어지며 기사 분석은 기사 하나에 최대 수 센트로 어림합니다(공개 요금표를 오늘 확인하지 못한 대략치, 키가 없어 실제 과금도 확인하지 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 120분(그림이 서른두 장이고 명령이 스물세 개인 데다 2.3GB 설치가 있어 읽고 돌려 보는 시간이 깁니다) · API 비용 대략 이 문서의 실습은 무료(키·Redis·Chromium·네트워크 없이 가짜 입력으로 진행). 앱을 키로 실제 돌리면 기사 분석(gpt-4o)·임베딩·검색과 대본(gpt-4o-mini)·배너(gpt-4o + DALL·E 3)·음성이 모두 과금되고, 팟캐스트 한 편은 TTS 엔진에 따라 로컬 Kokoro 무료부터 ElevenLabs의 수 달러까지 벌어지며 기사 분석은 기사 하나에 최대 수 센트로 어림합니다(공개 요금표를 오늘 확인하지 못한 대략치, 키가 없어 실제 과금도 확인하지 못함) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents`
 
 ## 오늘 만들 것
 
-이 앱은 폴더 이름이 `ai_news_and_podcast_agents`이고 스스로는 "Beifong"이라 부릅니다. 내가 고른 RSS 뉴스 소스를 계속 모아 기사로 쌓고, AI가 요약·분류·임베딩까지 해 둔 그 기사와 웹 검색을 재료로 두 진행자(ALEX·MORGAN)의 팟캐스트 대본·배너·음성을 만들어 웹 UI에서 재생합니다. 백엔드는 FastAPI(`beifong/`)이고 UI는 미리 빌드된 React(`web/build`)를 백엔드가 그대로 서빙하며, 저장은 SQLite 파일과 FAISS 색인입니다. 팟캐스트를 만드는 길은 둘입니다 — 스케줄러가 처리기 스크립트를 서브프로세스로 돌리는 **예약 경로**, 그리고 Celery와 Redis 위에서 agno 에이전트가 사람의 확인을 받아 가며 진행하는 **Studio 채팅 경로**. 이 문서는 예약 경로 하나, **뉴스 소스 → 기사 → 임베딩 색인 → 대본 → 오디오 → 재생**만 따라가고, Studio는 프로세스와 저장소를 그림 하나로 정리했으며 소셜 스크래퍼·Slack은 파일 단위로 표에만 적었습니다(소스로 확인). 이 길을 고른 까닭은 단계 사이의 경계가 SQLite 표·FAISS·파일이라서, RSS·기사 사이트·OpenAI·Chromium·TTS 같은 바깥 호출 자리만 가짜로 바꿔 끼우면 키 없이도 각 단계를 실제 코드로 돌려 볼 수 있기 때문입니다. 그렇게 돌려 보니 소스만 읽어서는 보이지 않던 것이 여럿 드러났습니다. `&` 하나가 든 피드가 통째로 버려지고, RSS 날짜는 SQLite가 읽지 못해 날짜 필터에서 빠지며, "유사도 85%" 필터가 코사인 0.75짜리도 통과시키고, 설정 화면의 세 필드가 생성기에 전달되지 않으며, Windows에서는 배치가 만든 팟캐스트의 오디오 주소가 재생 파일이 아닌 화면을 가리킵니다(모두 직접 확인, 각 Step). 이 문서는 API 키를 쓰지 않았고 외부로 요청을 보내지 않았습니다. 아래는 완성된 아키텍처, 예약 경로입니다.
+이 앱은 폴더 이름이 `ai_news_and_podcast_agents`이고 스스로는 "Beifong"이라 부릅니다. 내가 고른 RSS 뉴스 소스를 계속 모아 기사로 쌓고, AI가 요약·분류·임베딩까지 해 둔 그 기사와 웹 검색을 재료로 두 진행자(ALEX·MORGAN)의 팟캐스트 대본·배너·음성을 만들어 웹 UI에서 재생합니다. 백엔드는 FastAPI(`beifong/`)이고 UI는 미리 빌드된 React(`web/build`)를 백엔드가 그대로 서빙하며, 저장은 SQLite 파일과 FAISS 색인입니다. 팟캐스트를 만드는 길은 둘입니다 — 스케줄러가 처리기 스크립트를 서브프로세스로 돌리는 **예약 경로**, 그리고 Celery와 Redis 위에서 agno 에이전트가 사람의 확인을 받아 가며 진행하는 **Studio 채팅 경로**. 이 문서는 예약 경로 하나, **뉴스 소스 → 기사 → 임베딩 색인 → 대본 → 오디오 → 재생**만 따라가고, Studio는 워커와 API가 다루는 프로세스와 저장소를 그림 둘로 정리했으며 소셜 스크래퍼·Slack은 파일 단위로 표에만 적었습니다(소스로 확인). 이 길을 고른 까닭은 단계 사이의 경계가 SQLite 표·FAISS·파일이라서, RSS·기사 사이트·OpenAI·Chromium·TTS 같은 바깥 호출 자리만 가짜로 바꿔 끼우면 키 없이도 각 단계를 실제 코드로 돌려 볼 수 있기 때문입니다. 그렇게 돌려 보니 소스만 읽어서는 보이지 않던 것이 여럿 드러났습니다. `&` 하나가 든 피드가 통째로 버려지고, RSS 날짜는 SQLite가 읽지 못해 날짜 필터에서 빠지며, "유사도 85%" 필터가 코사인 0.75짜리도 통과시키고, 설정 화면의 세 필드가 생성에 쓰이지 않으며, Windows에서는 배치가 만든 팟캐스트의 오디오 주소가 재생 파일이 아닌 화면을 가리킵니다(모두 직접 확인, 각 Step). 이 문서의 명령 확인은 API 키 없이 이 컴퓨터 안에서만 돌렸습니다(UI 화면이 CDN과 Google 파비콘 서비스를 부르는 것은 Step 1과 Step 8에 적었습니다). 아래는 완성된 아키텍처, 예약 경로입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -12,33 +12,38 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| uv, Python 3.11 또는 3.12 | 가상환경과 패키지 252개 설치. Python 3.13 이상은 휠이 없는 패키지가 있어 설치가 막힘(문제 해결) | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
+| uv, Python 3.11 | 가상환경과 패키지 252개 설치. 이 문서는 3.11로만 설치했고, 3.13 이상은 `torch==2.2.2`의 휠이 없어 막힘(문제 해결) | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | 디스크 약 3GB | 가상환경이 2.3GB — requirements에 torch·spacy·kokoro까지 들어 있음(직접 확인) | 별도 설치 없음 |
 | OpenAI API 키 (실제로 돌릴 때만) | 기사 분석·임베딩·검색·대본·배너·openai TTS 엔진 모두 `OPENAI_API_KEY` | https://platform.openai.com/ 가입 후 발급 |
 | ElevenLabs API 키 (선택) | UI 설정 화면의 기본 TTS 엔진. 환경변수 이름이 철자 그대로 `ELEVENSLAB_API_KEY`(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/utils/tts_engine_selector.py:48`) | https://elevenlabs.io/ |
+| Kokoro 모델 (`kokoro` 엔진을 고를 때만) | 로컬에서 돌지만 첫 실행 때 Hugging Face에서 `hexgrad/Kokoro-82M` 모델과 목소리 파일을 내려받고, spaCy 영어 모델 `en_core_web_sm`이 없으면 pip로 설치함(소스로 확인, 실행하지 않음) | 별도 설치 없음 — 첫 실행 때 자동 |
 | Redis (Studio 채팅에만) | Celery 브로커와 세션 락. 예약 경로에는 필요 없음 | 로컬 설치 또는 Docker — 이 문서는 설치하지 않음 |
-| Chromium (실제 스크랩에만) | Playwright가 기사 페이지를 여는 브라우저 | `python -m playwright install` — 이 문서는 실행하지 않음 |
+| Chromium (스크랩 단계마다) | Playwright가 스크랩 단계마다 띄우는 브라우저(스크랩할 URL이 없어도, Step 6) | `uv run --no-project python -m playwright install chromium` — 이 문서는 실행하지 않음 |
 
 ## 아키텍처 한눈에 보기
 
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
 | FastAPI 백엔드 | 시작 시 폴더·SQLite 초기화, 라우터 7개(엔드포인트 65개), 오디오 Range 스트리밍, `web/build` 서빙 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:22-36`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:50-56`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:59-98` |
-| 저장소 초기화 | SQLite 파일별 표 정의(`sources`·`feed_entries`·`crawled_articles`·`podcasts`·`tasks` 등)와 경로 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/db_init.py:347-365`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/db/config.py:7-18` |
+| 저장소 초기화 | SQLite 파일별 표 정의(`sources`·`feed_entries`·`crawled_articles`·`podcasts`·`tasks` 등)와 그것을 부르는 초기화 함수, 경로 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/db_init.py:24-345`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/db_init.py:347-365`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/db/config.py:7-18` |
 | 소스·기사·팟캐스트·작업 API | 라우터 → 서비스 → SQLite로 이어지는 CRUD | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/source_service.py:158-181`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/article_service.py:11-102`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/podcast_service.py:97-179`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/task_service.py:75-118` |
-| 스케줄러 | `tasks` 표에서 지금 돌 작업을 찾아 `command`를 서브프로세스로 실행 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:96-103`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:132-149` |
+| 스케줄러 | `tasks` 표에서 지금 돌 작업을 찾아 `command`를 서브프로세스로 실행. APScheduler의 작업 저장소로 `scheduler.sqlite`를 씀 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:96-103`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:132-149`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:180-182` |
 | 처리기 1~5 | 피드 → 항목 → 기사 → AI 분석 → 임베딩 → FAISS 색인 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/feed_processor.py:15-75`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/url_processor.py:7-45`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/ai_analysis_processor.py:28-118`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/embedding_processor.py:128-165`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/faiss_indexing_processor.py:165-229` |
 | 팟캐스트 생성기(처리기 6) | 검색 → 스크랩 → 대본 → 배너 → 오디오 → 저장을 함수 하나가 순서대로 부름 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/podcast_generator_processor.py:36-190` |
-| 파이프라인 에이전트 4개 | 검색·스크랩·대본·배너, 각각 agno `Agent`(배너만 gpt-4o, 나머지 gpt-4o-mini) | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/search_agent.py:63-90`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/scrape_agent.py:127-136`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/script_agent.py:90-120`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/image_generate_agent.py:58-81` |
-| 검색 도구 7개 | Google News·DuckDuckGo·Wikipedia·Jikan(애니)·`embedding_search`·소셜 DB 둘 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/search_agent.py:72-80`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/embedding_search.py:94-163` |
+| 파이프라인 에이전트 4개 | 검색·스크랩·대본·배너, 각각 agno `Agent`(배너만 gpt-4o, 나머지 gpt-4o-mini). 스크랩 에이전트는 이 경로에서 모델을 부르지 않음(`use_agent=False`) | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/search_agent.py:63-90`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/scrape_agent.py:127-136`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/script_agent.py:90-120`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/image_generate_agent.py:58-81` |
+| 검색 도구 7개 | Google News·DuckDuckGo·Wikipedia·Jikan(애니)·`embedding_search`·`social_media.db`를 읽는 소셜 도구 둘 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/search_agent.py:72-80`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/embedding_search.py:94-163`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/social_media_search.py:10-14` |
 | 브라우저 크롤러 | Playwright Chromium으로 페이지를 열고 newspaper4k로 본문을 뽑음 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/browser_crawler.py:19-58`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/browser_crawler.py:119-137` |
 | TTS 선택기와 엔진 3개 | `elevenlabs`·`kokoro`(로컬)·`openai` 중 하나로 WAV를 조립 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/utils/tts_engine_selector.py:14-84`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/utils/text_to_audio_openai.py:119-210` |
-| Studio 채팅 경로 | `agent_chat` Celery 작업 → 오케스트레이터 agno 에이전트가 도구 10개(검색·스크랩·UI 상태·대본·배너·오디오·제목·종료)를 호출 → 세션 상태를 SQLite에 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/async_podcast_agent_service.py:63-98`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/celery_tasks.py:29-64`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/db/agent_config_v2.py:119-145`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/agents/search_agent.py:65-105` |
-| Celery·Redis | 작업 큐, 세션 락(10분) | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/celery_app.py:20-70`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/celery_worker.py:1-12` |
+| Studio 채팅 경로 | `agent_chat` Celery 작업 → 오케스트레이터 agno 에이전트가 도구 10개(검색·스크랩·UI 상태·소스 선택·언어·대본·배너·오디오·제목·종료)를 호출 → 세션 상태를 SQLite에 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/async_podcast_agent_service.py:63-98`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/celery_tasks.py:29-64`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/db/agent_config_v2.py:119-145`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/agents/search_agent.py:65-105` |
+| Celery·Redis | 작업 큐, 세션 락(10분) | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/celery_app.py:20-70`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/celery_worker.py:1-13` |
 | 소셜 미디어 수집 | X·Facebook 피드를 창을 띄우는 Playwright(`headless=False`)로 긁어 감성 분석해 `social_media.db`에 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/social/browser.py:75-89`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/social/x_scraper.py:8-91`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/x_scraper_processor.py:8-24` |
-| Slack 연동 | 같은 API의 클라이언트(스레드 하나가 세션 하나), `slack_bolt` 필요 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/integrations/slack/chat.py:15-24`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/integrations/slack/chat.py:1220-1223` |
+| Slack 연동 | 같은 API의 클라이언트(스레드 하나가 세션 하나), `slack_bolt` 필요 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/integrations/slack/chat.py:15-24`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/integrations/slack/chat.py:1220-1224` |
 | 웹 UI | React 19 페이지 13개 — Home·Sources·Articles·Podcasts·Studio·Voyager(작업·설정)·Social. 소스(`web/src`)와 미리 빌드한 `web/build`가 모두 저장소에 있고 백엔드는 `web/build`를 서빙 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/App.js:1-142`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/services/api.js:1-18` |
 | 그 밖 | 데모 데이터 내려받기·압축, API를 부르는 스크립트형 테스트, 인트로 음악 | `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/bootstrap_demo.py:54-64`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/pack_demo.py:8-21`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tests/agent_agno_test.py:1-12`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/static/musics/intro_audio.mp3` |
+
+개요 그림은 사용자 쪽 관계를 한 방향(화면 → 사용자)만 그렸습니다. 서로 다른 데이터를 나르는 두 방향을 화살표 넷으로 따로 그리면 아래와 같습니다. 사용자는 소스·작업 등록과 재생 조작을 화면에 넣고, 화면은 목록과 재생 화면을 보여 줍니다. 화면은 `/api/*`를 요청하고, 백엔드는 화면 파일·JSON·오디오 조각으로 답합니다.
+
+![화면과 백엔드가 주고받는 것](diagrams/extra-structure.svg)
 
 ## 단계별 진행
 
@@ -56,7 +61,7 @@ uv pip install -r requirements.txt
 
 (pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.)
 
-`requirements.txt`는 236줄짜리 `pip freeze` 결과라 252개 패키지가 깔리고 가상환경이 2.3GB가 됩니다. 제 환경에서는 일부가 uv 캐시에 이미 있는 상태로 40초가 걸리지 않았습니다(직접 확인). Python은 3.11이나 3.12를 씁니다 — 3.13과 3.14 가상환경에서 휠만 허용해(`--no-build`) 해석해 보면 3.13은 `blis==1.2.1`, 3.14는 `aiohttp==3.11.18`에서 막혔습니다(직접 확인). 이 저장소는 루트에 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 진입점 `main.py`는 시작할 때(lifespan) 폴더 다섯 곳을 만들고 SQLite 표를 초기화하며, 마지막에 `../web/build`가 있는지만 봅니다.
+`requirements.txt`는 236줄짜리 `pip freeze` 결과라 252개 패키지가 깔리고 가상환경이 2.3GB가 됩니다. 제 환경에서는 일부가 uv 캐시에 이미 있는 상태로 40초가 걸리지 않았습니다(직접 확인). Python은 3.11로 확인했습니다. 3.13 이상은 막힙니다 — `torch==2.2.2`는 PyPI에 cp38~cp312 휠만 있고 sdist가 없습니다(uv가 캐시한 PyPI 파일 목록에서 읽음). `blis==1.2.1`은 3.13 이상용 휠이, `aiohttp==3.11.18`은 3.14용 휠이 없어 컴파일이 필요합니다. 3.12는 세 패키지 모두 cp312 휠이 있어 될 것으로 보이지만 설치해 보지는 않았습니다. 3.11에서도 순수 파이썬 sdist 셋(`docopt`·`pyperclip`·`sgmllib3k`)은 설치 중에 빌드됩니다(직접 확인, 설치 로그). 이 저장소는 루트에 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 진입점 `main.py`는 시작할 때(lifespan) 폴더 다섯 곳을 만들고 SQLite 표를 초기화하며, 마지막에 `../web/build`가 있는지만 봅니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:22-36`
 
@@ -88,7 +93,7 @@ if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False, timeout_keep_alive=120, timeout_graceful_shutdown=120)
 ```
 
-`0.0.0.0`이라 같은 네트워크의 누구나 접속할 수 있고 인증 코드는 없습니다(앱 README도 인증 계층이 아직 없다고 적음). 게다가 `main.py`에는 인자를 읽는 코드가 없어 README의 `python main.py --host 0.0.0.0 --port 7000`은 인자를 무시하고 포트는 환경변수 `PORT`(기본 7000)로만 바뀝니다(직접 확인, 아래). 그래서 같은 `main:app`을 `127.0.0.1`에만 열어 띄웁니다. 터미널 하나를 더 열어 이 명령을 계속 실행해 두고, 이후 명령은 첫 터미널에서 이어 갑니다.
+`0.0.0.0`이라 같은 네트워크의 누구나 접속할 수 있고 인증 코드는 없습니다(앱 README도 인증 계층이 아직 없다고 적음). 게다가 `main.py`에는 인자를 읽는 코드가 없어 README의 `python main.py --host 0.0.0.0 --port 7000`은 인자를 무시하고 포트는 환경변수 `PORT`(기본 7000)로만 바뀝니다(직접 확인, 아래). 그래서 같은 `main:app`을 `127.0.0.1`에만 열어 띄웁니다. 터미널 하나를 더 열어 같은 `beifong` 폴더에서 이 명령을 계속 실행해 두고, 이후 명령은 첫 터미널에서 이어 갑니다.
 
 ```bash
 uv run --no-project uvicorn main:app --host 127.0.0.1 --port 7000
@@ -107,7 +112,7 @@ uv run --no-project python -c "import importlib.metadata as m; print(len(list(m.
 252 1.4.2 0.115.12 1.9.0.post1
 ```
 
-`import main`은 라우터·서비스·도구를 전부 끌어오므로 playwright·browser-use·faiss까지 import돼야 성공합니다. 이때 앱 폴더에 `databases/agent_sessions.db`와 `podcasts/`가 이미 생깁니다(서비스 객체가 만듭니다). 이어서 `main.py`에 인자 처리 코드가 없는지 봅니다.
+`import main`은 라우터·서비스·도구를 전부 끌어오므로 playwright·browser-use·faiss까지 import돼야 성공합니다. 이때 앱 폴더에 `databases/agent_sessions.db`와 `podcasts/`가 이미 생깁니다(`podcasts/`는 Studio 서비스 객체가, `agent_sessions.db`는 모듈 수준의 `SqliteStorage`(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/db/agent_config_v2.py:169`)가 만듭니다). 이어서 `main.py`에 인자 처리 코드가 없는지 봅니다.
 
 ```bash
 uv run --no-project python -c "import main; print(type(main.app).__name__, len([r for r in main.app.routes if r.path.startswith('/api/')]))"
@@ -135,7 +140,7 @@ uv run --no-project python -c "import glob; t = open(glob.glob('../web/build/sta
 1 True
 ```
 
-번들 안에 `localhost:7000`이 한 번 박혀 있어(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/services/api.js:3`) UI는 API를 항상 그 주소에서 찾으므로, 포트를 바꾸면 화면은 뜨지만 데이터가 오지 않습니다. `index.html`은 Tailwind를 `cdn.jsdelivr.net`에서 받아 옵니다 — 완전 로컬 앱이 아닙니다.
+번들 안에 `localhost:7000`이 한 번 박혀 있어(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/services/api.js:3`) UI는 API를 항상 그 주소에서 찾으므로, 포트를 바꾸면 화면은 뜨지만 데이터가 오지 않습니다. `index.html`은 Tailwind를 `cdn.jsdelivr.net`에서 받아 옵니다. 팟캐스트 상세 화면은 출처가 있으면 화면이 그려질 때 출처 도메인마다(최대 넷) Google 파비콘 서비스(`www.google.com/s2/favicons`)를 부릅니다(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/pages/PodcastDetail.js:48`, 소스로 확인). 완전 로컬 앱이 아닙니다.
 
 ### Step 2. 저장소와 뉴스 소스 등록 — 단계 사이의 경계는 SQLite 표
 
@@ -548,7 +553,7 @@ Embedding Search Input: vector search
 
 **목적.** 생성기가 에이전트 넷과 TTS를 어떤 순서로 부르고 어디서 멈추는지, 설정 화면의 필드가 실제로 쓰이는지, 키가 없으면 어디서 실패하는지 확인합니다.
 
-**할 일.** 검색 에이전트는 agno `Agent`(gpt-4o-mini, JSON 모드)에 도구 일곱 개를 주고, 어떤 도구를 부를지는 모델이 고릅니다. 실패하면 예외를 삼키고 빈 목록을 돌려줍니다.
+**할 일.** 검색 에이전트는 agno `Agent`(gpt-4o-mini, JSON 모드)에 도구 일곱 개를 주고, 어떤 도구를 부를지는 모델이 고릅니다. 소셜 검색 도구 둘은 `social_media.db`를 읽습니다(소스로 확인, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/social_media_search.py:10-14`). 실패하면 예외를 삼키고 빈 목록을 돌려줍니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/search_agent.py:63-90`
 
@@ -660,7 +665,7 @@ def search_agent_run(query: str) -> str:
 
 우리 DB에서 찾은 기사는 스크랩이 필요 없다고 표시돼 있어 본문 대신 `description`, 곧 Step 4의 AI 요약이 대본 재료가 됩니다(소스로 확인, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/scrape_agent.py:70-85`). 이 스크랩 단계는 실제 브라우저를 열 수 있어 돌리지 않았습니다.
 
-`agents/`에 같은 이름의 에이전트 네 개가 세션용으로 한 벌 더 있어 헷갈리기 쉽습니다. 예약 경로는 세션과 무관한 `tools/pipeline/`을 쓰고, `agents/`는 Studio의 도구입니다. 검색 에이전트는 Studio 쪽에 도구 둘(`search_articles`·`run_browser_search`)이 더 있고 지시문도 두 줄이 다릅니다(태그 목록에 `browser_search` 추가, 브라우저 검색 안내 한 줄 추가, 소스로 확인). 이 앱의 agno는 1.4.2인데, 에이전트 실행이 끝날 때마다 `api.agno.com`으로 실행 통계를 보내고 `AGNO_TELEMETRY=false`로 끕니다(소스로 확인, `agno/agent/agent.py`·`agno/cli/settings.py`). Day 047 Step 5의 「agno의 익명 사용 통계」 단락은 agno 3.0.10을 다룬 것이지만 같은 환경변수를 씁니다. 검색·대본·배너가 각각 새 `Agent`를 만들어 부르므로 팟캐스트 한 편에 최소 세 번 나갑니다.
+`agents/`에 같은 이름의 에이전트 네 개가 세션용으로 한 벌 더 있어 헷갈리기 쉽습니다. 예약 경로는 세션과 무관한 `tools/pipeline/`을 쓰고, `agents/`는 Studio의 도구입니다. 검색 에이전트는 Studio 쪽에 도구 둘(`search_articles`·`run_browser_search`)이 더 있고 지시문도 두 줄이 다릅니다(태그 목록에 `browser_search` 추가, 브라우저 검색 안내 한 줄 추가, 소스로 확인). 이 앱의 agno는 1.4.2인데, 에이전트 실행이 끝날 때마다 `api.agno.com`으로 실행 통계를 보내고 `AGNO_TELEMETRY=false`로 끕니다(소스로 확인, `agno/agent/agent.py`·`agno/cli/settings.py`). Day 047 Step 5의 「agno의 익명 사용 통계」 단락은 agno 3.0.10을 다룬 것이지만 같은 환경변수를 씁니다. 검색·대본·배너가 각각 새 `Agent`를 만들어 부르므로 팟캐스트 한 편에 최소 세 번 나갑니다(스크랩 에이전트는 `use_agent=False`라 모델을 부르지 않습니다, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/scrape_agent.py:130`).
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -693,8 +698,9 @@ for i, line in enumerate(open('processors/podcast_generator_processor.py', encod
 
 ```bash
 uv run --no-project python -c "
-import logging
+import logging, os
 logging.disable(logging.CRITICAL)
+os.environ.pop('OPENAI_API_KEY', None)
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 model = OpenAIChat(id='gpt-4o-mini')
@@ -712,7 +718,35 @@ agent built: Agent gpt-4o-mini
 OpenAIError
 ```
 
-`OpenAIChat`은 키 없이도 만들어지고, 클라이언트를 만드는 첫 순간에야 `OpenAIError`가 납니다. 예약 경로에서는 그 예외를 검색 에이전트가 삼키므로 생성기가 보는 것은 "No search results found"뿐입니다(소스로 확인, 실행하지는 않음). 아래는 검색·스크랩·대본·배너·TTS 다섯 호출을 가짜로 바꾸고 나머지 오케스트레이션은 원본 그대로 두 번 부른 결과입니다. 첫 호출은 본문이 짧아 멈추고, 둘째 호출은 끝까지 가서 `podcasts` 표에 한 행을 넣습니다.
+`OpenAIChat`은 키 없이도 만들어지고, 클라이언트를 만드는 첫 순간에야 `OpenAIError`가 납니다(명령이 먼저 셸의 `OPENAI_API_KEY`를 지워서 셸에 키가 있어도 같은 결과입니다). 다만 예약 경로는 거기까지 가지 못합니다. 스케줄러가 `python -m processors.podcast_generator_processor`로 띄우는 `main()`이 에이전트를 만들기 전에 키부터 확인하고, 없으면 오류를 찍고 `1`을 돌려줍니다. 프로세스는 `exit(main())`으로 그 값을 종료 코드로 씁니다(소스로 확인).
+
+`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/podcast_generator_processor.py:291-296`
+
+```python
+def main():
+    openai_api_key = load_api_key()
+    tasks_db_path = get_tasks_db_path()
+    if not openai_api_key:
+        print("ERROR: No OpenAI API key provided. Please set OPENAI_API_KEY environment variable.")
+        return 1
+```
+
+이 `main()`을 키가 없는 상태로 부른 결과입니다. 명령이 `load_api_key`를 "키 없음"으로 바꿔 부르므로 셸이나 `.env`에 키가 있어도 OpenAI에 닿지 않습니다.
+
+```bash
+uv run --no-project python -c "
+import processors.podcast_generator_processor as g
+g.load_api_key = lambda: None
+print('exit code', g.main())
+"
+```
+
+```text
+ERROR: No OpenAI API key provided. Please set OPENAI_API_KEY environment variable.
+exit code 1
+```
+
+"No search results found"는 키가 있는데 호출이 실패할 때(틀린 키·네트워크)만 보입니다. 그때는 검색 에이전트가 예외를 삼켜 빈 목록을 돌려주고 생성기는 그 문구만 봅니다(소스로 확인, 실행하지는 않음). 아래는 검색·스크랩·대본·배너·TTS 다섯 호출을 가짜로 바꾸고 나머지 오케스트레이션은 원본 그대로 두 번 부른 결과입니다. 첫 호출은 본문이 짧아 멈추고, 둘째 호출은 끝까지 가서 `podcasts` 표에 한 행을 넣습니다.
 
 ```bash
 uv run --no-project python -c "
@@ -789,7 +823,7 @@ def generate_podcast_audio(
         return None
 ```
 
-엔진 기본값이 곳곳에서 다릅니다 — 선택기 함수는 `kokoro`, 설정 API 스키마는 `kokoro`(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/models/podcast_config_schemas.py:12`), 표의 기본값과 UI 기본값은 `elevenlabs`(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/db_init.py:253`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/components/PodcastConfigForm.js:12`), Studio는 `openai` 고정(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/agents/audio_generate_agent.py:329`)입니다. 엔진 셋 모두 최종 경로를 `os.path.abspath`로 돌려줍니다(예: `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/utils/text_to_audio_openai.py:140`). Day 003 Step 6이 ElevenLabs로 텍스트를 음성으로 바꾸는 호출을 이미 다뤘으니 여기서는 조립만 봅니다. TTS 호출 자리에는 사인파를 돌려주는 가짜 함수를 끼웠고 나머지 조립 코드는 원본 그대로입니다.
+엔진 기본값이 곳곳에서 다릅니다 — 선택기 함수는 `kokoro`, 설정 API 스키마는 `kokoro`(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/models/podcast_config_schemas.py:12`), 표의 기본값과 UI 기본값은 `elevenlabs`(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/services/db_init.py:253`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web/src/components/PodcastConfigForm.js:12`), Studio는 `openai` 고정(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/agents/audio_generate_agent.py:329`)입니다. 엔진 셋 모두 최종 경로를 `os.path.abspath`로 돌려줍니다(예: `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/utils/text_to_audio_openai.py:140`). Day 003 Step 6이 ElevenLabs로 텍스트를 음성으로 바꾸는 호출을 이미 다뤘으니 여기서는 조립만 봅니다. TTS 호출 자리에는 사인파를 돌려주는 가짜 함수를 끼웠고 나머지 조립 코드는 원본 그대로입니다. `kokoro` 엔진은 로컬에서 돌지만 첫 실행 때 네트워크를 씁니다 — Hugging Face에서 `hexgrad/Kokoro-82M` 모델과 목소리 파일을 내려받고(kokoro 패키지의 `model.py`·`pipeline.py`), spaCy 영어 모델이 없으면 pip로 설치합니다(misaki 패키지의 `en.py`). 둘 다 소스로 확인했고 실행하지 않았습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -909,25 +943,31 @@ True True
 /stream-audio/C:/Users/me/demo.wav
 ```
 
-셋째 줄은 파일 이름으로 Range 요청을 보냈을 때의 응답(206)이고, 넷째 줄은 브라우저가 Windows 경로를 바꿔 보내는 모양(`/stream-audio/C:/Users/...`, 다섯째 줄이 Node의 `URL`이 실제로 만든 경로)으로 물었을 때의 응답입니다. 서버는 이 주소를 `/{full_path:path}` 안전망으로 받아 오디오 대신 UI의 HTML을 200으로 돌려줍니다. Windows에서 예약 경로가 만든 팟캐스트가 재생되지 않을 이유입니다(브라우저 재생은 열어 보지 못했습니다). 반대로 서버는 `os.path.join("podcasts/audio", filename)`에 URL의 값을 그대로 넣어(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:61`), Windows에서는 절대 경로를 요청하면 다른 폴더의 파일도 읽힙니다. 그래서 `0.0.0.0`으로 열면 안 됩니다.
+셋째 줄은 파일 이름으로 Range 요청을 보냈을 때의 응답(206)이고, 넷째 줄은 브라우저가 Windows 경로를 바꿔 보내는 모양(`/stream-audio/C:/Users/...`, 다섯째 줄이 Node의 `URL`이 실제로 만든 경로)으로 물었을 때의 응답입니다. 서버는 이 주소를 `/{full_path:path}` 안전망으로 받아 오디오 대신 UI의 HTML을 200으로 돌려줍니다. Windows에서 예약 경로가 만든 팟캐스트가 재생되지 않을 이유입니다(브라우저 재생은 열어 보지 못했습니다). 반대로 서버는 `os.path.join("podcasts/audio", filename)`에 URL의 값을 그대로 넣어(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:61`), Windows에서는 절대 경로를 요청하면 다른 폴더의 파일도 읽힙니다. 같은 패턴이 두 곳 더 있습니다 — `/api/podcasts/audio/{filename}`(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/routers/podcast_router.py:187-200`)과 `/stream-recording/{session_id}/{filename}`(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:101-103`). 그래서 `0.0.0.0`으로 열면 안 됩니다.
 
 ```bash
 uv run --no-project python -c "
-import os, tempfile, urllib.parse, urllib.request as u
+import os, tempfile, time, urllib.parse, urllib.request as u
 f = tempfile.NamedTemporaryFile(suffix='.txt', delete=False)
 f.write(b'outside-podcasts-audio')
 f.close()
-r = u.urlopen('http://127.0.0.1:7000/stream-audio/' + urllib.parse.quote(f.name, safe=''))
-print(r.status, r.headers['content-type'], r.read())
+name = urllib.parse.quote(f.name, safe='')
+base = 'http://127.0.0.1:7000'
+for path in ('/stream-audio/' + name, '/api/podcasts/audio/' + name, '/stream-recording/s1/' + name):
+    r = u.urlopen(base + path)
+    print(r.status, r.headers['content-type'], r.read())
+time.sleep(1)
 os.unlink(f.name)
 "
 ```
 
 ```text
 200 audio/wav b'outside-podcasts-audio'
+200 text/plain; charset=utf-8 b'outside-podcasts-audio'
+200 video/webm b'outside-podcasts-audio'
 ```
 
-방금 만든 임시 파일이 오디오 폴더 밖에서 읽혔습니다(Windows에서 확인, macOS·Linux는 확인하지 못함). 마지막으로 스케줄러입니다. UI(Voyager)는 작업을 `tasks` 표에 넣을 뿐이고, 스케줄러가 표에서 지금 돌 작업을 찾아 `command`를 그대로 서브프로세스로 실행합니다.
+방금 만든 임시 파일이 세 엔드포인트 모두에서 오디오·녹화 폴더 밖에서 읽혔습니다(Windows에서 확인, macOS·Linux는 확인하지 못함). 마지막으로 스케줄러입니다. UI(Voyager)는 작업을 `tasks` 표에 넣을 뿐이고, 스케줄러가 표에서 지금 돌 작업을 찾아 `command`를 그대로 서브프로세스로 실행합니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:96-103`
 
@@ -942,7 +982,7 @@ os.unlink(f.name)
         )
 ```
 
-스케줄러는 시작하자마자 한 번 점검하고 이후 1분마다 점검하며(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:185`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:192`), `last_run`이 비어 있는 새 작업은 바로 대상이 됩니다. 이 문서는 스케줄러를 켜지 않았습니다. 대신 API로 작업을 만들고 "지금 돌 작업" 목록에 뜨는 것만 봤습니다.
+스케줄러는 시작하자마자 한 번 점검하고 이후 1분마다 점검하며(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:185`, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:192`), `last_run`이 비어 있는 새 작업은 바로 대상이 됩니다. APScheduler의 작업 저장소는 `databases/scheduler.sqlite`입니다(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:180-182`, 소스로 확인). 이 문서는 스케줄러를 켜지 않았습니다. 대신 API로 작업을 만들고 "지금 돌 작업" 목록에 뜨는 것만 봤습니다.
 
 ```bash
 uv run --no-project python -c "
@@ -965,19 +1005,32 @@ print(scheduler.MAX_WORKERS, scheduler.DEFAULT_TASK_TIMEOUT)
 5 3600
 ```
 
-Studio 경로는 처리기 대신 Celery 워커가 `agent_chat`을 실행하고, 그 프로세스와 저장소는 아래 그림에 정리했습니다. Redis 없이 Studio에 메시지를 보내 보는 명령은 문제 해결에 있습니다.
+이 작업은 실습용입니다. 실습이 끝나면 `databases/`와 `podcasts/`를 지우세요. 실습용 소스(`example.com`)와 작업이 남아 있으면 나중에 스케줄러를 켤 때 그 작업이 곧바로 `https://example.com/feed.xml`을 받으러 갑니다(`last_run`이 비어 있어서, 소스로 확인).
 
-![Studio 채팅 경로의 프로세스와 저장소](diagrams/extra-studio.svg)
+Studio 경로는 처리기 대신 Celery 워커가 `agent_chat`을 실행합니다. 워커가 읽고 쓰는 것은 첫째 그림에, FastAPI가 Redis·세션 저장소·파일과 주고받는 것은 둘째 그림에 정리했습니다. Redis 없이 Studio에 메시지를 보내 보는 명령은 문제 해결에 있습니다.
+
+![Studio 워커의 프로세스와 저장소](diagrams/extra-studio.svg)
+
+![Studio API가 다루는 것](diagrams/extra-studio-api.svg)
 
 ## 요청 한 건이 흐르는 과정
 
-여기서 요청 한 건은 스케줄러가 팟캐스트 한 편을 만드는 한 주기입니다. 처리기마다 도는 시각이 달라 구간별로 나눠 그렸고(그림 17장), 메시지는 어느 그림에도 한 번씩, 시간 순서대로 있습니다. 화살표는 처리기가 표에서 입력을 읽는 것, 바깥에 요청하는 것, 산출물을 쓰는 것, 그리고 다음 실행을 가르는 표시(etag·해시·`processed`·색인 표시)까지 그렸습니다. 실행 전 준비 호출(개수 세기·중복 확인·추적 행 만들기·표 만들기·브라우저 탭 만들기·복구 초기화·`processing` 표시·색인 차원 확인)은 그리지 않았고, 배너 이미지 분기와 검색 도구 여섯 개, 그리고 에이전트 실행마다 agno가 보내는 실행 통계(Step 6)는 이 경로에서 뺐습니다. 먼저 작업이 만들어지는 과정입니다. UI가 작업 종류와 주기를 보내면 API가 표에 한 행을 넣습니다.
+여기서 요청 한 건은 스케줄러가 팟캐스트 한 편을 만드는 한 주기입니다. 처리기마다 도는 시각이 달라 구간별로 나눠 그렸고(그림 20장), 메시지는 어느 그림에도 한 번씩, 시간 순서대로 있습니다. 화살표는 처리기가 표에서 입력을 읽는 것, 바깥에 요청하는 것, 산출물을 쓰는 것, 그리고 다음 실행을 가르는 표시(etag·해시·`processed`·색인 표시)까지 그렸습니다. 실행 전 준비 호출(개수 세기·실행 중복 확인·추적 행 만들기·표 만들기·브라우저 탭 만들기·복구 초기화·`processing` 표시·색인 차원 확인)과 브라우저 대기·닫기(`wait_for_selector`·`browser.close`), ElevenLabs 엔진이 대사마다 쓰고 지우는 임시 mp3는 그리지 않았고, 검색 도구 여섯 개와 에이전트 실행마다 agno가 보내는 실행 통계(Step 6)도 이 경로에서 뺐습니다. 배너 단계는 매 주기 대본 다음에 돌므로 그렸습니다. 구간은 여섯입니다 — 작업, 기사 만들기, 검색, 스크랩·대본·배너, 오디오와 저장, 재생.
+
+### 1. 작업
+
+먼저 작업이 만들어지는 과정입니다. UI가 작업 종류와 주기를 보내면 API가 같은 종류의 작업이 이미 있는지 확인하고, 표에 한 행을 넣은 뒤 그 행을 돌려줍니다.
 
 ![작업 만들기](diagrams/extra-task.svg)
 
 스케줄러는 표에서 지금 돌 작업을 찾아 처리기를 서브프로세스로 띄웁니다. 처리기 여섯이 모두 이렇게 뜹니다.
 
 ![작업 실행](diagrams/extra-schedule.svg)
+
+### 2. 기사 만들기 (처리기 1~5)
+
+<details>
+<summary>피드에서 색인까지(그림 5장)</summary>
 
 첫째로 피드 처리기가 소스 표에서 피드를 읽어 항목을 씁니다. 사이트에는 etag와 수정 시각을 함께 보냅니다.
 
@@ -995,19 +1048,23 @@ AI 분석이 gpt-4o로 요약·분류를 만들어 기사를 완성합니다.
 
 ![임베딩](diagrams/extra-embed.svg)
 
-색인이 새 벡터를 FAISS에 붙입니다.
+색인이 새 벡터를 FAISS에 붙입니다. 색인과 id 맵 파일은 이미 있을 때만 읽고, 없으면(Step 5의 첫 실행) 새로 만듭니다.
 
 ![색인](diagrams/extra-index.svg)
+
+</details>
+
+### 3. 검색
 
 여기까지가 기사를 만드는 쪽이고, 이제 팟캐스트를 만드는 쪽입니다. 생성기는 뜨자마자 설정을 읽습니다.
 
 ![설정 읽기](diagrams/extra-config.svg)
 
-검색이 이 경로의 핵심이라 그림 셋으로 나눴습니다. 검색 에이전트가 gpt-4o-mini에게 일곱 도구를 주고, 모델이 `embedding_search`를 고른 경우를 따라갑니다. 어느 도구를 부를지는 실행마다 달라질 수 있습니다. 먼저 질문을 벡터로 바꿔 FAISS에서 가까운 기사를 찾습니다. 색인과 id 맵은 호출마다 디스크에서 새로 읽습니다(소스로 확인).
+검색이 이 경로의 핵심이라 그림 셋으로 나눴습니다. 검색 에이전트가 gpt-4o-mini에게 일곱 도구를 주고, 모델이 `embedding_search`를 고른 경우를 따라갑니다. 도구 함수(`tools/embedding_search.py`)는 에이전트와 같은 프로세스에서 돌아 한 배우로 그렸습니다. 어느 도구를 부를지는 실행마다 달라질 수 있습니다. 먼저 질문을 벡터로 바꿔 FAISS에서 가까운 기사를 찾습니다. 색인과 id 맵은 호출마다 디스크에서 새로 읽습니다(소스로 확인).
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-그다음 찾은 기사 id로 기사 표와 소스 표를 조회합니다.
+그다음 FAISS가 돌려준 색인 번호를 id 맵으로 기사 id로 바꿔 기사 표와 소스 표를 조회합니다.
 
 ![기사 조회](diagrams/extra-lookup.svg)
 
@@ -1015,7 +1072,9 @@ AI 분석이 gpt-4o로 요약·분류를 만들어 기사를 완성합니다.
 
 ![검색 결과](diagrams/extra-result.svg)
 
-검색 결과 가운데 스크랩이 필요한 URL을 브라우저로 엽니다. 우리 기사만 있어도 Chromium은 뜹니다(소스로 확인).
+### 4. 스크랩·대본·배너
+
+검색 결과 가운데 스크랩이 필요한 URL을 브라우저로 엽니다. 브라우저는 URL이 없어도 뜹니다(소스로 확인). 그래서 `chromium.launch`만 항상 일어나고, 가운데 여섯 메시지는 스크랩할 URL마다 되풀이됩니다. 우리 기사만 있는 이 경로에서는 URL이 0개라 그 여섯은 일어나지 않습니다(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/scrape_agent.py:55-65`, 소스로 확인). 크롤러(`tools/browser_crawler.py`)는 스크랩 에이전트가 부르는 클래스라 한 배우로 그렸습니다.
 
 ![스크랩](diagrams/extra-scrape.svg)
 
@@ -1023,19 +1082,35 @@ AI 분석이 gpt-4o로 요약·분류를 만들어 기사를 완성합니다.
 
 ![대본](diagrams/extra-script.svg)
 
+대본이 끝나면 생성기는 매 주기 배너 단계를 돌립니다. 조건은 없고, 실패해도 다음으로 넘어갑니다(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/processors/podcast_generator_processor.py:101-113`, 소스로 확인). 배너 에이전트가 gpt-4o에게 DALL·E 3 도구(agno `DalleTools`)를 주고 대본 JSON으로 그림 세 장을 만들게 합니다(지시문이 "Create 3 images", `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/pipeline/image_generate_agent.py:17-31`).
+
+![배너 만들기](diagrams/extra-banner.svg)
+
+이미지는 URL로 오므로 에이전트가 그림마다 내려받습니다.
+
+![배너 내려받기](diagrams/extra-banner-get.svg)
+
+받은 PNG를 `podcasts/images`에 쓰고 파일 이름을 생성기에 돌려줍니다.
+
+![배너 저장](diagrams/extra-banner-save.svg)
+
+### 5. 오디오와 저장
+
 TTS 선택기가 엔진을 골라 대사를 음성으로 받아 옵니다. 그림은 UI 기본값인 ElevenLabs 엔진을 그렸습니다.
 
 ![TTS 호출](diagrams/extra-audio.svg)
 
-엔진이 조각을 이어 붙여 WAV 하나로 쓰고, 생성기가 그 경로와 대본을 표에 저장합니다.
+엔진이 조각을 이어 붙여 WAV 하나로 쓰고, 생성기가 그 경로와 대본을 표에 저장한 뒤 새 행의 id를 받습니다. 저장 함수(`tools/session_state_manager.py`)는 생성기가 부르는 함수라 한 배우로 그렸습니다.
 
 ![WAV 쓰기와 저장](diagrams/extra-save.svg)
+
+### 6. 재생
 
 마지막으로 사용자가 UI에서 재생하는 과정입니다. 먼저 상세 화면이 팟캐스트 한 편의 데이터를 받습니다.
 
 ![재생 화면의 데이터](diagrams/extra-play.svg)
 
-이어서 화면의 오디오 태그가 스트리밍 주소를 부릅니다.
+이어서 화면이 그려지면서 출처 아이콘과 오디오를 요청합니다. 출처 아이콘은 Google 파비콘 서비스에서 받고, 오디오는 스트리밍 주소를 부릅니다. 두 요청의 순서는 고정돼 있지 않고 그림은 아이콘을 먼저 그렸습니다.
 
 ![오디오 스트리밍](diagrams/extra-stream.svg)
 
@@ -1043,31 +1118,33 @@ TTS 선택기가 엔진을 골라 대사를 음성으로 받아 옵니다. 그�
 
 - [ ] `uv venv --python 3.11`과 `uv pip install -r requirements.txt`로 252개 패키지를 설치하고 `import main`까지 확인했다
 - [ ] 백엔드를 `127.0.0.1`로만 띄우고 `/api/podcasts/`가 빈 목록을 돌려주는 것을 확인했다
-- [ ] 여섯 SQLite 파일과 표를 확인하고, 소스 등록이 중복 피드에서 409와 고아 행을 남기는 것을 확인했다
+- [ ] 일곱 SQLite 파일과 표를 확인하고, 소스 등록이 중복 피드에서 409와 고아 행을 남기는 것을 확인했다
 - [ ] `&`가 든 RSS가 `is_rss_feed: False`로 버려지는 것을 확인했다
 - [ ] AI 분석 결과가 있어야 `/api/articles/`에 기사가 나오고 RSS 날짜는 날짜 필터에서 빠지는 것을 확인했다
 - [ ] 코사인 0.75가 앱 유사도 0.875로 필터를 통과하는 것을 확인했다
 - [ ] 설정의 `time_range_hours`·`limit_articles`·`podcast_script_prompt`가 생성에 쓰이지 않는 것을 확인했다
+- [ ] 예약 경로는 키가 없으면 `main()`에서 종료 코드 1로 끝나는 것을 확인했다
 - [ ] 가짜 외부 호출로 생성기가 `podcasts` 표에 한 행을 넣는 것과 오디오 조립 결과(5.4초)를 확인했다
-- [ ] 예약 경로가 저장하는 `audio_path`가 절대 경로이고 브라우저 형태의 주소는 HTML을 돌려주는 것을 확인했다
+- [ ] 예약 경로가 저장하는 `audio_path`가 절대 경로이고 브라우저 형태의 주소는 HTML을 돌려주는 것, 세 엔드포인트가 폴더 밖 파일을 읽는 것을 확인했다
+- [ ] 실습이 끝난 뒤 `databases/`와 `podcasts/`를 지웠다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `uv pip install -r requirements.txt`가 Python 3.13이나 3.14에서 실패 | 고정된 버전 중 휠이 없는 것이 있음(휠만 허용해 해석하면 3.13은 `blis==1.2.1`, 3.14는 `aiohttp==3.11.18`에서 막힘, 직접 확인) | 리포 코드는 고치지 않음 — `uv venv --python 3.11`(또는 3.12)로 새로 만든다 |
+| `uv pip install -r requirements.txt`가 Python 3.13이나 3.14에서 실패 | `torch==2.2.2`의 휠이 cp38~cp312뿐이고 sdist도 없음(3.13은 `blis==1.2.1`, 3.14는 `aiohttp==3.11.18`의 휠도 없음, uv가 캐시한 PyPI 파일 목록에서 읽음) | 리포 코드는 고치지 않음 — `uv venv --python 3.11`로 새로 만든다(3.12도 휠은 있으나 설치해 보지 않음). 3.11에서도 순수 파이썬 sdist 셋은 설치 중에 빌드됨 |
 | 설치 때 `spacy==3.8.5` yanked 경고 | 고정한 버전이 PyPI에서 철회됨(직접 확인) | 경고일 뿐 설치는 끝까지 됨 |
 | `python main.py --host ... --port ...`가 인자를 무시하고 `0.0.0.0:7000`으로 뜸 | `main.py`가 인자를 읽지 않고 호스트를 `0.0.0.0`으로 고정함(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/main.py:185-187`) | 로컬 실습에는 `uvicorn main:app --host 127.0.0.1`로 띄운다 |
 | 포트를 바꿨더니 UI는 뜨는데 목록이 비어 있음 | UI 번들에 API 주소 `http://localhost:7000`이 박혀 있음(직접 확인) | 포트를 7000으로 두거나 `web/src/services/api.js`를 고쳐 다시 빌드 — 이 문서는 빌드하지 않음 |
-| Redis 없이 Studio에서 메시지를 보내면 1분 넘게 매달렸다 500 | Celery의 Redis 결과 백엔드가 기본값 20번(소스로 확인, `celery/backends/base.py`) 재연결을 시도한 뒤 포기하고 `chat`이 오류 응답을 만듦(직접 확인, 아래 명령) | Redis를 띄우거나 예약 경로만 쓴다 |
-| `python -m integrations.slack.chat`이 ImportError | `slack_bolt`가 `requirements.txt`에 없음(직접 확인, 아래 명령) | `pip install slack_bolt` 후 `SLACK_BOT_TOKEN`·`SLACK_APP_TOKEN` 설정 |
+| Redis 없이 Studio에서 메시지를 보내면 한참 매달렸다 500 | Celery의 Redis 결과 백엔드가 기본값 20번(소스로 확인, `celery/backends/base.py`) 재연결을 시도한 뒤 포기하고 `chat`이 오류 응답을 만듦. Windows에서는 거부된 연결 하나가 약 2초라 약 70초 걸림(직접 확인, 아래 명령). macOS·Linux는 거부가 즉시 나므로 더 짧을 것으로 보이나 확인하지 못함 | Redis를 띄우거나 예약 경로만 쓴다 |
+| `python -m integrations.slack.chat`이 ImportError | `slack_bolt`가 `requirements.txt`에 없음(직접 확인, 아래 명령) | `uv pip install slack_bolt` 후 `SLACK_BOT_TOKEN`·`SLACK_APP_TOKEN` 설정 |
 | 소스를 만들려다 409를 받았는데 목록에는 소스가 하나 더 있음 | `create_source`가 소스를 먼저 넣고 피드 추가에서 실패해도 되돌리지 않음(Step 2) | 목록에서 피드 없는 소스를 삭제 |
 | `ELEVENSLAB_API_KEY`를 넣었는데 ElevenLabs 엔진이 키가 없다고 함 | 환경변수 이름이 철자 그대로 `ELEVENSLAB`이어야 함(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/utils/tts_engine_selector.py:48`) | `ELEVENLABS_API_KEY`가 아니라 `ELEVENSLAB_API_KEY`로 설정 |
-| 스크랩 단계에서 매번 실패, 생성기가 `No content could be scraped` | 스크랩 URL이 없어도 Chromium을 띄우므로 Playwright 브라우저가 없으면 실패(소스로 확인, 돌려 보지는 않음) | `python -m playwright install`(이 문서는 실행하지 않음) |
-| 스케줄러를 켜자마자 작업이 실행돼 API 비용이 나감 | `last_run`이 빈 새 작업은 첫 점검에서 바로 대상이 됨(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:192`) | 키를 넣기 전에는 스케줄러를 켜지 않는다 |
-| `bootstrap_demo.py`가 "not empty. aborting" | `databases/`와 `podcasts/`가 비어 있어야 데모 zip을 풀음(소스로 확인, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/bootstrap_demo.py:12-19`) | 백엔드를 처음 띄우기 전에 실행 — 이 문서는 GitHub에서 내려받는 이 스크립트를 실행하지 않음 |
+| 스크랩 단계에서 매번 실패, 생성기가 `No content could be scraped` | 스크랩 URL이 없어도 Chromium을 띄우므로 Playwright 브라우저가 없으면 실패(소스로 확인, 돌려 보지는 않음) | `uv run --no-project python -m playwright install chromium`(이 문서는 실행하지 않음) |
+| 스케줄러를 켜자마자 작업이 실행돼 API 비용이 나감(소스로 확인) | `last_run`이 빈 새 작업은 첫 점검에서 바로 대상이 됨(`advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/scheduler.py:192`). 비용은 키가 있을 때 남 | 작업을 `enabled: false`로 만들고(`TaskCreate`가 `enabled`를 받음, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/models/tasks_schemas.py:63`과 `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/models/tasks_schemas.py:82`), 켜기 전에 `/api/tasks/pending`으로 무엇이 돌지 확인한다 |
+| `bootstrap_demo.py`가 "not empty. aborting" | `databases/`와 `podcasts/`가 비어 있어야 데모 zip을 풀음(소스로 확인, `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/bootstrap_demo.py:12-19`) | 백엔드를 처음 띄우기 전에 실행. 이 문서를 따라 이미 띄웠다면 `databases/`와 `podcasts/`를 지운 뒤 실행(실습용 소스·기사·작업도 함께 사라짐) — 이 문서는 GitHub에서 내려받는 이 스크립트를 실행하지 않음 |
 
-Redis 없이 Studio 채팅을 보내 보는 명령은 아래와 같습니다. 약 1분 걸립니다.
+Redis 없이 Studio 채팅을 보내 보는 명령은 아래와 같습니다. Windows에서 약 70초 걸립니다. **Redis가 떠 있으면 돌리지 마세요.** 메시지가 실제로 큐에 들어가고, 워커가 켜져 있으면 나중에 OpenAI가 불립니다.
 
 ```bash
 uv run --no-project python -c "
@@ -1080,7 +1157,7 @@ print(c.post('/api/podcast-agent/session', json={}).status_code, len(c.get('/api
 t = time.time()
 with contextlib.redirect_stdout(io.StringIO()):
     r = c.post('/api/podcast-agent/chat', json={'session_id': 's1', 'message': 'hello'})
-print(r.status_code, r.json()['stage'], r.json()['is_processing'], round(time.time() - t) > 30)
+print(r.status_code, r.json()['stage'], r.json()['is_processing'], round(time.time() - t) > 10)
 "
 ```
 
@@ -1108,7 +1185,7 @@ ModuleNotFoundError No module named 'slack_bolt'
 
 - 사본에서 `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/tools/embedding_search.py:22`의 식을 `1.0 - float(distance) / 2.0`으로 바꾸고 Step 5의 두 명령을 다시 돌려, 코사인 0.75짜리가 걸러지는지 확인해 보기
 - `advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/beifong/utils/rss_feed_parser.py:47`의 판정을 "`bozo`이고 항목이 하나도 없을 때만 거부"로 바꾸는 사본을 만들어, `&`가 든 피드에서 항목이 몇 개 살아나는지 Step 3 명령으로 확인해 보기
-- Redis를 띄우고(`REDIS_HOST`·`REDIS_PORT` 확인) 별도 터미널에서 `python -m celery_worker`를 켠 뒤 Studio 채팅에서 메시지를 한 번 보내, 세션 상태가 `internal_sessions.db`에 쌓이는 모습을 표로 확인해 보기(OpenAI 키 필요)
+- Redis를 띄우고(`REDIS_HOST`·`REDIS_PORT` 확인) 별도 터미널에서 `uv run --no-project python -m celery_worker`를 켠 뒤 Studio 채팅에서 메시지를 한 번 보내, 세션 상태가 `internal_sessions.db`에 쌓이는 모습을 표로 확인해 보기(OpenAI 키 필요)
 
 ## 다음 날 예고
 

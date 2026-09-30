@@ -1,0 +1,23 @@
+...@../../_tools/theme
+direction: down
+
+ui: "웹 UI\n(StudioChat.js)" { class: ours }
+slack: "Slack 봇\n(integrations/slack/chat.py)" { class: ours }
+api: "FastAPI\n(async_podcast_agent_router.py,\nasync_podcast_agent_service.py)" { class: ours }
+redis: "Redis\n(브로커 · 락 · 결과)" { class: store }
+
+sessions: "세션 저장소" {
+  class: group
+  grid-rows: 2
+  grid-gap: 8
+  agent_sessions: "agent_sessions.db" { class: store }
+  internal_sessions: "internal_sessions.db" { class: store }
+}
+
+media: "podcasts/\n(audio · images · recordings)" { class: file }
+
+ui -> api: "/api/podcast-agent/* (session · chat · status · 목록 · 기록 · 삭제)"
+slack -> api: "/api/podcast-agent/* (session · chat · status)"
+api -> redis: "delay() · lock_info · AsyncResult"
+api -> sessions: "세션 조회 · 목록 · 기록 · 삭제"
+api -> media: "세션 삭제 시 파일 지우기 · 녹화 찾기"

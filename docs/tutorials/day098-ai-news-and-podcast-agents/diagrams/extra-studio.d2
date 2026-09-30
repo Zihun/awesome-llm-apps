@@ -1,7 +1,6 @@
 ...@../../_tools/theme
 direction: down
 
-api: "FastAPI\n(async_podcast_agent_router.py)" { class: ours }
 worker: "Celery 워커\n(celery_tasks.py · agent_chat)" { class: ours }
 redis: "Redis\n(브로커 · 락 · 결과)" { class: store }
 
@@ -13,12 +12,14 @@ sessions: "세션 저장소" {
   internal_sessions: "internal_sessions.db" { class: store }
 }
 
-articles: "기사 저장소" {
+articles: "검색 도구가 읽는 저장소" {
   class: group
-  grid-rows: 2
+  grid-rows: 4
   grid-gap: 8
   tracking: "feed_tracking.db" { class: store }
   faiss: "FAISS 색인" { class: store }
+  sources: "sources.db" { class: store }
+  social: "social_media.db" { class: store }
 }
 
 result: "결과" {
@@ -37,9 +38,8 @@ ext: "외부 서비스" {
   browser: "Chromium" { class: ext }
 }
 
-api -> redis: "delay() · lock_info 조회"
 worker -> redis: "작업 수신 · 결과 · 락"
 worker -> sessions: "대화 기록 · 세션 상태"
-worker -> articles: "기사 검색 도구"
+worker -> articles: "검색 도구 읽기"
 worker -> result: "저장 · 오디오 · 배너"
-worker -> ext: "gpt-4o · DALL·E · 브라우저 검색"
+worker -> ext: "gpt-4o · DALL·E · TTS · 브라우저 검색·스크랩"

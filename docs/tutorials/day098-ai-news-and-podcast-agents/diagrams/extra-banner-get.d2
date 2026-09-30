@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+image: "배너 에이전트\n(pipeline/image_generate_agent.py)" { class: ours }
+blob: "이미지 URL 호스트\n(DALL·E가 돌려준 주소)" { class: ext }
+
+image -> blob: "requests.get(image_url, timeout=30) — 그림마다"
+blob -> image: "PNG 바이트 (response.content)"
