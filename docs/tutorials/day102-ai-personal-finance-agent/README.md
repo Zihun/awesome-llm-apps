@@ -1,12 +1,12 @@
 # Day 102 · 💰 AI Personal Finance Planner
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 65분(앱은 68줄이지만 Step 5에서 가짜 서버와 확인 스크립트를 직접 만들어 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 계획 1건에 $0.01~0.02(`gpt-4o` 호출 1회 — 입력은 지시문 약 1,000자와 사용자 입력으로 어림해 약 300토큰, 출력은 `max_tokens` 제한이 없어 1,000~2,000토큰이라고 보고, 모델 페이지의 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)을 대입한 대략치이며 키가 없어 실제 토큰 수는 확인하지 못함. SerpAPI는 호출되지 않아 0) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 65분(앱은 68줄이지만 Step 5에서 가짜 서버와 확인 스크립트를 직접 만들어 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 계획 1건에 $0.01~0.02(`gpt-4o` 호출 1회 — 입력은 지시문 약 1,000자와 사용자 입력으로 어림해 약 300토큰, 출력은 `max_tokens` 제한이 없어 1,000~2,000토큰이라고 보고, 모델 페이지의 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)을 대입한 대략치이며 키가 없어 실제 토큰 수는 확인하지 못함. SerpAPI는 호출되지 않아 0) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent`
 
 ## 오늘 만들 것
 
-재무 목표와 현재 상황을 적고 버튼을 누르면 `gpt-4o`가 예산·투자·저축 계획을 써 주는 Streamlit 앱입니다. `finance_agent.py` 한 파일(편집기 기준 68줄)에 agno의 `Agent` 둘을 만들고, 뼈대는 Day 012의 여행 앱과 같습니다. 키 두 개가 있어야 화면이 열리고, `SerpApiTools`를 쥔 Researcher와 도구 없는 Planner가 있습니다. 다른 점이 오늘의 주제입니다. Day 012는 Researcher의 요약을 Planner의 프롬프트에 끼웠지만(Day 012 Step 4), 이 앱에서 에이전트를 부르는 줄은 67행의 `planner.run(...)` 하나뿐입니다. Researcher는 만들어지기만 하고 한 번도 실행되지 않으니 SerpAPI 키는 화면을 여는 관문일 뿐이고 검색은 일어나지 않습니다.
+재무 목표와 현재 상황을 적고 버튼을 누르면 `gpt-4o`가 예산·투자·저축 계획을 써 주는 Streamlit 앱입니다. `finance_agent.py` 한 파일(편집기 기준 68줄)에 agno의 `Agent` 둘을 만들고, 뼈대는 Day 012의 여행 앱과 같습니다. 키 두 개가 있어야 화면이 열리고, `SerpApiTools`를 쥔 Researcher와 도구 없는 Planner가 있습니다. Day 012는 Researcher의 요약을 Planner의 프롬프트에 끼웠지만(Day 012 Step 4), 이 앱에서 에이전트를 부르는 줄은 67행의 `planner.run(...)` 하나뿐입니다. Researcher는 만들어지기만 하고 한 번도 실행되지 않으니 SerpAPI 키는 화면을 여는 관문일 뿐이고 검색은 일어나지 않습니다.
 
-Planner의 지시문은 "a list of research results"를 받는다고 말하지만 모델에 가는 요청에 연구 결과는 없고, 금융 조언이라는 고지는 화면·지시문·앱 README 어디에도 없습니다(모두 Step 5에서 확인). 이 문서는 OpenAI와 SerpAPI에 요청을 보내지 않고 모델로 가는 요청을 내 PC의 가짜 서버로 받아 봅니다. 키가 없어 모델의 실제 응답은 확인하지 못했고, 문서의 계획 텍스트는 가짜 서버의 고정 응답이라 어떤 금융 판단의 근거도 아닙니다. 아래는 완성된 아키텍처이고, 그림의 "(호출 안 됨)"은 코드가 연결해 두었지만 이 앱의 실행 경로에서는 쓰이지 않는다는 뜻입니다.
+Planner의 지시문은 "a list of research results"를 받는다고 말하지만 모델에 가는 요청에 연구 결과는 없고, 금융 조언이라는 고지는 화면·지시문·앱 README 어디에도 없습니다(모두 Step 5에서 확인). 이 문서는 OpenAI와 SerpAPI에 요청을 보내지 않고 모델로 가는 요청을 내 PC의 가짜 서버로 받아 봅니다. 키가 없어 모델의 실제 응답은 확인하지 못했고, 문서의 계획 텍스트는 가짜 서버의 고정 응답이라 어떤 금융 판단의 근거도 아닙니다. 아래는 완성된 아키텍처입니다. 그림의 "생성"은 화면 스크립트가 에이전트를 만드는 줄이고, "(호출 안 됨)"은 코드가 연결해 두었지만 이 앱의 실행 경로에서는 쓰이지 않는다는 뜻입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -25,7 +25,7 @@ Planner의 지시문은 "a list of research results"를 받는다고 말하지�
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
 | 사용자 | 브라우저에서 키 둘, 목표, 상황을 적고 버튼을 누른다 | 코드 없음 (브라우저) |
-| Streamlit 화면 | 제목, 키 입력 두 칸, 두 키가 있어야 이어지는 입력창·버튼, 결과 출력 | `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:8-18`, `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:60-68` |
+| Streamlit 화면 | 제목, 키 입력 두 칸, 두 키가 있으면 두 에이전트를 만들고 입력창·버튼·결과 출력으로 이어진다 | `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:8-18`, `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:60-68` |
 | 재무 조사 에이전트 (`researcher`) | 검색어 3개를 만들어 `search_google`로 찾고 10건을 고르라는 지시를 받지만 한 번도 실행되지 않는다 | `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:19-38` |
 | 검색 도구 (`SerpApiTools`) | `search_google` 함수 하나를 노출한다. 생성만 되고 불리지 않는다 | `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:4`, `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:36` |
 | 재무 계획 에이전트 (`planner`) | 도구 없이 지시문만으로 예산·투자·저축 계획을 쓴다. 버튼이 부르는 유일한 에이전트 | `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:39-58`, `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:67` |
@@ -47,7 +47,7 @@ uv venv
 uv pip install -r requirements.txt
 ```
 
-(pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.) 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 이유는 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)에 있습니다. 앱 README의 1단계는 `git clone` 바로 뒤에 이 `cd`를 적지만(`advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/README.md:14-17`) clone은 저장소 이름의 새 폴더를 만드므로 그 폴더로 먼저 들어가야 맞습니다(소스로 확인).
+(pip 대안: bash는 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`입니다. PowerShell 5.1은 `&&`를 받지 않으므로(PowerShell 7부터 지원) 세 줄로 `python -m venv .venv`, `.venv\Scripts\Activate.ps1`, `pip install -r requirements.txt`를 차례로 씁니다. 실행해 보지 못했습니다.) 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 이유는 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)에 있습니다. 앱 README의 1단계는 `git clone` 바로 뒤에 이 `cd`를 적지만(`advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/README.md:14-17`) clone은 저장소 이름의 새 폴더를 만드므로 그 폴더로 먼저 들어가야 맞습니다(소스로 확인).
 
 `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/requirements.txt:1-4`
 
@@ -58,7 +58,7 @@ openai
 google-search-results
 ```
 
-4줄이고 마지막 줄에 개행이 없어 `wc -l`은 3으로 셉니다. 버전 상한이 없어서 이 문서를 만들 때(2026-10-05)는 Python 3.13.3에서 agno 3.1.1, streamlit 1.65.0, openai 3.24.0, google-search-results 2.4.2를 포함해 패키지 70개가 깔렸습니다(직접 확인). `google-search-results`는 검색을 하지 않는 이 앱에서도 빠질 수 없습니다. 4행의 `agno.tools.serpapi` 임포트가 `import serpapi`를 시도하고 실패하면 `` `google-search-results` not installed. ``로 바꿔 던지기 때문입니다(소스로 확인, agno 3.1.1의 `agno/tools/serpapi.py` 8~11행. Day 012도 확인한 사실이고 패키지를 빼 본 실험은 문제 해결에 있습니다).
+4줄이고 마지막 줄에 개행이 없어 `wc -l`은 3으로 셉니다. 버전 상한이 없어서 이 문서를 만들 때(2026-10-05)는 Python 3.13.3에서 agno 3.1.1, streamlit 1.65.0, openai 3.24.0, google-search-results 2.4.2를 포함해 패키지 70개가 깔렸습니다(직접 확인). `google-search-results`는 검색을 하지 않는 이 앱에서도 빠질 수 없습니다. 4행의 `agno.tools.serpapi` 임포트가 `import serpapi`를 시도하고 실패하면 `` `google-search-results` not installed. ``로 바꿔 던지기 때문입니다(소스로 확인, agno 3.1.1의 `agno/tools/serpapi.py` 8~11행. Day 012도 확인한 사실입니다).
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -128,7 +128,7 @@ serp_api_key = st.text_input("Enter Serp API Key for Search functionality", type
 if openai_api_key and serp_api_key:
 ```
 
-키는 환경변수가 아니라 화면의 비밀번호 칸에 붙여넣습니다. 18행의 `if`가 19~68행 전부를 감싸므로 두 칸 중 하나라도 비면 제목·캡션·두 칸만 그려집니다. Day 012 Step 2와 Day 081 Step 2의 게이트와 같고, Streamlit이 상호작용마다 스크립트를 처음부터 다시 실행하는 리런은 Day 012 Step 2가 설명했습니다. 게이트는 값이 비어 있지 않은지만 봅니다. SerpAPI 칸에 무엇을 넣든 통과합니다(Step 5에서 `anything`으로 직접 확인).
+키는 환경변수가 아니라 화면의 비밀번호 칸에 붙여넣습니다. 18행의 `if`가 19~68행 전부를 감싸므로 두 칸 중 하나라도 비면 제목·캡션·두 칸만 그려집니다. 게이트는 Day 012 Step 2·Day 081 Step 2와 같고, 상호작용마다 스크립트를 처음부터 다시 실행하는 리런은 Day 012 Step 2가 설명했습니다. 게이트는 값이 비어 있지 않은지만 봅니다. SerpAPI 칸에 무엇을 넣든 통과합니다(Step 5에서 `anything`으로 직접 확인).
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -217,7 +217,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:61388
     )
 ```
 
-구성은 Day 012 Step 3의 Researcher와 같고 도메인만 재무로 바뀌었습니다. `SerpApiTools(api_key=...)`는 키를 저장하고 `search_google` 함수를 등록할 뿐 네트워크를 쓰지 않습니다(소스로 확인, agno 3.1.1의 `agno/tools/serpapi.py` 15~33행. 검색이 일어나는 곳은 `search_google` 함수 안의 `serpapi.GoogleSearch(...)` 호출, 같은 파일 63~64행입니다). 앱의 특이점은 여기서 나옵니다. `researcher`라는 이름은 정의(19행)와 25행의 설명문 속 낱말 말고는 파일 어디에도 없습니다. 이 에이전트의 `run`을 부르는 줄이 없어서 모델도 검색도 쓰이지 않습니다. `name`과 `role`은 Day 081 Step 3가 본 대로 `Team`이 멤버를 소개할 때 쓰는 인자입니다. 이 앱에는 팀이 없지만 `role`은 에이전트 자신의 시스템 메시지에도 들어갑니다(Step 5에서 Planner의 요청으로 확인).
+구성은 Day 012 Step 3의 Researcher와 같고 도메인만 재무로 바뀌었습니다(`SerpApiTools`가 기본값으로 `search_google` 하나만 노출한다는 것도 Day 012 Step 3과 Day 081 Step 3가 이미 확인했으므로 되풀이하지 않습니다). `SerpApiTools(api_key=...)`는 키를 저장하고 `search_google` 함수를 등록할 뿐 네트워크를 쓰지 않습니다(소스로 확인, agno 3.1.1의 `agno/tools/serpapi.py` 15~33행. 검색이 일어나는 곳은 `search_google` 함수 안의 `serpapi.GoogleSearch(...)` 호출, 같은 파일 63~64행입니다). 그런데 `researcher`라는 이름은 정의(19행)와 25행의 설명문 속 낱말 말고는 파일 어디에도 없습니다. 이 에이전트의 `run`을 부르는 줄이 없어서 모델도 검색도 쓰이지 않습니다. `name`과 `role`은 Day 081 Step 3가 본 대로 `Team`이 멤버를 소개할 때 쓰는 인자입니다. 이 앱에는 팀이 없지만 `role`은 에이전트 자신의 시스템 메시지에도 들어갑니다(Step 5에서 Planner의 요청으로 확인).
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -227,26 +227,13 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:61388
 grep -n researcher finance_agent.py
 ```
 
-(PowerShell: `Select-String researcher finance_agent.py`. 줄 번호가 `finance_agent.py:19:` 꼴로 앞에 붙습니다. 실행해 보지 못했습니다.)
+(PowerShell: `Select-String -CaseSensitive researcher finance_agent.py`. 줄 번호가 `finance_agent.py:19:` 꼴로 앞에 붙습니다. `-CaseSensitive`가 없으면 대소문자를 가리지 않아 `name="Researcher",`가 있는 20행도 찍힙니다(`grep -n -i researcher`로 같은 매칭을 확인). 실행해 보지 못했습니다.)
 
 직접 확인한 출력:
 
 ```
 19:    researcher = Agent(
 25:        You are a world-class financial researcher. Given a user's financial goals and current financial situation,
-```
-
-```bash
-uv run --no-project python -c "
-from agno.tools.serpapi import SerpApiTools
-print(list(SerpApiTools(api_key='anything').functions))
-"
-```
-
-직접 확인한 출력:
-
-```
-['search_google']
 ```
 
 실행하는 줄이 없다는 것은 소스를 읽어 아는 사실이고, 실제로 불리지 않는다는 것은 Step 5에서 `Agent.run` 호출을 세어 확인합니다.
@@ -337,7 +324,7 @@ Planner | gpt-4o | []
 agents after typing a goal: 4
 ```
 
-Researcher만 도구를 가졌고 Planner의 도구는 빈 리스트입니다. 목표 한 줄을 입력하는 리런마다 에이전트가 둘씩 새로 만들어졌습니다.
+Researcher만 도구를 가졌고 Planner의 도구는 빈 리스트입니다. 에이전트 수는 리런마다 둘씩 늘었습니다.
 
 ### Step 5. 입력창, 버튼, 그리고 호출 한 번
 
@@ -359,13 +346,13 @@ Researcher만 도구를 가졌고 Planner의 도구는 빈 리스트입니다. �
             st.write(response.content)
 ```
 
-두 입력창과 버튼도 게이트 안에 있습니다. `st.button`은 클릭이 일으킨 리런에서만 `True`이므로 호출은 그 리런 한 번에 일어납니다. 프롬프트는 문자열 하나이고 두 칸이 비었는지는 검사하지 않습니다. `stream=False`라 응답이 다 올 때까지 기다려 `RunOutput`의 `.content`를 `st.write`로 찍습니다. 대화 기록도 `st.session_state`도 없어서 요청은 서로를 모르고 화면의 계획은 다음 리런에 사라집니다. 호출이 실패해도 같은 줄이 실행됩니다. agno의 `Agent.run`은 모델 오류를 예외로 던지지 않고 `status`가 `error`인 `RunOutput`에 오류 문장을 담아 돌려주고(소스로 확인, agno 3.1.1의 `agno/agent/_run.py` 736~743행), 앱은 `status`를 보지 않으므로 그 문장이 계획 자리에 일반 글자로 나옵니다.
+두 입력창과 버튼도 게이트 안에 있습니다. `st.button`은 클릭이 일으킨 리런에서만 `True`이므로 호출은 그 리런 한 번에 일어납니다. 프롬프트는 문자열 하나이고 두 칸이 비었는지는 검사하지 않습니다. `stream=False`라 응답이 다 올 때까지 기다리는 동안 `st.spinner`가 `Processing...`을 보여 주고, 끝나면 `RunOutput`의 `.content`를 `st.write`로 찍습니다. 대화 기록도 `st.session_state`도 없어서 요청은 서로를 모르고 화면의 계획은 다음 리런에 사라집니다. 호출이 실패해도 같은 줄이 실행됩니다. agno의 `Agent.run`은 모델 오류를 예외로 던지지 않고 `status`가 `error`인 `RunOutput`에 오류 문장을 담아 돌려주고(소스로 확인, agno 3.1.1의 `agno/agent/_run.py` 736~743행), 앱은 `status`를 보지 않으므로 그 문장이 계획 자리에 일반 글자로 나옵니다.
 
 성공한 `planner.run`은 agno의 익명 통계도 부릅니다. AgentOS가 없는 이 앱에서는 Day 047 Step 5가 다룬 두 가지 가운데 `POST /telemetry/runs` 하나이고 `AGNO_TELEMETRY=false`로 끕니다(소스로 확인, agno 3.1.1의 `agno/agent/_run.py` 670행과 `agno/agent/_telemetry.py`).
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** OpenAI에 요청을 보내지 않고 모델로 가는 요청을 보려고, `openai` 패키지가 읽는 환경변수 `OPENAI_BASE_URL`을 내 PC의 가짜 서버로 돌립니다. 앱 폴더에 파일 둘을 편집기로 만듭니다(`AppTest.from_file`은 상대 경로를 스크립트가 있는 폴더 기준으로 풀어서 `finance_agent.py`와 같은 폴더여야 합니다). 첫째는 받은 요청을 찍고 고정 응답을 돌려주는 가짜 서버로, 키가 `bad-key`일 때만 401을 돌려줍니다.
+**확인.** OpenAI에 요청을 보내지 않고 모델로 가는 요청을 보려고, `openai` 패키지가 읽는 환경변수 `OPENAI_BASE_URL`을 내 PC의 가짜 서버로 돌립니다. 앱 폴더에 파일 둘을 편집기로 만듭니다(`AppTest.from_file`의 상대 경로가 스크립트 위치 기준이라 `finance_agent.py`와 같은 폴더여야 합니다). 첫째는 받은 요청을 찍고 고정 응답을 돌려주는 가짜 서버로, 키가 `bad-key`일 때만 401을 돌려줍니다.
 
 `fake_openai.py`
 
@@ -534,7 +521,7 @@ README.md:0
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-버튼 클릭이 일으킨 리런 하나를 따라갑니다. 스크립트가 처음부터 다시 실행되어 화면이 Researcher와 Planner를 만들고, Researcher는 이후 어떤 메시지도 받지 않습니다. 그림에서 조사 에이전트의 수명선만 홀로 이어지는 까닭입니다. 화면이 `planner.run(...)`에 목표와 상황 문자열을 넘기면 Planner가 `developer`와 `user` 두 메시지를 `gpt-4o`에 보내 계획 텍스트를 받습니다. 성공한 실행은 agno가 통계 전송을 큐에 넣고(백그라운드 스레드가 보냅니다) `RunOutput.content`를 돌려주며, 화면이 이를 `st.write`로 찍습니다. 실패하면 오류 문장이 같은 길로 돌아옵니다. 이 시퀀스는 가짜 서버로 직접 돌려 본 것이고, OpenAI의 실제 응답과 SerpAPI는 확인하지 못했습니다.
+버튼 클릭이 일으킨 리런 하나를 따라갑니다. 스크립트가 처음부터 다시 실행되어 화면이 Researcher와 Planner를 만들고, Researcher는 이후 어떤 메시지도 받지 않습니다. 그림에서 조사 에이전트의 수명선만 홀로 이어지는 까닭입니다. 버튼이 눌렸으므로 화면은 스피너(`Processing...`)를 띄운 채 `planner.run(...)`에 목표와 상황 문자열을 넘기고, Planner는 `developer`와 `user` 두 메시지를 `gpt-4o`에 보내 계획 텍스트를 받습니다. 성공한 실행은 agno가 통계 전송을 큐에 넣고(백그라운드 스레드가 보냅니다) `RunOutput.content`를 돌려주며, 화면이 이를 `st.write`로 찍습니다. 실패하면 오류 문장이 같은 길로 돌아옵니다. 이 시퀀스는 가짜 서버로 직접 돌려 본 것이고, OpenAI의 실제 응답과 SerpAPI는 확인하지 못했습니다.
 
 ## 실행 체크리스트
 
@@ -564,7 +551,7 @@ README.md:0
 ## 더 해보기
 
 - `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:67-68`을 복사본에서 고쳐 Researcher를 실제로 연결해 보세요. Day 012 Step 4처럼 `researcher.run(...)`의 `.content`를 Planner 프롬프트에 `Research results:`로 끼우고 `check_flow.py`를 다시 돌리면, 요청이 2건이 되고 첫 요청의 `keys`에만 `tools`가 들어갑니다(복사본에서 직접 확인). 가짜 서버는 도구 호출을 돌려주지 않으므로 SerpAPI에는 닿지 않습니다.
-- 같은 줄에서 `response.status`가 `RunStatus.error`이면 `st.error(response.content)`를 쓰고, 화면 위에 `st.warning`으로 금융 조언이 아니라는 고지를 넣어 보세요(복사본에서 직접 확인: `from agno.run.agent import RunOutput, RunStatus`로 임포트하면 틀린 키에서 `at.error`에 오류 문장이 담기고 `at.warning`에 고지가 보입니다).
+- 같은 줄에서 `response.status`가 `RunStatus.error`이면 `st.error(response.content)`를 쓰고, 화면 위에 `st.warning`으로 금융 조언이 아니라는 고지를 넣어 보세요(복사본에서 직접 확인: `from agno.run.agent import RunOutput, RunStatus`로 임포트하면 틀린 키에서 `at.error`에 오류 문장이, `at.warning`에 고지가 담깁니다).
 - `advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/finance_agent.py:64-68`에서 두 칸이 비었으면 `st.warning`으로 막고, 계획은 `st.session_state["plan"]`에 저장해 입력을 고쳐도 남게 해 보세요(복사본에서 직접 확인: 빈 칸으로 누르면 요청이 나가지 않고, 입력을 고친 뒤에도 계획이 남습니다).
 
 ## 다음 날 예고

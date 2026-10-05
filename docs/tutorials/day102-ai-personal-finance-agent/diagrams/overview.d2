@@ -12,6 +12,8 @@ agno_api: Agno 사용 통계 API { class: ext }
 
 user -> ui: 키 2개 · 목표 · 상황 입력, 버튼 클릭
 ui -> user: 계획 텍스트 표시 (st.write)
+ui -> researcher: Agent(...) 생성 (run 호출 없음)
+ui -> planner: Agent(...) 생성
 ui -> planner: run(목표 · 상황 문자열)
 planner -> openai: developer · user 메시지
 planner -> agno_api: 실행 메타데이터 (성공 시)

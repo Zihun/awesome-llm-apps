@@ -11,6 +11,7 @@ agno_api: Agno 사용 통계 API { class: ext }
 user -> ui: Generate Financial Plan 클릭
 ui -> researcher: Agent(...) 생성 (run 호출 없음)
 ui -> planner: Agent(...) 생성
+ui -> user: 'st.spinner("Processing...")'
 ui -> planner: run(목표 · 상황 문자열)
 planner -> openai: developer · user 메시지
 openai -> planner: 계획 텍스트
