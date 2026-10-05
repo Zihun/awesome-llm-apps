@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "CustomerSupportAIAgent" { class: ours }
+ui: "Streamlit 화면" { class: ours }
+state: "세션 상태\n(st.session_state)" { class: store }
+user: 고객 { class: person }
+
+agent -> ui: "customer_data (dict) 반환"
+ui -> state: "st.session_state.customer_data =\nsupport_agent.generate_synthetic_data(customer_id)"
+ui -> user: "사이드바에\n성공 배너\n(st.sidebar.success)"

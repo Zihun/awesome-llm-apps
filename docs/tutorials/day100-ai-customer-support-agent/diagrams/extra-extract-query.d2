@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "CustomerSupportAIAgent" { class: ours }
+memory: "mem0 Memory" { class: ours }
+openai: "OpenAI API" { class: ext }
+qdrant: "Qdrant" { class: store }
+
+agent -> memory: "add(query, user_id='alice',\nmetadata={'app_id': 'customer-support',\n'role': 'user'})"
+memory -> openai: "사실 추출 요청 (gpt-4o-mini), 입력: 'user: Where is my order?'"
+openai -> memory: "{\"facts\": [...]} (사실 문장 목록)"
+memory -> openai: "사실 임베딩 요청 (text-embedding-3-small) — 사실마다 한 번"
+openai -> memory: "1536차원 임베딩 벡터"
+memory -> qdrant: "비슷한 기존 기억 검색\n(사실마다, limit=5 ·\nuser_id 필터)"
+qdrant -> memory: "기존 기억 목록\n(최대 5개,\n처음이면 빈 목록)"

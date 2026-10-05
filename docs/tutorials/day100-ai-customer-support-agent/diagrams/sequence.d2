@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "CustomerSupportAIAgent" { class: ours }
+ui: "Streamlit 화면" { class: ours }
+state: "세션 상태\n(st.session_state)" { class: store }
+user: 고객 { class: person }
+
+user -> ui: "채팅창에\n질문 입력\n('Where is my order?')"
+ui -> state: "st.session_state.messages.append({'role': 'user', 'content': query})"
+ui -> user: "질문을\n말풍선으로 표시\n(st.chat_message)"
+ui -> agent: "handle_query(query,\nuser_id='alice')"

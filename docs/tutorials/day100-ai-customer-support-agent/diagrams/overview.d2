@@ -1,0 +1,25 @@
+...@../../_tools/theme
+direction: down
+
+user: 고객 (브라우저) { class: person }
+
+app: "customer_support_agent.py (Streamlit 앱 한 파일)" {
+  class: group
+  ui: "Streamlit 화면 (키 · 사이드바 · 채팅창)" { class: ours }
+  agent: "상담 에이전트 (CustomerSupportAIAgent)" { class: ours }
+  state: "세션 상태 (st.session_state)" { class: store; height: 84 }
+}
+memory: "기억 계층 (mem0 Memory, mem0ai 0.1.29)" { class: ours; width: 640 }
+qdrant: "벡터 저장소 (Qdrant)" { class: store; height: 84 }
+history: "이력 DB (history.db)" { class: store; height: 84 }
+openai: "OpenAI API" { class: ext }
+posthog: "익명 통계 (PostHog)" { class: ext }
+
+user -> app.ui: "API 키 · 고객 ID · 질문 · 버튼"
+app.ui -> user: "답변 · 기억 목록 · 오류 배너"
+app.agent -> memory: "search · add · get_all"
+app.agent -> openai: "gpt-4 채팅 (답변 · 합성 데이터 JSON)"
+memory -> openai: "text-embedding-3-small 임베딩 ·\ngpt-4o-mini 사실 추출 · 갱신 판단"
+memory -> qdrant: "벡터 검색 · 저장 · 목록\n(localhost:6333)"
+memory -> history: "ADD 이력\n(SQLite)"
+memory -> posthog: "익명 이벤트"

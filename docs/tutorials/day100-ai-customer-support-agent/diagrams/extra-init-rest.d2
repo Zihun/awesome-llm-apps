@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "CustomerSupportAIAgent" { class: ours }
+history: "history.db" { class: store }
+memory: "mem0 Memory" { class: ours }
+posthog: "PostHog" { class: ext }
+
+memory -> history: "history.db 열기 (MEM0_DIR 안, 없으면 만듦)"
+memory -> posthog: "mem0.init 이벤트\n(MEM0_TELEMETRY=False면 안 보냄)"
+memory -> agent: "Memory 객체\n반환"

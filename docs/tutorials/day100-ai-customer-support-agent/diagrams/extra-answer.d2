@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "CustomerSupportAIAgent" { class: ours }
+openai: "OpenAI API" { class: ext }
+
+agent -> agent: "컨텍스트 조립 ('Relevant past information:' + '- 기억' 줄들 +\n'Customer: 질문' + 'Support Agent:')"
+agent -> openai: "chat.completions.create(model='gpt-4',\nmessages=[system, user])"
+openai -> agent: "답변 텍스트\n(choices[0].message.content)"

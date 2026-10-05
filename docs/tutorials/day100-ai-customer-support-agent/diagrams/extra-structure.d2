@@ -1,0 +1,9 @@
+...@../../_tools/theme
+direction: right
+
+ui: "Streamlit 화면 (키 · 사이드바 · 채팅창)" { class: ours }
+agent: "상담 에이전트 (CustomerSupportAIAgent)" { class: ours }
+state: "세션 상태 (st.session_state)" { class: store; height: 84 }
+
+ui -> agent: "handle_query ·\ngenerate_synthetic_data ·\nget_memories"
+ui -> state: "messages · previous_customer_id ·\ncustomer_data 읽기 · 쓰기"

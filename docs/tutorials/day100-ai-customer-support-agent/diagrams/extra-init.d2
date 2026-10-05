@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "CustomerSupportAIAgent" { class: ours }
+memory: "mem0 Memory" { class: ours }
+qdrant: "Qdrant" { class: store }
+
+agent -> memory: "Memory.from_config(config)\nconfig: Qdrant localhost:6333,\nversion 'v1.1'"
+memory -> qdrant: "get_collections()\n— 컬렉션 목록 확인"
+qdrant -> memory: "컬렉션 목록\n(처음이면 'mem0'가 없음)"
+memory -> qdrant: "create_collection('mem0',\nsize=1536, distance=Cosine)\n— 컬렉션이 없을 때만"
