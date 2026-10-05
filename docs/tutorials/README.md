@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 99 / 167일 완료
+진도: 105 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -190,12 +190,12 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 097](day097-earnings-call-analyst-agent/README.md) | 📡 Earnings Call Analyst Agent | [advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent](../../advanced_ai_agents/single_agent_apps/earnings_call_analyst_agent/) |
 | ✅ | [Day 098](day098-ai-news-and-podcast-agents/README.md) | 🎧 AI Social Media News and Podcast Agent | [advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents](../../advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/) |
 | ✅ | [Day 099](day099-ai-agent-governance/README.md) | 🛡️ AI Agent Governance - Policy-Based Sandboxing | [advanced_ai_agents/single_agent_apps/ai_agent_governance](../../advanced_ai_agents/single_agent_apps/ai_agent_governance/) |
-| ⬜ | [Day 100](day100-ai-customer-support-agent/README.md) | 🛒 AI Customer Support Agent with Memory | [advanced_ai_agents/single_agent_apps/ai_customer_support_agent](../../advanced_ai_agents/single_agent_apps/ai_customer_support_agent/) |
-| ⬜ | [Day 101](day101-ai-email-gtm-reachout-agent/README.md) | 🚀 AI Email GTM Reachout Agent | [advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent](../../advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/) |
-| ⬜ | [Day 102](day102-ai-personal-finance-agent/README.md) | 💰 AI Personal Finance Planner | [advanced_ai_agents/single_agent_apps/ai_personal_finance_agent](../../advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/) |
-| ⬜ | [Day 103](day103-ai-recipe-meal-planning-agent/README.md) | 🍽️ AI Recipe & Meal Planning Agent | [advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent](../../advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/) |
-| ⬜ | [Day 104](day104-ai-startup-insight-fire1-agent/README.md) | 🔥 AI Startup Insight with Firecrawl FIRE-1 Agent | [advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent](../../advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/) |
-| ⬜ | [Day 105](day105-ai-aqi-analysis-agent/README.md) | 🌍 AQI Analysis Agent | [advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent](../../advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/) |
+| ✅ | [Day 100](day100-ai-customer-support-agent/README.md) | 🛒 AI Customer Support Agent with Memory | [advanced_ai_agents/single_agent_apps/ai_customer_support_agent](../../advanced_ai_agents/single_agent_apps/ai_customer_support_agent/) |
+| ✅ | [Day 101](day101-ai-email-gtm-reachout-agent/README.md) | 🚀 AI Email GTM Reachout Agent | [advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent](../../advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/) |
+| ✅ | [Day 102](day102-ai-personal-finance-agent/README.md) | 💰 AI Personal Finance Planner | [advanced_ai_agents/single_agent_apps/ai_personal_finance_agent](../../advanced_ai_agents/single_agent_apps/ai_personal_finance_agent/) |
+| ✅ | [Day 103](day103-ai-recipe-meal-planning-agent/README.md) | 🍽️ AI Recipe & Meal Planning Agent | [advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent](../../advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/) |
+| ✅ | [Day 104](day104-ai-startup-insight-fire1-agent/README.md) | 🔥 AI Startup Insight with Firecrawl FIRE-1 Agent | [advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent](../../advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/) |
+| ✅ | [Day 105](day105-ai-aqi-analysis-agent/README.md) | 🌍 AQI Analysis Agent | [advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent](../../advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/) |
 | ⬜ | [Day 106](day106-ai-codebase-migration-agent/README.md) | ⚡ Codebase Migration & Refactor Planner (LangGraph) | [advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent](../../advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/) |
 | ⬜ | [Day 107](day107-ai-domain-deep-research-agent/README.md) | 🔍 AI Domain Deep Research Agent | [advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent](../../advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/) |
 | ⬜ | [Day 108](day108-ai-email-gtm-outreach-agent/README.md) | Requirements | [advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent](../../advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent/) |
