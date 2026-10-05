@@ -984,4 +984,4 @@ gpt-4 500 ['system', 'user'] False
 
 ## 다음 날 예고
 
-[Day 100 · 🛒 AI Customer Support Agent with Memory](../day100-ai-customer-support-agent/README.md) — GPT-4o와 Mem0·Qdrant로 과거 상호작용을 기억하는 Streamlit 고객지원 에이전트를 다룹니다(원본 앱 README 기준).
+[Day 100 · 🛒 AI Customer Support Agent with Memory](../day100-ai-customer-support-agent/README.md) — `gpt-4`와 Mem0·Qdrant로 과거 상호작용을 기억하는 Streamlit 고객지원 에이전트를 다룹니다(앱 README는 GPT-4o라고 적지만 코드는 `gpt-4`입니다).
