@@ -12,7 +12,7 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| OpenAI API 키 (`OPENAI_API_KEY`) | Day 024가 이미 소개한 키. 모델 호출에 필요하지만, 이 문서는 키 없이 실행 방법·설정·예외 경계만 확인합니다 | https://platform.openai.com/api-keys 에서 발급 (이 실습에서는 생략 가능) |
+| OpenAI API 키 (`OPENAI_API_KEY`) | Day 024가 이미 소개한 키. 모델 호출에 필요하지만, 이 문서는 키 없이 실행 방법·설정·예외 경계만 확인합니다 | https://platform.openai.com/api-keys 에서 발급 (이 실습에서는 생략 가능). 앱 사이드바 Model 목록의 `gpt-3.5-turbo`는 2026-10-23에 종료 예정이다 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | 인터넷 연결 | PyPI에서 `openai-agents`·`streamlit` 설치 | 별도 설치 없음 |
 
@@ -688,6 +688,7 @@ MaxTurnsExceeded (no key needed): Max turns (0) exceeded
 | `SQLiteSession("id")`로 대화를 나눈 뒤 스크립트를 다시 실행해도 이전 대화가 전혀 남아있지 않음 | `SQLiteSession`의 `db_path` 기본값이 `:memory:`라 이름과 달리 디스크에 아무것도 쓰지 않는다(직접 확인) | `SQLiteSession(session_id, db_path="실제경로.db")`처럼 경로를 명시한다 |
 | `agent_runner.py`의 "General Exception Handling"에서 `except MaxTurnsExceeded`부터 `except AgentsException`까지 있어도 키 없을 때의 실제 오류는 항상 마지막 `except Exception`에서 잡힘 | 키 누락이 던지는 `openai.OpenAIError`는 `agents.AgentsException`의 서브클래스가 아니다(mro로 확인) — SDK 전용 except 절은 애초에 이 예외를 잡을 수 없다 | 이 SDK를 쓸 때는 `agents.exceptions`뿐 아니라 `openai.OpenAIError`(또는 상위의 `Exception`)도 함께 잡아야 한다고 전제하고 코드를 읽는다 |
 | 레슨 폴더에서 `--no-project` 없이 `uv run python -c "from agents import Agent"`를 실행하면 `ModuleNotFoundError`가 아니라 `AttributeError: module 'tensorflow' has no attribute 'contrib'`처럼 전혀 관계없어 보이는 오류가 남 | 저장소 루트 `.venv`에 이미 이름이 같은 `agents` 패키지가 설치되어 있다 — OpenAI Agents SDK가 아니라 **TensorFlow Agents**(`agents==1.4.0`, `Summary: Efficient TensorFlow implementation of reinforcement learning algorithms`)이고, 이 버전은 최신 TensorFlow에서 `tf.contrib`를 더 이상 찾지 못해 import 자체가 깨져 있다(직접 확인) | `uv run --no-project python -c "..."`처럼 항상 `--no-project`를 붙여 레슨 폴더의 로컬 가상환경을 쓴다 |
+| 2026-10-23 이후 사이드바 Model 목록에서 `gpt-3.5-turbo`를 고르고 Run Configuration 데모의 "Run with Config"나 "Run with Tracing"을 누르면 호출이 실패할 것으로 예상됨. 앱의 `except Exception`이 `st.error`로 `❌ Error: ...` 상자를 띄운다(`ai_agent_framework_crash_course/openai_sdk_crash_course/4_running_agents/agent_runner.py:383-384`, 434-435행, 소스로 확인). 종료 뒤의 실제 오류 문구는 아직 볼 수 없어 직접 보지 못함 | `gpt-3.5-turbo`(`ai_agent_framework_crash_course/openai_sdk_crash_course/4_running_agents/agent_runner.py:112`)가 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations, "2026-04-22: Legacy GPT model snapshots" 절)에 올라 있다. 그 행은 종료일 `October 23, 2026`, 모델 스냅숏 칸 `gpt-3.5-turbo-0125`(같은 칸에 앱이 쓰는 이름 `gpt-3.5-turbo`와 `gpt-3.5-turbo-completions`), 대체 모델 `gpt-5.6-terra`이다(공식 문서로 확인, 2026-10-05에 받은 원문). 목록의 기본값 `gpt-4o`와 나머지 선택지 `gpt-4o-mini`는 같은 표에 없어 영향이 없다(표에는 `gpt-4o-2024-05-13`이라는 다른 이름만 있음). 고른 모델은 Run Configuration 데모의 `RunConfig(model=model_choice)`(358행·403행)에만 쓰이고 다른 데모는 받아도 쓰지 않는다(소스로 확인) | 리포 코드는 고치지 않음. `gpt-3.5-turbo` 대신 목록의 다른 항목을 고른다. 항목 자체를 바꾸려면 복사본에서 112행의 모델 이름을 `gpt-5.6-terra`로 바꾼다. `gpt-5.6-terra`가 이 앱의 호출(openai-agents 0.22.3의 `RunConfig(model=...)`)과 맞는지는 키가 없어 확인하지 못했다 |
 
 ## 더 해보기
 

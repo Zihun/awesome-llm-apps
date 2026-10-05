@@ -1,6 +1,6 @@
 # Day 043 · 📽️ Chat with YouTube Videos
 
-> 볼륨 4 💬 Chat with X · 난이도 ★★☆ · 예상 소요 90분(다른 날보다 깁니다 — 같은 파일 안에서 되풀이가 아니라 서로 다른 결함 네 가지를 직접 확인하기 때문입니다) · API 비용 대략 질문 1건당 `gpt-4` 호출 1회(약 $30/$60, 100만 토큰당 입력/출력 — `gpt-4-turbo`·`gpt-4o`보다 훨씬 비싼 구형 모델) + 영상당 자막 임베딩 1회(`text-embedding-ada-002`, $0.10/1M 토큰 미만이지만 영상을 바꿀 때마다 반복) · 대략치, 키가 없어 실제 과금은 확인 못함 · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos`
+> 볼륨 4 💬 Chat with X · 난이도 ★★☆ ⚠(앱의 `gpt-4`는 2026-10-23 종료 예정) · 예상 소요 90분(다른 날보다 깁니다 — 같은 파일 안에서 되풀이가 아니라 서로 다른 결함 네 가지를 직접 확인하기 때문입니다) · API 비용 대략 질문 1건당 `gpt-4` 호출 1회(약 $30/$60, 100만 토큰당 입력/출력 — `gpt-4-turbo`·`gpt-4o`보다 훨씬 비싼 구형 모델) + 영상당 자막 임베딩 1회(`text-embedding-ada-002`, $0.10/1M 토큰 미만이지만 영상을 바꿀 때마다 반복) · 대략치, 키가 없어 실제 과금은 확인 못함 · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos`
 
 ## 오늘 만들 것
 
@@ -12,7 +12,7 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| OpenAI API 키 | `gpt-4`(답변)와 `text-embedding-ada-002`(임베딩) 호출 인증. 화면 입력창에 직접 붙여넣는다(환경변수 아님 — 코드 전체에 `os.environ` 참조가 없음, 직접 확인) | https://platform.openai.com/api-keys 가입 후 발급 |
+| OpenAI API 키 | `gpt-4`(답변)와 `text-embedding-ada-002`(임베딩) 호출 인증. 화면 입력창에 직접 붙여넣는다(환경변수 아님 — 코드 전체에 `os.environ` 참조가 없음, 직접 확인) | https://platform.openai.com/api-keys 가입 후 발급. `gpt-4`는 2026-10-23에 종료 예정이다 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python 3.11 이하 (Windows) | `chroma-hnswlib` 0.7.6의 Windows용 사전 빌드 wheel이 cp311까지만 배포됨 — Step 1에서 직접 확인 | `uv venv --python 3.11`로 지정 |
 | 자막이 있는 유튜브 영상 URL | 수동 또는 자동 생성 자막이 없으면 이 앱은 처리하지 못함(소스로 확인: `fetch_video_data`) | 실행할 때 준비만 하면 됨 — 이 시리즈 방침상 실제 영상으로는 요청을 보내지 않음 |
@@ -554,6 +554,7 @@ exit code는 0입니다(직접 확인) — 테스트 자체는 통과합니다. 
 | 유효한 키로 영상 URL을 넣어도 자막 로딩 단계에서 `AttributeError: 'YouTubeTranscriptApi' object has no attribute 'list'` | `requirements.txt`가 고정한 `youtube-transcript-api==0.6.3`에는 `chat_youtube.py`가 쓰는 `.list()`/`.fetch()`가 없다 — `FIX_SUMMARY.md`는 `>=1.2.0`으로 갱신했다고 적지만 실제 파일은 그렇지 않다(직접 확인) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침이지만, 직접 고친다면 `uv pip install "youtube-transcript-api>=1.2.0"`로 재설치 |
 | 영상을 바꿔 질문했는데 답변에 이전 영상 이야기가 섞여 나옴 | `app.chat()`의 대화 기록이 App 인스턴스가 아니라 고정된 `app_id="default-app-id"`에 묶여 있어 새 영상의 새 App도 이전 기록을 그대로 이어받는다(직접 확인, Step 6) | 코드를 고친다면 `AppConfig(id=hashlib.sha256(video_url.encode()).hexdigest())`처럼 영상마다 다른 `id`를 `App.from_config`에 넘기도록 바꾸는 것을 고려 |
 | 앱 자체 `README.md`의 클론 안내가 `cd awesome-llm-apps/chat_with_X_tutorials/chat_with_youtube_videos`로 되어 있어 그대로 따라가면 디렉터리를 찾지 못함 | 이 리포에서 실제 경로는 `advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos`이다(직접 확인) — Day039와 같은 종류의 실수 | `advanced_llm_apps/`를 포함한 전체 경로로 이동 |
+| 2026-10-23 이후 영상을 불러온 뒤 질문을 입력하면 `app.chat()`(`advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos/chat_youtube.py:229`)이 실패할 것으로 예상됨. 앱의 `except Exception`이 `st.error`로 `❌ Error chatting with the video: ...` 상자를 띄운다(`advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos/chat_youtube.py:240-241`, 소스로 확인). 종료 뒤의 실제 오류 문구는 아직 볼 수 없어 직접 보지 못함 | 답변 모델 `gpt-4`(`advanced_llm_apps/chat_with_X_tutorials/chat_with_youtube_videos/chat_youtube.py:10`)가 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations, "2026-04-22: Legacy GPT model snapshots" 절)에 올라 있다. 그 행은 종료일 `October 23, 2026`, 모델 스냅숏 칸 `gpt-4-0613`(같은 칸에 앱이 쓰는 이름 `gpt-4`와 `gpt-4-0613-completions`, `gpt-4-completions`), 대체 모델 `gpt-5.6-sol`이다(공식 문서로 확인, 2026-10-05에 받은 원문) | 리포 코드는 고치지 않음. 복사본에서 10행의 모델 이름을 `gpt-5.6-sol`로 바꾼다. 이 앱의 호출(embedchain 0.1.128, `temperature` 0.5)과 맞는지는 키가 없어 확인하지 못했다 |
 
 ## 더 해보기
 

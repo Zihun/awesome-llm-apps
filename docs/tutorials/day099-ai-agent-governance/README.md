@@ -1,6 +1,6 @@
 # Day 099 · 🛡️ AI Agent Governance - Policy-Based Sandboxing
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ · 예상 소요 95분(Step마다 함수를 직접 호출해 보고, 임시 폴더로 승인 y·n 두 경우를 돌리고, /workspace가 없는지 확인한 뒤 데모를 두 번 돌려 동작을 보고 폴더를 치우고, 시퀀스 여섯 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 $0.02 안팎, 상한 $0.10 — LLM 데모의 요청 3건(`gpt-4`, 입력 약 130토큰, 출력 최대 `max_tokens=500`)에 모델 페이지의 입력 $30·출력 $60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4, 2026-09-30 확인)을 대입한 대략치이고 키가 없어 실제 토큰 수는 확인하지 못함(키 없이 정책 엔진만 돌리는 실행은 무료) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_agent_governance`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★☆☆ ⚠(앱의 `gpt-4`는 2026-10-23 종료 예정) · 예상 소요 95분(Step마다 함수를 직접 호출해 보고, 임시 폴더로 승인 y·n 두 경우를 돌리고, /workspace가 없는지 확인한 뒤 데모를 두 번 돌려 동작을 보고 폴더를 치우고, 시퀀스 여섯 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 $0.02 안팎, 상한 $0.10 — LLM 데모의 요청 3건(`gpt-4`, 입력 약 130토큰, 출력 최대 `max_tokens=500`)에 모델 페이지의 입력 $30·출력 $60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4, 2026-09-30 확인)을 대입한 대략치이고 키가 없어 실제 토큰 수는 확인하지 못함(키 없이 정책 엔진만 돌리는 실행은 무료) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_agent_governance`
 
 ## 오늘 만들 것
 
@@ -16,7 +16,7 @@
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python | 앱 README는 3.8+라고 적지만(`README.md:36`) 이 저장소는 3.11~3.13이 기준이다. 이 문서는 3.13.3으로 확인했고, 3.12부터는 `datetime.utcnow()` 폐기 경고가 뜬다(Step 6) | 공통 사전 준비와 같음 |
-| OpenAI API 키 (선택) | `GovernedAgent`가 `gpt-4`를 부를 때만 필요하다(`ai_agent_governance.py:443`, `ai_agent_governance.py:462`). 키가 없어도 정책 엔진과 시험 케이스는 모두 돈다 | https://platform.openai.com/api-keys 에서 발급 (이 문서는 쓰지 않음) |
+| OpenAI API 키 (선택) | `GovernedAgent`가 `gpt-4`를 부를 때만 필요하다(`ai_agent_governance.py:443`, `ai_agent_governance.py:462`). 키가 없어도 정책 엔진과 시험 케이스는 모두 돈다 | https://platform.openai.com/api-keys 에서 발급 (이 문서는 쓰지 않음). `gpt-4`는 2026-10-23에 종료 예정이다 |
 
 앱이 이모지를 `print`하는데, 표준출력을 파이프로 받으면 Windows의 기본 인코딩(`cp949` 등, 로캘의 ANSI 코드 페이지)이 이모지를 못 써서 첫 줄에서 죽습니다(직접 확인, 문제 해결 첫 행). 아래 출력은 모두 UTF-8로 잡았으니 셸을 먼저 이렇게 맞춰 두세요.
 
@@ -975,6 +975,7 @@ gpt-4 500 ['system', 'user'] False
 | 앱 README의 `tools:`(`allowed`·`denied`) 절을 넣어도 `execute_code`·`send_email`이 막히지 않는다 | `from_yaml`은 `filesystem`·`network`·`execution`만 읽는다(`ai_agent_governance.py:305-326`, Step 4에서 직접 확인) | 직접 규칙을 만들어 잇는다(더 해보기) |
 | 앱 README의 "Example Output"과 실제 출력이 다르다 | 예시는 `/etc/passwd`에 `outside allowed directories`를 붙이지만(`README.md:94-97`) 이 코드는 `matches denied pattern '/etc'`를 낸다(`outside allowed directories`는 `/var/log/syslog` 같은 경로에 나온다, Step 2에서 직접 확인). 예시의 `Loading policy: workspace_sandbox.yaml`은 코드의 `Loading policy configuration...`과 다르고 `[Y/n]`은 실제 프롬프트 `[y/N]`과 다르다(Step 5·6에서 직접 확인). `PENDING`은 앱 안에서 닿지 않는 분기(`ai_agent_governance.py:378`)의 문구다 | 예시 대신 이 문서의 출력을 기준으로 삼는다 |
 | `/workspace-evil/x`가 허용되고 `/homework/x`가 거부된다 | 경로를 `startswith`로 문자열 접두사 비교한다(`ai_agent_governance.py:113`, `ai_agent_governance.py:122`, Step 2에서 직접 확인) | 경로 성분 단위로 비교한다(더 해보기) |
+| 2026-10-23 이후 `OPENAI_API_KEY`를 둔 채 돌리면 LLM 데모의 첫 요청에서 `gpt-4` 호출(`ai_agent_governance.py:462-469`)이 실패할 것으로 예상됨. 그 호출을 `run`도 `main`의 반복문(`ai_agent_governance.py:602-605`)도 `try`로 감싸지 않아(소스로 확인) 앱이 직접 만드는 오류 안내는 없다. 터미널에 어떻게 보일지는 확인하지 못함(종료 뒤의 실제 오류 문구는 아직 볼 수 없어 직접 보지 못함). 키 없이 도는 정책 엔진과 시험 케이스는 이 호출에 닿지 않아 영향이 없다 | `gpt-4`(`ai_agent_governance.py:463`)가 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations, "2026-04-22: Legacy GPT model snapshots" 절)에 올라 있다. 그 행은 종료일 `October 23, 2026`, 모델 스냅숏 칸 `gpt-4-0613`(같은 칸에 앱이 쓰는 이름 `gpt-4`와 `gpt-4-0613-completions`, `gpt-4-completions`), 대체 모델 `gpt-5.6-sol`이다(공식 문서로 확인, 2026-10-05에 받은 원문) | 리포 코드는 고치지 않음. 복사본에서 463행의 모델 이름을 `gpt-5.6-sol`로 바꾼다. 이 앱의 호출(`max_tokens=500`을 넘기는 `chat.completions.create`, openai 3.22.1)과 맞는지는 키가 없어 확인하지 못했다 |
 
 ## 더 해보기
 

@@ -1,6 +1,6 @@
 # Day 044 · 📨 Chat with Gmail
 
-> 볼륨 4 💬 Chat with X · 난이도 ★★☆ · 예상 소요 85분(Google Cloud OAuth 설정·동의 절차까지 함께 다뤄 이 볼륨의 다른 날보다 깁니다) · API 비용 대략 질문 1건당 `gpt-4-turbo` 호출 1회(약 $0.01, $5/$15 per 1M 토큰) + 메일 재임베딩(`text-embedding-ada-002`, $0.10/1M 토큰; 메일 최대 100통 기준이지만 질문마다 반복됨 — Step 7) · 대략치, 키가 없어 실제 과금은 확인 못함 · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_gmail`
+> 볼륨 4 💬 Chat with X · 난이도 ★★☆ ⚠(앱의 `gpt-4-turbo`는 2026-10-23 종료 예정) · 예상 소요 85분(Google Cloud OAuth 설정·동의 절차까지 함께 다뤄 이 볼륨의 다른 날보다 깁니다) · API 비용 대략 질문 1건당 `gpt-4-turbo` 호출 1회(약 $0.01, $5/$15 per 1M 토큰) + 메일 재임베딩(`text-embedding-ada-002`, $0.10/1M 토큰; 메일 최대 100통 기준이지만 질문마다 반복됨 — Step 7) · 대략치, 키가 없어 실제 과금은 확인 못함 · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_gmail`
 
 ## 오늘 만들 것
 
@@ -12,7 +12,7 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| OpenAI API 키 | `gpt-4-turbo`(답변)와 `text-embedding-ada-002`(임베딩) 호출 인증. 화면 입력창에 직접 붙여넣는다(환경변수 아님 — 코드에 `os.environ`·`os.getenv` 참조가 전혀 없음, 직접 확인) | https://platform.openai.com/api-keys 가입 후 발급 |
+| OpenAI API 키 | `gpt-4-turbo`(답변)와 `text-embedding-ada-002`(임베딩) 호출 인증. 화면 입력창에 직접 붙여넣는다(환경변수 아님 — 코드에 `os.environ`·`os.getenv` 참조가 전혀 없음, 직접 확인) | https://platform.openai.com/api-keys 가입 후 발급. `gpt-4-turbo`는 2026-10-23에 종료 예정이다 |
 | Google Cloud 프로젝트 + OAuth 클라이언트(데스크톱 앱) | Gmail을 읽기 전용으로 조회하는 동의 화면을 만들고, 그 클라이언트의 비밀정보를 `credentials.json`으로 내려받는다 | https://console.cloud.google.com/ 에서 프로젝트 생성 → "Gmail API" 사용 설정 → OAuth 동의 화면 구성 → OAuth 클라이언트 ID(데스크톱 앱) 생성 → JSON 다운로드 후 앱 작업 폴더에 `credentials.json`으로 저장 |
 | 접근을 허용할 Gmail 계정 | 실제로 조회되는 진짜 받은편지함. 시험 삼아 돌려볼 목적이라면 본계정 대신 별도 테스트 계정 사용을 권장 | 기존 Google 계정 또는 새로 만든 테스트 계정 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
@@ -435,6 +435,7 @@ add() calls: [('C:\\Users\\zihun\\AppData\\Local\\Temp\\tmpo7hhcr0c', 'to: me la
 | `app.add()` 호출 시 `FileNotFoundError: Missing 'credentials.json'. Download it from your Google Developer account.` | 작업 디렉터리에 `credentials.json`이 없다(`GmailReader._get_credentials()`, 직접 확인) | Google Cloud 콘솔에서 OAuth 클라이언트(데스크톱 앱)를 만들어 JSON을 내려받고, `chat_gmail.py`를 실행하는 디렉터리에 `credentials.json`으로 저장 |
 | 동의 화면이 뜨려다 실패하거나 브라우저가 연결을 거부함 | `InstalledAppFlow.run_local_server(port=8080)`이 포트 8080을 코드에 고정해서 쓴다(`embedchain/loaders/gmail.py`, 소스로 확인) — 이미 8080을 쓰는 프로세스가 있으면 실패한다 | 기존 프로세스 종료 후 재시도 (Windows: `netstat -ano | findstr :8080`으로 PID 확인 후 `taskkill /F /PID <PID>` — PowerShell에서도 같은 명령을 그대로 쓸 수 있음) |
 | 질문을 두 개 연달아 던지면 두 번째 질문이 유난히 오래 걸리고 OpenAI 대시보드의 임베딩 호출 수가 계속 늘어남 | `db_path = tempfile.mkdtemp()`가 캐시나 세션 상태 없이 재실행마다 실행돼(`advanced_llm_apps/chat_with_X_tutorials/chat_with_gmail/chat_gmail.py:26-31`) 질문마다 새 Chroma 저장소를 만들고 메일함을 처음부터 재조회·재임베딩한다(직접 확인, Step 7) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침이지만, 직접 고친다면 `embedchain_bot`을 `@st.cache_resource`로 감싸 재사용하도록 바꾸는 것을 고려 |
+| 2026-10-23 이후 Gmail 동의까지 마치고 질문을 입력하면 `app.query()`(`advanced_llm_apps/chat_with_X_tutorials/chat_with_gmail/chat_gmail.py:39`)가 실패할 것으로 예상됨. 앱에 `try`/`except`가 없어(Step 4, 소스로 확인) 앱이 직접 만드는 오류 안내는 없다. 어떻게 보일지는 확인하지 못함(종료 뒤의 실제 오류 문구는 아직 볼 수 없어 직접 보지 못함) | 답변 모델 `gpt-4-turbo`(`advanced_llm_apps/chat_with_X_tutorials/chat_with_gmail/chat_gmail.py:9`)가 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations, "2026-04-22: Legacy GPT model snapshots" 절)에 올라 있다. 그 행은 종료일 `October 23, 2026`, 모델 스냅숏 칸 `gpt-4-turbo`(같은 칸에 `gpt-4-turbo-2024-04-09`, `gpt-4-turbo-completions`), 대체 모델 `gpt-5.6-sol`이다(공식 문서로 확인, 2026-10-05에 받은 원문) | 리포 코드는 고치지 않음. 복사본에서 9행의 모델 이름을 `gpt-5.6-sol`로 바꾼다. 이 앱의 호출(embedchain 0.1.128, `temperature` 0.5)과 맞는지는 키가 없어 확인하지 못했다 |
 
 ## 더 해보기
 

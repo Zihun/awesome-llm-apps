@@ -1,6 +1,6 @@
 # Day 039 · 📝 Chat with Substack
 
-> 볼륨 4 💬 Chat with X · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 대략 질문 1건당 `gpt-4-turbo` 호출 1회(약 $0.01, $5/$15 per 1M 토큰) + 뉴스레터 재임베딩(`text-embedding-ada-002` $0.10/1M 토큰, 게시글 10개 기준 $0.001 미만이지만 질문마다 반복됨 — Step 6) · 대략치, 키가 없어 실제 과금은 확인 못함 · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_substack`
+> 볼륨 4 💬 Chat with X · 난이도 ★☆☆ ⚠(앱의 `gpt-4-turbo`는 2026-10-23 종료 예정) · 예상 소요 60분 · API 비용 대략 질문 1건당 `gpt-4-turbo` 호출 1회(약 $0.01, $5/$15 per 1M 토큰) + 뉴스레터 재임베딩(`text-embedding-ada-002` $0.10/1M 토큰, 게시글 10개 기준 $0.001 미만이지만 질문마다 반복됨 — Step 6) · 대략치, 키가 없어 실제 과금은 확인 못함 · 원본 앱: `advanced_llm_apps/chat_with_X_tutorials/chat_with_substack`
 
 ## 오늘 만들 것
 
@@ -12,7 +12,7 @@
 
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
-| OpenAI API 키 | `gpt-4-turbo`(답변)와 `text-embedding-ada-002`(임베딩) 호출 인증. 화면 입력창에 직접 붙여넣는다(환경변수 아님 — 코드에 `os.environ` 참조가 전혀 없음, 직접 확인) | https://platform.openai.com/api-keys 가입 후 발급 |
+| OpenAI API 키 | `gpt-4-turbo`(답변)와 `text-embedding-ada-002`(임베딩) 호출 인증. 화면 입력창에 직접 붙여넣는다(환경변수 아님 — 코드에 `os.environ` 참조가 전혀 없음, 직접 확인) | https://platform.openai.com/api-keys 가입 후 발급. `gpt-4-turbo`는 2026-10-23에 종료 예정이다 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python 3.11 이하 (Windows) | `chroma-hnswlib` 0.7.6의 Windows용 사전 빌드 wheel이 cp311까지만 배포됨 — Step 1에서 직접 확인 | `uv venv --python 3.11`로 지정 (uv가 자동으로 내려받음) |
 | 인터넷 연결 | Substack 사이트맵·게시글 페이지, OpenAI API 접속 | 별도 설치 없음. 사내망이면 도메인 접속 허용 필요 |
@@ -392,6 +392,7 @@ URL을 넣고 질문 하나를 던지는 과정은 세 단계를 거칩니다 �
 | `uv pip install -r requirements.txt`가 `chroma-hnswlib==0.7.6` 빌드 단계에서 `error: Unable to find a compatible Visual Studio installation.`로 실패 | `chroma-hnswlib` 0.7.6 정식 릴리스는 Windows용 사전 빌드 wheel을 cp311까지만 배포하고(PyPI 파일 목록으로 확인), `chromadb==0.5.23`이 이 버전을 정확히 못박아 다른 버전으로 바꿀 수도 없다(직접 확인) | `uv venv --python 3.11`로 다시 만들거나 Visual Studio C++ 빌드 도구를 설치 |
 | 질문을 두 개 연달아 던지면 두 번째 질문이 유난히 오래 걸리고 OpenAI 대시보드의 임베딩 호출 수가 게시글 수만큼 계속 늘어남 | `db_path = tempfile.mkdtemp()`가 캐시나 세션 상태 없이 재실행마다 실행돼(`advanced_llm_apps/chat_with_X_tutorials/chat_with_substack/chat_substack.py:22-23`) 질문마다 새 Chroma 저장소를 만들고 뉴스레터를 처음부터 재수집·재임베딩한다(직접 확인, Step 6) | 리포 코드는 고치지 않는 것이 이 시리즈의 방침이지만, 직접 고친다면 `embedchain_bot`을 `@st.cache_resource`로 감싸 같은 URL에는 같은 App을 재사용하도록 바꾸는 것을 고려 |
 | 앱 자체 `README.md`의 클론 안내가 `cd awesome-llm-apps/chat_with_X_tutorials/chat_with_substack`로 되어 있어 그대로 따라가면 디렉터리를 찾지 못함 | 이 리포에서 실제 경로는 `advanced_llm_apps/chat_with_X_tutorials/chat_with_substack`이다(직접 확인: 디렉터리 비교) — 앱 README가 상위 폴더 이름을 빠뜨렸다 | `advanced_llm_apps/`를 포함한 전체 경로로 이동 |
+| 2026-10-23 이후 Substack URL을 넣고 질문을 입력하면 `app.query()`(`advanced_llm_apps/chat_with_X_tutorials/chat_with_substack/chat_substack.py:40`)가 실패할 것으로 예상됨. 앱에 `try`/`except`가 없어(소스로 확인) 앱이 직접 만드는 오류 안내는 없다. 어떻게 보일지는 확인하지 못함(종료 뒤의 실제 오류 문구는 아직 볼 수 없어 직접 보지 못함) | 답변 모델 `gpt-4-turbo`(`advanced_llm_apps/chat_with_X_tutorials/chat_with_substack/chat_substack.py:9`)가 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations, "2026-04-22: Legacy GPT model snapshots" 절)에 올라 있다. 그 행은 종료일 `October 23, 2026`, 모델 스냅숏 칸 `gpt-4-turbo`(같은 칸에 `gpt-4-turbo-2024-04-09`, `gpt-4-turbo-completions`), 대체 모델 `gpt-5.6-sol`이다(공식 문서로 확인, 2026-10-05에 받은 원문) | 리포 코드는 고치지 않음. 복사본에서 9행의 모델 이름을 `gpt-5.6-sol`로 바꾼다. 이 앱의 호출(embedchain 0.1.128, `temperature` 0.5)과 맞는지는 키가 없어 확인하지 못했다 |
 
 ## 더 해보기
 
