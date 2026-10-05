@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+
+agent: "에이전트\n(MealPlanningExpert)" { class: ours }
+cost: "비용 추정\n(estimate_costs)" { class: ours }
+plan: "식단 생성\n(create_meal_plan)" { class: ours }
+ddg: "웹 검색\n(DuckDuckGoTools)" { class: ours }
+spoontools: "Spoonacular 도구" {
+  class: group
+  label.near: bottom-left
+  search: "레시피 검색\n(search_recipes)" { class: ours }
+  nutrition: "영양 분석\n(analyze_nutrition)" { class: ours }
+}
+env: ".env\n(SPOONACULAR_API_KEY)" { class: file }
+ddgsvc: "DuckDuckGo 검색" { class: ext }
+spoon: "Spoonacular API" { class: ext }
+
+agent -> cost: "ingredients·\nservings"
+agent -> plan: "선호·인원·\n일수·예산"
+agent -> ddg: query
+agent -> spoontools.search: "ingredients·\ndiet_type"
+agent -> spoontools.nutrition: recipe_name
+env -> spoontools: 키
+ddg -> ddgsvc: 검색어
+spoontools.search -> spoon: "GET findBy\nIngredients,\ninformation"
+spoontools.nutrition -> spoon: "GET\ncomplexSearch"

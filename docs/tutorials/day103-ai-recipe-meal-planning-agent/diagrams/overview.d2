@@ -1,0 +1,35 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+env: ".env (API 키 2개)" { class: file }
+ui: "채팅 화면 (main)" { class: ours }
+session: "세션 상태 (agent·messages)" { class: store }
+
+agentbox: "Agent 구성 (create_agent)" {
+  class: group
+  grid-columns: 3
+  grid-gap: 12
+  agent: "에이전트 (MealPlanningExpert)" { class: ours }
+  search: "레시피 검색 (search_recipes)" { class: ours }
+  nutrition: "영양 분석 (analyze_nutrition)" { class: ours }
+  cost: "비용 추정 (estimate_costs)" { class: ours }
+  plan: "식단 생성 (create_meal_plan)" { class: ours }
+  ddg: "웹 검색 (DuckDuckGoTools)" { class: ours }
+}
+
+openai: "OpenAI API (gpt-5-mini)" { class: ext }
+spoon: "Spoonacular API" { class: ext }
+ddgsvc: "DuckDuckGo 검색" { class: ext }
+agno_api: "Agno 통계 API" { class: ext }
+
+user -> ui: 질문 입력
+ui -> user: 답변
+ui -> session: 저장
+session -> ui: 조회
+ui -> agentbox: arun(질문)
+env -> ui: API 키
+agentbox -> openai: 메시지·도구 스키마
+agentbox -> spoon: GET 레시피·영양
+agentbox -> ddgsvc: 검색어
+agentbox -> agno_api: 실행 메타데이터

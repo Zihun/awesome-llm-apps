@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: 채팅 화면 (main) { class: ours }
+agent: 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+session: 세션 상태 { class: store }
+
+user -> ui: 질문 입력 (chat_input)
+ui -> session: messages에 질문 추가
+ui -> agent: "arun(질문), 턴마다 새 이벤트 루프"
+agent -> openai: developer 지시문 + 질문 + 도구 스키마 6개
+openai -> agent: "tool_calls: search_recipes(ingredients)"

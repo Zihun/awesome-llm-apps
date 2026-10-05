@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: 에이전트 { class: ours }
+search: 레시피 검색 도구 { class: ours }
+spoon: Spoonacular API { class: ext }
+
+agent -> search: search_recipes(ingredients, diet_type)
+search -> spoon: GET findByIngredients (number=5, ranking=2)
+spoon -> search: 레시피 5건 (id·title·usedIngredients)
+search -> spoon: "GET recipes/{id}/information (3건)"
+spoon -> search: readyInMinutes·healthScore·instructions
+search -> agent: dict (recipes 3건, total_found 5)
