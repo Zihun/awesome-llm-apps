@@ -1,12 +1,12 @@
 # Day 104 · 🔥 AI Startup Insight with Firecrawl FIRE-1 Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠ · 예상 소요 85분(앱은 267줄 한 파일이지만 오늘 설치되는 `firecrawl-py`가 앱의 호출 모양을 받지 않아서, 시그니처를 대조하고 가짜 Firecrawl와 가짜 OpenAI로 나머지를 확인하는 스크립트 둘을 직접 만들어 돌려 봐야 해 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 URL 1개에 `gpt-4o` 호출 1회 약 $0.005 이하(입력은 지시문 850자와 회사 JSON으로 어림해 약 400토큰, 출력은 "150단어 안쪽" 지시를 따른다고 보고 약 250토큰이라 보고, 모델 페이지의 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)을 대입한 어림이며 키가 없어 실제 토큰 수는 확인하지 못함)에 Firecrawl 크레딧(요금 문서가 FIRE-1을 사용량 기준이라고만 적어 단가는 확인하지 못함, WebFetch 요약). 오늘 설치되는 SDK에서는 추출 호출이 거부되어 둘 다 실제로는 청구되지 않음 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠ · 예상 소요 88분(앱은 267줄 한 파일이지만 오늘 설치되는 `firecrawl-py`가 앱의 호출 모양을 받지 않아서, 시그니처를 대조하고 가짜 Firecrawl와 가짜 OpenAI로 나머지를 확인하는 스크립트 둘을 직접 만들어 돌려 봐야 해 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 URL 1개에 `gpt-4o` 호출 1회 약 $0.005 이하(입력은 지시문 850자와 회사 JSON으로 어림해 약 400토큰, 출력은 "150단어 안쪽" 지시를 따른다고 보고 약 250토큰이라 보고, 모델 페이지의 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)을 대입한 어림이며 키가 없어 실제 토큰 수는 확인하지 못함)에 Firecrawl 크레딧(요금 문서가 FIRE-1을 사용량 기준이라고만 적어 단가는 확인하지 못함, WebFetch 요약). 오늘 설치되는 SDK에서는 추출 호출이 거부되어 둘 다 실제로는 청구되지 않음 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent`
 
 ## 오늘 만들 것
 
 회사 사이트 주소를 한 줄에 하나씩 적고 버튼을 누르면, Firecrawl의 FIRE-1 에이전트가 사이트를 돌아다니며 회사명·설명·사명·제품 기능·전화번호를 JSON으로 뽑고, `gpt-4o` 에이전트가 150단어 안쪽의 사업 분석을 덧붙이는 Streamlit 앱입니다. `ai_startup_insight_fire1_agent.py` 한 파일(편집기 기준 267줄)에 화면, 추출 스키마와 프롬프트, 버튼 핸들러가 모두 있고 agno `Agent`는 하나뿐입니다(`Agent`와 `instructions`·`markdown=True`는 Day 001이 다뤘습니다). 새로운 것은 앞단입니다. Day 003·036·089는 agno의 `FirecrawlTools`를 도구로 쥐여 줬지만, 이 앱은 Firecrawl SDK의 `FirecrawlApp`을 직접 불러 추출 결과를 딕셔너리로 받고 그 JSON을 에이전트의 프롬프트에 끼웁니다.
 
-다만 이 앱은 오늘 설치하면 추출 단계에서 막힙니다. `requirements.txt`가 `firecrawl-py`의 버전을 정하지 않아 이 문서를 만든 2026-10-05에는 4.46.2가 깔리는데, 그 `extract`는 앱이 넘기는 `params=` 인자를 받지 않습니다(Step 5). 두 키가 모두 있어도 URL마다 오류 상자가 뜨고 분석은 실행되지 않습니다. 그래서 이 문서는 Firecrawl의 요청 메서드를 한 번도 부르지 않고 호출 모양을 시그니처로 대조하며, 나머지(결과 표시, `gpt-4o` 요청)는 내 PC의 가짜 Firecrawl와 가짜 OpenAI 서버로 확인합니다. 키는 필요 없고 두 서비스에는 어떤 요청도 가지 않습니다. 실제 응답은 보지 못했으므로 문서의 추출 결과와 분석 문장은 고정된 가짜 값이고, FIRE-1이 지금도 서버에서 받아들여지는지도 확인하지 못했습니다. 아래는 앱이 의도한 아키텍처입니다.
+다만 이 앱은 오늘 설치하면 추출 단계에서 막힙니다. `requirements.txt`가 `firecrawl-py`의 버전을 정하지 않아 이 문서를 만든 2026-10-05에는 4.46.2가 깔리는데, 그 `extract`는 앱이 넘기는 `params=` 인자를 받지 않습니다(Step 5). 두 키가 모두 있어도 URL마다 오류 상자가 뜨고 분석은 실행되지 않습니다. 그래서 이 문서는 Firecrawl의 실제 주소로는 어떤 요청도 보내지 않고 호출 모양을 시그니처로 대조하며, 나머지(결과 표시, `gpt-4o` 요청)는 내 PC의 가짜 Firecrawl와 가짜 OpenAI 서버로 확인합니다. 키는 필요 없고 두 서비스에는 어떤 요청도 가지 않습니다. 실제 응답은 보지 못했으므로 문서의 추출 결과와 분석 문장은 고정된 가짜 값이고, FIRE-1이 지금도 서버에서 받아들여지는지도 확인하지 못했습니다. 아래는 앱이 의도한 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -48,7 +48,7 @@ uv venv
 uv pip install -r requirements.txt
 ```
 
-(pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.) 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 이유는 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)에 있습니다. 앱 README의 1단계는 `git clone` 바로 뒤에 이 `cd`를 적지만(`advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/README.md:40-41`) clone은 저장소 이름의 새 폴더를 만드므로 그 폴더로 먼저 들어가야 맞습니다(소스로 확인).
+(pip 대안: bash는 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`입니다. PowerShell 5.1은 `&&`를 받지 않으므로(PowerShell 7부터 지원) 세 줄로 `python -m venv .venv`, `.venv\Scripts\Activate.ps1`, `pip install -r requirements.txt`를 차례로 씁니다. 실행해 보지 못했습니다.) 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 이유는 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)에 있습니다. 앱 README의 1단계는 `git clone` 바로 뒤에 이 `cd`를 적지만(`advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/README.md:40-41`) clone은 저장소 이름의 새 폴더를 만드므로 그 폴더로 먼저 들어가야 맞습니다(소스로 확인).
 
 `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/requirements.txt:1-4`
 
@@ -334,11 +334,11 @@ if st.button("🚀 Start Analysis", type="primary"):
                     tabs = st.tabs([f"Website {i+1}: {url}" for i, url in enumerate(urls)])
 ```
 
-순서는 이렇습니다. URL 칸이 비었는지 보고(117행), `FirecrawlApp(api_key=...)`을 만들고(123행), URL 목록을 만들어 `st.info`에 파이썬 리스트 그대로 보여 준 다음(130행) OpenAI 키를 봅니다(134행). Firecrawl 클라이언트가 먼저여서 4.46.2는 키가 비면 생성자가 `ValueError: No API key provided`를 던지고(직접 확인) 바깥 `try`의 266행이 `Error during extraction: …`으로 그립니다. 환경변수 `FIRECRAWL_API_KEY`가 있으면 칸이 비어 있어도 통과합니다(직접 확인). 생성자는 네트워크에 접속하지 않았습니다(직접 확인: 접속 시도를 막는 가드에 기록 0건). 132~133행의 `if not urls`는 117행이 이미 막아 닿지 않는 가지입니다(읽기로 확인). 이 전체가 클릭이 일으킨 리런 한 번 안에서 돌고, 리런은 Day 012 Step 2가 설명했습니다.
+순서는 이렇습니다. URL 칸이 비었는지 보고(117행), `FirecrawlApp(api_key=...)`을 만들고(123행), URL 목록을 만들어 `st.info`에 파이썬 리스트 그대로 보여 준 다음(130행) OpenAI 키를 봅니다(134행). Firecrawl 클라이언트가 먼저여서 4.46.2는 키가 비면 생성자가 `ValueError: No API key provided`를 던지고(직접 확인) 바깥 `try`의 266행이 `Error during extraction: …`으로 그립니다. 환경변수 `FIRECRAWL_API_KEY`가 있으면 칸이 비어 있어도 통과합니다(직접 확인). 1.17.0의 생성자도 같은 변수를 읽어(직접 확인), Step 5처럼 고정한 환경에서는 OpenAI 키만 넣은 입력이 독자의 실제 키로 추출 요청을 보낼 수 있습니다(소스로 판단, 실행하지 않음). 생성자는 네트워크에 접속하지 않았습니다(직접 확인: 접속 시도를 막는 가드에 기록 0건). 132~133행의 `if not urls`는 117행이 이미 막아 닿지 않는 가지입니다(읽기로 확인). 이 전체가 클릭이 일으킨 리런 한 번 안에서 돌고, 리런은 Day 012 Step 2가 설명했습니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** 네 가지 입력으로 버튼을 눌러 봅니다. 앱 폴더에서 실행합니다.
+**확인.** 네 가지 입력으로 버튼을 눌러 봅니다. `FIRECRAWL_API_KEY`가 없는 셸의 앱 폴더에서 돌립니다(있으면 `unset FIRECRAWL_API_KEY`, PowerShell은 `Remove-Item Env:FIRECRAWL_API_KEY`이고 실행해 보지 못했습니다. 변수가 있으면 키 칸을 비운 두 사례의 출력이 달라집니다).
 
 ```bash
 uv run --no-project python -c "
@@ -394,11 +394,11 @@ URL, Firecrawl key only ->
    tabs   : []
 ```
 
-OpenAI 키만 넣은 경우에도 Firecrawl 오류가 나옵니다. Firecrawl 키만 있으면 추출은 시작도 하지 않고 경고만 뜹니다. 네 경우 모두 탭이 만들어지지 않았고 외부 호출은 없습니다.
+OpenAI 키만 넣어도 Firecrawl 오류가 먼저 나고, Firecrawl 키만 있으면 추출은 시작도 않고 경고만 뜹니다. 네 경우 모두 탭은 만들어지지 않았고 외부 호출도 없습니다.
 
 ### Step 5. FIRE-1 추출 호출 — 오늘의 SDK가 받지 않는 인자 모양
 
-**목적.** URL마다 나가는 `extract` 호출의 모양을 확인하고, 오늘의 `firecrawl-py`가 그 모양을 받는지 따져 봅니다. 이 문서는 `extract`를 부르지 않고 `inspect.signature`와 `bind`로만 따집니다.
+**목적.** URL마다 나가는 `extract` 호출의 모양을 확인하고, 오늘의 `firecrawl-py`가 그 모양을 받는지 따져 봅니다. Firecrawl의 실제 주소로는 요청을 보내지 않습니다. `inspect.signature`와 `bind`로 따지고, 앱의 호출은 `api_url`을 아무도 듣지 않는 내 PC의 포트로 돌린 클라이언트에서 실행해 봅니다.
 
 **할 일.**
 
@@ -423,11 +423,11 @@ OpenAI 키만 넣은 경우에도 Firecrawl 오류가 나옵니다. Firecrawl �
 
 호출은 `app.extract([url], params={...})`입니다. 프롬프트·스키마·`agent`가 `params` 딕셔너리 하나에 들어 있고 FIRE-1은 `'agent': {"model": "FIRE-1"}`로 고르며, 결과는 딕셔너리로 읽습니다(205행의 `data.get('data')`, 256~259행의 `data['status']`·`data['expiresAt']`). 이 모양은 `firecrawl-py` 1.x의 `extract(urls, params)`와 같습니다. 1.17.0의 `extract`는 `params`의 `prompt`·`schema`·`agent`를 요청 본문에 옮기고 상태 응답의 딕셔너리를 그대로 돌려줍니다(소스로 확인, firecrawl-py 1.17.0의 `firecrawl/firecrawl.py` 683~748행).
 
-오늘 풀리는 4.46.2의 `app`은 새 `Firecrawl` 인스턴스이고 그 `extract`는 v2 클라이언트의 메서드를 속성으로 붙인 것입니다(소스로 확인, `firecrawl/client.py` 325행. Day 083 Step 3가 같은 구조를 봤습니다). 이 `extract`는 키워드 전용 인자를 받고 `params`가 없으며, 결과는 딕셔너리가 아니라 `ExtractResponse`(소스로 확인)인데 이 클래스에는 `.get`이 없습니다(직접 확인). 앱이 옛 모양으로 부르면 파이썬은 인자를 맞추는 단계에서 `TypeError`를 던지고 264행이 그 문장을 `Error processing <url>: …`로 탭마다 그립니다. `bind`는 이 인자 맞추기를 함수를 실행하지 않고 따로 해 보는 것이라 요청이 나가지 않습니다.
+오늘 풀리는 4.46.2의 `app`은 새 `Firecrawl` 인스턴스이고 그 `extract`는 v2 클라이언트의 메서드를 속성으로 붙인 것입니다(소스로 확인, `firecrawl/client.py` 325행. Day 083 Step 3가 같은 구조를 봤습니다). 이 `extract`는 키워드 전용 인자를 받고 `params`가 없으며, 결과는 딕셔너리가 아니라 `ExtractResponse`(소스로 확인)인데 이 클래스에는 `.get`이 없습니다(직접 확인). 앱이 옛 모양으로 부르면 파이썬은 인자를 맞추는 단계에서 `TypeError`를 던지고 264행이 그 문장을 `Error processing <url>: …`로 탭마다 그립니다. 인자 맞추기에서 난 오류는 함수 본문이 실행되기 전이라 요청이 만들어지지 않고, `bind`는 이 인자 맞추기만 따로 해 보므로 요청이 나가는 옛 버전을 아래 표처럼 시험할 때도 안전합니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** 앱 폴더에 `check_call.py`를 편집기로 만듭니다(`AppTest.from_file`은 상대 경로를 스크립트가 있는 폴더 기준으로 풀어서 앱과 같은 폴더여야 합니다). `Firecrawl`의 생성자를 감싸 `extract`를 `bind`만 하는 함수로 바꾸고, 에이전트가 몇 개 만들어지는지도 셉니다.
+**확인.** 앱 폴더에 `check_call.py`를 편집기로 만듭니다(`AppTest.from_file`은 상대 경로를 스크립트가 있는 폴더 기준으로 풀어서 앱과 같은 폴더여야 합니다). `Firecrawl`의 생성자를 감싸 `api_url`을 닫힌 로컬 포트 `127.0.0.1:9`로 돌리고, 에이전트가 몇 개 만들어지는지도 셉니다.
 
 `check_call.py`
 
@@ -438,10 +438,7 @@ from agno.agent import Agent
 from firecrawl import Firecrawl
 from streamlit.testing.v1 import AppTest
 
-print("signature:", list(inspect.signature(Firecrawl(api_key="fc-test").extract).parameters))
-
 built = []
-passed = []
 original_agent_init = Agent.__init__
 original_firecrawl_init = Firecrawl.__init__
 
@@ -451,20 +448,15 @@ def spy_agent_init(self, *args, **kwargs):
     built.append(self)
 
 
-def guarded_firecrawl_init(self, *args, **kwargs):
+def loopback_firecrawl_init(self, *args, **kwargs):
+    kwargs["api_url"] = "http://127.0.0.1:9"  # 아무도 듣지 않는 내 PC의 포트
     original_firecrawl_init(self, *args, **kwargs)
-    real_extract = self.extract
-
-    def guarded_extract(*args, **kwargs):
-        passed.append(sorted(kwargs))
-        inspect.signature(real_extract).bind(*args, **kwargs)  # 실제 extract는 부르지 않는다
-        raise RuntimeError("인자가 시그니처에 맞음 (실제 extract는 부르지 않았음)")
-
-    self.extract = guarded_extract
 
 
 Agent.__init__ = spy_agent_init
-Firecrawl.__init__ = guarded_firecrawl_init
+Firecrawl.__init__ = loopback_firecrawl_init
+
+print("signature:", list(inspect.signature(Firecrawl(api_key="fc-test").extract).parameters))
 
 at = AppTest.from_file("ai_startup_insight_fire1_agent.py", default_timeout=60)
 at.run()
@@ -474,7 +466,6 @@ at.text_area[0].set_value("https://example.com\nhttps://example.org")
 at.button[0].click()
 at.run()
 print("agents built:", [(a.model.id, a.markdown) for a in built])
-print("keyword arguments passed to extract:", passed)
 print("tabs:", [t.label for t in at.tabs])
 print("errors:", [e.value for e in at.error][1:])
 ```
@@ -488,12 +479,11 @@ uv run --no-project python check_call.py
 ```
 signature: ['urls', 'prompt', 'schema', 'system_prompt', 'allow_external_links', 'enable_web_search', 'show_sources', 'scrape_options', 'ignore_invalid_urls', 'poll_interval', 'timeout', 'integration', 'agent', 'threat_protection']
 agents built: [('gpt-4o', True)]
-keyword arguments passed to extract: [['params'], ['params']]
 tabs: ['Website 1: https://example.com', 'Website 2: https://example.org']
-errors: ["Error processing https://example.com: got an unexpected keyword argument 'params'", "Error processing https://example.org: got an unexpected keyword argument 'params'"]
+errors: ["Error processing https://example.com: FirecrawlClient.extract() got an unexpected keyword argument 'params'", "Error processing https://example.org: FirecrawlClient.extract() got an unexpected keyword argument 'params'"]
 ```
 
-읽을 것은 셋입니다. 서명에 `params`도 `**kwargs`도 없습니다. 에이전트는 URL이 둘이어도 하나만 만들어지고 모델 호출은 없습니다. 앱이 넘긴 키워드 인자는 URL마다 `params` 하나뿐이고 둘 다 같은 이유로 실패하지만, 한 URL의 실패가 다음 URL을 막지는 않습니다(264행의 `try`가 루프 안에 있음). 오류 문장은 `bind`가 낸 것이고 실제 호출의 문장은 앞에 함수 이름이 붙을 수 있습니다.
+읽을 것은 셋입니다. 서명에 `params`도 `**kwargs`도 없습니다. 에이전트는 URL이 둘이어도 하나만 만들어지고 모델 호출은 없습니다. 두 URL이 같은 문장 `FirecrawlClient.extract() got an unexpected keyword argument 'params'`로 실패하지만, 한 URL의 실패가 다음 URL을 막지는 않습니다(264행의 `try`가 루프 안에 있음). 이 실행에서 9번 포트로 간 연결 시도는 0건이었습니다(직접 확인).
 
 어느 버전이 이 모양을 받는지 시험한 것만 표로 적습니다(`inspect.signature`와 `bind`로 직접 확인했고 사이 버전은 시험하지 않았습니다).
 
@@ -530,7 +520,7 @@ print('bind OK')
 bind OK
 ```
 
-1.x에서는 앱의 호출 모양이 시그니처에 맞습니다. 그러니 앱 환경에 `uv pip install "firecrawl-py==1.17.0"`을 하면 이 단계의 인자 불일치는 없어집니다(시그니처 수준에서만 확인). 다만 서버가 1.x SDK의 요청과 FIRE-1을 지금도 받아 주는지는 키가 없어 확인하지 못했습니다. 4.46.2의 소스는 `extract`를 "유지보수 모드이며 사용을 권하지 않는다"고 표시하고(소스로 확인, `firecrawl/v2/methods/extract.py` 11~14행) Firecrawl 문서는 `/agent`로 옮기라고 안내하지만(WebFetch 요약, 원문 대조는 못 함), SDK의 `app.agent`는 `model`을 `spark-1-pro`·`spark-1-mini`·`spark-2` 중에서 고르고 FIRE-1이 없습니다(직접 확인). 이 앱의 FIRE-1은 SDK에서 `extract`의 `agent` 옵션으로만 닿습니다.
+1.x에서는 앱의 호출 모양이 시그니처에 맞습니다. 그러니 앱 환경에 `uv pip install "firecrawl-py==1.17.0"`을 하면 이 단계의 인자 불일치는 없어집니다(시그니처 수준에서만 확인). 다만 서버가 1.x SDK의 요청과 FIRE-1을 지금도 받아 주는지는 키가 없어 확인하지 못했습니다. 4.46.2의 소스는 `extract`를 "유지보수 모드이며 사용을 권하지 않는다"고 표시하고(소스로 확인, `firecrawl/v2/methods/extract.py` 11~14행) Firecrawl 문서는 `/agent`로 옮기라고 안내하지만(WebFetch 요약, 원문 대조는 못 함), SDK의 `app.agent`는 `model`을 `spark-1-pro`·`spark-1-mini`·`spark-2` 중에서 고르고 FIRE-1이 없습니다(직접 확인). 기본(v2) 클라이언트에서 FIRE-1은 `extract`의 `agent` 옵션으로 고르고, 동결된(feature-frozen) `app.v1` 프록시의 `extract`와 `batch_scrape_urls`에도 FIRE-1 옵션이 남아 있습니다(직접 확인: 시그니처, 소스로 확인: `firecrawl/v1/client.py` 82~85행의 `V1AgentOptions`).
 
 ### Step 6. 결과 표시와 분석 에이전트 — 가짜 응답으로 끝까지
 
@@ -817,7 +807,7 @@ OpenAI requests: 0
 
 ## 요청 한 건이 흐르는 과정
 
-버튼 클릭 한 번에 URL 하나를 처리하는 흐름을 그림 셋으로 나눠 그렸습니다. 한 그림에 넣으면 이웃하지 않은 배우 사이를 오가는 메시지의 라벨이 다른 배우의 수명선 위에 놓이기 때문에 앱의 실제 시간 경계에서 나눴고, 메시지는 하나도 지우지 않았습니다. 이 흐름은 소스가 그리는 것입니다. Step 5에서 본 대로 오늘 설치되는 4.46.2에서는 첫 그림의 `extract`가 SDK 안에서 `TypeError`로 끝나 Firecrawl에는 아무것도 가지 않고, 그 뒤는 가짜 Firecrawl와 가짜 OpenAI로 확인한 것입니다.
+버튼 클릭 한 번에 URL 하나를 처리하는 흐름을 그림 셋으로 나눠 그렸습니다. 한 그림에 넣으면 이웃하지 않은 배우 사이를 오가는 메시지의 라벨이 다른 배우의 수명선 위에 놓이기 때문에 앱의 실제 시간 경계에서 나눴고, 메시지는 하나도 지우지 않았습니다. 이 흐름은 소스가 그리는 것이고, Step 5에서 본 대로 오늘 설치되는 4.46.2에서는 첫 그림의 `extract`가 SDK 안에서 `TypeError`로 끝나 Firecrawl에는 아무것도 가지 않습니다. 그 뒤는 가짜 Firecrawl와 가짜 OpenAI로 확인한 것입니다.
 
 ![1: 클릭에서 추출 결과 표시까지](diagrams/sequence.svg)
 
@@ -838,7 +828,7 @@ OpenAI requests: 0
 - [ ] 키 칸 둘이 비밀번호 칸이고 첫 화면에 안내 상자 넷이 있는 것을 `AppTest`로 봤다
 - [ ] 스키마가 필드 다섯에 필수 셋인 것을 소스에서 읽어 냈다
 - [ ] 버튼의 검사 순서(URL, Firecrawl 클라이언트, OpenAI 키)를 네 가지 입력으로 확인했다
-- [ ] 오늘의 `extract`가 앱의 `params=` 호출을 `TypeError`로 거부하는 것을 `bind`로 확인했다
+- [ ] 오늘의 `extract`가 앱의 `params=` 호출을 `TypeError`로 거부하는 것을 `bind`와 닫힌 로컬 포트로 돌린 앱 화면으로 확인했다
 - [ ] `firecrawl-py==1.17.0`이 앱의 호출 모양을 시그니처 수준에서 받는 것을 확인했다
 - [ ] 가짜 응답에서 결과가 탭에 그려지고 `gpt-4o` 요청이 한 건 나가는 것을 확인했다
 - [ ] 처리 상세의 네 줄이 응답과 무관한 고정 문장임을 확인했다
@@ -848,7 +838,7 @@ OpenAI requests: 0
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 두 키를 넣고 눌렀더니 탭마다 `Error processing <url>: … unexpected keyword argument 'params'` 꼴의 빨간 상자가 뜸(직접 확인: `bind`로 같은 규칙을 적용해 본 결과) | 오늘 풀리는 firecrawl-py 4.46.2의 `extract`는 `params=`를 받지 않는다. 앱의 165~202행은 1.x의 `extract(urls, params)` 모양이다(Step 5) | 앱 환경에서 `uv pip install "firecrawl-py==1.17.0"`(시그니처는 맞음, 서버가 1.x 요청과 FIRE-1을 받는지는 확인하지 못함). 호출을 키워드 인자로 바꾸는 법은 더 해보기 |
+| 두 키를 넣고 눌렀더니 탭마다 `Error processing <url>: FirecrawlClient.extract() got an unexpected keyword argument 'params'`가 빨간 상자로 뜸(직접 확인: `api_url`을 닫힌 로컬 포트로 돌린 클라이언트로 앱 화면에서) | 오늘 풀리는 firecrawl-py 4.46.2의 `extract`는 `params=`를 받지 않는다. 앱의 165~202행은 1.x의 `extract(urls, params)` 모양이다(Step 5) | 앱 환경에서 `uv pip install "firecrawl-py==1.17.0"`(시그니처는 맞음, 서버가 1.x 요청과 FIRE-1을 받는지는 확인하지 못함). 호출을 키워드 인자로 바꾸는 법은 더 해보기 |
 | 키 칸을 비우고 눌렀더니 `Error during extraction: No API key provided` | 123행의 `FirecrawlApp(api_key=...)`가 비어 있는 키를 거부한다. OpenAI 키 검사(134행)보다 먼저라 OpenAI 키만 넣어도 이 오류가 난다(직접 확인) | Firecrawl 키 칸을 채운다. 환경변수 `FIRECRAWL_API_KEY`가 있으면 칸이 비어 있어도 통과한다(직접 확인) |
 | Firecrawl 키만 넣었더니 `Attempting to process these URLs: [...]` 정보 상자와 OpenAI 키를 달라는 경고만 뜨고 아무 일도 안 일어남 | 134행이 OpenAI 키가 없으면 탭도 에이전트도 만들지 않고 경고만 그린다. 추출은 시작도 하지 않는다(직접 확인) | OpenAI 키 칸도 채운다 |
 | 첫 화면부터 맨 위에 빨간 오류 상자가 있음 | 48행이 안내 문장을 `st.error`로 그린 장식이다(직접 확인: 첫 화면에서 `at.error`가 1개) | 무시한다. `AppTest`로 오류를 셀 때는 첫 항목을 건너뛴다 |
@@ -859,7 +849,7 @@ OpenAI requests: 0
 
 ## 더 해보기
 
-- 복사본에서 `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/ai_startup_insight_fire1_agent.py:165-202`의 호출을 오늘의 모양으로 바꿔 보세요. `params={` 줄과 닫는 `}`를 지우고 `prompt=`·`schema=`·`agent=`를 키워드 인자로 쓰고, 결과는 `data.data`·`data.status`·`data.expires_at`으로 읽습니다(`advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/ai_startup_insight_fire1_agent.py:205-208`과 `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/ai_startup_insight_fire1_agent.py:256-259`도 같이 고칩니다). `Firecrawl`의 `extract`를 `bind`만 하고 `ExtractResponse`를 돌려주는 가짜로 바꿔 돌리면 화면이 추출 정보와 분석을 같은 모양으로 그립니다(복사본에서 직접 확인). 서버에서 FIRE-1이 통하는지는 확인하지 못했습니다.
+- 복사본에서 `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/ai_startup_insight_fire1_agent.py:165-202`의 호출을 오늘의 모양으로 바꿔 보세요. `params={` 줄과 닫는 `}`를 지우고 `prompt=`·`schema=`·`agent=`를 키워드 인자로 쓰고, 결과는 `data.data`·`data.status`·`data.expires_at`으로 읽습니다(`advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/ai_startup_insight_fire1_agent.py:205-208`과 `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/ai_startup_insight_fire1_agent.py:256-259`도 같이 고칩니다). `Firecrawl`의 `extract`를 `bind`만 하고 `ExtractResponse`를 돌려주는 가짜로 바꿔 돌리면 화면이 같은 모양을 그립니다(복사본에서 직접 확인). 서버에서 FIRE-1이 통하는지는 확인하지 못했습니다.
 - Firecrawl 문서가 권하는 `/agent`로 옮겨 보세요. `app.agent`의 `model`에는 FIRE-1이 없으니 모델 이름과 응답 모양은 문서에서 확인해야 합니다. 시그니처만 확인했고 호출은 하지 못했습니다.
 - 지시문의 들여쓰기를 없애 보세요. 복사본에 `import inspect`를 더하고 `advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/ai_startup_insight_fire1_agent.py:144-152`의 문자열을 `inspect.cleandoc("""...""")`로 감싸면 `check_flow.py ok`의 `[developer]` 메시지에서 28칸 들여쓰기가 사라집니다(복사본에서 직접 확인).
 
