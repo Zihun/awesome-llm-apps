@@ -1,4 +1,4 @@
-# awesome-llm-apps 164일 튜토리얼
+# awesome-llm-apps 167일 튜토리얼
 
 이 리포에 있는 앱을 하루에 하나씩, 처음부터 끝까지 따라 만드는 시리즈입니다. 하루 분량은 60~90분이고, 매 일차는 완성 아키텍처와 각 단계의 시스템 구성을 D2 다이어그램으로 보여 줍니다. 순서는 학습 난이도 순이며 볼륨 안에서는 작은 앱부터 갑니다.
 
@@ -53,9 +53,9 @@ uv run --no-project python <엔트리 파일>
 
 README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링크만 남깁니다: [Openwork](https://github.com/accomplish-ai/coworker), [OpenSource Voice Dictation Agent](https://github.com/akshayaggarwal/wispr-flow-clone).
 
-## 164일 일정
+## 167일 일정
 
-진도: 99 / 164일 완료
+진도: 99 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -285,29 +285,32 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ⬜ | Day 152 | 🦙 Llama 3.2 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning/) |
 | ⬜ | Day 153 | 🦥 Gemma 3 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning/) |
 
-### 볼륨 16. 🧩 Agent Skills (Day 154–159, 6일)
+### 볼륨 16. 🧩 Agent Skills (Day 154–161, 8일)
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
 | ⬜ | Day 154 | 🧠 Advisor Orchestrator Worker | [agent_skills/advisor-orchestrator-worker](../../agent_skills/advisor-orchestrator-worker/) |
-| ⬜ | Day 155 | 🏺 Commit Archaeologist | [agent_skills/commit-archaeologist](../../agent_skills/commit-archaeologist/) |
-| ⬜ | Day 156 | 🩺 Dependency Doctor | [agent_skills/dependency-doctor](../../agent_skills/dependency-doctor/) |
-| ⬜ | Day 157 | 🔭 Scope Creep Detector | [agent_skills/scope-creep-detector](../../agent_skills/scope-creep-detector/) |
-| ⬜ | Day 158 | ⚰️ Project Graveyard | [agent_skills/project-graveyard](../../agent_skills/project-graveyard/) |
-| ⬜ | Day 159 | ♾️ Self-Improving Agent Skills | [agent_skills/self-improving-agent-skills](../../agent_skills/self-improving-agent-skills/) |
+| ⬜ | Day 155 | 🎙️ Thinking Out Loud | [agent_skills/thinking-out-loud](../../agent_skills/thinking-out-loud/) |
+| ⬜ | Day 156 | 🏺 Commit Archaeologist | [agent_skills/commit-archaeologist](../../agent_skills/commit-archaeologist/) |
+| ⬜ | Day 157 | 🩺 Dependency Doctor | [agent_skills/dependency-doctor](../../agent_skills/dependency-doctor/) |
+| ⬜ | Day 158 | 🔭 Scope Creep Detector | [agent_skills/scope-creep-detector](../../agent_skills/scope-creep-detector/) |
+| ⬜ | Day 159 | ⚰️ Project Graveyard | [agent_skills/project-graveyard](../../agent_skills/project-graveyard/) |
+| ⬜ | Day 160 | 👁️ First Reader | [agent_skills/first-reader](../../agent_skills/first-reader/) |
+| ⬜ | Day 161 | ♾️ Self-Improving Agent Skills | [agent_skills/self-improving-agent-skills](../../agent_skills/self-improving-agent-skills/) |
 
-### 볼륨 17. 🔎 AI 브라우저 도구 (Day 160–160, 1일)
-
-| 완료 | 일차 | 앱 | 원본 앱 |
-|---|---|---|---|
-| ⬜ | Day 160 | 🪡 Needle - A New Way to Find | [advanced_llm_apps/needle](../../advanced_llm_apps/needle/) |
-
-### 볼륨 18. 🧪 기타 LLM 앱 (Day 161–164, 4일)
+### 볼륨 17. 🔎 AI 브라우저 도구 (Day 162–163, 2일)
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | Day 161 | 🔄 GPT-OSS Advanced Critique & Improvement Loop | [advanced_llm_apps/gpt_oss_critique_improvement_loop](../../advanced_llm_apps/gpt_oss_critique_improvement_loop/) |
-| ⬜ | Day 162 | 📄 Resume & Job Matcher | [advanced_llm_apps/resume_job_matcher](../../advanced_llm_apps/resume_job_matcher/) |
-| ⬜ | Day 163 | ThinkPath Chatbot  🧠 | [advanced_llm_apps/thinkpath_chatbot_app](../../advanced_llm_apps/thinkpath_chatbot_app/) |
-| ⬜ | Day 164 | Cursor Ai Experiments | [advanced_llm_apps/cursor_ai_experiments](../../advanced_llm_apps/cursor_ai_experiments/) |
+| ⬜ | Day 162 | 🪡 Needle - A New Way to Find | [advanced_llm_apps/needle](../../advanced_llm_apps/needle/) |
+| ⬜ | Day 163 | 🌀 Ripple - Change One Thing, Find What Else Needs to Change | [advanced_llm_apps/ripple](../../advanced_llm_apps/ripple/) |
+
+### 볼륨 18. 🧪 기타 LLM 앱 (Day 164–167, 4일)
+
+| 완료 | 일차 | 앱 | 원본 앱 |
+|---|---|---|---|
+| ⬜ | Day 164 | 🔄 GPT-OSS Advanced Critique & Improvement Loop | [advanced_llm_apps/gpt_oss_critique_improvement_loop](../../advanced_llm_apps/gpt_oss_critique_improvement_loop/) |
+| ⬜ | Day 165 | 📄 Resume & Job Matcher | [advanced_llm_apps/resume_job_matcher](../../advanced_llm_apps/resume_job_matcher/) |
+| ⬜ | Day 166 | ThinkPath Chatbot  🧠 | [advanced_llm_apps/thinkpath_chatbot_app](../../advanced_llm_apps/thinkpath_chatbot_app/) |
+| ⬜ | Day 167 | Cursor Ai Experiments | [advanced_llm_apps/cursor_ai_experiments](../../advanced_llm_apps/cursor_ai_experiments/) |
 

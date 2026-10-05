@@ -8,6 +8,12 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**업스트림 동기화 (2026-10-05) — 진도 99/167. 다음(Day 100~)은 여전히 사용자 지시를 받고.**
+- `upstream` 리모트(Shubhamsaboo/awesome-llm-apps)를 추가하고 upstream/main 15커밋(2026-09-21~28)을 merge(`82201be`, 충돌 0). 양쪽이 모두 고친 파일은 루트 README뿐이고 덩어리가 겹치지 않았다. 포크 고유 영역(루트 README "Getting Started with uv", `.gitignore`의 `!docs/tutorials/_tools/lib/`)은 살아 있다. 절차는 루트 `UPSTREAM_SYNC.md`.
+- 들어온 것: Ripple(신규, `advanced_llm_apps/ripple`), agent_skills `registry.json`·lint·CI, self-improving-agent-skills 모델 선택(2421→2740줄), insurance claim 라이브 아바타(4033→4571줄, `google-genai>=2.24.0`), TinyFish 스폰서 배너.
+- **작성된 Day 001~099 영향 없음.** 99일치 README의 인용 경로 1,441개와 이번 변경 파일 62개의 교집합은 `README.md` 하나인데, 전부 각 앱 폴더의 README를 가리키는 표기였다(루트 README 인용 0). `npm run check` 204건은 모두 Day 100~150 골격(SVG 없음·미작성 표시)이고 Day 001~099는 0건. 테스트 50/50.
+- **계획 164 → 167일.** 상위 README가 링크하는 로컬 앱과 days.json을 대조하니 3개가 빠져 있었다: thinking-out-loud(이번에 README에 실림, 폴더는 2026-07부터 있었음), ripple(신규), first-reader(README에는 2026-09-10부터 있었는데 9/21 확장 때 누락 — 원인은 모름). 폴더가 Day 150까지만 있으므로 Day 154 이후만 재번호하고, 규격대로 볼륨 안 코드 규모 오름차순에 끼웠다: 155 thinking-out-loud(0), 160 first-reader(1248), 163 ripple(1659). 그 뒤는 밀림(self-improving 159→161, needle 160→162, 볼륨 18은 164~167). Day 1~153 항목은 바이트 단위로 동일함을 확인. 스펙 부록 A·로드맵 재생성, 스펙의 남은 "133" 규칙 문구(마지막 일차·행 수)도 일반화.
+
 **멈춤 지점 (2026-10-01) — Day 099까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 99/164). 다음(Day 100~)은 사용자 지시를 받고. 아래 '다음 작업 순서' 1·2는 끝남.**
 
 **다음 작업 순서 (재개하면 이 순서대로)**

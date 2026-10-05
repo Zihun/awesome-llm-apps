@@ -1235,12 +1235,20 @@
     "day": 155,
     "vol": 16,
     "volLabel": "🧩 Agent Skills",
+    "title": "🎙️ Thinking Out Loud",
+    "path": "agent_skills/thinking-out-loud",
+    "slug": "thinking-out-loud"
+  },
+  {
+    "day": 156,
+    "vol": 16,
+    "volLabel": "🧩 Agent Skills",
     "title": "🏺 Commit Archaeologist",
     "path": "agent_skills/commit-archaeologist",
     "slug": "commit-archaeologist"
   },
   {
-    "day": 156,
+    "day": 157,
     "vol": 16,
     "volLabel": "🧩 Agent Skills",
     "title": "🩺 Dependency Doctor",
@@ -1248,7 +1256,7 @@
     "slug": "dependency-doctor"
   },
   {
-    "day": 157,
+    "day": 158,
     "vol": 16,
     "volLabel": "🧩 Agent Skills",
     "title": "🔭 Scope Creep Detector",
@@ -1256,7 +1264,7 @@
     "slug": "scope-creep-detector"
   },
   {
-    "day": 158,
+    "day": 159,
     "vol": 16,
     "volLabel": "🧩 Agent Skills",
     "title": "⚰️ Project Graveyard",
@@ -1264,7 +1272,15 @@
     "slug": "project-graveyard"
   },
   {
-    "day": 159,
+    "day": 160,
+    "vol": 16,
+    "volLabel": "🧩 Agent Skills",
+    "title": "👁️ First Reader",
+    "path": "agent_skills/first-reader",
+    "slug": "first-reader"
+  },
+  {
+    "day": 161,
     "vol": 16,
     "volLabel": "🧩 Agent Skills",
     "title": "♾️ Self-Improving Agent Skills",
@@ -1272,7 +1288,7 @@
     "slug": "self-improving-agent-skills"
   },
   {
-    "day": 160,
+    "day": 162,
     "vol": 17,
     "volLabel": "🔎 AI 브라우저 도구",
     "title": "🪡 Needle - A New Way to Find",
@@ -1280,7 +1296,15 @@
     "slug": "needle"
   },
   {
-    "day": 161,
+    "day": 163,
+    "vol": 17,
+    "volLabel": "🔎 AI 브라우저 도구",
+    "title": "🌀 Ripple - Change One Thing, Find What Else Needs to Change",
+    "path": "advanced_llm_apps/ripple",
+    "slug": "ripple"
+  },
+  {
+    "day": 164,
     "vol": 18,
     "volLabel": "🧪 기타 LLM 앱",
     "title": "🔄 GPT-OSS Advanced Critique & Improvement Loop",
@@ -1288,7 +1312,7 @@
     "slug": "gpt-oss-critique-improvement-loop"
   },
   {
-    "day": 162,
+    "day": 165,
     "vol": 18,
     "volLabel": "🧪 기타 LLM 앱",
     "title": "📄 Resume & Job Matcher",
@@ -1296,7 +1320,7 @@
     "slug": "resume-job-matcher"
   },
   {
-    "day": 163,
+    "day": 166,
     "vol": 18,
     "volLabel": "🧪 기타 LLM 앱",
     "title": "ThinkPath Chatbot  🧠",
@@ -1304,7 +1328,7 @@
     "slug": "thinkpath-chatbot-app"
   },
   {
-    "day": 164,
+    "day": 167,
     "vol": 18,
     "volLabel": "🧪 기타 LLM 앱",
     "title": "Cursor Ai Experiments",

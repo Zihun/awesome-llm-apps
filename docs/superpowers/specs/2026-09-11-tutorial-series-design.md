@@ -1,6 +1,6 @@
-# awesome-llm-apps 133일 튜토리얼 시리즈 설계
+# awesome-llm-apps 167일 튜토리얼 시리즈 설계
 
-작성일: 2026-09-11 · 상태: 검토 대기 · 대상 리포: Zihun/awesome-llm-apps (upstream Shubhamsaboo/awesome-llm-apps 2026-09-10 동기화 기준, 병합 커밋 `edcdc65`)
+작성일: 2026-09-11 · 상태: 검토 대기 · 대상 리포: Zihun/awesome-llm-apps (upstream Shubhamsaboo/awesome-llm-apps 2026-09-10 동기화 기준, 병합 커밋 `edcdc65`. 최근 동기화: 2026-10-05, 병합 커밋 `82201be`. 절차는 루트 `UPSTREAM_SYNC.md`)
 
 ## 1. 목적과 범위
 
@@ -10,7 +10,7 @@
 
 - README 목록 116개 항목 중 외부 리포 링크 2개(Openwork, OpenSource Voice Dictation Agent)는 코드가 이 리포에 없으므로 제외한다. 로드맵에 링크만 남긴다.
 - AI Agent Framework Crash Course 2개는 레슨 단위로 풀어 21일(Google ADK 10, OpenAI Agents SDK 11)로 다룬다.
-- 합계 **164일**. 전체 일정은 부록 A에 있다. (2026-09-21에 133일에서 확장: 업스트림이 더한 앱 2개와, 상위 README에 실리지 않아 최초 계획에서 빠졌던 앱 29개. Day 1–21은 이미 작성되어 번호를 고정했으므로 추가분은 22일차 이후에만 들어간다.)
+- 합계 **167일**. 전체 일정은 부록 A에 있다. (2026-09-21에 133일에서 164일로 확장: 업스트림이 더한 앱 2개와, 상위 README에 실리지 않아 최초 계획에서 빠졌던 앱 29개. Day 1–21은 이미 작성되어 번호를 고정했으므로 추가분은 22일차 이후에만 들어간다. 2026-10-05에 167일로 확장: 업스트림 동기화로 상위 README에 새로 실린 Thinking Out Loud·Ripple과, README에는 있었으나 계획에서 빠져 있던 First Reader. 폴더가 아직 없는 Day 154 이후에만 끼웠으므로 Day 1–153의 번호와 폴더명은 그대로다.)
 
 **대상 독자.** Python 기초와 터미널 사용이 가능하고, LLM 앱 개발은 처음인 개발자. Node.js가 필요한 볼륨(Generative UI)은 해당 일차에서 설치부터 안내한다.
 
@@ -37,7 +37,7 @@
 
 ```
 docs/tutorials/
-├── README.md                     # 133일 로드맵: 볼륨별 표(일차·앱·난이도·링크), 진도 체크박스, 공통 사전 준비
+├── README.md                     # 전체 일정 로드맵: 볼륨별 표(일차·앱·난이도·링크), 진도 체크박스, 공통 사전 준비
 ├── _tools/
 │   ├── package.json              # @terrastruct/d2 devDependency, scripts: render / check / test / scaffold / roadmap
 │   ├── render.mjs                # **/diagrams/*.d2 → 같은 이름 .svg
@@ -47,6 +47,7 @@ docs/tutorials/
 │   ├── scaffold.mjs              # dayNNN-slug/ 폴더와 README 골격, diagrams/ 생성
 │   ├── roadmap.mjs               # roadmap.template.md + days.json + 진도 → README.md 생성
 │   ├── roadmap.template.md       # 로드맵의 고정 본문(소개, 공통 사전 준비). <!-- DAYS --> 자리에 표가 들어감
+│   ├── sync-audit.mjs            # upstream 동기화 뒤 점검: README 링크 대 days.json, 작성된 일차의 원본 앱·인용 경로 변경
 │   ├── lib/                      # 스크립트가 공유하는 모듈 (d2.mjs, days.mjs, check.mjs)
 │   └── test/                     # node --test 로 도는 도구 테스트
 ├── day001-xai-finance-agent/
@@ -56,7 +57,7 @@ docs/tutorials/
 │       ├── step1.d2     step1.svg
 │       ├── …
 │       └── sequence.d2  sequence.svg
-└── day002-… (총 133개 폴더)
+└── day002-… (일차마다 폴더 하나, `days.json` 항목 수만큼)
 ```
 
 - 폴더 이름은 `day` + 3자리 일차 + `-` + 슬러그. 슬러그는 원본 앱 폴더명을 소문자·하이픈으로 바꾼 것이며, Generative UI 볼륨은 `genui-` 접두사를 붙여 같은 이름의 Python 앱과 구분한다. 크래시 코스는 `adk-N-…`, `openai-sdk-N-…` 형식이다. 전체 목록은 부록 A에 고정되어 있고(원천은 `days.json`), 한 번 커밋된 일차 번호와 폴더명은 바꾸지 않는다(링크 안정성).
@@ -109,7 +110,7 @@ docs/tutorials/
 심화 과제 2~3개.
 
 ## 다음 날 예고
-다음 일차 링크와 한 줄 소개. (Day 133은 시리즈 마무리로 대체)
+다음 일차 링크와 한 줄 소개. (마지막 일차는 시리즈 마무리로 대체)
 ```
 
 **스텝 설계 규칙.**
@@ -224,12 +225,12 @@ docs/tutorials/
 
 **`check.mjs`.** 다음을 검사하고 하나라도 실패하면 exit 1.
 
-1. 모든 `day*/README.md`에 4절의 H2 제목 9개가 순서대로 있다(Day 133은 "다음 날 예고" 생략 허용).
+1. 모든 `day*/README.md`에 4절의 H2 제목 9개가 순서대로 있다(마지막 일차는 "다음 날 예고" 생략 허용).
 2. README가 참조하는 상대 링크와 이미지 파일이 존재한다.
 3. `diagrams/*.d2`마다 짝이 되는 `.svg`가 있고, `.svg` 안의 `d2-source-sha256` 주석이 현재 소스(import를 펼친 것)의 해시와 같다(다르면 "stale").
 4. 본문의 코드 위치 표기 `` `경로:시작-끝` ``이 실제 파일을 가리키고 줄 범위가 파일 길이 안에 있다.
 5. mermaid 코드 펜스가 없다.
-6. 로드맵 README에 일차 행이 133개 있고, 링크가 걸린 일차는 모두 존재하는 폴더를 가리킨다. (로드맵은 폴더가 있는 일차에만 링크를 걸고, 아직 없는 일차는 링크 없이 나열한다.)
+6. 로드맵 README에 `days.json` 항목 수만큼 일차 행이 있고, 링크가 걸린 일차는 모두 존재하는 폴더를 가리킨다. (로드맵은 폴더가 있는 일차에만 링크를 걸고, 아직 없는 일차는 링크 없이 나열한다.)
 7. 골격의 미작성 표시 `(작성 필요)`가 본문에 남아 있지 않다. (`scaffold.mjs`가 만든 골격의 빈칸 표시. `roadmap.mjs`도 이 문자열이 없는 일차만 완료로 센다.)
 8. 렌더된 `.svg`의 너비가 1200px 이하다(sequence는 1400px).
 9. 코드 발췌가 바로 앞에서 인용한 줄 범위와 정확히 일치한다.
@@ -276,7 +277,7 @@ docs/tutorials/
 
 | 위험 | 대응 |
 |---|---|
-| upstream 동기화로 앱 코드가 바뀌어 줄 번호 참조가 어긋남 | `check.mjs`가 줄 범위 초과를 잡는다. 동기화 후에는 `npm run check`를 돌리고 어긋난 참조를 고친다. 코드 발췌는 줄 번호보다 함수·변수 이름을 기준으로 설명해 어긋나도 찾을 수 있게 한다 |
+| upstream 동기화로 앱 코드가 바뀌어 줄 번호 참조가 어긋남 | `check.mjs`가 줄 범위 초과를 잡는다. 동기화 후에는 `npm run sync-audit`와 `npm run check`를 돌리고 어긋난 참조를 고친다(절차: 루트 `UPSTREAM_SYNC.md`). 코드 발췌는 줄 번호보다 함수·변수 이름을 기준으로 설명해 어긋나도 찾을 수 있게 한다 |
 | 일부 앱이 폐기된 라이브러리 API를 쓰거나 현재 실행되지 않음 | 고치지 않고 "문제 해결" 절에 증상과 우회법을 적는다. 문서 상단 난이도 옆에 ⚠ 표시 |
 | 대형 앱(수천~수만 줄)은 하루 분량을 넘음 | 핵심 파일과 요청 경로 하나만 다루고 나머지는 컴포넌트 표에 역할만 적는다 |
 | D2 JS 렌더러의 import 처리 불확실 | render.mjs가 import를 텍스트로 펼치므로 렌더러의 import 지원에 의존하지 않는다(6절) |
@@ -284,7 +285,7 @@ docs/tutorials/
 | D2 렌더러 프로세스가 끝나지 않아 자동화가 멈춤 | 렌더 스크립트는 `process.exit`, 테스트는 `--test-force-exit`, 출력은 파이프 대신 파일로 |
 | API 비용 | 문서에 대략치를 적고 로컬 모델 대안이 있는 앱은 함께 안내 |
 
-## 부록 A. 전체 일정 (164일)
+## 부록 A. 전체 일정 (167일)
 
 일차 번호와 폴더명은 여기서 고정한다. 코드 규모는 정렬 근거로 쓴 `.py/.ts/.tsx/.js/.jsx` 줄 수 합계다.
 이 표는 `docs/tutorials/_tools/days.json`에서 생성한다 — 둘이 어긋나면 `days.json`이 옳다.
@@ -482,7 +483,7 @@ docs/tutorials/
 | 137 | 📞 Customer Support Voice Agent | `voice_ai_agents/customer_support_voice_agent` | `day137-customer-support-voice-agent` | 393 |
 | 138 | 🔊 Voice RAG Agent (OpenAI SDK) | `voice_ai_agents/voice_rag_openaisdk` | `day138-voice-rag-openaisdk` | 401 |
 | 139 | 🗣️ AI Audio Tour Agent | `voice_ai_agents/ai_audio_tour_agent` | `day139-ai-audio-tour-agent` | 695 |
-| 140 | 🛡️ Insurance Claim Live Agent Team | `voice_ai_agents/insurance_claim_live_agent_team` | `day140-insurance-claim-live-agent-team` | 4033 |
+| 140 | 🛡️ Insurance Claim Live Agent Team | `voice_ai_agents/insurance_claim_live_agent_team` | `day140-insurance-claim-live-agent-team` | 4571 |
 
 ### 볼륨 12. 🖼️ Generative UI (Day 141–147, 7일)
 
@@ -517,28 +518,31 @@ docs/tutorials/
 | 152 | 🦙 Llama 3.2 Fine-tuning | `advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning` | `day152-llama3.2-finetuning` | 63 |
 | 153 | 🦥 Gemma 3 Fine-tuning | `advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning` | `day153-gemma3-finetuning` | 90 |
 
-### 볼륨 16. 🧩 Agent Skills (Day 154–159, 6일)
+### 볼륨 16. 🧩 Agent Skills (Day 154–161, 8일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
 | 154 | 🧠 Advisor Orchestrator Worker | `agent_skills/advisor-orchestrator-worker` | `day154-advisor-orchestrator-worker` | 0 |
-| 155 | 🏺 Commit Archaeologist | `agent_skills/commit-archaeologist` | `day155-commit-archaeologist` | 388 |
-| 156 | 🩺 Dependency Doctor | `agent_skills/dependency-doctor` | `day156-dependency-doctor` | 485 |
-| 157 | 🔭 Scope Creep Detector | `agent_skills/scope-creep-detector` | `day157-scope-creep-detector` | 528 |
-| 158 | ⚰️ Project Graveyard | `agent_skills/project-graveyard` | `day158-project-graveyard` | 555 |
-| 159 | ♾️ Self-Improving Agent Skills | `agent_skills/self-improving-agent-skills` | `day159-self-improving-agent-skills` | 2421 |
+| 155 | 🎙️ Thinking Out Loud | `agent_skills/thinking-out-loud` | `day155-thinking-out-loud` | 0 |
+| 156 | 🏺 Commit Archaeologist | `agent_skills/commit-archaeologist` | `day156-commit-archaeologist` | 388 |
+| 157 | 🩺 Dependency Doctor | `agent_skills/dependency-doctor` | `day157-dependency-doctor` | 485 |
+| 158 | 🔭 Scope Creep Detector | `agent_skills/scope-creep-detector` | `day158-scope-creep-detector` | 528 |
+| 159 | ⚰️ Project Graveyard | `agent_skills/project-graveyard` | `day159-project-graveyard` | 555 |
+| 160 | 👁️ First Reader | `agent_skills/first-reader` | `day160-first-reader` | 1248 |
+| 161 | ♾️ Self-Improving Agent Skills | `agent_skills/self-improving-agent-skills` | `day161-self-improving-agent-skills` | 2740 |
 
-### 볼륨 17. 🔎 AI 브라우저 도구 (Day 160–160, 1일)
-
-| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
-|---|---|---|---|---|
-| 160 | 🪡 Needle - A New Way to Find | `advanced_llm_apps/needle` | `day160-needle` | 1545 |
-
-### 볼륨 18. 🧪 기타 LLM 앱 (Day 161–164, 4일)
+### 볼륨 17. 🔎 AI 브라우저 도구 (Day 162–163, 2일)
 
 | Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
 |---|---|---|---|---|
-| 161 | 🔄 GPT-OSS Advanced Critique & Improvement Loop | `advanced_llm_apps/gpt_oss_critique_improvement_loop` | `day161-gpt-oss-critique-improvement-loop` | 228 |
-| 162 | 📄 Resume & Job Matcher | `advanced_llm_apps/resume_job_matcher` | `day162-resume-job-matcher` | 93 |
-| 163 | ThinkPath Chatbot  🧠 | `advanced_llm_apps/thinkpath_chatbot_app` | `day163-thinkpath-chatbot-app` | 348 |
-| 164 | Cursor Ai Experiments | `advanced_llm_apps/cursor_ai_experiments` | `day164-cursor-ai-experiments` | 323 |
+| 162 | 🪡 Needle - A New Way to Find | `advanced_llm_apps/needle` | `day162-needle` | 1545 |
+| 163 | 🌀 Ripple - Change One Thing, Find What Else Needs to Change | `advanced_llm_apps/ripple` | `day163-ripple` | 1659 |
+
+### 볼륨 18. 🧪 기타 LLM 앱 (Day 164–167, 4일)
+
+| Day | 앱 | 원본 경로 | 폴더 | 코드 규모(줄) |
+|---|---|---|---|---|
+| 164 | 🔄 GPT-OSS Advanced Critique & Improvement Loop | `advanced_llm_apps/gpt_oss_critique_improvement_loop` | `day164-gpt-oss-critique-improvement-loop` | 228 |
+| 165 | 📄 Resume & Job Matcher | `advanced_llm_apps/resume_job_matcher` | `day165-resume-job-matcher` | 93 |
+| 166 | ThinkPath Chatbot  🧠 | `advanced_llm_apps/thinkpath_chatbot_app` | `day166-thinkpath-chatbot-app` | 348 |
+| 167 | Cursor Ai Experiments | `advanced_llm_apps/cursor_ai_experiments` | `day167-cursor-ai-experiments` | 323 |
