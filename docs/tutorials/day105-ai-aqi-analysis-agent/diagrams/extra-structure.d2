@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+
+screen: "Streamlit 화면\n(main)" { class: ours; width: 190 }
+session: "세션 상태 (api_keys)" { class: store; width: 190; height: 96 }
+analyze: "분석 함수\n(analyze_conditions)" { class: ours }
+analyzer: "측정값 수집\n(AQIAnalyzer)" { class: ours; width: 200 }
+health: "건강 추천 에이전트\n(HealthRecommendationAgent)" { class: ours }
+models: "데이터 모양\n(ExtractSchema · AQIResponse ·\nUserInput)" { class: ours }
+
+firecrawl: "Firecrawl API\n(extract)" { class: ext; height: 70 }
+aqi_in: "aqi.in 대시보드" { class: ext; height: 70 }
+openai: "OpenAI API\n(gpt-4o)" { class: ext; height: 70 }
+agno_api: "Agno 통계 API" { class: ext; height: 70 }
+
+screen -> analyze: "analyze_conditions(\nuser_input, api_keys)"
+screen -> session: "키 저장"
+session -> screen: "키 조회"
+screen -> models: "UserInput(...)\n만들기"
+analyze -> analyzer: "AQIAnalyzer(키) 생성 ·\nfetch_aqi_data(도시 · 주 · 나라)"
+analyze -> health: "HealthRecommendationAgent(키) 생성 ·\nget_recommendations(측정값 · UserInput)"
+analyzer -> models: "ExtractSchema 스키마 ·\nAQIResponse 검증"
+analyzer -> firecrawl: "extract(URL/*,\nprompt · schema)"
+aqi_in -> firecrawl: "페이지 내용"
+health -> openai: "user 메시지 1개"
+health -> agno_api: "실행 메타데이터\n(성공 시)"

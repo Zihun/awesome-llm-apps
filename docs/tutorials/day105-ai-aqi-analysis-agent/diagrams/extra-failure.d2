@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+analyze: 분석 함수 { class: ours }
+screen: Streamlit 화면 { class: ours }
+analyzer: 측정값 수집 { class: ours }
+health: 건강 추천 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+firecrawl: Firecrawl API { class: ext }
+
+analyze -> analyzer: "fetch_aqi_data(\n도시 · 주 · 나라)"
+analyzer -> firecrawl: "POST /v1/extract"
+firecrawl -> analyzer: "오류 응답 (예: 401)"
+analyzer -> screen: "st.error (Error fetching AQI data: 오류 문장)"
+analyzer -> analyze: "숫자 7개가 전부 0인 dict"
+analyze -> health: "get_recommendations(\n0 값, user_input)"
+health -> openai: "user 메시지 1개\n(AQI 0, PM2.5 0 등)"

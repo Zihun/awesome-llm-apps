@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+screen: "Gradio 화면\n(create_demo)" { class: ours }
+logic: "분석 코드 (스트림릿 파일과\n같은 클래스의 복사본)" { class: ours }
+tunnel: "gradio.live 공개 터널" { class: ext; height: 70 }
+firecrawl: "Firecrawl API\n(extract)" { class: ext; height: 70 }
+openai: "OpenAI API\n(gpt-4o)" { class: ext; height: 70 }
+
+user -> screen: "로컬 주소\n(127.0.0.1:7860)"
+screen -> user: "결과 표시"
+user -> tunnel: "공개 주소로 접속\n(xxx.gradio.live)"
+screen -> tunnel: "launch(share=True)가\n터널을 연다"
+screen -> logic: "analyze_conditions(\n입력 7개)"
+logic -> screen: "JSON · 추천 ·\n상태 · 경고"
+logic -> firecrawl: "extract(URL/*,\nprompt · schema)"
+logic -> openai: "user 메시지 1개"

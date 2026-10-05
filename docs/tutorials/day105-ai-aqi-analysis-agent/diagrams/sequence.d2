@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+screen: Streamlit 화면 { class: ours }
+analyze: 분석 함수 { class: ours }
+health: 건강 추천 에이전트 { class: ours }
+analyzer: 측정값 수집 { class: ours }
+
+user -> screen: 키 · 위치 · 지병 · 활동 입력, 버튼 클릭
+screen -> screen: "city · planned_activity · 키 두 개가 비어 있지 않은지 검사"
+screen -> analyze: "analyze_conditions(user_input, api_keys)"
+analyze -> analyzer: "AQIAnalyzer(\nfirecrawl_key) 생성"
+analyze -> health: "HealthRecommendationAgent(openai_key) 생성"

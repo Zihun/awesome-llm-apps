@@ -1,0 +1,36 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+
+app: "ai_aqi_analysis_agent_streamlit.py (한 파일)" {
+  class: group
+  front: "화면 쪽" {
+    class: group
+    grid-columns: 2
+    grid-gap: 8
+    screen: "Streamlit 화면\n(main)" { class: ours }
+    session: "세션 상태 (api_keys)" { class: store; height: 96 }
+  }
+  logic: "분석 쪽" {
+    class: group
+    grid-columns: 2
+    grid-gap: 8
+    analyze: "분석 함수\n(analyze_conditions)" { class: ours }
+    analyzer: "측정값 수집\n(AQIAnalyzer)" { class: ours }
+    health: "건강 추천 에이전트\n(HealthRecommendationAgent)" { class: ours }
+    models: "데이터 모양\n(ExtractSchema · AQIResponse ·\nUserInput)" { class: ours }
+  }
+}
+
+firecrawl: "Firecrawl API (extract)" { class: ext; height: 60 }
+aqi_in: "aqi.in 대시보드" { class: ext; height: 60 }
+openai: "OpenAI API (gpt-4o)" { class: ext; height: 60 }
+agno_api: "Agno 통계 API" { class: ext; height: 60 }
+
+user -> app: "키 · 위치 · 지병 ·\n활동 입력, 버튼 클릭"
+app -> user: "추천 표시 ·\n다운로드"
+app.logic -> firecrawl: "extract(URL/*,\nprompt · schema)"
+aqi_in -> firecrawl: "페이지 내용"
+app.logic -> openai: "user 메시지\n1개"
+app.logic -> agno_api: "실행 메타데이터\n(성공 시)"

@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+analyze: 분석 함수 { class: ours }
+screen: Streamlit 화면 { class: ours }
+analyzer: 측정값 수집 { class: ours }
+firecrawl: Firecrawl API { class: ext }
+
+analyze -> analyzer: "fetch_aqi_data(\n도시 · 주 · 나라)"
+analyzer -> screen: "st.info (접속할 URL 표시)"
+analyzer -> firecrawl: "POST /v1/extract (urls = URL/*, prompt, schema)"
+firecrawl -> analyzer: "{success, id}"
+analyzer -> firecrawl: "GET /v1/extract/{id} (2초 간격 폴링)"
+firecrawl -> analyzer: "processing 뒤 completed (data, expiresAt)"
+analyzer -> analyzer: "AQIResponse(**response) 검증"
+analyzer -> screen: "st.expander: st.json(원본 데이터) · st.warning"
+analyzer -> analyze: "측정값 dict (숫자 7개)"
