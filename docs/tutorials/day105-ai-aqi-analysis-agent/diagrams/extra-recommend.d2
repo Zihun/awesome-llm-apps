@@ -2,11 +2,11 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-screen: Streamlit 화면 { class: ours }
 analyze: 분석 함수 { class: ours }
 health: 건강 추천 에이전트 { class: ours }
 agno_api: Agno 통계 API { class: ext }
 openai: OpenAI API { class: ext }
+screen: Streamlit 화면 { class: ours }
 
 analyze -> health: "get_recommendations(\n측정값, user_input)"
 health -> openai: "user 메시지 1개\n(_create_prompt)"
@@ -14,4 +14,5 @@ openai -> health: 추천 텍스트
 health -> agno_api: "실행 메타데이터 (백그라운드, 성공 시)"
 health -> analyze: response.content
 analyze -> screen: 추천 문자열
+screen -> user: "st.success (Analysis completed!)"
 screen -> user: "추천 마크다운 ·\n다운로드 버튼"

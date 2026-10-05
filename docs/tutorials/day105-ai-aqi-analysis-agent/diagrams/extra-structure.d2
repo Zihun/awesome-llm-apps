@@ -21,6 +21,8 @@ analyze -> analyzer: "AQIAnalyzer(키) 생성 ·\nfetch_aqi_data(도시 · 주 �
 analyze -> health: "HealthRecommendationAgent(키) 생성 ·\nget_recommendations(측정값 · UserInput)"
 analyzer -> models: "ExtractSchema 스키마 ·\nAQIResponse 검증"
 analyzer -> firecrawl: "extract(URL/*,\nprompt · schema)"
+firecrawl -> analyzer: "측정값\n(data · expiresAt)"
 aqi_in -> firecrawl: "페이지 내용"
 health -> openai: "user 메시지 1개"
+openai -> health: "추천 텍스트"
 health -> agno_api: "실행 메타데이터\n(성공 시)"

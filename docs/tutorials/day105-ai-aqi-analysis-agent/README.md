@@ -1,10 +1,10 @@
 # Day 105 · 🌍 AQI Analysis Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 115분(앱은 266줄이지만 Step마다 확인 명령을 돌리고, 가짜 서버와 확인 스크립트 둘을 직접 만들어 한 번 끝까지 돌려 보고, gradio판 확인까지 하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 질문 1건에 OpenAI 약 $0.01 + Firecrawl 추출 크레딧 — `gpt-4o`는 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)이고 프롬프트가 738자라 입력은 200토큰 안팎, 출력은 `max_tokens` 제한이 없는 네 항목 답이라 500~1,000토큰으로 어림했으며 키가 없어 실제 토큰 수는 확인하지 못함. Firecrawl은 `extract`를 15토큰당 1크레딧으로 센다고 문서가 적고(https://docs.firecrawl.dev/features/extract, 같은 날 확인) 무료 플랜은 월 1,000크레딧(https://www.firecrawl.dev/pricing, 같은 날 확인)이지만 이 앱의 한 번이 몇 토큰인지는 확인하지 못함. 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 120분(앱은 266줄이지만 Step마다 확인 명령을 돌리고, 가짜 서버와 확인 스크립트 둘을 직접 만들어 한 번 끝까지 돌려 보고, gradio판 확인까지 하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 질문 1건에 OpenAI 약 $0.01 + Firecrawl 추출 크레딧 — `gpt-4o`는 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)이고 프롬프트가 738자라 입력은 200토큰 안팎, 출력은 `max_tokens` 제한이 없는 네 항목 답이라 500~1,000토큰으로 어림했으며 키가 없어 실제 토큰 수는 확인하지 못함. Firecrawl은 `extract`를 15토큰당 1크레딧으로 센다고 문서가 적고(https://docs.firecrawl.dev/features/extract, 같은 날 확인) 무료 플랜은 월 1,000크레딧(https://www.firecrawl.dev/pricing, 같은 날 확인)이지만 이 앱의 한 번이 몇 토큰인지는 확인하지 못함. 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent`
 
 ## 오늘 만들 것
 
-도시와 건강 상태, 계획한 활동을 적고 버튼을 누르면 그 도시의 실시간 대기질 수치를 가져와 `gpt-4o`가 활동해도 괜찮은지 알려 주는 앱입니다. 수치는 앱이 직접 긁지 않습니다. `aqi.in` 대시보드 주소를 문자열로 만들어 Firecrawl의 `extract`에 JSON 스키마와 함께 넘기면 Firecrawl 쪽이 페이지를 읽어 숫자 일곱 개를 돌려주고, 앱은 그 숫자를 프롬프트 한 장에 끼워 agno `Agent`에게 묻습니다. 앱 폴더에는 같은 클래스를 복사해 가진 UI 파일이 둘입니다. 오늘은 `ai_aqi_analysis_agent_streamlit.py`(편집기 기준 266줄, 마지막 줄에 개행이 없어 `wc -l`은 265로 셉니다)를 따라가고 `ai_aqi_analysis_agent_gradio.py`(273줄)는 Step 7에서 비교합니다. 까닭은 셋입니다. gradio 파일은 마지막 줄 `demo.launch(share=True)`가 띄우는 순간 `gradio.live` 공개 주소를 여는 반면 Streamlit 파일은 `--server.address localhost`로 내 PC 안에서만 돌릴 수 있고, 모델·수집·추천 클래스가 두 파일에서 글자까지 같아 하나를 배우면 둘을 배운 셈이며(Step 7), 화면 동작을 키 없이 `AppTest`로 확인할 수 있습니다. 반대로 앱 README는 gradio 파일만 안내하고 `requirements.txt`에는 `streamlit`이 없습니다(Step 1).
+도시와 건강 상태, 계획한 활동을 적고 버튼을 누르면 그 도시의 실시간 대기질 수치를 가져와 `gpt-4o`가 활동해도 괜찮은지 알려 주는 앱입니다. 수치는 앱이 직접 긁지 않습니다. `aqi.in` 대시보드 주소를 문자열로 만들어 Firecrawl의 `extract`에 JSON 스키마와 함께 넘기면 Firecrawl 쪽이 페이지를 읽어 숫자 일곱 개를 돌려주고, 앱은 그 숫자를 프롬프트 한 장에 끼워 agno `Agent`에게 묻습니다. 앱 폴더에는 클래스를 복사해 가진 UI 파일이 둘입니다. 오늘은 `ai_aqi_analysis_agent_streamlit.py`(편집기 기준 266줄, 마지막 줄에 개행이 없어 `wc -l`은 265로 셉니다)를 따라가고 `ai_aqi_analysis_agent_gradio.py`(273줄)는 Step 7에서 비교합니다. 까닭은 셋입니다. gradio 파일은 마지막 줄 `demo.launch(share=True)`가 띄우는 순간 `gradio.live` 공개 주소를 여는 반면 Streamlit 파일은 `--server.address localhost`로 내 PC 안에서만 돌릴 수 있고, 데이터 모양·추천 클래스와 수집 클래스의 생성자·URL 만들기가 두 파일에서 글자까지 같고 수집 메서드 `fetch_aqi_data`만 화면 호출 때문에 달라서 하나를 배우면 둘을 배운 셈이며(Step 7), 화면 동작을 키 없이 `AppTest`로 확인할 수 있습니다. 반대로 앱 README는 gradio 파일만 안내하고 `requirements.txt`에는 `streamlit`이 없습니다(Step 1).
 
 직접 돌려 보고 알게 된 특이점이 넷 있습니다. 폴더 이름(`multi_agent_apps`)과 달리 LLM `Agent`는 하나뿐입니다(Step 4). Firecrawl 호출이 실패하면 오류를 띄우고도 측정값 일곱 개를 0으로 채워 모델에 그대로 묻습니다(Step 3·6). 모델 키가 틀리면 오류 문장이 추천 자리에 일반 글자로 나옵니다(Step 6). `firecrawl-py==1.9.0` 고정은 풀면 4.46.2가 설치되어 앱의 `extract` 호출이 맞지 않기 때문입니다(Step 1).
 
@@ -47,11 +47,15 @@ $env:PYTHONIOENCODING = "utf-8"
 | aqi.in 대시보드 | Firecrawl 서버가 읽는 페이지. 앱은 주소 문자열만 만든다 | `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/ai_aqi_analysis_agent_streamlit.py:38-47` |
 | OpenAI API (`gpt-4o`) | 추천 문장을 만든다 | `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/ai_aqi_analysis_agent_streamlit.py:102-106` |
 | Agno 통계 API | 성공한 `run` 뒤에 agno가 익명 메타데이터를 보내려 한다 | 코드 없음 (agno 내부) |
-| gradio 파일 | 같은 클래스의 복사본에 `gr.Blocks` 화면과 `launch(share=True)`를 얹은 두 번째 UI | `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/ai_aqi_analysis_agent_gradio.py:1-273` |
+| gradio 파일 | 클래스의 복사본(수집 메서드만 다름)에 `gr.Blocks` 화면과 `launch(share=True)`를 얹은 두 번째 UI | `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/ai_aqi_analysis_agent_gradio.py:1-273` |
 
-위 그림은 한 파일을 화면 쪽과 분석 쪽으로 나눠 묶었고 묶음 안의 호출은 뺐습니다. 함수 호출을 층층이 이으면 그림이 세로로 길어져 읽히지 않기 때문입니다. 화살표는 데이터가 가는 방향이고, `aqi.in`에서 Firecrawl로 가는 화살표는 앱이 아니라 Firecrawl 서버가 그 페이지를 읽는다는 뜻입니다. 앱이 하는 일은 주소 문자열을 만드는 것뿐입니다(소스로 확인). 다만 Firecrawl 서버가 실제로 어떻게 읽는지는 보지 못했습니다. 빼 둔 호출은 아래 그림에 모두 있습니다. 화면이 `UserInput`을 만들어 분석 함수에 넘기고, 분석 함수가 두 객체를 만들어 부르며, 외부 서비스로 나가는 선은 `AQIAnalyzer`(Firecrawl)와 `HealthRecommendationAgent`(OpenAI와 agno 통계) 둘에서만 나옵니다.
+위 그림은 한 파일을 화면 쪽과 분석 쪽으로 나눠 묶었고 묶음 안의 호출은 뺐습니다. 함수 호출을 층층이 이으면 그림이 세로로 길어져 읽히지 않기 때문입니다. 화살표는 라벨에 적은 데이터가 가는 방향이고, 이 그림에는 앱에서 나가는 요청과 `aqi.in`에서 Firecrawl로 들어가는 페이지 내용만 있습니다. 뒤 화살표는 앱이 아니라 Firecrawl 서버가 그 페이지를 읽는다는 뜻입니다. 앱이 하는 일은 주소 문자열을 만드는 것뿐이고(소스로 확인) Firecrawl 서버가 실제로 어떻게 읽는지는 보지 못했습니다. 빼 둔 호출과 외부 서비스에서 돌아오는 측정값·추천 텍스트는 아래 그림 둘에 있고, 함수의 반환값은 뒤의 "요청 한 건이 흐르는 과정" 시퀀스에 있습니다. 첫째 그림에서 화면이 `UserInput`을 만들어 분석 함수에 넘기고, 분석 함수가 두 객체를 만들어 부르며, 외부 서비스로 나가는 선은 `AQIAnalyzer`(Firecrawl)와 `HealthRecommendationAgent`(OpenAI와 agno 통계) 둘에서만 나옵니다.
 
 ![묶음 안의 호출과 외부 서비스 연결](diagrams/extra-structure.svg)
+
+둘째 그림은 수집 클래스가 화면 함수도 직접 부른다는 것입니다. Step 3에서 볼 `fetch_aqi_data`는 호출 전에 `st.info`로 접속할 URL을, 성공하면 `st.expander`·`st.json`·`st.warning`으로 원본 데이터를, 실패하면 `st.error`로 오류 문장을 띄웁니다.
+
+![수집 클래스가 화면을 부르는 호출](diagrams/extra-ui.svg)
 
 ## 단계별 진행
 
@@ -67,7 +71,7 @@ uv venv
 uv pip install -r requirements.txt
 ```
 
-(pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. Windows PowerShell은 활성화만 `.venv\Scripts\Activate.ps1`로 바꿉니다.) 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 이유는 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)에 있습니다. 앱 README의 1단계는 `git clone` 바로 뒤에 이 `cd`를 적지만(`advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/README.md:43-44`) clone은 저장소 이름의 새 폴더를 만드므로 그 폴더로 먼저 들어가야 맞습니다(소스로 확인).
+(pip 대안: bash는 `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`입니다. PowerShell 5.1은 `&&`를 받지 않으므로(PowerShell 7부터 지원) 세 줄로 `python -m venv .venv`, `.venv\Scripts\Activate.ps1`, `pip install -r requirements.txt`를 차례로 씁니다. 실행해 보지 못했습니다.) 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 이유는 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)에 있습니다. 앱 README의 1단계는 `git clone` 바로 뒤에 이 `cd`를 적지만(`advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/README.md:43-44`) clone은 저장소 이름의 새 폴더를 만드므로 그 폴더로 먼저 들어가야 맞습니다(소스로 확인).
 
 `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/requirements.txt:1-5`
 
@@ -98,7 +102,7 @@ ModuleNotFoundError: No module named 'streamlit'
 uv pip install streamlit
 ```
 
-(pip 대안: `pip install streamlit`.) 오늘은 streamlit 1.65.0이 받아졌습니다(직접 확인). `firecrawl-py==1.9.0` 고정은 군더더기가 아닙니다. 같은 날 별도 환경에서 고정 없이 설치하니 4.46.2가 깔렸고, 그 `extract`는 `urls`와 키워드 전용 인자(`prompt`, `schema` 등)만 받고 `params`를 받지 않았습니다(`inspect.signature`로 직접 확인). 앱의 `extract(urls=..., params=...)` 호출은 요청을 만들기 전에 `TypeError: FirecrawlClient.extract() got an unexpected keyword argument 'params'`로 끝나고(직접 확인), 이 오류도 Step 3의 `except`가 삼켜 0 값으로 바꿉니다(소스로 확인).
+(pip 대안: `pip install streamlit`.) 오늘은 streamlit 1.65.0이 받아졌습니다(직접 확인). `firecrawl-py==1.9.0` 고정은 군더더기가 아닙니다. 같은 날 별도 환경에서 고정 없이 설치하니 4.46.2가 깔렸고 그 `extract`는 `params`를 받지 않았습니다(`inspect.signature`로 직접 확인. 버전별 모양은 어제 Day 104 Step 5의 표에 있습니다). 앱의 `extract(urls=..., params=...)` 호출은 요청을 만들기 전에 `TypeError: FirecrawlClient.extract() got an unexpected keyword argument 'params'`로 끝나고(직접 확인), 이 오류도 Step 3의 `except`가 삼켜 0 값으로 바꿉니다(소스로 확인).
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -184,7 +188,7 @@ class UserInput:
     planned_activity: str
 ```
 
-`ExtractSchema`는 pydantic 모델이고 Step 3이 `model_json_schema()`로 JSON Schema를 뽑아 Firecrawl에 보냅니다. 일곱 칸이 모두 필수 숫자입니다. `AQIResponse`는 Firecrawl의 응답을 받는 모양입니다. `data`는 키 이름을 가리지 않는 `Dict[str, float]`라서 일곱 키가 다 있는지는 보지 않고, 값이 숫자가 아니면 검증이 실패합니다. 다음 스텝에서 보듯 추출 프롬프트는 데이터의 타임스탬프도 뽑으라고 하는데 스키마에는 그 칸이 없고, `data`에 문자열이 하나라도 섞이면 응답 전체가 거부됩니다. `UserInput`은 검증 없는 평범한 `dataclass`입니다. Day 003이 `FirecrawlTools`로 같은 서비스를 에이전트의 도구로 연결한 것(Day 003 Step 4)과 달리, 이 앱은 에이전트가 아니라 일반 코드가 SDK를 직접 부르고 응답의 모양도 코드가 검사합니다.
+`ExtractSchema`는 pydantic 모델이고 Step 3이 `model_json_schema()`로 JSON Schema를 뽑아 Firecrawl에 보냅니다. 일곱 칸이 모두 필수 숫자입니다. `AQIResponse`는 Firecrawl의 응답을 받는 모양입니다. `data`는 키 이름을 가리지 않는 `Dict[str, float]`라서 일곱 키가 다 있는지는 보지 않고, 값이 숫자가 아니면 검증이 실패합니다. 다음 스텝에서 보듯 추출 프롬프트는 데이터의 타임스탬프도 뽑으라고 하는데 스키마에는 그 칸이 없고, `data`에 문자열이 하나라도 섞이면 응답 전체가 거부됩니다. `UserInput`은 검증 없는 평범한 `dataclass`입니다. Day 003이 `FirecrawlTools`로 같은 서비스를 에이전트의 도구로 연결한 것(Day 003 Step 4)과 달리, 이 앱은 어제 Day 104와 같은 방식입니다. 에이전트가 아니라 일반 코드가 SDK의 `FirecrawlApp`을 직접 불러 응답을 딕셔너리로 받고, 그 모양도 코드가 검사합니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -402,7 +406,7 @@ class HealthRecommendationAgent:
         )
 ```
 
-`Agent`에는 모델 하나뿐이고 `tools`·`instructions`·`role`이 없습니다. "Health Recommendation Agent"라는 이름표도 에이전트가 아니라 `OpenAIChat`의 `name`에 붙어서 `agent.name`은 `None`입니다(직접 확인). 앱 README는 이 앱을 "AQI Analyzer"와 "Health Recommendation Agent"의 멀티 에이전트라고 소개하지만(`advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/README.md:11-13`) 두 파일에서 `= Agent(`는 한 곳씩입니다(직접 확인). 수집 쪽의 추출은 Firecrawl 서버가 하고(문서가 `extract`를 토큰 단위로 과금한다고 적는 것으로 보아 그쪽에서 모델을 쓰는 것으로 짐작합니다) 이 앱의 코드에는 모델이 하나뿐입니다.
+`Agent`에는 모델 하나뿐이고 `tools`·`instructions`·`role`이 없습니다. "Health Recommendation Agent"라는 이름표도 에이전트가 아니라 `OpenAIChat`의 `name`에 붙어서 `agent.name`은 `None`입니다(직접 확인). 앱 README는 이 앱을 "AQI Analyzer"와 "Health Recommendation Agent"의 멀티 에이전트라고 소개하지만(`advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/README.md:11-13`) 두 파일에서 `= Agent(`는 한 곳씩입니다(직접 확인). 수집 쪽의 추출은 Firecrawl 서버가 하고(공식 문서가 `/extract`를 "LLM-powered extraction"이라고 설명합니다. 2026-10-05 확인) 이 앱의 코드에는 모델이 하나뿐입니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/ai_aqi_analysis_agent_streamlit.py:109-116`
 
@@ -665,7 +669,7 @@ one key: {'firecrawl': '', 'openai': ''}
 two keys: {'firecrawl': 'fc-test', 'openai': 'sk-test'} ['API keys updated!']
 ```
 
-`AppTest`는 `st.success`·`st.error` 앞머리의 이모지를 값에서 빼서 보여 줍니다. 서버만 띄워 응답을 보려면 `--server.address localhost`를 붙입니다. 안 붙이면 Streamlit이 시작하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 접속합니다(Day 054와 Day 060이 확인한 사실입니다. 포트는 겹치지 않는 아무 높은 번호입니다).
+Streamlit이 `st.success`·`st.error` 본문 앞의 이모지를 아이콘 칸으로 옮기므로 `AppTest`의 `value`에는 이모지가 없고 `proto.icon`에 들어 있습니다(소스로 확인, streamlit 1.65.0의 `elements/alert.py`. 직접 확인: `proto.icon`이 `✅`). 서버만 띄워 응답을 보려면 `--server.address localhost`를 붙입니다. 안 붙이면 Streamlit이 시작하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 접속합니다(Day 054와 Day 060이 확인한 사실입니다. 포트는 겹치지 않는 아무 높은 번호입니다).
 
 ```bash
 uv run --no-project streamlit run ai_aqi_analysis_agent_streamlit.py --server.headless true --server.address localhost --server.port 57482
@@ -695,7 +699,7 @@ curl -s http://localhost:57482/_stcore/health
 ok
 ```
 
-(PowerShell이면 `curl` 대신 `(Invoke-WebRequest -Uri http://localhost:57482 -UseBasicParsing).StatusCode`. 실행해 보지 못했습니다.) 서버는 `Ctrl+C`로 멈춥니다.
+(PowerShell이면 `curl` 대신 `(Invoke-WebRequest -Uri http://localhost:57482 -UseBasicParsing).StatusCode`와 `(Invoke-WebRequest -Uri http://localhost:57482/_stcore/health -UseBasicParsing).Content`를 씁니다. Windows PowerShell 5.1에서 `curl`은 `Invoke-WebRequest`의 별칭이라 `-s` 같은 curl 옵션이 통하지 않습니다. 문법 규칙으로 판단한 것이고 실행해 보지 못했습니다.) 서버는 `Ctrl+C`로 멈춥니다.
 
 ### Step 6. 가짜 서비스 둘로 끝까지 — 요청 본문과 실패 둘
 
@@ -910,7 +914,7 @@ POST /v1/chat/completions | Bearer sk-ok | model: gpt-4o | keys: ['messages', 'm
 
 읽을 것은 다섯입니다. 첫째, Firecrawl로 간 본문의 키는 `urls`, `prompt`, `schema`, `allowExternalLinks`, `origin`이고 주소 끝에 `/*`가 붙어 있으며, `GET`이 두 번 나가고 첫 응답이 `processing`이었으니 SDK가 폴링을 합니다. 둘째, 모델로 간 요청의 최상위 키는 `messages`와 `model`뿐이고 메시지는 `user` 하나라 도구도 시스템 메시지도 `max_tokens`도 없습니다. 이 에이전트는 모델 호출 하나를 감싼 껍데기입니다. 셋째, 틀린 Firecrawl 키에서 `('…', 500)` 튜플 꼴 오류 문장과 "Analysis completed!"가 함께 뜨고 모델은 값이 모두 0인 프롬프트에 답했습니다. 넷째, 틀린 OpenAI 키에서는 `st.error`가 아니라 서버의 오류 문장이 추천 자리에 일반 글자로 나옵니다. agno의 `Agent.run`이 모델 오류를 예외 대신 `content`에 담아 돌려주고 앱이 그 문자열을 `st.markdown`에 넘기기 때문입니다. 다섯째, 통계 전송은 성공한 실행마다 한 건이고 실패한 실행에는 없으며 담긴 값에 도시·지병·키는 없습니다. Day 047 Step 5가 소스로 확인한 `POST /telemetry/runs`와 같은 것입니다(그날은 agno 3.0.10, 오늘은 3.1.1). 연결을 막은 환경에서 `os-api.agno.com:443`으로 가는 시도가 잡혔고 `AGNO_TELEMETRY=false`를 걸면 0건이었습니다(직접 확인). 마지막 두 줄은 Step 5의 말을 확인합니다. 결과가 뜬 뒤 도시 칸을 고치면 추천과 다운로드 버튼이 사라지고, 다운로드 버튼도 누르면 스크립트를 다시 실행하게 설정되어 있어(`ignore_rerun`이 `False`) 같은 일이 일어날 것입니다(브라우저로 눌러 보지는 못했습니다). 서버는 Step 7에서 한 번 더 쓰니 켜 둡니다.
 
-### Step 7. 같은 클래스, 다른 껍데기 — gradio판은 띄우지 않고 읽습니다
+### Step 7. 복사된 클래스, 다른 껍데기 — gradio판은 띄우지 않고 읽습니다
 
 **목적.** gradio 파일이 Streamlit 파일과 무엇이 같고 다른지, 마지막 줄의 `share=True`가 무슨 일을 하는지를 띄우지 않고 확인합니다.
 
@@ -958,7 +962,7 @@ if __name__ == "__main__":
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 모델·수집·추천 클래스가 정말 같은지 줄 단위로 비교합니다. 파이썬으로 하면 셸에 상관없이 됩니다.
+**확인.** 두 파일의 클래스가 어디까지 줄 단위로 같은지 비교합니다. 파이썬으로 하면 셸에 상관없이 됩니다.
 
 ```bash
 uv run --no-project python -c "
@@ -980,7 +984,7 @@ HealthRecommendation  : True
 fetch_aqi_data        : False
 ```
 
-`fetch_aqi_data`만 다릅니다. gradio판은 `st.info`·`st.expander`·`st.error` 대신 `(데이터, 상태 문장)` 튜플을 돌려주고 나머지(`extract` 호출, 검증, 0 값 반환)는 같습니다(소스로 확인). 이제 화면을 만들되 `launch`는 부르지 않습니다.
+`fetch_aqi_data`만 다릅니다. gradio판은 `st.info`·`st.expander`·`st.json`·`st.warning`·`st.error` 대신 `(데이터, 상태 문장)` 튜플을 돌려주고 나머지(`extract` 호출, 검증, 0 값 반환)는 같습니다(소스로 확인). 수집 클래스가 화면 함수를 직접 부르는 결합(아키텍처 절의 둘째 그림)이 둘이 갈리는 곳입니다. 이제 화면을 만들되 `launch`는 부르지 않습니다.
 
 ```bash
 uv run --no-project python -c "
@@ -1002,7 +1006,7 @@ load_example ['Dataset'] -> ['Textbox', 'Textbox', 'Textbox', 'Textbox', 'Textbo
 ['/analyze_conditions']
 ```
 
-`load_example`은 예시 줄을 누르면 다섯 칸을 채우는 gradio 쪽 이벤트입니다. 환경변수를 먼저 끄는 까닭은 gradio를 임포트하는 것만으로 분석 통계 스레드가 `api.gradio.app`에 접속을 시도하기 때문입니다. 기본 설정에서는 접속 시도가 한 건 잡혔고 `GRADIO_ANALYTICS_ENABLED=False`면 0건이었습니다(직접 확인, `gradio/strings.py`가 임포트 때 시작하는 스레드). 끝으로 gradio판의 분석 함수를 가짜 서버로 직접 부릅니다. Step 6의 가짜 서버가 떠 있어야 하고, 아래 파일은 앱 폴더에 만드는 셋째 파일입니다.
+`load_example`은 예시 줄을 누르면 다섯 칸을 채우는 gradio 쪽 이벤트입니다. 환경변수를 먼저 끄는 까닭은 기본 설정의 gradio가 임포트만으로 안내 문구를 받으려 `api.gradio.app`에 접속하고(`gradio/strings.py`가 임포트 때 시작하는 스레드), `create_demo()`(Blocks 생성)는 버전 확인과 사용 통계를, `launch()`는 사용 통계를 더 보내기 때문입니다(소스로 확인. 사용 통계는 huggingface_hub의 텔레메트리 도우미로 나갑니다). 연결을 막은 환경에서 기본 설정으로 임포트와 `create_demo()`를 하면 `api.gradio.app` 2건과 `huggingface.co` 2건의 접속 시도가 잡혔고 `GRADIO_ANALYTICS_ENABLED=False`면 0건이었습니다(직접 확인). 끝으로 gradio판의 분석 함수를 가짜 서버로 직접 부릅니다. Step 6의 가짜 서버가 떠 있어야 하고, 아래 파일은 앱 폴더에 만드는 셋째 파일입니다.
 
 `check_gradio.py`
 
@@ -1061,7 +1065,7 @@ Streamlit과 같은 일이 gradio에서도 일어납니다. 실패한 측정은 
 
 ![3단계: 추천 만들기와 표시](diagrams/extra-recommend.svg)
 
-분석 함수가 `get_recommendations`를 부르면 에이전트가 프롬프트를 `user` 메시지 하나로 `gpt-4o`에 보내 추천 텍스트를 받습니다. 성공한 실행은 agno가 통계 전송을 백그라운드로 보내려 하고, `RunOutput.content`가 분석 함수를 거쳐 화면에 마크다운과 다운로드 버튼으로 나옵니다. 이 시퀀스는 가짜 서버로 직접 돌려 본 것입니다. 실제 Firecrawl과 OpenAI의 응답, 그리고 Firecrawl 서버가 `aqi.in`을 읽는 구간은 확인하지 못했습니다.
+분석 함수가 `get_recommendations`를 부르면 에이전트가 프롬프트를 `user` 메시지 하나로 `gpt-4o`에 보내 추천 텍스트를 받습니다. 성공한 실행은 agno가 통계 전송을 백그라운드로 보내려 하고, `RunOutput.content`가 분석 함수를 거쳐 화면에 닿으면 화면이 먼저 `Analysis completed!`를 띄운 뒤 마크다운과 다운로드 버튼을 보여 줍니다. 이 시퀀스는 가짜 서버로 직접 돌려 본 것입니다. 실제 Firecrawl과 OpenAI의 응답, 그리고 Firecrawl 서버가 `aqi.in`을 읽는 구간은 확인하지 못했습니다.
 
 ## 실행 체크리스트
 
@@ -1098,7 +1102,7 @@ Streamlit과 같은 일이 gradio에서도 일어납니다. 실패한 측정은 
 
 - 측정 실패가 추천으로 이어지지 않게 해 보세요. 복사본에서 `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/ai_aqi_analysis_agent_streamlit.py:87-96`의 `except` 본문을 `raise` 한 줄로 바꾸고 `check_flow.py`가 복사본을 열게 하면, 틀린 Firecrawl 키에서 `Agent.run` 호출이 0번이고 화면에는 `Error: ('Unexpected error during extract: Status code 401. …', 500)` 한 줄만 남습니다(복사본에서 가짜 서버로 직접 확인).
 - 결과가 입력을 고쳐도 남게 해 보세요. 복사본의 `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/ai_aqi_analysis_agent_streamlit.py:254-263` 앞에서 `result`를 `st.session_state['result']`에 저장하고 다시 읽으면, 도시 칸을 고쳐도 추천이 남고 `Agent.run`은 늘지 않습니다(복사본에서 직접 확인).
-- gradio 파일을 공개 터널 없이 띄워 보세요. `create_demo().launch()`만 부르면 `share`가 `None`이라 로컬 주소에서만 열려야 하지만 `GRADIO_SHARE`가 `true`면 켜지니 먼저 확인하세요(소스로 확인. 이 문서는 gradio 파일을 띄워 보지 않았고 이 방법도 실행해 보지 못했습니다).
+- gradio 파일을 공개 터널 없이 띄워 보세요. `create_demo().launch()`만 부르면 `share`가 `None`이라 로컬 주소에서만 열려야 하지만 `GRADIO_SHARE`가 `true`면 켜지니 먼저 확인하세요. 터널이 없어도 기본 설정에서는 사용 통계가 나가므로 `GRADIO_ANALYTICS_ENABLED=False`도 함께 거세요(bash `export GRADIO_ANALYTICS_ENABLED=False`, PowerShell `$env:GRADIO_ANALYTICS_ENABLED = "False"`). 소스로 확인한 것이고 이 문서는 gradio 파일을 띄워 보지 않았으며 이 방법도 실행해 보지 못했습니다.
 
 ## 다음 날 예고
 

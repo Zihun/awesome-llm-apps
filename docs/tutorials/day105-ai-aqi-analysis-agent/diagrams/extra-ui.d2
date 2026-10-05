@@ -1,0 +1,9 @@
+...@../../_tools/theme
+direction: right
+
+analyzer: "측정값 수집\n(AQIAnalyzer)" { class: ours }
+screen: "Streamlit 화면\n(main)" { class: ours }
+
+analyzer -> screen: "st.info\n(접속할 URL, 호출 전)"
+analyzer -> screen: "st.expander · st.json · st.warning\n(원본 데이터, 성공했을 때)"
+analyzer -> screen: "st.error\n(오류 문장, 실패했을 때)"
