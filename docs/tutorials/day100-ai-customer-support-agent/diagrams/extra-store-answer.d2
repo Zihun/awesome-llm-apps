@@ -5,10 +5,8 @@ history: "history.db" { class: store }
 qdrant: "Qdrant" { class: store }
 memory: "mem0 Memory" { class: ours }
 openai: "OpenAI API" { class: ext }
-agent: "CustomerSupportAIAgent" { class: ours }
 
 memory -> openai: "갱신 판단 요청 (gpt-4o-mini):\n기존 기억 목록 + 새 사실 목록"
 openai -> memory: "{\"memory\": [{\"id\", \"text\", \"event\": \"ADD\"}, ...]}"
 memory -> qdrant: "새 기억 저장 (upsert)\npayload: data · hash · created_at ·\nuser_id · app_id · role"
 memory -> history: "ADD 이력\n기록"
-memory -> agent: "{'results':\n[{'id', 'memory',\n'event': 'ADD'}],\n'relations': []}"

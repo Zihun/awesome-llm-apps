@@ -1,6 +1,6 @@
 # Day 100 · 🛒 AI Customer Support Agent with Memory
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠(`qdrant-client` 1.16 이상에서는 첫 질문부터 막히고, 앱의 `gpt-4`는 2026-10-23 종료 예정) · 예상 소요 110분(Step마다 확인용 파일의 장면을 돌려 보고, 설치 환경을 한 번 고친 뒤 같은 장면을 다시 돌려 앞뒤를 비교하며, 시퀀스 그림 열세 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 합성 데이터 한 번에 $0.05, 대화 한 턴에 $0.02 안팎 — `gpt-4` 입력 $30·출력 $60, `gpt-4o-mini` 입력 $0.15·출력 $0.60, 임베딩 $0.02(모두 1M 토큰당, OpenAI 모델 페이지를 2026-10-05에 WebFetch로 확인한 요약)에, mem0가 보내는 프롬프트의 실제 글자 수(추출 약 3,400자, 판단 약 7,800자, 가짜 서버가 받은 값)와 가정한 `gpt-4` 출력 길이(한 턴 150토큰, 합성 데이터 700토큰)를 대입한 값이고 키가 없어 실제 토큰 수는 재지 못했습니다(이 문서의 확인 장면은 가짜 응답이라 무료) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_customer_support_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠(`qdrant-client` 1.16 이상에서는 첫 질문부터 막히고, 앱의 `gpt-4`는 2026-10-23 종료 예정) · 예상 소요 135분(Step마다 확인용 파일의 장면을 돌려 보고, 설치 환경을 한 번 고친 뒤 같은 장면을 다시 돌려 앞뒤를 비교하며, 시퀀스 그림 열일곱 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 합성 데이터 한 번에 $0.05, 대화 한 턴에 $0.02 안팎 — `gpt-4` 입력 $30·출력 $60, `gpt-4o-mini` 입력 $0.15·출력 $0.60, 임베딩 $0.02(모두 1M 토큰당, 2026-10-05에 받은 OpenAI 모델 페이지 원문)에, mem0가 보내는 프롬프트의 실제 글자 수(추출 약 3,400자, 판단 약 7,800자, 가짜 서버가 받은 값)와 가정한 `gpt-4` 출력 길이(한 턴 150토큰, 합성 데이터 700토큰)를 대입한 값이고 키가 없어 실제 토큰 수는 재지 못했습니다(이 문서의 확인 장면은 가짜 응답이라 무료) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_customer_support_agent`
 
 ## 오늘 만들 것
 
@@ -8,7 +8,7 @@
 
 검색 → 프롬프트 → 답 → 저장이라는 고리는 Day 075의 여행 에이전트와 같습니다. 오늘 앱은 그 고리를 `CustomerSupportAIAgent` 클래스로 묶고 모든 호출을 `try/except`와 `st.error`로 감쌌습니다. 화면에 입력한 키를 `os.environ`에 실어 mem0가 보게 한 것(Day 075 앱은 그러지 않아 Day 075 Step 3에서 막혔습니다)과, mem0 설정에 `"version": "v1.1"`을 더해 `search()`·`get_all()`이 `{"results": [...]}`를 돌려주게 한 것도 다릅니다. 마지막 한 줄은 상류 저장소의 수정 커밋(`b96d19a`, 커밋 메시지로 확인)이 더했고, 덕분에 Day 073·075가 겪은 `"results" in memories`가 항상 거짓인 문제가 이 앱에는 없습니다.
 
-그래도 오늘(2026-10-05) 설치 그대로는 첫 질문에서 막힙니다. `requirements.txt`가 `qdrant-client`를 고정하지 않아 1.19.1이 깔리는데, mem0ai 0.1.29의 Qdrant 래퍼가 부르는 `QdrantClient.search()`가 1.16.0부터 없습니다. Day 073·075가 본 문제와 같고, 메서드가 사라지는 경계가 1.15.1과 1.16.0 사이임을 오늘 패키지 소스로 확인했습니다. 클라이언트 클래스의 문제라 Qdrant 서버가 어디에 있든 같습니다. 이 앱은 그 `AttributeError`를 `except`로 삼켜 빨간 배너와 정해진 사과문만 보여 주므로, 화면만 보면 오류가 났다는 것밖에 알 수 없습니다. 또 하나, 앱이 `gpt-4`를 부르는 두 곳은 OpenAI의 폐기 안내(https://developers.openai.com/api/docs/deprecations, 2026-10-05에 WebFetch로 받은 표)에 2026년 10월 23일 종료로 올라 있습니다. 오늘로부터 18일 뒤입니다.
+그래도 오늘(2026-10-05) 설치 그대로는 첫 질문에서 막힙니다. `requirements.txt`가 `qdrant-client`를 고정하지 않아 1.19.1이 깔리는데, mem0ai 0.1.29의 Qdrant 래퍼가 부르는 `QdrantClient.search()`가 1.16.0부터 없습니다. Day 073·075가 본 문제와 같고, 메서드가 사라지는 경계가 1.15.1과 1.16.0 사이임을 오늘 패키지 소스로 확인했습니다. 클라이언트 클래스의 문제라 Qdrant 서버가 어디에 있든 같습니다. 이 앱은 그 `AttributeError`를 `except`로 삼켜 빨간 배너와 정해진 사과문만 보여 주므로, 화면만 보면 오류가 났다는 것밖에 알 수 없습니다. 또 하나, 앱이 `gpt-4`를 부르는 두 곳은 OpenAI의 폐기 안내(https://developers.openai.com/api/docs/deprecations, 2026-10-05에 받은 페이지 원문의 표)에 2026년 10월 23일 종료로 올라 있습니다. 오늘로부터 18일 뒤입니다.
 
 이 문서는 키도 Docker도 쓰지 않습니다. Step 2에서 만드는 확인용 파일 `day100_check.py`가 OpenAI 서버와 Qdrant 서버 자리만 가짜로 바꿔 끼우고, 앱 코드와 Streamlit·mem0 코드는 그대로 태웁니다. 그래서 아래의 "직접 확인"은 가짜 응답으로 본 앱의 동작이고, 실제 `gpt-4`의 답과 실제 Qdrant 서버는 확인하지 못했습니다.
 
@@ -20,7 +20,7 @@
 |---|---|---|
 | OpenAI API 키 | 화면에서 입력한 키 하나가 앱의 `gpt-4`(답변·합성 데이터)와 mem0 안의 `gpt-4o-mini`(사실 추출·갱신 판단)·`text-embedding-3-small`(임베딩)에 함께 쓰인다. 이 문서의 확인에는 필요 없다 | https://platform.openai.com/api-keys 에서 발급해 화면의 "Enter OpenAI API Key" 입력창에 붙여 넣는다. `gpt-4`는 2026-10-23에 종료 예정이다 |
 | Qdrant (`localhost:6333`) | mem0가 고객별 기억을 저장하는 벡터 저장소. 코드에 주소가 박혀 있다 | 앱 README의 Docker 안내를 따른다. 그 `docker run`은 `-v "$(pwd)/qdrant_storage:/qdrant/storage:z"`로 현재 폴더에 저장소를 두므로 앱 폴더에서 실행하면 저장소 안에 `qdrant_storage/`가 생길 수 있고, 이 폴더는 `.gitignore`에 없다(`git check-ignore`가 아무것도 내지 않음, 직접 확인). 이 문서는 Docker를 띄우지 않고 `qdrant-client`의 `:memory:` 저장소로 그 자리만 대신한다 |
-| `MEM0_DIR`·`MEM0_TELEMETRY` (선택) | `import mem0`가 홈의 `~/.mem0/`를 만들고 PostHog로 익명 통계를 보내는 것을 막는다(Day 073 Step 1) | Step 2의 확인용 파일이 대신 정한다. 앱을 직접 띄울 때의 값은 Step 7 |
+| `MEM0_DIR`·`MEM0_TELEMETRY` (선택) | `import mem0`는 홈에 `~/.mem0/`를 만들고, `Memory`를 만들 때와 `search`·`add`·`get_all`을 부를 때마다 PostHog로 익명 통계를 보낸다. 그 둘을 막는다(Day 073 Step 1) | Step 2의 확인용 파일이 대신 정한다. 앱을 직접 띄울 때의 값은 Step 7 |
 | uv · Python | 가상환경과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 참고 |
 
 ## 아키텍처 한눈에 보기
@@ -30,14 +30,14 @@
 | 고객 (브라우저) | API 키·고객 ID·질문 입력, 답변·기억 목록·오류 배너 확인 | 코드 없음 (외부 UI) |
 | Streamlit 화면 | 제목·키 입력창(키 게이트), 사이드바(고객 ID와 버튼 셋), 채팅창 | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:8-16`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:133-203`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:205-206` |
 | 상담 에이전트 (`CustomerSupportAIAgent`) | mem0 `Memory`와 OpenAI 클라이언트를 들고 `handle_query`·`get_memories`·`generate_synthetic_data`를 제공 | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:18-128`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:130-131` |
-| 세션 상태 (`st.session_state`) | 대화 기록 `messages`, 합성 프로필 `customer_data`, 직전 고객 ID `previous_customer_id` | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:135-141`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:147`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:156-157`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:176-177`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:189`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:198` |
-| 기억 계층 (mem0 `Memory`) | 사실 추출·임베딩·검색·저장을 도맡는 라이브러리(mem0ai 0.1.29, 패키지 소스로 확인) | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:21-34`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:45`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:66-67`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:77` |
+| 세션 상태 (`st.session_state`) | 대화 기록 `messages`, 합성 프로필 `customer_data`, 직전 고객 ID `previous_customer_id` | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:135-141`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:147-148`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:156-157`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:176-177`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:180`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:189`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:198` |
+| 기억 계층 (mem0 `Memory`) | 사실 추출·임베딩·검색·저장을 도맡는 라이브러리(mem0ai 0.1.29, 패키지 소스로 확인) | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:21-34`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:45`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:66-67`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:77`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:113-123` |
 | OpenAI API | 앱의 `gpt-4` 채팅(답변·합성 데이터)과 mem0 안의 `gpt-4o-mini`·`text-embedding-3-small` | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:39`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:56-62`, `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:99-105` |
 | Qdrant (`localhost:6333`) | 벡터 저장소, 기본 컬렉션 `mem0` | `advanced_ai_agents/single_agent_apps/ai_customer_support_agent/customer_support_agent.py:22-28` (서버는 외부 프로세스) |
-| `history.db` (SQLite) | mem0가 기억의 변경(ADD 등)을 적는 이력 | 코드 없음 (mem0 내부, 위치는 `MEM0_DIR`) |
-| PostHog | mem0의 익명 사용 통계 | 코드 없음 (mem0 내부) |
+| `history.db` (SQLite) | mem0가 기억의 변경(ADD·UPDATE·DELETE)을 적는 이력 | 코드 없음 (mem0 내부, 위치는 `MEM0_DIR`) |
+| PostHog | mem0의 익명 사용 통계(`Memory`를 만들 때와 `search`·`add`·`get_all`을 부를 때마다 이벤트) | 코드 없음 (mem0 내부) |
 
-완성 그림은 외부와 맞닿는 화살표만 그렸습니다. 화면이 에이전트와 세션 상태를 부르는 파일 안쪽의 호출은 따로 그렸습니다.
+완성 그림은 외부와 맞닿는 화살표만 그렸습니다. 화면이 에이전트와 세션 상태를 부르는 파일 안쪽의 호출은 따로 그렸습니다. 에이전트가 `st.error`와 `st.stop()`으로 화면에 직접 쓰는 길도 이 그림에 있습니다(36-37행, 71행, 79행, 127행). Step 4의 빨간 배너가 이 길로 나옵니다.
 
 ![파일 안쪽의 호출 관계](diagrams/extra-structure.svg)
 
@@ -158,15 +158,15 @@ else:
 
 3행의 `from mem0 import Memory`는 키 게이트 밖에 있습니다. 그래서 키를 넣기 전 첫 화면에서도 mem0가 불러와지고, mem0는 불러오는 순간 홈에 `~/.mem0/`를 만듭니다(Day 073 Step 1). 이 앱의 첫 화면만으로 그렇게 되는지 `MEM0_DIR` 없이 홈을 임시 폴더로 돌려 직접 확인했고, `.mem0/config.json`이 생겼습니다. 아래 확인용 파일이 맨 위에서 `MEM0_DIR`과 `MEM0_TELEMETRY`를 정하는 이유입니다.
 
-확인용 파일은 앱이 아니라 이 문서의 도구입니다. 앱 폴더에 `day100_check.py`로 저장하세요(저장소에 올릴 파일이 아니라 `git status`에 보이면 지우면 됩니다). `FakeOpenAI`가 앱의 `OpenAI()`와 mem0 안의 클라이언트 자리에 들어가 요청을 받아 기록하고 준비한 답을 돌려줍니다. `Redirect`는 앱이 `localhost:6333`으로 만드는 Qdrant 클라이언트를 프로세스 안의 저장소 하나로 바꿔 서버를 흉내 냅니다. 그 밖의 앱 코드, mem0 코드, Streamlit은 그대로 돌고, Streamlit의 `AppTest`가 브라우저 없이 화면을 조작합니다. 답의 내용은 제가 만든 것이고, 진짜 `gpt-4`가 어떻게 답하는지는 확인하지 못했습니다.
+확인용 파일은 앱이 아니라 이 문서의 도구입니다. 앱 폴더에 `day100_check.py`로 저장하세요(저장소에 올릴 파일이 아니라 `git status`에 보이면 지우면 됩니다). `FakeOpenAI`가 앱의 `OpenAI()`와 mem0 안의 클라이언트 자리에 들어가 요청을 받아 기록하고 준비한 답을 돌려줍니다. `Redirect`는 앱이 `localhost:6333`으로 만드는 Qdrant 클라이언트를 프로세스 안의 저장소 하나로 바꿔 서버를 흉내 냅니다. `posthog.Posthog.capture` 자리에 들어간 한 줄은 mem0가 PostHog로 보내려는 이벤트의 이름만 `EVENTS`에 적고 돌아옵니다. 어차피 `MEM0_TELEMETRY=False`라 아무것도 나가지 않고, 이 이름들이 장면 출력의 `이벤트:` 줄이 됩니다. `atexit` 한 줄은 끝날 때 mem0가 열어 둔 `history.db` 연결을 닫습니다. Windows는 열린 파일이 있으면 임시 폴더를 지우지 못해서, 이 줄이 없으면 장면을 돌릴 때마다 `%TEMP%`에 `day100-mem0-…` 폴더와 그 안의 `history.db`가 남습니다(Windows에서 직접 확인했고 macOS와 Linux는 확인하지 못했습니다). 그 밖의 앱 코드, mem0 코드, Streamlit은 그대로 돌고, Streamlit의 `AppTest`가 브라우저 없이 화면을 조작합니다. 답의 내용은 제가 만든 것이고, 진짜 `gpt-4`가 어떻게 답하는지는 확인하지 못했습니다.
 
 ```python
 """day100_check.py - 확인용 하니스(앱이 아니라 이 문서의 도구).
 앱 폴더에서: uv run --no-project python day100_check.py <장면>
 장면: nokey noqdrant memory chat synth fence sidebar   (둘째 인자로 고친 복사본의 파일 이름을 줄 수 있다)
-앱 코드는 그대로 두고, OpenAI 서버와 Qdrant 서버 자리만 가짜로 바꿔 끼운다.
+앱 코드는 그대로 두고, OpenAI 서버와 Qdrant 서버 자리만 가짜로 바꿔 끼우고, mem0가 PostHog로 보내려는 이벤트는 이름만 적어 둔다.
 """
-import ast, inspect, json, logging, os, socket, sys, tempfile, types, zlib
+import ast, atexit, inspect, json, logging, os, socket, sys, tempfile, types, zlib
 from collections import Counter
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -176,7 +176,7 @@ os.environ['MEM0_TELEMETRY'] = 'False'     # mem0의 PostHog 익명 통계 끄�
 SCENE = sys.argv[1]
 APP = os.path.abspath(sys.argv[2] if len(sys.argv) > 2 else 'customer_support_agent.py')   # 고친 복사본을 시험할 때만 둘째 인자
 FENCE = '`' * 3                           # 백틱 셋(코드 펜스 표시)
-CALLS, SENT = [], []                       # 가짜 OpenAI가 받은 호출, mem0가 사실 추출에 보낸 입력
+CALLS, SENT, EVENTS = [], [], []           # 가짜 OpenAI가 받은 호출, mem0가 사실 추출에 보낸 입력, mem0가 PostHog로 보내려 한 이벤트 이름
 PROFILE = {'customer_name': 'Alice Kim', 'email': 'alice.kim@example.com',
            'shipping_address': '12 Maple Street, Springfield',
            'recent_order': {'order_number': 'TG-4417', 'product': 'UltraBook Pro 14', 'price': '$1,899.00'},
@@ -214,8 +214,9 @@ class FakeOpenAI:                          # 앱의 OpenAI()와 mem0 안의 클�
         msg = types.SimpleNamespace(content=text, tool_calls=None)
         return types.SimpleNamespace(choices=[types.SimpleNamespace(message=msg)])
 
-import openai, qdrant_client
+import openai, posthog, qdrant_client
 openai.OpenAI = FakeOpenAI                 # 반드시 앱과 mem0를 불러오기 전에
+posthog.Posthog.capture = lambda self, distinct_id=None, event=None, properties=None, **k: EVENTS.append(event)   # 이름만 적고 돌아온다
 if SCENE != 'noqdrant':                    # 6333의 Qdrant 서버 대신 프로세스 안의 저장소 하나를 쓴다
     Real = qdrant_client.QdrantClient
     store = Real(location=':memory:')
@@ -225,9 +226,14 @@ if SCENE != 'noqdrant':                    # 6333의 Qdrant 서버 대신 프로
     qdrant_client.QdrantClient = Redirect
 
 from mem0 import Memory
-BUILT = []                                 # 앱이 Memory.from_config에 넘긴 설정을 모은다
+BUILT, MEMS = [], []                       # 앱이 Memory.from_config에 넘긴 설정, 만들어진 Memory 객체
 real_from_config = Memory.from_config.__func__
-Memory.from_config = classmethod(lambda cls, cfg: (BUILT.append(cfg), real_from_config(cls, cfg))[1])
+def counting(cls, cfg):
+    BUILT.append(cfg)
+    MEMS.append(real_from_config(cls, cfg))
+    return MEMS[-1]
+Memory.from_config = classmethod(counting)
+atexit.register(lambda: [m.db.connection.close() for m in MEMS])   # Windows는 열린 history.db가 있으면 임시 폴더를 못 지운다
 from streamlit.testing.v1 import AppTest
 for name in list(logging.root.manager.loggerDict):      # Streamlit의 '베어 모드' 경고 숨기기
     if name.startswith('streamlit'):
@@ -246,6 +252,11 @@ def click(at, label):                      # 사이드바 버튼 누르기
 def calls():                               # 마지막 확인 이후 가짜 OpenAI가 받은 호출
     c = Counter(CALLS); CALLS.clear()
     return ' · '.join(f'{k[0]}({k[1]}) {v}' for k, v in c.items()) or '없음'
+
+def events(count=False):                   # 마지막 확인 이후 mem0가 PostHog로 보내려 한 이벤트(순서대로, count면 종류별 개수)
+    names = [f'{k} {v}' for k, v in Counter(EVENTS).items()] if count else EVENTS[:]
+    EVENTS.clear()
+    return (' · ' if count else ' → ').join(names) or '없음'
 
 def banners(at):
     for e in at.error:
@@ -278,12 +289,14 @@ elif SCENE == 'memory':
     print('세 번 만진 뒤 Memory.from_config 호출 수:', len(BUILT))
 elif SCENE == 'chat':
     at = start('alice')
+    events()                               # 시작할 때 쌓인 이벤트는 버린다
     for q in ('Where is my order?', 'Is my order late?'):
         at.chat_input[0].set_value(q).run()
         print('질문:', q)
         banners(at)
         print('  답:', at.chat_message[-1].markdown[0].value)
         print('  호출:', calls())
+        print('  이벤트:', events())
     saved = [p.payload for p in store.scroll('mem0', limit=20, with_payload=True)[0]]
     print('Qdrant에 저장된 항목', len(saved), '개')
     if saved:
@@ -292,9 +305,11 @@ elif SCENE == 'chat':
     print('search 시그니처:', inspect.signature(Memory.search))
 elif SCENE in ('synth', 'fence'):
     at = start('alice')
+    events()
     click(at, 'Generate Synthetic Data')
     banners(at)
     print('  호출:', calls())
+    print('  이벤트:', events(count=True))
     if not at.error:
         click(at, 'View Customer Profile')
         print('프로필 키:', list(json.loads(at.sidebar.json[0].value)))
@@ -306,12 +321,13 @@ elif SCENE == 'sidebar':
     print('alice 대화 기록:', len(at.session_state.messages), '개 / previous_customer_id:', at.session_state.previous_customer_id)
     at.sidebar.text_input[0].input('bob').run()
     print('bob으로 바꾼 뒤 대화 기록:', len(at.session_state.messages), '개 / previous_customer_id:', at.session_state.previous_customer_id)
-    calls()
+    calls(); events()
     click(at, 'View Memory Info')
-    print('bob 기억 보기 -> 사이드바:', [m.value for m in at.sidebar.markdown], '/ 안내:', [i.value for i in at.sidebar.info], '/ 호출:', calls())
+    print('bob 기억 보기 -> 사이드바:', [m.value for m in at.sidebar.markdown], '/ 안내:', [i.value for i in at.sidebar.info], '/ 호출:', calls(), '/ 이벤트:', events())
     at.sidebar.text_input[0].input('alice').run()
+    events()
     click(at, 'View Memory Info')
-    print('alice 기억 보기 -> 사이드바:', [m.value for m in at.sidebar.markdown], '/ 본문 항목', len(notes(at)), '개 / 호출:', calls())
+    print('alice 기억 보기 -> 사이드바:', [m.value for m in at.sidebar.markdown], '/ 본문 항목', len(notes(at)), '개 / 호출:', calls(), '/ 이벤트:', events())
     click(at, 'View Customer Profile')
     print('프로필 보기 ->', [i.value for i in at.sidebar.info])
 ```
@@ -377,7 +393,7 @@ uv run --no-project python day100_check.py nokey
     support_agent = CustomerSupportAIAgent()
 ```
 
-이 줄도 스크립트 안이라 Streamlit이 화면을 다시 그릴 때마다, 곧 키 입력·고객 ID 입력·버튼·질문마다 실행됩니다. 상호작용마다 `Memory.from_config`가 새로 불리고, 그때마다 Qdrant에 컬렉션 목록부터 묻습니다(소스로 확인: 컬렉션을 만들기 전에 `get_collections()`를 부릅니다).
+이 줄도 스크립트 안이라 Streamlit이 화면을 다시 그릴 때마다, 곧 키 입력·고객 ID 입력·버튼·질문마다 실행됩니다. 상호작용마다 `Memory.from_config`가 새로 불리고, 그때마다 Qdrant에 먼저 서버 버전을 묻고(`GET /`, `qdrant-client`가 클라이언트를 만들 때 하는 호환성 확인) 이어서 컬렉션 목록을 묻습니다. 소스로 확인했습니다. `qdrant_client/qdrant_remote.py`는 `check_compatibility`가 기본값 참이라 `get_server_version()`을 부르고, `common/version_check.py`가 `httpx.get(rest_uri)`로 서버의 `/`를 읽습니다. mem0는 컬렉션을 만들기 전에 `get_collections()`를 부릅니다. 서버 자리에 프로세스 안의 가짜 REST 서버를 두고 mem0의 Qdrant 래퍼를 만들어 보니 요청이 `GET /`, `GET /collections`, `PUT /collections/mem0` 순서로 들어왔습니다(`qdrant-client` 1.15.1). 1.19.1은 `GET /`를 백그라운드 스레드로 보내서 세 번 모두 컬렉션 요청보다 늦게 도착했습니다(이쪽은 순서가 정해져 있지 않습니다). 이 뒤의 초기화 그림은 1.15.1의 순서로 그렸습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -416,7 +432,7 @@ MEM0_DIR 안: ['config.json', 'history.db']
 
 ![Memory.from_config와 Qdrant 컬렉션](diagrams/extra-init.svg)
 
-이어서 `history.db`와 통계 이벤트, 그리고 객체를 돌려주는 일입니다. `mem0.init` 이벤트는 `MEM0_TELEMETRY`를 끄지 않으면 이 순간 PostHog로 나갑니다. 통계를 켠 채 키를 넣으면 이 전송을 시도하는 것을 직접 확인했습니다(프록시를 닫힌 포트로 돌린 환경에서 `error uploading: HTTPSConnectionPool(host='us.i.posthog.com', ...)`가 반복해 찍혔습니다).
+이어서 `history.db`와 통계 이벤트, 그리고 객체를 돌려주는 일입니다. `mem0.init` 이벤트는 `MEM0_TELEMETRY`를 끄지 않으면 이 순간 PostHog로 나갑니다. 통계를 켠 채 키를 넣으면 이 전송을 시도하는 것을 직접 확인했습니다(프록시를 닫힌 포트로 돌린 환경에서 `error uploading: HTTPSConnectionPool(host='us.i.posthog.com', ...)`가 반복해 찍혔습니다). 이벤트는 `Memory`를 만들 때만 나가는 것이 아닙니다. `search`·`add`·`get_all`도 부를 때마다 `mem0.search`·`mem0._create_memory`·`mem0.add`·`mem0.get_all` 이벤트를 보냅니다. 그 메시지들은 Step 4와 Step 6의 그림에 그렸습니다.
 
 ![history.db와 통계 이벤트](diagrams/extra-init-rest.svg)
 
@@ -485,17 +501,19 @@ uv run --no-project python day100_check.py chat
   오류 배너: An error occurred while handling the query: 'QdrantClient' object has no attribute 'search'
   답: Sorry, I encountered an error. Please try again later.
   호출: 임베딩(text-embedding-3-small) 1
+  이벤트: mem0.init → mem0.search
 질문: Is my order late?
   오류 배너: An error occurred while handling the query: 'QdrantClient' object has no attribute 'search'
   답: Sorry, I encountered an error. Please try again later.
   호출: 임베딩(text-embedding-3-small) 1
+  이벤트: mem0.init → mem0.search
 Qdrant에 저장된 항목 0 개
 search 시그니처: (self, query, user_id=None, agent_id=None, run_id=None, limit=100, filters=None)
 ```
 
-질문 하나가 임베딩 요청 한 번에서 끝났습니다. 그다음 `vector_store.search`가 `AttributeError`를 내고, 앱의 `except`(70행)가 그것을 삼켜 배너와 사과문을 돌려줍니다. `gpt-4`는 한 번도 불리지 않았고 저장된 항목은 0개입니다. 사과문도 `session_state.messages`에 어시스턴트의 말풍선으로 남습니다(198행이 `handle_query`의 반환값을 가리지 않고 넣어서, 직접 확인). 마지막 줄은 `search`의 `limit` 기본값이 100임을 보여 줍니다.
+질문 하나가 임베딩 요청 한 번에서 끝났습니다. 그다음 `vector_store.search`가 `AttributeError`를 내고, 앱의 `except`(70행)가 그것을 삼켜 배너와 사과문을 돌려줍니다. `gpt-4`는 한 번도 불리지 않았고 저장된 항목은 0개입니다. mem0가 PostHog로 보내려던 이벤트도 `mem0.init`과 `mem0.search`에서 끝났습니다. `mem0.search`는 임베딩보다 먼저 나가는 이벤트라 검색이 실패해도 이미 나간 뒤입니다. 사과문도 `session_state.messages`에 어시스턴트의 말풍선으로 남습니다(198행이 `handle_query`의 반환값을 가리지 않고 넣어서, 직접 확인). 마지막 줄은 `search`의 `limit` 기본값이 100임을 보여 줍니다.
 
-왜 막히는지는 Step 1에서 본 `search` 없음 하나입니다. 이 메서드는 `qdrant-client` 1.15.1에는 있고 1.16.0부터 없습니다. 휠 안의 `QdrantClient` 소스에서 1.9.1과 1.15.1에는 `def search(`가 있고 1.16.0·1.16.1·1.16.2·1.17.0·1.18.0·1.19.0·1.19.1에는 없는 것을 확인했습니다. 그러니 1.15.1까지 내려 고정합니다.
+왜 막히는지는 Step 1에서 본 `search` 없음 하나입니다. 이 메서드는 `qdrant-client` 1.15.1에는 있고 1.16.0부터 없습니다. 휠 안의 `QdrantClient` 소스에서 1.9.1과 1.15.1에는 `def search(`가 있고 1.16.0·1.16.1·1.16.2·1.17.0·1.18.0·1.19.0·1.19.1에는 없는 것을 확인했습니다. 그러니 1.15.1까지 내려 고정합니다. Day 073·074·075는 같은 문제를 `qdrant-client==1.9.1`(mem0ai가 선언한 하한)로 내려 피했습니다. 1.9.1과 1.15.1 둘 다 `search`가 있어 어느 쪽이든 풀리고, 경계가 1.16.0이라 오늘은 경계 바로 아래까지만 내리는 `<1.16`을 골랐습니다.
 
 ```bash
 uv pip install "qdrant-client<1.16"
@@ -528,16 +546,18 @@ True True
 질문: Where is my order?
   답: (가짜 gpt-4) 기억 0개를 받았습니다
   호출: 임베딩(text-embedding-3-small) 3 · 답변(gpt-4) 1 · mem0 사실 추출(gpt-4o-mini) 2 · mem0 갱신 판단(gpt-4o-mini) 2
+  이벤트: mem0.init → mem0.search → mem0._create_memory → mem0.add → mem0._create_memory → mem0.add
 질문: Is my order late?
   답: (가짜 gpt-4) 기억 2개를 받았습니다, 첫째: Where is my order?
   호출: 임베딩(text-embedding-3-small) 3 · 답변(gpt-4) 1 · mem0 사실 추출(gpt-4o-mini) 2 · mem0 갱신 판단(gpt-4o-mini) 2
+  이벤트: mem0.init → mem0.search → mem0._create_memory → mem0.add → mem0._create_memory → mem0.add
 Qdrant에 저장된 항목 4 개
 mem0가 사실 추출에 보낸 입력: ['user: Where is my order?', 'user: (가짜 gpt-4) 기억 0개를 받았습니다', 'user: Is my order late?', 'user: (가짜 gpt-4) 기억 2개를 받았습니다, 첫째: Where is my order?']
 페이로드 키: ['app_id', 'created_at', 'data', 'hash', 'role', 'user_id'] / role: ['assistant', 'assistant', 'user', 'user']
 search 시그니처: (self, query, user_id=None, agent_id=None, run_id=None, limit=100, filters=None)
 ```
 
-이제 질문 한 번이 `gpt-4` 한 번, mem0 안의 `gpt-4o-mini` 네 번(`add` 두 번이 각각 사실 추출과 갱신 판단), 임베딩 세 번입니다. 임베딩은 검색 한 번에 사실마다 한 번인데 가짜 응답이 사실을 하나씩만 돌려줘서 3이고, 진짜 모델이 사실을 몇 개로 쪼개느냐에 따라 달라집니다. 둘째 질문은 단어가 겹치는 첫 질문의 기억을 첫째로 받았고(`기억 2개를 받았습니다, 첫째: Where is my order?`), 기억이 100개 미만이라 가진 기억 전부를 받았습니다. 앞에서 소스로 읽은 두 가지도 그대로 나왔습니다. 사실 추출에 보낸 입력 네 개가 모두 `user:`로 시작하고(답 문장도), 페이로드에는 앱이 붙인 `app_id`와 `role`(user 둘, assistant 둘)이 `user_id`·`data`·`hash`·`created_at`과 함께 남았습니다.
+이제 질문 한 번이 `gpt-4` 한 번, mem0 안의 `gpt-4o-mini` 네 번(`add` 두 번이 각각 사실 추출과 갱신 판단), 임베딩 세 번입니다. 임베딩은 검색 한 번에 사실마다 한 번인데 가짜 응답이 사실을 하나씩만 돌려줘서 3이고, 진짜 모델이 사실을 몇 개로 쪼개느냐에 따라 달라집니다. 둘째 질문은 단어가 겹치는 첫 질문의 기억을 첫째로 받았고(`기억 2개를 받았습니다, 첫째: Where is my order?`), 기억이 100개 미만이라 가진 기억 전부를 받았습니다. 앞에서 소스로 읽은 두 가지도 그대로 나왔습니다. 사실 추출에 보낸 입력 네 개가 모두 `user:`로 시작하고(답 문장도), 페이로드에는 앱이 붙인 `app_id`와 `role`(user 둘, assistant 둘)이 `user_id`·`data`·`hash`·`created_at`과 함께 남았습니다. PostHog 이벤트는 질문마다 여섯 개입니다. `mem0.init`, `mem0.search`, 그리고 `add`마다 `mem0._create_memory`와 `mem0.add` 한 쌍씩입니다(사실이 하나씩 뽑힐 때).
 
 ### Step 5. 합성 데이터 — 한 번의 클릭이 JSON 항목 수만큼의 저장이 된다
 
@@ -617,15 +637,18 @@ uv run --no-project python day100_check.py synth
 
 ```
   호출: 합성 데이터(gpt-4) 1 · mem0 사실 추출(gpt-4o-mini) 9 · 임베딩(text-embedding-3-small) 9 · mem0 갱신 판단(gpt-4o-mini) 9
+  이벤트: mem0.init 1 · mem0._create_memory 9 · mem0.add 9
 프로필 키: ['customer_name', 'email', 'shipping_address', 'recent_order', 'previous_orders', 'service_interactions', 'preferences']
 저장된 기억 9 개, 예: - customer_name: "Alice Kim"
 ```
 
-`gpt-4` 한 번에 이어 `add`가 아홉 번 불렸습니다(비리스트 키 다섯 + 리스트 항목 둘씩 둘). 그래서 `gpt-4o-mini`가 열여덟 번, 임베딩이 아홉 번입니다. 진짜 `gpt-4`가 만드는 JSON의 모양은 확인하지 못했고, 모양에 따라 횟수가 달라집니다. 이 흐름을 두 장으로 그렸습니다.
+`gpt-4` 한 번에 이어 `add`가 아홉 번 불렸습니다(비리스트 키 다섯 + 리스트 항목 둘씩 둘). 그래서 `gpt-4o-mini`가 열여덟 번, 임베딩이 아홉 번입니다. PostHog 이벤트는 `mem0.init` 하나(버튼을 누른 실행이 `Memory`를 다시 만든 것)에 `add`마다 `mem0._create_memory`와 `mem0.add` 한 쌍씩, 아홉 쌍입니다. 진짜 `gpt-4`가 만드는 JSON의 모양은 확인하지 못했고, 모양에 따라 횟수가 달라집니다. 이 흐름을 두 장으로 그렸습니다.
 
 ![합성 데이터 요청과 저장](diagrams/extra-synth.svg)
 
 ![합성 데이터를 화면에 돌려주기](diagrams/extra-synth-save.svg)
+
+첫 그림은 `add` 호출과 반환만 그렸습니다. 그 `add` 하나하나의 안쪽은 질문 저장과 같은 메시지입니다. 사실 추출·임베딩·유사 검색은 '요청 한 건이 흐르는 과정'의 5번 그림, 갱신 판단·upsert·이력은 6번, PostHog 이벤트와 반환은 7번 그림과 같고, 다른 것은 메타데이터의 `role`이 `system`이라는 점뿐입니다.
 
 모델이 JSON을 코드 펜스로 감싸 돌려주면 어떻게 되는지도 봅니다.
 
@@ -639,15 +662,19 @@ uv run --no-project python day100_check.py fence
   오류 배너: Failed to generate synthetic data: Expecting value: line 1 column 1 (char 0)
   오류 배너: Failed to generate synthetic data.
   호출: 합성 데이터(gpt-4) 1
+  이벤트: mem0.init 1
 ```
 
-`json.loads`가 첫 글자에서 실패해 배너 둘만 남고 저장은 0입니다. `gpt-4` 호출은 이미 나간 뒤입니다. 실제 `gpt-4`가 펜스를 붙이는지는 확인하지 못했고 코드 경로만 가짜 응답으로 확인했습니다. 한편 Step 4의 고정을 하지 않은 환경에서는 이 버튼도 첫 `add`에서 같은 `AttributeError`로 끊깁니다. 그 환경에서 `synth`를 돌리면 이렇게 나왔습니다(직접 확인).
+`json.loads`가 첫 글자에서 실패해 배너 둘만 남고 저장은 0입니다. `gpt-4` 호출은 이미 나간 뒤입니다. `add`가 한 번도 불리지 않아 이벤트도 `mem0.init`뿐입니다. 실제 `gpt-4`가 펜스를 붙이는지는 확인하지 못했고 코드 경로만 가짜 응답으로 확인했습니다. 한편 Step 4의 고정을 하지 않은 환경에서는 이 버튼도 첫 `add`에서 같은 `AttributeError`로 끊깁니다. 그 환경에서 `synth`를 돌리면 이렇게 나왔습니다(직접 확인).
 
 ```
   오류 배너: Failed to generate synthetic data: 'QdrantClient' object has no attribute 'search'
   오류 배너: Failed to generate synthetic data.
   호출: 합성 데이터(gpt-4) 1 · mem0 사실 추출(gpt-4o-mini) 1 · 임베딩(text-embedding-3-small) 1
+  이벤트: mem0.init 1
 ```
+
+이벤트도 `mem0.init`뿐입니다. 첫 `add`가 예외로 끝나서 `add` 끝에서 나가는 `mem0.add`까지 가지 못했기 때문입니다.
 
 ### Step 6. 사이드바 — 고객 ID, 프로필, 기억 보기
 
@@ -738,14 +765,16 @@ uv run --no-project python day100_check.py sidebar
 ```
 alice 대화 기록: 2 개 / previous_customer_id: alice
 bob으로 바꾼 뒤 대화 기록: 0 개 / previous_customer_id: bob
-bob 기억 보기 -> 사이드바: ['Memory for customer **bob**:'] / 안내: [] / 호출: 없음
-alice 기억 보기 -> 사이드바: ['Memory for customer **alice**:'] / 본문 항목 2 개 / 호출: 없음
+bob 기억 보기 -> 사이드바: ['Memory for customer **bob**:'] / 안내: [] / 호출: 없음 / 이벤트: mem0.init → mem0.get_all
+alice 기억 보기 -> 사이드바: ['Memory for customer **alice**:'] / 본문 항목 2 개 / 호출: 없음 / 이벤트: mem0.init → mem0.get_all
 프로필 보기 -> ["No customer data generated yet. Click 'Generate Synthetic Data' first."]
 ```
 
-ID를 bob으로 바꾸자 대화 기록이 비워지고 `previous_customer_id`가 따라갔습니다. bob의 기억은 없는데 사이드바에는 머리말만 있고 "No memory found" 안내는 없습니다(`안내: []`). alice로 돌아오면 기억 두 개가 사이드바가 아니라 본문 항목으로 나오고(`본문 항목 2 개`), 사이드바에는 머리말 한 줄뿐입니다. 이 장면에서는 합성 데이터를 만든 적이 없어 프로필 보기가 안내문만 보여 줍니다. ID가 바뀌면 `customer_data`도 `None`이 되는 것은 141행에서 소스로 확인했습니다. 두 기억 보기에서 가짜 OpenAI 호출은 없었습니다. `get_all`은 임베딩 없이 Qdrant에서 목록만 읽습니다. 이 흐름도 그렸습니다.
+ID를 bob으로 바꾸자 대화 기록이 비워지고 `previous_customer_id`가 따라갔습니다. bob의 기억은 없는데 사이드바에는 머리말만 있고 "No memory found" 안내는 없습니다(`안내: []`). alice로 돌아오면 기억 두 개가 사이드바가 아니라 본문 항목으로 나오고(`본문 항목 2 개`), 사이드바에는 머리말 한 줄뿐입니다. 이 장면에서는 합성 데이터를 만든 적이 없어 프로필 보기가 안내문만 보여 줍니다. ID가 바뀌면 `customer_data`도 `None`이 되는 것은 141행에서 소스로 확인했습니다. 두 기억 보기에서 가짜 OpenAI 호출은 없었습니다. `get_all`은 임베딩 없이 Qdrant에서 목록만 읽습니다. 다만 `mem0.get_all` 이벤트는 나갑니다. 출력의 `이벤트:`가 기억 보기마다 `mem0.init → mem0.get_all`입니다(`mem0.init`은 버튼을 누른 실행이 `Memory`를 다시 만든 것). 이 흐름을 두 장으로 그렸습니다. 한 장에 모두 넣으면 배우 순서 720가지 가운데 선과 글자가 닿지 않는 것이 없고 높이도 1000px를 넘습니다. 앞 그림은 클릭에서 `get_all`과 그 통계 이벤트까지, 뒤 그림은 Qdrant에서 목록을 읽어 화면에 그리기까지입니다. 머리말(`st.sidebar.write`)과 항목(`st.write`)은 서로 다른 호출이라 뒤 그림에서도 두 메시지로 나눠 그렸습니다.
 
-![기억 보기](diagrams/extra-memoryview.svg)
+![기억 보기: 클릭에서 get_all까지](diagrams/extra-memoryview.svg)
+
+![기억 보기: 목록을 화면에 그리기](diagrams/extra-memoryview-list.svg)
 
 ### Step 7. 채팅 화면과 실행
 
@@ -841,41 +870,53 @@ ok
 
 ## 요청 한 건이 흐르는 과정
 
-질문 하나는 메시지 마흔 개로 이루어집니다. 그림 한 장은 1000px 안에서 메시지 일곱 개 안팎까지만 담기므로, 실제 시간 경계에서 여덟 장으로 나눴습니다. 메시지는 모두 정확히 한 그림에 원래 순서대로 있습니다. mem0나 화면이 여러 상대와 동시에 주고받는 그림은 배우를 일렬로 세우면 한 메시지가 다른 배우의 수명선을 건너가야 합니다. 건너뛰는 메시지의 라벨은 좁게 줄바꿈하고 이웃한 메시지의 라벨에는 실제 코드 값을 채워 선과 글자 사이를 벌렸습니다. 데이터를 줄인 라벨은 없고, 배우 순서는 전수 탐색으로 골랐습니다.
+질문 하나는 메시지 마흔다섯 개로 이루어집니다. mem0가 사실을 하나씩 뽑아 ADD로 판단하는 경우의 수이고, 그중 PostHog 이벤트가 다섯 개입니다(`mem0.search` 하나, `add` 두 번의 `mem0._create_memory`·`mem0.add` 두 쌍). 이 앞에는 매 턴 Step 3의 초기화 두 장이 붙습니다. 질문을 보내면 Streamlit이 스크립트를 처음부터 다시 돌려 `Memory.from_config`가 `chat_input`보다 먼저 불리기 때문입니다. 초기화 메시지는 아홉 개이고(컬렉션이 이미 있으면 `create_collection`이 빠져 여덟 개), 합하면 한 턴은 메시지 쉰네 개입니다. 출력의 `이벤트:`에서도 질문마다 `mem0.init`이 `mem0.search` 앞에 옵니다. 그림 한 장은 1000px 안에서 메시지 일곱 개 안팎까지만 담습니다. 거기에 PostHog를 배우로 더해 한 장에 모두 넣으면 배우 순서를 전부 시험해도 선과 글자가 닿지 않는 순서가 없었습니다(검색 그림 120가지, 저장 그림 720가지). 그래서 실제 시간 경계에서 열한 장으로 나눴습니다. 메시지는 모두 정확히 한 그림에 원래 순서대로 있습니다. mem0나 화면이 여러 상대와 동시에 주고받는 그림은 배우를 일렬로 세우면 한 메시지가 다른 배우의 수명선을 건너가야 합니다. 건너뛰는 메시지의 라벨은 좁게 줄바꿈하고 이웃한 메시지의 라벨에는 실제 코드 값을 채워 선과 글자 사이를 벌렸습니다. 데이터를 줄인 라벨은 없고, 배우 순서는 전수 탐색으로 골랐습니다.
 
 1. 고객이 질문을 입력하면 화면이 세션 상태에 질문을 쌓고 말풍선을 그린 뒤 에이전트의 `handle_query`를 부릅니다.
 
 ![질문 입력과 handle_query 호출](diagrams/sequence.svg)
 
-2. 에이전트가 `search`를 부르고, mem0가 질문을 임베딩해 Qdrant에서 이 고객의 기억을 가까운 순으로 받아 `{"results": [...]}`로 돌려줍니다.
+2. 에이전트가 `search`를 부르면 mem0는 제일 먼저 `mem0.search` 이벤트를 PostHog로 보냅니다. 임베딩보다 앞입니다.
 
-![기억 검색](diagrams/extra-search.svg)
+![기억 검색: 호출과 통계 이벤트](diagrams/extra-search.svg)
 
-3. 에이전트가 기억 줄들로 컨텍스트를 조립해 `gpt-4`에 보내고 답을 받습니다.
+3. 이어서 mem0가 질문을 임베딩해 Qdrant에서 이 고객의 기억을 가까운 순으로 받아 `{"results": [...]}`로 돌려줍니다.
+
+![기억 검색: 임베딩과 Qdrant 조회](diagrams/extra-retrieve.svg)
+
+4. 에이전트가 기억 줄들로 컨텍스트를 조립해 `gpt-4`에 보내고 답을 받습니다.
 
 ![gpt-4 답변](diagrams/extra-answer.svg)
 
-4. 질문 저장의 앞부분입니다. mem0가 `gpt-4o-mini`에 사실을 뽑게 하고, 사실마다 임베딩해 비슷한 기존 기억을 찾습니다.
+5. 질문 저장의 앞부분입니다. mem0가 `gpt-4o-mini`에 사실을 뽑게 하고, 사실마다 임베딩해 비슷한 기존 기억을 찾습니다.
 
 ![질문 저장: 사실 추출과 비교](diagrams/extra-extract-query.svg)
 
-5. 질문 저장의 뒷부분입니다. 새 사실과 기존 기억을 `gpt-4o-mini`에게 보여 ADD·UPDATE·DELETE·NONE을 판단시키고, 이 그림은 ADD로 판단된 경우입니다. 결과를 Qdrant에 쓰고 `history.db`에 이력을 남긴 뒤 에이전트에 돌려줍니다.
+6. 질문 저장의 가운데입니다. 새 사실과 기존 기억을 `gpt-4o-mini`에게 보여 ADD·UPDATE·DELETE·NONE을 판단시키고, 이 그림은 ADD로 판단된 경우입니다. 결과를 Qdrant에 쓰고 `history.db`에 이력을 남깁니다.
 
 ![질문 저장: 판단과 저장](diagrams/extra-store-query.svg)
 
-6. 답 저장의 앞부분입니다. 질문과 같은 흐름이지만 입력이 답 문자열이고 `role`이 `assistant`입니다. 사실을 뽑는 입력은 그래도 `user:`로 시작합니다.
+7. 질문 저장의 끝부분입니다. 새 기억마다 `mem0._create_memory` 이벤트를, `add`가 끝날 때 `mem0.add` 이벤트를 PostHog로 보내고, 결과를 에이전트에 돌려줍니다.
+
+![질문 저장: 통계 이벤트와 반환](diagrams/extra-event-query.svg)
+
+8. 답 저장의 앞부분입니다. 질문과 같은 흐름이지만 입력이 답 문자열이고 `role`이 `assistant`입니다. 사실을 뽑는 입력은 그래도 `user:`로 시작합니다.
 
 ![답 저장: 사실 추출과 비교](diagrams/extra-extract-answer.svg)
 
-7. 답 저장의 뒷부분입니다. 질문 때와 같은 판단·저장·이력입니다.
+9. 답 저장의 가운데입니다. 질문 때와 같은 판단·저장·이력입니다.
 
 ![답 저장: 판단과 저장](diagrams/extra-store-answer.svg)
 
-8. 마지막으로 에이전트가 답을 화면에 돌려주고, 화면이 세션 상태에 쌓은 뒤 말풍선으로 그립니다.
+10. 답 저장의 끝부분입니다. 질문 때와 같은 이벤트 둘과 반환입니다.
+
+![답 저장: 통계 이벤트와 반환](diagrams/extra-event-answer.svg)
+
+11. 마지막으로 에이전트가 답을 화면에 돌려주고, 화면이 세션 상태에 쌓은 뒤 말풍선으로 그립니다.
 
 ![답변 표시](diagrams/extra-reply.svg)
 
-한 턴은 이 여덟 장이 이어진 것입니다. 오늘 설치 그대로라면 2번 그림에서 임베딩 벡터를 받은 mem0가 Qdrant 검색을 부르려는 곳에서 `AttributeError`가 나고, 3~7번 그림의 메시지는 일어나지 않습니다. 앱은 `except`에서 사과문을 만들어 8번 그림의 화면 쪽으로 곧장 돌려줍니다(Step 4에서 직접 확인).
+한 턴은 Step 3의 초기화 두 장에 이 열한 장이 이어진 것입니다. 오늘 설치 그대로라면 3번 그림에서 임베딩 벡터를 받은 mem0가 Qdrant 검색을 부르려는 곳에서 `AttributeError`가 나고, 4~10번 그림의 메시지는 일어나지 않습니다. 앱은 `except`에서 사과문을 만들어 11번 그림의 화면 쪽으로 곧장 돌려줍니다(Step 4에서 직접 확인).
 
 ## 실행 체크리스트
 
@@ -886,6 +927,7 @@ ok
 - [ ] 화면을 만질 때마다 `Memory.from_config`가 다시 불린다는 것(세 번 만지면 세 번)을 확인했다
 - [ ] 오늘 설치 그대로는 질문이 임베딩 한 번 뒤 `AttributeError`로 끊기고 배너와 사과문만 나온다는 것, `qdrant-client<1.16`으로 고정하면 한 턴이 끝까지 간다는 것을 확인했다
 - [ ] 한 턴이 `gpt-4` 한 번과 `gpt-4o-mini` 네 번을 쓰고, 답 문장도 mem0에는 `user:`로 보인다는 것을 확인했다
+- [ ] mem0가 `Memory`를 만들 때뿐 아니라 `search`·`add`·`get_all`을 부를 때마다 PostHog 이벤트를 보내려 한다는 것을 장면 출력의 `이벤트:` 줄로 확인했다
 - [ ] `search`의 `limit` 기본값이 100이라 고객의 기억 전부가 프롬프트에 들어간다는 것을 시그니처와 장면으로 확인했다
 - [ ] 합성 데이터 한 번이 JSON 항목 수만큼의 `add`로 번져 `gpt-4o-mini` 호출이 그 두 배가 된다는 것과, JSON이 아닌 답이면 `json.loads`에서 멈춘다는 것을 확인했다
 - [ ] 고객 ID를 바꾸면 대화와 프로필은 비워지고 기억은 남는다는 것, 기억 보기의 항목이 본문에 그려진다는 것을 확인했다
@@ -899,11 +941,12 @@ ok
 | 합성 데이터 버튼 뒤 배너 `Failed to generate synthetic data: 'QdrantClient' object has no attribute 'search'`와 사이드바의 `Failed to generate synthetic data.` | 같은 원인이다. 첫 `add`가 사실을 하나라도 뽑으면 `vector_store.search`를 부른다. 그 전에 `gpt-4` 한 번, `gpt-4o-mini` 한 번, 임베딩 한 번이 이미 나간다(Step 5에서 직접 확인) | 같은 고정 |
 | `Failed to generate synthetic data: Expecting value: line 1 column 1 (char 0)` | 107행의 `json.loads`가 모델 답을 그대로 파싱한다. 답이 JSON 한 덩어리가 아니면(여기서는 코드 펜스) 실패하고 `gpt-4` 호출은 이미 나간 뒤다(가짜 응답으로 직접 확인) | 리포 코드는 고치지 않음 |
 | 키를 넣은 뒤 `Failed to initialize memory: [WinError 10061] ...`가 뜨고 제목과 키 입력창만 남음 | Qdrant가 `localhost:6333`에 없다(Step 3에서 직접 확인, 다른 OS는 문구가 다름) | 앱 README의 Docker 안내로 Qdrant를 띄운다 |
-| 고객 ID를 치기 전에 빨간 "Please enter a customer ID to start the chat." | 202행의 `elif not customer_id`가 질문이 없는 첫 화면에서도 참이다(Step 3·7에서 직접 확인) | 의도된 안내로 보임 |
+| 고객 ID를 치기 전에 빨간 "Please enter a customer ID to start the chat." | 202행의 `elif not customer_id`가 질문이 없는 첫 화면에서도 참이다(Step 3·7에서 직접 확인) | 정상이다. 사이드바에 고객 ID를 넣으면 사라진다(Step 7) |
 | "View Memory Info"의 항목이 사이드바가 아니라 본문에 뜨고, 기억이 없는 고객은 머리말만 나옴 | 169행이 `st.write`이고, 164행의 `if memories:`가 v1.1의 빈 결과 `{"results": []}`에도 참이다(Step 6에서 직접 확인) | 리포 코드는 고치지 않음. 더 해보기 2 |
 | 키를 넣기도 전에 첫 화면만 열었는데 홈에 `.mem0/config.json`이 생김 | 3행의 `from mem0 import Memory`가 게이트 밖이라 첫 화면에서도 실행된다(홈을 임시 폴더로 돌려 직접 확인) | 실행 전에 `MEM0_DIR`을 정한다(Step 7) |
 | 콘솔에 `error uploading: HTTPSConnectionPool(host='us.i.posthog.com', ...)`가 반복해 찍힘 | mem0의 통계가 기본으로 켜져 있고 전송이 막힌 네트워크에서 실패한다(프록시를 닫힌 포트로 돌린 환경에서 직접 확인) | 실행 전에 `MEM0_TELEMETRY=False`를 정한다 |
 | 앱 README는 GPT-4o라고 적는데 코드는 `gpt-4` | 57행과 100행이 `model="gpt-4"`이고, mem0 안은 `gpt-4o-mini`다(소스로 확인) | 코드를 기준으로 삼는다 |
+| 2026-10-23 이후 질문과 합성 데이터 버튼마다 배너가 뜰 것으로 예상됨(종료 뒤의 실제 문구는 아직 볼 수 없어 직접 보지 못함) | `gpt-4`(57행·100행)가 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations, 2026-10-05에 받은 원문)에 2026년 10월 23일 종료로 올라 있고 대체는 `gpt-5.6-sol`이다. 앱의 `except`(70행·126행)가 그 오류를 배너로 바꾼다 | 복사본에서 57행·100행의 모델 이름을 바꾼다(더 해보기 3). `gpt-5.6-sol`이 이 앱의 호출과 맞는지는 키가 없어 확인하지 못했다 |
 | 앱 README의 `git clone` 뒤 `cd advanced_ai_agents/single_agent_apps/ai_customer_support_agent`가 `No such file or directory`로 실패 | clone으로 생긴 `awesome-llm-apps` 폴더로 들어가는 단계가 빠져 있다(bash로 직접 확인, PowerShell은 문구가 다름) | 먼저 `cd awesome-llm-apps` |
 
 ## 더 해보기

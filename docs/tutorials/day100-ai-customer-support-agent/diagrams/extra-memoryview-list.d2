@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 고객 { class: person }
+ui: "Streamlit 화면" { class: ours }
+agent: "CustomerSupportAIAgent" { class: ours }
+memory: "mem0 Memory" { class: ours }
+qdrant: "Qdrant" { class: store }
+
+memory -> qdrant: "scroll (user_id 필터, limit=100)\n— 임베딩 호출 없음"
+qdrant -> memory: "포인트 목록 (payload 포함)"
+memory -> agent: "{'results': [{'memory', ...}]}"
+agent -> ui: "memories 반환"
+ui -> user: "사이드바: 'Memory for customer **alice**:'\n(st.sidebar.write)"
+ui -> user: "본문: '- 기억' 줄들\n(st.write, 기억마다 한 줄)"

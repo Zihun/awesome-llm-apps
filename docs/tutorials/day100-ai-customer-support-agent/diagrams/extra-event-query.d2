@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+posthog: "PostHog" { class: ext }
+memory: "mem0 Memory" { class: ours }
+agent: "CustomerSupportAIAgent" { class: ours }
+
+memory -> posthog: "mem0._create_memory 이벤트 (memory_id · 설정 정보) —\n새 기억마다. MEM0_TELEMETRY=False면 안 보냄"
+memory -> posthog: "mem0.add 이벤트 (version='v1.1' · keys=['user_id'] ·\n설정 정보). MEM0_TELEMETRY=False면 안 보냄"
+memory -> agent: "{'results':\n[{'id', 'memory',\n'event': 'ADD'}],\n'relations': []}"

@@ -3,12 +3,7 @@ shape: sequence_diagram
 
 agent: "CustomerSupportAIAgent" { class: ours }
 memory: "mem0 Memory" { class: ours }
-openai: "OpenAI API" { class: ext }
-qdrant: "Qdrant" { class: store }
+posthog: "PostHog" { class: ext }
 
 agent -> memory: "search(query=query,\nuser_id='alice')"
-memory -> openai: "임베딩 요청 (text-embedding-3-small, 입력 = 질문 문자열)"
-openai -> memory: "1536차원 임베딩 벡터 (embedding_model_dims=1536)"
-memory -> qdrant: "코사인 유사도 검색\n(컬렉션 mem0 ·\nuser_id 필터 · limit=100)"
-qdrant -> memory: "점수 붙은\n기억 목록"
-memory -> agent: "{'results':\n[{memory, score, ...}]}"
+memory -> posthog: "mem0.search 이벤트 (limit=100 · version='v1.1' ·\nkeys=['user_id'] · 설정 정보)\nMEM0_TELEMETRY=False면 안 보냄"

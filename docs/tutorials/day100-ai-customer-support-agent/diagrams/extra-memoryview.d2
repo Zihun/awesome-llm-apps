@@ -5,13 +5,9 @@ user: 고객 { class: person }
 ui: "Streamlit 화면" { class: ours }
 agent: "CustomerSupportAIAgent" { class: ours }
 memory: "mem0 Memory" { class: ours }
-qdrant: "Qdrant" { class: store }
+posthog: "PostHog" { class: ext }
 
 user -> ui: "'View Memory Info' 클릭"
 ui -> agent: "get_memories(user_id='alice')"
 agent -> memory: "get_all(user_id='alice')"
-memory -> qdrant: "scroll (user_id 필터, limit=100)\n— 임베딩 호출 없음"
-qdrant -> memory: "포인트 목록 (payload 포함)"
-memory -> agent: "{'results': [{'memory', ...}]}"
-agent -> ui: "memories 반환"
-ui -> user: "사이드바: 'Memory for customer **alice**:'\n본문: '- 기억' 줄들 (st.write)"
+memory -> posthog: "mem0.get_all 이벤트 (limit=100 ·\nkeys=['user_id'] · 설정 정보)\nMEM0_TELEMETRY=False면 안 보냄"
