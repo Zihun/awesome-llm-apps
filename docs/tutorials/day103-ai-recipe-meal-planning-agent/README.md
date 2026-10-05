@@ -217,7 +217,7 @@ def search_recipes(ingredients: str, diet_type: Optional[str] = None) -> Dict:
         return {"error": "Recipe search failed"}
 ```
 
-`@tool`(agno의 `agno.tools.tool`)이 붙은 함수는 `Function` 객체가 되고 원래 함수는 `.entrypoint`로 남습니다(직접 확인: Step 5). `search_recipes`는 키가 없으면 네트워크에 가기 전에 오류 dict를 돌려주고(24~25행), 있으면 재료로 후보 5건을 찾은 뒤(39행) 상위 3건의 상세만 한 건씩 부릅니다(44~46행). 한 번의 검색에 GET이 최대 4건이고 모두 순차입니다(소스로 확인). 후보가 5건이어도 `total_found`는 5, 상세는 3건뿐이고(직접 확인), 상세 호출이 200이 아니면 그 레시피는 말없이 빠집니다(48행, 소스로 확인). 무료 플랜은 호출마다 보통 1포인트에 결과당 0.01포인트를 쓰므로(공식 가격 페이지, 2026-10-05 확인) 하루 50포인트에서 검색 한 번이 대략 4포인트 이상입니다. 앱 README는 이 한도를 `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/README.md:55`에서 하루 약 50건, `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/README.md:139`에서 150건으로 서로 다르게 적습니다.
+`@tool`(agno의 `agno.tools.tool`)이 붙은 함수는 `Function` 객체가 되고(직접 확인: Step 5), 부르는 입구는 `.entrypoint`입니다. 여기에는 pydantic의 인자 검사와 예외를 로그로 찍고 다시 던지는 agno 래퍼가 씌워져 있습니다(직접 확인). `search_recipes`는 키가 없으면 네트워크에 가기 전에 오류 dict를 돌려주고(24~25행), 있으면 재료로 후보 5건을 찾은 뒤(39행) 상위 3건의 상세만 한 건씩 부릅니다(44~46행). 한 번의 검색에 GET이 최대 4건이고 모두 순차입니다(소스로 확인). 후보가 5건이어도 `total_found`는 5, 상세는 3건뿐이고(직접 확인), 상세 호출이 200이 아니면 그 레시피는 말없이 빠집니다(48행, 소스로 확인). 무료 플랜은 호출마다 보통 1포인트에 결과당 0.01포인트를 쓰므로(공식 가격 페이지, 2026-10-05 확인) 하루 50포인트에서 검색 한 번이 대략 4포인트 이상입니다. 앱 README는 이 한도를 `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/README.md:55`에서 하루 약 50건, `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/README.md:139`에서 150건으로 서로 다르게 적습니다.
 
 맨몸 `except:`(65행)는 시간 초과, 키 오류, 한도 초과를 모두 `{"error": "Recipe search failed"}` 한 가지로 바꿔서 모델도 독자도 원인을 알 수 없습니다(직접 확인: 호출이 예외를 던지게 했을 때). 키가 없으면 오류를 돌려줄 뿐 앱은 뜬다는 앱 README의 말(`advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/README.md:135`)은 맞습니다(직접 확인).
 
@@ -362,7 +362,7 @@ total_found: 5 | 상세 정보를 붙인 레시피: 3
             selected_meal = random.choice(meals[meal_type])
 ```
 
-같은 요청도 호출마다 다른 식단이 나옵니다. `dietary_preference`는 결과 dict에 그대로 되돌려 줄 뿐(`advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:266`) 메뉴 선택에 쓰이지 않습니다. 날짜는 요일 이름 7개를 `days`만큼 자르므로(209행) 14일을 달라 해도 7일치만 나오는데, 평균은 `days`로 나누어(246~247행) 절반이 되고 `days` 필드는 14로 남습니다. 안내 문구도 메뉴 표의 값 때문에 거의 고정입니다.
+`dietary_preference`는 결과 dict에 그대로 되돌려 줄 뿐(`advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:266`) 메뉴 선택에 쓰이지 않습니다. 날짜는 요일 이름 7개를 `days`만큼 자르므로(209행) 14일을 달라 해도 7일치만 나오는데, 평균은 `days`로 나누어(246~247행) 절반이 되고 `days` 필드는 14로 남습니다. 안내 문구도 메뉴 표의 값 때문에 거의 고정입니다.
 
 `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:249-253`
 
@@ -378,7 +378,7 @@ total_found: 5 | 상세 정보를 붙인 레시피: 3
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** 아래 스크립트를 `check_local_tools.py`로 저장합니다. 두 도구는 네트워크를 쓰지 않으니 가짜가 필요 없고, `.entrypoint`는 `@tool`이 감싸기 전의 함수 호출 입구입니다.
+**확인.** 아래 스크립트를 `check_local_tools.py`로 저장합니다. 두 도구는 네트워크를 쓰지 않으니 가짜가 필요 없고, 함수는 Step 3처럼 `.entrypoint`로 부릅니다.
 
 ```python
 import random
@@ -599,7 +599,7 @@ uv run --no-project python ui_check.py
 
 **목적.** 키 없이 가짜 모델 서버로 질문 한 건을 끝까지 돌려 도구 호출 루프와 요청 본문을 보고, 이어 묻기 문제를 재현하고, 앱을 띄우는 명령과 agno 통계를 확인합니다.
 
-**할 일.** 먼저 가짜 서버입니다. 진짜 API처럼 연결을 재사용하는(HTTP/1.1 keep-alive) 서버로, 무슨 질문이든 `estimate_costs`를 부르라고 답하고 도구 결과를 받으면 최종 답을 돌려줍니다. 받은 요청의 역할 목록과 도구 수, 도구 메시지를 터미널에 찍습니다. `fake_openai.py`로 저장해 한 터미널에서 띄워 둡니다.
+**할 일.** 먼저 가짜 서버입니다. 진짜 API처럼 연결을 재사용하는(HTTP/1.1 keep-alive) 서버로, 무슨 질문이든 `estimate_costs`를 부르라고 답하고 도구 결과를 받으면 최종 답을 돌려줍니다. `fake_openai.py`로 저장해 한 터미널에서 띄워 둡니다.
 
 ```python
 import json
