@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+wf: "워크플로 (run)" { class: ours }
+main: "화면 (main)" { class: ours }
+user: "사용자" { class: person }
+
+wf -> main: "yield {company_name, email, company_data,\ncontacts, step, progress,\nstatus: \"Completed\"}"
+main -> user: "progress_bar.progress(progress)\nstatus_text.text(\"✅ Company 1/N completed\")"
+main -> user: "카드 한 장 (회사마다)\n탭: 이메일 · 조사 · 연락처 · 요약"
+main -> user: "progress_bar.progress(1.0)\nstatus_text.text(\"Campaign complete!\nGenerated N personalized emails\")"
+main -> user: "st.success(\"Campaign Complete!\nSuccessfully generated N personalized emails\")"
+main -> user: "st.metric 넷: Emails Generated ·\nTarget Companies · Success Rate · Service Type"
+main -> user: "버튼 셋: Export All Emails · Generate Report ·\nRun New Campaign, 그리고 st.balloons()"

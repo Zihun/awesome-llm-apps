@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "화면 (main)" { class: ours }
+wf: "워크플로 (run)" { class: ours }
+db: "SQLite\n(tmp/agno_workflows.db)" { class: store }
+
+user -> main: "\"🚀 Start Automated Campaign\" 클릭"
+main -> user: "progress_bar = st.progress(0)\n(빈 진행 막대)"
+main -> user: "st.spinner(\"Initializing\nAI research agents...\")"
+main -> db: "SqliteDb(\ndb_file=\"tmp/\nagno_workflows.db\")"
+main -> wf: "PersonalisedEmailGenerator(\nsession_id=\"streamlit-email-generator\", db=db)"
+main -> user: "status_text.text(\"🔍 Discovering companies\nand generating emails...\")"
+main -> wf: "run(config, sender_details,\nnum_companies, use_cache=True)"

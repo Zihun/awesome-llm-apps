@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: down
+
+user: "사용자 (브라우저)" { class: person }
+main: "진입점·결과 카드 (main)" { class: ours }
+form: "입력 폼 (create_streamlit_ui)" { class: ours }
+categories: "기업 분류표 (COMPANY_CATEGORIES)" { class: ours }
+config: "캠페인 설정 (OutreachConfig)" { class: ours }
+
+user -> main: "API 키 · 시작 버튼"
+main -> user: "진행 막대 ·\n이메일 카드 · 요약"
+user -> form: "폼 입력값"
+form -> user: "위젯 · 오류 문구"
+main -> form: "create_streamlit_ui() 호출"
+form -> main: "(config, sender_details,\nnum_companies) 반환"
+categories -> form: "분류 목록 · 설명 · 대표 직책"
+form -> config: "OutreachConfig(분류, 부서,\n서비스, 크기, 수준) 만들기"

@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "화면 (main)" { class: ours }
+wf: "워크플로 (run)" { class: ours }
+researcher: "기업 조사\n(company_researcher)" { class: ours }
+openai: "OpenAI API\n(gpt-5)" { class: ext }
+
+wf -> main: "yield {\n\"step\": \"Processing company 1/N\",\n\"progress\": (i + 0.4) / N,\n\"status\": \"Researching company...\"}"
+main -> user: "progress_bar.progress(progress)\nstatus_text.text(\"🔄 Researching company... -\nProcessing company 1/N\")"
+wf -> researcher: "run(research_query)\n(회사 번호 + companies_text\n전체 + 서비스 · 부서)"
+researcher -> openai: "create(model=\"gpt-5\",\nmessages, tools=4개)"
+openai -> researcher: "tool_calls:\nsearch_exa(query, num_results)"

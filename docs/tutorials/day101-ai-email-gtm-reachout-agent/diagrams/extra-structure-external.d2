@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: right
+
+tooled: "Exa 도구를 쥔 에이전트 셋" {
+  class: group
+  grid-rows: 3
+  grid-gap: 8
+  finder: "기업 탐색 (company_finder)" { class: ours }
+  contact: "연락처 탐색 (contact_finder)" { class: ours }
+  researcher: "기업 조사 (company_researcher)" { class: ours }
+}
+creator: "이메일 작성\n(email_creator, 도구 없음)" { class: ours }
+openai: "OpenAI API (gpt-5)" { class: ext }
+exa: "Exa API" { class: ext }
+agno: "agno 통계 API\n(os-api.agno.com)" { class: ext }
+
+tooled -> openai: "gpt-5 요청\n(tools 4개)"
+openai -> tooled: "응답 ·\ntool_calls"
+creator -> openai: "gpt-5 요청\n(tools 없음)"
+openai -> creator: "응답 텍스트"
+tooled -> exa: "도구 호출\n(search_exa 등 4종)"
+exa -> tooled: "검색 결과\nJSON"
+tooled -> agno: "run 통계\n(run 성공마다)"
+creator -> agno: "run 통계\n(run 성공마다)"

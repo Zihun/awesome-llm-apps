@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+wf: "워크플로 (run)" { class: ours }
+finder: "기업 탐색\n(company_finder)" { class: ours }
+openai: "OpenAI API\n(gpt-5)" { class: ext }
+exa: "Exa API" { class: ext }
+
+wf -> finder: "run(search_query)\n(분류 · 크기 · 부서 · 서비스 지시문)"
+finder -> openai: "chat.completions.create(model=\"gpt-5\",\nmessages=[developer, user], tools=4개)"
+openai -> finder: "tool_calls: search_exa(query, num_results)"
+finder -> exa: "search_and_contents(\nquery, text=True,\nsummary=False,\nnum_results)"
+exa -> finder: "검색 결과 JSON\n(url · title · author ·\npublished_date · text)"
+finder -> openai: "create(messages + assistant tool_calls\n+ tool 결과 메시지)"
+openai -> finder: "기업 목록 텍스트"
+finder -> wf: ".content → companies_text"

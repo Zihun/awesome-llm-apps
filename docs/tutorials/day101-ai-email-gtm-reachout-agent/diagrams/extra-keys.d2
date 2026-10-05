@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+sidebar: "사이드바 키 입력칸 (main)" { class: ours }
+session: "st.session_state" { class: store }
+env: "os.environ (프로세스 환경변수, 셸에서 export한 값으로 시작)" { class: file }
+exatools: "ExaTools 셋 (클래스 속성)" { class: ours }
+chat: "OpenAIChat 넷 (클래스 속성)" { class: ours }
+
+sidebar -> session: "text_input 값 저장"
+env -> session: "os.getenv로 두 키 읽기\n(세션 첫 실행만)"
+session -> env: "os.environ에 두 키 쓰기\n(스크립트를 돌 때마다 맨 위)"
+session -> env: "os.environ에 두 키 쓰기\n(main이 입력칸을 그린 직후)"
+env -> exatools: "EXA_API_KEY\n(클래스를 만들 때 읽음)"
+env -> chat: "OPENAI_API_KEY\n(첫 호출 때 읽음)"

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+wf: "워크플로 (run)" { class: ours }
+contact: "연락처 탐색\n(contact_finder)" { class: ours }
+openai: "OpenAI API\n(gpt-5)" { class: ext }
+exa: "Exa API" { class: ext }
+
+contact -> exa: "search_and_contents(\nquery, text=True,\nsummary=False,\nnum_results)"
+exa -> contact: "검색 결과 JSON\n(url · title · author ·\npublished_date · text)"
+contact -> openai: "create(messages + assistant tool_calls\n+ tool 결과 메시지)"
+openai -> contact: "연락처 텍스트"
+contact -> wf: ".content → contacts_response.content"

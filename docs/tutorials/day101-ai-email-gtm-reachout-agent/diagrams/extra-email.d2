@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "화면 (main)" { class: ours }
+wf: "워크플로 (run)" { class: ours }
+creator: "이메일 작성\n(email_creator)" { class: ours }
+openai: "OpenAI API\n(gpt-5)" { class: ext }
+
+wf -> main: "yield {\"step\":\n\"Processing company 1/N\",\n\"progress\": (i + 0.6) / N,\n\"status\": \"Generating email...\"}"
+main -> user: "progress_bar.progress(progress)\nstatus_text.text(\"🔄 Generating email... -\nProcessing company 1/N\")"
+wf -> wf: "template = DEPARTMENT_TEMPLATES\n[첫 부서][서비스 종류]\n(없으면 GTM · Software Solution 틀)"
+wf -> creator: "run(email_context)\nJSON: template · company_info ·\ncontacts_info · sender_details ·\ntarget_departments ·\nservice_type · personalization_level"
+creator -> openai: "create(model=\"gpt-5\", messages)\n(tools 없음)"
+openai -> creator: "이메일 텍스트"
+creator -> wf: ".content → email_response.content"

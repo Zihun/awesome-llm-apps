@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+wf: "워크플로 (run)" { class: ours }
+researcher: "기업 조사\n(company_researcher)" { class: ours }
+openai: "OpenAI API\n(gpt-5)" { class: ext }
+exa: "Exa API" { class: ext }
+
+researcher -> exa: "search_and_contents(\nquery, text=True,\nsummary=False,\nnum_results)"
+exa -> researcher: "검색 결과 JSON\n(url · title · author ·\npublished_date · text)"
+researcher -> openai: "create(messages + assistant tool_calls\n+ tool 결과 메시지)"
+openai -> researcher: "조사 텍스트"
+researcher -> wf: ".content → research_response.content"
+wf -> wf: "CompanyInfo(company_name=\"Company #1\", website_url=\"\",\nindustry=\"Unknown\", core_business=research_content[:200])"

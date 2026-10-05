@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: down
+
+main: "진입점·결과 카드 (main)" { class: ours }
+db: "SQLite\n(tmp/agno_workflows.db)" { class: store }
+wf: "run 제너레이터 (run)" { class: ours }
+config: "캠페인 설정 (OutreachConfig)" { class: ours }
+templates: "이메일 틀 (DEPARTMENT_TEMPLATES)" { class: ours }
+company: "기업 정보 (CompanyInfo)" { class: ours }
+
+main -> db: "SqliteDb(db_file) 생성"
+main -> wf: "PersonalisedEmailGenerator(\nsession_id, db=db) 만들기"
+main -> wf: "run(config, sender_details,\nnum_companies, use_cache)"
+wf -> main: "yield 진행 dict ·\n결과 dict"
+wf -> config: "필드 읽기 (분류 · 서비스 ·\n크기 · 부서 · 수준)"
+wf -> templates: "(부서, 서비스 종류)로 조회"
+templates -> wf: "이메일 틀 문자열"
+wf -> company: "CompanyInfo(이름, URL,\n업종, 핵심 사업) 만들기"
+company -> wf: "model_dump() dict"
+config -> main: "분류 · 크기 · 부서 · 서비스 · 수준 값\n(안내 상자 · 요약 지표)"

@@ -1,0 +1,50 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 (브라우저) { class: person }
+
+app: "ai_email_gtm_reachout.py (한 파일)" {
+  class: group
+  grid-rows: 3
+  grid-gap: 10
+  front: "화면" {
+    class: group
+    grid-rows: 2
+    grid-gap: 8
+    form: "입력 폼 (create_streamlit_ui)" { class: ours }
+    main: "진입점·결과 카드 (main)" { class: ours }
+  }
+  data: "설정 데이터와 모델" {
+    class: group
+    grid-rows: 4
+    grid-gap: 8
+    categories: "기업 분류표 (COMPANY_CATEGORIES)" { class: ours }
+    templates: "이메일 틀 (DEPARTMENT_TEMPLATES)" { class: ours }
+    config: "캠페인 설정 (OutreachConfig)" { class: ours }
+    company: "기업 정보 (CompanyInfo)" { class: ours }
+  }
+  flow: "워크플로 (PersonalisedEmailGenerator)" {
+    class: group
+    grid-rows: 5
+    grid-gap: 8
+    run: "run 제너레이터 (run)" { class: ours }
+    finder: "기업 탐색 (company_finder)" { class: ours }
+    contact: "연락처 탐색 (contact_finder)" { class: ours }
+    researcher: "기업 조사 (company_researcher)" { class: ours }
+    creator: "이메일 작성 (email_creator)" { class: ours }
+  }
+}
+
+db: "SQLite\n(tmp/agno_workflows.db)" { class: store }
+openai: "OpenAI API (gpt-5)" { class: ext }
+exa: "Exa API (검색·본문)" { class: ext }
+agno: "agno 통계 API\n(os-api.agno.com)" { class: ext }
+
+user -> app: "폼 · API 키 ·\n시작 버튼"
+app -> user: "진행 막대 ·\n이메일 카드"
+app -> db: "SqliteDb 생성\n(쓰기 없음)"
+app -> openai: "gpt-5 요청\n(네 에이전트)"
+openai -> app: "응답 · 도구\n호출 요청"
+app -> exa: "search_exa 등\n호출 (세 에이전트)"
+exa -> app: "검색 결과\nJSON"
+app -> agno: "실행 통계\n(run 성공마다)"

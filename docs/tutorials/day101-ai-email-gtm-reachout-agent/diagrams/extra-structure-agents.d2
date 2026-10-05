@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: right
+
+wf: "run 제너레이터 (run)" { class: ours }
+finder: "기업 탐색\n(company_finder)" { class: ours }
+contact: "연락처 탐색\n(contact_finder)" { class: ours }
+researcher: "기업 조사\n(company_researcher)" { class: ours }
+creator: "이메일 작성\n(email_creator)" { class: ours }
+
+wf -> finder: "run(search_query)"
+finder -> wf: ".content\n(기업 목록 텍스트)"
+wf -> contact: "run(contacts_query)"
+contact -> wf: ".content\n(연락처 텍스트)"
+wf -> researcher: "run(research_query)"
+researcher -> wf: ".content\n(조사 텍스트)"
+wf -> creator: "run(이메일 컨텍스트 JSON)"
+creator -> wf: ".content\n(이메일 텍스트)"

@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "화면 (main)" { class: ours }
+wf: "워크플로 (run)" { class: ours }
+contact: "연락처 탐색\n(contact_finder)" { class: ours }
+openai: "OpenAI API\n(gpt-5)" { class: ext }
+
+wf -> main: "yield {\n\"step\": \"Processing company 1/N\",\n\"progress\": (i + 0.2) / N,\n\"status\": \"Finding contacts...\"}"
+main -> user: "progress_bar.progress(progress)\nstatus_text.text(\"🔄 Finding contacts... -\nProcessing company 1/N\")"
+wf -> contact: "run(contacts_query)\n(회사 번호 + companies_text\n전체 + 부서)"
+contact -> openai: "create(model=\"gpt-5\",\nmessages, tools=4개)"
+openai -> contact: "tool_calls:\nsearch_exa(query, num_results)"
