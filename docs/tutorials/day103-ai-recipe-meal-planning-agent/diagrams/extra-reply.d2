@@ -10,7 +10,7 @@ agno_api: Agno 통계 API { class: ext }
 
 agent -> openai: tool 메시지 (결과 dict 문자열)
 openai -> agent: 최종 답변 (markdown)
-agent -> agno_api: POST /telemetry/runs (성공했을 때)
+agent -> agno_api: "POST /telemetry/runs (성공했을 때,\n큐에 넣고 데몬 스레드가 보냄)"
 agent -> ui: RunOutput.content
-ui -> session: messages에 답변 추가
 ui -> user: st.markdown(답변)
+ui -> session: messages에 답변 추가

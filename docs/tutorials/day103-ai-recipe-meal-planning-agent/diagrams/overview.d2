@@ -27,8 +27,9 @@ user -> ui: 질문 입력
 ui -> user: 답변
 ui -> session: 저장
 session -> ui: 조회
-ui -> agentbox: arun(질문)
-env -> ui: API 키
+ui -> agentbox: "create_agent() · arun(질문)"
+env -> ui: "OPENAI_API_KEY (키 게이트)"
+env -> agentbox: "두 키 (os.environ)"
 agentbox -> openai: 메시지·도구 스키마
 agentbox -> spoon: GET 레시피·영양
 agentbox -> ddgsvc: 검색어

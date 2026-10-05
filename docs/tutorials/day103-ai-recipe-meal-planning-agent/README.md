@@ -1,6 +1,6 @@
 # Day 103 · 🍽️ AI Recipe & Meal Planning Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 100분(Step마다 확인 스크립트를 저장해 돌리고, 가짜 모델 서버로 끝까지 한 번 돌리고, 이어 묻기 실험까지 하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 질문 10건에 $0.1 안팎 — `gpt-5-mini`는 입력 $0.25·출력 $2(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-5-mini, 2026-10-05 확인), 요청 본문이 3~6천 자라 질문 하나에 입력이 수천 토큰이지만 추론 토큰은 키가 없어 확인하지 못했고, Spoonacular는 무료 플랜 하루 50포인트(https://spoonacular.com/food-api/pricing, 2026-10-05 확인), 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 110분(Step마다 확인 스크립트를 저장해 돌리고, 가짜 모델 서버를 띄운 터미널을 하나 더 쓰며 끝까지 한 번 돌리고, 6초 대기를 낀 이어 묻기 실험과 headless 확인까지 하는 손 시간에 그림 열두 장을 따라 읽는 시간이 더해져 읽는 시간만큼 듭니다) · API 비용 대략 질문 10건에 $0.1 안팎 — `gpt-5-mini`는 입력 $0.25·출력 $2(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-5-mini, 2026-10-05 확인), 요청 본문이 3~6천 자라 질문 하나에 입력이 수천 토큰이지만 추론 토큰은 키가 없어 확인하지 못했고, Spoonacular는 무료 플랜 하루 50포인트(https://spoonacular.com/food-api/pricing, 2026-10-05 확인), 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent`
 
 ## 오늘 만들 것
 
@@ -20,7 +20,7 @@
 | Python | 이 저장소의 기준은 3.11~3.13이다. 이 문서는 3.13.3으로 확인했다 | 공통 사전 준비와 같음 |
 | OpenAI API 키 | `gpt-5-mini` 호출. 키가 없으면 화면이 오류 한 줄만 그리고 멈춘다(Step 6, 직접 확인). 키 없이 따라 하려면 Step 7의 가짜 서버를 쓴다 | https://platform.openai.com/ 가입 후 발급 |
 | Spoonacular API 키(선택) | 레시피 검색·영양 분석. 없으면 두 도구가 오류 dict를 돌려줄 뿐 앱은 뜬다(Step 3). 무료 플랜은 하루 50포인트·초당 1요청(공식 가격 페이지, 2026-10-05 확인) | https://spoonacular.com/food-api 가입 후 발급 |
-| 인터넷 연결 | PyPI 설치, 그리고 앱이 OpenAI·Spoonacular·DuckDuckGo와 agno 익명 통계 서버(`os-api.agno.com`)에 접속한다(통계는 Day 047 Step 5와 같은 사실, Step 7) | 별도 설치 없음 |
+| 인터넷 연결 | PyPI 설치, 그리고 앱이 OpenAI·Spoonacular·DuckDuckGo와 agno 익명 통계 서버(`os-api.agno.com`)에 접속하고, 브라우저로 열면 Streamlit의 사용 통계도 나간다(agno 통계는 Day 047 Step 5와 같은 사실이고 Step 7에서 다룬다. Streamlit 쪽은 Day 054와 Day 063이 확인했고 `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
 | `.env` 파일 | 두 키를 둔다. 앱 폴더나 그 위쪽 폴더에 둔다(Step 2) | 직접 만든다 |
 
 ## 아키텍처 한눈에 보기
@@ -37,7 +37,7 @@
 | 세션 상태 (`st.session_state`) | `agent`와 화면용 `messages`를 보관한다. 탭을 닫거나 새로고침하면 사라진다 | `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:309-317`, `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:320-338` |
 | 외부 서비스 (OpenAI, Spoonacular, DuckDuckGo, agno 통계) | 추론, 레시피·영양 데이터, 웹 검색, 익명 실행 통계 | 코드 없음 (외부 서비스) |
 
-한 그림에 다 그리면 너무 길어져, overview는 에이전트와 도구를 한 묶음으로 두고 묶음 안의 호출은 빼고 묶음과 바깥(화면·외부 서비스)의 관계만 그렸습니다. 에이전트가 도구를 따로 부르는 관계, 도구가 외부 서비스를 부르는 관계, `.env`의 Spoonacular 키가 닿는 도구는 아래 그림에 따로 그렸습니다.
+한 그림에 다 그리면 너무 길어져, overview는 에이전트와 도구를 한 묶음으로 두고 묶음 안의 호출은 빼고 묶음과 바깥(화면·외부 서비스)의 관계만 그렸습니다. `.env`의 두 키는 `os.environ`을 거쳐 묶음 안의 모델 클라이언트와 Spoonacular 도구가 읽고, 화면은 키 게이트에만 씁니다. 도구 쪽 배선(에이전트가 도구를 따로 부르고 도구가 외부 서비스를 부르는 관계, Spoonacular 키가 닿는 도구)은 아래 그림에 따로 그렸고, 에이전트와 OpenAI·agno 통계 사이, 화면과 에이전트 사이의 요청과 응답은 '요청 한 건이 흐르는 과정'의 시퀀스 그림 세 장이 부품 수준으로 그립니다.
 
 ![에이전트·도구·외부 서비스 배선](diagrams/extra-tools.svg)
 
@@ -132,7 +132,7 @@ SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ```
 
-`load_dotenv()`에 경로를 주지 않으면 python-dotenv는 **이 줄을 실행한 파일이 있는 폴더**에서 시작해 위쪽 폴더로 올라가며 처음 만나는 `.env`를 읽습니다(직접 확인: 작업 폴더가 달라도 앱 폴더의 `.env`가 읽혔고, 앱 폴더에 없이 한 칸 위에만 두어도 읽혔습니다). 상위 폴더에 다른 프로젝트의 `.env`가 있으면 그 키가 조용히 쓰인다는 뜻입니다. 셸에 이미 있는 환경변수는 `.env`가 덮어쓰지 않습니다(직접 확인). 두 상수는 값이 없으면 `None`이고, `OPENAI_API_KEY` 상수는 화면의 키 게이트(Step 6)만 씁니다 — 모델 호출의 인증은 agno의 `OpenAIChat`이 환경변수를 직접 읽습니다(`agno/models/openai/chat.py`, 소스로 확인). `SPOONACULAR_API_KEY`는 두 Spoonacular 도구만 씁니다.
+`load_dotenv()`에 경로를 주지 않으면 python-dotenv는 **이 줄을 실행한 파일이 있는 폴더**에서 시작해 위쪽 폴더로 올라가며 처음 만나는 `.env`를 읽습니다(직접 확인: 스크립트로 돌리면 작업 폴더가 달라도 앱 폴더의 `.env`가 읽혔고, 앱 폴더에 없이 한 칸 위에만 두어도 읽혔습니다). 단 `python -c`나 대화형 셸처럼 파일 없이 실행하면 현재 작업 폴더에서 시작합니다(python-dotenv 1.2.4의 `find_dotenv`, 직접 확인). 상위 폴더에 다른 프로젝트의 `.env`가 있으면 그 키가 조용히 쓰인다는 뜻입니다. 셸에 이미 있는 환경변수는 `.env`가 덮어쓰지 않습니다(직접 확인). 두 상수는 값이 없으면 `None`이고, `OPENAI_API_KEY` 상수는 화면의 키 게이트(Step 6)만 씁니다 — 모델 호출의 인증은 agno의 `OpenAIChat`이 환경변수를 직접 읽습니다(`agno/models/openai/chat.py`, 소스로 확인). `SPOONACULAR_API_KEY`는 두 Spoonacular 도구만 씁니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -258,6 +258,8 @@ def search_recipes(ingredients: str, diet_type: Optional[str] = None) -> Dict:
 ```python
 from unittest.mock import patch
 
+import requests
+
 import ai_recipe_meal_planning_agent as m
 
 calls = []
@@ -288,7 +290,7 @@ def fake_get(url, params=None, timeout=None):
 
 
 def broken_get(url, params=None, timeout=None):
-    raise RuntimeError("402 Payment Required")
+    raise requests.HTTPError("402 Payment Required")
 
 
 m.SPOONACULAR_API_KEY = None  # .env에 키가 있어도 키 없는 경로를 시험한다
@@ -458,7 +460,7 @@ async def create_agent():
     return agent
 ```
 
-`tools=`의 앞 넷은 Step 3·4의 함수이고 마지막 `DuckDuckGoTools()`는 agno의 검색 도구 모음입니다. 인자 없이 만들면 `web_search`와 `search_news` 두 함수를 등록하므로(직접 확인) 모델이 보는 도구는 여섯 개입니다. `instructions`는 실제 요청에서 `developer` 역할의 첫 메시지로 나가고(직접 확인: Step 7), `markdown=True`가 '마크다운으로 답하라'는 한 줄을 덧붙입니다(직접 확인: DEBUG 로그). `debug_mode=True`는 프롬프트·도구 호출·도구 결과를 터미널에 DEBUG로 찍으니(직접 확인) 로그를 공유하기 전에 질문 내용이 들어 있는지 보세요. `create_agent`는 안에 `await`가 하나도 없는 `async def`입니다(소스로 확인). 이전 대화를 모델 입력에 넣는 설정(`add_history_to_context`)도 저장소(`db`)도 주지 않아 기본값인 `False`와 `None`입니다(직접 확인).
+`tools=`의 앞 넷은 Step 3·4의 함수이고 마지막 `DuckDuckGoTools()`는 agno의 검색 도구 모음입니다. 인자 없이 만들면 `web_search`와 `search_news` 두 함수를 등록하므로(직접 확인) 모델이 보는 도구는 여섯 개입니다. `instructions`는 실제 요청에서 `developer` 역할의 첫 메시지로 나가고(직접 확인: Step 7), `markdown=True`가 '마크다운으로 답하라'는 한 줄을 덧붙입니다(직접 확인: DEBUG 로그). `debug_mode=True`는 프롬프트·도구 호출·도구 결과를 터미널에 DEBUG로 찍습니다(직접 확인). `create_agent`는 안에 `await`가 하나도 없는 `async def`입니다(소스로 확인). 이전 대화를 모델 입력에 넣는 설정(`add_history_to_context`)도 저장소(`db`)도 주지 않아 기본값인 `False`와 `None`입니다(직접 확인).
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -593,7 +595,7 @@ uv run --no-project python ui_check.py
   입력창: 1 | 말풍선: 1 | session_state의 agent: True
 ```
 
-키가 없으면 제목과 오류 한 줄뿐이고 입력창도 에이전트도 없습니다. 가짜 키만 있어도 에이전트가 만들어지고 환영 말풍선 하나와 입력창이 그려집니다 — 이 단계에서는 모델을 부르지 않으니 키 값은 검사되지 않습니다.
+키가 없으면 제목과 오류 한 줄뿐이고 입력창도 에이전트도 없습니다. 가짜 키만 있어도 에이전트가 만들어지고 환영 말풍선 하나와 입력창이 그려집니다 — 이 단계에서는 모델을 부르지 않으니 키 값은 검사되지 않습니다. (stderr에는 `missing ScriptRunContext!` 경고 두 줄이 함께 나오지만 무시해도 됩니다. 직접 확인)
 
 ### Step 7. 끝까지 돌려 보기 — 가짜 모델 서버, 이어 묻기, 앱 띄우기
 
@@ -684,7 +686,7 @@ $env:OPENAI_API_KEY="sk-fake"; $env:OPENAI_BASE_URL="http://127.0.0.1:8765/v1"; 
 uv run --no-project python ask_agent.py
 ```
 
-(PowerShell 변수는 이 창에 남으니 실험이 끝나면 `Remove-Item Env:OPENAI_API_KEY, Env:OPENAI_BASE_URL, Env:AGNO_TELEMETRY`로 지웁니다. 안 지우면 다음 실제 실행이 가짜 서버로 갑니다.)
+(PowerShell 변수는 이 창에 남으니 아래 `two_loops.py`까지 돌린 뒤 `Remove-Item Env:OPENAI_API_KEY, Env:OPENAI_BASE_URL, Env:AGNO_TELEMETRY`로 지웁니다. 안 지우면 다음 실제 실행이 가짜 서버로 갑니다.)
 
 직접 확인한 출력은 `ask_agent.py` 쪽이 다음과 같고,
 
@@ -706,7 +708,7 @@ uv run --no-project python ask_agent.py
 
 질문 한 건에 모델 요청이 두 번 갑니다. 첫 요청은 `developer` 지시문과 질문, 도구 여섯 개이고, 모델이 `estimate_costs`를 부르라고 답하면 agno가 **내 컴퓨터에서** 그 함수를 실행해(15.96, Step 4의 값) 결과를 `tool` 메시지로 붙여 다시 보냅니다. 도구 결과는 JSON이 아니라 파이썬 dict의 문자열이라 작은따옴표로 갑니다. 그리고 둘째 질문 "What did I ask you first?"의 첫 요청에도 역할은 `developer`와 `user`뿐입니다. 첫 질문이 모델에 가지 않았으니 앱은 대화를 기억하지 못합니다.
 
-이제 앱이 하는 방식 그대로 턴마다 새 이벤트 루프를 만들어 질문 둘을 바로 이어 보냅니다. 둘째 질문에는 8초 제한을 걸고, 6초 쉰 뒤 셋째 질문도 보냅니다.
+이제 이어 묻기를 재현합니다. 아래 스크립트를 `two_loops.py`로 저장합니다. 앱이 하는 방식 그대로 턴마다 새 이벤트 루프를 만들어 질문을 보내고 질문마다 8초 제한을 겁니다. 첫 질문 뒤 6초를 쉬고 둘째를 보낸 다음, 바로 이어서 셋째를 보냅니다.
 
 ```python
 import asyncio
@@ -721,33 +723,36 @@ agent.debug_mode = False  # 로그를 줄이려고 이 실험에서만 끈다
 def turn(question):
     loop = asyncio.new_event_loop()  # 앱 355~356행처럼: 턴마다 새 루프를 만들고 닫지 않는다
     asyncio.set_event_loop(loop)
-    start = time.time()
     try:
         loop.run_until_complete(asyncio.wait_for(agent.arun(question), 8))
-        return f"{time.time() - start:.1f}초 만에 답이 왔다"
+        return "답이 왔다"
     except TimeoutError:
         return "8초가 지나도 답이 오지 않았다"
 
 
 print("1번째 질문:", turn("hello"))
-print("바로 이어서 2번째 질문:", turn("hello again"))
 time.sleep(6)
-print("6초 쉰 뒤 3번째 질문:", turn("hello once more"))
+print("6초 쉰 뒤 2번째 질문:", turn("hello again"))
+print("바로 이어서 3번째 질문:", turn("hello once more"))
 ```
 
 ```bash
 OPENAI_API_KEY=sk-fake OPENAI_BASE_URL=http://127.0.0.1:8765/v1 AGNO_TELEMETRY=false uv run --no-project python two_loops.py
 ```
 
-직접 확인한 출력:
-
-```
-1번째 질문: 0.3초 만에 답이 왔다
-바로 이어서 2번째 질문: 8초가 지나도 답이 오지 않았다
-6초 쉰 뒤 3번째 질문: 0.0초 만에 답이 왔다
+```powershell
+uv run --no-project python two_loops.py
 ```
 
-바로 이어 보낸 둘째 질문만 답이 오지 않았습니다. 원인은 연결 재사용 쪽으로 좁혀졌습니다. 연결을 매번 닫는 HTTP/1.0 서버로 같은 실험을 하거나 같은 이벤트 루프를 계속 쓰면 바로 이어 물어도 답이 옵니다(직접 확인). 멈춘 순간 대기 중인 태스크는 `httpcore2`의 요청 본문 전송에서 `anyio`의 `send`를 기다리고 있었고, openai 3.24.0 연결 풀이 유휴 연결을 보관하는 시간은 5.0초입니다(`keepalive_expiry`, 직접 확인). 첫 질문이 만든 연결을 5초 안에 다음 질문이 재사용하는데, 그 연결을 만든 루프와 지금 루프가 달라 쓰기가 끝나지 않는 것으로 보입니다. SDK의 기본 제한시간이 600초라(소스로 확인) 막히면 몇 분을 기다릴 수 있습니다. `AppTest`로 앱을 이어 돌려도 0.5초 간격이면 90초가 지나도 둘째 턴이 끝나지 않았고 6.5초 간격이면 바로 끝났습니다(직접 확인). 실제 OpenAI 서버가 5초보다 먼저 연결을 닫으면 생기지 않을 수 있는데, 이 문서는 실제 서버에서 확인하지 못했습니다.
+(PowerShell은 위 `ask_agent.py`에서 `$env:` 변수 세 개를 건 같은 창에서 돌립니다.) 직접 확인한 출력:
+
+```
+1번째 질문: 답이 왔다
+6초 쉰 뒤 2번째 질문: 답이 왔다
+바로 이어서 3번째 질문: 8초가 지나도 답이 오지 않았다
+```
+
+6초 쉰 뒤의 둘째 질문은 답이 왔고, 바로 이어 보낸 셋째 질문만 답이 오지 않았습니다. 원인은 연결 재사용 쪽으로 좁혀졌습니다. 연결을 매번 닫는 HTTP/1.0 서버로 같은 실험을 하거나 같은 이벤트 루프를 계속 쓰면 셋째도 답이 옵니다(직접 확인). 멈춘 순간 대기 중인 태스크는 `httpcore2` 2.13.1의 요청 본문 전송에서 `anyio` 4.15.1의 `send`를 기다리고 있었고, openai 3.24.0 연결 풀이 유휴 연결을 보관하는 시간은 5.0초입니다(`keepalive_expiry`, 직접 확인). 둘째 질문이 만든 연결을 5초 안에 셋째 질문이 재사용하는데, 그 연결을 만든 루프와 지금 루프가 달라 쓰기가 끝나지 않는 것으로 보입니다. 이 멈춤은 영원하지 않습니다. SDK의 기본 제한시간은 600초이고 기본 재시도는 2회인데(소스로 확인), 제한시간을 3초로 줄여 보니 3.4초 만에 답이 왔습니다(직접 확인). 기본값이면 약 10분 뒤에 답이 올 것입니다(600초는 기다려 보지 않았습니다). `AppTest`로 앱을 이어 돌려도 0.5초 간격이면 90초가 지나도 둘째 턴이 끝나지 않았고 6.5초 간격이면 바로 끝났습니다(직접 확인). 실제 OpenAI 서버가 5초보다 먼저 연결을 닫으면 생기지 않을 수 있는데, 이 문서는 실제 서버에서 확인하지 못했습니다.
 
 앱을 띄우는 명령은 다음 한 줄이고 브라우저에서 `http://localhost:8501`을 엽니다. 위 가짜 서버를 켜 둔 채 위의 환경변수 세 개를 걸고 같은 명령을 실행하면 키 없이 브라우저에서 질문해 볼 수 있습니다.
 
@@ -755,17 +760,17 @@ OPENAI_API_KEY=sk-fake OPENAI_BASE_URL=http://127.0.0.1:8765/v1 AGNO_TELEMETRY=f
 uv run --no-project streamlit run ai_recipe_meal_planning_agent.py
 ```
 
-화면 없이 서버가 뜨는지만 보려면 `--server.headless true --server.address localhost`를 붙입니다(주소를 지정하지 않고 headless로 띄우면 Streamlit이 외부 IP를 알아내려고 요청을 보낸다는 Day 086 Step 7의 확인과 같은 이유입니다). 임의의 높은 포트(58115)로 직접 확인했더니 Streamlit 1.65.0에서 `/_stcore/health`가 `200 ok`를 돌려주었고, 나가려는 요청을 기록만 하는 프록시를 걸어도 아무 기록이 남지 않았습니다.
+화면 없이 서버가 뜨는지만 보려면 `--server.headless true --server.address localhost`를 붙입니다(주소를 지정하지 않고 headless로 띄우면 Streamlit이 외부 IP를 알아내려고 요청을 보낸다는 Day 086 Step 7의 확인과 같은 이유입니다). 임의의 높은 포트(58115)로 직접 확인했더니 Streamlit 1.65.0에서 `/_stcore/health`가 `200 ok`를 돌려주었고, 나가려는 요청을 기록만 하는 프록시를 걸어도 아무 기록이 남지 않았습니다. 서버만 띄운 경우의 이야기이고, 브라우저로 열면 Streamlit이 사용 통계를 내보냅니다(콘솔 첫 줄이 이를 밝히며 Day 054와 Day 063이 확인했습니다). 끄려면 `--browser.gatherUsageStats false`를 더합니다.
 
-agno의 익명 사용 통계는 Day 047 Step 5가 이미 다뤘습니다. `agent.run()`이 성공할 때마다 실행 메타데이터를 보내고 `AGNO_TELEMETRY=false`로 끈다는 것인데, 이 앱이 쓰는 `arun()`도 같은 경로입니다(agno 3.1.1 소스로 확인: 비동기 실행 끝에서 `alog_agent_telemetry`가 불립니다). 통계 주소를 내 컴퓨터의 수신기로 바꿔 돌려 보니 성공한 `arun`마다 `POST /telemetry/runs`가 한 건씩 왔고, 401로 실패한 실행과 `AGNO_TELEMETRY=false`인 실행에서는 오지 않았습니다. 본문은 `agent_id`, 모델 provider·이름·id, `has_tools` 같은 구성 정보이고 질문·답변은 없었습니다(직접 확인). 기본 주소는 `https://os-api.agno.com`이고(소스로 확인), 요청을 거절하는 프록시를 걸자 `CONNECT os-api.agno.com:443` 한 건이 도착했습니다(직접 확인, 아무것도 나가지 않았습니다).
+agno의 익명 사용 통계는 Day 047 Step 5가 이미 다뤘습니다. `agent.run()`이 성공할 때마다 실행 메타데이터를 보내고 `AGNO_TELEMETRY=false`로 끈다는 것인데, 이 앱이 쓰는 `arun()`도 같은 경로입니다(agno 3.1.1 소스로 확인: 비동기 실행 끝에서 `alog_agent_telemetry`가 불립니다). 이 호출은 이벤트를 큐에 넣고 바로 돌아오며 실제 POST는 `agno-telemetry` 데몬 스레드가 따로 보냅니다(소스로 확인). 통계 주소를 내 컴퓨터의 수신기로 바꿔 돌려 보니 성공한 `arun`마다 `POST /telemetry/runs`가 한 건씩 왔고, 401로 실패한 실행과 `AGNO_TELEMETRY=false`인 실행에서는 오지 않았습니다. 본문은 `agent_id`, 모델 provider·이름·id, `has_tools` 같은 구성 정보이고 질문·답변은 없었습니다(직접 확인). 기본 주소는 `https://os-api.agno.com`이고(소스로 확인), 요청을 거절하는 프록시를 걸자 `CONNECT os-api.agno.com:443` 한 건이 도착했습니다(직접 확인, 아무것도 나가지 않았습니다).
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** `ask_agent.py`의 출력과 가짜 서버의 역할 목록이 위와 같은지, `two_loops.py`에서 둘째 질문만 답이 오지 않는지 봅니다. 끝나면 가짜 서버를 `Ctrl+C`로 끄고 PowerShell이라면 환경변수를 지웁니다.
+**확인.** `ask_agent.py`의 출력과 가짜 서버의 역할 목록이 위와 같은지, `two_loops.py`에서 셋째 질문만 답이 오지 않는지 봅니다. 끝나면 가짜 서버를 `Ctrl+C`로 끄고 PowerShell이라면 환경변수를 지웁니다.
 
 ## 요청 한 건이 흐르는 과정
 
-사용자가 "닭고기로 만들 수 있는 건강한 저녁"을 물었고 모델이 `search_recipes`를 한 번만 고르는 경우의 예입니다. 첫 그림에서 질문은 `chat_input`으로 들어와 화면이 메시지 목록에 붙이고, 새 이벤트 루프에서 `arun`을 부릅니다. 에이전트는 지시문·질문·도구 스키마 여섯 개를 모델에 보내고, 모델은 도구를 부르라는 `tool_calls`로 답합니다.
+사용자가 "닭고기로 만들 수 있는 건강한 저녁"을 물었고 모델이 `search_recipes`를 한 번만 고르는 경우의 예입니다. 첫 그림에서 질문은 `chat_input`으로 들어와 화면이 메시지 목록에 붙이고 질문 말풍선을 그린 뒤, 세션에서 꺼낸 에이전트의 `arun`을 새 이벤트 루프에서 부릅니다. 에이전트는 지시문·질문·도구 스키마 여섯 개를 모델에 보내고, 모델은 도구를 부르라는 `tool_calls`로 답합니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -773,7 +778,7 @@ agno의 익명 사용 통계는 Day 047 Step 5가 이미 다뤘습니다. `agent
 
 ![2: 레시피 검색 도구의 Spoonacular 호출](diagrams/extra-search.svg)
 
-셋째 그림에서 에이전트는 결과를 `tool` 메시지로 모델에 다시 보내 최종 답변을 받고, 성공한 실행이므로 agno 통계 서버에 메타데이터를 보낸 뒤 화면에 답변을 넘깁니다. 화면은 답변을 메시지 목록에 붙이고 말풍선으로 그립니다. 모델이 다른 도구를 골랐다면 둘째 그림이 달라집니다. 영양 분석은 `complexSearch` 한 번, 비용·식단은 외부 호출 없는 로컬 계산, 웹 검색은 DuckDuckGo 검색이 됩니다.
+셋째 그림에서 에이전트는 결과를 `tool` 메시지로 모델에 다시 보내 최종 답변을 받고, 성공한 실행이므로 통계 이벤트를 큐에 넣은 뒤(실제 POST는 agno의 데몬 스레드가 따로 보냅니다, Day 047 Step 5) 화면에 답변을 넘깁니다. 화면은 답변을 말풍선으로 그린 뒤 메시지 목록에 붙입니다. 모델이 다른 도구를 골랐다면 둘째 그림이 달라집니다. 영양 분석은 `complexSearch` 한 번, 비용·식단은 외부 호출 없는 로컬 계산, 웹 검색은 DuckDuckGo 검색이 됩니다.
 
 ![3: 최종 답변과 화면 갱신](diagrams/extra-reply.svg)
 
@@ -787,7 +792,7 @@ agno의 익명 사용 통계는 Day 047 Step 5가 이미 다뤘습니다. `agent
 - [ ] `check_agent.py`로 도구 5개·함수 6개와 `add_history_to_context=False`, 도구 스키마를 확인했다
 - [ ] `ui_check.py`로 키 없는 화면(오류 한 줄, 입력창 없음)과 키 있는 화면을 확인했다
 - [ ] 가짜 서버로 `ask_agent.py`를 돌려 요청이 두 번이고 `tool` 메시지가 붙으며, 둘째 질문에 이력이 없는 것을 확인했다
-- [ ] `two_loops.py`로 바로 이어 보낸 둘째 질문만 답이 오지 않는 것을 확인했다
+- [ ] `two_loops.py`로 6초 쉰 뒤의 둘째 질문은 답이 오고 바로 이어 보낸 셋째 질문만 답이 오지 않는 것을 확인했다
 - [ ] 확인이 끝나 가짜 서버를 끄고 환경변수(`OPENAI_API_KEY`·`OPENAI_BASE_URL`·`AGNO_TELEMETRY`)를 지웠다
 - [ ] (키가 있다면) 앱을 띄워 실제 질문을 하나 보내고 터미널의 DEBUG 로그에서 도구 호출을 확인했다
 
@@ -798,11 +803,11 @@ agno의 익명 사용 통계는 Day 047 Step 5가 이미 다뤘습니다. `agent
 | ``ImportError: `openai` not installed. Please install using `pip install openai` `` (직접 확인) | `requirements.txt`에 `openai`가 없는데 agno의 `OpenAIChat`이 요구한다 | 리포 코드는 고치지 않음 — `uv pip install openai` |
 | ``ImportError: `ddgs` not installed. Please install using `pip install ddgs` `` (직접 확인) | agno 3.1.1의 `DuckDuckGoTools`가 `ddgs`를 가져오는데 requirements는 `duckduckgo-search`를 설치한다(Day 001·Day 038과 같은 원인) | `uv pip install ddgs` |
 | `streamlit run` 화면에 제목도 입력창도 없이 `ImportError` 빨간 상자만 뜬다(`requirements.txt`만 설치한 환경에서 `AppTest`로 직접 확인: 예외 1건, 입력창 0, 제목 없음) | 위 두 행과 같은 원인 | 두 패키지를 설치하고 새로고침 |
-| 화면에 `Please add OPENAI_API_KEY to your .env file` 한 줄만 뜬다(직접 확인) | 환경에 `OPENAI_API_KEY`가 없다 — `.env`가 앱 폴더나 위쪽 폴더에 없거나 이름이 다르다 | Step 2의 두 줄을 앱 폴더 `.env`에 쓰고 앱을 다시 띄움 |
+| 화면에 `Please add OPENAI_API_KEY to your .env file` 한 줄만 뜬다(직접 확인) | 환경에 `OPENAI_API_KEY`가 없다 — `.env`가 앱 폴더나 위쪽 폴더에 없거나 이름이 다르거나, 셸에 빈 `OPENAI_API_KEY`가 있어 `.env`가 덮어쓰지 못한다(직접 확인) | Step 2의 두 줄을 앱 폴더 `.env`에 쓰고, 셸의 빈 변수는 지운 뒤 앱을 다시 띄움 |
 | 레시피 검색·영양 분석 결과가 `Spoonacular API key not found`, `API key not found`, `Recipe search failed`, `Nutrition analysis failed` 가운데 하나뿐이다(직접 확인) | 키가 없거나, 호출이 실패했는데 맨몸 `except:`가 원인을 숨긴다 | 코드는 고치지 않음 — 키와 하루 50포인트 한도를 확인하고, 원인은 `requests`로 같은 주소를 직접 불러 확인 |
 | vegetarian·vegan을 요청했는데 식단에 닭고기·연어가 들어 있다(직접 확인) | `create_meal_plan`이 `dietary_preference`를 결과에 되돌려 줄 뿐 메뉴 선택에 쓰지 않는다(`advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:266`) | 코드는 고치지 않음 — 도구 결과의 메뉴를 그대로 믿지 말 것 |
 | 7일을 넘는 식단을 요청하면 7일치만 나오고 일 평균 칼로리·비용이 절반으로 보인다(직접 확인) | 요일 이름이 7개뿐인데 평균은 요청한 `days`로 나눈다(`advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:209`, `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:246-247`) | 코드는 고치지 않음 — 7일 이내로 요청 |
-| 앞 질문에 답이 온 직후 바로 다음 질문을 보내면 `Thinking...`이 끝나지 않는다 | 턴마다 새 이벤트 루프를 만들면서 같은 비동기 클라이언트의 연결을 재사용한다(가짜 keep-alive 서버에서 재현, 실제 OpenAI 서버에서는 확인하지 못함) | 코드는 고치지 않음 — 5초 넘게 쉬었다 보내거나 페이지를 새로고침(새 세션이 에이전트와 클라이언트를 새로 만든다, 소스로 확인) |
+| 앞 질문에 답이 온 직후 바로 다음 질문을 보내면 `Thinking...`이 10분 가까이 끝나지 않는다(SDK 기본 제한시간 600초 뒤에 답이 올 것으로 보이며, 제한시간을 3초로 줄인 실험에서는 3.4초 만에 답이 왔다) | 턴마다 새 이벤트 루프를 만들면서 같은 비동기 클라이언트의 연결을 재사용한다(가짜 keep-alive 서버에서 재현, 실제 OpenAI 서버에서는 확인하지 못함) | 코드는 고치지 않음 — 5초 넘게 쉬었다 보내거나 페이지를 새로고침(새 세션이 에이전트와 클라이언트를 새로 만든다, 소스로 확인) |
 | 틀린 키로 질문했더니 빨간 오류 상자가 아니라 답변 말풍선에 오류 문구가 뜬다(가짜 서버의 401로 직접 확인) | `arun`이 모델 오류를 예외로 올리지 않고 `status`가 `error`인 `RunOutput`으로 돌려준다 | 키를 확인하고 앱을 다시 띄움 |
 | 터미널에 `DEBUG` 줄(프롬프트, 도구 호출, 도구 결과)이 쏟아진다(직접 확인) | `create_agent`가 `debug_mode=True`로 만든다(`advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:294`) | 코드는 고치지 않음 — 로그를 공유하기 전에 질문 내용이 들어 있는지 볼 것 |
 | 앱 README의 안내가 코드와 어긋난다(소스로 확인) | `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/README.md:40`은 `git clone` 바로 뒤에 `awesome-llm-apps` 폴더에 들어가지 않고 `cd advanced_ai_agents/...`를 적는다. `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/README.md:124`와 `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/README.md:127`이 말하는 `ingredient_costs`·`estimate_grocery_costs`·`meal_categories`·`create_weekly_meal_plan`은 코드에 없다(실제 이름은 `prices`·`estimate_costs`·`meals`·`create_meal_plan`) | 이 문서는 실제 코드 기준으로 설명 — `cd awesome-llm-apps`를 먼저 실행 |
@@ -811,8 +816,8 @@ agno의 익명 사용 통계는 Day 047 Step 5가 이미 다뤘습니다. `agent
 
 - `create_meal_plan`의 메뉴 표에 식단 태그(채식, 비건 등)를 붙이고 `dietary_preference`로 걸러 내도록 고쳐 본 뒤, Step 4의 `check_local_tools.py`를 다시 돌려 vegetarian 식단에서 닭·연어가 사라지는지 확인해 보기
 - 에이전트에 대화 이력을 주기: `Agent(...)`에 `db=InMemoryDb()`(`from agno.db.in_memory import InMemoryDb`)와 `add_history_to_context=True`를 더하면 둘째 질문의 모델 입력에 첫 질문의 대화가 실립니다(가짜 서버로 직접 확인). `db` 없이 `add_history_to_context=True`만 주면 agno가 경고를 찍고 이력을 넣지 않습니다(직접 확인). Step 7의 `ask_agent.py`로 둘째 요청의 역할 목록이 어떻게 달라지는지 보기
-- `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:65-66`의 맨몸 `except:`를 `except requests.RequestException as error:`로 바꾸고 오류 종류를 돌려주게 한 뒤 `check_spoonacular.py`의 마지막 줄이 어떻게 달라지는지 보기
-- `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:355-359`의 턴마다 새 루프를 만드는 대신 루프 하나를 재사용하도록 바꾸고 `two_loops.py`와 같은 실험을 해서 바로 이어 묻는 둘째 질문이 답을 받는지 확인해 보기
+- `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:65-66`의 맨몸 `except:`를 `except requests.RequestException as error:`로 바꾸고 `return {"error": f"Recipe search failed: {type(error).__name__}"}`처럼 오류 종류를 돌려주게 한 뒤 `check_spoonacular.py`의 마지막 줄이 `Recipe search failed: HTTPError`로 바뀌는지 보기(스크래치 사본에서 직접 확인)
+- `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/ai_recipe_meal_planning_agent.py:355-359`의 턴마다 새 루프를 만드는 대신 루프 하나를 재사용하도록 바꾸고 `two_loops.py`와 같은 실험을 해서 바로 이어 묻는 셋째 질문이 답을 받는지 확인해 보기
 
 ## 다음 날 예고
 

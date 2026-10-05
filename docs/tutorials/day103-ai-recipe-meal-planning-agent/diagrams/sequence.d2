@@ -9,6 +9,8 @@ session: 세션 상태 { class: store }
 
 user -> ui: 질문 입력 (chat_input)
 ui -> session: messages에 질문 추가
+ui -> user: 질문 말풍선 (st.markdown)
+session -> ui: st.session_state.agent
 ui -> agent: "arun(질문), 턴마다 새 이벤트 루프"
 agent -> openai: developer 지시문 + 질문 + 도구 스키마 6개
 openai -> agent: "tool_calls: search_recipes(ingredients)"
