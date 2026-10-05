@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 (finance_agent.py) { class: ours }
+researcher: 재무 조사 에이전트 (researcher) { class: ours }
+planner: 재무 계획 에이전트 (planner) { class: ours }
+
+openai: OpenAI API (gpt-4o) { class: ext }
+serpapi: SerpAPI (search_google) { class: ext }
+agno_api: Agno 사용 통계 API { class: ext }
+
+user -> ui: 키 2개 · 목표 · 상황 입력, 버튼 클릭
+ui -> user: 계획 텍스트 표시 (st.write)
+ui -> planner: run(목표 · 상황 문자열)
+planner -> openai: developer · user 메시지
+planner -> agno_api: 실행 메타데이터 (성공 시)
+researcher -> openai: 요청 (호출 안 됨)
+researcher -> serpapi: search_google 검색어 (호출 안 됨)

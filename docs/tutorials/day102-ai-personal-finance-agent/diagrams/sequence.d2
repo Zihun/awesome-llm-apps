@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+researcher: 재무 조사 에이전트 { class: ours }
+openai: OpenAI API (gpt-4o) { class: ext }
+planner: 재무 계획 에이전트 { class: ours }
+agno_api: Agno 사용 통계 API { class: ext }
+
+user -> ui: Generate Financial Plan 클릭
+ui -> researcher: Agent(...) 생성 (run 호출 없음)
+ui -> planner: Agent(...) 생성
+ui -> planner: run(목표 · 상황 문자열)
+planner -> openai: developer · user 메시지
+openai -> planner: 계획 텍스트
+planner -> agno_api: 실행 메타데이터 (성공 시)
+planner -> ui: RunOutput.content
+ui -> user: st.write로 계획 표시
