@@ -10,7 +10,7 @@
 
 그래도 오늘(2026-10-05) 설치 그대로는 첫 질문에서 막힙니다. `requirements.txt`가 `qdrant-client`를 고정하지 않아 1.19.1이 깔리는데, mem0ai 0.1.29의 Qdrant 래퍼가 부르는 `QdrantClient.search()`가 1.16.0부터 없습니다. Day 073·075가 본 문제와 같고, 메서드가 사라지는 경계가 1.15.1과 1.16.0 사이임을 오늘 패키지 소스로 확인했습니다. 클라이언트 클래스의 문제라 Qdrant 서버가 어디에 있든 같습니다. 이 앱은 그 `AttributeError`를 `except`로 삼켜 빨간 배너와 정해진 사과문만 보여 주므로, 화면만 보면 오류가 났다는 것밖에 알 수 없습니다. 또 하나, 앱이 `gpt-4`를 부르는 두 곳은 OpenAI의 폐기 안내(https://developers.openai.com/api/docs/deprecations, 2026-10-05에 받은 페이지 원문의 표)에 2026년 10월 23일 종료로 올라 있습니다. 오늘로부터 18일 뒤입니다.
 
-이 문서는 키도 Docker도 쓰지 않습니다. Step 2에서 만드는 확인용 파일 `day100_check.py`가 OpenAI 서버와 Qdrant 서버 자리만 가짜로 바꿔 끼우고, 앱 코드와 Streamlit·mem0 코드는 그대로 태웁니다. 그래서 아래의 "직접 확인"은 가짜 응답으로 본 앱의 동작이고, 실제 `gpt-4`의 답과 실제 Qdrant 서버는 확인하지 못했습니다.
+이 문서는 키도 Docker도 쓰지 않습니다. Step 2에서 만드는 확인용 파일 `day100_check.py`가 OpenAI 서버와 Qdrant 서버 자리를 가짜로 바꿔 끼우고 mem0의 통계 이벤트는 이름만 적어 두며, 앱 코드와 Streamlit·mem0 코드는 그대로 태웁니다. 그래서 아래의 "직접 확인"은 가짜 응답으로 본 앱의 동작이고, 실제 `gpt-4`의 답과 실제 Qdrant 서버는 확인하지 못했습니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -393,7 +393,7 @@ uv run --no-project python day100_check.py nokey
     support_agent = CustomerSupportAIAgent()
 ```
 
-이 줄도 스크립트 안이라 Streamlit이 화면을 다시 그릴 때마다, 곧 키 입력·고객 ID 입력·버튼·질문마다 실행됩니다. 상호작용마다 `Memory.from_config`가 새로 불리고, 그때마다 Qdrant에 먼저 서버 버전을 묻고(`GET /`, `qdrant-client`가 클라이언트를 만들 때 하는 호환성 확인) 이어서 컬렉션 목록을 묻습니다. 소스로 확인했습니다. `qdrant_client/qdrant_remote.py`는 `check_compatibility`가 기본값 참이라 `get_server_version()`을 부르고, `common/version_check.py`가 `httpx.get(rest_uri)`로 서버의 `/`를 읽습니다. mem0는 컬렉션을 만들기 전에 `get_collections()`를 부릅니다. 서버 자리에 프로세스 안의 가짜 REST 서버를 두고 mem0의 Qdrant 래퍼를 만들어 보니 요청이 `GET /`, `GET /collections`, `PUT /collections/mem0` 순서로 들어왔습니다(`qdrant-client` 1.15.1). 1.19.1은 `GET /`를 백그라운드 스레드로 보내서 세 번 모두 컬렉션 요청보다 늦게 도착했습니다(이쪽은 순서가 정해져 있지 않습니다). 이 뒤의 초기화 그림은 1.15.1의 순서로 그렸습니다.
+이 줄도 스크립트 안이라 Streamlit이 화면을 다시 그릴 때마다, 곧 키 입력·고객 ID 입력·버튼·질문마다 실행됩니다. 상호작용마다 `Memory.from_config`가 새로 불리고, 그때마다 Qdrant에 서버 버전(`GET /`, `qdrant-client`가 클라이언트를 만들 때 하는 호환성 확인)과 컬렉션 목록을 묻습니다. `qdrant-client` 1.15.1에서는 서버 버전을 먼저 묻고 이어서 컬렉션 목록을 묻습니다. 소스로 확인했습니다. `qdrant_client/qdrant_remote.py`는 `check_compatibility`가 기본값 참이라 `get_server_version()`을 부르고, `common/version_check.py`가 `httpx.get(rest_uri)`로 서버의 `/`를 읽습니다. mem0는 컬렉션을 만들기 전에 `get_collections()`를 부릅니다. 서버 자리에 프로세스 안의 가짜 REST 서버를 두고 mem0의 Qdrant 래퍼를 만들어 보니 요청이 `GET /`, `GET /collections`, `PUT /collections/mem0` 순서로 들어왔습니다(`qdrant-client` 1.15.1). 1.19.1은 `GET /`를 백그라운드 스레드로 보내서 세 번 모두 컬렉션 요청보다 늦게 도착했습니다(이쪽은 순서가 정해져 있지 않습니다). 이 뒤의 초기화 그림은 1.15.1의 순서로 그렸습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -432,7 +432,7 @@ MEM0_DIR 안: ['config.json', 'history.db']
 
 ![Memory.from_config와 Qdrant 컬렉션](diagrams/extra-init.svg)
 
-이어서 `history.db`와 통계 이벤트, 그리고 객체를 돌려주는 일입니다. `mem0.init` 이벤트는 `MEM0_TELEMETRY`를 끄지 않으면 이 순간 PostHog로 나갑니다. 통계를 켠 채 키를 넣으면 이 전송을 시도하는 것을 직접 확인했습니다(프록시를 닫힌 포트로 돌린 환경에서 `error uploading: HTTPSConnectionPool(host='us.i.posthog.com', ...)`가 반복해 찍혔습니다). 이벤트는 `Memory`를 만들 때만 나가는 것이 아닙니다. `search`·`add`·`get_all`도 부를 때마다 `mem0.search`·`mem0._create_memory`·`mem0.add`·`mem0.get_all` 이벤트를 보냅니다. 그 메시지들은 Step 4와 Step 6의 그림에 그렸습니다.
+이어서 `history.db`와 통계 이벤트, 그리고 객체를 돌려주는 일입니다. `mem0.init` 이벤트는 `MEM0_TELEMETRY`를 끄지 않으면 이 순간 PostHog로 나갑니다. 통계를 켠 채 키를 넣으면 이 전송을 시도하는 것을 직접 확인했습니다(프록시를 닫힌 포트로 돌린 환경에서 `error uploading: HTTPSConnectionPool(host='us.i.posthog.com', ...)`가 반복해 찍혔습니다). 이벤트는 `Memory`를 만들 때만 나가는 것이 아닙니다. `search`·`add`·`get_all`도 부를 때마다 `mem0.search`·`mem0._create_memory`·`mem0.add`·`mem0.get_all` 이벤트를 보냅니다. 그 메시지들은 '요청 한 건이 흐르는 과정'의 2번(`mem0.search`)과 7번·10번(`mem0._create_memory`·`mem0.add`) 그림, 그리고 Step 6의 기억 보기 그림(`mem0.get_all`)에 그렸습니다.
 
 ![history.db와 통계 이벤트](diagrams/extra-init-rest.svg)
 
@@ -770,7 +770,7 @@ alice 기억 보기 -> 사이드바: ['Memory for customer **alice**:'] / 본문
 프로필 보기 -> ["No customer data generated yet. Click 'Generate Synthetic Data' first."]
 ```
 
-ID를 bob으로 바꾸자 대화 기록이 비워지고 `previous_customer_id`가 따라갔습니다. bob의 기억은 없는데 사이드바에는 머리말만 있고 "No memory found" 안내는 없습니다(`안내: []`). alice로 돌아오면 기억 두 개가 사이드바가 아니라 본문 항목으로 나오고(`본문 항목 2 개`), 사이드바에는 머리말 한 줄뿐입니다. 이 장면에서는 합성 데이터를 만든 적이 없어 프로필 보기가 안내문만 보여 줍니다. ID가 바뀌면 `customer_data`도 `None`이 되는 것은 141행에서 소스로 확인했습니다. 두 기억 보기에서 가짜 OpenAI 호출은 없었습니다. `get_all`은 임베딩 없이 Qdrant에서 목록만 읽습니다. 다만 `mem0.get_all` 이벤트는 나갑니다. 출력의 `이벤트:`가 기억 보기마다 `mem0.init → mem0.get_all`입니다(`mem0.init`은 버튼을 누른 실행이 `Memory`를 다시 만든 것). 이 흐름을 두 장으로 그렸습니다. 한 장에 모두 넣으면 배우 순서 720가지 가운데 선과 글자가 닿지 않는 것이 없고 높이도 1000px를 넘습니다. 앞 그림은 클릭에서 `get_all`과 그 통계 이벤트까지, 뒤 그림은 Qdrant에서 목록을 읽어 화면에 그리기까지입니다. 머리말(`st.sidebar.write`)과 항목(`st.write`)은 서로 다른 호출이라 뒤 그림에서도 두 메시지로 나눠 그렸습니다.
+ID를 bob으로 바꾸자 대화 기록이 비워지고 `previous_customer_id`가 따라갔습니다. bob의 기억은 없는데 사이드바에는 머리말만 있고 "No memory found" 안내는 없습니다(`안내: []`). alice로 돌아오면 기억 두 개가 사이드바가 아니라 본문 항목으로 나오고(`본문 항목 2 개`), 사이드바에는 머리말 한 줄뿐입니다. 이 장면에서는 합성 데이터를 만든 적이 없어 프로필 보기가 안내문만 보여 줍니다. ID가 바뀌면 `customer_data`도 `None`이 되는 것은 141행에서 소스로 확인했습니다. 두 기억 보기에서 가짜 OpenAI 호출은 없었습니다. `get_all`은 임베딩 없이 Qdrant에서 목록만 읽습니다. 다만 `mem0.get_all` 이벤트는 나갑니다. 출력의 `이벤트:`가 기억 보기마다 `mem0.init → mem0.get_all`입니다(`mem0.init`은 버튼을 누른 실행이 `Memory`를 다시 만든 것). 이 흐름을 두 장으로 그렸습니다. 한 장에 모두 넣고 배우 순서 720가지를 전부 시험했습니다. 선이 글자를 지나지 않는 순서가 4개 있었지만 너비 1253~1359px, 높이 1175px라 상한(1200×1000)을 둘 다 넘었고, 선과 글자 사이 검사와 크기 상한을 함께 통과하는 순서는 하나도 없었습니다. 앞 그림은 클릭에서 `get_all`과 그 통계 이벤트까지, 뒤 그림은 Qdrant에서 목록을 읽어 화면에 그리기까지입니다. 머리말(`st.sidebar.write`)과 항목(`st.write`)은 서로 다른 호출이라 뒤 그림에서도 두 메시지로 나눠 그렸습니다.
 
 ![기억 보기: 클릭에서 get_all까지](diagrams/extra-memoryview.svg)
 
@@ -870,7 +870,7 @@ ok
 
 ## 요청 한 건이 흐르는 과정
 
-질문 하나는 메시지 마흔다섯 개로 이루어집니다. mem0가 사실을 하나씩 뽑아 ADD로 판단하는 경우의 수이고, 그중 PostHog 이벤트가 다섯 개입니다(`mem0.search` 하나, `add` 두 번의 `mem0._create_memory`·`mem0.add` 두 쌍). 이 앞에는 매 턴 Step 3의 초기화 두 장이 붙습니다. 질문을 보내면 Streamlit이 스크립트를 처음부터 다시 돌려 `Memory.from_config`가 `chat_input`보다 먼저 불리기 때문입니다. 초기화 메시지는 아홉 개이고(컬렉션이 이미 있으면 `create_collection`이 빠져 여덟 개), 합하면 한 턴은 메시지 쉰네 개입니다. 출력의 `이벤트:`에서도 질문마다 `mem0.init`이 `mem0.search` 앞에 옵니다. 그림 한 장은 1000px 안에서 메시지 일곱 개 안팎까지만 담습니다. 거기에 PostHog를 배우로 더해 한 장에 모두 넣으면 배우 순서를 전부 시험해도 선과 글자가 닿지 않는 순서가 없었습니다(검색 그림 120가지, 저장 그림 720가지). 그래서 실제 시간 경계에서 열한 장으로 나눴습니다. 메시지는 모두 정확히 한 그림에 원래 순서대로 있습니다. mem0나 화면이 여러 상대와 동시에 주고받는 그림은 배우를 일렬로 세우면 한 메시지가 다른 배우의 수명선을 건너가야 합니다. 건너뛰는 메시지의 라벨은 좁게 줄바꿈하고 이웃한 메시지의 라벨에는 실제 코드 값을 채워 선과 글자 사이를 벌렸습니다. 데이터를 줄인 라벨은 없고, 배우 순서는 전수 탐색으로 골랐습니다.
+질문 하나는 메시지 마흔다섯 개로 이루어집니다. mem0가 사실을 하나씩 뽑아 ADD로 판단하는 경우의 수이고, 그중 PostHog 이벤트가 다섯 개입니다(`mem0.search` 하나, `add` 두 번의 `mem0._create_memory`·`mem0.add` 두 쌍). 이 앞에는 매 턴 Step 3의 초기화 두 장이 붙습니다. 질문을 보내면 Streamlit이 스크립트를 처음부터 다시 돌려 `Memory.from_config`가 `chat_input`보다 먼저 불리기 때문입니다. 초기화 메시지는 아홉 개이고(컬렉션이 이미 있으면 `create_collection`이 빠져 여덟 개), 합하면 컬렉션을 처음 만드는 턴은 메시지 쉰네 개, 컬렉션이 이미 있는 턴은 쉰세 개입니다. 출력의 `이벤트:`에서도 질문마다 `mem0.init`이 `mem0.search` 앞에 옵니다. 그림 한 장은 1000px 안에서 메시지 일곱 개 안팎까지만 담습니다. 거기에 PostHog를 배우로 더해 한 장에 모두 넣고 배우 순서를 전부 시험했습니다(검색 그림 120가지, 저장 그림 720가지). 선이 글자를 지나지 않는 순서는 검색에 4개(너비 1258~1267px), 저장에 6개(너비 1387~1396px) 있었지만 너비 상한 1200px를 넘었습니다. 선과 글자 사이 검사와 크기 상한을 함께 통과하는 순서는 하나도 없었습니다. 그래서 실제 시간 경계에서 열한 장으로 나눴습니다. 메시지는 모두 정확히 한 그림에 원래 순서대로 있습니다. mem0나 화면이 여러 상대와 동시에 주고받는 그림은 배우를 일렬로 세우면 한 메시지가 다른 배우의 수명선을 건너가야 합니다. 건너뛰는 메시지의 라벨은 좁게 줄바꿈하고 이웃한 메시지의 라벨에는 실제 코드 값을 채워 선과 글자 사이를 벌렸습니다. 데이터를 줄인 라벨은 없고, 배우 순서는 전수 탐색으로 골랐습니다.
 
 1. 고객이 질문을 입력하면 화면이 세션 상태에 질문을 쌓고 말풍선을 그린 뒤 에이전트의 `handle_query`를 부릅니다.
 
