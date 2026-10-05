@@ -1,6 +1,6 @@
 # Day 103 · 🍽️ AI Recipe & Meal Planning Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 110분(Step마다 확인 스크립트를 저장해 돌리고, 가짜 모델 서버를 띄운 터미널을 하나 더 쓰며 끝까지 한 번 돌리고, 6초 대기를 낀 이어 묻기 실험과 headless 확인까지 하는 손 시간에 그림 열두 장을 따라 읽는 시간이 더해져 읽는 시간만큼 듭니다) · API 비용 대략 질문 10건에 $0.1 안팎 — `gpt-5-mini`는 입력 $0.25·출력 $2(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-5-mini, 2026-10-05 확인), 요청 본문이 3~6천 자라 질문 하나에 입력이 수천 토큰이지만 추론 토큰은 키가 없어 확인하지 못했고, Spoonacular는 무료 플랜 하루 50포인트(https://spoonacular.com/food-api/pricing, 2026-10-05 확인), 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 110분(Step마다 확인 스크립트를 저장해 돌리고, 가짜 모델 서버를 띄운 터미널을 하나 더 쓰며 끝까지 한 번 돌리고, 이어 묻기 실험(6초 대기)과 headless 확인까지 손으로 해 보는 시간에 그림 열두 장을 읽는 시간이 더해집니다) · API 비용 대략 질문 10건에 $0.1 안팎 — `gpt-5-mini`는 입력 $0.25·출력 $2(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-5-mini, 2026-10-05 확인), 요청 본문이 3~6천 자라 질문 하나에 입력이 수천 토큰이지만 추론 토큰은 키가 없어 확인하지 못했고, Spoonacular는 무료 플랜 하루 50포인트(https://spoonacular.com/food-api/pricing, 2026-10-05 확인), 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent`
 
 ## 오늘 만들 것
 
@@ -752,7 +752,7 @@ uv run --no-project python two_loops.py
 바로 이어서 3번째 질문: 8초가 지나도 답이 오지 않았다
 ```
 
-6초 쉰 뒤의 둘째 질문은 답이 왔고, 바로 이어 보낸 셋째 질문만 답이 오지 않았습니다. 원인은 연결 재사용 쪽으로 좁혀졌습니다. 연결을 매번 닫는 HTTP/1.0 서버로 같은 실험을 하거나 같은 이벤트 루프를 계속 쓰면 셋째도 답이 옵니다(직접 확인). 멈춘 순간 대기 중인 태스크는 `httpcore2` 2.13.1의 요청 본문 전송에서 `anyio` 4.15.1의 `send`를 기다리고 있었고, openai 3.24.0 연결 풀이 유휴 연결을 보관하는 시간은 5.0초입니다(`keepalive_expiry`, 직접 확인). 둘째 질문이 만든 연결을 5초 안에 셋째 질문이 재사용하는데, 그 연결을 만든 루프와 지금 루프가 달라 쓰기가 끝나지 않는 것으로 보입니다. 이 멈춤은 영원하지 않습니다. SDK의 기본 제한시간은 600초이고 기본 재시도는 2회인데(소스로 확인), 제한시간을 3초로 줄여 보니 3.4초 만에 답이 왔습니다(직접 확인). 기본값이면 약 10분 뒤에 답이 올 것입니다(600초는 기다려 보지 않았습니다). `AppTest`로 앱을 이어 돌려도 0.5초 간격이면 90초가 지나도 둘째 턴이 끝나지 않았고 6.5초 간격이면 바로 끝났습니다(직접 확인). 실제 OpenAI 서버가 5초보다 먼저 연결을 닫으면 생기지 않을 수 있는데, 이 문서는 실제 서버에서 확인하지 못했습니다.
+6초 쉰 뒤의 둘째 질문은 답이 왔고, 바로 이어 보낸 셋째 질문만 답이 오지 않았습니다. 원인은 연결 재사용 쪽으로 좁혀졌습니다. 연결을 매번 닫는 HTTP/1.0 서버로 같은 실험을 하거나 같은 이벤트 루프를 계속 쓰면 셋째도 답이 옵니다(직접 확인). 멈춘 순간 대기 중인 태스크는 `httpcore2` 2.13.1의 요청 본문 전송에서 `anyio` 4.15.1의 `send`를 기다리고 있었고, openai 3.24.0 연결 풀이 유휴 연결을 보관하는 시간은 5.0초입니다(`keepalive_expiry`, 직접 확인). 둘째 질문이 만든 연결을 5초 안에 셋째 질문이 재사용하는데, 그 연결을 만든 루프와 지금 루프가 달라 쓰기가 끝나지 않는 것으로 보입니다. 이 멈춤은 영원하지 않습니다. SDK의 기본 제한시간은 600초이고 기본 재시도는 2회인데(openai 3.24.0의 `openai/_constants.py`, 소스로 확인), 제한시간을 3초로 줄여 보니 3.4초 만에 답이 왔습니다(직접 확인). 기본값이면 약 10분 뒤에 답이 올 것입니다(600초는 기다려 보지 않았습니다). `AppTest`로 앱을 이어 돌려도 0.5초 간격이면 90초가 지나도 둘째 턴이 끝나지 않았고 6.5초 간격이면 바로 끝났습니다(직접 확인). 실제 OpenAI 서버가 5초보다 먼저 연결을 닫으면 생기지 않을 수 있는데, 이 문서는 실제 서버에서 확인하지 못했습니다.
 
 앱을 띄우는 명령은 다음 한 줄이고 브라우저에서 `http://localhost:8501`을 엽니다. 위 가짜 서버를 켜 둔 채 위의 환경변수 세 개를 걸고 같은 명령을 실행하면 키 없이 브라우저에서 질문해 볼 수 있습니다.
 
@@ -760,9 +760,9 @@ uv run --no-project python two_loops.py
 uv run --no-project streamlit run ai_recipe_meal_planning_agent.py
 ```
 
-화면 없이 서버가 뜨는지만 보려면 `--server.headless true --server.address localhost`를 붙입니다(주소를 지정하지 않고 headless로 띄우면 Streamlit이 외부 IP를 알아내려고 요청을 보낸다는 Day 086 Step 7의 확인과 같은 이유입니다). 임의의 높은 포트(58115)로 직접 확인했더니 Streamlit 1.65.0에서 `/_stcore/health`가 `200 ok`를 돌려주었고, 나가려는 요청을 기록만 하는 프록시를 걸어도 아무 기록이 남지 않았습니다. 서버만 띄운 경우의 이야기이고, 브라우저로 열면 Streamlit이 사용 통계를 내보냅니다(콘솔 첫 줄이 이를 밝히며 Day 054와 Day 063이 확인했습니다). 끄려면 `--browser.gatherUsageStats false`를 더합니다.
+화면 없이 서버가 뜨는지만 보려면 `--server.headless true --server.address localhost`를 붙입니다(주소를 지정하지 않고 headless로 띄우면 Streamlit이 외부 IP를 알아내려고 요청을 보낸다는 Day 086 Step 7의 확인과 같은 이유입니다). 임의의 높은 포트(58115)로 직접 확인했더니 Streamlit 1.65.0에서 `/_stcore/health`가 `200 ok`를 돌려주었고, 나가려는 요청을 기록만 하는 프록시를 걸어도 아무 기록이 남지 않았습니다. 서버만 띄운 경우의 이야기이고, 브라우저로 열면 Streamlit이 사용 통계를 내보냅니다(Day 054와 Day 063이 확인했습니다). 콘솔 첫 줄 `Collecting usage statistics…`는 `~/.streamlit/credentials.toml`이 없는 PC에서 `browser.gatherUsageStats`를 따로 정하지 않았을 때만 나옵니다(Streamlit 1.65.0의 `streamlit/runtime/credentials.py`로 확인했고, 그 파일을 두고 띄우면 줄이 빠지는 것도 직접 확인했습니다). 끄려면 `--browser.gatherUsageStats false`를 더합니다.
 
-agno의 익명 사용 통계는 Day 047 Step 5가 이미 다뤘습니다. `agent.run()`이 성공할 때마다 실행 메타데이터를 보내고 `AGNO_TELEMETRY=false`로 끈다는 것인데, 이 앱이 쓰는 `arun()`도 같은 경로입니다(agno 3.1.1 소스로 확인: 비동기 실행 끝에서 `alog_agent_telemetry`가 불립니다). 이 호출은 이벤트를 큐에 넣고 바로 돌아오며 실제 POST는 `agno-telemetry` 데몬 스레드가 따로 보냅니다(소스로 확인). 통계 주소를 내 컴퓨터의 수신기로 바꿔 돌려 보니 성공한 `arun`마다 `POST /telemetry/runs`가 한 건씩 왔고, 401로 실패한 실행과 `AGNO_TELEMETRY=false`인 실행에서는 오지 않았습니다. 본문은 `agent_id`, 모델 provider·이름·id, `has_tools` 같은 구성 정보이고 질문·답변은 없었습니다(직접 확인). 기본 주소는 `https://os-api.agno.com`이고(소스로 확인), 요청을 거절하는 프록시를 걸자 `CONNECT os-api.agno.com:443` 한 건이 도착했습니다(직접 확인, 아무것도 나가지 않았습니다).
+agno의 익명 사용 통계는 Day 047 Step 5가 이미 다뤘습니다. `agent.run()`이 성공할 때마다 실행 메타데이터를 보내고 `AGNO_TELEMETRY=false`로 끈다는 것인데, 이 앱이 쓰는 `arun()`도 같은 경로입니다(agno 3.1.1의 `agno/agent/_run.py`로 확인: 비동기 실행 끝에서 `alog_agent_telemetry`가 불립니다). 이 호출은 이벤트를 큐에 넣고 바로 돌아오며 실제 POST는 `agno-telemetry` 데몬 스레드가 따로 보냅니다(`agno/api/api.py`, 소스로 확인). 통계 주소를 내 컴퓨터의 수신기로 바꿔 돌려 보니 성공한 `arun`마다 `POST /telemetry/runs`가 한 건씩 왔고, 401로 실패한 실행과 `AGNO_TELEMETRY=false`인 실행에서는 오지 않았습니다. 본문은 `agent_id`, 모델 provider·이름·id, `has_tools` 같은 구성 정보이고 질문·답변은 없었습니다(직접 확인). 기본 주소는 `https://os-api.agno.com`이고(`agno/api/settings.py`, 소스로 확인), 요청을 거절하는 프록시를 걸자 `CONNECT os-api.agno.com:443` 한 건이 도착했습니다(직접 확인, 아무것도 나가지 않았습니다).
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
