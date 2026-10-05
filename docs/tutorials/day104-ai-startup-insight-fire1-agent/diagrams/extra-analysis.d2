@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit 화면 { class: ours }
+agent: 분석 에이전트 { class: ours }
+openai: OpenAI API (gpt-4o) { class: ext }
+
+ui -> agent: run(회사 데이터 JSON 문자열)
+agent -> openai: developer · user 메시지
+openai -> agent: 분석 텍스트

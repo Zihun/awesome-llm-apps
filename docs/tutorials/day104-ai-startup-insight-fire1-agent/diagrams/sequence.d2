@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+agent: 분석 에이전트 { class: ours }
+firecrawl: Firecrawl API { class: ext }
+
+user -> ui: Start Analysis 클릭 (키 2개 · URL 목록 입력 뒤)
+ui -> agent: Agent(OpenAIChat gpt-4o, markdown=True) 생성 (URL 처리 전 한 번)
+ui -> firecrawl: "extract([url], params) (URL마다)"
+firecrawl -> ui: 추출 데이터 (data · status · expiresAt)
+ui -> user: 추출 정보 표시 (company_data 필드)

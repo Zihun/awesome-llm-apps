@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+agent: 분석 에이전트 { class: ours }
+agno_api: Agno 사용 통계 API { class: ext }
+
+agent -> agno_api: 실행 메타데이터 (백그라운드, 성공 시)
+agent -> ui: RunOutput.content
+ui -> user: AI 분석 표시
+ui -> user: 원본 응답 · 처리 상세 (접힌 영역)

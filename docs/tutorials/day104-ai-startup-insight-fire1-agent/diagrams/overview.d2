@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 (ai_startup_insight_fire1_agent.py) { class: ours }
+firecrawl: Firecrawl API (FIRE-1 추출) { class: ext }
+agent: 분석 에이전트 (agno_agent) { class: ours }
+schema: 추출 스키마·프롬프트 (extraction_schema) { class: file }
+agno_api: Agno 사용 통계 API { class: ext }
+openai: OpenAI API (gpt-4o) { class: ext }
+
+ui -> firecrawl: "extract([url], params)"
+agent -> openai: developer · user 메시지
+ui -> user: 탭별 추출 정보 · AI 분석 표시
+openai -> agent: 분석 텍스트
+agent -> agno_api: 실행 메타데이터 (성공 시)
+ui -> agent: run(회사 데이터 JSON 문자열)
+firecrawl -> ui: 추출 데이터 (data · status · expiresAt)
+agent -> ui: RunOutput.content
+ui -> schema: 스키마 · 프롬프트 읽기
+user -> ui: 키 2개 · URL 목록 입력, 버튼 클릭
