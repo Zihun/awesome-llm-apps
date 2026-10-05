@@ -6,7 +6,7 @@
 
 고객 ID마다 과거 대화와 주문 정보를 기억해 두었다가 답할 때 꺼내 쓰는 고객지원 챗봇입니다. 앱은 `customer_support_agent.py` 한 파일(편집기 기준 206줄)이고, Streamlit 화면에서 `gpt-4`가 가상의 전자제품 쇼핑몰 TechGadgets.com 상담원으로 답합니다. 질문이 들어오면 mem0가 그 고객의 기억을 Qdrant에서 찾아 프롬프트 앞에 붙이고, 답이 나오면 질문과 답을 다시 기억에 씁니다. 사이드바의 "Generate Synthetic Data" 버튼은 `gpt-4`에게 가상 고객 프로필과 주문 이력을 JSON으로 만들게 하고 그 항목을 하나씩 기억에 넣어 데모용 기억을 만듭니다.
 
-검색 → 프롬프트 → 답 → 저장이라는 고리는 Day 075의 여행 에이전트와 같습니다. 오늘 앱은 그 고리를 `CustomerSupportAIAgent` 클래스로 묶고 모든 호출을 `try/except`와 `st.error`로 감쌌습니다. 화면에 입력한 키를 `os.environ`에 실어 mem0가 보게 한 것(Day 075 앱은 그러지 않아 Step 3에서 막혔습니다)과, mem0 설정에 `"version": "v1.1"`을 더해 `search()`·`get_all()`이 `{"results": [...]}`를 돌려주게 한 것도 다릅니다. 마지막 한 줄은 상류 저장소의 수정 커밋(`b96d19a`, 커밋 메시지로 확인)이 더했고, 덕분에 Day 073·075가 겪은 `"results" in memories`가 항상 거짓인 문제가 이 앱에는 없습니다.
+검색 → 프롬프트 → 답 → 저장이라는 고리는 Day 075의 여행 에이전트와 같습니다. 오늘 앱은 그 고리를 `CustomerSupportAIAgent` 클래스로 묶고 모든 호출을 `try/except`와 `st.error`로 감쌌습니다. 화면에 입력한 키를 `os.environ`에 실어 mem0가 보게 한 것(Day 075 앱은 그러지 않아 Day 075 Step 3에서 막혔습니다)과, mem0 설정에 `"version": "v1.1"`을 더해 `search()`·`get_all()`이 `{"results": [...]}`를 돌려주게 한 것도 다릅니다. 마지막 한 줄은 상류 저장소의 수정 커밋(`b96d19a`, 커밋 메시지로 확인)이 더했고, 덕분에 Day 073·075가 겪은 `"results" in memories`가 항상 거짓인 문제가 이 앱에는 없습니다.
 
 그래도 오늘(2026-10-05) 설치 그대로는 첫 질문에서 막힙니다. `requirements.txt`가 `qdrant-client`를 고정하지 않아 1.19.1이 깔리는데, mem0ai 0.1.29의 Qdrant 래퍼가 부르는 `QdrantClient.search()`가 1.16.0부터 없습니다. Day 073·075가 본 문제와 같고, 메서드가 사라지는 경계가 1.15.1과 1.16.0 사이임을 오늘 패키지 소스로 확인했습니다. 클라이언트 클래스의 문제라 Qdrant 서버가 어디에 있든 같습니다. 이 앱은 그 `AttributeError`를 `except`로 삼켜 빨간 배너와 정해진 사과문만 보여 주므로, 화면만 보면 오류가 났다는 것밖에 알 수 없습니다. 또 하나, 앱이 `gpt-4`를 부르는 두 곳은 OpenAI의 폐기 안내(https://developers.openai.com/api/docs/deprecations, 2026-10-05에 WebFetch로 받은 표)에 2026년 10월 23일 종료로 올라 있습니다. 오늘로부터 18일 뒤입니다.
 
