@@ -7,6 +7,7 @@ wf: "워크플로 (run)" { class: ours }
 db: "SQLite\n(tmp/agno_workflows.db)" { class: store }
 
 user -> main: "\"🚀 Start Automated Campaign\" 클릭"
+wf -> wf: "클래스 본문 다시 실행:\nAgent 넷 · ExaTools 셋\n(api_key=\nos.environ의 그 순간 값)"
 main -> user: "progress_bar = st.progress(0)\n(빈 진행 막대)"
 main -> user: "st.spinner(\"Initializing\nAI research agents...\")"
 main -> db: "SqliteDb(\ndb_file=\"tmp/\nagno_workflows.db\")"

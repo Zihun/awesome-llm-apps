@@ -1,12 +1,12 @@
 # Day 101 · 🚀 AI Email GTM Reachout Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 120분(가짜 OpenAI 서버를 직접 만들어 띄우고 도우미 스크립트 네 개를 저장해 돌려 보는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 확인 불가(키가 없어 토큰 수를 재지 못했고 `gpt-5`·Exa 요금표도 확인하지 못했습니다. 캠페인 한 번에 `gpt-5` 호출이 최소 1+3×회사 수번 나가고 기본 5곳이면 16번입니다 — 소스로 확인. 이 문서의 확인은 모두 가짜 서버로 돌아 무료입니다) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 130분(가짜 OpenAI 서버를 직접 만들어 띄우고 도우미 스크립트 네 개를 저장해 돌려 보는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 확인 불가(키가 없어 토큰 수를 재지 못했고 `gpt-5`·Exa 요금표도 확인하지 못했습니다. 캠페인 한 번에 `gpt-5` 호출이 최소 1+3×회사 수번 나가고 기본 5곳이면 16번입니다 — 소스로 확인. 이 문서의 확인은 모두 가짜 서버로 돌아 무료입니다) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent`
 
 ## 오늘 만들 것
 
 분류·회사 크기·부서·서비스 종류를 고르면 에이전트 넷이 차례로 일해 영업 메일 초안을 회사마다 한 통씩 써 주는 Streamlit 앱입니다. 기업 탐색 에이전트가 후보 회사를 찾고, 연락처 에이전트와 기업 조사 에이전트가 회사 하나씩 담당자와 배경을 찾고, 이메일 작성 에이전트가 그 결과를 부서별 틀과 함께 받아 초안을 씁니다. 앞의 셋은 Exa 검색을 도구로 쥐고, 넷 모두 `gpt-5`를 씁니다. 오늘 새로 보는 것은 에이전트를 묶는 방식입니다. agno의 `Workflow`를 상속한 클래스 하나가 에이전트 넷을 클래스 속성으로 쥐고, 덮어쓴 `run()`이 제너레이터로 진행 신호와 완성된 카드를 하나씩 내놓으면 화면이 그것을 진행 막대와 카드로 그립니다. 이 저장소의 앱 가운데 `agno.workflow`를 import하는 파일은 이것 하나뿐이고(전체 검색으로 확인) 앞선 날 README에도 agno `Workflow`는 없습니다. 에이전트에 Exa를 도구로 쥐여 주는 것은 Day 062·064·070이 이미 보였지만 거기서는 벡터 검색이 빈손일 때 부르는 폴백이었고, 여기서는 세 에이전트의 본업입니다. 앱은 `ai_email_gtm_reachout.py` 한 파일이고 편집기에서는 1,097줄입니다(마지막 줄에 개행이 없어 `wc -l`은 1,096으로 셉니다 — 직접 확인). 이 문서는 버튼 한 번이 지나가는 길만 따라가고 샘플 상수는 건너뜁니다.
 
-이름은 "완전 자동 아웃리치"지만 소스를 읽으면 사실이 몇 개 다릅니다. 메일을 **보내는 코드는 어디에도 없습니다**. 초안을 화면에 보여 줄 뿐이고 `DEMO_MODE`는 정의만 있고 읽히지 않습니다(Step 8). 회사 이름은 `Company #1`, `Company #2`처럼 번호로 고정이고, 조사 결과는 200자까지만 이메일 작성 에이전트에 닿고, 복사·내보내기 버튼은 성공 문구만 띄웁니다. `requirements.txt`는 SQLite 저장소가 쓰는 `sqlalchemy`와 Exa 도구가 쓰는 `exa-py`를 빠뜨려서(오늘 설치하면 agno 3.1.1이 풀립니다) 그대로는 첫 import에서 멈춥니다(Step 1).
+이름은 "완전 자동 아웃리치"지만 소스를 읽으면 사실이 몇 개 다릅니다. 메일을 **보내는 코드는 어디에도 없습니다**. 초안을 화면에 보여 줄 뿐이고 `DEMO_MODE`는 정의만 있고 읽히지 않습니다(Step 8). 회사 이름은 `Company #1`, `Company #2`처럼 번호로 고정이고, 조사 결과는 200자까지만 이메일 작성 에이전트에 닿고, 복사·내보내기 버튼은 성공 문구를 띄우는 코드뿐이라 누르면 그 문구도 못 본 채 카드가 사라집니다(Step 7). `requirements.txt`는 SQLite 저장소가 쓰는 `sqlalchemy`와 Exa 도구가 쓰는 `exa-py`를 빠뜨려서(오늘 설치하면 agno 3.1.1이 풀립니다) 그대로는 첫 import에서 멈춥니다(Step 1).
 
 OpenAI·Exa 키가 없으므로 Step 4부터는 이 PC에서만 듣는 가짜 OpenAI 서버가 모델 호출을 받고, Exa 클라이언트는 로컬 대역으로 바꿉니다. 그래서 이 문서가 보여 주는 연락처·이메일·회사 이름은 전부 가짜 서버가 내놓은 문장이고, 진짜 `gpt-5`나 Exa가 무엇을 돌려주는지는 확인하지 못했습니다. 모든 확인 명령은 `AGNO_TELEMETRY=false`를 걸고 돕니다(이유는 Step 4). 완성하면 키 없이 캠페인 한 번을 끝까지 돌려 카드가 그려지는 데까지 봅니다. 아래는 완성된 아키텍처입니다.
 
@@ -187,7 +187,7 @@ class OutreachConfig(BaseModel):
     )
 ```
 
-바로 아래의 `ContactInfo`(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:240-248`)는 어디서도 쓰이지 않고, 칸이 32개인 `CompanyInfo`(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:250-318`)는 `run`이 넷만 채웁니다(Step 5). 분류표 `COMPANY_CATEGORIES`는 선택지와 안내 문구와 "대표 직책" 목록이고, 이메일 틀 사전 `DEPARTMENT_TEMPLATES`는 부서에서 서비스 종류로 두 단계를 내려가 틀 문자열에 닿습니다. 틀 안의 `[RECIPIENT_NAME]` 같은 자리표시를 앱이 직접 치환하지는 않고 틀 전체를 모델에 넘깁니다(Step 6).
+바로 아래의 `ContactInfo`(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:240-248`)는 어디서도 쓰이지 않고, 칸이 32개인 `CompanyInfo`(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:250-318`)는 `run`이 넷만 채웁니다(Step 5). 분류표 `COMPANY_CATEGORIES`는 선택지와 안내 문구와 "대표 직책" 목록이고, 이메일 틀 사전 `DEPARTMENT_TEMPLATES`는 부서에서 서비스 종류로 두 단계를 내려가 틀 문자열에 닿습니다. 틀 안의 `[RECIPIENT_NAME]` 같은 자리표시를 앱이 직접 치환하지는 않고 틀 전체를 모델에 넘깁니다(Step 6). 이 Step의 구성도는 설정과 이메일 틀만 밝힙니다. 기업 정보는 `run`이 채우는 Step 5에서, 분류표는 화면을 다루는 Step 7에서 밝힙니다.
 
 화면의 부서 일곱 개와 서비스 종류 다섯 개를 이 사전과 맞춰 보는 파일을 `check_templates.py`로 저장합니다. 선택지는 `AppTest`로 화면을 한 번 그려서 위젯에서 읽어 오므로 앱 코드를 베끼지 않습니다.
 
@@ -266,6 +266,8 @@ os.environ["OPENAI_API_KEY"] = st.session_state.OPENAI_API_KEY
 
 ![키가 에이전트까지 가는 길](diagrams/extra-keys.svg)
 
+이 Step의 구성도는 기업 탐색 에이전트만 밝힙니다. 넷은 여기서 한꺼번에 만들어지지만 처음 불리는 것은 Step 4의 이 에이전트이고, 연락처·조사 에이전트는 Step 5에서, 이메일 작성 에이전트는 Step 6에서 불립니다.
+
 ![Step 3까지의 구성](diagrams/step3.svg)
 
 **확인.** 먼저 키가 있는 채로 에이전트가 무엇을 쥐었는지 봅니다. `logging.disable(logging.WARNING)`은 Streamlit이 bare mode에서 내는 경고와 agno의 INFO 로그를 가립니다.
@@ -296,6 +298,8 @@ ERROR   EXA_API_KEY not set. Please set the EXA_API_KEY environment variable.
 ERROR   EXA_API_KEY not set. Please set the EXA_API_KEY environment variable.
 ERROR   EXA_API_KEY not set. Please set the EXA_API_KEY environment variable.
 ```
+
+이 문서의 `ERROR` 줄은 출력을 파이프로 받아 옮긴 모양입니다. 터미널에 바로 찍으면 agno가 다른 로그 처리기를 써서 모양이 조금 다릅니다(agno 3.1.1 `agno/utils/log.py`, 소스로 확인).
 
 ### Step 4. 기업 탐색 — `run()`의 첫 호출과 가짜 모델 서버
 
@@ -470,7 +474,7 @@ company discovery specialist | model=gpt-5 roles=['developer', 'user'] tools=['e
    user: Find 2 SaaS/Technology Companies companies that would be good prospects for Software Solution. Company criteri
 ```
 
-첫 값이 나오기 전에 모델 호출이 정확히 한 번 있었습니다. 요청의 `roles`가 `system`이 아니라 `developer`인 것은 agno의 `OpenAIChat`이 시스템 메시지를 그렇게 매핑하기 때문입니다(agno 3.1.1 소스로 확인). 도구는 이름이 알파벳 순으로 정렬돼 네 개가 실립니다. 프롬프트의 "Companies companies"는 분류 이름이 이미 `Companies`로 끝나는데 지시문 템플릿이 또 `companies`를 붙인 결과입니다.
+첫 값이 나오기 전에 모델 호출이 정확히 한 번 있었습니다. 이 실행은 기업 탐색 에이전트에서 멈추므로(드라이버가 첫 `yield`에서 끊습니다) 위 구성도에서 연락처·조사·이메일 작성 에이전트는 아직 흐립니다. 요청의 `roles`가 `system`이 아니라 `developer`인 것은 agno의 `OpenAIChat`이 시스템 메시지를 그렇게 매핑하기 때문입니다(agno 3.1.1 소스로 확인). 도구는 이름이 알파벳 순으로 정렬돼 네 개가 실립니다. 프롬프트의 "Companies companies"는 분류 이름이 이미 `Companies`로 끝나는데 지시문 템플릿이 또 `companies`를 붙인 결과입니다.
 
 이제 모델이 검색을 요청하는 경우를 봅니다. 키 끝에 `tool`을 붙이면 가짜 서버가 첫 요청에 `search_exa`를 부르라고 답합니다.
 
@@ -620,7 +624,7 @@ Research companies in depth | model=gpt-5 roles=['developer', 'user'] tools=['ex
                 )
 ```
 
-틀은 선택한 부서 목록의 **첫 번째**만 보고(`target_departments[0]`), 그 부서와 서비스 종류 조합이 사전에 없으면 GTM의 `Software Solution` 틀로 물러납니다. Step 2에서 본 것처럼 화면이 줄 수 있는 35개 조합 중 31개가 이 폴백을 탑니다. 컨텍스트 JSON은 일곱 키이고, `company_info`는 32칸을 전부 싣습니다(값이 없는 28칸은 `null`). `personalization_level`은 이 JSON에 낱말로 실릴 뿐 앱 코드가 수준에 따라 갈라지는 곳은 없고(파일에서 이 값을 읽는 곳은 JSON을 만드는 줄과 요약 지표 표시뿐 — 소스로 확인), 회사 크기 선택도 검색 지시문 문자열로만 갑니다. 이메일 작성 에이전트에는 도구가 없어 이 호출은 모델 한 번으로 끝납니다.
+틀은 선택한 부서 목록의 **첫 번째**만 보고(`target_departments[0]`), 그 부서와 서비스 종류 조합이 사전에 없으면 GTM의 `Software Solution` 틀로 물러납니다. Step 2에서 본 것처럼 화면이 줄 수 있는 35개 조합 중 31개가 이 폴백을 탑니다. 컨텍스트 JSON은 일곱 키이고, `company_info`는 32칸을 전부 싣습니다(값이 없는 28칸은 `null`). `personalization_level`은 이 JSON에 낱말로 실릴 뿐 앱 코드가 수준에 따라 갈라지는 곳은 없고(파일에서 이 값을 읽는 곳은 JSON을 만드는 줄과 요약 지표 표시뿐 — 소스로 확인), 모델이 그 낱말에 따라 글을 다르게 쓰는지는 키가 없어 보지 못했습니다. 회사 크기 선택도 검색 지시문 문자열로만 갑니다. 이메일 작성 에이전트에는 도구가 없어 이 호출은 모델 한 번으로 끝납니다. 이메일 틀은 Step 2에서 처음 봤지만 `run`이 틀을 실제로 고르는 것은 이 Step이라 구성도에서 다시 주황으로 표시했습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -795,7 +799,7 @@ print("6) 복사 버튼을 누른 뒤: 카드", len(at.tabs) // 4, "| 이메일 
 uv run --no-project python ui_check.py
 ```
 
-직접 확인한 출력입니다(`ERROR` 줄은 stderr라 순서가 조금 섞일 수 있습니다).
+직접 확인한 출력입니다(`ERROR` 줄은 agno가 stdout으로 찍어서, 출력을 파일로 돌리면 stderr는 비어 있었습니다).
 
 ```
 1) 키 없이 처음 실행
@@ -815,7 +819,7 @@ ERROR   EXA_API_KEY not set. Please set the EXA_API_KEY environment variable.
 6) 복사 버튼을 누른 뒤: 카드 0 | 이메일 칸 0 | 성공 문구: ['API keys configured']
 ```
 
-1)과 2)에서 세 줄씩 나오다가 3)에서 사라지니, 키는 입력한 바로 그 실행에서는 `ExaTools`에 닿지 못하고 그다음 실행부터 들어갑니다. 시작 버튼을 누르는 것도 그 "다음 실행"이라 실제 사용에서는 문제가 되지 않습니다. 필수 칸(이름·이메일·조직·서비스 설명)이 비면 폼 함수가 `st.stop()`으로 스크립트를 끊어 버튼이 아예 그려지지 않습니다(3의 `버튼: 0`). 6)에서는 복사 버튼을 누르자 카드가 모두 사라졌고 "Email copied" 문구는 어디에도 없습니다.
+1)과 2)에서 세 줄씩 나오다가 3)에서 사라지니, 키는 입력한 바로 그 실행에서는 `ExaTools`에 닿지 못하고 그다음 실행부터 들어갑니다. 시작 버튼이 이 규칙에서 자유로운지는 이 스크립트로 알 수 없습니다. 입력과 클릭을 서로 다른 실행으로 나눠 돌리기 때문입니다. 둘을 한 실행에 넣어 보면(`AppTest`로 직접 확인) `ERROR` 세 줄이 찍히고도 캠페인은 끝까지 돌아 "Campaign Complete!"가 뜹니다. 시작 버튼의 키 검사(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:838-840`)는 `os.environ`이 아니라 방금 채워진 세션 상태를 보기 때문입니다. 브라우저에서 입력 직후의 클릭이 입력과 한 실행으로 합쳐지는지는 확인하지 못했습니다. 폼 함수는 분류 선택지와 안내 문구를 `COMPANY_CATEGORIES`에서 읽어 그리고(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:637-644`), 필수 칸(이름·이메일·조직·서비스 설명)이 비면 `st.stop()`으로 스크립트를 끊어 버튼이 아예 그려지지 않습니다(3의 `버튼: 0`). 6)에서는 복사 버튼을 누르자 카드가 모두 사라졌고 "Email copied" 문구는 어디에도 없습니다.
 
 이제 OpenAI 키가 틀린 경우입니다. 같은 스크립트에 키만 바꿉니다. 키가 `bad`로 끝나면 가짜 서버가 OpenAI의 오류 형식(`{"error": {"message": ...}}`)을 흉내 내 401을 돌려줍니다. 진짜 OpenAI의 문구는 다를 수 있습니다.
 
@@ -830,7 +834,7 @@ uv run --no-project python ui_check.py key=sk-fake-bad
    카드: 2 | 제목 상자: [] | 본문 칸 첫 줄: 'Incorrect API key provided.'
 ```
 
-agno의 `Agent.run()`은 모델 오류를 예외로 올리지 않고 오류 문장을 `.content`로 돌려주고, 앱은 그 비어 있지 않은 문자열을 응답으로 취급합니다. 일곱 번(기업 탐색 1 + 회사 둘 × 3) 모두 "성공"으로 세어져 카드 두 장이 나오고, 요약의 `Success Rate`도 `results_count / num_companies`라 100.0%가 됩니다(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:1033`, 소스로 확인). 이메일 칸에 오류 문장이 들어가는 것입니다. 서버가 없거나 포트가 틀려도 같은 모양입니다(문장만 `Connection error.`, 직접 확인). 앱이 "No emails were generated" 안내를 내려면 카드가 한 장도 없어야 하는데, 그러려면 기업 탐색의 응답이 비어 있어 `run`이 일찍 끝나거나(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:496-498`) 회사마다 예외가 나야 합니다(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:616-618`). 둘 다 소스로 확인했습니다.
+agno의 `Agent.run()`은 모델 오류를 예외로 올리지 않고 오류 문장을 `.content`로 돌려주고, 앱은 그 비어 있지 않은 문자열을 응답으로 취급합니다. 일곱 번(기업 탐색 1 + 회사 둘 × 3) 모두 "성공"으로 세어져 카드 두 장이 나오고, 요약의 `Success Rate`도 `results_count / num_companies`라 100.0%가 됩니다(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:1033`, 소스로 확인). 이메일 칸에 오류 문장이 들어가는 것입니다. 서버가 없거나 포트가 틀려도 같은 모양입니다(문장만 `Connection error.`, 직접 확인). 앱이 "No emails were generated" 안내를 내려면 카드가 한 장도 없어야 하는데, 그러려면 기업 탐색의 응답이 비어 있어 `run`이 일찍 끝나거나(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:496-498`), 회사마다 연락처·조사·이메일 응답 중 하나가 비어 그 회사를 건너뛰거나(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:529-531`, `advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:550-552`, `advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:556-558`, `advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:602-604`), 회사마다 예외가 나야 합니다(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:616-618`). 모두 소스로 확인했습니다.
 
 마지막으로 진짜 화면을 띄우는 명령입니다. 키는 환경변수로 주거나 화면의 사이드바에 넣습니다.
 
@@ -845,15 +849,19 @@ uv run --no-project streamlit run ai_email_gtm_reachout.py --server.headless tru
 curl http://localhost:58215/_stcore/health
 ```
 
-(PowerShell은 `curl.exe`를 씁니다.) 직접 확인한 출력은 서버 쪽 세 줄(맨 앞 시각은 뺍니다)과 `ok`입니다. 확인이 끝나면 Ctrl+C로 끕니다.
+(PowerShell은 `curl.exe`를 씁니다.) 직접 확인한 서버 쪽 출력은 이렇습니다(시각은 실행마다 다릅니다). 맨 앞 줄은 Streamlit 자체의 사용 통계 안내로, `~/.streamlit/credentials.toml`이 없는 PC에서 `browser.gatherUsageStats`를 따로 정하지 않았을 때 나옵니다(streamlit 1.65.0 소스로 확인했고 Day 063 Step 7이 같은 줄을 다뤘습니다). 명령에 `--browser.gatherUsageStats false`를 더하면 이 줄이 빠집니다(직접 확인). 확인이 끝나면 Ctrl+C로 끕니다.
 
 ```
-Uvicorn server started on localhost:58215
+Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.
+
+2026-10-05 13:32:02.909 Uvicorn server started on localhost:58215
 
   You can now view your Streamlit app in your browser.
 
   URL: http://localhost:58215
 ```
+
+`curl`의 답입니다.
 
 ```
 ok
@@ -911,13 +919,13 @@ uv run --no-project python -c "import os; print(os.path.isdir('tmp'), os.listdir
 True []
 ```
 
-`SqliteDb(db_file="tmp/agno_workflows.db")`는 부모 폴더 `tmp/`만 만들고(실행한 작업 폴더 기준이라 상대 경로입니다) DB 파일은 만들지 않았고, 캠페인을 끝까지 돌려도 마찬가지였습니다. agno 3.1.1에서 세션 저장(`save_session`)은 `_persist_session_and_run`이, 워크플로 통계는 `_execute`가 하고, 둘 다 부모 `Workflow.run()`이 부르는 메서드입니다. 이 앱은 `run`을 다른 시그니처로 통째로 덮어써서 그 경로를 지나지 않습니다(소스로 확인). 카드의 "복사"·"내보내기"·"보고서" 버튼도 같은 사정입니다. 성공 문구를 띄울 뿐 하는 일이 없습니다(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:1041-1051`, 소스로 확인).
+`SqliteDb(db_file="tmp/agno_workflows.db")`는 부모 폴더 `tmp/`만 만들고(실행한 작업 폴더 기준이라 상대 경로입니다) DB 파일은 만들지 않았고, 캠페인을 끝까지 돌려도 마찬가지였습니다. agno 3.1.1에서 세션 저장(`save_session`)은 `_persist_session_and_run`이, 워크플로 통계는 `_execute`가 하고, 둘 다 부모 `Workflow.run()`이 부르는 메서드입니다. 이 앱은 `run`을 다른 시그니처로 통째로 덮어써서 그 경로를 지나지 않습니다(소스로 확인). 카드의 복사 버튼 둘(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:923-924`, `advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:975-976`)과 요약 아래의 내보내기·보고서 버튼(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:1041-1047`)도 같은 사정입니다. 성공 문구를 띄울 뿐 하는 일이 없고(소스로 확인) 누르면 카드가 사라집니다(복사 버튼은 Step 7의 6)번 줄이고, 나머지 넷도 같은 방식으로 눌러 직접 확인했습니다). `st.rerun()`을 부르는 새 캠페인 버튼은 따로 `advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/ai_email_gtm_reachout.py:1049-1051`에 있습니다.
 
 ## 요청 한 건이 흐르는 과정
 
-버튼 한 번이 만드는 흐름을 여덟 장으로 나눠 그렸습니다. 기업 탐색까지만 한 장에 담아 봐도 1,613×1,434px가 되어 가로 상한(1,400px)을 넘겼고, 배우 일곱의 순서를 300개 시험해도 수명선이 글자를 지나지 않는 순서가 하나도 없었습니다(직접 렌더해 확인). 모델이 검색을 한 번 요청하는 경우를 그렸고, 진짜 모델이 그렇게 하는지는 키가 없어 보지 못했습니다. 기업 탐색(둘째 장)은 한 번, 연락처·조사·이메일(셋째~일곱째 장)은 회사마다 반복됩니다. 마지막 장은 앞의 세 메시지(결과 `yield`, 진행 막대 갱신, 카드)만 회사마다 되풀이되고, 나머지 넷은 루프가 끝난 뒤 한 번 나옵니다. 모든 외부 호출은 에이전트가 하고, 에이전트를 부르는 것은 `run`이며, `run`은 진행 신호를 `main`에 `yield`할 뿐 화면을 직접 건드리지 않습니다. 앱이 `logger.info`로 터미널에 남기는 진행 로그(`Processing company #1` 등)는 화면 밖의 출력이라 그림에 넣지 않았습니다.
+버튼 한 번이 만드는 흐름을 여덟 장으로 나눠 그렸습니다. 기업 탐색까지만 한 장에 담아도 1,622×1,857px가 되어 가로·세로 상한(1,400×1,500px)을 모두 넘고, 배우 일곱의 순서를 720개 전부 시험해도 세로는 모두 1,857px라 상한 안에 드는 순서가 하나도 없었습니다(직접 렌더해 확인). 모델이 검색을 한 번 요청하는 경우를 그렸고, 진짜 모델이 그렇게 하는지는 키가 없어 보지 못했습니다. 기업 탐색(둘째 장)은 한 번, 연락처·조사·이메일(셋째~일곱째 장)은 회사마다 반복됩니다. 마지막 장은 앞의 세 메시지(결과 `yield`, 진행 막대 갱신, 카드)만 회사마다 되풀이되고, 나머지 넷은 루프가 끝난 뒤 한 번 나옵니다. 모든 외부 호출은 에이전트가 하고, 에이전트를 부르는 것은 `run`이며, `run`은 진행 신호를 `main`에 `yield`할 뿐 화면을 직접 건드리지 않습니다. 앱이 `logger.info`로 터미널에 남기는 진행 로그(`Processing company #1` 등)는 화면 밖의 출력이라 그림에 넣지 않았습니다.
 
-1. **버튼을 누르면 `main`이 빈 진행 막대와 스피너를 그리고, `SqliteDb`와 워크플로를 만들고, `run`을 부릅니다.** 스크립트는 이 클릭으로 처음부터 다시 돌아 클래스와 에이전트 넷도 새로 만들어집니다.
+1. **버튼을 누르면 스크립트가 처음부터 다시 돌아 클래스 본문이 에이전트 넷과 `ExaTools` 셋을 새로 만들고, `main`이 빈 진행 막대와 스피너를 그리고, `SqliteDb`와 워크플로를 만들고, `run`을 부릅니다.** `api_key`는 클래스를 만드는 순간의 `os.environ` 값이라 방금 입력한 키가 이 클릭의 `ExaTools`에 닿지 못할 수 있습니다(Step 7).
    ![클릭에서 run 호출까지](diagrams/sequence.svg)
 2. **`run`이 기업 탐색 에이전트를 부르고, 에이전트는 모델과 Exa 사이를 한 바퀴 돌아 목록 텍스트를 돌려줍니다.**
    ![기업 탐색](diagrams/extra-discover.svg)
@@ -956,12 +964,12 @@ True []
 |---|---|---|
 | 앱 파일을 불러오는 순간 `ModuleNotFoundError: No module named 'sqlalchemy'` | 10행의 `agno.db.sqlite`가 `sqlalchemy`를 요구하는데 `requirements.txt`에 없다(직접 확인) | `uv pip install "agno[sqlite,exa]"` |
 | 위를 고치면 ``ImportError: `exa_py` not installed. Please install using `pip install exa_py` `` | 11행의 `agno.tools.exa`가 `exa_py`를 요구하는데 `requirements.txt`에 없다(직접 확인) | 같은 명령 |
-| 터미널에 `ERROR   EXA_API_KEY not set.`가 세 줄씩 반복 | 스크립트가 도는 매번 클래스가 새로 만들어지고 세 `ExaTools`가 그 순간의 `os.environ`을 읽는다. 사이드바에 키를 넣은 직후 실행에서는 아직 비어 있다(직접 확인) | 키를 넣고 한 번 더 상호작용한다(시작 버튼도 해당). 셸에 `EXA_API_KEY`를 걸고 띄우면 처음부터 없다 |
+| 터미널에 `ERROR   EXA_API_KEY not set.`가 세 줄씩 반복 | 스크립트가 도는 매번 클래스가 새로 만들어지고 세 `ExaTools`가 그 순간의 `os.environ`을 읽는다. 사이드바에 키를 넣은 직후 실행에서는 아직 비어 있고(직접 확인), 입력과 시작 버튼 클릭이 한 실행에 겹치면 그 캠페인도 빈 키의 `ExaTools`로 돈다(`AppTest`로 직접 확인, 브라우저에서 겹치는지는 확인하지 못함) | 키를 넣고 Enter를 누르거나 다른 곳을 한 번 눌러 입력을 확정한 뒤 시작 버튼을 누른다(`AppTest`에서 입력과 클릭을 다른 실행으로 나눈 순서와 같다). 셸에 `EXA_API_KEY`를 걸고 띄우면 처음부터 없다 |
 | 키가 틀리거나 서버에 닿지 못해도 "Campaign Complete! Successfully generated N personalized emails"가 뜨고 이메일 칸에 오류 문장이 들어 있다 | agno `Agent.run()`이 모델 오류를 예외로 올리지 않고 오류 문장을 `.content`로 돌려주고, 앱은 비어 있지 않은 문자열을 응답으로 센다(가짜 서버의 401과 연결 거부로 직접 확인) | 카드의 이메일 칸과 터미널의 `ERROR ... Error in Agent run` 줄을 본다. 앱 코드는 고치지 않는다 |
 | 카드의 회사 이름이 `Company #1`, 업종이 `Unknown`이고 웹사이트가 비어 있다 | `run`이 이 값들을 이름표로만 채우고 갱신하지 않는다(Step 5, 소스로 확인) | 해결할 수 없다. 이름은 이메일 본문이나 연락처 칸에서 찾는다 |
-| 복사·내보내기·보고서 버튼을 누르면 카드가 통째로 사라지고 성공 문구도 안 보인다 | 카드가 시작 버튼의 `if` 블록 안에 있어서, 다른 버튼이 눌린 실행에서는 시작 버튼이 `False`다(직접 확인). 버튼이 하는 일도 문구뿐이다 | 카드를 눌러서 복사할 수 없다. 이메일 칸에서 직접 선택해 복사한다 |
+| 복사(이메일·연락처)·내보내기·보고서 버튼을 누르면 카드가 통째로 사라지고 성공 문구도 안 보인다 | 카드가 시작 버튼의 `if` 블록 안에 있어서, 다른 버튼이 눌린 실행에서는 시작 버튼이 `False`다(버튼마다 눌러 보니 카드가 1장에서 0장이 되고 성공 문구는 없었다, 직접 확인). 버튼이 하는 일도 문구뿐이다 | 카드를 눌러서 복사할 수 없다. 이메일 칸에서 직접 선택해 복사한다 |
 | 부서를 여러 개 골라도, 서비스 종류를 바꿔도 이메일 틀이 거의 같다 | 틀은 선택한 첫 부서 하나만 보고 35개 조합 중 4개만 틀을 찾는다. 나머지는 GTM의 `Software Solution` 틀로 물러난다(Step 2·6, 직접 확인) | 틀 사전을 화면 선택지에 맞게 고친 복사본에서 시험한다(더 해보기) |
-| 앱 README는 `Basic`·`Medium`·`Deep` 수준에 따라 개인화가 달라진다고 하는데 결과가 같다 | 수준은 JSON에 낱말로 실릴 뿐 앱 코드가 갈라지는 곳이 없다(Step 6, 소스로 확인) | 수준은 모델에 보내는 힌트일 뿐이다 |
+| 앱 README(`advanced_ai_agents/single_agent_apps/ai_email_gtm_reachout_agent/README.md:130-133`)는 `Basic`·`Medium`·`Deep` 수준에 따라 개인화가 달라진다고 하지만 앱 코드에는 수준별 분기가 없다(소스로 확인) | 수준은 이메일 요청 JSON에 낱말로 실려 모델에 갈 뿐 앱 코드가 갈라지는 곳이 없다(Step 6, 소스로 확인). 진짜 `gpt-5`가 그 낱말에 따라 다르게 쓰는지는 키가 없어 확인하지 못했다 | 수준은 모델에 보내는 힌트로만 쓰인다. 차이를 보려면 진짜 키로 `Basic`과 `Deep`을 각각 돌려 이메일을 비교한다 |
 | 실행한 폴더에 `tmp/`가 생기는데 안은 비어 있다 | `SqliteDb(db_file="tmp/agno_workflows.db")`가 작업 폴더 기준 상대 경로의 부모 폴더만 만들고 DB 파일은 만들지 않는다(Step 8, 직접 확인) | 지워도 된다. 저장소의 `.gitignore`에 `tmp/` 규칙이 없지만 빈 폴더라 `git status`에는 안 나타난다 |
 | Windows에서 출력을 파이프나 파일로 받으면 로그마다 `--- Logging error ---`와 `UnicodeEncodeError: 'cp949' codec can't encode character`가 난다 | 앱이 로그 문구에 이모지를 넣는데 파이프로 받으면 Windows의 기본 인코딩(`cp949` 등)이 이를 못 쓴다. 앱은 죽지 않고 계속 돈다(직접 확인) | `PYTHONIOENCODING=utf-8`을 먼저 건다(사전 준비). 터미널에 바로 찍을 때는 나지 않는다 |
 
@@ -973,4 +981,4 @@ True []
 
 ## 다음 날 예고
 
-[Day 102 · 💰 AI Personal Finance Planner](../day102-ai-personal-finance-agent/README.md) — 원본 앱 README 기준으로, 재무 목표와 현재 상황을 입력하면 GPT-4o와 SerpApi 검색 도구를 쥔 agno 에이전트가 예산·투자·저축 계획을 써 주는 작은 Streamlit 앱입니다.
+[Day 102 · 💰 AI Personal Finance Planner](../day102-ai-personal-finance-agent/README.md) — 키 두 개를 받아 `gpt-4o` 에이전트가 예산·투자·저축 계획을 써 주는 68줄짜리 Streamlit 앱입니다. 검색 도구를 쥔 에이전트가 실제로 불리는지를 소스로 따라갑니다.
