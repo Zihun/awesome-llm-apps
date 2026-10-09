@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+사용자: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+story_agent: 스토리 { class: ours }
+gpt: GPT-4o mini { class: ext }
+
+사용자 -> ui: 게임 설정 15칸 입력 · Generate Game Concept 클릭
+ui -> story_agent: initiate_swarm_chat(task, max_rounds=13)
+story_agent -> gpt: 요약 강제 프롬프트 + task
+gpt -> story_agent: update_story_overview 호출

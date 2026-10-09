@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit 화면 { class: ours }
+story_agent: 스토리 { class: ours }
+gameplay_agent: 게임플레이 { class: ours }
+gpt: GPT-4o mini { class: ext }
+
+story_agent -> ui: 사이드바에 Story 요약 표시
+story_agent -> gameplay_agent: 이관 SwarmResult(gameplay_agent)
+gameplay_agent -> gpt: 요약 강제 프롬프트 + Story 요약
+gpt -> gameplay_agent: update_gameplay_overview 호출

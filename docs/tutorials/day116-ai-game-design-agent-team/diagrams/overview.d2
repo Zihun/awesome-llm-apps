@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: down
+
+사용자: 사용자 { class: person }
+ui: Streamlit 화면 (game_design_agent_team.py) { class: ours }
+
+swarm: "AG2 Swarm (SwarmAgent 4개)" {
+  class: group
+  story_agent: 스토리 (story_agent) { class: ours }
+  gameplay_agent: 게임플레이 (gameplay_agent) { class: ours }
+  visuals_agent: 비주얼 (visuals_agent) { class: ours }
+  tech_agent: 기술 (tech_agent) { class: ours }
+}
+
+gpt: GPT-4o mini (OpenAI) { class: ext }
+
+사용자 -> ui: 게임 설정 입력 · 버튼 클릭
+ui -> swarm.story_agent: initiate_swarm_chat(task)
+swarm.story_agent -> gpt: 시스템 프롬프트 + 대화
+swarm.gameplay_agent -> gpt: 시스템 프롬프트 + 대화
+swarm.visuals_agent -> gpt: 시스템 프롬프트 + 대화
+swarm.tech_agent -> gpt: 시스템 프롬프트 + 대화
+swarm -> ui: ChatResult 반환
+ui -> 사용자: 4개 섹션으로 결과 표시

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+visuals_agent: 비주얼 { class: ours }
+tech_agent: 기술 { class: ours }
+gpt: GPT-4o mini { class: ext }
+
+visuals_agent -> tech_agent: 이관 AFTER_WORK(tech_agent)
+tech_agent -> gpt: 본문 프롬프트(도구 없음) + 요약 4개
+gpt -> tech_agent: "## Tech Design 본문"

@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit 화면 { class: ours }
+tech_agent: 기술 { class: ours }
+story_agent: 스토리 { class: ours }
+gpt: GPT-4o mini { class: ext }
+
+tech_agent -> ui: 사이드바에 Tech 요약 표시
+tech_agent -> story_agent: 이관 SwarmResult(story_agent)
+story_agent -> gpt: 본문 프롬프트(도구 없음) + 요약 4개
+gpt -> story_agent: "## Story Design 본문"

@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit 화면 { class: ours }
+visuals_agent: 비주얼 { class: ours }
+tech_agent: 기술 { class: ours }
+gpt: GPT-4o mini { class: ext }
+
+visuals_agent -> ui: 사이드바에 Visuals 요약 표시
+visuals_agent -> tech_agent: 이관 SwarmResult(tech_agent)
+tech_agent -> gpt: 요약 강제 프롬프트 + 앞 요약 3개
+gpt -> tech_agent: update_tech_overview 호출

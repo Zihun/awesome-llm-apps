@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+story_agent: 스토리 (story_agent) { class: ours }
+gameplay_agent: 게임플레이 (gameplay_agent) { class: ours }
+visuals_agent: 비주얼 (visuals_agent) { class: ours }
+tech_agent: 기술 (tech_agent) { class: ours }
+cache: ".cache/41/cache.db (cache_seed 기본값 41)" { class: store }
+
+story_agent -> cache: 요청·응답 저장
+gameplay_agent -> cache: 요청·응답 저장
+visuals_agent -> cache: 요청·응답 저장
+tech_agent -> cache: 요청·응답 저장

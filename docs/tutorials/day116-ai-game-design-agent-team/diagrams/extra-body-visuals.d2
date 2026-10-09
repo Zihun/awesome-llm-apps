@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gameplay_agent: 게임플레이 { class: ours }
+visuals_agent: 비주얼 { class: ours }
+gpt: GPT-4o mini { class: ext }
+
+gameplay_agent -> visuals_agent: 이관 AFTER_WORK(visuals_agent)
+visuals_agent -> gpt: 본문 프롬프트(도구 없음) + 요약 4개
+gpt -> visuals_agent: "## Visuals Design 본문"
