@@ -1,0 +1,34 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+adkweb: "adk web 서버\n(ADK 개발 서버)" { class: ext }
+
+app: "앱 코드 (agent.py · tools.py)" {
+  class: group
+  grid-columns: 3
+  grid-gap: 8
+  coordinator: "코디네이터\n(UIUXFeedbackTeam)" { class: ours }
+  info: "안내 에이전트\n(InfoAgent)" { class: ours }
+  editor: "편집 에이전트\n(DesignEditor)" { class: ours }
+  pipeline: "분석 파이프라인\n(AnalysisPipeline)" { class: ours }
+  search: "검색 도우미\n(SearchAgent)" { class: ours }
+  tools: "이미지 도구 둘\n(tools.py)" { class: ours }
+}
+
+gemini: "Gemini 텍스트 모델\n(gemini-2.5-flash)" { class: ext }
+gemini_image: "Gemini 이미지 모델\n(gemini-2.5-flash-image)" { class: ext }
+sessiondb: "세션 DB\n(.adk/session.db)" { class: store }
+artifacts: "아티팩트 폴더\n(.adk/artifacts)" { class: store }
+
+user -> adkweb: "이미지 + 요청 글"
+adkweb -> user: "단계별 응답"
+adkweb -> app: "root_agent 실행"
+adkweb -> sessiondb: "세션 · 상태 저장"
+app -> gemini: "지시문 · 대화 (이미지 포함) ·\ngoogleSearch 선언 ·\n프롬프트 다듬기"
+gemini -> app: "글 · 함수 호출"
+app -> gemini_image: "프롬프트 (+ 편집할 이미지)"
+gemini_image -> app: "이미지 inline_data"
+app -> artifacts: "save_artifact (PNG)"
+artifacts -> app: "load_artifact (편집 대상)"
+app -> sessiondb: "state (버전 번호 · 파일 이름)"

@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+tool: 생성 도구 { class: ours }
+gemini_image: Gemini 이미지 { class: ext }
+
+tool -> gemini_image: "streamGenerateContent (IMAGE, TEXT)"
+gemini_image -> tool: "inline_data (PNG)"

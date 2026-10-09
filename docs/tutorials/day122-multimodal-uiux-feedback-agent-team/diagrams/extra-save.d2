@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+implementer: VisualImplementer { class: ours }
+artifacts: 아티팩트 { class: store }
+tool: 생성 도구 { class: ours }
+sessiondb: 세션 DB { class: store }
+
+tool -> artifacts: "save_artifact (landing_page_improved_v1.png)"
+tool -> sessiondb: "state (asset_versions · asset_filenames)"
+tool -> implementer: "저장 안내 문자열"

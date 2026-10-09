@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adkweb: adk web { class: ext }
+implementer: VisualImplementer { class: ours }
+gemini: Gemini 텍스트 { class: ext }
+
+implementer -> gemini: "functionResponse + 대화"
+gemini -> implementer: "개선 요약 글"
+implementer -> adkweb: "이벤트 (함수 응답 · 요약)"
+adkweb -> user: "응답 목록 (JSON)"

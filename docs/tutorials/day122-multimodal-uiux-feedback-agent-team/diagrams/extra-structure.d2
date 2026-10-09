@@ -1,0 +1,25 @@
+...@../../_tools/theme
+direction: right
+
+coordinator: "코디네이터\n(root_agent)" { class: ours }
+info: "안내 에이전트\n(info_agent)" { class: ours }
+editor: "편집 에이전트\n(design_editor)" { class: ours }
+
+pipeline: "분석 파이프라인 (SequentialAgent, 번호 순서)" {
+  class: group
+  critic: "1. UICritic" { class: ours }
+  strategist: "2. DesignStrategist" { class: ours }
+  implementer: "3. VisualImplementer" { class: ours }
+}
+
+search: "검색 도우미\n(search_agent)" { class: ours }
+edit_tool: "편집 도구\n(edit_landing_page_image)" { class: ours }
+gen_tool: "생성 도구\n(generate_improved_landing_page)" { class: ours }
+
+coordinator -> info: "sub_agents"
+coordinator -> editor: "sub_agents"
+coordinator -> pipeline: "sub_agents"
+editor -> edit_tool: "tools=[...]"
+pipeline.critic -> search: "AgentTool"
+pipeline.strategist -> search: "AgentTool"
+pipeline.implementer -> gen_tool: "tools=[...]"

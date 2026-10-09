@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adkweb: adk web { class: ext }
+coordinator: 코디네이터 { class: ours }
+critic: UICritic { class: ours }
+gemini: Gemini 텍스트 { class: ext }
+
+user -> adkweb: "이미지 + 요청 글 (POST /run)"
+adkweb -> coordinator: "root_agent 실행"
+coordinator -> gemini: "지시문 + 대화(이미지 포함)"
+gemini -> coordinator: "transfer_to_agent(AnalysisPipeline)"
+coordinator -> critic: "첫 하위 에이전트"
+critic -> gemini: "지시문 + 대화(이미지 포함) + SearchAgent 도구 선언"
+gemini -> critic: "분석 글 (OVERALL IMPRESSION · 점수 · ANALYSIS COMPLETE)"
