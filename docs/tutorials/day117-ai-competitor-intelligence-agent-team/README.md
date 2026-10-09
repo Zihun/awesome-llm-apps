@@ -1105,4 +1105,4 @@ Exa 선택에서는 탐색 에이전트가 모델 요청을 먼저 보내고(도
 
 ## 다음 날 예고
 
-[Day 118 · 👨‍💼 AI Services Agency (CrewAI)](../day118-ai-services-agency/README.md) — 제목은 "(CrewAI)"이지만 `agency.py`의 4행은 `agency_swarm`을 가져오는 앱입니다(소스로 확인). 에이전트 여럿이 역할을 나눠 맡는 쪽으로 한 걸음 더 가는 날입니다.
+[Day 118 · 👨‍💼 AI Services Agency](../day118-ai-services-agency/README.md) — 예전 제목에는 "(CrewAI)"가 붙어 있었지만 `agency.py`의 4행은 `agency_swarm`을 가져오는 앱입니다(소스로 확인). 에이전트 여럿이 역할을 나눠 맡는 쪽으로 한 걸음 더 가는 날입니다.
