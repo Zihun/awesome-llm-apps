@@ -1,0 +1,70 @@
+...@../../_tools/theme
+direction: down
+
+ui: 화면 (app.py) {
+  class: ours
+  width: 360
+  height: 40
+}
+router: 라우터 (router.py) {
+  class: ours
+  width: 360
+  height: 40
+}
+tools: 도구 (tools.py) {
+    class: ours
+    height: 40
+  }
+사용자: 사용자 {
+  class: person
+  width: 48
+  height: 48
+}
+
+team: "AG2 에이전트 5개 (agents.py)" {
+  class: group
+  label.near: bottom-right
+  triage: 분류 (triage) {
+    class: ours
+    height: 40
+  }
+  local: 로컬 (local) {
+    class: ours
+    height: 40
+  }
+  web: 웹 (web) {
+    class: ours
+    height: 40
+  }
+  verifier: 검증 (verifier) {
+    class: ours
+    height: 40
+  }
+  synth: 종합 (synthesizer) {
+    class: ours
+    height: 40
+  }
+}
+
+gpt: gpt-5-nano (OpenAI) {
+  class: ext
+  height: 48
+}
+searx: SearXNG {
+  class: ext
+  height: 48
+}
+
+router -> ui: dict
+ui -> 사용자: 결과 표시
+사용자 -> ui: 입력·클릭
+ui -> tools: 파일 → 조각
+ui -> router: run_pipeline
+router -> team.triage: 분류 요청
+router -> team.local: 발췌 요청
+router -> team.web: 웹 결과 요청
+router -> team.verifier: 초안·증거
+router -> team.synth: 초안·증거·판정
+router -> tools: 검색 호출
+tools -> searx: GET 질문
+team -> gpt: 프롬프트

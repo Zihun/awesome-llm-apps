@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+router: 라우터 (router.py) { class: ours }
+tools: 도구 (tools.py) { class: ours }
+searx: SearXNG (searxng.site) { class: ext }
+web: 웹 조사 (web_research_agent) { class: ours }
+gpt: gpt-5-nano (OpenAI) { class: ext }
+
+router -> tools: "run_searxng(질문, max_results=5)"
+tools -> searx: "GET q=질문&format=json"
+searx -> tools: "JSON results"
+tools -> router: "결과 목록 또는 []"
+router -> web: "run_agent(web_prompt)"
+web -> gpt: "웹 결과 프롬프트"
+gpt -> web: "응답 문자열"
+web -> router: "reply 문자열"
+router -> router: "_extract_json → evidence, draft_answer"

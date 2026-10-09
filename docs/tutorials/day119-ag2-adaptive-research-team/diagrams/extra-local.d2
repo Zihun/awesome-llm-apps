@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+tools: 도구 (tools.py) { class: ours }
+router: 라우터 (router.py) { class: ours }
+local: 로컬 조사 (local_research_agent) { class: ours }
+gpt: gpt-5-nano (OpenAI) { class: ext }
+
+router -> tools: "search_local(질문, 조각, top_k=5)"
+tools -> router: "겹친 단어 수가 큰 조각 최대 5개"
+router -> router: "_summarize_chunks → 조각마다 앞 300자"
+router -> local: "run_agent(local_prompt) 문서·청크·발췌 줄"
+local -> gpt: "문서 발췌 프롬프트"
+gpt -> local: "응답 문자열"
+local -> router: "reply 문자열"
+router -> router: "_extract_json → evidence, draft_answer"

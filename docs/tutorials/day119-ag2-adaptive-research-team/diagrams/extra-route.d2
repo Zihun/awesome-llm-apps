@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: 화면 (app.py) { class: ours }
+router: 라우터 (router.py) { class: ours }
+triage: 분류 (triage_agent) { class: ours }
+gpt: gpt-5-nano (OpenAI) { class: ext }
+
+ui -> router: "run_pipeline(질문, 조각, 설정)"
+router -> router: "build_agents → 에이전트 5개"
+router -> triage: "run_agent(질문 + 문서 요약)"
+triage -> gpt: "분류 프롬프트 (temperature 0.2)"
+gpt -> triage: "응답 문자열"
+triage -> router: "reply 문자열"
+router -> router: "_extract_json → route 정하기"

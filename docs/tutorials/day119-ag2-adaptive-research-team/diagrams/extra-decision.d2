@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+triage: "triage 응답 JSON (route 없으면 local)" { class: ours }
+override: "조각 0개이고 웹이 켜져 있나" { class: ours }
+branch: "route가 web이고 웹이 켜져 있나 (아니오면 local 경로)" { class: ours }
+web: "웹 조사 에이전트 (run_searxng 결과)" { class: ours }
+local: "로컬 조사 에이전트 (search_local 발췌)" { class: ours }
+
+triage -> override: "route"
+override -> branch: "예이면 web으로 덮어씀"
+branch -> web: "예"
+branch -> local: "아니오"

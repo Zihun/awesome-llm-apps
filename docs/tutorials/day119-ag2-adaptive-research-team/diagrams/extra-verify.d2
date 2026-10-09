@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+router: 라우터 (router.py) { class: ours }
+verifier: 검증 (verifier_agent) { class: ours }
+gpt: gpt-5-nano (OpenAI) { class: ext }
+
+router -> verifier: "run_agent(verifier_prompt) 질문 + 초안 + 증거 JSON"
+verifier -> gpt: "검증 프롬프트"
+gpt -> verifier: "응답 문자열"
+verifier -> router: "reply 문자열"
+router -> router: "_extract_json → verdict, gaps"

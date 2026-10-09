@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+사용자: 사용자 { class: person }
+ui: 화면 (app.py) { class: ours }
+router: 라우터 (router.py) { class: ours }
+synth: 종합 (synthesizer_agent) { class: ours }
+gpt: gpt-5-nano (OpenAI) { class: ext }
+
+router -> synth: "run_agent(초안·증거·판정)"
+synth -> gpt: "종합 프롬프트"
+gpt -> synth: "최종 답 문자열"
+synth -> router: "final_answer"
+router -> ui: "결과 dict"
+ui -> 사용자: "결과 네 칸 표시"
