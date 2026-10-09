@@ -816,7 +816,11 @@ tampered: denied | verify method: False
 
 창구가 에이전트에 `(True, ...)`를 돌려주면 에이전트는 가짜 행동의 문자열을 만들고, 응답에 넣을 점수를 창구의 `get_trust_score`로 다시 물어(`multi_agent_trust_layer.py:644`) 창구가 점수 엔진에서 755를 받아 옵니다. 그 값으로 데모에 `{success: True, result, trust_score: 755}`를 돌려줍니다.
 
-두 번째 시험(`send_email`)은 같은 길을 가다 정책 엔진에서 갈립니다. 앞 네 메시지(데모의 `execute`, 에이전트의 `authorize_action`, 신원 등록부 조회와 응답)는 첫 시험과 값만 `send_email`로 다르고, 그림은 판정부터 그립니다.
+두 번째 시험(`send_email`)은 같은 길을 가다 정책 엔진에서 갈립니다. 앞 네 메시지(데모의 `execute`, 에이전트의 `authorize_action`, 신원 등록부 조회와 응답)는 첫 시험과 값만 `send_email`로 다릅니다.
+
+![거부되는 요청의 신원 확인 시퀀스](diagrams/extra-denied-request.svg)
+
+여섯 배우를 한 장에 그리면 배우 순서 720가지를 모두 재 보아도 검사를 통과하는 것이 없어(위반 0이 없고, 위반이 없는 순서는 폭이 1300px을 넘음) 이 경계에서 나눴습니다. 이어서 정책 판정입니다.
 
 ![거부되는 정책 판정 시퀀스](diagrams/extra-denied-policy.svg)
 
