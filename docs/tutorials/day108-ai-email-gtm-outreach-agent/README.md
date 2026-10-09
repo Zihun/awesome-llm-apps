@@ -1,6 +1,6 @@
 # Day 108 · AI Email GTM Outreach Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(`requirements.txt` 그대로는 첫 import에서 막히고, 오늘 설치되는 agno 3에서는 에이전트를 만드는 순간 `TypeError`가 나며, 앱의 `gpt-5`는 기본 스냅숏이 2026-12-11 종료 예정) · 예상 소요 120분(가짜 OpenAI 서버를 직접 띄우고 도우미 스크립트 여섯 개를 저장해 돌리며 시퀀스 그림 열세 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 확인 불가(키가 없어 토큰 수를 재지 못했습니다. 캠페인 한 번의 모델 호출은 연락처가 하나라도 있으면 에이전트 넷에 메모리 요청 넷을 더한 8번이 최소(연락처가 비면 이메일 에이전트를 부르지 않아 6번)이고 — 직접 확인 — 요금은 1M 토큰당 `gpt-5` 입력 $1.25·출력 $10, `gpt-4o` 입력 $2.5·출력 $10입니다(2026-10-09에 받은 OpenAI 모델 페이지 원문). Exa 요금은 확인하지 못했습니다. 이 문서의 확인은 모두 가짜 서버로 돌아 무료입니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(`requirements.txt` 그대로는 첫 import에서 막히고, 오늘 설치되는 agno 3에서는 에이전트를 만드는 순간 `TypeError`가 나며, 앱의 `gpt-5`는 기본 스냅숏이 2026-12-11 종료 예정) · 예상 소요 120분(가짜 OpenAI 서버를 직접 띄우고 도우미 스크립트 여섯 개를 저장해 돌리며 시퀀스 그림 열네 장을 따라가는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 확인 불가(키가 없어 토큰 수를 재지 못했습니다. 캠페인 한 번의 모델 호출은 연락처가 하나라도 있으면 에이전트 넷에 메모리 요청 넷을 더한 8번이 최소(연락처가 비면 이메일 에이전트를 부르지 않아 6번)이고 — 직접 확인 — 요금은 1M 토큰당 `gpt-5` 입력 $1.25·출력 $10, `gpt-4o` 입력 $2.5·출력 $10입니다(2026-10-09에 받은 OpenAI 모델 페이지 원문). Exa 요금은 확인하지 못했습니다. 이 문서의 확인은 모두 가짜 서버로 돌아 무료입니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent`
 
 ## 오늘 만들 것
 
@@ -37,13 +37,15 @@
 | agno 통계 API | 성공한 에이전트 실행마다 익명 통계 한 건 | 코드 없음 (agno 안, Step 7) |
 | 쓰이지 않는 정의 | `require_env`, `run_pipeline`, `require_env`만 쓰는 `sys` import | `advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent/ai_email_gtm_outreach_agent.py:14-17`, `advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent/ai_email_gtm_outreach_agent.py:183-196` |
 
-위 그림은 한 파일 안의 부품을 한 묶음으로 두고 파일 밖으로 나가는 화살표만 그렸습니다. 파일 안의 부품 사이는 아래 여섯 장 가운데 앞의 네 장이, 에이전트와 외부 서비스 사이는 뒤의 두 장이 보여 줍니다. 먼저 화면과 단계 함수와 JSON 읽기 사이입니다. 화면은 설명·회사 수·발신자와 만든 에이전트를 단계 함수에 넘깁니다.
+위 그림은 한 파일 안의 부품을 한 묶음으로 두고 파일 밖으로 나가는 화살표만 그렸습니다. 파일 안의 부품 사이는 아래 일곱 장 가운데 앞의 다섯 장이, 에이전트와 외부 서비스 사이는 뒤의 두 장이 보여 줍니다. 먼저 화면과 단계 함수와 JSON 읽기 사이입니다. 화면은 설명·회사 수·발신자와 만든 에이전트를 단계 함수에 넘깁니다.
 
 ![화면·단계 함수·JSON 읽기의 구조](diagrams/extra-structure-screen.svg)
 
 에이전트는 `main`이 시작 버튼 안에서 공장 함수로 만들어 단계 함수에 넘깁니다(250~253행). 이메일 스타일은 `main`이 `create_email_writer_agent(email_style)`에 넘기는 것이 전부이고, 단계 함수에는 가지 않습니다.
 
-![화면이 에이전트를 만드는 구조](diagrams/extra-structure-create.svg)
+![화면이 기업 탐색·연락처 에이전트를 만드는 구조](diagrams/extra-structure-create.svg)
+
+![화면이 기업 조사·이메일 작성 에이전트를 만드는 구조](diagrams/extra-structure-create-more.svg)
 
 스타일 이름을 지시문 한 줄로 바꾸는 것은 이메일 작성 에이전트의 공장 함수 안에서 불리는 `get_email_style_instruction`입니다.
 
@@ -751,7 +753,7 @@ print("수신기: http://localhost:7070", flush=True)
 ThreadingHTTPServer(("127.0.0.1", 7070), Handler).serve_forever()
 ```
 
-새 터미널에서 `uv run --no-project python recv.py`를 띄우고, 통계를 끄지 않은 터미널에서 캠페인을 돌립니다. 통계는 배경 스레드가 보내고 프로세스가 끝날 때 기다려 주는 시간에 상한(`telemetry_shutdown_timeout`, 기본 2초, 환경변수 `AGNO_TELEMETRY_SHUTDOWN_TIMEOUT`)이 있습니다. 여기에 Windows에서는 `localhost`가 IPv6(`::1`)를 먼저 시도하는데 `recv.py`는 IPv4(`127.0.0.1`)에서만 들어서, 같은 수신기로 잰 POST 한 건이 `localhost`로 2.79초, `127.0.0.1`로 0.97초 걸렸습니다(리뷰어가 직접 잼). 그래서 `drive.py`가 끝나고 12초를 기다립니다(`wait=12`). `wait=0`은 0건, `wait=4`는 2건, `wait=12`는 4건이었습니다. 다른 OS에서는 덜 기다려도 될 수 있습니다.
+새 터미널에서 `uv run --no-project python recv.py`를 띄우고, 통계를 끄지 않은 터미널에서 캠페인을 돌립니다. 통계는 배경 스레드가 보내고 프로세스가 끝날 때 기다려 주는 시간에 상한(`telemetry_shutdown_timeout`, 기본 2초, 환경변수 `AGNO_TELEMETRY_SHUTDOWN_TIMEOUT`)이 있습니다. 여기에 Windows에서는 `localhost`가 IPv6(`::1`)를 먼저 시도하는데 `recv.py`는 IPv4(`127.0.0.1`)에서만 들어서, 같은 수신기로 잰 httpx POST 한 건이 `localhost`로 3.49초와 3.08초, `127.0.0.1`로 1.00초와 1.02초 걸렸습니다(수신기를 IPv4 전용으로 따로 띄워 직접 확인, Windows). 그래서 `drive.py`가 끝나고 12초를 기다립니다(`wait=12`). `wait=0`은 0건, `wait=4`는 2건, `wait=12`는 4건이었습니다(직접 확인). 다른 OS에서는 덜 기다려도 될 수 있습니다.
 
 ```bash
 unset AGNO_TELEMETRY
@@ -817,7 +819,7 @@ agno의 `Agent.run()`이 모델 오류를 예외로 올리지 않고 오류 문�
 
 ## 요청 한 건이 흐르는 과정
 
-버튼 한 번이 만드는 흐름을 열세 장으로 나눠 그렸습니다. 전부를 한 장에 담으면 1,684px 이상이라 `sequence` 상한 1,500px을 넘고, `extra-*` 조각의 상한은 1,000px이라(직접 렌더해 확인) 단계 경계에서 나눴습니다. 배우는 화면(`main`), 단계 함수(`run_*`), JSON 읽기, 에이전트를 따로 두었습니다. 응답을 JSON으로 읽고 회사 수를 자르는 것은 단계 함수 안의 일이고(139·141행), 단계마다 화면이 띄우는 안내(`1/4`~`4/4`, `Completed`)는 화면이 보냅니다. 모델이 검색을 한 번 요청하는 경우를 그렸고, 진짜 모델이 그렇게 하는지는 키가 없어 보지 못했습니다. 기업 탐색(둘째~일곱째 장)은 에이전트 하나를 따라가고, 연락처·조사·이메일(여덟째~열셋째 장)은 검색 왕복을 뺀 모델 한 번의 경우만 그렸습니다. 기억·세션 저장·통계는 에이전트마다 기업 탐색과 같은 모양으로 따라붙습니다(Step 7).
+버튼 한 번이 만드는 흐름을 열네 장으로 나눠 그렸습니다. 전부를 한 장에 담으면 1,684px 이상이라 `sequence` 상한 1,500px을 넘고, `extra-*` 조각의 상한은 1,000px이라(직접 렌더해 확인) 단계 경계에서 나눴습니다. 배우는 화면(`main`), 단계 함수(`run_*`), JSON 읽기, 에이전트를 따로 두었습니다. 응답을 JSON으로 읽고 회사 수를 자르는 것은 단계 함수 안의 일이고(139·141행), 단계마다 화면이 띄우는 안내(`1/4`~`4/4`, `Completed`)는 화면이 보냅니다. 모델이 검색을 한 번 요청하는 경우를 그렸고, 진짜 모델이 그렇게 하는지는 키가 없어 보지 못했습니다. 기업 탐색(둘째~여덟째 장)은 에이전트 하나를 따라가고, 연락처·조사·이메일(아홉째~열넷째 장)은 검색 왕복을 뺀 모델 한 번의 경우만 그렸습니다. 기억·세션 저장·통계는 에이전트마다 기업 탐색과 같은 모양으로 따라붙습니다(Step 7).
 
 1. **버튼을 누르면 `main`이 키와 두 설명을 검사하고, 빈 진행 막대를 그리고, 에이전트 넷을 만듭니다. 만들 때마다 `SqliteDb`가 한 번씩 생깁니다.**
    ![클릭에서 에이전트 생성까지](diagrams/sequence.svg)
@@ -827,23 +829,25 @@ agno의 `Agent.run()`이 모델 오류를 예외로 올리지 않고 오류 문�
    ![기업 탐색: 모델 요청](diagrams/extra-call.svg)
 4. **에이전트가 Exa에서 검색합니다.**
    ![기업 탐색: Exa 검색](diagrams/extra-search.svg)
-5. **검색 결과로 모델을 다시 불러 JSON 텍스트를 받아 단계 함수에 돌려줍니다.**
+5. **검색 결과로 모델을 다시 불러 JSON 텍스트를 받습니다.**
    ![기업 탐색: 재요청과 응답](diagrams/extra-answer.svg)
-6. **에이전트가 세션을 저장하고 통계를 보냅니다.**
+6. **에이전트가 세션을 저장하고 통계를 보냅니다(agno 3.1.2 `_run.py`에서 저장 668행, 통계 673행).**
    ![기업 탐색: 저장과 통계](diagrams/extra-finish.svg)
-7. **단계 함수가 JSON 읽기로 응답을 읽고 회사 수를 자른 뒤 `main`에 돌려주고, `main`이 진행 막대를 25%로 올립니다.**
+7. **그 다음에야 응답 텍스트를 단계 함수에 돌려줍니다(677행).**
+   ![기업 탐색: 응답 반환](diagrams/extra-return.svg)
+8. **단계 함수가 JSON 읽기로 응답을 읽고 회사 수를 자른 뒤 `main`에 돌려주고, `main`이 진행 막대를 25%로 올립니다.**
    ![기업 탐색: JSON 읽기와 진행 신호](diagrams/extra-parse.svg)
-8. **`main`이 "2/4" 안내를 띄우고 `run_contact_finder`를 부르면 연락처 에이전트가 `gpt-4o`로 연락처 JSON 텍스트를 만들어 돌려줍니다.**
+9. **`main`이 "2/4" 안내를 띄우고 `run_contact_finder`를 부르면 연락처 에이전트가 `gpt-4o`로 연락처 JSON 텍스트를 만들어 돌려줍니다.**
    ![연락처 탐색](diagrams/extra-contact.svg)
-9. **단계 함수가 연락처 JSON을 읽고 진행 막대가 50%가 됩니다.**
+10. **단계 함수가 연락처 JSON을 읽고 진행 막대가 50%가 됩니다.**
    ![연락처 JSON 읽기](diagrams/extra-contact-parse.svg)
-10. **"3/4" 안내 뒤 기업 조사 에이전트가 조사 JSON 텍스트를 만들어 돌려줍니다.**
+11. **"3/4" 안내 뒤 기업 조사 에이전트가 조사 JSON 텍스트를 만들어 돌려줍니다.**
     ![기업 조사](diagrams/extra-research.svg)
-11. **단계 함수가 조사 JSON을 읽고 진행 막대가 75%가 됩니다.**
+12. **단계 함수가 조사 JSON을 읽고 진행 막대가 75%가 됩니다.**
     ![조사 JSON 읽기](diagrams/extra-research-parse.svg)
-12. **"4/4" 안내 뒤 이메일 작성 에이전트가 두 JSON을 한 프롬프트로 받아 메일 JSON 텍스트를 돌려줍니다.**
+13. **"4/4" 안내 뒤 이메일 작성 에이전트가 두 JSON을 한 프롬프트로 받아 메일 JSON 텍스트를 돌려줍니다.**
     ![이메일 작성](diagrams/extra-email.svg)
-13. **단계 함수가 메일 JSON을 읽고, 진행 막대가 100%가 되고, 결과를 `st.session_state`에 저장한 뒤 "Completed"와 결과 네 구역·확장 상자가 그려집니다.**
+14. **단계 함수가 메일 JSON을 읽고, 진행 막대가 100%가 되고, 결과를 `st.session_state`에 저장한 뒤 "Completed"와 결과 네 구역·확장 상자가 그려집니다.**
     ![이메일 JSON 읽기와 결과 그리기](diagrams/extra-complete.svg)
 
 모델이 도구를 쓰지 않고 곧바로 답하면 3~5의 검색 왕복(Exa 호출과 모델 재요청)이 빠집니다. 그림에는 없지만 이 흐름과 별도로 에이전트 실행마다 통계 한 건이 나갑니다(Step 7).

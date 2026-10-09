@@ -1,0 +1,7 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
+run: "단계 함수\n(run_company_finder)" { class: ours }
+
+finder -> run: "resp.content\n(JSON 텍스트)"

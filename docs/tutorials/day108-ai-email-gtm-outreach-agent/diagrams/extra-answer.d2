@@ -3,8 +3,6 @@ shape: sequence_diagram
 
 openai: "OpenAI API\n(gpt-5)" { class: ext }
 finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
-run: "단계 함수\n(run_company_finder)" { class: ours }
 
 finder -> openai: "gpt-5 재요청\n(assistant · tool 메시지)"
 openai -> finder: "{\" companies\": [...]}\n텍스트"
-finder -> run: "resp.content\n(JSON 텍스트)"

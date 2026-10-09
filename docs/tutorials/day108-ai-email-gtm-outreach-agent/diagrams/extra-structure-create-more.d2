@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: right
+
+main: "화면\n(main)" { class: ours }
+research: "기업 조사\n(ResearchAgent)" { class: ours }
+writer: "이메일 작성\n(EmailWriterAgent)" { class: ours }
+
+main -> research: "create_research_agent()"
+research -> main: "Agent"
+main -> writer: "create_email_writer_agent(\n스타일)"
+writer -> main: "Agent"
