@@ -65,6 +65,6 @@ router -> team.local: 발췌 요청
 router -> team.web: 웹 결과 요청
 router -> team.verifier: 초안·증거
 router -> team.synth: 초안·증거·판정
-router -> tools: 검색 호출
+router -> tools: 검색 호출 (search_local · run_searxng)
 tools -> searx: GET 질문
 team -> gpt: 프롬프트

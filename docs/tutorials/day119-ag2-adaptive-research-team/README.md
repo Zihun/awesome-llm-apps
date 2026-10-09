@@ -1,6 +1,6 @@
 # Day 119 · 🧭 AG2 Adaptive Research Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(`requirements.txt`의 `ag2[openai]>=0.11.0`은 오늘 1.1.2로 풀리는데 이 버전에는 앱이 import하는 `autogen` 패키지가 없어, 설치 그대로는 첫 줄에서 `ModuleNotFoundError`로 멈춥니다. `ag2[openai]<0.14`로 고정해야 돕니다 — Step 1. 또 기본 모델 `gpt-5-nano`의 날짜 붙은 버전 `gpt-5-nano-2025-08-07`이 OpenAI 폐기 표에서 2026-12-11에 내려갑니다) · 예상 소요 90분(앱은 네 파일 402줄이지만 `ag2` 버전을 열 가지로 갈아 끼워 보고, 가짜 서버와 확인 스크립트 여섯을 직접 저장해 돌리고, 시퀀스·구조 그림 일곱 장을 따라가야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 요청 1건에 `gpt-5-nano` 호출 4회, 합쳐서 $0.01 이하(OpenAI 모델 페이지의 입력 $0.05·출력 $0.40(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-5-nano, 2026-10-09 확인)에, 호출당 입력 2,000토큰·출력 4,000토큰(추론 토큰 포함)이라고 가정해 대입한 어림이며 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(`requirements.txt`의 `ag2[openai]>=0.11.0`은 오늘 1.1.2로 풀리는데 이 버전에는 앱이 import하는 `autogen` 패키지가 없어, 설치 그대로는 첫 줄에서 `ModuleNotFoundError`로 멈춥니다. `ag2[openai]<0.14`로 고정해야 돕니다 — Step 1. 또 기본 모델 `gpt-5-nano`의 날짜 붙은 버전 `gpt-5-nano-2025-08-07`이 OpenAI 폐기 표에서 2026-12-11에 내려갑니다) · 예상 소요 105분(앱은 네 파일 402줄이지만 `ag2` 버전을 열 가지로 갈아 끼워 보고, 가짜 서버와 확인 스크립트 여섯을 직접 저장해 돌리고, 시퀀스·구조 그림 일곱 장을 따라가야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 요청 1건에 `gpt-5-nano` 호출 4회, 합쳐서 $0.01 이하(OpenAI 모델 페이지의 입력 $0.05·출력 $0.40(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-5-nano, 2026-10-09 확인)에, 호출당 입력 2,000토큰·출력 4,000토큰(추론 토큰 포함)이라고 가정해 대입한 어림이며 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team`
 
 ## 오늘 만들 것
 
@@ -21,7 +21,7 @@ PDF·텍스트 문서를 올리고 질문을 쓰고 "Run Research"를 누르면,
 | `ag2[openai]<0.14` | `import autogen`이 되고 앱이 쓰는 `SearxngSearchTool`이 남아 있는 마지막 계열(0.13.4). `requirements.txt` 그대로는 1.1.2가 깔려 실패합니다 | Step 1에서 `uv pip install` |
 | 인터넷 연결 | PyPI 설치, OpenAI API 호출, 공개 SearXNG 검색 | 별도 설치 없음 |
 
-기본 모델 `gpt-5-nano`는 오늘(2026-10-09) 아직 쓸 수 있지만, OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations)에 `gpt-5-nano-2025-08-07`이 2026-12-11 제거, 대체 `gpt-5.6-luna`로 올라 있습니다(WebFetch 요약으로 확인했고 원문 전체를 직접 읽지는 않았습니다. 짧은 이름 `gpt-5-nano` 자체는 표에 없습니다). 사이드바의 "Model" 칸에서 바꿀 수 있습니다. 앱이 닿는 외부 서비스는 OpenAI와 SearXNG 둘뿐이고, 이 앱은 agno를 쓰지 않으므로 앞 날들에서 본 agno 통계 전송도 없습니다(import 줄이 `autogen`·`streamlit`·`pypdf`·`os`·표준 라이브러리뿐 — 소스로 확인). `ag2` 0.13.4 소스에서 `posthog`를 언급하는 `.py`는 하나도 없었고, 앱이 쓰는 `oai/`·`agentchat/conversable_agent.py`·`agentchat/assistant_agent.py`·`tools/`에는 `telemetry`라는 글자도 없었습니다(grep으로 확인).
+기본 모델 `gpt-5-nano`는 오늘 아직 쓸 수 있지만, OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations)에 `gpt-5-nano-2025-08-07`이 2026-12-11 제거, 대체 `gpt-5.6-luna`로 올라 있습니다(2026-10-10 원문을 `curl`로 받아 그 행을 직접 확인). 짧은 이름 `gpt-5-nano`는 표에 따로 없지만, 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5-nano)가 "GPT-5 nano"를 Deprecated로 표시하고 스냅샷 목록에 `gpt-5-nano` → `gpt-5-nano-2025-08-07` 하나뿐이라, 짧은 이름도 같은 날 함께 내려가는 것으로 읽는 편이 안전합니다. 사이드바의 "Model" 칸에서 바꿀 수 있습니다. 앱이 닿는 외부 서비스는 OpenAI와 SearXNG 둘뿐이고, 이 앱은 agno를 쓰지 않으므로 앞 날들에서 본 agno 통계 전송도 없습니다(import 줄이 `autogen`·`streamlit`·`pypdf`·`os`·표준 라이브러리뿐 — 소스로 확인). `ag2` 0.13.4 소스에서 `posthog`를 언급하는 `.py`는 하나도 없었고, 앱이 쓰는 `oai/`·`agentchat/conversable_agent.py`·`agentchat/assistant_agent.py`·`tools/`에는 `telemetry`라는 글자도 없었습니다(grep으로 확인).
 
 ## 아키텍처 한눈에 보기
 
@@ -39,12 +39,25 @@ PDF·텍스트 문서를 올리고 질문을 쓰고 "Run Research"를 누르면,
 
 ## 단계별 진행
 
-명령은 bash 기준입니다. 이 문서의 재현은 저장소 밖의 스크래치 폴더에서 했고, 앱 폴더를 그 안의 `app/`으로 복사해 썼습니다. 독자도 그렇게 하면 저장소에 `.venv`나 `__pycache__`가 생기지 않습니다. PowerShell에서는 줄바꿈이 든 `-c "..."`가 따옴표 문제를 일으키니 같은 내용을 `.py` 파일로 저장해 실행하세요(PowerShell 형태는 실행해 보지 못했습니다). 스크래치 폴더를 만들고 안에서 시작합니다.
+명령은 bash 기준입니다. 이 문서의 재현은 저장소 밖의 스크래치 폴더에서 했고, 앱 폴더를 그 안의 `app/`으로 복사해 썼습니다. 독자도 그렇게 하면 저장소에 `.venv`나 `__pycache__`가 생기지 않습니다. `<저장소>`는 이 저장소를 받은 경로입니다. 스크래치 폴더를 만들고 안에서 시작합니다.
 
 ```bash
 mkdir ag2-day119 && cd ag2-day119
 cp -r <저장소>/advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team app
 ```
+
+Windows PowerShell 5.1에서는 bash 전용 줄이 그대로 돌지 않습니다. 아래 대응은 **실행해 보지 못했습니다**(하네스가 PowerShell 실행을 막아 문서만으로 옮긴 것입니다). 가장 조심할 것은 `echo route=local > ctl.txt`입니다. PowerShell 5.1의 `>`는 파일을 UTF-16으로 저장하는데, `fake.py`는 `ctl.txt`를 UTF-8로 읽으므로 UTF-16 파일을 읽는 순간 `UnicodeDecodeError`가 나서 요청마다 응답 없이 연결이 끊깁니다(UTF-16 BOM이 붙은 파일을 `fake.py`의 `ctl()`에 읽혀 `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff`가 나는 것까지는 직접 확인했고, PowerShell에서 `>`가 UTF-16이 되는 것은 PowerShell 문서에 따랐습니다).
+
+| bash | PowerShell 5.1 |
+|---|---|
+| `mkdir ag2-day119 && cd ag2-day119` | `mkdir ag2-day119` 다음 줄에 `cd ag2-day119` |
+| `cp -r <저장소>/... app` | `Copy-Item -Recurse <저장소>\advanced_ai_agents\multi_agent_apps\agent_teams\ag2_adaptive_research_team app` |
+| `source .venv/bin/activate` | `.venv\Scripts\Activate.ps1` |
+| `echo route=local > ctl.txt` | `Set-Content -Path ctl.txt -Value "route=local" -Encoding ascii` (줄이 둘이면 `-Value "route=web","searx=fail"`) |
+| `sed -i 's/A/B/' app/app.py` (Step 8, A·B는 주소) | `(Get-Content app\app.py -Encoding utf8) -replace 'https://searxng.site/search','http://127.0.0.1:52718/search' \| Set-Content app\app.py -Encoding utf8` |
+| `curl http://localhost:8765/_stcore/health` | `curl.exe http://localhost:8765/_stcore/health` (`curl`은 `Invoke-WebRequest` 별칭) |
+| `fake.py ... >> fake.log 2>&1`, `cat fake.log` | 터미널 1에서 리디렉션 없이 `fake.py`를 실행하고 그 터미널에 찍히는 줄을 봅니다. 또는 `Get-Content fake.log` |
+| `-c "..."` 여러 줄 | 따옴표 문제가 나니 같은 내용을 `.py`로 저장해 `uv run --no-project python 파일.py` |
 
 ### Step 1. 환경 만들기 — `ag2`가 오늘 무엇으로 풀리는가
 
@@ -66,7 +79,7 @@ uv pip install -r app/requirements.txt
 uv run --no-project python -c "import autogen"
 ```
 
-(pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r app/requirements.txt`. 이 저장소 루트에는 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다.) 이 문서를 쓰며 설치했을 때(2026-10-09) **ag2 1.1.2**, openai 3.26.1, streamlit 1.65.0, pypdf 6.20.0이 받아졌습니다(직접 확인). 마지막 명령의 직접 확인한 출력입니다.
+(pip 대안: `python -m venv .venv`로 만든 뒤 활성화(bash는 `source .venv/bin/activate`, Git Bash·Windows는 `.venv/Scripts/activate`)하고 `pip install -r app/requirements.txt`. 이 저장소 루트에는 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다.) 이 문서를 쓰며 설치했을 때(2026-10-09) **ag2 1.1.2**, openai 3.26.1, streamlit 1.65.0, pypdf 6.20.0이 받아졌습니다(직접 확인). 마지막 명령의 직접 확인한 출력입니다(traceback의 마지막 줄).
 
 ```text
 ModuleNotFoundError: No module named 'autogen'
@@ -101,7 +114,7 @@ AG2는 1.0부터 새로 쓴 프레임워크가 최상위 패키지 `ag2`가 되�
 uv pip install "ag2[openai]<0.14" "streamlit>=1.33.0" "pypdf>=4.2.0"
 ```
 
-이 문서의 재현은 새 가상환경에서 `requirements.txt` 대신 이 줄로 설치했습니다. 이미 1.1.2가 깔린 가상환경을 내려 보는 것은 하지 않았으니 새로 만드는 쪽을 권합니다. 앱 폴더의 `requirements.txt`는 고치지 않습니다.
+이 줄은 같은 가상환경에서 그대로 돌려도 됩니다. 1.1.2가 깔린 가상환경에서 실행하니 `- ag2==1.1.2 + ag2==0.13.4`, `- openai==3.26.1 + openai==2.54.0`으로 내려갔고 아래 확인 두 명령이 통과했습니다(직접 확인). 이 문서의 나머지 재현은 처음부터 이 줄로 설치한 새 가상환경에서 했습니다. 앱 폴더의 `requirements.txt`는 고치지 않습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -369,7 +382,7 @@ def _summarize_chunks(chunks: List[Chunk]) -> str:
     return "\n".join(lines)
 ```
 
-점수는 질문 단어 집합과 조각 단어 집합의 교집합 크기이고, 겹침이 0이면 제외하며, 큰 순서로 5개를 고릅니다. 불용어를 거르지 않아서 "what is the" 같은 질문은 `the cat is on the mat`에도 맞습니다(직접 확인). 단어는 `[a-zA-Z0-9]+`로만 뽑으므로 **한글은 단어가 되지 않습니다.** 한국어 질문은 단어가 하나도 없어 검색 결과가 늘 빈 목록입니다. 에이전트에게 가는 글은 조각 전체가 아니라 `chunk.text[:300]`, 곧 조각마다 앞 300자뿐입니다. 800단어 조각은 4,906자인데 그중 322자(줄 머리글 포함)만 갑니다. 확인 스크립트 `search.py`입니다.
+점수는 질문 단어 집합과 조각 단어 집합의 교집합 크기이고, 겹침이 0이면 제외하며, 큰 순서로 5개를 고릅니다. 불용어를 거르지 않아서 "what is the" 같은 질문은 `the cat is on the mat`에도 맞습니다(직접 확인). 단어는 `[a-zA-Z0-9]+`로만 뽑으므로 **한글은 단어가 되지 않습니다.** 한글로만 된 질문은 단어가 하나도 없어 검색 결과가 늘 빈 목록이고, 질문에 영문·숫자가 섞이면("GPT-5 가격은?" 같은) 그 부분으로만 맞습니다. 문서가 한국어여도 한글 부분은 점수에 쓰이지 않습니다. 에이전트에게 가는 글은 조각 전체가 아니라 `chunk.text[:300]`, 곧 조각마다 앞 300자뿐입니다. 아래 스크립트의 조각은 701단어(4,906자)인데 그중 322자(줄 머리글 포함)만 갑니다. 800단어 조각이면 더 길어서 비율은 더 작아집니다. 확인 스크립트 `search.py`입니다.
 
 `search.py`
 
@@ -565,7 +578,7 @@ POST /v1/chat/completions gpt-5-nano temperature= 0.2 | You are a verifier. Chec
 POST /v1/chat/completions gpt-5-nano temperature= 0.2 | You are the final synthesizer.
 ```
 
-`.cache/` 폴더는 작업 폴더에 생기지 않았습니다. 이 앱의 `llm_config`에는 `cache_seed`가 없고 0.11.0과 0.13.4 모두 같았습니다(직접 확인). 한 가지는 확인하지 못했습니다. 진짜 `gpt-5-nano`가 `temperature` 0.2를 받아 주는지입니다. 추론 모델 계열이 이 값을 거부하는 경우가 있다고 알려져 있지만 키가 없어 실제 요청을 보내지 못했고, OpenAI 모델 페이지에서도 이 값의 지원 여부를 찾지 못했습니다. 키가 있다면 첫 실행에서 이 줄이 오류를 내는지 보세요(문제 해결 표).
+`.cache/` 폴더는 작업 폴더에 생기지 않았습니다(0.11.0과 0.13.4 모두, 직접 확인). Day 116의 `autogen` 0.7.3은 `llm_config`에 `cache_seed`가 없으면 기본값 41로 디스크 캐시를 켰지만, 0.13.4는 `cache_seed`를 기본 `None`으로 읽고(`oai/client.py`의 1190행) 값이 있을 때만 `Cache.disk`를 만듭니다(같은 파일 1211행. `LEGACY_DEFAULT_CACHE_SEED = 41`은 201행에 정의만 있고 쓰이지 않음 — grep으로 확인). 같은 조건이어도 버전에 따라 캐시 동작이 다릅니다. 한 가지는 확인하지 못했습니다. 진짜 `gpt-5-nano`가 `temperature` 0.2를 받아 주는지입니다. 추론 모델 계열이 이 값을 거부하는 경우가 있다고 알려져 있지만 키가 없어 실제 요청을 보내지 못했고, OpenAI 모델 페이지에서도 이 값의 지원 여부를 찾지 못했습니다. 키가 있다면 첫 실행에서 이 줄이 오류를 내는지 보세요(문제 해결 표).
 
 ### Step 6. 웹 검색 — `SearxngSearchTool`과 조용한 빈 목록
 
@@ -617,7 +630,7 @@ ag2 0.13.4 패키지에 들어 있는 `searxng_search.py`의 39~62행입니다.
         return []
 ```
 
-요청은 `GET <주소>?q=<질문>&format=json&language=en-US&count=5`이고 시간 제한 10초입니다. 라우터는 이 결과를 `- 제목 | 링크 | 스니펫` 줄로 바꿔 웹 조사 에이전트 프롬프트에 붙입니다(`router.py:63-84`).
+요청은 `GET <주소>?q=<질문>&format=json&language=en-US&count=5`이고 시간 제한 10초입니다. SearXNG가 돌려주는 `url`·`content`는 같은 파일의 `_searxng_search`(91~94행)에서 `link`·`snippet`으로 이름이 바뀝니다(`"link": item.get("url", "")`, `"snippet": item.get("content", "")`). 라우터가 `item.get('link')`·`item.get('snippet')`을 쓰는 것은 그 때문이고, 가짜 서버가 `url`·`content`를 돌려주는 것은 진짜 SearXNG와 같은 키입니다. 라우터는 이 결과를 `- 제목 | 링크 | 스니펫` 줄로 바꿔 웹 조사 에이전트 프롬프트에 붙입니다(`router.py:63-84`).
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team/router.py:63-84`
 
@@ -864,6 +877,34 @@ if run_clicked:
 
 전체 실행을 위해 앱 사본의 검색 주소만 가짜 서버로 바꿉니다(`SEARXNG_BASE_URL`이 상수라서 사본에서만 바꿉니다. 이 사본에서 다른 줄은 같습니다).
 
+먼저 아래를 `apptest.py`로 **작업 폴더(`app/`의 한 단계 위)에** 저장합니다. `AppTest.from_file`의 상대 경로는 그 호출이 들어 있는 파일을 기준으로 풀리므로, 다른 곳에 두면 `app/app.py`를 못 찾습니다(Streamlit 1.65.0에서 `FileNotFoundError ... Relative paths are resolved against the file that calls AppTest.from_file()`를 직접 봤습니다). 앞쪽 줄은 Step 2의 스크립트와 같고, 뒤쪽이 키와 질문을 넣어 파이프라인까지 돌리는 부분입니다.
+
+`apptest.py`
+
+```python
+"""사용법: python apptest.py 포트   (앱 폴더 app/ 의 app.py를 AppTest로 돌린다)"""
+import os, sys
+from streamlit.testing.v1 import AppTest
+port = sys.argv[1]
+os.environ["OPENAI_BASE_URL"] = f"http://127.0.0.1:{port}/v1"
+sys.path.insert(0, "app")
+at = AppTest.from_file("app/app.py", default_timeout=60).run()
+print("첫 화면 예외:", [e.value for e in at.exception])
+print("소제목:", [s.value for s in at.subheader])
+at.button[0].click().run()
+print("키 없이 클릭:", [e.value for e in at.error])
+at.sidebar.text_input[0].set_value("sk-fake")
+at.button[0].click().run()
+print("키만 넣고 클릭:", [e.value for e in at.error])
+at.text_area[0].set_value("What is alpha?")
+at.button[0].click().run()
+print("실행 뒤 소제목:", [s.value for s in at.subheader])
+print("json 칸:", [j.value for j in at.json])
+print("마지막 markdown:", [m.value for m in at.markdown][-2])
+```
+
+그다음 Step 5의 `fake.py`를 띄워 둔 채(터미널 1) 터미널 2에서 앱 사본의 검색 주소만 가짜 서버로 바꾸고 실행합니다.
+
 ```bash
 sed -i 's|https://searxng.site/search|http://127.0.0.1:52718/search|' app/app.py
 echo route=local > ctl.txt
@@ -920,11 +961,11 @@ json 칸: ['{"route": "local", "confidence": 0.9, "rationale": "FAKE"}', '[{"sou
 - [ ] `ag2[openai]<0.14`(0.13.4)로 고정하면 `AssistantAgent`·`SearxngSearchTool` import와 네 파일 컴파일이 성공하고, 0.14.0에서는 `SearxngSearchTool`이 없는 것을 확인했다
 - [ ] `AppTest`로 첫 화면이 예외 없이 뜨고, 키 없이/질문 없이 누르면 각각 오류 상자만 뜨는 것을 확인했다
 - [ ] `chunks.py`로 2,000단어가 조각 셋(800·800·640)이 되는 것을 확인했다
-- [ ] `search.py`로 한국어 질문의 검색 결과가 빈 목록이고, 조각의 앞 300자만 에이전트에게 가는 것을 확인했다
+- [ ] `search.py`로 한글로만 된 질문의 검색 결과가 빈 목록이고, 조각의 앞 300자만 에이전트에게 가는 것을 확인했다
 - [ ] 가짜 서버로 로컬 경로 호출 4회(분류 → 로컬 → 검증 → 종합), `temperature` 0.2를 확인했다
 - [ ] 웹 경로에서 검색 GET 한 번이 추가되고, 검색이 500이어도 앱이 끝까지 가는 것을 확인했다
 - [ ] 문서 없음·웹 꺼짐·분류 오류 조합에서 "Routing Decision" 칸과 실제 경로가 어긋나는 행을 확인했다
-- [ ] 작업 폴더에 `.cache/`가 생기지 않는 것을 확인했다
+- [ ] 작업 폴더에 `.cache/`가 생기지 않는 것을 확인했다(0.13.4는 `cache_seed` 기본값이 `None`)
 - [ ] (키가 있다면) 실제로 실행해 `gpt-5-nano`가 `temperature` 0.2를 받아 주는지, 분류 JSON이 파싱되는지 확인한다
 
 ## 문제 해결
@@ -935,11 +976,11 @@ json 칸: ['{"route": "local", "confidence": 0.9, "rationale": "FAKE"}', '[{"sou
 | `ImportError: cannot import name 'SearxngSearchTool' from 'autogen.tools.experimental'`(직접 확인, 0.14.0) | 0.14.0에서 이 도구가 빠짐(0.13.4 경고문에 "removed in v0.14") | 0.14 미만으로 고정. 오래 쓸 계획이면 `DuckDuckGoSearchTool` 등으로 옮기는 것은 "더 해보기" |
 | 웹 검색이 실패해도 오류 없이 답이 나옴, 웹 조사 프롬프트의 `Web results:`가 비어 있음(직접 확인) | `SearxngSearchTool`이 모든 예외를 삼키고 `[]`를 돌려줌 | 터미널 로그의 `SearxNG Search failed: ...` 줄을 봄. 근거 없는 답이 나왔으면 의심 |
 | "Routing Decision" 칸은 `local`인데 웹 근거가 나옴(직접 확인) | 문서가 없고 웹이 켜져 있으면 `route`를 `web`으로 덮어쓰는데 화면은 분류의 원래 답을 보여 줌 | `result["route"]`를 같이 확인(리포 코드는 고치지 않음). 문서를 올리면 분류 답이 그대로 쓰임 |
-| 한국어 질문을 하면 로컬 조사 증거가 비어 있거나 엉뚱함(직접 확인) | 단어를 `[a-zA-Z0-9]+`로만 뽑아 한글은 점수가 0, 발췌가 빈 프롬프트 | 영문 질문을 쓰거나 `_tokenize`를 `\w+`로 바꿈(사본에서) |
+| 한글로만 된 질문을 하면 로컬 조사 증거가 비어 있거나 엉뚱함(직접 확인) | 단어를 `[a-zA-Z0-9]+`로만 뽑아 한글은 점수가 0, 발췌가 빈 프롬프트(영문·숫자가 섞이면 그 부분으로만 맞음) | 영문 질문을 쓰거나 `_tokenize`를 `\w+`로 바꿈(사본에서) |
 | 답이 문서 뒷부분의 내용을 모름(직접 확인) | 조사 에이전트가 조각마다 앞 300자만 받음 | `router.py`의 `[:300]`을 키우는 것은 "더 해보기" |
 | 한국어 `.txt`가 깨진 글자로 읽힘(직접 확인) | CP949 파일은 UTF-8 읽기가 실패하고 latin-1 읽기가 오류 없이 성공함 | 파일을 UTF-8로 저장해서 올림 |
 | 첫 실행에서 `temperature` 관련 400 오류가 나는 것 같음(실제 요청으로는 확인하지 못함) | 코드가 모델과 상관없이 `temperature` 0.2를 보냄(직접 확인). 진짜 `gpt-5-nano`가 이 값을 받는지 확인하지 못함 | 오류가 나면 사본에서 `make_llm_config`의 `temperature`를 뺌 |
-| 2026-12-11 이후 모델 오류 | `gpt-5-nano-2025-08-07`이 OpenAI 폐기 표에서 이 날 제거됨(WebFetch 요약 기준) | 사이드바 "Model"에서 대체 모델로 바꿈. 표의 대체는 `gpt-5.6-luna` |
+| 2026-12-11 이후 모델 오류 | `gpt-5-nano-2025-08-07`이 OpenAI 폐기 표에서 이 날 제거됨(원문 직접 확인) | 사이드바 "Model"에서 대체 모델로 바꿈. 표의 대체는 `gpt-5.6-luna` |
 | `streamlit run`을 헤드리스로 띄우면 시작 중 외부 IP 조회 요청이 나갈 수 있음 | `--server.address`를 안 주면 Streamlit이 외부 IP를 알아내려 `checkip.amazonaws.com`에 요청(Day 060) | `--server.headless true --server.address localhost` 지정 |
 | `missing ScriptRunContext!` 경고 | `AppTest`를 Streamlit 서버 밖에서 부름 | 무시해도 됨(직접 확인) |
 | 앱 README와 코드가 다름 | README의 AG-UI·OpenTelemetry는 코드에 없는 선택 기능 소개이고, "문서 범위에 따른 라우팅"은 문서 이름과 조각 수만 쓰는 코드와 다름(소스로 확인) | 코드를 기준으로 봄 |
