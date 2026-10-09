@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+ui: Streamlit 화면 (research_agent_llama3.py) { class: ours }
+
+team: "HackerNews Team (Team)" {
+  class: ours
+  hn: HackerNews Researcher (Agent) { class: ours }
+  web: Web Searcher (Agent) { class: ours }
+  reader: Article Reader (Agent) { class: ours }
+}
+
+ollama: Llama 3.2 (Ollama, 로컬) { class: ext }
+
+ui -> team: run(질문)
+team -> ollama: 리더 요청
+team.hn -> ollama: 멤버 요청
+team.web -> ollama: 멤버 요청
+team.reader -> ollama: 멤버 요청

@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: HackerNews Team { class: ours }
+agno_api: Agno 통계 API { class: ext }
+ddg: DuckDuckGo 검색 { class: ext }
+web: Web Searcher { class: ours }
+openai: OpenAI API { class: ext }
+
+team -> openai: user(질문) + 앞선 위임·보고서
+openai -> team: delegate_task_to_member(web-searcher, task)
+team -> web: task 문자열
+web -> openai: developer(역할 · 시각) · user(task) + 도구 스키마
+openai -> web: web_search(query, max_results)
+web -> ddg: 검색어 (ddgs, backend=duckduckgo)
+ddg -> web: 검색 결과 JSON (제목 · 주소 · 본문 조각)
+web -> openai: tool 메시지(검색 JSON)
+openai -> web: 검색 정리 글
+web -> agno_api: 실행 메타데이터
+web -> team: 멤버 보고서

@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+team: "HackerNews Team (Team)" {
+  class: ours
+  hn: HackerNews Researcher (Agent) { class: ours }
+  web: Web Searcher (Agent) { class: ours }
+  reader: Article Reader (Agent) { class: ours }
+}
+
+agno_api: Agno 통계 API { class: ext }
+
+team -> agno_api: 팀 실행 메타데이터
+team.hn -> agno_api: 멤버 실행 메타데이터
+team.web -> agno_api: 멤버 실행 메타데이터
+team.reader -> agno_api: 멤버 실행 메타데이터

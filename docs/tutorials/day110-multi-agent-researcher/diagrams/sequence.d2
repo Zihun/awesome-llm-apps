@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+team: HackerNews Team { class: ours }
+openai: OpenAI API { class: ext }
+
+user -> ui: 질문 입력 후 Enter
+ui -> team: run(질문, stream=False)
+team -> openai: 지시문 · 멤버 명단 · 질문\n+ 위임 스키마
+openai -> team: delegate_task_to_member(\nhackernews-researcher, task)

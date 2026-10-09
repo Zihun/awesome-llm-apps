@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+team: "HackerNews Team (Team)" {
+  class: ours
+  hn: HackerNews Researcher (Agent) { class: ours }
+  web: Web Searcher (Agent) { class: ours }
+  reader: Article Reader (Agent) { class: ours }
+}
+
+openai: OpenAI API (gpt-4o-mini) { class: ext }
+
+team -> openai: 리더 요청
+team.hn -> openai: 멤버 요청
+team.web -> openai: 멤버 요청
+team.reader -> openai: 멤버 요청

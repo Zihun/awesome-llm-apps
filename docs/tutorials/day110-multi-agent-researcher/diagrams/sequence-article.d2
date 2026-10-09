@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: HackerNews Team { class: ours }
+openai: OpenAI API { class: ext }
+pages: 기사 웹페이지 { class: ext }
+reader: Article Reader { class: ours }
+agno_api: Agno 통계 API { class: ext }
+
+team -> openai: user(질문) + 앞선 위임·보고서
+openai -> team: delegate_task_to_member(article-reader, task)
+team -> reader: task 문자열
+reader -> openai: 역할 · task + 도구 스키마
+openai -> reader: read_article(url) 호출 요청
+reader -> pages: newspaper.article(url) — 기사 URL을 내려받아 파싱
+pages -> reader: 제목 · 저자 · 본문 JSON (실패하면 오류 문장)
+reader -> openai: 역할 · task + 도구 스키마
+openai -> reader: 기사 정리 글
+reader -> agno_api: 실행 메타데이터
+reader -> team: 멤버 보고서

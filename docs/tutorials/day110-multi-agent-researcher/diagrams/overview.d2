@@ -1,0 +1,23 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 (research_agent.py) { class: ours }
+
+team: "HackerNews Team (Team)" {
+  class: ours
+  hn: HackerNews Researcher (Agent) { class: ours }
+  web: Web Searcher (Agent) { class: ours }
+  reader: Article Reader (Agent) { class: ours }
+}
+
+hn_api: Hacker News API { class: ext }
+ddg: DuckDuckGo 검색 (ddgs) { class: ext }
+pages: 기사 웹페이지 { class: ext }
+
+user -> ui: "키 · 질문 입력 후 Enter"
+ui -> user: "리포트 글 표시 (st.write)"
+ui -> team: run(질문)
+team.hn -> hn_api: 이야기 목록
+team.web -> ddg: 검색어
+team.reader -> pages: 기사 URL
