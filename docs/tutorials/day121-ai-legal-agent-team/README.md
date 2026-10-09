@@ -1,6 +1,6 @@
 # Day 121 · 👨‍⚖️ AI Legal Agent Team (Cloud & Local)
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠ 앱이 쓰는 `gpt-5`는 별칭이 가리키는 스냅숏 `gpt-5-2025-08-07`이 2026-12-11에 종료됩니다(OpenAI 폐기 문서, 2026-10-09 확인) · 예상 소요 120분(앱은 클라우드판 393줄·로컬판 270줄이지만 설치 직후 문서를 올리는 곳에서 막히고, 가짜 서버와 대역 파일을 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 분석 1회에 $0.1~0.3(대본 기준으로 `gpt-5` 호출이 "Contract Review"는 7번, "Compliance Check"는 14번이었고, 모델 페이지의 입력 $1.25·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-5, 2026-10-09 확인)에 입력 호출당 약 4,000토큰, 출력은 추론 토큰을 포함해 호출당 약 1,000토큰을 가정한 어림입니다. 키가 없어 실제 토큰 수는 재지 못했고 추론 토큰이 얼마나 나올지는 확인하지 못했습니다. 임베딩 `text-embedding-3-small`은 $0.02, 같은 곳 확인. 로컬판은 무료) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠ 앱이 쓰는 `gpt-5`는 별칭이 가리키는 스냅숏 `gpt-5-2025-08-07`이 2026-12-11에 종료됩니다(OpenAI 폐기 문서, 2026-10-09 확인) · 예상 소요 130분(앱은 클라우드판 394줄(마지막 줄에 개행이 없어 `wc -l`은 393)·로컬판 270줄이지만 설치 직후 문서를 올리는 곳에서 막히고, 가짜 서버와 대역 파일을 직접 저장해 터미널 둘로 돌려 봐야 하고, 로컬판은 다섯 곳을 고치며 따라가야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 분석 1회에 $0.1~0.3(대본 기준으로 `gpt-5` 호출이 "Contract Review"는 7번, "Compliance Check"는 14번이었고, 모델 페이지의 입력 $1.25·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-5, 2026-10-09 확인)에 입력 호출당 약 4,000토큰, 출력은 추론 토큰을 포함해 호출당 약 1,000토큰을 가정한 어림입니다. 키가 없어 실제 토큰 수는 재지 못했고 추론 토큰이 얼마나 나올지는 확인하지 못했습니다. 임베딩 `text-embedding-3-small`은 $0.02, 같은 곳 확인. 로컬판은 무료) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team`
 
 ## 오늘 만들 것
 
@@ -24,7 +24,18 @@
 | Qdrant 클라우드 | 클라우드판의 벡터 저장소. 화면에서 URL과 API 키를 모두 받는다(키가 비어 있으면 연결 객체를 만들지 않는다). 무료 등급은 1GB 메모리 노드 하나이고 카드가 필요 없다고 공식 문서에 적혀 있다(https://qdrant.tech/documentation/cloud/create-cluster/, 2026-10-09 확인). 이 문서는 쓰지 않는다 | https://cloud.qdrant.io |
 | Ollama와 Qdrant 서버 | 로컬판 전용(Step 8). `llama3.1:8b`는 4.9GB, `openhermes`는 4.1GB(Ollama 라이브러리 페이지, 2026-10-09 확인). Qdrant는 `http://localhost:6333` 고정. 이 문서는 어느 쪽도 받거나 띄우지 않는다 | https://ollama.com, Docker의 `qdrant/qdrant`(Day 047 참고) |
 
-모델 `gpt-5`는 OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인)에서 별칭 그대로는 폐기 표에 없고 `gpt-4-0314`의 대체 모델 칸에만 나옵니다. 같은 문서에 `gpt-5-2025-08-07`(스냅숏)이 2026-12-11 종료로 올라 있는데, 별칭 `gpt-5`가 지금 어느 스냅숏을 가리키는지는 확인하지 못했습니다. 그래서 머리말에 ⚠를 달았습니다. 종료된 뒤에도 쓰려면 코드의 네 곳(168~216행 사이의 `OpenAIChat(id="gpt-5")`)을 다른 모델로 바꿔야 합니다. `text-embedding-3-small`은 폐기 표에 없고 첫 세대 임베딩 모델들의 대체 모델 칸에만 나옵니다(같은 원문).
+이 문서의 확인 스크립트는 한글과 이모지를 출력합니다. 한국어 Windows에서 출력을 파이프나 파일로 받으면 Python의 기본 인코딩(`cp949`)이 모자라, bash의 `| grep "^>>"`는 `Binary file (standard input) matches` 한 줄만 내고 Step 6의 `drive.py`는 `🤖`에서 `UnicodeEncodeError`로 죽습니다(직접 확인). 셸을 먼저 이렇게 맞춰 두세요. 이 문서의 명령은 모두 이 설정을 건 상태에서 돌려 출력을 얻었습니다. PowerShell 줄은 실행해 보지 못했습니다.
+
+```bash
+export PYTHONIOENCODING=utf-8
+```
+
+```powershell
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+```
+
+모델 `gpt-5`는 OpenAI 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5, 2026-10-10 확인)의 Snapshots 목록에서 별칭 `gpt-5`가 스냅숏 `gpt-5-2025-08-07`을 가리키고, 그 스냅숏에 Deprecated 표시가 붙어 있습니다. 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인)도 `gpt-5-2025-08-07`을 2026-12-11 종료로 올렸습니다. 별칭 이름 `gpt-5`는 폐기 표에 없고 `gpt-4-0314`·`gpt-4-1106-preview`·`gpt-4-0125-preview` 세 행의 대체 모델 칸에만 나옵니다. 그래서 머리말에 ⚠를 달았습니다. 종료된 뒤에도 쓰려면 코드의 네 곳(171·188·202·216행의 `OpenAIChat(id="gpt-5")`)을 다른 모델로 바꿔야 합니다. `text-embedding-3-small`은 폐기 표에 없고 첫 세대 임베딩 모델들의 대체 모델 칸에만 나옵니다(같은 원문).
 
 ## 아키텍처 한눈에 보기
 
@@ -43,6 +54,10 @@
 외부 호출은 모델(`gpt-5`, 팀 리더와 멤버 셋이 각자), OpenAI 임베딩(문서 쪽마다, 검색어마다), Qdrant 클라우드, DuckDuckGo(Legal Researcher만), 그리고 Agno 사용 통계 API입니다. 먼저 팀과 멤버, 지식 베이스가 어떻게 이어지는지입니다.
 
 ![팀·멤버·도구·지식 베이스의 구조](diagrams/extra-structure.svg)
+
+화면과 사이드바, 문서 처리가 이 구조에 어떻게 이어지는지입니다. 분석 화면은 Analyze 한 번에 팀을 세 번 `run`하고(Step 5), 문서 처리는 `Knowledge.insert`를 부르고(Step 3), 사이드바는 `init_qdrant`로 저장소 연결을 만듭니다(Step 2).
+
+![화면·문서 처리·사이드바와 구조의 연결](diagrams/extra-app.svg)
 
 멤버와 도구, 저장소가 바깥으로 나가는 호출은 이렇습니다.
 
@@ -65,7 +80,7 @@ uv venv
 uv pip install -r requirements.txt
 ```
 
-(pip 대안: `python -m venv .venv`로 만들고 활성화한 뒤 `pip install -r requirements.txt`.) 아래 PowerShell 줄은 실행해 보지 못했습니다(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다).
+(pip 대안: `python -m venv .venv`로 만들고 활성화한 뒤 `pip install -r requirements.txt`.) 아래 PowerShell 줄은 실행해 보지 못했습니다.
 
 ```powershell
 mkdir legal-team-work
@@ -179,7 +194,7 @@ def init_qdrant():
                 st.error(f"Failed to connect to Qdrant: {str(e)}")
 ```
 
-세 값(OpenAI 키, Qdrant 키, URL)은 `st.session_state`에 쌓입니다. 키와 URL이 **둘 다** 비어 있지 않아야 `init_qdrant`가 객체를 만들므로(35행), 키 없이 도는 로컬 Qdrant 서버를 이 판에 연결할 수는 없습니다. 성공 메시지(144행)는 `init_qdrant`가 예외 없이 돌아오면 찍힙니다. 그런데 agno의 `Qdrant`는 만들 때 서버에 접속하지 않습니다(소스로 확인, 클라이언트는 처음 쓸 때 만들어집니다).
+세 값(OpenAI 키, Qdrant 키, URL)은 `st.session_state`에 쌓입니다. 키와 URL이 **둘 다** 비어 있지 않아야 `init_qdrant`가 객체를 만들므로(35행), 키 칸이 비면 업로드 위젯이 열리지 않습니다. 키 없이 도는 로컬 Qdrant 서버에는 아무 값이나 넣으면 열릴 것으로 보이지만 확인하지는 않았습니다. 성공 메시지(144행)는 `init_qdrant`가 예외 없이 돌아오면 찍힙니다. 그런데 agno의 `Qdrant`는 만들 때 서버에 접속하지 않습니다(agno 3.1.2의 `agno/vectordb/qdrant/qdrant.py`를 소스로 확인, `client` 속성이 처음 쓸 때 `QdrantClient`를 만듭니다).
 
 **확인.** 아무도 듣지 않는 포트(이 문서는 59999)를 가리켜 봅니다. 이 명령은 외부로 나가지 않습니다.
 
@@ -203,7 +218,7 @@ except Exception as e:
 exists() 실패: ResponseHandlingException [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
 ```
 
-객체는 만들어지고 차원은 `text-embedding-3-small`의 1536으로 정해지지만, 서버에 닿는 첫 호출(`exists()`)에서야 실패합니다. 앱 화면에서는 같은 URL로도 "Successfully connected to Qdrant!"가 먼저 뜨고 오류는 문서를 올릴 때 나옵니다(Step 3의 하네스로 직접 확인). URL을 잘못 적었다면 그 지점에서야 알게 됩니다.
+객체는 만들어지고 차원은 `text-embedding-3-small`의 1536으로 정해지지만, 서버에 닿는 첫 호출(`exists()`)에서야 실패합니다. 앱 화면에서도 같습니다. Step 3의 하네스에서 Qdrant 대역만 뺀 복사본으로 같은 URL을 넣으면 "Successfully connected to Qdrant!"가 먼저 뜨고 오류(`[WinError 10061] …`)는 문서를 올릴 때 나왔습니다(직접 확인). URL을 잘못 적었다면 그 지점에서야 알게 됩니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -467,6 +482,9 @@ print(">> 성공:", [s.value for s in at.success], "| 오류:", [e.value for e i
 vdb = at.session_state["vector_db"]
 points, _ = vdb.client.scroll(vdb.collection, limit=50, with_payload=True)
 print(">> 저장소:", len(points), "조각 | name:", sorted({p.payload["name"] for p in points}))
+if at.session_state["legal_team"] is None:                                # 문서 처리가 실패해 팀이 없으면 여기서 끝낸다
+    print(">> 팀이 만들어지지 않아 여기서 끝냅니다")
+    sys.exit()
 for p in sorted(points, key=lambda p: p.payload["meta_data"]["page"]):
     print(">>   쪽", p.payload["meta_data"]["page"], p.payload["content"][:45])
 team = at.session_state["legal_team"]
@@ -487,7 +505,7 @@ for kind in sys.argv[1:]:
 uv run --no-project python make_pdf.py
 ```
 
-`sample-contract.pdf 1842 bytes`, `sample-nda.pdf 975 bytes`가 찍힙니다(직접 확인). 터미널 A에서 가짜 서버를 띄웁니다. 포트는 비어 있는 높은 번호면 아무거나 됩니다(이 문서는 55101).
+`sample-contract.pdf 1842 bytes`, `sample-nda.pdf 975 bytes`가 찍힙니다(직접 확인). 터미널 A에서 가짜 서버를 띄웁니다. 포트는 비어 있는 높은 번호면 됩니다. Windows가 예약해 둔 범위는 피하세요(`netsh interface ipv4 show excludedportrange protocol=tcp`로 봅니다)(이 문서는 55101).
 
 ```bash
 uv run --no-project python fake_server.py 55101
@@ -510,6 +528,8 @@ uv run --no-project python drive.py 2>&1 | Select-String "^>>"
 ```text
 >> Qdrant 대역: url='https://qdrant.invalid:6333' api_key='fake-key' 는 쓰지 않음
 >> 성공: ['Successfully connected to Qdrant!'] | 오류: ["Error loading documents: 'Knowledge' object has no attribute 'add_content'", "Document processing error: 'Knowledge' object has no attribute 'add_content'", "Error processing document: Error processing document: 'Knowledge' object has no attribute 'add_content'"]
+>> 저장소: 0 조각 | name: []
+>> 팀이 만들어지지 않아 여기서 끝냅니다
 ```
 
 빨간 오류 셋이 같은 원인을 세 번 말합니다. 앱의 `except`가 안쪽에서 한 번(88행), 바깥에서 한 번(100행), 호출한 쪽에서 한 번(234행) 화면에 찍기 때문입니다. agno 3.0.5와 3.1.2의 `Knowledge`에는 `add_content`가 없고 같은 일을 `insert`가 합니다. 2.9.0에는 `add_content`가 `insert`를 부르는 폐기 예정 래퍼로 남아 있었습니다(세 판을 설치해 소스로 확인). Day 047 Step 3이 먼저 본 변화입니다. 또 하나, 이 실패 뒤 임시 폴더에 올린 PDF의 사본(`tmp*.pdf`, 1842바이트)이 지워지지 않고 남았습니다(직접 확인). 지우는 줄(93행)이 성공 경로에만 있기 때문입니다. 법률 문서를 다루는 앱에서는 눈여겨볼 점입니다.
@@ -533,11 +553,11 @@ PDF 두 쪽이 조각 둘이 됐습니다. 쪽마다 한 조각이고, 각 조�
 
 ![1단계: PDF 업로드와 임시 파일](diagrams/extra-ingest.svg)
 
-업로드 바이트를 임시 `.pdf`로 쓰고, `Knowledge.insert`를 부릅니다.
+사용자가 PDF를 올리면 화면이 업로드 바이트를 임시 `.pdf`로 씁니다.
 
 ![2단계: 컬렉션 확인](diagrams/extra-ingest-check.svg)
 
-`Knowledge`가 컬렉션이 있는지 보고 없으면 만들고, 같은 내용이 이미 있는지 해시로 묻습니다(`Qdrant`의 호출 순서를 가로채 직접 확인: `exists`, `create`, `exists`, `content_hash_exists`, `insert`).
+화면이 `Knowledge.insert`를 부르면 `Knowledge`가 Qdrant에 `exists`, `create`, `create` 안의 `exists`, `content_hash_exists`를 차례로 부릅니다(`Qdrant`의 메서드를 감싸 호출 순서를 직접 확인: `exists`, `create`, `exists`, `content_hash_exists`, `insert`).
 
 ![3단계: 임베딩](diagrams/extra-ingest-embed.svg)
 
@@ -545,7 +565,11 @@ PDF 두 쪽이 조각 둘이 됐습니다. 쪽마다 한 조각이고, 각 조�
 
 ![4단계: 저장과 임시 파일 삭제](diagrams/extra-ingest-store.svg)
 
-벡터와 쪽 텍스트가 Qdrant에 저장되고, `insert`가 돌아온 뒤에야 임시 파일이 지워집니다.
+벡터와 쪽 텍스트가 Qdrant에 저장되고(`insert`), 돌아오면 화면이 "Documents stored successfully!"를 띄웁니다.
+
+![5단계: 임시 파일 삭제와 팀 만들기](diagrams/extra-ingest-end.svg)
+
+`process_document`가 임시 파일을 지우고 돌아오면 화면이 에이전트 셋과 팀을 만들고 "Document processed and team initialized!"를 띄웁니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -652,7 +676,7 @@ Legal Researcher만 웹 검색 두 함수를 쥡니다. 나머지 둘은 지식 
         }
 ```
 
-`agents` 목록은 화면의 "Active Legal AI Agents" 줄(301행)과 질문 글의 "Focus Areas" 줄(328·339행)에만 쓰입니다. 팀을 만드는 코드(214~229행)는 유형과 상관없이 멤버 셋을 모두 넣습니다. 질문을 만드는 곳과 팀을 부르는 곳입니다.
+`agents` 목록은 화면의 "Active Legal AI Agents" 줄(301행)과 질문 글의 "Focus Areas" 줄(328·339행), 핵심 요약·권고 요청의 "Focus on insights from"·"Provide specific recommendations from" 줄(363·379행)에만 쓰입니다. 팀을 만드는 코드(214~229행)는 유형과 상관없이 멤버 셋을 모두 넣습니다. 질문을 만드는 곳과 팀을 부르는 곳입니다.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team/legal_agent_team.py:322-342`
 
@@ -690,13 +714,23 @@ Legal Researcher만 웹 검색 두 함수를 쥡니다. 나머지 둘은 지식 
 
 **목적.** 외부 서비스 없이 분석 한 번이 팀을 통과하는 전 과정을 로컬에서 봅니다.
 
-**할 일.** 가짜 서버의 대본(`fake_server.py`의 `chat`)은 이렇게 움직입니다. 리더에게는 지식 검색 → `Focus Areas`에 적힌 멤버를 하나씩 위임 → 종합을, 멤버에게는 지식 검색(Legal Researcher는 이어서 웹 검색) → 보고를, 핵심 요약·권고 요청에는 곧장 답을 시킵니다. 지식 검색 결과는 대본이 아니라 앱이 Qdrant에서 찾은 조각이 그대로 돌아와, 멤버의 보고 첫머리에 실립니다. 터미널 A는 새로 띄운 가짜 서버(55102)로 두고 터미널 B에서 돌립니다.
+**할 일.** 가짜 서버의 대본(`fake_server.py`의 `chat`)은 이렇게 움직입니다. 리더에게는 지식 검색 → `Focus Areas`에 적힌 멤버를 하나씩 위임 → 종합을, 멤버에게는 지식 검색(Legal Researcher는 이어서 웹 검색) → 보고를, 핵심 요약·권고 요청에는 곧장 답을 시킵니다. 지식 검색 결과는 대본이 아니라 앱이 Qdrant에서 찾은 조각이 그대로 돌아와, 멤버의 보고 첫머리에 실립니다. 모델 호출 번호를 처음부터 세려고 Step 3의 서버를 터미널 A에서 Ctrl+C로 멈추고 새로 띄웁니다. 터미널 B에서 돌립니다.
+
+```bash
+uv run --no-project python fake_server.py 55102
+```
 
 ```bash
 OPENAI_BASE_URL=http://127.0.0.1:55102/v1 AGNO_TELEMETRY=false uv run --no-project python drive.py "Contract Review" 2>&1 | grep "^>>"
 ```
 
-**확인.** 직접 확인한 출력의 끝부분입니다(앞의 저장소·팀 줄은 Step 3·4와 같습니다).
+```powershell
+# 실행해 보지 못했습니다
+$env:OPENAI_BASE_URL = "http://127.0.0.1:55102/v1"; $env:AGNO_TELEMETRY = "false"
+uv run --no-project python drive.py "Contract Review" 2>&1 | Select-String "^>>"
+```
+
+**확인.** 직접 확인한 출력의 끝부분입니다(앞의 저장소·팀 줄은 Step 3·4와 같습니다). 멤버 보고에 실리는 검색 결과의 첫머리는 JSON 키 순서가 환경에 따라 달라 `"content"`가 먼저 나올 수 있습니다.
 
 ```text
 >> ===== Contract Review | 오류: []
@@ -718,7 +752,7 @@ OPENAI_BASE_URL=http://127.0.0.1:55102/v1 AGNO_TELEMETRY=false uv run --no-proje
 #6 채팅 Contract Analyst 도구 1개 | roles=['developer', 'user'] | 질문='Review the document for your p'
 #7 임베딩 /v1/embeddings model=text-embedding-3-small dimensions=1536 입력 1개 | 'termination fees liability con'
 #8 채팅 Contract Analyst 도구 1개 | roles=['developer', 'user', 'assistant', 'tool'] | 질문='Review the document for your p'
-#9 채팅 leader           도구 2개 | roles=['developer', 'user', 'assistant', 'tool', 'assistant', 'tool'] | 질문='Using the uploaded document as'
+#9 채팅 leader           도구 2개 | roles=['developer', 'user', 'assistant', 'tool', 'assistant', 'tool'] | 질문='Using the uploaded document as' | 명단 3명 | Focus Areas: Contract Analyst
 #10 채팅 leader           도구 2개 | roles=['developer', 'user'] | 질문='Based on this previous analysi'
 #11 채팅 leader           도구 2개 | roles=['developer', 'user'] | 질문='Based on this previous analysi'
 ```
@@ -746,6 +780,15 @@ runpy.run_path("drive.py", run_name="__main__")
 ```bash
 OPENAI_BASE_URL=http://127.0.0.1:55102/v1 uv run --no-project python spy.py "Contract Review" 2>&1 | grep "^>> 통계"
 ```
+
+```powershell
+# 실행해 보지 못했습니다. 앞에서 건 AGNO_TELEMETRY가 세션에 남아 있으면 0줄이 나오므로 먼저 지웁니다
+Remove-Item Env:AGNO_TELEMETRY
+$env:OPENAI_BASE_URL = "http://127.0.0.1:55102/v1"
+uv run --no-project python spy.py "Contract Review" 2>&1 | Select-String "^>> 통계"
+```
+
+bash에서 앞 명령의 `AGNO_TELEMETRY=false`는 그 명령에만 걸린 것이라 이 줄에는 남지 않습니다. 같은 터미널에서 `export`로 걸어 두었다면 `unset AGNO_TELEMETRY`로 지우고 돌리세요.
 
 직접 확인한 출력입니다. 멤버 하나와 팀의 세 실행, 모두 넷입니다. `AGNO_TELEMETRY=false`를 걸고 다시 돌리면 한 줄도 나오지 않았습니다.
 
@@ -800,6 +843,14 @@ export OPENAI_BASE_URL=http://127.0.0.1:55102/v1 AGNO_TELEMETRY=false
 uv run --no-project python accumulate.py 2>&1 | grep "^>>"
 ```
 
+```powershell
+# 실행해 보지 못했습니다
+$env:OPENAI_BASE_URL = "http://127.0.0.1:55102/v1"; $env:AGNO_TELEMETRY = "false"
+uv run --no-project python accumulate.py 2>&1 | Select-String "^>>"
+```
+
+이 `export`와 `$env:` 값은 터미널에 남습니다. 같은 터미널에서 실제 키와 Qdrant URL로 앱을 쓰면 요청이 가짜 서버로 가서, 가짜 서버의 해시 벡터와 PDF 쪽 텍스트가 실제 Qdrant 컬렉션에 쌓일 수 있습니다(코드 경로상 그렇다고 읽었고 실행하지는 않았습니다). 실제 키로 돌릴 때는 새 터미널을 쓰세요.
+
 직접 확인한 출력입니다.
 
 ```text
@@ -818,6 +869,15 @@ QDRANT_PATH=qstore uv run --no-project python accumulate.py 2>&1 | grep "^>> [�
 QDRANT_PATH=qstore uv run --no-project python accumulate.py 2>&1 | grep "^>> [계N]"
 ```
 
+```powershell
+# 실행해 보지 못했습니다. 끝나면 변수를 지웁니다
+mkdir qstore
+$env:QDRANT_PATH = "qstore"
+uv run --no-project python accumulate.py 2>&1 | Select-String "^>> [계N]"
+uv run --no-project python accumulate.py 2>&1 | Select-String "^>> [계N]"
+Remove-Item Env:QDRANT_PATH
+```
+
 ```text
 >> 계약서 | 조각 2 | name ['tmpkpc50e2i.pdf'] | 이 세션이 처리한 파일 ['sample-contract.pdf']
 >> NDA 추가 | 조각 3 | name ['tmpkpc50e2i.pdf', 'tmpldaamotp.pdf'] | 이 세션이 처리한 파일 ['sample-contract.pdf', 'sample-nda.pdf']
@@ -825,7 +885,7 @@ QDRANT_PATH=qstore uv run --no-project python accumulate.py 2>&1 | grep "^>> [�
 >> NDA 추가 | 조각 6 | name ['tmpg_kub8kt.pdf', 'tmpkpc50e2i.pdf', 'tmpldaamotp.pdf', 'tmpt_8p_tus.pdf'] | 이 세션이 처리한 파일 ['sample-contract.pdf', 'sample-nda.pdf']
 ```
 
-(직접 확인.) 둘째 프로세스는 같은 계약서를 올렸을 뿐인데 조각이 2개 늘었습니다. 임시 파일 이름이 매번 달라 내용 해시가 달라지기 때문에 같은 문서로 인식되지 않고 중복으로 쌓입니다. 앱에는 저장소의 문서를 지우거나 고르는 기능이 없습니다. Qdrant 클라우드를 쓰면 이전 사용자의 문서가 컬렉션에 계속 남고 다음 분석의 검색 범위에 들어갑니다.
+(직접 확인.) 둘째 프로세스는 같은 계약서를 올렸을 뿐인데 조각이 2개 늘었습니다. 임시 파일 이름이 매번 달라 내용 해시가 달라지기 때문에 같은 문서로 인식되지 않고 중복으로 쌓입니다. `insert(path=임시 파일, name=올린 파일 이름, skip_if_exists=True)`로 고친 복사본으로 같은 폴더 저장 모드를 두 번 돌려 봐도 저장된 이름만 `sample-contract.pdf`로 바뀔 뿐 조각은 2→3, 5→6으로 그대로 쌓였습니다(직접 확인). 내용 해시를 만들 때 이름에 더해 파일 경로(`str(content.path)`)가 들어가고 경로는 매번 다른 임시 파일이기 때문입니다(agno 3.1.2 `agno/knowledge/knowledge.py`의 `_build_content_hash`를 소스로 확인). 앱에는 저장소의 문서를 지우거나 고르는 기능이 없습니다. Qdrant 클라우드를 쓰면 이전 사용자의 문서가 컬렉션에 계속 남고 다음 분석의 검색 범위에 들어갑니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -887,6 +947,7 @@ for kind in sys.argv[1:]:
 ```bash
 uv venv
 uv pip install -r requirements.txt
+uv run --no-project python make_pdf.py
 uv run --no-project python -c "import agno.models.ollama"
 ```
 
@@ -925,12 +986,16 @@ uv run --no-project python -c "p='local_legal_agent.py'; s=open(p,encoding='utf-
 ```
 
 ```text
+>> Qdrant 대역: url='http://localhost:6333' api_key=None 는 쓰지 않음
 >> 성공: ['Connected to local Qdrant!'] | 오류: ["Error processing document: Error processing document: 'Knowledge' object has no attribute 'add_content'"]
 ```
+
+(②를 고친 뒤부터 매 실행 첫 줄에 이 `Qdrant 대역` 줄이 나옵니다. 앱이 가리킨 곳이 `http://localhost:6333`임을 보여 줍니다. 이 실행들은 끝에서 팀이 없어 traceback으로 끝나지만 `grep`이 가려 보이지 않습니다.)
 
 ③ 클라우드판과 같은 `add_content`입니다. 43행을 Step 3처럼 `insert`로 고칩니다. 다음은 PDF를 읽는 단계입니다.
 
 ```text
+>> Qdrant 대역: url='http://localhost:6333' api_key=None 는 쓰지 않음
 >> 성공: ['Connected to local Qdrant!'] | 오류: ['Error processing document: Error processing document: `pypdf` not installed. Please install it via `pip install pypdf`.']
 ```
 
@@ -938,6 +1003,7 @@ uv run --no-project python -c "p='local_legal_agent.py'; s=open(p,encoding='utf-
 
 ```text
 ERROR    Error inserting document: Failed to generate embedding: Client.embed() got an unexpected keyword argument 'dimensions'
+>> Qdrant 대역: url='http://localhost:6333' api_key=None 는 쓰지 않음
 >> 성공: ['Connected to local Qdrant!', '✅ Document processed and team initialized!'] | 오류: []
 >> 저장소: 0 조각 | name: []
 ```
@@ -945,6 +1011,7 @@ ERROR    Error inserting document: Failed to generate embedding: Client.embed() 
 ⑤ agno 3.0.5의 `OllamaEmbedder`는 `embed(..., dimensions=4096)`을 부르는데 `ollama==0.4.4`의 `Client.embed`에는 `dimensions` 인자가 없습니다. agno가 이 오류를 `ERROR` 로그로만 남기고 `insert`는 정상으로 돌아오므로 앱은 "✅ Document processed"를 띄우는데 저장소는 비어 있습니다. 이 상태에서 분석하면 지식 검색이 아무것도 찾지 못합니다. `dimensions`를 받는 `ollama` 0.6.3으로 올리면(`uv pip install -U ollama`, httpx도 0.28.1로 올라감) 풀립니다.
 
 ```text
+>> Qdrant 대역: url='http://localhost:6333' api_key=None 는 쓰지 않음
 >> 성공: ['Connected to local Qdrant!', '✅ Document processed and team initialized!'] | 오류: []
 >> 저장소: 2 조각 | name: ['sample-contract.pdf']
 >> ===== Contract Review | 오류: [] | 저장소: 6 조각
@@ -956,11 +1023,11 @@ ERROR    Error inserting document: Failed to generate embedding: Client.embed() 
 
 ## 요청 한 건이 흐르는 과정
 
-문서가 이미 올라간 뒤 사용자가 "Contract Review"를 골라 Analyze를 누르면 팀 실행이 셋 일어납니다. 배우가 여덟 곳이고 메시지가 서른여덟 개라 한 그림에 넣으면 선이 서로 가로질러 읽히지 않아, 모델 호출과 검색 경계에서 열네 그림으로 나눴고 메시지는 모두 원래 순서로 정확히 한 그림에 있습니다. 첫 그림을 뺀 열세 장은 `extra-` 이름입니다. 이 시퀀스는 Step 6의 가짜 서버 대본(멤버는 Contract Analyst 하나)으로 돌려 본 것이라 진짜 모델의 위임 순서는 확인하지 못했습니다. 핵심 요약과 권고에서 리더가 지식 검색을 하지 않은 것도 대본의 선택입니다. 문서 올리기 쪽 흐름은 Step 3에 그림 넷으로 있습니다.
+문서가 이미 올라간 뒤 사용자가 "Contract Review"를 골라 Analyze를 누르면 팀 실행이 셋 일어납니다. 배우가 여덟 곳이고 메시지가 서른아홉 개라 한 그림에 넣으면 선이 서로 가로질러 읽히지 않아, 모델 호출과 검색 경계에서 열네 그림으로 나눴고 메시지는 모두 원래 순서로 정확히 한 그림에 있습니다. 첫 그림을 뺀 열세 장은 `extra-` 이름입니다. 이 시퀀스는 Step 6의 가짜 서버 대본(멤버는 Contract Analyst 하나)으로 돌려 본 것이라 진짜 모델의 위임 순서는 확인하지 못했습니다. 핵심 요약과 권고에서 리더가 지식 검색을 하지 않은 것도 대본의 선택입니다. 문서 올리기 쪽 흐름은 Step 3에 그림 다섯으로 있습니다.
 
 ![1단계: 클릭과 리더의 첫 요청](diagrams/sequence.svg)
 
-사용자가 분석 유형을 고르고 Analyze를 누르면 화면이 질문과 `Focus Areas`를 만들어 팀의 `run`을 부르고, 리더는 지시문·멤버 명단·질문과 도구 스키마 둘을 모델에 보내 `search_knowledge_base`를 요청받습니다.
+사용자가 분석 유형을 고르고(이때 화면은 다시 그려지지만 팀은 부르지 않습니다) Analyze를 누르면 화면이 질문과 `Focus Areas`를 만들어 팀의 `run`을 부르고, 리더는 지시문·멤버 명단·질문과 도구 스키마 둘을 모델에 보내 `search_knowledge_base`를 요청받습니다.
 
 ![2단계 가: 리더의 검색어 임베딩](diagrams/extra-team-embed.svg)
 
@@ -1023,9 +1090,9 @@ ERROR    Error inserting document: Failed to generate embedding: Client.embed() 
 - [ ] "Contract Review" 한 번에 모델 호출 일곱 번과 임베딩 넷(문서 둘, 검색 둘)이 찍혔다
 - [ ] `accumulate.py`를 폴더 저장 모드로 두 번 돌려 조각이 2개에서 5개로 늘어남을 봤다
 - [ ] 로컬판: `openai`·`pypdf`를 채우고 `model=`→`id=`, `add_content`→`insert`를 고치고 `ollama`를 올려 조각이 2개 저장됨을 봤다
-- [ ] 실제 키로 돌릴 때: `uv run --no-project streamlit run legal_agent_team.py --server.headless true --server.address localhost`로 띄우고 키·URL을 넣었다(이 문서는 하지 않음, 모델 호출과 Qdrant 쓰기가 일어난다)
+- [ ] 실제 키로 돌릴 때: **새 터미널**(가짜 서버 주소를 건 변수가 없는 곳)에서 `uv run --no-project streamlit run legal_agent_team.py --server.headless true --server.address localhost --browser.gatherUsageStats false`로 띄우고 키·URL을 넣었다(이 문서는 하지 않음, 모델 호출과 Qdrant 쓰기가 일어난다)
 
-앱을 띄우는 명령 자체는 아무것도 보내지 않습니다. 직접 확인하니 `/_stcore/health`가 `ok`를 돌려줬고, 터미널에는 `Uvicorn server started on localhost:...`가 찍혔습니다. `~/.streamlit/credentials.toml`이 없을 때만 `Collecting usage statistics` 줄이 함께 나옵니다.
+앱을 띄우는 명령 자체는 아무것도 보내지 않지만, 브라우저로 열면 Streamlit 사용 통계가 나갑니다(Day 054가 확인했고 `--browser.gatherUsageStats false`로 끕니다). 직접 확인하니 `/_stcore/health`가 `ok`를 돌려줬고, 터미널에는 `Uvicorn server started on localhost:...`가 찍혔습니다. `~/.streamlit/credentials.toml`이 없을 때만 `Collecting usage statistics` 줄이 함께 나옵니다.
 
 ## 문제 해결
 
@@ -1034,21 +1101,23 @@ ERROR    Error inserting document: Failed to generate embedding: Client.embed() 
 | 앱을 열자마자 ``ImportError: `ddgs` not installed`` | agno의 검색 도구는 `ddgs`를 import하는데 `requirements.txt`는 `duckduckgo-search`만 적었다 | `uv pip install ddgs`(Step 1) |
 | 문서를 올리면 빨간 오류 셋, `'Knowledge' object has no attribute 'add_content'` | agno 3.0 이후 `add_content`가 없고 `insert`가 같은 일을 한다 | 85행을 `knowledge_base.insert(path=temp_file_path)`로, 또는 `agno<3`으로 고정(Step 3) |
 | 처리에 실패한 뒤에도 임시 폴더에 올린 PDF의 사본이 남아 있다 | 지우는 줄이 성공 경로에만 있다 | 임시 폴더의 `tmp*.pdf`를 직접 지운다(Step 3) |
-| "Successfully connected to Qdrant!"가 떴는데 문서를 올리면 연결 거부 오류가 난다 | 성공 메시지는 객체 생성 뒤에 뜨고 접속은 첫 호출 때 한다 | URL·포트·키를 먼저 확인하고, 클라우드 URL은 포트 `:6333`까지 적는다(Step 2) |
-| Qdrant 키를 비워 두면 업로드 위젯이 안 나온다. 키 없는 로컬 Qdrant를 쓸 수 없다 | `init_qdrant`가 키와 URL이 모두 있어야 객체를 만든다 | 로컬 저장소는 로컬판을 쓴다(Step 8) |
+| "Successfully connected to Qdrant!"가 떴는데 문서를 올리면 연결 거부 오류가 난다 | 성공 메시지는 객체 생성 뒤에 뜨고 접속은 첫 호출 때 한다 | URL·포트·키를 먼저 확인한다. URL에 포트가 없으면 `qdrant-client` 1.19.1이 6333을 쓴다(소스로 확인, Step 2) |
+| Qdrant 키를 비워 두면 업로드 위젯이 안 나온다 | `init_qdrant`가 키와 URL이 모두 있어야 객체를 만든다 | 키 칸에 값을 넣는다. 키가 필요 없는 로컬 서버라면 아무 값이나 넣으면 열릴 것으로 보이나 확인하지 않았다. 로컬 저장소를 쓰려면 로컬판(Step 8) |
 | "Contract Review"를 골랐는데도 다른 멤버가 일한다 | 분석 유형은 질문 글의 `Focus Areas`일 뿐 팀 구성을 바꾸지 않는다 | 멤버를 제한하려면 `Team(members=...)`를 유형별로 만든다(더 해보기) |
-| 같은 계약서를 다시 올렸더니 같은 문장이 중복으로 나오고, 인용한 문서 이름이 `tmp…pdf`다 | 임시 파일 이름이 해시에 들어가 같은 문서로 인식되지 않고, 저장된 `name`이 임시 이름이다 | 올리기 전에 컬렉션을 비우거나, `insert(name=...)`로 이름을 주고 `skip_if_exists=True`를 시험한다(Step 7) |
+| 같은 계약서를 다시 올렸더니 같은 문장이 중복으로 나오고, 인용한 문서 이름이 `tmp…pdf`다 | 임시 파일 경로가 해시에 들어가 같은 문서로 인식되지 않고, 저장된 `name`이 임시 이름이다. `name=`과 `skip_if_exists=True`만 줘서는 조각이 줄지 않는다 | 올리기 전에 컬렉션을 비운다(Step 7) |
 | 지식 검색이 다른 문서의 문장을 인용한다 | 컬렉션 하나에 모든 문서가 들어가고 검색에 문서 필터가 없다 | 문서마다 컬렉션 이름을 바꾸거나 `metadata`로 거른다(더 해보기) |
 | 로컬판: "Failed to connect to Qdrant: OllamaEmbedder.__init__() got an unexpected keyword argument 'model'" | 25행의 `model=`가 틀렸다. 필드 이름은 `id` | `OllamaEmbedder(id="openhermes")`(Step 8) |
 | 로컬판: ``ImportError: `openai` not installed``, ``pypdf not installed`` | 로컬판 `requirements.txt`에 둘이 없다 | `uv pip install openai pypdf` |
 | 로컬판: "✅ Document processed"인데 분석이 문서를 못 찾는다. 로그에 ``Client.embed() got an unexpected keyword argument 'dimensions'`` | `ollama==0.4.4`에 `dimensions`가 없다. agno는 오류를 로그로만 남기고 계속한다 | `uv pip install -U ollama`(Step 8) |
 | 로컬판: 버튼을 누를 때마다 느려지고 같은 조각이 쌓인다 | 문서 처리가 화면이 다시 그려질 때마다 돈다 | `st.session_state`에 처리한 파일 이름을 두는 클라우드판의 방식으로 감싼다(더 해보기) |
+| `fake_server.py`가 `PermissionError: [WinError 10013] ...`로 죽는다. 서버가 죽은 채 `drive.py`를 돌리면 오류 없이 세 탭에 `Connection error.`만 나온다 | 고른 포트가 Windows의 TCP 제외 범위에 들어 있다(검토 중 `58726-58825` 범위의 포트에서 재현됨) | 다른 포트를 고른다. 가짜 서버의 첫 줄 `가짜 모델 서버: 127.0.0.1:포트`가 찍혔는지 먼저 본다 |
+| `| grep "^>>"`가 `Binary file (standard input) matches`만 내거나 `drive.py`가 ``UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f916'``로 죽는다 | 한국어 Windows에서 파이프 출력의 기본 인코딩이 `cp949`다 | 사전 준비의 `PYTHONIOENCODING=utf-8`을 건다 |
 | 머리말의 ⚠: 나중에 `gpt-5` 호출이 모델 없음으로 실패한다 | `gpt-5-2025-08-07` 스냅숏이 2026-12-11에 종료된다 | 네 곳의 `OpenAIChat(id="gpt-5")`를 다른 모델로 바꾼다 |
 
 ## 더 해보기
 
 - `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team/legal_agent_team.py:214-229`의 `Team(...)`을 분석 유형마다 `analysis_configs`의 `agents`에 든 멤버만으로 만들도록 바꾸고, Step 6의 가짜 서버 로그에서 리더 시스템 메시지의 `<member id=` 개수가 1로 줄어드는지 세어 보세요. 위임 대본(`Focus Areas`)은 그대로 둬도 됩니다.
-- `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team/legal_agent_team.py:77-85`의 `Knowledge.insert` 호출에 `name=uploaded_file.name`을 넘기고 `skip_if_exists=True`를 더한 복사본으로 Step 7을 다시 돌려, 저장된 `name`이 올린 파일 이름이 되는지, 새 프로세스에서 같은 계약서를 올려도 조각이 늘지 않는지 확인해 보세요. 파일 내용 해시를 쓸지 이름을 쓸지는 직접 정해야 합니다.
+- `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team/legal_agent_team.py:77-85`의 `Knowledge.insert` 호출에 이름만 줘서는 중복이 줄지 않습니다(Step 7). 해시에 임시 경로가 들어가기 때문입니다. 임시 경로 대신 고정된 경로를 쓰거나, PDF 바이트의 해시를 직접 계산해 이미 저장된 문서면 `insert`를 건너뛰는 방법을 설계하고 Step 7을 다시 돌려 조각이 늘지 않는지 확인해 보세요.
 - `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team/local_ai_legal_agent_team/local_legal_agent.py:70-74`의 `if uploaded_file:` 블록을 클라우드판의 `processed_files` 방식(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team/legal_agent_team.py:156-165`)으로 감싸 상호작용마다 조각이 6개로 늘던 것이 2개에 머무는지 `drive_local.py`로 확인해 보세요.
 
 ## 다음 날 예고

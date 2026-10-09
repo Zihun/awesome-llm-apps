@@ -6,5 +6,7 @@ kb: 지식 베이스 (Knowledge) { class: ours }
 qdrant: Qdrant 클라우드 { class: store }
 
 ui -> kb: insert(path=임시 파일)
-kb -> qdrant: exists() 뒤 create()\n(컬렉션이 없으면 만듦)
+kb -> qdrant: exists()
+kb -> qdrant: create()
+kb -> qdrant: create() 안의 exists()
 kb -> qdrant: content_hash_exists()

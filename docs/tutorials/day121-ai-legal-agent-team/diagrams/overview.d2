@@ -4,11 +4,13 @@ direction: right
 user: 사용자 { class: person }
 
 app: legal_agent_team.py {
+  class: group
   grid-columns: 2
   vertical-gap: 0
   horizontal-gap: 20
   side: "사이드바\n(키 · URL 입력)" { class: ours }
   proc: "문서 처리\n(process_document)" { class: ours }
+  vdb: "저장소 연결\n(Qdrant)" { class: ours }
   kb: "지식 베이스\n(Knowledge)" { class: ours }
   ui: "분석 화면\n(Analyze 버튼)" { class: ours }
   team: "팀 리더\n(Team)" { class: ours }

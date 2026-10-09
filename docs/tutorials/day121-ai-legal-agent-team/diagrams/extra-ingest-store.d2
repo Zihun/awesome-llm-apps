@@ -4,8 +4,8 @@ shape: sequence_diagram
 qdrant: Qdrant 클라우드 { class: store }
 kb: 지식 베이스 (Knowledge) { class: ours }
 ui: 분석 화면 (Streamlit) { class: ours }
-tmp: 임시 파일 (.pdf) { class: file }
+user: 사용자 { class: person }
 
 kb -> qdrant: 쪽 텍스트 · 벡터 저장\n(insert)
 kb -> ui: insert 반환
-ui -> tmp: 임시 파일 지움
+ui -> user: Documents stored successfully! 표시

@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+side: 사이드바 (키 · URL 입력) { class: ours }
+proc: 문서 처리 (process_document) { class: ours }
+ui: 분석 화면 (Analyze 버튼) { class: ours }
+vdb: 저장소 연결 (Qdrant) { class: ours }
+kb: 지식 베이스 (Knowledge) { class: ours }
+team: 팀 리더 (Team) { class: ours }
+
+side -> vdb: init_qdrant()
+proc -> kb: insert(path=임시 파일)
+ui -> team: run(질문)
+ui -> team: run(앞 분석 + 핵심 요약 요청)
+ui -> team: run(앞 분석 + 권고 요청)
