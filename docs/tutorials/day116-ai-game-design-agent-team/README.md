@@ -822,7 +822,7 @@ curl http://localhost:8765/_stcore/health
 | expander 네 칸의 내용이 한 칸씩 밀리거나 비어 있음(직접 확인, `max_rounds` 12·14) | `chat_history[-4:]`는 본문 한 바퀴가 끝에 있어야 맞음. 대화 길이가 `9 + 4k`일 때만 맞음 | `max_rounds=13` 그대로 둠 |
 | 앱 자체 README의 "Task Agent"와 `initiate_chat()` 설명이 코드와 다름 | 코드에는 에이전트가 넷뿐이고 `initiate_swarm_chat`을 부름(소스로 확인) | 무시해도 됨 |
 | 잘못된 키나 네트워크 오류에서 Streamlit 오류 화면이 뜸 | `try/except`가 없음(소스로 확인, 실제로 실패시켜 보지는 않음) | 키를 확인. 오류를 화면에 정리하려면 직접 감싸야 함 |
-| 가짜 서버가 `PermissionError: [WinError 10013]`로 죽음 | 고른 포트가 Windows의 TCP 제외 포트 범위(Hyper-V·WSL 등이 잡음)에 걸림. 이 PC는 50000~50059, 58626~58925, 60635~60734, 61196~61395 같은 범위가 제외였음(리뷰 재현 기준) | `netsh interface ipv4 show excludedportrange protocol=tcp`로 범위를 보고 그 밖의 포트를 고름 |
+| 가짜 서버가 `PermissionError: [WinError 10013]`로 죽음 | 고른 포트가 Windows의 TCP 제외 포트 범위(Hyper-V·WSL 등이 잡음)에 걸림. 이 PC는 50000~50059, 58626~58925, 60635~60734, 61196~61395 같은 범위가 제외였음(이 PC에서 `netsh interface ipv4 show excludedportrange protocol=tcp`로 직접 확인) | `netsh interface ipv4 show excludedportrange protocol=tcp`로 범위를 보고 그 밖의 포트를 고름 |
 | `streamlit run`을 헤드리스로 띄우면 시작 중 외부 IP 조회 요청이 나갈 수 있음 | `--server.address`를 안 주면 Streamlit이 외부 IP를 알아내려 `checkip.amazonaws.com`에 요청(Day 060) | `--server.headless true --server.address localhost` 지정 |
 | 확인 스크립트에서 `missing ScriptRunContext!` 경고 | `AppTest`를 Streamlit 서버 밖에서 부름 | 무시해도 됨(직접 확인) |
 
