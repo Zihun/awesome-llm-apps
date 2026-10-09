@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: right
+
+os: 서버 (AgentOS) { class: ours }
+team: 팀 리더 (Team) { class: ours }
+web: Web Agent (Agent) { class: ours }
+fin: Finance Agent (Agent) { class: ours }
+ddgt: 검색 도구 (DuckDuckGoTools) { class: ours }
+yft: 주가 도구 (YFinanceTools) { class: ours }
+
+openai: OpenAI gpt-4o { class: ext }
+ddg: DuckDuckGo { class: ext }
+yahoo: Yahoo Finance { class: ext }
+agno_api: Agno 사용 통계 API { class: ext }
+
+team -> openai: 지시문 · 위임 스키마
+web -> openai: 역할 · 도구 스키마
+fin -> openai: 역할 · 도구 스키마
+ddgt -> ddg: 검색어
+yft -> yahoo: 티커
+os -> agno_api: 기동 메타데이터

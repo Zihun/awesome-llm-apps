@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+web: Web Agent { class: ours }
+openai: OpenAI gpt-4o { class: ext }
+
+web -> openai: tool 메시지 (검색 결과)
+openai -> web: 정리한 글
+web -> team: 보고서 (문자열)

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+fin: Finance Agent { class: ours }
+openai: OpenAI gpt-4o { class: ext }
+
+team -> fin: task 문자열
+fin -> openai: 역할 · 표 지시문 · task\n+ 도구 스키마 넷
+openai -> fin: get_current_stock_price(\n"AAPL")

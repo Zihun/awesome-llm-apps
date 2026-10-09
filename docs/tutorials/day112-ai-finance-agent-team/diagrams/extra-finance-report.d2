@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+fin: Finance Agent { class: ours }
+openai: OpenAI gpt-4o { class: ext }
+
+fin -> openai: tool 메시지 (가격)
+openai -> fin: 표로 쓴 답
+fin -> team: 보고서 (문자열)

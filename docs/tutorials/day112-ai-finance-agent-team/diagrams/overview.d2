@@ -1,0 +1,30 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+plane: 컨트롤 플레인 (os.agno.com) { class: ext }
+key: OPENAI_API_KEY (환경변수) { class: file }
+
+app: finance_agent_team.py {
+  grid-columns: 7
+  os: "AgentOS 서버\n(AgentOS)" { class: ours }
+  team: "팀 리더\n(Team)" { class: ours }
+  web: "Web Agent\n(Agent)" { class: ours }
+  fin: "Finance Agent\n(Agent)" { class: ours }
+  ddgt: "검색 도구\n(DuckDuckGo\nTools)" { class: ours }
+  yft: "주가 도구\n(YFinance\nTools)" { class: ours }
+  db: "agents.db\n(SqliteDb)" { class: store }
+}
+
+openai: OpenAI gpt-4o { class: ext }
+ddg: DuckDuckGo { class: ext }
+yahoo: Yahoo Finance { class: ext }
+agno_api: Agno 사용 통계 API { class: ext }
+
+user -> plane: 질문
+plane -> app: "POST /teams/{id}/runs"
+key -> app: 인증
+app -> openai: 지시문 · 스키마
+app -> ddg: 검색어
+app -> yahoo: 티커
+app -> agno_api: 기동 메타데이터

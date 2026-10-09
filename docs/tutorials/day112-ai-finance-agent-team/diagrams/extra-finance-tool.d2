@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+fin: Finance Agent { class: ours }
+yft: YFinanceTools { class: ours }
+yahoo: Yahoo Finance { class: ext }
+
+fin -> yft: get_current_stock_price(\n"AAPL")
+yft -> yahoo: 시세 조회
+yahoo -> yft: 시세 정보
+yft -> fin: 가격 문자열

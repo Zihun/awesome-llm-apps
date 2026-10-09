@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+web: Web Agent { class: ours }
+ddgt: DuckDuckGoTools { class: ours }
+ddg: DuckDuckGo { class: ext }
+
+web -> ddgt: web_search(query)
+ddgt -> ddg: 검색어
+ddg -> ddgt: 검색 결과
+ddgt -> web: JSON 결과

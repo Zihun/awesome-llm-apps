@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+plane: 컨트롤 플레인 { class: ext }
+os: AgentOS 서버 { class: ours }
+team: 팀 리더 (Team) { class: ours }
+openai: OpenAI gpt-4o { class: ext }
+
+user -> plane: 질문 입력
+plane -> os: "POST /teams/{id}/runs"
+os -> team: arun(질문)
+team -> openai: 지시문 · 멤버 명단 · 질문\n+ delegate_task_to_member 스키마
+openai -> team: delegate_task_to_member(\nfinance-agent, task)

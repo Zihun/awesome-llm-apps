@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+os: 서버 (AgentOS) { class: ours }
+team: 팀 리더 (Team) { class: ours }
+web: Web Agent (Agent) { class: ours }
+fin: Finance Agent (Agent) { class: ours }
+ddgt: 검색 도구 (DuckDuckGoTools) { class: ours }
+yft: 주가 도구 (YFinanceTools) { class: ours }
+db: agents.db (SqliteDb) { class: store }
+
+os -> team: run(질문)
+team -> web: 위임 task
+team -> fin: 위임 task
+web -> ddgt: web_search · search_news
+fin -> yft: 시세 · 추천 · 정보 · 뉴스
+web -> db: db=db (연결만)
+fin -> db: db=db (연결만)

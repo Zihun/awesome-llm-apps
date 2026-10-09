@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+openai: OpenAI gpt-4o { class: ext }
+web: Web Agent { class: ours }
+
+team -> openai: 앞선 위임 호출 · 재무 보고서\n(tool 메시지)
+openai -> team: delegate_task_to_member(\nweb-agent, task)
+team -> web: task 문자열
+web -> openai: 역할 · task\n+ 도구 스키마 둘
+openai -> web: web_search(\n"AAPL latest news")
