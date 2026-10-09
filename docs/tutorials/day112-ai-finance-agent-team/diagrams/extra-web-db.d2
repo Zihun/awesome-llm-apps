@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+web: Web Agent { class: ours }
+db: agents.db (SqliteDb) { class: store }
+
+web -> db: approvals 표 확인
+db -> web: 표 없음

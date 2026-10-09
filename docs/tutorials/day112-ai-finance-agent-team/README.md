@@ -1,6 +1,6 @@
 # Day 112 · 💲 AI Finance Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ · 예상 소요 85분(앱은 45줄이지만 Step 6에서 가짜 서버와 대역 파일을 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 질문 1건에 $0.03 안팎(`gpt-4o` 호출이 대본으로는 7번이었고 입력은 도구 결과에 따라 달라 약 7,000토큰, 출력은 약 1,500토큰으로 어림했습니다. 모델 페이지의 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-09 확인)을 대입한 대략치이고, 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ · 예상 소요 90분(앱은 45줄이지만 Step 6에서 가짜 서버와 대역 파일을 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 질문 1건에 $0.03 안팎(`gpt-4o` 호출이 대본으로는 7번이었고 입력은 도구 결과에 따라 달라 약 7,000토큰, 출력은 약 1,500토큰으로 어림했습니다. 모델 페이지의 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-09 확인)을 대입한 대략치이고, 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team`
 
 ## 오늘 만들 것
 
@@ -21,7 +21,7 @@
 | OpenAI API 키 | 리더와 멤버 둘의 `gpt-4o` 호출 인증. 앱 코드는 키를 읽지 않고(`finance_agent_team.py`에 `api_key`·`environ` 없음, grep) 환경변수 `OPENAI_API_KEY`를 쓴다. 이 문서는 가짜 값 `sk-fake`와 가짜 서버로 확인한다 | https://platform.openai.com/api-keys |
 | curl | Step 6의 HTTP 요청. 이 문서는 Git Bash의 `curl`로 확인했다. PowerShell 5.1에서 `curl`은 다른 명령의 별칭이라 `curl.exe`로 부른다(실행해 보지 못함) | 별도 설치 없음 |
 
-모델 `gpt-4o`는 OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인)에서 폐기 대상 칸에 없고 다른 모델의 "대체 모델" 칸에만 나옵니다.
+모델 `gpt-4o`는 OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인)에서 폐기 대상 칸에 없고 다른 모델의 "대체 모델" 칸에만 나옵니다. 별칭 `gpt-4o`의 기본 스냅숏 `gpt-4o-2024-08-06`도 폐기 표에 없고, `gpt-4o-2024-05-13`만 2026-10-23에 종료됩니다(같은 원문, 2026-10-09 확인).
 
 ## 아키텍처 한눈에 보기
 
@@ -35,7 +35,7 @@
 | 주가 도구 (`YFinanceTools`) | 시세·애널리스트 추천·회사 정보·회사 뉴스 네 함수 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team/finance_agent_team.py:26` |
 | 저장소 (`SqliteDb`) | 멤버 둘이 `db=`로 받는 SQLite 파일 `agents.db` | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team/finance_agent_team.py:9-10` |
 
-외부 호출은 모델(`gpt-4o`, 세 곳), DuckDuckGo, Yahoo Finance, 서버가 뜰 때 가는 Agno 사용 통계 API, 그리고 브라우저로 여는 컨트롤 플레인(`os.agno.com`)입니다. 먼저 서버가 팀을 받고, 팀이 멤버를, 멤버가 도구와 저장소를 쥐는 부분입니다.
+외부 호출은 모델(`gpt-4o`, 세 곳), DuckDuckGo, Yahoo Finance, Agno 사용 통계 API(서버가 뜰 때 `POST /telemetry/os` 한 번, 질문마다 멤버 둘과 팀이 각각 보내는 실행 통계 `POST /telemetry/runs` 셋 — 뒤쪽은 `AGNO_TELEMETRY=false`로 꺼집니다), 그리고 브라우저로 여는 컨트롤 플레인(`os.agno.com`)입니다. 먼저 서버가 팀을 받고, 팀이 멤버를, 멤버가 도구와 저장소를 쥐는 부분입니다.
 
 ![서버·팀·멤버·도구·저장소의 구조](diagrams/extra-structure-team.svg)
 
@@ -139,7 +139,7 @@ web_agent = Agent(
 )
 ```
 
-`db_file="agents.db"`는 실행한 작업 폴더 기준의 상대 경로입니다. `role`은 이 에이전트의 지시문이 아니라 팀 리더가 보는 멤버 명단에 들어가는 설명입니다(Step 6의 첫 요청에서 확인). `DuckDuckGoTools()`는 인자 없이 두 함수를 켭니다.
+`db_file="agents.db"`는 실행한 작업 폴더 기준의 상대 경로입니다. `role`은 팀 리더가 보는 멤버 명단에 들어가고(Step 6의 요청 `#1`), 멤버 자신의 시스템 메시지에도 `<your_role>`로 들어갑니다(요청 `#2`·`#5`). `instructions`가 없는 Web Agent에게는 이것이 유일한 지시입니다. `DuckDuckGoTools()`는 인자 없이 두 함수를 켭니다.
 
 **확인.** 이 줄들만 따로 만들어 봅니다. 키는 필요 없고, `ls`에 `agents.db`가 없다는 것이 요점입니다.
 
@@ -162,7 +162,7 @@ ls
 Web Agent ['web_search', 'search_news']
 ```
 
-`SqliteDb`는 만들 때 파일을 만들지 않습니다. 파일은 처음 쓸 때 생기고, 오늘 앱에서는 그 순간이 Step 7에서 봅니다.
+`SqliteDb`는 만들 때 파일을 만들지 않습니다. 첫 질문에서 멤버 실행이 끝날 때 agno가 `agents.db`의 approvals 표를 찾느라 처음 연결하면서 파일이 생깁니다(Step 7). 표는 생기지 않습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -195,7 +195,7 @@ ValueError: Included tool(s) not present in the toolkit: get_company_news, get_a
 
 원인은 `YFinanceTools`가 바뀐 데 있습니다. agno 3.1.2의 생성자(`agno/tools/yfinance.py`의 `__init__`)는 함수마다 `enable_*` 플래그를 두고 기본값으로 `get_current_stock_price` 하나만 켭니다. `include_tools`는 켜진 함수 가운데서 고르는 필터라서(`agno/tools/toolkit.py`의 `_check_tools_filters`), 꺼진 함수의 이름을 적으면 오류입니다. 이 앱이 쓴 `agno>=2.2.10`의 하한판 2.2.10과 2.5.2의 `yfinance.py`에는 플래그가 없고 아홉 함수가 모두 켜졌으며, 2.5.3부터 플래그가 있습니다(두 판의 소스를 직접 열어 확인). 같은 종류의 실패를 Day 089가 `FirecrawlTools`의 인자 이름에서 겪었습니다.
 
-고치는 길은 둘입니다. `uv pip install "agno[os,sqlite,ddg]==2.5.2" greenlet`로 고정하면 원본이 그대로 import됩니다(직접 확인, 이 판의 extra는 `greenlet`을 가져오지 않아 따로 넣었습니다). 오늘은 최신판에 남아 복사본의 26행만 고칩니다. 원본 파일은 건드리지 않습니다.
+고치는 길은 둘입니다. `uv pip install "agno[os,sqlite,ddg]==2.5.2" greenlet`로 고정하면 원본이 그대로 import됩니다(직접 확인, 이 판의 extra는 `greenlet`을 가져오지 않아 따로 넣었습니다. 이 판은 `AgentOS(...)`를 만들 때 바로 기동 통계를 보내려 하므로 Step 4·5의 import 확인에서도 나갑니다 — 소스로 확인). 오늘은 최신판에 남아 복사본의 26행만 고칩니다. 원본 파일은 건드리지 않습니다.
 
 ```bash
 uv run --no-project python -c "p='finance_agent_team.py'; s=open(p,encoding='utf-8').read(); open(p,'w',encoding='utf-8').write(s.replace('YFinanceTools(include_tools=','YFinanceTools(enable_company_info=True, enable_analyst_recommendations=True, enable_company_news=True, include_tools='))"
@@ -292,7 +292,7 @@ uv run --no-project python -c "
 import finance_agent_team as f, inspect
 print(type(f.app).__name__)
 print(inspect.signature(f.agent_os.serve))
-print('telemetry 인자:', f.agent_os.telemetry)
+print('telemetry:', f.agent_os.telemetry)
 " | grep -v "^DEBUG"
 ```
 
@@ -301,10 +301,10 @@ print('telemetry 인자:', f.agent_os.telemetry)
 ```text
 FastAPI
 (app: Union[str, fastapi.applications.FastAPI], *, host: str = 'localhost', port: int = 7777, reload: bool = False, reload_includes: Optional[List[str]] = None, reload_excludes: Optional[List[str]] = None, workers: Optional[int] = None, access_log: bool = False, **kwargs)
-telemetry 인자: True
+telemetry: True
 ```
 
-세 가지를 읽습니다. 서버는 `localhost:7777`에만 열립니다(`host` 기본값이 `localhost`이고, 환경변수 `AGENT_OS_HOST`·`AGENT_OS_PORT`가 있으면 그 값이 이깁니다 — `agno/os/app.py`의 `serve`를 소스로 확인). `reload=True`이므로 코드를 고치면 서버가 다시 뜨고, 문자열 `"finance_agent_team:app"`은 모듈 이름이라 이 파일이 있는 폴더에서 돌려야 합니다. 그리고 `telemetry`는 `True`입니다. `AgentOS(teams=[agent_team])`에 `telemetry=False`가 없으므로 서버가 뜨는 순간 agno가 `POST /telemetry/os`를 보내려 하고, `AGNO_TELEMETRY=false`는 이쪽을 끄지 못합니다(Day 047 Step 5가 소스와 로컬 수신기로 확인). 이 앱에서도 `AGNO_TELEMETRY=false`를 건 채 Step 6의 대역이 같은 내용을 찍었습니다(직접 확인). 보내려는 내용은 Step 6에서 봅니다.
+세 가지를 읽습니다. 서버는 `localhost:7777`에만 열립니다(`host` 기본값이 `localhost`이고, 환경변수 `AGENT_OS_HOST`·`AGENT_OS_PORT`가 있으면 그 값이 이깁니다 — `agno/os/app.py`의 `serve`를 소스로 확인). `reload=True`이므로 코드를 고치면 서버가 다시 뜨고, 문자열 `"finance_agent_team:app"`은 모듈 이름이라 이 파일이 있는 폴더에서 돌려야 합니다. 그리고 `telemetry`는 `True`입니다. `AgentOS(teams=[agent_team])`에 `telemetry=False`가 없으므로 서버가 뜨는 순간 agno가 `POST /telemetry/os`를 보내려 하고, `AGNO_TELEMETRY=false`는 이쪽을 끄지 못합니다(Day 047 Step 5가 소스와 로컬 수신기로 확인). 이 앱에서도 `AGNO_TELEMETRY=false`를 건 채 Step 6의 대역이 같은 내용을 찍었습니다(직접 확인). 보내려는 내용은 Step 6에서 봅니다. 질문마다 가는 `POST /telemetry/runs`는 다릅니다. 환경변수 없이 질문 1건을 보내면 `finance-agent`·`web-agent`·팀 몫으로 셋이 나가고, `AGNO_TELEMETRY=false`를 걸면 0건이 됩니다(`agno.api.api.api.post_in_background`를 가로채 직접 확인). Step 6의 명령이 이 변수를 거는 까닭입니다.
 
 독자가 앱을 띄우는 명령은 이 한 줄입니다.
 
@@ -411,12 +411,11 @@ uv run --no-project python fake_openai.py 54331
 
 ```bash
 # 터미널 B
-export OPENAI_API_KEY=sk-fake OPENAI_BASE_URL=http://127.0.0.1:54331/v1 AGNO_TELEMETRY=false
-uv run --no-project python -m uvicorn harness:app --host 127.0.0.1 --port 54332
+OPENAI_API_KEY=sk-fake OPENAI_BASE_URL=http://127.0.0.1:54331/v1 AGNO_TELEMETRY=false uv run --no-project python -m uvicorn harness:app --host 127.0.0.1 --port 54332
 ```
 
 ```powershell
-# 터미널 B (PowerShell, 실행해 보지 못했습니다)
+# 터미널 B (PowerShell, 실행해 보지 못했습니다. 변수가 이 터미널에 남으므로 실제 키로 돌릴 때는 새 터미널을 쓰세요)
 $env:OPENAI_API_KEY = "sk-fake"; $env:OPENAI_BASE_URL = "http://127.0.0.1:54331/v1"; $env:AGNO_TELEMETRY = "false"
 uv run --no-project python -m uvicorn harness:app --host 127.0.0.1 --port 54332
 ```
@@ -471,7 +470,7 @@ for m in d["member_responses"]:
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-### Step 7. agents.db는 비어 있습니다 — 멤버의 db=db가 쓰이지 않습니다
+### Step 7. agents.db는 비어 있습니다 — 멤버의 db=db는 세션 저장에 쓰이지 않습니다
 
 **목적.** 앱 README가 말하는 저장이 실제로 일어나는지, 같은 세션으로 다시 물으면 앞 대화가 이어지는지 봅니다.
 
@@ -498,13 +497,13 @@ print("표:", c.execute("select name from sqlite_master where type='table'").fet
 표: []
 ```
 
-파일은 있지만 표가 없습니다. 터미널 A의 `#8`~`#14`도 Step 6과 모양이 같습니다. 두 번째 질문의 리더 요청 `#8`은 `roles=['developer', 'user']`, `질문='What did I jus'`이고 앞 질문의 흔적이 없습니다. 이유는 agno 소스에 있습니다. `agno/agent/_session.py`의 `save_session`은 "If the agent is a member of a team, do not save the session to the database"라는 주석 아래 `agent.team_id is None`일 때만 세션을 저장하고, 읽는 쪽도 같은 조건입니다(`agno/agent/_storage.py`의 `read_or_create_session`). 멤버는 팀에 들어가는 순간 `team_id`를 받으므로(`agno/team/_init.py`의 `_initialize_member`) 멤버의 `db=db`는 쓰이지 않습니다. 팀에는 `db`가 없어 기록할 곳이 없습니다. 같은 세션 이름으로 이어지는 대화가 필요하면 `Team(..., db=db)`를 넣어야 합니다(더 해보기).
+파일은 있지만 표가 없습니다. 터미널 A의 `#8`~`#14`도 Step 6과 모양이 같습니다. 두 번째 질문의 리더 요청 `#8`은 `roles=['developer', 'user']`, `질문='What did I jus'`이고 앞 질문의 흔적이 없습니다. 이유는 agno 소스에 있습니다. `agno/agent/_session.py`의 `save_session`은 "If the agent is a member of a team, do not save the session to the database"라는 주석 아래 `agent.team_id is None`일 때만 세션을 저장하고, 읽는 쪽도 같은 조건입니다(`agno/agent/_storage.py`의 `read_or_create_session`). 팀이 실행될 때 `_initialize_member`(`agno/team/_init.py`)가 멤버에 `team_id`를 붙이므로(import 직후에는 `None`) 멤버의 `db=db`는 세션 저장에 쓰이지 않고, 멤버 실행이 끝날 때 approvals 표를 찾는 데에만 닿습니다(`agno/agent/_run.py`의 실행 뒤 정리 단계에서 `update_approval_run_status(agent.db, ...)`를 부릅니다, 소스로 확인. 표가 없을 때 아무것도 만들지 않는다는 쪽은 `agents.db`에 표가 0개라는 Step 7의 출력이 보여 줍니다). 이 접근이 첫 질문 뒤 `agents.db` 파일이 생기는 까닭입니다. 팀에는 `db`가 없어 기록할 곳도 없습니다. 같은 세션으로 이어지는 대화가 필요하면 `Team(..., db=db)`만으로는 모자랍니다. 표가 생기고 멤버는 자기 앞 실행을 받지만, 팀의 `add_history_to_context` 기본값이 `False`(`agno/team/team.py`)라 리더는 앞 질문을 받지 못합니다. `Team(..., db=db, add_history_to_context=True)`가 필요합니다(리뷰어가 `db=db`만 넣은 복사본으로 확인했고, 두 값을 함께 넣은 판은 이 문서에서 돌려 보지 못했습니다).
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
 ## 요청 한 건이 흐르는 과정
 
-컨트롤 플레인에서 질문을 보내면 리더가 멤버 둘을 차례로 부르고 종합하는 흐름을 여덟 그림으로 나눠 따라갑니다. 배우가 열한 곳이고 메시지가 서른둘이라 한 그림에 넣으면 상한(1200×1000)을 넘으므로 앱의 시간 경계, 곧 모델 호출과 도구 호출 경계에서 나눴고, 메시지는 모두 원래 순서로 정확히 한 그림에 있습니다. 첫 그림을 뺀 일곱 장은 `extra-` 이름입니다. 이 시퀀스는 Step 6의 가짜 서버 대본으로 돌려 본 것이라 진짜 모델의 위임 순서와 도구 결과는 확인하지 못했습니다. 컨트롤 플레인 자리는 `curl`이 대신했습니다. Yahoo Finance와 DuckDuckGo로 가는 화살표는 소스(`agno/tools/yfinance.py`, `agno/tools/websearch.py`)로 그렸고, 이 문서에서는 대역으로 바꿔 실행했습니다.
+컨트롤 플레인에서 질문을 보내면 리더가 멤버 둘을 차례로 부르고 종합하는 흐름을 열두 그림으로 나눠 따라갑니다. 배우가 열세 곳이고 메시지가 서른아홉이라 한 그림에 넣으면 상한(1200×1000)을 넘으므로 앱의 시간 경계, 곧 모델 호출과 도구 호출 경계에서 나눴고, 메시지는 모두 원래 순서로 정확히 한 그림에 있습니다. 첫 그림을 뺀 열한 장은 `extra-` 이름입니다. 이 시퀀스는 Step 6의 가짜 서버 대본으로 돌려 본 것이라 진짜 모델의 위임 순서와 도구 결과는 확인하지 못했습니다. 컨트롤 플레인 자리는 `curl`이 대신했습니다. Yahoo Finance와 DuckDuckGo로 가는 화살표는 소스(`agno/tools/yfinance.py`, `agno/tools/websearch.py`)로 그렸고, 이 문서에서는 대역으로 바꿔 실행했습니다.
 
 ![1단계: 질문과 첫 위임](diagrams/sequence.svg)
 
@@ -518,9 +517,17 @@ print("표:", c.execute("select name from sqlite_master where type='table'").fet
 
 도구 함수가 Yahoo Finance에서 시세를 받아 가격 문자열(`"123.4567"`)로 돌려줍니다.
 
-![2단계 다: 표와 보고](diagrams/extra-finance-report.svg)
+![2단계 다: 표 작성](diagrams/extra-finance-report.svg)
 
-가격이 `tool` 메시지로 모델에 가고, 표로 쓴 답이 멤버의 보고서로 리더에게 돌아갑니다.
+가격이 `tool` 메시지로 모델에 가고 표로 쓴 답이 돌아옵니다.
+
+![2단계 라: approvals 표 확인](diagrams/extra-finance-db.svg)
+
+멤버 실행이 끝나면 agno가 `agents.db`에서 approvals 표를 찾고, 표가 없다는 답을 받습니다. 첫 질문 뒤 `agents.db` 파일이 생기는 자리입니다(Step 7).
+
+![2단계 마: 실행 통계와 보고](diagrams/extra-finance-finish.svg)
+
+`AGNO_TELEMETRY`가 없으면 멤버가 실행 통계를 Agno로 보내고, 보고서가 리더에게 돌아갑니다.
 
 ![3단계 가: 리더의 두 번째 위임](diagrams/extra-web-ask.svg)
 
@@ -530,13 +537,21 @@ print("표:", c.execute("select name from sqlite_master where type='table'").fet
 
 검색 도구가 DuckDuckGo에 검색어를 보내고 결과를 JSON으로 돌려받습니다.
 
-![3단계 다: 정리와 보고](diagrams/extra-web-report.svg)
+![3단계 다: 정리](diagrams/extra-web-report.svg)
 
-검색 JSON이 `tool` 메시지로 모델에 가고, 정리한 글이 보고서로 리더에게 돌아갑니다.
+검색 JSON이 `tool` 메시지로 모델에 가고 정리한 글이 돌아옵니다.
+
+![3단계 라: approvals 표 확인](diagrams/extra-web-db.svg)
+
+Finance Agent와 같은 확인이 한 번 더 있습니다.
+
+![3단계 마: 실행 통계와 보고](diagrams/extra-web-finish.svg)
+
+멤버가 실행 통계를 보내고 보고서가 리더에게 돌아갑니다.
 
 ![4단계: 최종 답과 표시](diagrams/extra-final.svg)
 
-리더의 마지막 요청에는 위임 호출 둘과 보고서 둘이 쌓여 있고, 모델이 종합한 답이 서버를 거쳐 화면에 표시됩니다. 이 과정 어디에도 `agents.db`로 가는 화살표가 없다는 점이 Step 7의 내용입니다.
+리더의 마지막 요청에는 위임 호출 둘과 보고서 둘이 쌓여 있고, 모델이 종합한 답이 서버를 거쳐 화면에 표시됩니다. 리더의 최종 답 뒤에는 팀의 실행 통계가 나갑니다. 이 과정에서 `agents.db`에 무언가를 쓰는 화살표는 없고, 표를 찾는 확인만 있다는 점이 Step 7의 내용입니다.
 
 ## 실행 체크리스트
 
@@ -556,12 +571,12 @@ print("표:", c.execute("select name from sqlite_master where type='table'").fet
 | `import agno.tools.duckduckgo`에서 ``ImportError: `ddgs` not installed`` | agno 3.1.2의 검색 도구는 `ddgs`를 import하는데 `requirements.txt`는 `duckduckgo-search`만 적었다 | 같은 명령 |
 | `import agno.os`에서 `ModuleNotFoundError: No module named 'fastapi'` | 서버 계층의 `fastapi`·`uvicorn`·`python-multipart`가 빠졌다 | 같은 명령 |
 | `import finance_agent_team`에서 `ValueError: Included tool(s) not present in the toolkit: ...` | agno 2.5.3 이후 `YFinanceTools`는 함수를 플래그로 켜고, `include_tools`는 켜진 것만 거른다 | 복사본 26행에 `enable_*=True` 셋을 더하거나 `agno==2.5.2`로 고정(Step 3) |
-| 팀에 같은 `session_id`로 다시 물어도 앞 질문을 모른다. `agents.db`는 생겼는데 표가 없다 | 팀의 멤버는 세션을 DB에 저장하지 않고(`agno/agent/_session.py`의 `save_session`) 팀에는 `db`가 없다 | `Team(..., db=db)`를 넣어 본다(더 해보기) |
+| 팀에 같은 `session_id`로 다시 물어도 앞 질문을 모른다. `agents.db`는 생겼는데 표가 없다 | 팀의 멤버는 세션을 DB에 저장하지 않고(`agno/agent/_session.py`의 `save_session`) 팀에는 `db`가 없다. 파일은 멤버 실행 뒤 approvals 표를 찾느라 생긴다 | `Team(..., db=db, add_history_to_context=True)`를 넣어 본다. `db=db`만으로는 리더가 앞 질문을 받지 못한다(더 해보기) |
 | `curl`로 한글 질문을 보냈더니 `fake_openai.py`가 찍은 질문이 `ÁÖ°¡¿Í`처럼 깨져 있다 | Git Bash의 `curl`이 한글 인자를 시스템 코드 페이지(cp949)로 보냈다 | 메시지를 영어로 적는다(Step 6) |
 
 ## 더 해보기
 
-- `advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team/finance_agent_team.py:33-39`의 `Team(...)`에 `db=db`를 넣은 복사본으로 Step 7을 다시 돌려, `agents.db`에 표가 생기는지와 두 번째 질문의 리더 요청에 앞 대화가 들어가는지 `fake_openai.py`의 출력으로 비교해 보세요. 첫 요청의 `roles`가 어떻게 달라지는지가 요점입니다.
+- `advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team/finance_agent_team.py:33-39`의 `Team(...)`에 `db=db`만 넣은 복사본과 `db=db, add_history_to_context=True`를 함께 넣은 복사본으로 Step 7을 각각 다시 돌려, `agents.db`에 표가 생기는지와 두 번째 질문의 리더 요청(`#8`)의 `roles`에 앞 대화가 들어가는지 `fake_openai.py`의 출력으로 비교해 보세요.
 - `from agno.team.mode import TeamMode`로 `Team(..., mode=TeamMode.route)`처럼 `mode`를 바꾸면(`agno/team/mode.py`에 `coordinate`·`route`·`broadcast`·`tasks`가 있습니다) 같은 질문에서 리더의 호출이 몇 번으로 줄어드는지 `fake_openai.py`의 대본을 모드에 맞게 고쳐 세어 보세요. 가짜 서버는 대본대로만 움직이니 진짜 모델로 해야 의미가 있습니다.
 - `YFinanceTools(all=True)`로 아홉 함수를 모두 켜고, Finance Agent의 첫 요청에 실리는 도구 스키마가 4개에서 9개로 늘 때 요청 크기가 얼마나 커지는지 `fake_openai.py`에 `len(json.dumps(body))`를 찍는 줄을 더해 재 보세요.
 

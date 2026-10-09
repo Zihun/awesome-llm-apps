@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+fin: Finance Agent { class: ours }
+agno_api: Agno 사용 통계 API { class: ext }
+
+fin -> agno_api: 실행 통계\n(AGNO_TELEMETRY가 없을 때)
+fin -> team: 보고서 (문자열)

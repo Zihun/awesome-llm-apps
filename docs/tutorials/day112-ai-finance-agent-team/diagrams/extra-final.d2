@@ -2,13 +2,15 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-plane: 컨트롤 플레인 { class: ext }
 os: AgentOS 서버 { class: ours }
 team: 팀 리더 (Team) { class: ours }
 openai: OpenAI gpt-4o { class: ext }
+plane: 컨트롤 플레인 { class: ext }
+agno_api: Agno 사용 통계 API { class: ext }
 
 team -> openai: 위임 호출 둘 · 보고서 둘\n(tool 메시지)
 openai -> team: 종합한 최종 답
+team -> agno_api: 실행 통계\n(AGNO_TELEMETRY가 없을 때)
 team -> os: RunOutput (content)
 os -> plane: 응답 JSON
 plane -> user: 화면에 표시
