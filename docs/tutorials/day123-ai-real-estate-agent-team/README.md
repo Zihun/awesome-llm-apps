@@ -1,6 +1,6 @@
 # Day 123 · 🏠 AI Real Estate Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★☆ ⚠ · 예상 소요 110분(앱은 편집기 기준 837줄이지만 Step 3·4에서 가짜 서버와 확인 스크립트를 직접 저장해 터미널 둘로 돌려 보고, 실패 시나리오를 따로 돌리는 시간이 읽는 시간보다 더 듭니다) · API 비용 대략 1회에 Gemini 약 $0.01 안팎에 Firecrawl 크레딧(Gemini는 `gemini-2.5-flash`의 입력 $0.30·출력 $2.50(1M 토큰당, https://ai.google.dev/gemini-api/docs/pricing, 2026-10-10 확인)을 매물 20건 기준 입력 약 2천·출력 약 2천 5백 토큰으로 어림한 값이고 생각 토큰은 넣지 못했으며, 같은 페이지가 무료 등급을 적습니다. Firecrawl 요금 페이지(https://www.firecrawl.dev/pricing, 2026-10-10)는 무료 월 1,000 크레딧을 적지만 `extract`의 크레딧 단가는 적지 않고, 문서는 "토큰 기준, 1 크레딧 = 15 토큰, 내용에 따라 달라짐"이라고만 적어 1회 비용은 확인하지 못했습니다. 키가 없어 어느 쪽도 실제로 부르지 않았습니다. 로컬판은 Gemini 대신 Ollama라 모델 비용이 없지만 Firecrawl는 그대로 듭니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★☆ ⚠(`requirements.txt`만 설치하면 `google-genai`가 빠져 앱이 첫 import에서 막히고, Gemini 2.5 모델은 새 사용자에게 접근이 제한될 수 있습니다. Step 1·4. 별점은 에이전트가 셋이지만 모델을 부르는 것은 둘이고 파일이 하나라 ★★로 두었습니다) · 예상 소요 120분(앱은 편집기 기준 837줄이지만 Step 3·4에서 가짜 서버와 확인 스크립트를 직접 저장해 터미널 둘로 돌려 보고, 실패 시나리오를 따로 돌리는 시간이 읽는 시간보다 더 듭니다) · API 비용 대략 1회에 Gemini 약 $0.01 안팎에 Firecrawl 크레딧(Gemini는 `gemini-2.5-flash`의 입력 $0.30·출력 $2.50(1M 토큰당, https://ai.google.dev/gemini-api/docs/pricing, 2026-10-10 확인)을 매물 20건 기준 입력 약 2천·출력 약 2천 5백 토큰으로 어림한 값이고 생각 토큰은 넣지 못했으며, 같은 페이지가 무료 등급을 적습니다. Firecrawl 요금 페이지(https://www.firecrawl.dev/pricing, 2026-10-10)는 무료 월 1,000 크레딧을 적지만 `extract`의 크레딧 단가는 적지 않고, 문서는 "토큰 기준, 1 크레딧 = 15 토큰, 내용에 따라 달라짐"이라고만 적어 1회 비용은 확인하지 못했습니다. 키가 없어 어느 쪽도 실제로 부르지 않았습니다. 로컬판은 Gemini 대신 Ollama라 모델 비용이 없지만 Firecrawl는 그대로 듭니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team`
 
 ## 오늘 만들 것
 
@@ -22,7 +22,7 @@
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python | 이 문서는 3.12.10으로 확인했다. 저장소 기준은 3.11~3.13 | 공통 사전 준비와 같음 |
-| Google AI API 키 | `gemini-2.5-flash` 호출. 사이드바 비밀번호 칸에 붙여넣거나 환경변수 `GOOGLE_API_KEY`에 둔다(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/ai_real_estate_agent_team.py:18`). 이 문서는 키 없이 진행한다 | https://aistudio.google.com/app/apikey |
+| Google AI API 키 | `gemini-2.5-flash` 호출(새 키는 이 모델 접근이 제한될 수 있음, Step 4). 사이드바 비밀번호 칸에 붙여넣거나 환경변수 `GOOGLE_API_KEY`에 둔다(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/ai_real_estate_agent_team.py:18`). 이 문서는 키 없이 진행한다 | https://aistudio.google.com/app/apikey |
 | Firecrawl API 키 | 매물 추출. 같은 사이드바의 칸 또는 환경변수 `FIRECRAWL_API_KEY`(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/ai_real_estate_agent_team.py:19`) | https://firecrawl.dev |
 | 인터넷 연결 | PyPI 설치. 앱을 실제로 쓸 때는 Gemini API, Firecrawl API, agno 사용 통계 서버(`os-api.agno.com`)에 접속하고, Firecrawl 서버가 부동산 사이트를 읽는다. 브라우저로 열면 Streamlit의 사용 통계도 나간다(`--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
 | 모델 서버 가짜 | 이 문서의 확인 스크립트가 쓴다. 파이썬 표준 라이브러리만 쓰고 Step 3에서 저장한다 | 별도 설치 없음 |
@@ -50,6 +50,10 @@ $env:PYTHONIOENCODING = "utf-8"
 | 결과 화면 (`display_properties_professionally`) | 지표 셋, 탭 셋, 매물 카드 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/ai_real_estate_agent_team.py:490-584` |
 | 로컬판 | 모델만 Ollama로 바꾼 같은 구조 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/local_ai_real_estate_agent_team.py:1-828` |
 | 의존성 | 클라우드판 8줄 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/requirements.txt:1-8` |
+
+오늘의 앱은 한 파일이라 overview는 부품을 한 묶음에 모았습니다. 그 안의 호출 관계(누가 누구를 만들고 부르는지)는 별도 그림에 화살표로 그렸고 괄호 숫자는 호출하는 줄입니다. 순서 함수가 에이전트를 만들고 `DirectFirecrawlAgent`를 만들며 두 에이전트의 `run`을 부르고, 화면이 결과 dict를 받아 결과 화면 함수를 부릅니다. 그림에서 "쓰이지 않음"으로 적은 둘은 만들어지기만 합니다(Step 4).
+
+![앱 안의 호출 구조](diagrams/extra-structure.svg)
 
 ## 단계별 진행
 
@@ -80,7 +84,7 @@ requests>=2.31.0
 googlesearch-python>=1.2.3
 ```
 
-이 문서를 만들 때(2026-10-10) Python 3.12.10에서 패키지 81개가 깔렸고 agno 3.1.2, streamlit 1.65.0, firecrawl-py 4.50.0, googlesearch-python 1.3.0, openai 3.27.0이 들어왔습니다(직접 확인). `agno>=2.2.10`·`firecrawl-py>=1.9.0`에는 상한이 없어 오늘의 최신으로 풀립니다. 앱의 import는 12줄이고 `openai`·`requests`·`googlesearch`를 쓰는 줄은 두 파일 어디에도 없어서(grep으로 확인), 세 패키지는 설치만 되고 쓰이지 않습니다. 앱 README의 필요 패키지 목록(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/README.md:50-54`)에도 이 셋은 없지만 `google-genai`도 없습니다. 앱을 import해 봅니다.
+이 문서를 만들 때(2026-10-10) Python 3.12.10에서 패키지 81개가 깔렸고 agno 3.1.2, streamlit 1.65.0, firecrawl-py 4.50.0, googlesearch-python 1.3.0, openai 3.27.0이 들어왔습니다(직접 확인). `agno>=2.2.10`·`firecrawl-py>=1.9.0`에는 상한이 없어 오늘의 최신으로 풀립니다. 앱의 import는 12줄이고 `openai`·`requests`·`googlesearch`를 쓰는 줄은 두 파일 어디에도 없어서(grep으로 확인), 세 패키지는 앱 코드가 import하지 않습니다(`requests`는 다른 의존 패키지가 쓸 수 있어 설치는 됩니다). 앱 README의 필요 패키지 목록(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/README.md:50-54`)에도 이 셋은 없지만 `google-genai`도 없습니다. 앱을 import해 봅니다.
 
 ```bash
 uv run --no-project python -c "import ai_real_estate_agent_team"
@@ -472,7 +476,7 @@ $env:AGNO_TELEMETRY = "false"
 uv run --no-project python lab/scenarios.py 55291
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다.) 앱이 찍는 `print` 줄(`Selected websites: ...`, `Raw Firecrawl Response: ...` 등)이 먼저 쏟아지고, 스크립트 출력은 이렇습니다(직접 확인).
+(PowerShell 줄은 실행해 보지 못했습니다.) 앱이 찍는 `print` 줄(`Selected websites: ...`, `Raw Firecrawl Response: ...` 등)이 장면마다 머리줄 뒤에 섞여 나오고, 스크립트 출력만 추리면 이렇습니다(직접 확인).
 
 ```text
 --- 네 사이트, 주/도 비움 ---
@@ -552,7 +556,7 @@ No properties extracted despite finding 0 listin
 
 프롬프트에는 매물 건수와 도시·주/도, 예산만 들어가고 매물 내용은 하나도 들어가지 않습니다. 그런데 프롬프트는 "Key neighborhoods where properties are located"를 쓰라고 시킵니다. 가짜 서버가 받은 요청 본문이 이 문장 그대로였으니(직접 확인) 모델은 매물 주소를 모르고 동네를 쓰게 됩니다. 이 문서는 진짜 모델의 답은 보지 못했습니다.
 
-모델 주소는 `google-genai`가 `GOOGLE_GEMINI_BASE_URL` 환경변수를 읽어 정합니다(소스로 확인, google-genai 2.29.0의 `google/genai/_base_url.py`). 그래서 앱 코드를 고치지 않고 가짜 서버로 보낼 수 있습니다. 모델 이름은 `gemini-2.5-flash`이고 Google의 폐기 안내 페이지는 이 ID에 종료일이 없다고 적습니다(https://ai.google.dev/gemini-api/docs/deprecations, 2026-10-10 확인, 같은 이름의 `-preview-*`·`-lite-preview-*` 등 변형 일곱 개에는 종료일이 있지만 이 앱의 ID는 아님). 화면 하나를 끝까지 돌립니다. 확인 스크립트를 저장합니다.
+모델 주소는 `google-genai`가 `GOOGLE_GEMINI_BASE_URL` 환경변수를 읽어 정합니다(소스로 확인, google-genai 2.29.0의 `google/genai/_base_url.py`). 그래서 앱 코드를 고치지 않고 가짜 서버로 보낼 수 있습니다. 모델 이름은 `gemini-2.5-flash`이고 Google의 폐기 안내 페이지는 이 ID에 종료일이 없다고 적습니다(https://ai.google.dev/gemini-api/docs/deprecations, 2026-10-10 확인, 같은 이름의 `-preview-*`·`-lite-preview-*` 등 변형 일곱 개에는 종료일이 있지만 이 앱의 ID는 아님). 그런데 같은 페이지의 "Gemini 2.5 Flash models" 절에는 이런 노트가 있습니다. "To ensure reliable performance for everyone, we are limiting access to the 2.5 models to users who have actively used them in the past. These models are not deprecated and will continue to be served until further notice through the API. For any new projects, use our latest models: 3.5 Flash-Lite or 3.8 Flash."(2026-10-10 원문 확인). 과거에 이 모델을 써 본 적이 없는 새 키는 이 모델을 못 쓸 수 있다는 뜻으로 읽히지만, 새 키로 실제로 막히는지는 확인하지 못했습니다. 앱은 모델 ID를 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/ai_real_estate_agent_team.py:43`·`257`·`266`행에 박아 두었고, 막히면 Step 5처럼 화면에는 오류 JSON만 실립니다. 화면 하나를 끝까지 돌립니다. 확인 스크립트를 저장합니다.
 
 `lab/run_app.py`
 
@@ -721,12 +725,15 @@ $env:GOOGLE_GEMINI_BASE_URL = "http://127.0.0.1:55291"
 uv run --no-project python lab/llm_down.py ai_real_estate_agent_team.py 55291
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다.) 터미널에 `ERROR   Error from Gemini API: 400 INVALID_ARGUMENT...`가 두 번씩(시장 분석, 평가) 찍히고 스크립트는 이렇게 끝납니다(직접 확인).
+(PowerShell 줄은 실행해 보지 못했습니다.) 터미널에 `ERROR   Error from Gemini API: 400 INVALID_ARGUMENT...`가 두 번씩(시장 분석, 평가) 찍히고 스크립트는 이렇게 끝납니다(직접 확인). `Analysis completed in 0.7s`의 시간은 실행마다 달라지는 값이고 `N.Ns` 꼴이라고만 보면 됩니다.
 
 ```text
 exceptions: []
 errors: []
 tabs: ['🏠 Properties', '📊 Market Analysis', '💰 Valuations']
+info: ['Please provide the location, budget, and property details to help us find your ideal home.', 'AI Agents are searching for your perfect home...']
+captions: ['Find Your Dream Home with Specialized AI Agents', 'Analysis completed in 0.7s']
+🏠 Properties -> ['**Type:** House', '**Beds/Baths:** 3/2', '**Area:** 1,450', '**Property 1 Analysis** • Analysis: Individual assessment not available • Recommendation: ']
 📊 Market Analysis -> ['{"error": {"code": 400, "message": "API key not valid.", "status": "INVALID_ARGUMENT"}}']
 💰 Valuations -> ['{"error": {"code": 400, "message": "API key not valid.", "status": "INVALID_ARGUMENT"}}']
 ```
@@ -783,7 +790,7 @@ download buttons: []
 captions: ['Find Your Dream Home with Specialized AI Agents', 'Analysis completed in 0.6s']
 ```
 
-지표 셋(매물 수, 평균 가격, 가장 많은 유형), 탭 셋, 매물 카드 둘이 나오고 `download buttons`는 비어 있습니다. 앱 README가 내세우는 "Downloadable analysis reports"(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/README.md:43`)는 클라우드판에서 확인되지 않았습니다. 이 확인 전체에서 가짜 서버가 받은 요청은 `POST /v2/extract` 하나(뒤에 `GET`이 하나), `generateContent` 둘이었습니다(직접 확인). 매물 사이트·Gemini·Firecrawl의 실제 주소로는 한 건도 가지 않았습니다.
+지표 셋(매물 수, 평균 가격, 가장 많은 유형), 탭 셋, 매물 카드 둘이 나오고(캡션의 소요 시간은 실행마다 달라지는 `N.Ns` 값입니다) `download buttons`는 비어 있습니다. 앱 README가 내세우는 "Downloadable analysis reports"(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/README.md:43`)는 클라우드판에서 확인되지 않았습니다. 이 확인 전체에서 가짜 서버가 받은 요청은 `POST /v2/extract` 하나(뒤에 `GET`이 하나), `generateContent` 둘이었습니다(직접 확인). 매물 사이트·Gemini·Firecrawl의 실제 주소로는 한 건도 가지 않았습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -803,7 +810,7 @@ captions: ['Find Your Dream Home with Specialized AI Agents', 'Analysis complete
 | 제출 검사의 오류 표시 | HTML 상자 | `st.error` |
 | 결과 아래 | 지표·탭만 | `st.markdown(final_result)`와 내려받기 버튼 |
 
-로컬판은 주소를 정하는 인자가 없습니다. `Ollama(id=...)`는 호스트를 받지 않고 `ollama` 클라이언트가 환경변수 `OLLAMA_HOST`를 읽습니다(소스로 확인, ollama 0.6.3의 `ollama/_client.py`). 안 정하면 이 PC의 11434에 있는 Ollama에 묻습니다. 이 문서는 사용자의 실제 Ollama에는 묻지 않고, `OLLAMA_HOST`를 가짜 서버로 돌려 확인했습니다. 결과 아래 부분은 이렇게 되어 있습니다.
+로컬판은 주소를 정하는 인자를 넘기지 않습니다. agno `Ollama`에는 `host` 필드가 있지만 앱이 `Ollama(id=...)`만 불러 비워 두므로 `ollama` 클라이언트가 환경변수 `OLLAMA_HOST`를 읽습니다(소스로 확인, ollama 0.6.3의 `ollama/_client.py`, agno 3.1.2의 `agno/models/ollama/chat.py`). 안 정하면 이 PC의 11434에 있는 Ollama에 묻습니다. 같은 agno 소스는 환경변수 `OLLAMA_API_KEY`가 있고 `host`가 비어 있으면 주소를 `https://ollama.com`(Ollama의 클라우드)으로 잡으니, 그 변수가 있는 셸에서는 "로컬판"이 로컬이 아닙니다. 이 문서는 사용자의 실제 Ollama에는 묻지 않고, `OLLAMA_HOST`를 가짜 서버로 돌려 확인했습니다. 결과 아래 부분은 이렇게 되어 있습니다.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/local_ai_real_estate_agent_team.py:796-819`
 
@@ -848,21 +855,29 @@ $env:OLLAMA_HOST = "127.0.0.1:55291"
 uv run --no-project python lab/run_app.py local_ai_real_estate_agent_team.py 55291
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다.) 출력은 클라우드판과 같은데 `download buttons: ['📄 Download Full Report']`가 생기고 캡션이 `Find Your Dream Home with Local Ollama AI Agents`입니다(직접 확인). 가짜 서버에는 `POST /api/chat`이 둘(모델 `gpt-oss:20b`, `stream: False`) 들어왔습니다. Ollama가 꺼져 있을 때는(같은 스크립트를 `OLLAMA_HOST=127.0.0.1:55299`처럼 아무도 안 듣는 곳으로 돌렸습니다) 터미널에 `ERROR   Error in Agent run: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download`가 두 번 찍히고 스크립트는 예외 없이 끝나고 결과 탭도 그려집니다(탭 안의 글은 보지 않았습니다, 직접 확인). 앱 README는 로컬판을 "Completely local processing"이라 하지만(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/README.md:212`) 매물 추출은 로컬판도 Firecrawl 서버를 거치고(위 표의 키 행), 그 서버가 사이트를 읽습니다.
+(PowerShell 줄은 실행해 보지 못했습니다.) 출력은 클라우드판과 같은데 `download buttons: ['📄 Download Full Report']`가 생기고 캡션이 `Find Your Dream Home with Local Ollama AI Agents`입니다(직접 확인). 가짜 서버에는 `POST /api/chat`이 둘(모델 `gpt-oss:20b`, `stream: False`) 들어왔습니다. Ollama가 꺼져 있을 때는(같은 스크립트를 `OLLAMA_HOST=127.0.0.1:55299`처럼 아무도 안 듣는 곳으로 돌렸습니다) 터미널에 `ERROR   Error in Agent run: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download`가 두 번 찍히고 스크립트는 예외 없이 끝납니다. 분석 탭 둘에는 JSON이 아니라 `Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download` 문장이 글로 실립니다(직접 확인). 앱 README는 로컬판을 "Completely local processing"이라 하지만(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/README.md:212`) 이 PC 밖으로 나가는 것이 둘 더 있습니다. 매물 추출은 로컬판도 Firecrawl 서버를 거치고(위 표의 키 행) 그 서버가 사이트를 읽습니다. 그리고 로컬판의 에이전트도 같은 `Agent.run` 경로라 성공한 `run`마다 agno가 익명 통계를 `os-api.agno.com`으로 보냅니다(소스로 확인, agno 3.1.2의 `agno/agent/_run.py`가 `log_agent_telemetry`를 부르고 `agno/agent/agent.py`의 `telemetry` 기본값이 `True`, 주소는 `agno/api/settings.py`). 로컬판 파일에는 이를 끄는 인자가 없어(grep으로 확인) `AGNO_TELEMETRY=false`로 끕니다. 이 문서의 로컬판 실행은 그 변수를 켠 채라 전송 건수는 세지 않았습니다.
 
 ![로컬판의 구성](diagrams/extra-local.svg)
 
-**확인.** 위 그림처럼 로컬판에서 클라우드 호출로 남는 것은 Firecrawl뿐이고 모델 화살표만 이 PC의 Ollama를 가리킵니다. 가짜 서버 기록에서 `/api/chat` 둘과 `/v2/extract` 하나를 확인했습니다(직접 확인). 실제 `gpt-oss:20b`로 돌려 보지는 않았습니다.
+**확인.** 위 그림처럼 로컬판에서 모델 화살표만 이 PC의 Ollama를 가리키고, 이 PC 밖으로 나가는 것은 Firecrawl 호출과 agno 통계입니다(브라우저로 열면 Streamlit 사용 통계도 나가고 `--browser.gatherUsageStats false`로 끕니다). 가짜 서버 기록에서 `/api/chat` 둘과 `/v2/extract` 하나를 확인했습니다(직접 확인). 실제 `gpt-oss:20b`로 돌려 보지는 않았습니다.
 
 ## 요청 한 건이 흐르는 과정
 
+시퀀스는 메시지가 많아 시간 경계마다 그림을 나눴습니다. 첫 장은 버튼부터 매물이 돌아올 때까지입니다.
+
 ![요청 시퀀스](diagrams/sequence.svg)
 
-버튼을 누르면 `main`이 `run_sequential_analysis`를 부르고, 순서 함수가 `find_properties_direct`에 넘겨 Firecrawl `extract`가 돌아올 때까지 기다립니다. 실패하면 문자열을 돌려주고 끝납니다(그림에 없는 갈래). 성공하면 매물 건수만 담은 프롬프트로 시장 분석 에이전트를 부르고 Gemini가 글을 돌려줍니다. 시퀀스는 여기까지가 한 장이고 나머지는 같은 시점에서 이어집니다.
+버튼을 누르면 `main`이 진행 막대를 0.1로 갱신하고(`update_progress`, 797행) `run_sequential_analysis`를 부릅니다. 순서 함수는 진행 콜백 `update_callback`으로 화면에 0.2를 알리고(261행) `find_properties_direct`에 넘겨 Firecrawl `extract`가 돌아올 때까지 기다리며, 돌아오면 0.4를 알립니다(283행). 실패하면 문자열을 돌려주고 끝납니다(그림에 없는 갈래). 둘째 장은 시장 분석입니다. 매물 건수만 담은 프롬프트로 에이전트를 부르고 Gemini가 글을 돌려주며, 성공한 `run`마다 agno 통계가 나갑니다(`AGNO_TELEMETRY=false`면 안 나감).
 
-![요청 시퀀스, 평가와 화면](diagrams/extra-valuation.svg)
+![요청 시퀀스, 시장 분석](diagrams/extra-market.svg)
 
-평가 에이전트는 매물 JSON 프롬프트로 한 번 더 Gemini를 부르고, 순서 함수는 결과를 dict로 `main`에 돌려주며, 화면이 지표와 탭을 그립니다. 성공한 에이전트 호출마다 agno 통계 전송이 따라붙지만 그림에서는 뺐습니다(Step 4). 순서는 모두 직렬이라 모델 호출 둘과 Firecrawl 호출 하나가 서로를 기다립니다.
+셋째 장은 평가입니다. 같은 모양으로 평가 에이전트가 매물 JSON 프롬프트를 Gemini에 보내고 통계가 한 번 더 나갑니다.
+
+![요청 시퀀스, 매물 평가](diagrams/extra-valuation.svg)
+
+마지막 장에서 순서 함수가 0.95와 1.0을 알리고(363·447행) 결과 dict를 `main`에 돌려주며, 화면이 지표와 탭, 소요 시간을 그립니다. 순서는 모두 직렬이라 모델 호출 둘과 Firecrawl 호출 하나가 서로를 기다립니다. 같은 동작이 로컬판에서는 모델 자리만 바뀝니다(Step 7).
+
+![요청 시퀀스, 마무리](diagrams/extra-final.svg)
 
 ## 실행 체크리스트
 
@@ -882,12 +897,13 @@ uv run --no-project python lab/run_app.py local_ai_real_estate_agent_team.py 552
 |---|---|---|
 | ``ImportError: `google-genai` not installed. Please install it using `pip install google-genai` `` | `requirements.txt`에 `google-genai`가 없다(8행의 `agno.models.google`이 요구) | `uv pip install google-genai` |
 | ``ImportError: `ollama` not installed. Please install using `pip install ollama` `` | 로컬판은 `ollama` 패키지가 필요한데 목록에 없다 | `uv pip install ollama` |
-| 하한 `firecrawl-py==1.9.0`에서 `TypeError: got an unexpected keyword argument 'prompt'` | 1.9.0의 `extract(urls, params=None)`이 앱의 호출 모양을 받지 않는다 | 4.x로 올린다. 오늘의 최신(4.50.0)은 같은 호출이 맞는다 |
+| 하한 `firecrawl-py==1.9.0`에서 화면에 `Error in property search: Firecrawl extraction failed: FirecrawlApp.extract() got an unexpected keyword argument 'prompt'` | 1.9.0의 `extract(urls, params=None)`이 앱의 호출 모양을 받지 않는다. 앱이 `TypeError` 문장을 `Firecrawl extraction failed:` 뒤에 붙여 돌려준다(`TypeError` 문장은 직접 확인, 붙는 모양은 172·277행 소스로 확인) | 4.x로 올린다. 오늘의 최신(4.50.0)은 같은 호출이 맞는다 |
 | `Please provide: Google AI API Key, Firecrawl API Key, City` | 키·도시·사이트가 비었다. 클라우드판은 스타일 없는 HTML 상자, 로컬판은 `st.error`로 보인다 | 사이드바 칸과 도시를 채운다 |
 | `Firecrawl extraction failed: ...` | 키가 틀렸거나 서비스가 거부했다. 앱은 예외 문장을 그대로 붙인다 | Firecrawl 키와 크레딧을 확인한다 |
 | `No properties extracted despite finding 0 listings.`로 시작하는 긴 안내 | `extract`가 빈 배열을 돌려줬다. 안내문이 사이트 구조 변경·차단 같은 원인을 나열한다 | 사이트를 바꾸고 조건을 넓힌다. 진짜 서버에서 어느 원인인지는 확인하지 못했다 |
-| 분석 탭에 `{"error": {...}}` 같은 JSON이 글로 보이고 오류 표시는 없다 | 모델 호출이 실패해도 agno가 오류 문자열을 내용으로 돌려준다 | 터미널의 `ERROR` 줄에서 원인(키·한도)을 본다 |
-| 로컬판에서 분석이 비거나 오류 JSON이 보이고 터미널에 `Failed to connect to Ollama` | Ollama 서버가 안 떠 있거나 `OLLAMA_HOST`가 다른 곳을 가리킨다 | `ollama serve`와 `ollama pull gpt-oss:20b`를 확인한다(14GB) |
+| 분석 탭에 `{"error": {...}}` 같은 JSON이 글로 보이고 오류 표시는 없다 | 모델 호출이 실패해도 agno가 오류 문자열을 내용으로 돌려준다. 진짜 키라면 키·한도 말고도 Gemini 2.5 모델의 새 사용자 접근 제한일 수 있다(Step 4) | 터미널의 `ERROR` 줄에서 원인을 본다. 접근 제한이면 복사본에서 모델 ID(43·257·266행)를 바꿔 시험해야 하지만 시험하지 못했다 |
+| 가짜 서버가 `[WinError 10013]`로 뜨지 않는다 | 고른 포트가 Windows의 TCP 제외 대역 안이다. 49152~65535 안에도 제외 대역이 있을 수 있다 | `netsh int ipv4 show excludedportrange protocol=tcp`로 대역을 보고 밖의 포트를 고른다(`WinError 10013`은 제외 대역 포트에 bind할 때 나는 오류이고, 이 문서의 가짜 서버로 그 포트를 직접 시험하지는 않았다) |
+| 로컬판 분석 탭 둘에 `Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible.` 문장이 글로 보이고 터미널에도 `ERROR` 줄이 찍힌다 | Ollama 서버가 안 떠 있거나 `OLLAMA_HOST`가 다른 곳을 가리킨다 | `ollama serve`와 `ollama pull gpt-oss:20b`를 확인한다(14GB) |
 | 주/도를 비웠더니 사이트 주소 끝이 `-`·`_`·`//`로 깨진다 | 주소 조립이 빈 문자열을 처리하지 않는다 | 주/도를 적는다 |
 | 로컬판 결과 아래에 `{'properties': [...` 같은 긴 문자열이 보인다 | `st.markdown(final_result)`에 `else`가 없어 dict 표현이 찍힌다 | 앱을 고치지 않고 무시하거나 복사본에서 `else` 안으로 옮겨 본다 |
 | "Average Price"가 이상하게 작거나 크다 | `'$1.2M'`처럼 약어 가격에서 숫자만 모아 `12`가 된다 | 가격이 `$850,000` 꼴인 결과만 믿는다 |

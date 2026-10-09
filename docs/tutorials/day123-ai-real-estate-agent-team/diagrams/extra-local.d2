@@ -12,6 +12,7 @@ app: "local_ai_real_estate_agent_team.py (한 파일)" {
 }
 
 ollama: "Ollama 서버 (이 PC)\ngpt-oss:20b (로컬)" { class: ext; height: 70 }
+agno_api: "agno 통계 API" { class: ext; height: 60 }
 firecrawl: "Firecrawl API\n(extract)" { class: ext; height: 70 }
 sites: "Zillow · Realtor.com ·\nTrulia · Homes.com" { class: ext; height: 70 }
 
@@ -20,3 +21,4 @@ ollama -> app: "분석 · 평가 글"
 app -> firecrawl: "extract 요청\n(URL · 프롬프트 · 스키마)"
 firecrawl -> app: "properties 배열"
 sites -> firecrawl: "페이지 내용"
+app -> agno_api: "메타데이터\n(성공 시)"

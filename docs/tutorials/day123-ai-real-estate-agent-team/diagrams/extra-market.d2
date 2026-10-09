@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit 화면 { class: ours }
+seq: 순서 함수 { class: ours }
+market: 시장 분석 { class: ours }
+agno_api: agno 통계 API { class: ext }
+gemini: Gemini API { class: ext }
+
+seq -> ui: update_callback(0.5, Analyzing market)
+seq -> market: run(시장 분석 프롬프트)
+market -> gemini: generateContent
+gemini -> market: 분석 글
+market -> agno_api: 실행 통계 (AGNO_TELEMETRY=false면 안 감)
+market -> seq: RunOutput.content
+seq -> ui: update_callback(0.7, Market analysis complete)

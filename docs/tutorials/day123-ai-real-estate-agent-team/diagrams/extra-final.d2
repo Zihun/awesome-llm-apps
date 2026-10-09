@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+seq: 순서 함수 { class: ours }
+
+seq -> ui: update_callback(0.95, Synthesizing results)
+seq -> ui: update_callback(1.0, Analysis complete)
+seq -> ui: dict (매물 · 분석 · 평가 · 보고서)
+ui -> user: 지표 셋 + 탭 셋 + 소요 시간

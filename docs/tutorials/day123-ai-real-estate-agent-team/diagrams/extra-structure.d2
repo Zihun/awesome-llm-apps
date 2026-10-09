@@ -1,0 +1,28 @@
+...@../../_tools/theme
+direction: down
+
+ui: "화면 (main)" { class: ours }
+seq: "순서 함수\n(run_sequential_analysis)" { class: ours }
+create: "에이전트 만들기\n(create_sequential_agents)" { class: ours }
+finder: "매물 찾기\n(DirectFirecrawlAgent)" { class: ours }
+search: "property_search_agent\n(쓰이지 않음)" { class: ours }
+market: "market_analysis_agent" { class: ours }
+valuation: "property_valuation_agent" { class: ours }
+idle: "DirectFirecrawlAgent.agent\n(쓰이지 않음)" { class: ours }
+fc: "FirecrawlApp\n(SDK 클라이언트)" { class: ours }
+display: "결과 화면\n(display_properties_professionally)" { class: ours }
+extractval: "평가 글 자르기\n(extract_property_valuation)" { class: ours }
+
+ui -> seq: "800-808행"
+seq -> create: "258행"
+create -> search: "Agent (177행)"
+create -> market: "Agent (206행)"
+create -> valuation: "Agent (227행)"
+seq -> finder: "263-274행"
+finder -> idle: "44행"
+finder -> fc: "49행"
+seq -> market: "run (302행)"
+seq -> valuation: "run (357행)"
+seq -> ui: "결과 dict"
+ui -> display: "815행"
+display -> extractval: "545행"
