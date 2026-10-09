@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+screen: Streamlit 화면 { class: ours }
+agent: agno Agent { class: ours }
+together: Together AI { class: ext }
+agno_api: Agno 통계 API { class: ext }
+composio: Composio API { class: ext }
+
+user -> screen: Compile Final Report 클릭
+screen -> agent: compile_report_task.run(입력)
+agent -> together: 지시문 + 질문과 답
+together -> agent: 도구 호출 요청
+agent -> composio: 문서 만들기 요청
+composio -> agent: 문서 생성 결과

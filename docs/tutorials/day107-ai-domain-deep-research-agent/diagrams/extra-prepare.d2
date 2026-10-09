@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: right
+
+screen: "Streamlit 화면\n(사이드바 · 입력 · 버튼)" { class: ours }
+state: "세션 상태\n(st.session_state)" { class: store; height: 96 }
+init: "모델 · 도구 준비\n(initialize_agents)" { class: ours }
+composio: "Composio API" { class: ext; height: 70 }
+
+screen -> init: "두 키"
+init -> screen: "llm, composio_tools"
+init -> composio: "ComposioToolSet(키) ·\nget_tools(액션 3개)"
+composio -> init: "도구 정의 3개"
+screen -> state: "질문 · 답 · 보고서 저장"
+state -> screen: "저장된 값 읽기"

@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: right
+
+qgen: "질문 생성 Agent\n(Question Generator)" { class: ours }
+researcher: "질문별 조사 Agent\n(research_question)" { class: ours }
+reporter: "보고서 작성 Agent\n(Report Compiler)" { class: ours }
+together: "Together AI\n(Qwen3 235B)" { class: ext; height: 200 }
+
+qgen -> together: "지시문 + 요청 문장"
+together -> qgen: "질문 5줄"
+researcher -> together: "지시문 + 질문"
+together -> researcher: "도구 호출 · 답"
+reporter -> together: "지시문 + 질문과 답"
+together -> reporter: "도구 호출 · 본문"

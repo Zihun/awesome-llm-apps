@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+screen: Streamlit 화면 { class: ours }
+agent: agno Agent { class: ours }
+together: Together AI { class: ext }
+composio: Composio API { class: ext }
+agno_api: Agno 통계 API { class: ext }
+
+agent -> together: 도구 결과
+together -> agent: 보고서 본문
+agent -> agno_api: 실행 메타데이터
+agent -> screen: 보고서 본문
+screen -> user: 보고서 표시

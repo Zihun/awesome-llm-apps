@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+screen: Streamlit 화면 { class: ours }
+agent: agno Agent { class: ours }
+together: Together AI { class: ext }
+agno_api: Agno 통계 API { class: ext }
+composio: Composio API { class: ext }
+
+agent -> screen: 질문 텍스트
+screen -> user: 질문 5개 표시
+user -> screen: Start Research 클릭
+screen -> agent: research_task.run(질문) × 5
+agent -> together: 지시문 + 질문
+together -> agent: 도구 호출 요청
+agent -> composio: 검색 실행 요청
+composio -> agent: 검색 결과

@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: right
+
+screen: "Streamlit 화면\n(버튼 핸들러)" { class: ours }
+qgen: "질문 생성 Agent\n(Question Generator)" { class: ours }
+researcher: "질문별 조사 Agent\n(research_question)" { class: ours }
+reporter: "보고서 작성 Agent\n(Report Compiler)" { class: ours }
+agno_api: "Agno 통계 API" { class: ext; height: 70 }
+
+screen -> qgen: "run(요청 문장)"
+qgen -> screen: "질문 텍스트"
+screen -> researcher: "run(질문)"
+researcher -> screen: "답"
+screen -> reporter: "run(입력)"
+reporter -> screen: "보고서 본문"
+qgen -> agno_api: "실행 메타데이터"
+researcher -> agno_api: "실행 메타데이터"
+reporter -> agno_api: "실행 메타데이터"

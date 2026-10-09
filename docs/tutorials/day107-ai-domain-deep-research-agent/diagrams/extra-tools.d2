@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: right
+
+researcher: "질문별 조사 Agent\n(research_question)" { class: ours }
+reporter: "보고서 작성 Agent\n(Report Compiler)" { class: ours }
+composio: "Composio API" { class: ext; height: 70 }
+tavily: "Tavily 검색" { class: ext; height: 60 }
+perplexity: "Perplexity 검색" { class: ext; height: 60 }
+gdocs: "Google Docs" { class: ext; height: 60 }
+
+researcher -> composio: "검색 실행 요청"
+composio -> researcher: "검색 결과"
+reporter -> composio: "문서 만들기 요청"
+composio -> reporter: "문서 생성 결과"
+composio -> tavily: "Tavily 검색"
+composio -> perplexity: "Perplexity 검색"
+composio -> gdocs: "문서 만들기"
