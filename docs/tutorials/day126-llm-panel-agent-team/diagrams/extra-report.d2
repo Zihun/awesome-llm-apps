@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+main: "main" { class: ours }
+grouped: "grouped_positions" { class: ours }
+scoreboard: "scoreboard" { class: ours }
+
+main -> grouped: "grouped_positions(answers) — --rebut일 때만 호출"
+grouped -> main: "표 줄 목록 (finding · positions · contested)"
+main -> user: "## Positions by finding\n+ 표"
+main -> scoreboard: "scoreboard(answers)"
+scoreboard -> main: "점수표 줄 목록\n(모델별 토큰 · 비용 · 합계)"
+main -> user: "점수표 출력"

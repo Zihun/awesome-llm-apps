@@ -1,0 +1,41 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (터미널) { class: person }
+key: "OPENROUTER_API_KEY\n(환경변수)" { class: file }
+patch: "sample_diff.patch\n(--file)" { class: file }
+
+app: "llm_panel_agent_team.py" {
+  class: group
+  grid-columns: 6
+  grid-gap: 4
+  main: "명령줄 진입\n(main)" { class: ours }
+  round_one: "1라운드 병렬\n(round_one)" { class: ours }
+  ask: "모델 한 번 호출\n(ask)" { class: ours }
+  round_two: "2라운드 반박\n(round_two)" { class: ours }
+  grouped: "입장 묶기\n(grouped_positions)" { class: ours }
+  report: "점수표 · 파일\n(write_panel)" { class: ours }
+}
+
+openrouter: "OpenRouter\n(openrouter.ai)" { class: ext }
+
+models: "기본 로스터 (DEFAULT_MODELS)" {
+  class: group
+  grid-columns: 3
+  grid-gap: 4
+  gpt: "~openai/\ngpt-mini-latest" { class: ext }
+  haiku: "~anthropic/\nclaude-haiku-latest" { class: ext }
+  gemini: "~google/\ngemini-flash-latest" { class: ext }
+}
+
+panelmd: "panel.md\n(--out)" { class: file }
+
+user -> app: "--file/--question · --models · --rebut"
+key -> app: "환경변수 읽기"
+patch -> app: "diff 본문"
+app -> user: "답 · 입장 표 · 점수표 (stdout)"
+app -> openrouter: "POST chat/completions (프롬프트 · usage.include)"
+openrouter -> app: "답 글 · 토큰 · 청구 비용"
+openrouter -> models: "별칭 풀이 · 프롬프트"
+models -> openrouter: "답 글"
+app -> panelmd: "두 라운드 전문"

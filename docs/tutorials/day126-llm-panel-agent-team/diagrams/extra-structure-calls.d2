@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: down
+
+main: "main" { class: ours }
+round_one: "round_one" { class: ours }
+round_two: "round_two" { class: ours }
+write_panel: "write_panel" { class: ours }
+scoreboard: "scoreboard" { class: ours }
+grouped: "grouped_positions" { class: ours }
+
+main -> round_one: "client · models ·\nprompt · timeout"
+main -> round_two: "--rebut일 때: client ·\nanswers · prompt · timeout"
+main -> grouped: "--rebut일 때: answers"
+main -> scoreboard: "answers"
+main -> write_panel: "path · answers ·\nquestion · rebut"
+write_panel -> scoreboard: "answers"
+write_panel -> grouped: "--rebut일 때: answers"

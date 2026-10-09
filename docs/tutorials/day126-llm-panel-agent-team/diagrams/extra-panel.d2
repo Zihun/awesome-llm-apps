@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+grouped: "grouped_positions" { class: ours }
+write_panel: "write_panel" { class: ours }
+panelmd: "panel.md" { class: file }
+
+write_panel -> grouped: "grouped_positions(answers)\n(--rebut일 때)"
+grouped -> write_panel: "표 줄 목록\n(finding · positions · contested)"
+write_panel -> panelmd: "# Panel · 점수표 · 입장 표 ·\n모델별 1·2라운드 전문"

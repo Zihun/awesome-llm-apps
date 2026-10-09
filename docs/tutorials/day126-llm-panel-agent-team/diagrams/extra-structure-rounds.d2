@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: right
+
+round_one: "round_one" { class: ours }
+round_two: "round_two" { class: ours }
+ask: "ask" { class: ours }
+parse: "parse_positions" { class: ours }
+openrouter: "OpenRouter\n(openrouter.ai)" { class: ext }
+
+round_one -> ask: "모델마다 한 번\n(스레드 풀)"
+round_two -> ask: "모델마다 한 번\n(스레드 풀)"
+round_two -> parse: "반박 글"
+parse -> round_two: "(label, ref) 쌍 목록"
+ask -> openrouter: "chat.completions.create\n(model · messages ·\ntimeout · extra_body)"
+openrouter -> ask: "choices · usage"

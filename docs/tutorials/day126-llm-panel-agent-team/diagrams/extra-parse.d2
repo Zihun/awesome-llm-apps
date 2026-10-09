@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+main: "main" { class: ours }
+round_two: "round_two" { class: ours }
+parse: "parse_positions" { class: ours }
+
+round_two -> parse: "parse_positions(반박 글)"
+parse -> round_two: "(label, ref) 쌍 목록"
+round_two -> user: "## 모델 rebuts (ok, 1.5s)\n+ 반박 전문"
+round_two -> main: "반환 (answers에 rebuttal · positions · letters가 채워짐)"

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+main: "main" { class: ours }
+write_panel: "write_panel" { class: ours }
+scoreboard: "scoreboard" { class: ours }
+
+main -> write_panel: "write_panel(path, answers,\nquestion, rebut)"
+write_panel -> scoreboard: "scoreboard(answers)"
+scoreboard -> write_panel: "점수표 줄 목록\n(모델별 토큰 · 비용 · 합계)"

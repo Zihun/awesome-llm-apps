@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+main: "main" { class: ours }
+round_two: "round_two" { class: ours }
+ask: "ask" { class: ours }
+openrouter: "OpenRouter" { class: ext }
+
+main -> round_two: "round_two(client, answers,\n프롬프트, timeout)"
+round_two -> ask: "ask(모델마다: 내 답 + 섞은\n남의 답 Reviewer A, B)"
+ask -> openrouter: "POST chat/completions\n(2라운드 프롬프트)"
+openrouter -> ask: "반박 글 · 토큰 · cost"
+ask -> round_two: "Answer(rebuttal)"
