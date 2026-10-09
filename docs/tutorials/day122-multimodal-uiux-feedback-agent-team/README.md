@@ -519,7 +519,7 @@ find agent_teams -name ".adk" -o -name "*.db"
 Get-ChildItem -Recurse -Force agent_teams -Include .adk,session.db | Select-Object -ExpandProperty FullName
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다.)
+(PowerShell 줄은 실행해 보지 못했습니다. 이 줄은 `FullName`이라 절대 경로를 찍으니, 아래 출력의 `agent_teams/…` 상대 경로와 앞부분만 다르고 이후는 같은 파일입니다.)
 
 ```text
 agent_teams/multimodal_uiux_feedback_agent_team/.adk
@@ -592,7 +592,7 @@ find agent_teams -path "*s2/artifacts*" -type f
 Get-ChildItem -Recurse -File -Force agent_teams | Where-Object { $_.FullName -like "*s2*artifacts*" } | Select-Object -ExpandProperty FullName
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다.)
+(PowerShell 줄은 실행해 보지 못했습니다. 이 줄은 `FullName`이라 절대 경로를 찍으니, 아래 출력의 `agent_teams/…` 상대 경로와 앞부분만 다르고 이후는 같은 파일입니다.)
 
 ```text
 agent_teams/multimodal_uiux_feedback_agent_team/.adk/artifacts/apps/multimodal_uiux_feedback_agent_team/users/u1/sessions/s2/artifacts/landing_page_improved_v1.png/versions/0/landing_page_improved_v1.png
@@ -649,33 +649,37 @@ curl.exe -s http://127.0.0.1:53418/apps/multimodal_uiux_feedback_agent_team/user
 
 ## 요청 한 건이 흐르는 과정
 
-분석 요청 한 건은 Step 6의 고친 판으로 그렸습니다(원본 그대로는 `extra-load`의 첫 메시지 직후 도구가 실패해서, 그 그림의 나머지와 그 뒤 그림의 호출·저장은 일어나지 않습니다). 검색 호출은 이 요청에서 일어나지 않는 경우로 그렸습니다(Step 5·6의 요청은 검색을 한 번 부릅니다). 메시지는 모두 코드 순서대로 한 그림에 들어 있고, 배우가 많아 시간 경계에서 일곱 그림으로 나눴습니다. 코디네이터가 `transfer_to_agent`로 이관하는 대상은 `AnalysisPipeline`이고, 세 에이전트를 차례로 부르는 것은 `SequentialAgent`인 이 파이프라인입니다(google-adk 2.11.0의 `sequential_agent.py`가 `sub_agents`를 `for`로 돌며 `run_async`를 부르는 것을 소스로 확인).
+분석 요청 한 건은 Step 6의 고친 판으로 그렸습니다(원본 그대로는 `extra-load`의 첫 메시지 직후 도구가 실패해서, 그 그림의 나머지와 그 뒤 그림의 호출·저장은 일어나지 않습니다). 비평가가 검색 도우미를 한 번 부르는 경우로 그렸습니다(Step 5·6의 요청과 같습니다. 전략가도 같은 도구를 가졌지만 이 요청에서는 부르지 않았습니다). 메시지는 모두 코드 순서대로 한 그림에 들어 있고, 배우가 많아 시간 경계에서 여덟 그림으로 나눴습니다. 코디네이터가 `transfer_to_agent`로 이관하는 대상은 `AnalysisPipeline`이고, 세 에이전트를 차례로 부르는 것은 `SequentialAgent`인 이 파이프라인입니다(google-adk 2.11.0의 `sequential_agent.py`가 `sub_agents`를 `for`로 돌며 `run_async`를 부르는 것을 소스로 확인).
 
-1. 사용자가 이미지와 글을 `/run`으로 보내고, 코디네이터가 `AnalysisPipeline`으로 넘기고, 파이프라인이 1단계 비평가를 부르고, 비평가가 분석 글을 씁니다.
+1. 사용자가 이미지와 글을 `/run`으로 보내고, 코디네이터가 `AnalysisPipeline`으로 넘기고, 파이프라인이 1단계 비평가를 부르고, 비평가의 모델 호출이 검색 도우미 호출을 요구합니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-2. 파이프라인이 2단계 전략가와 3단계 시각 구현을 차례로 부르고, 시각 구현이 도구 호출을 받습니다.
+2. 비평가가 검색 도우미를 `AgentTool`로 부르고, 검색 도우미가 `googleSearch` 선언과 함께 모델을 부르고, 결과를 받은 비평가가 분석 글을 씁니다.
+
+![검색 도우미 호출](diagrams/extra-search.svg)
+
+3. 파이프라인이 2단계 전략가와 3단계 시각 구현을 차례로 부르고, 시각 구현이 도구 호출을 받습니다.
 
 ![계획과 도구 호출](diagrams/extra-plan.svg)
 
-3. 도구가 `reference_image`의 원본을 아티팩트에서 읽으려 하지만 없습니다.
+4. 도구가 `reference_image`의 원본을 아티팩트에서 읽으려 하지만 없습니다.
 
 ![원본 읽기](diagrams/extra-load.svg)
 
-4. 도구가 프롬프트를 `gemini-2.5-flash`로 한 번 다듬습니다.
+5. 도구가 프롬프트를 `gemini-2.5-flash`로 한 번 다듬습니다.
 
 ![프롬프트 다듬기](diagrams/extra-rewrite.svg)
 
-5. 다듬은 글을 `gemini-2.5-flash-image`에 스트리밍으로 보내 이미지를 받습니다.
+6. 다듬은 글을 `gemini-2.5-flash-image`에 스트리밍으로 보내 이미지를 받습니다.
 
 ![이미지 요청](diagrams/extra-image.svg)
 
-6. 도구가 PNG를 아티팩트로 저장하고 상태를 적고, 안내 문자열을 돌려줍니다.
+7. 도구가 PNG를 아티팩트로 저장하고 상태를 적고, 안내 문자열을 돌려줍니다.
 
 ![저장](diagrams/extra-save.svg)
 
-7. 시각 구현이 함수 응답을 보고 요약을 쓰고, `adk web`이 이벤트 목록을 사용자에게 돌려줍니다.
+8. 시각 구현이 함수 응답을 보고 요약을 쓰고, `adk web`이 이벤트 목록을 사용자에게 돌려줍니다.
 
 ![응답](diagrams/extra-finish.svg)
 

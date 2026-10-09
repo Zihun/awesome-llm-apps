@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+critic: UICritic { class: ours }
+gemini: Gemini 텍스트 { class: ext }
+search: SearchAgent { class: ours }
+
+critic -> search: "AgentTool 호출 (request)"
+search -> gemini: "요청 + googleSearch 내장 도구 선언"
+gemini -> search: "검색 요약 글"
+search -> critic: "함수 응답 (검색 요약)"
+critic -> gemini: "functionResponse + 대화"
+gemini -> critic: "분석 글 (OVERALL IMPRESSION · 점수 · ANALYSIS COMPLETE)"
