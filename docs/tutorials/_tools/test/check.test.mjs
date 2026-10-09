@@ -115,6 +115,23 @@ test("an svg over either cap is reported", () => {
   assert.deepEqual(checkDay(dayDir, { repoRoot: repo }), []);
 });
 
+// 시퀀스를 나눈 그림은 extra-*로 1200×1000 상한을 받는다(§5). 이름만 sequence-*로 붙여
+// 1400×1500 상한을 얻으면 안 된다(Day 110, 2026-10-09). sequence 상한은 sequence.d2 한 장만이다.
+test("only sequence.d2 gets the sequence caps; a split named sequence-*.d2 gets the 1200x1000 caps", () => {
+  const { repo, dayDir } = fixture();
+  const put = (name, width, height) => {
+    const d2 = join(dayDir, "diagrams", `${name}.d2`);
+    writeFileSync(d2, DEFAULT_D2);
+    writeFileSync(join(dayDir, "diagrams", `${name}.svg`), embedHash(`<svg width="${width}" height="${height}"></svg>`, sourceHash(inlineImports(d2))));
+  };
+  put("sequence", 1300, 1100);
+  put("sequence-hn", 1300, 1100);
+  const problems = checkDay(dayDir, { repoRoot: repo });
+  assert.ok(problems.some((p) => p.includes("sequence-hn.svg") && p.includes("1300px") && p.includes("1200px")), problems.join("\n"));
+  assert.ok(problems.some((p) => p.includes("sequence-hn.svg") && p.includes("1100px") && p.includes("1000px")), problems.join("\n"));
+  assert.ok(!problems.some((p) => p.includes("diagrams/sequence.svg") && p.includes("상한")), problems.join("\n"));
+});
+
 // 사용자가 일차별로 허락한 세로 예외(2026-09-26). 허락한 높이까지만 통과하고, 넘으면 다시 걸린다.
 test("a per-day height exception raises the cap for that day's overview only up to the granted height", () => {
   const { repo, dayDir } = fixture();

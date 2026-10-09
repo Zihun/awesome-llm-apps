@@ -108,7 +108,7 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false, heightExcep
         if (missing.length) problems.push(rel(`임베드 폰트에 없는 글자 ${JSON.stringify(missing.join(""))}: diagrams/${f} — \`python fonts/build.py\` 후 \`npm run render -- --force\``));
       }
       const width = Number(svgText.match(/<svg[^>]*\swidth="(\d+)"/)?.[1] ?? 0);
-      const widthCap = f.startsWith("sequence") ? SEQUENCE_MAX_WIDTH : SVG_MAX_WIDTH;
+      const widthCap = f === "sequence.d2" ? SEQUENCE_MAX_WIDTH : SVG_MAX_WIDTH;
       if (width > widthCap) problems.push(rel(`다이어그램이 본문 폭에서 읽히지 않음: diagrams/${f.replace(/\.d2$/, ".svg")} (${width}px, 상한 ${widthCap}px) — grid-columns를 줄여 줄을 나누세요. 라벨이 긴 상자를 가로로 여러 개 세우면 폭이 금세 넘칩니다`));
       // (17) 연결선이 남의 도형을 가로지르면 그림이 읽히지 않는다. 그리드는 엣지를 보지 않고
       //      자리를 정하고 그 위에 직선을 긋기 때문에, 멀리 떨어진 칸을 이으면 사이를 관통한다.
@@ -132,13 +132,13 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false, heightExcep
       if (throughText.length) problems.push(rel(`선이 글자를 지나갑니다: diagrams/${svgName} (${throughText.length}곳) — 화살표가 다른 라벨이나 묶음 제목을 지나지 않게 꺾어 돌리세요. sequence 그림이면 배우 순서를 바꾸거나 라벨을 줄이세요`));
       const collisions = labelCollisions(svgText);
       if (collisions.length) problems.push(rel(`라벨이 도형이나 다른 라벨에 얹혔습니다: diagrams/${svgName} (${collisions.length}곳) — 화살표가 라벨보다 짧아 라벨이 넘친 것입니다. ELK에 맡겨 선을 늘리거나 라벨을 줄이세요`));
-      if (!f.startsWith("sequence")) {
+      if (!f === "sequence.d2") {
         const diagonals = diagonalEdges(svgText);
         if (diagonals.length) problems.push(rel(`비스듬한 화살표가 있습니다: diagrams/${svgName} (${diagonals.length}개) — 곧은 화살표는 수평·수직 한 줄일 때만 씁니다. grid 칸 사이 화살표는 꺾이지 않으므로 그 층을 ELK에 맡기세요`));
       }
       const height = Number(svgText.match(/<svg[^>]*\sheight="(\d+)"/)?.[1] ?? 0);
       const excepted = heightException && /^(overview|step\d+)\.d2$/.test(f);
-      const heightCap = f.startsWith("sequence") ? SEQUENCE_MAX_HEIGHT : excepted ? heightException.maxHeight : SVG_MAX_HEIGHT;
+      const heightCap = f === "sequence.d2" ? SEQUENCE_MAX_HEIGHT : excepted ? heightException.maxHeight : SVG_MAX_HEIGHT;
       if (height > heightCap) problems.push(rel(`다이어그램이 세로로 너무 깁니다: diagrams/${svgName} (${height}px, 상한 ${heightCap}px${excepted ? " — 사용자가 허락한 예외 높이" : ""}) — 안쪽에 화살표가 없는 묶음만 grid로 좁히고, 노드와 라벨을 줄이세요`));
     }
     // (19) 단계 공개 불변식 — step<N>.d2가 overview 배치를 그대로 가져와 클래스만
