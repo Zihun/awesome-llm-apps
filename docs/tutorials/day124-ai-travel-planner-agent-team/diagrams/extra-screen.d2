@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+page: plan/page.tsx { class: ours }
+route: Next.js 라우트 { class: ours }
+db: PostgreSQL { class: store }
+
+page -> route: "GET /api/plans/{id}\n(마지막 조회)"
+route -> db: "tripPlan.findUnique\n(include status, output)"
+db -> route: "status: completed +\noutput.itinerary"
+route -> page: "{success, tripPlan}"
+page -> page: "JSON.parse 두 번\n(바깥 문자열, 안쪽 itinerary)"
+page -> user: "일정 화면 표시,\n폴링 중단"

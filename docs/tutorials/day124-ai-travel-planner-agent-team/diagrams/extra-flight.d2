@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+flight: Flight Search Assistant { class: ours }
+openrouter: OpenRouter { class: ext }
+
+svc -> flight: "arun(항공편 프롬프트)"
+flight -> openrouter: "chat/completions\n(도구: get_flights)"
+openrouter -> flight: "tool_call: get_flights\n(출발·도착·날짜·인원)"

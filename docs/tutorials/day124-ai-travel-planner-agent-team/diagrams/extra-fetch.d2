@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gflights: Google Flights { class: ext }
+flight: Flight Search Assistant { class: ours }
+playwright: try.playwright.tech { class: ext }
+
+flight -> gflights: "GET /travel/flights\n(fast-flights, verify=False)"
+gflights -> flight: "HTML 응답"
+flight -> playwright: "200이 아니면 POST\n/service/control/run"
+playwright -> flight: "output (HTML)"

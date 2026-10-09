@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+task: 백그라운드 작업 { class: ours }
+db: PostgreSQL { class: store }
+
+svc -> task: "return final_response"
+task -> db: "update_task_status\n(success, output_data)"

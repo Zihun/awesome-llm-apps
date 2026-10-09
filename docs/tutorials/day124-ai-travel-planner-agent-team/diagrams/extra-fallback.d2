@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+openrouter: OpenRouter { class: ext }
+flight: Flight Search Assistant { class: ours }
+svc: plan_service { class: ours }
+db: PostgreSQL { class: store }
+
+flight -> openrouter: "chat/completions\n(도구 결과 또는 [])"
+openrouter -> flight: "항공편 글"
+flight -> svc: "messages[-1].content"
+svc -> db: "update: Searching for\nthe best hotels"

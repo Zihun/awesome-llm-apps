@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+db: PostgreSQL { class: store }
+
+svc -> db: "delete_trip_plan_outputs"
+svc -> db: "create_trip_plan_output\n(itinerary=final_response)"
+svc -> db: "update: completed\n(Plan generated and saved)"

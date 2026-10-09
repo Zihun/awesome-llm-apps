@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+hotel: Hotel Search Assistant { class: ours }
+openrouter: OpenRouter { class: ext }
+
+svc -> hotel: "arun(호텔 프롬프트)"
+hotel -> openrouter: "chat/completions\n(도구 2개)"
+openrouter -> hotel: "tool_call:\nkayak_hotel_url_generator"
+hotel -> hotel: "Kayak URL 문자열 만들기"
+hotel -> openrouter: "chat/completions\n(도구 결과: URL)"
+openrouter -> hotel: "tool_call:\nscrape_website(url)"

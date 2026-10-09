@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+page: plan/page.tsx { class: ours }
+route: Next.js 라우트 { class: ours }
+db: PostgreSQL { class: store }
+
+user -> page: "재시도 버튼"
+page -> route: "POST /api/plans/{id}/retry"
+route -> db: "tripPlanStatus.upsert\n(processing, Restarting...)"

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+dining: Culinary Guide { class: ours }
+openrouter: OpenRouter { class: ext }
+
+svc -> dining: "arun(식당 프롬프트)"
+dining -> openrouter: "chat/completions\n(도구 4개)"
+openrouter -> dining: "tool_call:\nsearch_exa"

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+dest: Destination Explorer { class: ours }
+openrouter: OpenRouter { class: ext }
+
+svc -> dest: "arun(목적지 조사 프롬프트)"
+dest -> openrouter: "chat/completions\n(도구 4개)"
+openrouter -> dest: "tool_call:\nsearch_exa"

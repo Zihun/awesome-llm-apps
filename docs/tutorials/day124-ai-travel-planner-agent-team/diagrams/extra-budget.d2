@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+db: PostgreSQL { class: store }
+budget: Budget Optimizer { class: ours }
+svc: plan_service { class: ours }
+itin: Itinerary Specialist { class: ours }
+openrouter: OpenRouter { class: ext }
+
+itin -> svc: "messages[-1].content"
+svc -> db: "update: Optimizing\nthe budget"
+svc -> budget: "arun(예산 프롬프트 + 앞 다섯 글)"
+budget -> openrouter: "chat/completions\n(도구 없음)"
+openrouter -> budget: "예산 글"

@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+db: PostgreSQL { class: store }
+openrouter: OpenRouter { class: ext }
+conv: 구조화 변환 에이전트 { class: ours }
+svc: plan_service { class: ours }
+budget: Budget Optimizer { class: ours }
+
+budget -> svc: "messages[-1].content"
+svc -> db: "update: Adding\nfinishing touches"
+svc -> conv: "convert_to_model\n(앞 다섯 글, TravelPlanTeamResponse)"
+conv -> openrouter: "chat/completions\n(스키마 + 입력 글)"
+openrouter -> conv: "JSON 글"
+conv -> svc: "JSON 문자열\n(json.loads 통과)"

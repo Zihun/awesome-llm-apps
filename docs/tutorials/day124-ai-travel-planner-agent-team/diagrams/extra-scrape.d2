@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+hotel: Hotel Search Assistant { class: ours }
+openrouter: OpenRouter { class: ext }
+db: PostgreSQL { class: store }
+firecrawl: Firecrawl API { class: ext }
+
+hotel -> firecrawl: "POST /v1/scrape\n{url, formats, waitFor}"
+firecrawl -> hotel: "markdown"
+hotel -> openrouter: "chat/completions\n(도구 결과: markdown)"
+openrouter -> hotel: "호텔 글"
+hotel -> svc: "messages[-1].content"
+svc -> db: "update: Searching for the\nbest restaurants"

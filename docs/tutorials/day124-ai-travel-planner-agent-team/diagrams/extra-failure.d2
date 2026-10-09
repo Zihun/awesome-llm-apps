@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+conv: 구조화 변환 에이전트 { class: ours }
+openrouter: OpenRouter { class: ext }
+
+svc -> conv: "convert_to_model"
+conv -> openrouter: "chat/completions"
+openrouter -> conv: "JSON이 아닌 글"
+conv -> svc: "ValueError\n(Invalid JSON response)"

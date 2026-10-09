@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+route: Next.js 라우트 { class: ours }
+api: FastAPI { class: ours }
+db: PostgreSQL { class: store }
+
+route -> api: "POST /api/plan/trigger\n{trip_plan_id, travel_plan}"
+api -> db: "create_plan_task\n(status: queued)"
+db -> api: "task.id"

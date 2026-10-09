@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+page: plan/page.tsx { class: ours }
+route: Next.js 라우트 { class: ours }
+db: PostgreSQL { class: store }
+
+page -> route: "GET /api/plans/{id}\n(5초마다)"
+route -> db: "tripPlan.findUnique\n(include status, output)"
+db -> route: "TripPlan + status 행\n(output 없음)"
+route -> page: "{success, tripPlan}"
+page -> page: "processing -> in-progress"
+page -> user: "currentStep 표시"

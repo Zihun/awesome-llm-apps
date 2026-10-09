@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+exa: Exa API { class: ext }
+dining: Culinary Guide { class: ours }
+openrouter: OpenRouter { class: ext }
+
+dining -> exa: "POST /search\n{query, numResults}"
+exa -> dining: "검색 결과"
+dining -> openrouter: "chat/completions\n(도구 결과)"
+openrouter -> dining: "식당 글"

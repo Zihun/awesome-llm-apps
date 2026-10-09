@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+task: 백그라운드 작업 { class: ours }
+db: PostgreSQL { class: store }
+svc: plan_service { class: ours }
+
+svc -> db: "update: failed\n(error, completed_at)"
+svc -> task: "raise"
+task -> db: "update_task_status\n(error, error_message)"
+task -> task: "raise\n(Task exception was never retrieved)"

@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: right
+
+a_dest: "Destination Explorer" { class: ours; height: 44 }
+a_flight: "Flight Search Assistant" { class: ours; height: 44 }
+a_hotel: "Hotel Search Assistant" { class: ours; height: 44 }
+a_dining: "Culinary Guide" { class: ours; height: 44 }
+a_itin: "Itinerary Specialist" { class: ours; height: 44 }
+
+exa_tools: "ExaTools\n(agno: search_exa 외 셋)" { class: ours; height: 56 }
+flights_tool: "get_google_flights\n(tools/google_flight.py)" { class: ours; height: 56 }
+kayak_tool: "kayak_hotel_url_generator\n(tools/kayak_hotel.py)" { class: ours; height: 56 }
+scrape_tool: "scrape_website\n(tools/scrape.py)" { class: ours; height: 56 }
+fc_tools: "FirecrawlTools\n(agno: scrape_website)" { class: ours; height: 56 }
+think_tools: "ReasoningTools\n(agno: think · analyze)" { class: ours; height: 56 }
+
+a_dest -> exa_tools: "ExaTools(num_results=10)"
+a_dining -> exa_tools: "ExaTools() 기본값"
+a_itin -> exa_tools: "ExaTools(num_results=8)"
+a_itin -> fc_tools: "formats=[markdown]"
+a_itin -> think_tools: "think · analyze"
+a_flight -> flights_tool: "get_flights(출발 · 도착 · 날짜)"
+a_hotel -> kayak_tool: "Kayak URL 만들기"
+a_hotel -> scrape_tool: "URL 스크랩"

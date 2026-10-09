@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+client: "웹 클라이언트\n(Next.js 라우트)" { class: ours; height: 50 }
+router: "라우터\n(router/plan.py)" { class: ours; height: 50 }
+service: "계획 서비스\n(plan_service.py)" { class: ours; height: 50 }
+db: "PostgreSQL" { class: store; height: 60 }
+
+client -> router: "POST /api/plan/trigger\n{trip_plan_id, travel_plan}"
+router -> client: "{success, message, trip_plan_id}"
+router -> db: "plan_tasks: create_plan_task ·\nupdate_task_status"
+router -> service: "generate_travel_plan(request)"
+service -> router: "final_response (JSON 문자열)"
+service -> db: "trip_plan_status 갱신 ·\ntrip_plan_output 저장"

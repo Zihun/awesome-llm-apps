@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+exa: Exa API { class: ext }
+dest: Destination Explorer { class: ours }
+openrouter: OpenRouter { class: ext }
+db: PostgreSQL { class: store }
+svc: plan_service { class: ours }
+
+dest -> exa: "POST /search\n{query, numResults: 10}"
+exa -> dest: "검색 결과"
+dest -> openrouter: "chat/completions\n(도구 결과)"
+openrouter -> dest: "조사 글"
+dest -> svc: "messages[-1].content"
+svc -> db: "update: Searching for\nthe best flights"

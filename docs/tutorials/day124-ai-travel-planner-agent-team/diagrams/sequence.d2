@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+page: plan/page.tsx { class: ours }
+route: Next.js 라우트 { class: ours }
+db: PostgreSQL { class: store }
+
+user -> page: "폼 제출\n(onSubmit)"
+page -> route: "POST /api/plan/submit\n{폼 값}"
+route -> db: "prisma.tripPlan.create\n(userId: null)"
+db -> route: "TripPlan 행 (id)"

@@ -1,0 +1,51 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+client: "웹 클라이언트\n(client/ · Next.js)" { class: ours; height: 50 }
+db: "PostgreSQL\n(trip_plan · trip_plan_status\ntrip_plan_output · plan_tasks)" { class: store }
+
+backend: "FastAPI 백엔드 (backend/)" {
+  class: group
+  grid-columns: 2
+  grid-gap: 16
+  api: "라우터\n(router/plan.py)" { class: ours; height: 50 }
+  service: "계획 서비스\n(plan_service.py)" { class: ours; height: 50 }
+}
+
+team: "에이전트 일곱과 도구 (backend/agents/ · backend/tools/)" {
+  class: group
+  grid-columns: 4
+  grid-gap: 6
+  a_dest: "Destination\nExplorer" { class: ours; height: 44 }
+  a_flight: "Flight Search\nAssistant" { class: ours; height: 44 }
+  a_hotel: "Hotel Search\nAssistant" { class: ours; height: 44 }
+  a_dining: "Culinary\nGuide" { class: ours; height: 44 }
+  a_itin: "Itinerary\nSpecialist" { class: ours; height: 44 }
+  a_budget: "Budget\nOptimizer" { class: ours; height: 44 }
+  a_conv: "구조화 변환\n에이전트" { class: ours; height: 44 }
+  tools: "앱 도구 함수\n(tools/)" { class: ours; height: 44 }
+}
+
+ext: "외부 서비스" {
+  class: group
+  grid-columns: 3
+  grid-gap: 6
+  openrouter: "OpenRouter\n(Gemini 2.0 Flash)" { class: ext; height: 56 }
+  exa: "Exa 검색 API" { class: ext; height: 56 }
+  firecrawl: "Firecrawl API" { class: ext; height: 56 }
+  gflights: "Google Flights" { class: ext; height: 56 }
+  playwright: "try.playwright.tech" { class: ext; height: 56 }
+  agno_api: "agno 통계 API" { class: ext; height: 56 }
+}
+
+user -> client: "폼 입력 · 제출"
+client -> user: "진행 단계 · 결과 화면"
+client -> db: "TripPlan 저장 · 상태 조회"
+db -> client: "status · output 행"
+client -> backend: "POST /api/plan/trigger"
+backend -> client: "{success, trip_plan_id}"
+backend -> db: "plan_tasks · 상태 · 결과 행"
+backend -> team: "arun(프롬프트)"
+team -> backend: "messages[-1].content"
+team -> ext: "chat/completions · 검색 · 스크랩 · 통계"

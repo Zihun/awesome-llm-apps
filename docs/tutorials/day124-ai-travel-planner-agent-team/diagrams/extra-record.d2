@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+svc: plan_service { class: ours }
+db: PostgreSQL { class: store }
+
+svc -> db: "get_trip_plan_status(id)"
+db -> svc: "None (행 없음)"
+svc -> db: "create_trip_plan_status\n(pending)"
+svc -> db: "update: processing\n(Initializing travel plan generation)"
+svc -> svc: "travel_request_to_markdown"
+svc -> db: "update: Generating plan with\nTripCraft AI agents"
+svc -> db: "update: Researching about\nthe destination"

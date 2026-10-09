@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+db: PostgreSQL { class: store }
+task: 백그라운드 작업 { class: ours }
+svc: plan_service { class: ours }
+
+task -> db: "update_task_status\n(in_progress)"
+task -> svc: "generate_travel_plan\n(request)"
