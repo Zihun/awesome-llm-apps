@@ -53,13 +53,16 @@ export function citedPaths(md, dayDirFromRoot) {
 
 const touches = (path, changed) => changed.filter((c) => c === path || c.startsWith(path + "/"));
 
-/** 작성된 일차마다, 원본 앱 안에서 바뀐 파일과 인용한 경로 중 바뀐 것. 둘 다 없으면 빠진다. */
-export function affectedDays(written, changed) {
+/** 작성된 일차마다, 원본 앱 안에서 바뀐 파일과 인용한 경로 중 바뀐 것. 둘 다 없으면 빠진다.
+ *  앱 폴더 여럿을 품은 분류 폴더(예: `advanced_ai_agents/multi_agent_apps`)를 인용한 것은 세지 않는다 —
+ *  그 아래 다른 앱의 변경이 모두 그 날에 걸리는 오탐이 된다(2026-10-10, Day 084). */
+export function affectedDays(written, changed, appPaths = []) {
+  const isCategory = (p) => appPaths.some((a) => a.startsWith(p + "/"));
   const out = [];
   for (const { day, md, dayDirFromRoot } of written) {
     const inApp = touches(day.path, changed);
     const cited = citedPaths(md, dayDirFromRoot)
-      .filter((p) => p !== day.path && !p.startsWith(day.path + "/"))
+      .filter((p) => p !== day.path && !p.startsWith(day.path + "/") && !isCategory(p))
       .flatMap((p) => touches(p, changed));
     if (inApp.length || cited.length) out.push({ day, inApp, cited: [...new Set(cited)] });
   }
@@ -90,7 +93,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       const dir = join(TUTORIALS_DIR, folderName(day));
       return { day, md: readFileSync(join(dir, "README.md"), "utf8"), dayDirFromRoot: relative(REPO_ROOT, dir).replaceAll("\\", "/") };
     });
-  const hits = affectedDays(written, changed);
+  const hits = affectedDays(written, changed, days.map((d) => d.path));
   console.log(`\n[작성된 일차] ${written.length}일 중 영향 ${hits.length}일`);
   for (const { day, inApp, cited } of hits) {
     console.log(`  ${folderName(day)}`);

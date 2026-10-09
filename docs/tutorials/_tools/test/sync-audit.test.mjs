@@ -33,6 +33,19 @@ test("citedPaths reads repo paths in backticks and repo-relative links, not bare
   ]);
 });
 
+test("a cited category folder that holds other apps does not pull in their changes", () => {
+  // Day 084는 `advanced_ai_agents/multi_agent_apps`를 분류로만 언급했는데, 그 아래 다른 앱의
+  // 변경이 모두 Day 084에 걸렸다(2026-10-10). 앱을 품은 상위 폴더 인용은 세지 않는다.
+  const written = [
+    { day: { path: "cat/apps/a" }, md: "`cat/apps` 아래 · `cat/apps/b` 참고", dayDirFromRoot: "docs/tutorials/day001-a" },
+  ];
+  const changed = ["cat/apps/c/README.md", "cat/apps/b/app.py"];
+  const appPaths = ["cat/apps/a", "cat/apps/b", "cat/apps/c"];
+  assert.deepEqual(affectedDays(written, changed, appPaths), [
+    { day: { path: "cat/apps/a" }, inApp: [], cited: ["cat/apps/b/app.py"] },
+  ]);
+});
+
 test("affectedDays reports changes inside the day's app and in paths it cites elsewhere", () => {
   const written = [
     { day: { path: "starter/a" }, md: "`shared/util.py:3`", dayDirFromRoot: "docs/tutorials/day001-a" },
