@@ -6,7 +6,7 @@
 
 저장소 주소(또는 경로)와 이주 목표를 적으면 계획 담당 모델이 파일별 이주 계획과 위험도(`Low`·`Medium`·`High`·`Critical`)를 만들고, 사람이 그 계획을 승인하거나 고쳐 달라고 한 다음, 승인된 파일마다 워커가 하나씩 병렬로 달라붙어 diff와 테스트 제안을 쓰고, 마지막으로 집계 담당 모델이 보고서와 위험 차트를 합치는 Streamlit 앱입니다. LangGraph의 `StateGraph`와 조건부 갈래는 Day 059 Step 5와 Day 061 Step 5·7이 이미 다뤘으므로 여기서는 이 앱의 그래프 모양만 확인합니다. 오늘 새로 만나는 것은 `interrupt()`로 그래프를 사람 앞에서 멈췄다가 `Command(resume=…)`로 이어 가는 것, `Send()`로 파일 수만큼 워커를 한꺼번에 띄우는 것, 멈춘 상태를 붙드는 `MemorySaver` 체크포인터, 동시에 쓰는 값을 이어 붙이는 `operator.add` 리듀서입니다(이 낱말들은 Day 001~105 README에서 찾지 못했습니다, grep으로 확인).
 
-직접 돌려 보고 알게 된 사실이 셋 있습니다. 첫째, 저장소 주소는 문자열일 뿐입니다. 앱은 어떤 저장소도 내려받거나 읽지 않고, 계획 담당 모델은 저장소를 보지 않고 이름과 목표만으로 파일 경로를 추측합니다(Step 3). 그래서 diff와 보고서는 코드를 본 결과가 아니라 모델의 추측입니다. 둘째, 승인·수정 버튼이 동작하지 않습니다(버전을 올려서 생긴 문제가 아니라 앱이 Streamlit의 실행 방식과 맞지 않는 것입니다). Streamlit이 버튼을 누를 때마다 `app.py`를 처음부터 다시 실행해서 `MemorySaver`가 매번 새로 만들어지고, 멈춰 있던 계획이 사라진 그래프에 `resume`을 보내면 그래프가 처음부터 다시 시작해 검증 노드가 빈 입력을 거절합니다(Step 7). 앱 README의 "interrupts survive Streamlit reruns"와 반대입니다. 셋째, 연결 오류는 검증 노드에서 조용히 삼켜지고 계획 노드에서야 오류로 나옵니다(Step 3).
+직접 돌려 보고 알게 된 사실이 셋 있습니다. 첫째, 저장소 주소는 문자열일 뿐입니다. 앱은 어떤 저장소도 내려받거나 읽지 않고, 계획 담당 모델은 저장소를 보지 않고 이름과 목표만으로 파일 경로를 추측합니다(Step 3). 그래서 diff와 보고서는 코드를 본 결과가 아니라 모델의 추측입니다. 둘째, 승인·수정 버튼이 동작하지 않습니다(버전을 올려서 생긴 문제가 아니라 앱이 Streamlit의 실행 방식과 맞지 않는 것입니다. streamlit 1.30.0 휠을 받아 확인하니 `script_runner.py` 512행과 535행이 1.65.0과 같은 구조여서 적어도 그 사이 버전에서는 같습니다). Streamlit이 버튼을 누를 때마다 `app.py`를 처음부터 다시 실행해서 `MemorySaver`가 매번 새로 만들어지고, 멈춰 있던 계획이 사라진 그래프에 `resume`을 보내면 그래프가 처음부터 다시 시작해 검증 노드가 빈 입력을 거절합니다(Step 7). 앱 README의 "interrupts survive Streamlit reruns"와 반대입니다. 셋째, 연결 오류는 검증 노드에서 조용히 삼켜지고 계획 노드에서야 오류로 나옵니다(Step 3).
 
 키가 없어도 Step 1~7의 확인이 모두 됩니다. 앱이 읽는 `LLM_BASE_URL`을 내 PC의 가짜 서버로 돌려 OpenAI 호환 엔드포인트를 흉내 내고, 화면은 `AppTest`로 확인합니다. 이 문서를 만들며 OpenAI에 닿은 요청은 한 건도 없습니다. 그래서 문서의 계획·diff·보고서 문장은 가짜 서버의 고정 응답일 뿐이고, 진짜 모델이 `json_object` 응답 형식과 도구 호출을 이 앱이 기대하는 모양으로 돌려주는지는 확인하지 못했습니다. 실제 브라우저에서 버튼을 눌러 보지도 못했습니다. 아래는 앱이 의도한 아키텍처입니다.
 
@@ -1138,7 +1138,7 @@ title: ⚡ Codebase Migration & Refactor Planner | exception: []
    보고서 부제: [] | 다운로드 버튼: 0
 ```
 
-계획까지는 되고(`awaiting_approval`, 3개), 승인은 `Please provide both a target repository URL/path AND a clear migration goal.` 오류 상자로 끝납니다. 새 그래프에 `Command(resume=…)`를 보내자 체크포인트가 없어 그래프가 처음(`START`)부터 시작했고, 입력이 없으니 검증 노드가 빈 `repo_target`을 거절한 것입니다(로그의 `Query validation failed: Missing repo or migration goal.`). 앱 README는 "Session state is persisted using LangGraph's in-memory `MemorySaver`, allowing execution interrupts to survive Streamlit reruns seamlessly."라고 적었지만(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/README.md:55`) 실제로는 그렇지 않습니다. 이 확인은 `AppTest`로 한 것이고 실제 브라우저에서 눌러 보지는 못했습니다. 다만 두 경로가 모두 실행마다 새 모듈을 만드는 것은 소스로 확인했습니다(streamlit 1.65.0: 서버 쪽 `runtime/scriptrunner/script_runner.py`의 `_new_module`이 `types.ModuleType(name)`을 새로 만들고, `AppTest`의 `testing/v1/local_script_runner.py`는 `ScriptRunner`를 이어받아 자기 `_new_module`로 역시 실행마다 새로 만듭니다). 그러니 이것은 버전을 올려서 생긴 문제가 아니라 앱과 Streamlit 실행 방식의 불일치입니다.
+계획까지는 되고(`awaiting_approval`, 3개), 승인은 `Please provide both a target repository URL/path AND a clear migration goal.` 오류 상자로 끝납니다. 새 그래프에 `Command(resume=…)`를 보내자 체크포인트가 없어 그래프가 처음(`START`)부터 시작했고, 입력이 없으니 검증 노드가 빈 `repo_target`을 거절한 것입니다(로그의 `Query validation failed: Missing repo or migration goal.`). 앱 README는 "Session state is persisted using LangGraph's in-memory `MemorySaver`, allowing execution interrupts to survive Streamlit reruns seamlessly."라고 적었지만(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/README.md:55`) 실제로는 그렇지 않습니다. 이 확인은 `AppTest`로 한 것이고 실제 브라우저에서 눌러 보지는 못했습니다. 다만 두 경로가 모두 실행마다 새 모듈을 만드는 것은 소스로 확인했습니다(streamlit 1.65.0: 서버 쪽 `runtime/scriptrunner/script_runner.py`의 `_new_module`이 `types.ModuleType(name)`을 새로 만들고, `AppTest`의 `testing/v1/local_script_runner.py`는 `ScriptRunner`를 이어받아 자기 `_new_module`로 역시 실행마다 새로 만듭니다). 그러니 이것은 버전을 올려서 생긴 문제가 아니라 앱과 Streamlit 실행 방식의 불일치입니다(직접 확인: streamlit 1.30.0 휠의 `runtime/scriptrunner/script_runner.py` 512행 `_new_module("__main__")`, 535행 `exec(code, module.__dict__)`가 1.65.0의 764·924행과 같은 구조).
 
 고치는 방법의 하나는 그래프를 스크립트 밖에서 살아남는 곳에 두는 것입니다. 복사본에서 `_graph`를 `st.cache_resource`가 돌려주는 딕셔너리로 바꿉니다. 앱 파일은 건드리지 않고 복사본을 만드는 `step7_patch.py`입니다.
 
@@ -1280,7 +1280,7 @@ app_cached2.py written
 
 ## 요청 한 건이 흐르는 과정
 
-계획 요청 하나에서 보고서까지를 그림 열 장으로 나눠 그렸습니다. 한 그림에 넣으면 한 배우가 이웃 둘과 동시에 주고받는 메시지가 다른 배우의 수명선 위에 라벨을 놓게 됩니다(모든 배우 순서를 시험했지만 선이 글자를 지나지 않는 순서가 없었습니다). 그래서 한 배우가 이웃 둘만 갖는 곳에서 나눴고, 메시지는 하나도 지우지 않고 원래 순서 그대로 한 그림에 하나씩 있습니다. 이 흐름은 소스가 그리는 것이고 모델 응답은 가짜 서버로만 확인했습니다. 다만 Step 7에서 본 대로 오늘의 화면에서는 네 번째 그림의 첫 메시지(승인 클릭) 이후가 새 그래프로 가서 이어지지 않습니다.
+계획 요청 하나에서 보고서까지를 그림 열 장으로 나눠 그렸습니다. 한 그림에 넣으면 한 배우가 이웃 둘과 동시에 주고받는 메시지가 다른 배우의 수명선 위에 라벨을 놓게 됩니다(모든 배우 순서를 시험했지만 선이 글자를 지나지 않는 순서가 없었습니다). 그래서 한 배우가 이웃 둘만 갖는 곳에서 나눴고, 메시지는 하나도 지우지 않고 원래 순서 그대로 한 그림에 하나씩 있습니다. 이 흐름은 소스가 그리는 것이고 모델 응답은 가짜 서버로만 확인했습니다. 다만 Step 7에서 본 대로 이 앱의 화면에서는 네 번째 그림의 첫 메시지(승인 클릭) 이후가 새 그래프로 가서 이어지지 않습니다.
 
 ![1: 클릭에서 검증까지](diagrams/sequence.svg)
 
