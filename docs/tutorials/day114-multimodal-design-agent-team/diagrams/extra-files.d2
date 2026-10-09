@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: right
+
+team: 에이전트 셋 { class: group
+  vision: 시각 디자인 (vision_agent) { class: ours }
+  ux: UX (ux_agent) { class: ours }
+  market: 시장 조사 (market_agent) { class: ours }
+}
+
+tmp: 임시 이미지 (temp_파일이름) { class: file }
+
+team.vision -> tmp: 이미지 파일 읽기
+team.ux -> tmp: 이미지 파일 읽기
+team.market -> tmp: 이미지 파일 읽기

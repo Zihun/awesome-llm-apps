@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+vision: 시각 디자인 에이전트 { class: ours }
+agno_api: Agno 사용 통계 API { class: ext }
+
+vision -> agno_api: 실행 메타데이터 (백그라운드, 성공 시)
+vision -> ui: RunOutput.content
+ui -> user: 소제목 + 마크다운 표시

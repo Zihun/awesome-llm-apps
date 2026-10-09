@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+tmp: 임시 이미지 { class: file }
+
+user -> ui: 디자인 · 경쟁사 이미지 업로드
+user -> ui: 분석 유형 · 초점 · 맥락 선택
+user -> ui: Run Analysis 클릭
+ui -> user: Analysis Results 제목 표시
+ui -> tmp: 디자인 이미지 바이트 저장
+ui -> tmp: 경쟁사 이미지 바이트 저장

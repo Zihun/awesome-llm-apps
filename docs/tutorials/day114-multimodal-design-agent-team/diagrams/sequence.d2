@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+vision: 시각 디자인 에이전트 { class: ours }
+ux: UX 에이전트 { class: ours }
+market: 시장 조사 에이전트 { class: ours }
+
+user -> ui: 사이드바에 Gemini 키 입력
+ui -> vision: "Agent(model, instructions 6줄, markdown=True) 생성 (rerun마다 새로, model 하나를 셋이 공유)"
+ui -> ux: Agent(...) 생성
+ui -> market: Agent(...) 생성 (DuckDuckGoTools 포함)

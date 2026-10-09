@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+market: 시장 조사 에이전트 { class: ours }
+tmp: 임시 이미지 { class: file }
+ui: Streamlit 화면 { class: ours }
+gemini: Gemini API { class: ext }
+
+ui -> user: 스피너 'Conducting market analysis'
+ui -> market: run(market_prompt, images=전부)
+market -> tmp: temp_파일이름 경로를 열어 바이트 읽기 (format_image_for_message)
+market -> gemini: 프롬프트 + 이미지 + 도구
+gemini -> market: web_search 호출 요청

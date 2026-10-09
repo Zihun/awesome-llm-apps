@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 60; height: 60 }
+ui: Streamlit 화면 (design_agent_team.py) { class: ours }
+tmp: 임시 이미지 (temp_파일이름) { class: file }
+
+team: 에이전트 셋 { class: group; label.near: top-left
+  vision: 시각 디자인 (vision_agent) { class: ours }
+  ux: UX (ux_agent) { class: ours }
+  market: 시장 조사 (market_agent) { class: ours }
+}
+
+gemini: Gemini API (gemini-2.0-flash-exp) { class: ext }
+ddg: DuckDuckGo 검색 { class: ext }
+
+user -> ui: 키·이미지·설정·클릭
+ui -> user: 분석 결과
+ui -> tmp: 업로드 바이트 저장
+ui -> team.vision: run(vision_prompt)
+ui -> team.ux: run(ux_prompt)
+ui -> team.market: run(market_prompt)
+team.vision -> gemini: 시각 프롬프트 + 이미지
+team.ux -> gemini: UX 프롬프트 + 이미지
+team.market -> gemini: 시장 프롬프트 + 이미지 + 도구
+team.market -> ddg: 검색어

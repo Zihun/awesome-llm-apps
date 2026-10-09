@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: right
+
+team: 에이전트 셋 { class: group
+  vision: 시각 디자인 (vision_agent) { class: ours }
+  ux: UX (ux_agent) { class: ours }
+  market: 시장 조사 (market_agent) { class: ours }
+}
+
+agno_api: Agno 사용 통계 API { class: ext }
+
+team.vision -> agno_api: 실행 메타데이터 (성공 시)
+team.ux -> agno_api: 실행 메타데이터 (성공 시)
+team.market -> agno_api: 실행 메타데이터 (성공 시)

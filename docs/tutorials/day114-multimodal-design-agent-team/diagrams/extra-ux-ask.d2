@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ux: UX 에이전트 { class: ours }
+tmp: 임시 이미지 { class: file }
+ui: Streamlit 화면 { class: ours }
+gemini: Gemini API { class: ext }
+
+ui -> user: 스피너 'Analyzing user experience'
+ui -> ux: run(ux_prompt, images=전부)
+ux -> tmp: temp_파일이름 경로를 열어 바이트 읽기 (format_image_for_message)
+ux -> gemini: 프롬프트 + 이미지
+gemini -> ux: 분석 텍스트
