@@ -5,6 +5,13 @@ user: 사용자 { class: person }
 ui: Streamlit 화면 { class: ours }
 pdf: PDF 읽기 { class: ours }
 
-user -> ui: "키 일곱 칸 · PDF 업로드 · 지원자 이메일 입력"
+user -> ui: "키 일곱 칸 입력"
+user -> ui: "이력서 PDF 업로드"
+ui -> ui: "tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')에\n이력서 바이트 쓰기 (pdf_viewer용, %TEMP%)"
+ui -> user: "pdf_viewer(임시 파일) 미리보기"
+ui -> ui: "os.unlink로 임시 파일 삭제"
+ui -> user: "Download 버튼"
 ui -> pdf: "extract_text_from_pdf(pdf_file)"
 pdf -> ui: "페이지별 글을 이어 붙인 이력서 글"
+ui -> user: "\"Resume processed successfully!\""
+user -> ui: "지원자 이메일 입력"

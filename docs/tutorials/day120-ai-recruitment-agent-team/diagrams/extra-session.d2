@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+session: "세션 상태\n(키 · 이메일 · 이력서 글)" { class: store; height: 110 }
+analyzer: "이력서 분석 에이전트\n(create_resume_analyzer)" { class: ours }
+emailer: "메일 에이전트\n(create_email_agent)" { class: ours }
+scheduler: "일정 에이전트\n(create_scheduler_agent)" { class: ours }
+
+session -> analyzer: "OpenAI 키"
+session -> emailer: "OpenAI 키 · 지원자 주소 ·\n발신 계정 · 회사 이름"
+session -> scheduler: "Zoom 키 셋 · OpenAI 키"

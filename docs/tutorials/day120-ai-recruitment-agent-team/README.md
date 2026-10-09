@@ -1,6 +1,6 @@
 # Day 120 · 💼 AI Recruitment Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ · 예상 소요 140분(앱은 522줄이지만 설치부터 막히는 곳이 둘이고, Step 4에서 가짜 서버와 확인 스크립트를 직접 저장해 터미널 둘로 시나리오를 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 지원자 한 명에 $0.01~0.03(⚠ 이 문서는 어떤 서비스도 실제로 부르지 않았고 키가 없어 토큰 수를 재지 못했습니다. 모델 요청 수는 가짜 서버로 셌습니다. 탈락 쪽이 3번, 합격 쪽이 6번(분석 1, 선발 메일 2, 일정 1, 확인 메일 2)입니다. 입력은 요청 글자 수를 4로 나눠 어림해 탈락 쪽이 1,500토큰, 합격 쪽이 5,500토큰 안팎이고, 출력은 JSON과 메일 본문 몇 개라 합격 쪽 700토큰 안팎으로 어림해 모델 페이지의 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-09 확인)을 대입했습니다. Zoom과 Gmail은 이 앱이 쓰는 범위에서 요금을 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ · 예상 소요 145분(앱은 522줄이지만 설치부터 막히는 곳이 둘이고, Step 4에서 가짜 서버와 확인 스크립트를 직접 저장해 터미널 둘로 시나리오를 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 지원자 한 명에 탈락 약 $0.007, 합격 약 $0.02(⚠ 이 문서는 어떤 서비스도 실제로 부르지 않았고 키가 없어 토큰 수를 재지 못했습니다. 모델 요청 수는 가짜 서버로 셌습니다. 탈락 쪽이 3번, 합격 쪽이 6번(분석 1, 선발 메일 2, 일정 1, 확인 메일 2)입니다. 입력은 요청 글자 수를 4로 나눠 어림해 탈락 쪽이 1,500토큰, 합격 쪽이 5,500토큰 안팎이고, 출력은 JSON과 메일 본문 몇 개라 합격 쪽 700토큰 안팎으로 어림해 모델 페이지의 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-09 확인)을 대입했습니다. Zoom과 Gmail은 이 앱이 쓰는 범위에서 요금을 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team`
 
 ## 오늘 만들 것
 
@@ -8,7 +8,7 @@ PDF 이력서를 올리고 지원자 이메일을 적은 뒤 `Analyze Resume`을
 
 **이 앱은 바깥에 행동합니다.** 키를 넣으면 입력한 주소로 진짜 메일이 나가고(`agno`의 `EmailTools`가 `smtp.gmail.com:465`에 로그인합니다) Zoom에 진짜 회의를 만들려 합니다. 이 문서는 OpenAI·Gmail SMTP·Zoom·Agno 통계 어디에도 요청을 보내지 않습니다. 모델은 내 PC의 가짜 서버로, `requests.post`와 `smtplib.SMTP_SSL`은 호출을 기록만 하는 가짜로 바꿔 돌렸고, 이력서는 직접 만든 가짜 PDF(실존 인물 없음, 주소는 예약 도메인 `.test`)만 씁니다. 그래서 아래의 모델 답과 Zoom 응답은 모두 내가 쓴 대본이고, 진짜 `gpt-4o`가 이 프롬프트에 어떻게 답하는지, 진짜 Gmail과 Zoom이 어떻게 반응하는지는 확인하지 못했습니다.
 
-직접 돌려 보고 알게 된 것이 여섯입니다. 첫째, `requirements.txt`만 설치하면 앱의 import가 13행(`openai`)과 15·16행(`phi`)에서 막힙니다(Step 1). 둘째, 일정 에이전트는 Zoom 도구를 받지만 모델에게 도구가 하나도 전달되지 않아서 Zoom에는 요청이 가지 않고, 화면은 그래도 "Interview scheduled successfully!"라고 합니다(Step 3·6). 셋째, SMTP 로그인이 실패하거나 OpenAI 키가 틀려도 화면은 "We've sent you an email…"라고 합니다(Step 5). 넷째, 모델 답이 `json` 코드 울타리(백틱 세 개)로 감싸이면 `json.loads`가 실패해 탈락 메일 쪽으로 가고, `"selected": "false"`처럼 문자열이면 합격으로 처리됩니다(Step 4). 다섯째, 확인 메일 지시문에 `RunOutput` 객체의 전체 repr이 통째로 들어갑니다(Step 6). 여섯째, 터미널 디버그 출력에 OpenAI 키가 찍힙니다(Step 6). 앱 README는 맨 끝에서 자동 판정을 사람이 검토하라고 하지만(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/README.md:91-93`) 코드에는 판정과 메일 사이에 사람이 승인하는 단계가 없습니다(소스로 확인). 아래는 완성된 아키텍처입니다.
+직접 돌려 보고 알게 된 것이 여섯입니다. 첫째, `requirements.txt`만 설치하면 앱의 import가 13행(`openai`)과 15·16행(`phi`)에서 막힙니다(Step 1). 둘째, 일정 에이전트는 Zoom 도구를 받지만 모델에게 도구가 하나도 전달되지 않아서 Zoom에는 요청이 가지 않고, 화면은 그래도 "Interview scheduled successfully!"라고 합니다(Step 3·6). 셋째, SMTP 로그인이 실패하거나 OpenAI 키가 틀려도 화면은 "We've sent you an email…"라고 합니다(Step 5). 넷째, 모델 답이 `json` 코드 울타리(백틱 세 개)로 감싸이면 `json.loads`가 실패해 탈락 메일 쪽으로 가고, `"selected": "false"`처럼 문자열이면 합격으로 처리됩니다(Step 4). 다섯째, 확인 메일 지시문에 `RunOutput` 객체의 전체 repr이 통째로 들어갑니다(Step 6). 여섯째, 터미널 디버그 출력에 OpenAI 키가 찍힙니다(Step 6). 앱 README는 끝 무렵의 Disclaimer에서 자동 판정을 사람이 검토하라고 하지만(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/README.md:91-93`) 코드에는 판정과 메일 사이에 사람이 승인하는 단계가 없습니다(소스로 확인). 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -20,8 +20,10 @@ PDF 이력서를 올리고 지원자 이메일을 적은 뒤 `Analyze Resume`을
 | Python | 이 문서는 3.13.3으로 확인했다. 저장소 기준은 3.11~3.13 | 공통 사전 준비와 같음 |
 | OpenAI API 키 | `gpt-4o` 호출. 화면 사이드바의 비밀번호 칸에 넣는다(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:327`). 이 문서는 가짜 키로 진행한다 | https://platform.openai.com/api-keys |
 | Gmail 앱 비밀번호 | 메일 발송. 사이드바의 `Sender Email`과 `Email App Password`(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:336-337`). 앱 README는 새 Gmail 계정에 2단계 인증과 앱 비밀번호를 쓰라고 안내한다. 이 문서는 가짜 값으로 진행한다 | https://support.google.com/accounts/answer/185833 |
-| Zoom Server-to-Server OAuth 앱 | 회의 만들기. 사이드바의 Account ID·Client ID·Client Secret 셋(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:331-333`). 앱 README가 필요한 권한(scope)을 적는다. 이 문서는 가짜 값으로 진행한다 | https://marketplace.zoom.us |
-| 인터넷 연결 | PyPI 설치. 앱을 실제로 쓸 때는 OpenAI, `smtp.gmail.com`, `zoom.us`·`api.zoom.us`, agno 사용 통계 서버(`os-api.agno.com`)에 접속한다. 브라우저로 열면 Streamlit 사용 통계도 나간다(Day 054가 확인했고 `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
+| Zoom Server-to-Server OAuth 앱 | 회의 만들기. 사이드바의 Account ID·Client ID·Client Secret 셋(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:331-333`). 앱 README가 필요한 권한(scope)을 적는다. 이 문서는 가짜 값으로 진행한다. 원본 그대로는 Zoom 요청이 가지 않는다(Step 6). 그래도 일곱 칸 문을 열려면 아무 값이나 넣어야 한다 | https://marketplace.zoom.us |
+| 인터넷 연결 | PyPI 설치. 앱을 실제로 쓸 때는 OpenAI, `smtp.gmail.com`, agno 사용 통계 서버(`os-api.agno.com`)에 접속한다(`zoom.us`·`api.zoom.us`는 원본 그대로는 접속하지 않는다. Step 6). 브라우저로 열면 Streamlit 사용 통계도 나간다(Day 054가 확인했고 `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
+
+앱이 쓰는 모델 ID `gpt-4o`는 별칭이고, OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인, 조회 도구의 요약)에서 별칭은 폐기 목록에 없으며 날짜가 붙은 `gpt-4o-2024-05-13`만 2026-10-23 종료로 올라 있습니다. 그래서 ⚠ 표시는 하지 않았습니다.
 
 이 문서의 확인 스크립트는 한글을 출력합니다. 한국어 Windows에서 출력을 파이프나 파일로 받으면 기본 인코딩(`cp949`)이 모자랄 수 있으니 셸을 먼저 이렇게 맞춰 두세요(Day 105와 같은 처방이고, 이 설정 없이 돌려 보지는 않았습니다).
 
@@ -48,12 +50,16 @@ $env:PYTHONIOENCODING = "utf-8"
 | Zoom 도구 (`CustomZoomTool`) | 옛 `phi`의 `ZoomTool`을 상속해 토큰 요청만 덮어쓴다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:21-54` |
 | OpenAI API (`gpt-4o`) | 세 에이전트의 모델 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:110`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:127`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:160` |
 | Gmail SMTP | `EmailTools.email_user`가 `smtp.gmail.com:465`로 로그인해 보낸다 | 코드 없음 (agno 3.1.2의 `agno/tools/email.py`, 소스로 확인) |
-| Zoom 토큰 서버·Zoom API | 토큰은 24행의 주소, 회의는 `phi`의 `schedule_meeting`이 `api.zoom.us`에 만든다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:24`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:36` |
-| Agno 사용 통계 API | 성공한 `run`마다 익명 메타데이터를 보내려 한다 | 코드 없음 (agno 내부) |
+| Zoom 토큰 서버·Zoom API | 토큰은 24행의 주소, 회의는 `phi`의 `schedule_meeting`이 `api.zoom.us`에 만든다. 원본 그대로는 도구가 모델에게 가지 않아 두 서버 모두 불리지 않는다(Step 6) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:24`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:36` |
+| Agno 사용 통계 API | 성공한 `run`마다 익명 메타데이터를 보내려 한다(Day 047 Step 5와 같은 통계). `AGNO_TELEMETRY=false`면 보내지 않는다 | 코드 없음 (agno 3.1.2의 `agno/agent/_run.py` 673행의 `log_agent_telemetry`와 `agno/agent/_telemetry.py`, 소스로 확인) |
 
-첫 그림은 한 파일 안의 부품을 한 묶음에 두고 묶음 안의 호출은 뺐습니다. 화살표는 라벨에 적은 데이터가 가는 방향입니다. 부품끼리의 호출은 아래 그림에 화살표로 그렸습니다. 모든 호출이 화면에서 시작하고, 일정 에이전트가 Zoom 도구를 쥐는 화살표(`tools=[zoom_tools]`)가 이 앱에서 가장 중요한 화살표입니다.
+첫 그림은 한 파일 안의 부품을 한 묶음에 두고 묶음 안의 호출은 뺐습니다. 화살표는 라벨에 적은 데이터가 가는 방향입니다. 부품끼리의 호출은 아래 그림에 화살표로 그렸습니다. 모든 호출이 화면에서 시작하고, 일정 에이전트가 Zoom 도구를 쥐는 화살표(`tools=[zoom_tools]`)가 이 앱에서 가장 중요한 화살표입니다. 그 뒤에 이어지는 Zoom 쪽 화살표 둘은 원본에서는 일어나지 않습니다(agno가 그 도구를 버리기 때문입니다. Step 6).
 
 ![부품 사이의 호출](diagrams/extra-structure.svg)
+
+세 에이전트는 만들어질 때 세션 상태에서 키와 주소를 읽어 옵니다. 그 화살표는 위 그림이 넘치지 않도록 따로 그렸습니다. 화살표는 데이터가 가는 방향입니다.
+
+![세션 상태가 에이전트에 주는 값](diagrams/extra-session.svg)
 
 ## 단계별 진행
 
@@ -571,22 +577,22 @@ for line in open(LOG, encoding="utf-8"):
     print("  ", r["tools"], r["roles"], r["last_chars"])
 ```
 
-터미널 하나에서 서버를 띄웁니다. 포트는 49152~65535에서 비어 있는 것을 고르세요(나는 58231을 썼습니다).
+터미널 하나에서 서버를 띄웁니다. 포트는 49152~65535에서 비어 있는 것을 고르세요(나는 61877을 썼습니다). Windows에는 OS가 예약해 둔 제외 범위가 있어서, 그 안의 포트는 비어 있어도 `PermissionError: [WinError 10013]`으로 서버가 못 뜹니다. 이 문서를 처음 쓸 때 쓰던 61877도 나중에 이 범위에 들어가 있었습니다. 범위는 `netsh interface ipv4 show excludedportrange protocol=tcp`로 보고(재부팅마다 바뀔 수 있습니다), 그 안이면 다른 포트를 고르세요.
 
 ```bash
 uv run --no-project python make_pdfs.py
-uv run --no-project python fake_openai.py 58231 model.jsonl
+uv run --no-project python fake_openai.py 61877 model.jsonl
 ```
 
-다른 터미널에서 같은 폴더로 가서 앱이 모델 서버로 이 주소를 쓰게 하고 agno의 통계는 끕니다(`OPENAI_BASE_URL`은 OpenAI 파이썬 SDK가 읽는 환경변수입니다).
+다른 터미널에서 같은 폴더로 가서 앱이 모델 서버로 이 주소를 쓰게 하고 agno의 통계는 끕니다(`OPENAI_BASE_URL`은 OpenAI 파이썬 SDK가 읽는 환경변수입니다. agno의 익명 통계는 Day 047 Step 5가 다룬 것과 같은 통계이고, 성공한 `run` 뒤에 `agno/agent/_run.py` 673행에서 보내집니다. 이 환경변수가 그것을 끕니다).
 
 ```bash
-export OPENAI_BASE_URL=http://127.0.0.1:58231/v1
+export OPENAI_BASE_URL=http://127.0.0.1:61877/v1
 export AGNO_TELEMETRY=false
 ```
 
 ```powershell
-$env:OPENAI_BASE_URL = "http://127.0.0.1:58231/v1"
+$env:OPENAI_BASE_URL = "http://127.0.0.1:61877/v1"
 $env:AGNO_TELEMETRY = "false"
 ```
 
@@ -606,7 +612,7 @@ $env:ACTIONS = "analyze"
 uv run --no-project python drive.py
 ```
 
-(PowerShell은 실행해 보지 못했습니다. 이후 시나리오는 bash 줄만 적고 바꿀 값은 `FAKE_RESUME`·`CAND`·`ACTIONS`입니다.) 직접 확인한 출력입니다.
+(PowerShell은 실행해 보지 못했습니다. 이후 시나리오는 bash 줄만 적습니다. 바꿀 값은 `FAKE_RESUME`·`CAND`·`ACTIONS`이고, 실패 시나리오에서는 `FAKE_SMTP`·`KEY`·`FAKE_ZOOM`도 바뀝니다. bash의 `값=… 명령` 형태는 그 명령에만 적용되지만 PowerShell의 `$env:`는 그 세션에 남습니다. 실패 시나리오를 돌린 뒤에는 `Remove-Item Env:FAKE_SMTP, Env:KEY, Env:FAKE_ZOOM -ErrorAction SilentlyContinue`로 지우세요. 안 지우면 Step 6의 합격 시나리오가 분석부터 실패해 `Proceed with Application` 버튼이 없어 `drive.py`가 `StopIteration`으로 죽습니다(bash에서 같은 상황을 만들어 직접 확인).) 직접 확인한 출력입니다.
 
 ```text
 --- analyze
@@ -694,7 +700,7 @@ grep -o "Error analyzing resume[^\"\]*" model.jsonl
 Error analyzing resume: Expecting value: line 1 column 1 (char 0)
 ```
 
-(PowerShell에서는 `Select-String -Pattern "Error analyzing resume[^\"\]*" model.jsonl`이 같은 일을 하지만 실행해 보지 못했습니다.) 지원자는 모델이 JSON을 잘못 감쌌다는 이유로 탈락 메일을 받게 됩니다. 또 `strfalse.pdf`(`selected`가 `"false"`)는 `if is_selected:`가 문자열을 참으로 읽어 합격으로 갑니다.
+(PowerShell에서는 `(Select-String -Pattern 'Error analyzing resume[^"\\]*' -AllMatches model.jsonl).Matches.Value`가 일치한 부분만 냅니다. 실행해 보지 못했습니다.) 지원자는 모델이 JSON을 잘못 감쌌다는 이유로 탈락 메일을 받게 됩니다. 또 `strfalse.pdf`(`selected`가 `"false"`)는 `if is_selected:`가 문자열을 참으로 읽어 합격으로 갑니다.
 
 ```bash
 MODEL_LOG=model.jsonl FAKE_RESUME=resumes/strfalse.pdf CAND=candidate.d@example.test ACTIONS=analyze uv run --no-project python drive.py
@@ -893,7 +899,7 @@ api_key='sk-fake-test'
 api_key='sk-fake-test'
 ```
 
-(직접 확인. 463·467행의 `print`가 에이전트 객체를 통째로 찍을 때 모델 설정의 `api_key`가 같이 나옵니다. PowerShell에서는 `Select-String -Pattern "api_key='[^']*'" app_out.log`가 같은 일을 하지만 실행해 보지 못했습니다.) 에이전트 repr에 `EmailTools`의 `sender_passkey`와 Zoom 비밀은 나오지 않았습니다(같은 파일에서 `fakepasskey`·`csec-fake`·`acct-fake`를 찾아 0건이었던 것을 직접 확인).
+(직접 확인. 463·467행의 `print`가 에이전트 객체를 통째로 찍을 때 모델 설정의 `api_key`가 같이 나옵니다. PowerShell에서는 `(Select-String -Pattern "api_key='[^']*'" -AllMatches app_out.log).Matches.Value`가 일치한 부분만 냅니다. 실행해 보지 못했습니다.) 에이전트 repr에 `EmailTools`의 `sender_passkey`와 Zoom 비밀은 나오지 않았습니다(같은 파일에서 `fakepasskey`·`csec-fake`·`acct-fake`를 찾아 0건이었던 것을 직접 확인).
 
 Zoom 도구 자체는 고장이 아닙니다. `CustomZoomTool`이 토큰을 어떻게 받는지 봅니다.
 
@@ -960,7 +966,13 @@ POST https://api.zoom.us/v2/users/me/meetings | 기본 인증: False | 베어러
 POST https://api.zoom.us/v2/users/me/meetings | 기본 인증: False | 베어러: True | data: None | json 키: ['duration', 'settings', 'start_time', 'timezone', 'topic', 'type']
 ```
 
-토큰 요청은 한 번이고 회의 요청은 두 번입니다. 둘째 호출이 토큰을 다시 받지 않았습니다. 토큰 요청이 실패하면(`FAKE_ZOOM=tokenfail`) 도구는 예외 없이 `Failed to obtain access token` 오류 JSON을 돌려주고 호출마다 토큰을 다시 시도합니다(직접 확인).
+토큰 요청은 한 번이고 회의 요청은 두 번입니다. 둘째 호출이 토큰을 다시 받지 않았습니다. 토큰 요청이 실패하면 도구는 예외 없이 `Failed to obtain access token` 오류 JSON을 돌려주고 호출마다 토큰을 다시 시도합니다. `harness.py`가 `FAKE_ZOOM=tokenfail`이면 토큰 요청에 연결 오류를 던집니다(직접 확인).
+
+```bash
+FAKE_ZOOM=tokenfail FAKE_RESUME=resumes/strong.pdf uv run --no-project python zoom_check.py
+```
+
+(PowerShell은 `$env:FAKE_ZOOM = "tokenfail"`을 걸고 같은 줄을 돌린 뒤 `Remove-Item Env:FAKE_ZOOM`으로 지웁니다. 실행해 보지 못했습니다.)
 
 ```text
 tool 함수: ['schedule_meeting', 'get_upcoming_meetings', 'list_meetings', 'get_meeting_recordings', 'delete_meeting', 'get_meeting']
@@ -1012,23 +1024,41 @@ POST : [{"url": "https://zoom.us/oauth/token", "basic_auth": true, "data": {"gra
 
 ![Step 7 — 전체 구성](diagrams/step7.svg)
 
-마지막으로 독자가 앱을 띄우는 명령입니다. 이 앱은 진짜 키를 넣으면 진짜로 메일을 보내므로, 띄우는 것까지만 확인하고 키를 넣지 않았습니다.
+마지막으로 독자가 앱을 띄우는 명령입니다. **이 명령은 하네스 없이 원본 앱을 띄웁니다. 따라서 Step 4의 터미널에서 그대로 쓰면 안 됩니다.** 가짜 서버가 아직 떠 있고 그 터미널에 `OPENAI_BASE_URL`이 남아 있으면, 화면에서 버튼을 누르는 순간 가짜 서버의 대본이 `email_user`를 부르게 하고, 그러면 `EmailTools`가 진짜 `smtp.gmail.com:465`에 접속해 사이드바의 발신 계정으로 로그인합니다. 사이드바에 진짜 Gmail 계정과 앱 비밀번호를 넣었다면 "대본 메일"이 적은 지원자 주소로 진짜 메일이 나갑니다. 가짜 값을 넣어도 Gmail로 접속·로그인 시도가 나갑니다. 이 문서는 그 위험을 이렇게 확인했습니다. 하네스 대신 업로더만 바꾼 스크립트로 원본 앱을 돌리고 `127.0.0.1` 밖으로 나가는 이름 조회와 접속을 호출 전에 막으며 기록했습니다. 가짜 서버를 켜고 `OPENAI_BASE_URL`을 건 경우에는 `smtp.gmail.com` 이름 조회가 시도되어 막혔고(직접 확인), 가짜 서버를 끄고 `OPENAI_BASE_URL` 없이 돌린 경우에는 `smtp.gmail.com` 이름 조회 시도가 없었고 가짜 서버가 받은 요청도 0건이었습니다(직접 확인. 이 재현은 프록시로 바깥 접속을 막은 환경이라, 독자 환경에서 가짜 키 요청이 OpenAI까지 가서 어떻게 거절되는지는 확인하지 못했습니다).
+
+그래서 순서는 이렇습니다.
+
+1. Step 4의 가짜 서버를 `Ctrl+C`로 멈춥니다.
+2. **새 터미널**을 열고 `recruit-lab`으로 가서 가짜 서버용 변수가 없는지 확인합니다. 있으면 지웁니다.
+3. 사이드바의 Gmail·Zoom 칸에는 **진짜가 아닌 값**을 넣습니다. 일곱 칸 문을 열려면 아무 값이나 있으면 됩니다.
 
 ```bash
+env | grep OPENAI_BASE_URL
+unset OPENAI_BASE_URL
 uv run --no-project streamlit run ai_recruitment_agent_team.py --server.address localhost --browser.gatherUsageStats false
 ```
 
-(headless로 임의 포트에 띄워 `curl`로 확인했을 때 화면 주소가 200, `/_stcore/health`가 `ok`였습니다. 같은 명령에 `--server.headless true --server.port <포트>`를 더했습니다.) 서버와 확인 스크립트가 만든 파일은 모두 `recruit-lab` 안에 있으므로 서버를 `Ctrl+C`로 멈추고 폴더를 지우면 됩니다.
+```powershell
+Get-ChildItem Env:OPENAI_BASE_URL
+Remove-Item Env:OPENAI_BASE_URL
+uv run --no-project streamlit run ai_recruitment_agent_team.py --server.address localhost --browser.gatherUsageStats false
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다. `env | grep`은 변수가 없으면 아무것도 내지 않고, `Get-ChildItem Env:OPENAI_BASE_URL`은 없으면 오류를 냅니다. 둘 다 정상입니다.) 이 절차에서 화면의 버튼을 누르면 모델 서버가 가짜가 아니므로 메일 도구를 부르라는 대본 답이 올 길이 없습니다. 다만 가짜 키라도 모델 요청은 진짜 OpenAI로 나갑니다(그 응답은 확인하지 못했습니다). **진짜 키를 넣어 쓸 때는 진짜 메일이 지원자 칸에 적은 주소로 나가고 진짜 Zoom 회의 요청이 시도됩니다.** 따라서 본인 소유 주소만 지원자 칸에 쓰세요. headless로 임의 포트에 띄워 `curl`로 확인했을 때 화면 주소가 200, `/_stcore/health`가 `ok`였고, 같은 명령에 `--server.headless true --server.port <포트>`를 더했습니다. 서버와 확인 스크립트가 만든 파일은 모두 `recruit-lab` 안에 있으므로 서버를 `Ctrl+C`로 멈추고 폴더를 지우면 됩니다.
 
 ## 요청 한 건이 흐르는 과정
 
-이 앱은 한 그림에 다 넣으면 이웃하지 않은 배우 사이 메시지의 라벨이 다른 배우의 수명선 위에 놓이거나 높이가 한계를 넘어서, 앱의 실제 시간 경계에서 여러 그림으로 나눴습니다. 모든 메시지는 한 그림에만 있고 코드의 순서 그대로입니다. 첫 그림은 키와 PDF를 넣는 앞부분입니다. PDF 글은 업로드로 화면이 다시 그려질 때 읽히고(373~404행), 버튼을 누르기 전에 끝납니다.
+이 앱은 한 그림에 다 넣으면 이웃하지 않은 배우 사이 메시지의 라벨이 다른 배우의 수명선 위에 놓이거나 높이가 한계를 넘어서, 앱의 실제 시간 경계에서 여러 그림으로 나눴습니다. 모든 메시지는 한 그림에만 있고 코드의 순서 그대로입니다. 사용자에게 보이는 화면 문구(성공·경고·진행 표시)도 메시지로 그렸고, `Analyze Resume`을 누르는 순간의 기준은 코드의 버튼 핸들러입니다. 첫 그림은 키와 PDF를 넣는 앞부분입니다. 업로드하면 `pdf_viewer`가 쓸 임시 `.pdf` 파일이 `%TEMP%`에 만들어졌다가 바로 지워지고(385~392행), PDF 글은 그 뒤에 읽혀 `Resume processed successfully!`가 뜹니다(397~404행). 지원자 이메일은 그 아래 칸이라 마지막에 들어갑니다(407~412행). 이 모두가 버튼을 누르기 전에 끝납니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-`Analyze Resume`을 누르면 분석 에이전트가 `gpt-4o`에 한 번 묻고, 성공하면 통계 메타데이터가 나가며, 화면이 JSON을 읽습니다.
+`Analyze Resume`을 누르면 진행 표시가 뜨고, 분석 에이전트가 `gpt-4o`에 한 번 묻고, 성공하면 통계 메타데이터가 나갑니다.
 
 ![분석](diagrams/extra-analyze.svg)
+
+`json.loads`가 끝나면 판정이 화면에 나옵니다. 합격이면 성공 문구(그리고 다시 그려진 화면의 `Proceed` 안내), 탈락이면 경고와 피드백을 먼저 보여 주고 메일을 보내는 진행 표시를 띄웁니다.
+
+![판정 표시](diagrams/extra-verdict.svg)
 
 탈락이면 메일 에이전트가 두 번 묻습니다. 모델이 `email_user`를 부르면 SMTP로 로그인해 보내고, 그 결과 문자열이 두 번째 요청에 실려 마무리 문장이 옵니다. 반환값은 쓰이지 않고 화면은 안내 문구를 씁니다.
 
@@ -1036,7 +1066,7 @@ uv run --no-project streamlit run ai_recruitment_agent_team.py --server.address 
 
 ![탈락 메일의 마무리](diagrams/extra-reject-reply.svg)
 
-합격이면 `Proceed with Application`부터 선발 메일이 같은 두 갈래로 나갑니다.
+합격이면 `Proceed with Application`을 누르고, 진행 표시 아래에서 선발 메일이 같은 두 갈래로 나갑니다. 메일 결과와 상관없이 `Confirmation email sent!` 표시가 뜨고, 이어서 일정 진행 표시(`Scheduling interview...`)가 뜹니다.
 
 ![선발 메일 보내기](diagrams/extra-selected-send.svg)
 
@@ -1046,7 +1076,7 @@ uv run --no-project streamlit run ai_recruitment_agent_team.py --server.address 
 
 ![일정](diagrams/extra-schedule.svg)
 
-확인 메일은 `meeting_response` 전체 repr을 지시문에 담아 같은 방식으로 나가고, 화면은 성공 문구를 씁니다.
+확인 메일은 `meeting_response` 전체 repr을 지시문에 담아 같은 방식으로 나가고, 화면은 `Interview scheduled successfully!`, `Interview scheduled!` 표시, 마지막 성공 문구를 차례로 씁니다.
 
 ![확인 메일 보내기](diagrams/extra-confirm-send.svg)
 
@@ -1065,6 +1095,7 @@ Zoom 두 서버(`zoom.us`, `api.zoom.us`)는 위 그림 어디에도 없습니�
 - [ ] `weak.pdf`로 탈락 경로를, `FAKE_SMTP=authfail`과 `KEY=sk-bad-key`로 실패해도 "sent"가 뜨는 것을 확인했다
 - [ ] `ACTIONS=analyze,proceed`로 일정 에이전트의 도구 목록이 `[]`이고 `POST`가 비어 있는 것을 확인했다
 - [ ] `zoom_check.py`로 토큰 한 번·회의 두 번과 `tokenfail`을 확인했다
+- [ ] 앱을 띄우기 전에 가짜 서버를 멈추고 새 터미널에서 `OPENAI_BASE_URL`이 없는 것을 확인했다
 - [ ] 한 줄 고친 복사본에서 `schedule_meeting`이 실리고 `POST`가 두 건 생기는 것을 확인했다
 - [ ] 서버를 `Ctrl+C`로 멈추고 `recruit-lab`을 지웠다
 
@@ -1081,6 +1112,8 @@ Zoom 두 서버(`zoom.us`, `api.zoom.us`)는 위 그림 어디에도 없습니�
 | `Error processing response: Expecting value: line 1 column 1 (char 0)`와 탈락 메일 (직접 확인) | 모델 답이 `json` 코드 울타리(백틱 세 개)로 감싸이면 `json.loads`가 실패한다 | 앱을 고치지 않고는 막을 수 없다. 오류 문장이 지원자에게 가는 메일의 feedback이 된다 |
 | 확인 메일 지시문이 6,000자를 넘음 (직접 확인) | `meeting_response`(`RunOutput`)를 f-string에 그대로 넣어 repr 전체가 들어간다 | `meeting_response.content`만 넣도록 바꾸는 변경을 시험한다(더 해보기) |
 | 터미널에 `api_key='sk-…'`가 찍힘 (직접 확인) | 463·467행의 `print`가 에이전트 객체를 통째로 찍는다 | 로그를 공유하기 전에 지운다 |
+| 서버가 `PermissionError: [WinError 10013]`으로 안 뜸 (직접 확인) | Windows가 예약한 포트 제외 범위 안의 포트다. 비어 있어도 bind가 거부된다 | `netsh interface ipv4 show excludedportrange protocol=tcp`로 범위를 보고 밖의 포트를 고른다 |
+| 앱을 띄워 버튼을 눌렀더니 Gmail 접속 시도가 나감 (직접 확인) | 하네스 없이 띄운 원본 앱에서 가짜 서버와 `OPENAI_BASE_URL`이 남아 대본이 `email_user`를 부른다 | 가짜 서버를 멈추고 변수를 지운 새 터미널에서 띄운다(Step 7) |
 | 일정 지시문의 시간대가 서로 다름 (소스로 확인) | 일정 에이전트의 지시문은 "9 AM - 5 PM EST"(167행), 호출 지시문은 IST(273·288행)다 | 한 쪽을 맞추는 변경을 시험한다 |
 
 ## 더 해보기

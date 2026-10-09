@@ -1,8 +1,8 @@
 ...@../../_tools/theme
 direction: down
 
-ui: "Streamlit 화면\n(사이드바 · 업로드 · 버튼)" { class: ours; width: 220 }
-session: "세션 상태\n(키 · 이메일 · 이력서 글)" { class: store; width: 160; height: 96 }
+ui: "Streamlit 화면\n(사이드바 · 업로드 · 버튼)" { class: ours }
+session: "세션 상태\n(키 · 이메일 · 이력서 글)" { class: store; height: 110 }
 pdf: "PDF 읽기\n(extract_text_from_pdf)" { class: ours }
 analyzer: "이력서 분석 에이전트\n(create_resume_analyzer)" { class: ours }
 emailer: "메일 에이전트\n(create_email_agent)" { class: ours }
@@ -15,9 +15,9 @@ zoom_api: "Zoom API\n(api.zoom.us)" { class: ext; height: 60 }
 ui -> session: "키 · 이메일 · 이력서 글 저장"
 ui -> pdf: "extract_text_from_pdf(\npdf_file)"
 ui -> analyzer: "analyze_resume 안에서\nrun(프롬프트)"
-ui -> emailer: "send_*_email 안에서\nrun(프롬프트)"
+ui -> emailer: "send_*_email · 확인 메일 안에서\nrun(프롬프트)"
 ui -> scheduler: "schedule_interview 안에서\nrun(프롬프트)"
-scheduler -> zoomtool: "tools=[zoom_tools]"
+scheduler -> zoomtool: "tools=[zoom_tools]\n(agno가 버림 · Step 6)"
 emailer -> smtp: "EmailTools.email_user\n(SMTP_SSL)"
 zoomtool -> zoom_oauth: "get_access_token\n(requests.post)"
 zoomtool -> zoom_api: "schedule_meeting\n(requests.post)"
