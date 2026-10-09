@@ -100,7 +100,7 @@ uv run --no-project python -c "import multi_agent_trust_layer; print('import ok'
 grep -n -i -E "openai|gpt|environ|getenv|socket|http|requests|open\(" multi_agent_trust_layer.py
 ```
 
-(PowerShell: 마지막 줄은 `Select-String -Pattern "openai|gpt|environ|getenv|socket|http|requests|open\(" multi_agent_trust_layer.py` — 실행해 보지 못했습니다.)
+(PowerShell 5.1에는 `&&`가 없으므로 첫 줄은 `uv run --no-project python -m py_compile multi_agent_trust_layer.py; if ($?) { echo compiled }`로 씁니다. 마지막 줄은 `Select-String -Pattern "openai|gpt|environ|getenv|socket|http|requests|open\(" multi_agent_trust_layer.py`입니다. 두 PowerShell 형태 모두 실행해 보지 못했습니다.)
 
 직접 확인한 출력:
 
@@ -730,6 +730,7 @@ revoked: Action denied: Action 'web_search' not allowed under delegation <did>
 |---|---|
 | README 그림의 에이전트와 창구 사이 `TLS` | 네트워크 코드가 없다. `ssl`·`tls`·소켓 관련 문자열이 파일에 없다(`grep -i -E "ssl\|tls"`가 아무것도 찾지 못함, 직접 확인) |
 | "Cryptographically narrow scope", 서명된 위임 | 서명은 `sha256(...)[:16]`을 만들 뿐 검증이 없다(Step 4). `public_key`는 난수 해시다(Step 3) |
+| `scope={..., "time_limit_minutes": 30}`(README 예제의 `create_delegation`) | 시간은 `scope` 안의 같은 키가 아니라 인자 `time_limit_minutes`(기본 60)로만 받는다(`multi_agent_trust_layer.py:489`, `multi_agent_trust_layer.py:500`). 예제 그대로 부르면 위임이 60분이 되고, 돌아오는 값은 위임 객체가 아니라 번호 문자열이다(직접 확인) |
 | `researcher.execute_with_delegation(...)`(README 예제) | 그런 메서드가 없다. `AttributeError: 'GovernedAgent' object has no attribute 'execute_with_delegation'`(직접 확인). 실제로는 `current_delegation`을 정하고 `execute` |
 | README 예제 출력 "850 → 860 (+10)" | 실제 데모는 750 → 755(+5). 앞 단계 표대로 `stayed_in_scope`는 +5다 |
 | 등급별 권한(Probation은 제한 행동·추가 로깅 등) | 코드가 구분하는 등급은 suspended(전부 거부)와 restricted(거부)뿐이다. trusted·standard·probation은 규칙이 똑같다(Step 5) |
@@ -793,7 +794,7 @@ tampered: denied | verify method: False
 
 ## 요청 한 건이 흐르는 과정
 
-데모의 첫 시험(researcher의 `web_search`)을 따라갑니다. 요청 하나가 그림 네 장으로 나뉘는 것은 한 장에 담으면 가로로 길어져 읽히지 않기 때문이고, 메시지는 모두 한 장에 원래 순서대로 있습니다. 그림의 위임 번호 `del-6c1f`는 자리 표시이고 실제 번호는 매번 다릅니다.
+데모의 첫 시험(researcher의 `web_search`)을 따라갑니다. 요청 하나가 그림 다섯 장으로 나뉘는 것은 한 장에 담으면 가로로 길어져 읽히지 않기 때문이고, 이 첫 시험의 메시지는 모두 정확히 한 장에 원래 순서대로 있습니다(`get_trust_score` 조회 포함). 그림의 위임 번호 `del-6c1f`는 자리 표시이고 실제 번호는 매번 다릅니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -809,9 +810,13 @@ tampered: denied | verify method: False
 
 ![허락 뒤의 기록 시퀀스](diagrams/extra-record.svg)
 
-창구는 점수 엔진에 `stayed_in_scope`를 기록해 750을 755로 올리고, 감사 기록에 `allowed` 한 줄을 더하고, 에이전트에 `(True, ...)`를 돌려줍니다. 에이전트는 가짜 행동의 문자열을 만들어 데모에 `{success: True, result, trust_score: 755}`를 돌려줍니다.
+창구는 점수 엔진에 `stayed_in_scope`를 기록해 750을 755로 올리고 감사 기록에 `allowed` 한 줄을 더합니다.
 
-두 번째 시험(`send_email`)은 같은 길을 가다 정책 엔진에서 갈립니다. 신원 확인은 위와 같습니다.
+![응답을 만드는 시퀀스](diagrams/extra-score.svg)
+
+창구가 에이전트에 `(True, ...)`를 돌려주면 에이전트는 가짜 행동의 문자열을 만들고, 응답에 넣을 점수를 창구의 `get_trust_score`로 다시 물어(`multi_agent_trust_layer.py:644`) 창구가 점수 엔진에서 755를 받아 옵니다. 그 값으로 데모에 `{success: True, result, trust_score: 755}`를 돌려줍니다.
+
+두 번째 시험(`send_email`)은 같은 길을 가다 정책 엔진에서 갈립니다. 앞 네 메시지(데모의 `execute`, 에이전트의 `authorize_action`, 신원 등록부 조회와 응답)는 첫 시험과 값만 `send_email`로 다르고, 그림은 판정부터 그립니다.
 
 ![거부되는 정책 판정 시퀀스](diagrams/extra-denied-policy.svg)
 
@@ -819,7 +824,11 @@ tampered: denied | verify method: False
 
 ![거부 뒤의 기록 시퀀스](diagrams/extra-denied-record.svg)
 
-창구는 `scope_violation_attempt`로 755를 705로 깎고, `denied` 한 줄을 감사 기록에 더하고, 에이전트에 거부를 돌려줍니다. 에이전트는 `{success: False, trust_score: 705, error: ...}`를 데모에 돌려줍니다.
+창구는 `scope_violation_attempt`로 755를 705로 깎고 `denied` 한 줄을 감사 기록에 더합니다.
+
+![거부 응답을 만드는 시퀀스](diagrams/extra-denied-score.svg)
+
+창구가 에이전트에 `(False, ...)`를 돌려주면 에이전트는 이 경로에서도 점수를 `get_trust_score`로 다시 물어(`multi_agent_trust_layer.py:635`) 705를 받고, `{success: False, trust_score: 705, error: ...}`를 데모에 돌려줍니다.
 
 ## 실행 체크리스트
 
@@ -839,7 +848,7 @@ tampered: denied | verify method: False
 | `ModuleNotFoundError: No module named 'openai'` | 26행 `from openai import OpenAI`가 파일을 읽는 순간 실행된다. 쓰지는 않지만 패키지가 있어야 한다(직접 확인) | 가상환경에서 `uv pip install -r requirements.txt` |
 | 출력을 파일이나 파이프로 돌리면 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f91d' in position 0: illegal multibyte sequence` | 데모가 이모지를 `print`하고, 한국어 Windows에서 출력이 파일·파이프로 갈 때 기본 인코딩이 cp949라 인코딩에 실패한다(Git Bash에서 `> out.txt`로 직접 확인. 터미널에 바로 찍을 때는 시험하지 못함) | `PYTHONUTF8=1`을 앞에 붙인다. 셸 문법: Git Bash·macOS·Linux `PYTHONUTF8=1 uv run --no-project python multi_agent_trust_layer.py`, PowerShell `$env:PYTHONUTF8 = "1"`(실행해 보지 못함) |
 | 데모 실행 때 `DeprecationWarning: datetime.datetime.utcnow() is deprecated ...`가 여러 줄 나온다 | 코드가 `datetime.utcnow()`를 쓴다(89·159·325·326·339·580행, 그리고 `default_factory=datetime.utcnow`인 71·82행). Python 3.13.3에서 직접 확인했고, 경고일 뿐 결과에는 영향이 없다 | 무시하거나 `python -W ignore::DeprecationWarning ...`. 고치려면 `datetime.now(timezone.utc)`로 바꾼다 |
-| 데모 실행 때 `2026-... - INFO - Trust update: ...` 줄이 섞여 나온다 | 29행의 `logging.basicConfig(level=logging.INFO, ...)`가 import할 때 켜진다. 표준 오류(stderr)로 나가므로 표준 출력과 섞이지 않는다(직접 확인) | `2>/dev/null`로 숨기거나 `check*.py`처럼 `logging.disable(logging.CRITICAL)` |
+| 데모 실행 때 터미널에 `2026-... - INFO - Trust update: ...` 줄이 끼어 나온다 | 29행의 `logging.basicConfig(level=logging.INFO, ...)`가 import할 때 켜진다. 표준 오류(stderr)로 나가므로 표준 출력과는 따로다. 터미널에는 둘이 섞여 보인다(직접 확인) | `2>/dev/null`(PowerShell `2>$null`, 실행해 보지 못함)로 숨기거나 `check*.py`처럼 `logging.disable(logging.CRITICAL)` |
 | `register_agent(..., initial_trust=0)`인데 점수가 700이다 | `score = initial_score or self.initial_score`(241행) — 0은 거짓이라 기본값으로 바뀐다(Step 2, 직접 확인) | 복사본에서 `initial_score if initial_score is not None else self.initial_score`로 바꾼다 |
 | 같은 행동이 갑자기 `Agent is suspended`로 거부된다 | 거부될 때마다 -50이고 정지되면 +5를 받을 길이 없다(Step 5, 직접 확인) | 데모 밖에서 `trust_engine.record_event(agent_id, ..., custom_delta=...)`로 점수를 직접 올린다. 정지에서 되돌리는 장치는 코드에 없다 |
 | 앱 README 예제의 `researcher.execute_with_delegation(...)`이 `AttributeError` | 그런 메서드가 없다(직접 확인) | `researcher.current_delegation = delegation_id` 후 `researcher.execute(action, params)` |

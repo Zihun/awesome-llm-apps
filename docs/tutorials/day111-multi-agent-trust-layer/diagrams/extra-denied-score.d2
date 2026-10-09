@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+demo: "데모\n(main)" { class: ours }
+agent: "에이전트\n(GovernedAgent)" { class: ours }
+layer: "신뢰 계층 창구\n(TrustLayer)" { class: ours }
+trust: "신뢰 점수 엔진\n(TrustScoringEngine)" { class: ours }
+
+layer -> agent: "(False, \"Action 'send_email' denied\nfor role researcher\")"
+agent -> layer: "get_trust_score(\"researcher-002\")"
+layer -> trust: "get(\"researcher-002\")"
+trust -> layer: "TrustScore(705, standard)"
+layer -> agent: "705"
+agent -> demo: "{success: False, trust_score: 705,\nerror: \"Action denied: Action 'send_email'\ndenied for role researcher\"}"
