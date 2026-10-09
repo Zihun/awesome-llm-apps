@@ -6,7 +6,7 @@ gameplay_agent: 게임플레이 (gameplay_agent) { class: ours }
 visuals_agent: 비주얼 (visuals_agent) { class: ours }
 tech_agent: 기술 (tech_agent) { class: ours }
 
-story_agent -> gameplay_agent: 이관 (SwarmResult · AFTER_WORK)
-gameplay_agent -> visuals_agent: 이관 (SwarmResult · AFTER_WORK)
-visuals_agent -> tech_agent: 이관 (SwarmResult · AFTER_WORK)
-tech_agent -> story_agent: 이관 (SwarmResult · AFTER_WORK)
+story_agent -> gameplay_agent: 이관 (AFTER_WORK)
+gameplay_agent -> visuals_agent: 이관 (AFTER_WORK)
+visuals_agent -> tech_agent: 이관 (AFTER_WORK)
+tech_agent -> story_agent: 이관 (AFTER_WORK)

@@ -1,6 +1,6 @@
 # Day 116 · 🎨 AI Game Design Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(`requirements.txt`의 `autogen`이 오늘 0.14.1로 풀리는데 이 버전에는 앱이 3행에서 import하는 `SwarmAgent`가 없어, 설치 그대로는 첫 줄에서 `ImportError`로 멈춥니다. `autogen==0.7.3`으로 고정해야 돕니다 — Step 1) · 예상 소요 100분(앱은 290줄 단일 파일이지만 `autogen` 버전을 열네 가지로 갈아 끼워 보고, 가짜 서버와 확인 스크립트 둘을 직접 저장해 돌리고, 시퀀스 그림 아홉 장을 따라가야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 요청 1건에 `gpt-4o-mini` 호출 8회, 합쳐서 $0.01 이하(OpenAI 모델 페이지의 입력 $0.15·출력 $0.60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-09 확인)에, 호출당 입력 3,000토큰·출력 1,500토큰 이하라고 가정해 대입한 어림이며 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(`requirements.txt`의 `autogen`이 오늘 0.14.1로 풀리는데 이 버전에는 앱이 3행에서 import하는 `SwarmAgent`가 없어, 설치 그대로는 첫 줄에서 `ImportError`로 멈춥니다. `autogen==0.7.3`으로 고정해야 돕니다 — Step 1) · 예상 소요 100분(앱은 290줄 단일 파일이지만 `autogen` 버전을 열네 가지로 갈아 끼워 보고, 가짜 서버와 확인 스크립트 둘을 직접 저장해 돌리고, 시퀀스 그림 아홉 장을 따라가야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 요청 1건에 `gpt-4o-mini` 호출 8회, 합쳐서 약 $0.01(OpenAI 모델 페이지의 입력 $0.15·출력 $0.60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-09 확인)에, 호출당 입력 3,000토큰·출력 1,500토큰을 상한으로 가정해 대입하면 호출당 $0.00135, 8회에 $0.0108입니다. 실제 토큰 수는 키가 없어 재지 못했으니 그 근처의 어림입니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team`
 
 ## 오늘 만들 것
 
@@ -40,7 +40,7 @@
 
 ## 단계별 진행
 
-명령은 bash 기준입니다. PowerShell에서는 줄바꿈이 든 `-c "..."`가 따옴표 문제를 일으키니 같은 내용을 `.py` 파일로 저장해 `uv run --no-project python 파일.py`로 실행하세요(PowerShell 형태는 실행해 보지 못했습니다). Windows 콘솔에서 `✨` 같은 글자를 찍는 스크립트는 `python -X utf8`로 돌립니다.
+명령은 bash 기준입니다. PowerShell에서는 줄바꿈이 든 `-c "..."`가 따옴표 문제를 일으키니 같은 내용을 `.py` 파일로 저장해 `uv run --no-project python 파일.py`로 실행하고, `&&`로 이은 줄은 나눠 쓰고, `curl`은 PowerShell 5.1에서 `Invoke-WebRequest` 별칭이라 `curl.exe`를 쓰세요(PowerShell 형태는 실행해 보지 못했습니다). Windows 콘솔에서 `✨` 같은 글자를 찍는 스크립트는 `python -X utf8`로 돌립니다.
 
 ### Step 1. 환경 만들기 — `autogen`이 오늘 무엇으로 풀리는가
 
@@ -54,7 +54,7 @@ uv venv
 uv pip install -r requirements.txt
 ```
 
-(pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`.) 이 저장소 루트에는 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다.
+(pip 대안: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`. PowerShell 5.1에는 `&&`가 없으니 `python -m venv .venv`, `.venv\Scripts\Activate.ps1`, `pip install -r requirements.txt` 세 줄로 나눕니다. 실행해 보지 못했습니다.) 이 저장소 루트에는 `pyproject.toml`이 있어 이후 `uv run`에는 모두 `--no-project`를 붙입니다.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team/requirements.txt:1-2`
 
@@ -98,8 +98,7 @@ Swarm API가 어느 버전까지 있는지 `autogen`의 여러 버전을 각자 
 |---|---|
 | 0.6.1 · 0.7.3 | import 되고 `SwarmAgent(...).register_hand_off(AFTER_WORK(...))` 호출도 됨 |
 | 0.7.4 | import 되지만 `AttributeError: 'SwarmAgent' object has no attribute 'register_hand_off'` |
-| 0.7.6 | `SwarmAgent` 생성에서 `ImportError: Module 'openai' needed ...`(이 버전은 `openai`를 같이 깔지 않음) |
-| 0.8.0 · 0.8.7 | import 되지만 `hasattr(SwarmAgent, "register_hand_off")`가 `False` |
+| 0.7.6 · 0.8.0 · 0.8.7 | import 되지만 `SwarmAgent` 생성에서 `ImportError: Module 'openai' needed ...`(이 버전들은 `openai`를 같이 깔지 않음). `hasattr(SwarmAgent, "register_hand_off")`도 `False` |
 | 0.9 · 0.9.9 · 0.10.0 · 0.11.0 · 0.12.0 · 0.13.4 · 0.14.0 · 0.14.1 | `ImportError: cannot import name 'SwarmAgent' from 'autogen'` |
 
 0.7.4에서 `register_hand_off`가 인스턴스 메서드에서 사라지는 경계는 Day 085 Step 1이 `pyautogen`으로 확인한 것과 같습니다. 앱 254~257행이 인스턴스 메서드로 부르므로 0.7.3까지만 됩니다. 이 문서는 그중 가장 새 것인 0.7.3을 씁니다.
@@ -634,10 +633,11 @@ for e in at.expander:
     print(e.label, "->", [m.value for m in e.markdown])
 ```
 
-앱 폴더 아래에 새 폴더(`play`)를 만들어 두 파일과 앱 파일 `game_design_agent_team.py`의 사본을 넣고 그 안에서 실행합니다. AG2의 디스크 캐시 `.cache/`가 그 폴더에 생기게 하려는 것입니다. 앞 단계에서 만든 `.venv`는 상위 폴더에서 uv가 찾아 씁니다. 서버는 다른 터미널에 띄웁니다. 포트는 49152~65535 중에서 쓰이지 않는 것을 고르세요(아래는 51873 예시).
+앱 폴더 아래에 새 폴더(`play`)를 만들어 두 파일과 앱 파일 `game_design_agent_team.py`의 사본을 넣고 그 안에서 실행합니다. AG2의 디스크 캐시 `.cache/`가 그 폴더에 생기게 하려는 것입니다. 앞 단계에서 만든 `.venv`는 상위 폴더에서 uv가 찾아 씁니다. 서버는 다른 터미널에 띄웁니다. 포트는 49152~65535 중에서 쓰이지 않는 것을 고르되, Windows에서는 제외 포트 범위에 걸리면 바인드가 거부됩니다("문제 해결"). 아래는 51873 예시입니다.
 
 ```bash
-mkdir play && cd play
+mkdir play
+cd play
 cp ../game_design_agent_team.py .
 uv run --no-project python fake_openai.py 51873
 ```
@@ -731,7 +731,19 @@ print('입력 문구가 든 행:', c.execute(\"select count(*) from Cache where 
 
 `chat_history`의 **마지막 네 메시지**가 스토리·게임플레이·비주얼·기술의 본문 순서라고 가정하고 인덱스(-4~-1)로 꺼냅니다. 이 가정이 맞으려면 대화가 본문 한 바퀴의 끝에서 멈춰야 합니다. 세어 보면 시작 메시지 하나, 요약 넷이 각자 도구 호출과 실행 결과로 둘씩 여덟, 본문 넷이니 9 + 4 = 13입니다. 그래서 `max_rounds=13`은 "넉넉한 값"이 아니라 본문 한 바퀴가 끝나는 값입니다. 일반식은 본문 바퀴 수를 k라 할 때 `9 + 4k`입니다. 앱에는 `try/except`가 없어서 이 가정이 어긋나 `IndexError`가 나거나 API 요청이 실패하면 Streamlit의 오류 화면이 그대로 뜹니다(소스로 확인. 실제로 실패시켜 보지는 않았습니다).
 
-12와 14로 바꿔 돌린 결과입니다. 사본에서만 바꿨고 매번 새 폴더와 새 서버를 썼습니다(같은 폴더를 쓰면 Step 7의 캐시가 이전 응답을 돌려줍니다). `drive.py` 인자로 `12`, `14`를 줍니다.
+12와 14로 바꿔 돌린 결과입니다. 사본에서만 바꿨고 매번 새 폴더와 새 서버를 썼습니다(같은 폴더를 쓰면 Step 7의 캐시가 이전 응답을 돌려줍니다). 새 폴더 `play12`에 Step 7의 파일 셋(`fake_openai.py`, `drive.py`, 앱 사본)을 넣고, 다른 터미널에서 새 포트로 서버를 띄운 뒤 `drive.py`에 인자를 줍니다(14는 `play14`에서 같은 방법으로).
+
+```bash
+mkdir ../play12
+cp fake_openai.py drive.py game_design_agent_team.py ../play12/
+cd ../play12
+uv run --no-project python fake_openai.py 51912
+```
+
+```bash
+export OPENAI_BASE_URL=http://127.0.0.1:51912/v1
+uv run --no-project python -X utf8 -W ignore drive.py 12
+```
 
 ```text
 max_rounds=12 → 호출 7회. 화면 = (빈 문자열) / Story(#5) / Gameplay(#6) / Visuals(#7). 기술 본문이 빠지고 한 칸씩 밀림
@@ -756,7 +768,7 @@ curl http://localhost:8765/_stcore/health
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
-**확인.** 위의 `max_rounds=13` 결과(Step 7 출력)가 곧 이 단계의 확인입니다. 네 expander에 본문이 스토리·게임플레이·비주얼·기술 순서로 들어갔습니다. 키 없이 버튼을 누르면 Step 4의 오류 상자만 뜹니다.
+**확인.** 위 명령(`drive.py 12`, 그리고 `play14`에서 `drive.py 14`)의 기대 출력은 위의 요약 블록입니다. 12는 서버 기록이 7줄이고 expander가 `'' / #5 / #6 / #7`, 14는 9줄이고 `#6 / #7 / #8 / #9`이며 마지막 줄의 `messages`가 6입니다. 인자 없이 돌린 `max_rounds=13`(Step 7 출력)에서는 네 expander에 본문이 스토리·게임플레이·비주얼·기술 순서로 들어갔습니다. 키 없이 버튼을 누르면 Step 4의 오류 상자만 뜹니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -776,7 +788,13 @@ curl http://localhost:8765/_stcore/health
 
 ![9: 결과 반환과 표시](diagrams/extra-result.svg)
 
-9번은 `max_rounds=13`이 다 차서 `initiate_swarm_chat`이 `ChatResult`를 돌려주고, 화면이 `chat_history[-4:]`를 expander 넷으로 보여 주는 마무리입니다. 아홉 장 모두 메시지의 존재·순서와 어떤 함수가 불리는지는 가짜 서버로 직접 확인했고, 진짜 모델이 쓰는 문장은 확인하지 못했습니다. 아래 그림은 순서가 아니라 구조입니다. 에이전트 넷이 어떻게 이어지는지 보여 줍니다.
+9번은 `max_rounds=13`이 다 차서 `initiate_swarm_chat`이 `ChatResult`를 돌려주고, 화면이 `chat_history[-4:]`를 expander 넷으로 보여 주는 마무리입니다. 아홉 장 모두 메시지의 존재·순서와 어떤 함수가 불리는지는 가짜 서버로 직접 확인했고, 진짜 모델이 쓰는 문장은 확인하지 못했습니다. 아래 그림들은 순서가 아니라 구조입니다. 먼저 요약 도구 함수 넷(Step 4)의 관계입니다. 에이전트가 요약 턴에 함수를 부르고, 함수가 `st.sidebar.success`로 사이드바에 요약을 쓰고, `SwarmResult`로 다음 에이전트를 정합니다(128~150행).
+
+![요약 도구 함수와 사이드바](diagrams/extra-tools-sidebar.svg)
+
+![요약 도구 함수의 SwarmResult 이관](diagrams/extra-tools-result.svg)
+
+그리고 본문 구간의 순환입니다. `register_hand_off(AFTER_WORK(...))`가 만드는 고리이고, 요약 구간의 이관은 위 그림의 `SwarmResult`가 맡습니다(Step 7).
 
 ![이관 구조](diagrams/extra-handoff.svg)
 
@@ -804,6 +822,7 @@ curl http://localhost:8765/_stcore/health
 | expander 네 칸의 내용이 한 칸씩 밀리거나 비어 있음(직접 확인, `max_rounds` 12·14) | `chat_history[-4:]`는 본문 한 바퀴가 끝에 있어야 맞음. 대화 길이가 `9 + 4k`일 때만 맞음 | `max_rounds=13` 그대로 둠 |
 | 앱 자체 README의 "Task Agent"와 `initiate_chat()` 설명이 코드와 다름 | 코드에는 에이전트가 넷뿐이고 `initiate_swarm_chat`을 부름(소스로 확인) | 무시해도 됨 |
 | 잘못된 키나 네트워크 오류에서 Streamlit 오류 화면이 뜸 | `try/except`가 없음(소스로 확인, 실제로 실패시켜 보지는 않음) | 키를 확인. 오류를 화면에 정리하려면 직접 감싸야 함 |
+| 가짜 서버가 `PermissionError: [WinError 10013]`로 죽음 | 고른 포트가 Windows의 TCP 제외 포트 범위(Hyper-V·WSL 등이 잡음)에 걸림. 이 PC는 50000~50059, 58626~58925, 60635~60734, 61196~61395 같은 범위가 제외였음(리뷰 재현 기준) | `netsh interface ipv4 show excludedportrange protocol=tcp`로 범위를 보고 그 밖의 포트를 고름 |
 | `streamlit run`을 헤드리스로 띄우면 시작 중 외부 IP 조회 요청이 나갈 수 있음 | `--server.address`를 안 주면 Streamlit이 외부 IP를 알아내려 `checkip.amazonaws.com`에 요청(Day 060) | `--server.headless true --server.address localhost` 지정 |
 | 확인 스크립트에서 `missing ScriptRunContext!` 경고 | `AppTest`를 Streamlit 서버 밖에서 부름 | 무시해도 됨(직접 확인) |
 
@@ -815,4 +834,4 @@ curl http://localhost:8765/_stcore/health
 
 ## 다음 날 예고
 
-[Day 117 · 🧲 AI Competitor Intelligence Agent Team](../day117-ai-competitor-intelligence-agent-team/README.md) — agno 에이전트가 Firecrawl·DuckDuckGo와 Perplexity API로 경쟁사를 조사하는 Streamlit 앱입니다.
+[Day 117 · 🧲 AI Competitor Intelligence Agent Team](../day117-ai-competitor-intelligence-agent-team/README.md) — Perplexity(또는 Exa)로 경쟁사 주소를 찾고 Firecrawl `extract`로 정보를 뽑아, agno 에이전트(`gpt-4o`)가 보고서를 쓰는 Streamlit 앱입니다.

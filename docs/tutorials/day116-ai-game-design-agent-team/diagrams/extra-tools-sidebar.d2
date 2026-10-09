@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+ui: Streamlit 화면 (st.sidebar.success) { class: ours }
+story_agent: 스토리 (story_agent) { class: ours }
+update_story: update_story_overview { class: ours }
+gameplay_agent: 게임플레이 (gameplay_agent) { class: ours }
+update_gameplay: update_gameplay_overview { class: ours }
+visuals_agent: 비주얼 (visuals_agent) { class: ours }
+update_visuals: update_visuals_overview { class: ours }
+tech_agent: 기술 (tech_agent) { class: ours }
+update_tech: update_tech_overview { class: ours }
+
+story_agent -> update_story: 호출 (요약 턴)
+update_story -> ui: "Story overview: 요약"
+gameplay_agent -> update_gameplay: 호출 (요약 턴)
+update_gameplay -> ui: "Gameplay overview: 요약"
+visuals_agent -> update_visuals: 호출 (요약 턴)
+update_visuals -> ui: "Visuals overview: 요약"
+tech_agent -> update_tech: 호출 (요약 턴)
+update_tech -> ui: "Tech overview: 요약"
