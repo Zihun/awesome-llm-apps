@@ -1,10 +1,10 @@
 ...@../../_tools/theme
 direction: right
 
-professor: Professor { class: ours }
-advisor: Academic Advisor { class: ours }
-librarian: Research Librarian { class: ours }
-assistant: Teaching Assistant { class: ours }
+professor: Professor (professor_agent) { class: ours }
+advisor: Academic Advisor (academic_advisor_agent) { class: ours }
+librarian: Research Librarian (research_librarian_agent) { class: ours }
+assistant: Teaching Assistant (teaching_assistant_agent) { class: ours }
 openai: OpenAI (gpt-4o-mini, api.openai.com) { class: ext }
 
 professor -> openai: 지시문 · 주제 · 도구

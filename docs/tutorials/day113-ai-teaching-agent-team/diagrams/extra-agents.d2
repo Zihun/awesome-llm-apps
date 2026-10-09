@@ -1,13 +1,13 @@
 ...@../../_tools/theme
 direction: down
 
-ui: Streamlit 화면 { class: ours }
-professor: Professor { class: ours }
-advisor: Academic Advisor { class: ours }
-librarian: Research Librarian { class: ours }
-assistant: Teaching Assistant { class: ours }
-docs_tool: 문서 만들기 도구 { class: ours }
-serp_tool: 검색 도구 { class: ours }
+ui: Streamlit 화면 (teaching_agent_team.py) { class: ours }
+professor: Professor\n(professor_agent) { class: ours }
+advisor: Academic Advisor\n(academic_advisor_agent) { class: ours }
+librarian: Research Librarian\n(research_librarian_agent) { class: ours }
+assistant: Teaching Assistant\n(teaching_assistant_agent) { class: ours }
+docs_tool: 문서 만들기 도구 (google_docs_tool) { class: ours }
+serp_tool: 검색 도구 (SerpApiTools) { class: ours }
 
 ui -> professor: run(주제 문장)
 ui -> advisor: run(주제 문장)

@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+screen: Streamlit 화면 { class: ours }
+terminal: 터미널 (stdout) { class: file }
+
+screen -> user: "Professor 응답 제목"
+screen -> user: "Professor 응답 본문"
+screen -> terminal: "pprint_run_response(Professor)"
+screen -> user: "구분선"
+screen -> user: "Academic Advisor 응답 제목"
+screen -> user: "Academic Advisor 응답 본문"
+screen -> terminal: "pprint_run_response(Academic Advisor)"
+screen -> user: "구분선"

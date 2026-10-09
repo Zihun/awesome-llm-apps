@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+screen: Streamlit 화면 { class: ours }
+extract: 링크 뽑기 함수 (extract_google_doc_link) { class: ours }
+
+screen -> extract: "Professor 응답 본문"
+extract -> screen: "Professor 링크 조각 또는 None"
+screen -> extract: "Academic Advisor 응답 본문"
+extract -> screen: "Academic Advisor 링크 조각 또는 None"
+screen -> extract: "Research Librarian 응답 본문"
+extract -> screen: "Research Librarian 링크 조각 또는 None"
+screen -> extract: "Teaching Assistant 응답 본문"
+extract -> screen: "Teaching Assistant 링크 조각 또는 None"

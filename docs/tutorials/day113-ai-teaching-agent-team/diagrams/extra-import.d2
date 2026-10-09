@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+composio: Composio API { class: ext }
+screen: Streamlit 화면 { class: ours }
+pypi: PyPI (pypi.org) { class: ext }
+
+screen -> composio: "sentry 설정 조회 (composio import 때)"
+composio -> screen: "sentry 설정 (DSN)"
+screen -> pypi: "버전 확인 (프로세스가 끝날 때)"
+pypi -> screen: "최신 버전 정보"

@@ -1,14 +1,12 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자 { class: person }
 screen: Streamlit 화면 { class: ours }
 professor: Professor { class: ours }
 openai: OpenAI (gpt-4o-mini) { class: ext }
 composio: Composio API { class: ext }
 docs_tool: 문서 만들기 도구 { class: ours }
 
-user -> screen: "주제 입력 후 Start 클릭"
 screen -> professor: "run(주제 문장)"
 professor -> openai: "요청 (지시문 · 주제 · 도구 정의)"
 openai -> professor: "도구 호출 요청 (문서 만들기)"
