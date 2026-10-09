@@ -5,8 +5,7 @@ openai: OpenAI gpt-4.1 { class: ext }
 agency: Agency (agency-swarm) { class: ours }
 ctx: 공유 컨텍스트 { class: store }
 
-agency -> openai: 지시문 · 도구 둘 + 입력 5건
-(CEO 대화 4 + CTO 질문 1)
+agency -> openai: 지시문 · 도구 둘 + 입력 5건\n(CEO 대화 4 + CTO 질문 1)
 openai -> agency: 도구 호출\nCreateTechnicalSpecification(인자)
 agency -> ctx: project_analysis 읽기
 agency -> ctx: technical_specification 저장
