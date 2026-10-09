@@ -5,6 +5,6 @@ finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
 openai: "OpenAI API\n(gpt-5)" { class: ext }
 
 finder -> openai: "메모리 요청 (배경 스레드)\n도구: add · update · delete_memory"
-openai -> finder: "메모리 응답"
+openai -> finder: "메모리 응답\n(도착 순서는 실행마다 다름)"
 finder -> openai: "gpt-5 요청\n(developer · user · 도구 넷)"
 openai -> finder: "search_exa 호출 요청\n(모델이 정할 때만)"

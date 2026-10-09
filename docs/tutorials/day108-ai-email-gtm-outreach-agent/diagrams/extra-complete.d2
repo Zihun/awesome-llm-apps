@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "화면 (main)" { class: ours }
+run: "단계 함수\n(run_email_writer)" { class: ours }
+json: "JSON 읽기\n(extract_json_or_raise)" { class: ours }
+
+run -> json: "응답 텍스트"
+json -> run: "dict"
+run -> main: "이메일 목록"
+main -> user: "progress 100 ·\n\"Generated N emails\""
+main -> main: "st.session_state[\n\"gtm_results\"] 저장"
+main -> user: "\"Completed\" · 결과 네 구역과\n이메일 확장 상자"

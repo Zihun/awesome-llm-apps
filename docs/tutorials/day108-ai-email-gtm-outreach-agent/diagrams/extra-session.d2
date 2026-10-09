@@ -2,9 +2,11 @@
 shape: sequence_diagram
 
 main: "화면 (main)" { class: ours }
+run: "단계 함수\n(run_company_finder)" { class: ours }
 finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
 db: "SQLite\n(tmp/gtm_outreach.db)" { class: store }
 
-main -> finder: "run(\n\"Find exactly N companies\nthat are a strong B2B fit...\")"
+main -> run: "run_company_finder(\n에이전트, 설명, 제안, N)"
+run -> finder: "run(\" Find exactly N companies\nthat are a strong B2B fit...\")"
 finder -> db: "세션 읽기\n(gtm_outreach_company_finder)"
 db -> finder: "이전 실행 기록\n(처음이면 없음)"

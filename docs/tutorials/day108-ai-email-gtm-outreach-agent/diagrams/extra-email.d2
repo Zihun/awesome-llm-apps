@@ -3,11 +3,13 @@ shape: sequence_diagram
 
 user: "사용자" { class: person }
 main: "화면 (main)" { class: ours }
+run: "단계 함수\n(run_email_writer)" { class: ours }
 writer: "이메일 작성\n(EmailWriterAgent)" { class: ours }
 openai: "OpenAI API\n(gpt-5)" { class: ext }
 
-main -> writer: "run(\"Write personalized...\nContacts JSON · Research JSON\")"
+main -> user: "\"4/4 Writing personalized emails...\""
+main -> run: "run_email_writer(\n에이전트, 연락처, 조사,\n제안, 발신자, 링크)"
+run -> writer: "run(\"Write personalized...\nContacts JSON · Research JSON\")"
 writer -> openai: "gpt-5 요청\n(도구 없음)"
-openai -> writer: "{\"emails\": [{company,\ncontact, subject, body}]}"
-writer -> main: "resp.content\n→ extract_json_or_raise"
-main -> user: "progress 100 · 결과 4구역과\n이메일 확장 상자"
+openai -> writer: "{\" emails\": [{company,\ncontact, subject, body}]}"
+writer -> run: "resp.content"

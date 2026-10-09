@@ -3,11 +3,13 @@ shape: sequence_diagram
 
 user: "사용자" { class: person }
 main: "화면 (main)" { class: ours }
+run: "단계 함수\n(run_research)" { class: ours }
 research: "기업 조사\n(ResearchAgent)" { class: ours }
 openai: "OpenAI API\n(gpt-5)" { class: ext }
 
-main -> research: "run(\"For each company, gather\n2-4 insights... Companies JSON\")"
+main -> user: "\"3/4 Researching insights (website + Reddit)...\""
+main -> run: "run_research(\n에이전트, 회사 목록)"
+run -> research: "run(\"For each company, gather\n2-4 insights... Companies JSON\")"
 research -> openai: "gpt-5 요청"
-openai -> research: "{\"companies\": [{name,\ninsights}]} 텍스트"
-research -> main: "resp.content\n→ extract_json_or_raise"
-main -> user: "progress 75 ·\n\"Compiled research...\""
+openai -> research: "{\" companies\": [{name,\ninsights}]} 텍스트"
+research -> run: "resp.content"

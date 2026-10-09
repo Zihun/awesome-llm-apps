@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "화면 (main)" { class: ours }
+run: "단계 함수\n(run_company_finder)" { class: ours }
+json: "JSON 읽기\n(extract_json_or_raise)" { class: ours }
+
+run -> json: "extract_json_or_raise(\n응답 텍스트)"
+json -> run: "dict"
+run -> run: "companies[: max(1,\nmin(N, 10))]"
+run -> main: "회사 목록"
+main -> user: "progress 25 ·\n\"Found N companies\""

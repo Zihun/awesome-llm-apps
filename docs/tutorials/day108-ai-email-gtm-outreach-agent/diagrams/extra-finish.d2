@@ -1,15 +1,9 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: "사용자" { class: person }
-main: "화면 (main)" { class: ours }
 agno: "agno 통계 API" { class: ext }
 finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
 db: "SQLite\n(tmp/gtm_outreach.db)" { class: store }
 
 finder -> db: "세션·실행 저장\n(agno_sessions · agno_runs)"
 finder -> agno: "POST /telemetry/runs\n(AGNO_TELEMETRY=false면 없음)"
-finder -> main: "resp.content\n(JSON 텍스트)"
-main -> main: "extract_json_or_raise\n→ dict"
-main -> main: "companies[: max(1,\nmin(N, 10))]"
-main -> user: "progress 25 ·\n\"Found N companies\""

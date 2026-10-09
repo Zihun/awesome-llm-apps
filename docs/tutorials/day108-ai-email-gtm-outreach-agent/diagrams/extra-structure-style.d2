@@ -1,0 +1,8 @@
+...@../../_tools/theme
+direction: right
+
+writer: "이메일 작성\n(EmailWriterAgent)" { class: ours }
+styles: "이메일 스타일\n(get_email_style_instruction)" { class: ours }
+
+writer -> styles: "스타일 이름"
+styles -> writer: "지시문 한 줄"
