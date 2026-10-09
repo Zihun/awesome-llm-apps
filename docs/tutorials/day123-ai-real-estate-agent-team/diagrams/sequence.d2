@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+seq: 순서 함수 { class: ours }
+finder: 매물 찾기 { class: ours }
+firecrawl: Firecrawl API { class: ext }
+market: 시장 분석 { class: ours }
+gemini: Gemini API { class: ext }
+
+user -> ui: 키 · 도시 · 조건, 버튼
+ui -> seq: run_sequential_analysis(...)
+seq -> finder: find_properties_direct(...)
+finder -> firecrawl: extract(urls, prompt, schema)
+firecrawl -> finder: ExtractResponse (data.properties)
+finder -> seq: "{success, properties}"
+seq -> market: run(시장 분석 프롬프트)
+market -> gemini: generateContent
+gemini -> market: 분석 글
+market -> seq: RunOutput.content

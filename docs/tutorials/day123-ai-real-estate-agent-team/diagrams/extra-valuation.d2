@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+seq: 순서 함수 { class: ours }
+valuation: 매물 평가 { class: ours }
+gemini: Gemini API { class: ext }
+
+seq -> valuation: run(매물 JSON 프롬프트)
+valuation -> gemini: generateContent
+gemini -> valuation: Property N 평가 글
+valuation -> seq: RunOutput.content
+seq -> ui: dict (매물 · 분석 · 평가)
+ui -> user: 지표 셋 + 탭 셋

@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+app: "local_ai_real_estate_agent_team.py (한 파일)" {
+  class: group
+  grid-columns: 3
+  grid-gap: 8
+  ui: "Streamlit 화면\n(사이드바 · 폼 · 탭)" { class: ours }
+  finder: "매물 찾기\n(DirectFirecrawlAgent)" { class: ours }
+  market: "시장 분석\n(market_analysis_agent)" { class: ours }
+  valuation: "매물 평가\n(property_valuation_agent)" { class: ours }
+}
+
+ollama: "Ollama 서버 (이 PC)\ngpt-oss:20b (로컬)" { class: ext; height: 70 }
+firecrawl: "Firecrawl API\n(extract)" { class: ext; height: 70 }
+sites: "Zillow · Realtor.com ·\nTrulia · Homes.com" { class: ext; height: 70 }
+
+app -> ollama: "분석 · 평가 프롬프트\n(POST /api/chat)"
+ollama -> app: "분석 · 평가 글"
+app -> firecrawl: "extract 요청\n(URL · 프롬프트 · 스키마)"
+firecrawl -> app: "properties 배열"
+sites -> firecrawl: "페이지 내용"
