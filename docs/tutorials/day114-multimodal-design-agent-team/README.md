@@ -1,10 +1,10 @@
 # Day 114 · ✨ Multimodal Design Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★☆ · 예상 소요 100분(앱은 264줄이지만 Step 4·5·6에서 가짜 모델 서버와 구동 스크립트를 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 확인하지 못함(⚠ 앱이 쓰는 모델 ID `gemini-2.0-flash-exp`가 Google 공식 요금표에 없습니다. 오늘 요금표에 있는 `gemini-2.5-flash`는 유료 입력 $0.30·출력 $2.50(1M 토큰당, https://ai.google.dev/gemini-api/docs/pricing, 2026-10-09 확인)이고 무료 등급이 있습니다. 분석 유형을 셋 다 고르면 모델 요청이 3건이고 시장 조사가 검색 도구를 부를 때마다 1건씩 늘지만, 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ · 예상 소요 100분(앱은 264줄이지만 Step 4·5·6에서 가짜 모델 서버와 구동 스크립트를 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 확인하지 못함(⚠ 앱이 쓰는 모델 ID `gemini-2.0-flash-exp`가 Google 공식 요금표에 없습니다. 폐기 표가 정한 대체 모델 `gemini-3.6-flash`는 유료 입력 $0.75·출력 $3.75(1M 토큰당, 2026-12-31까지이고 2027-01-01부터 $1.50·$7.50)이며 무료 등급이 있습니다. 출처는 https://ai.google.dev/gemini-api/docs/pricing(Last updated 2026-10-07 UTC, 2026-10-09 확인)입니다. 분석 유형을 셋 다 고르면 모델 요청이 3건이고 시장 조사가 검색 도구를 부를 때마다 1건씩 늘지만, 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team`
 
 ## 오늘 만들 것
 
-디자인 화면 이미지를 올리고 분석 유형을 고른 뒤 버튼을 누르면, 에이전트 셋이 같은 이미지를 각자의 관점으로 읽고 결과 세 절을 한 화면에 써 주는 Streamlit 앱입니다. `design_agent_team.py` 한 파일(편집기 기준 264줄)에 agno의 `Agent` 셋이 있습니다. 시각 디자인, UX, 시장 조사 에이전트입니다. 앞 날들의 `Team`과 모양이 다릅니다. Day 079·Day 081·Day 110은 agno `Team`을 만들었지만, 이 앱에는 `Team`이 없습니다. 버튼 핸들러가 세 에이전트를 정해진 순서로 한 번씩 직접 부르고(Step 5), 에이전트끼리는 서로의 답을 보지 못합니다. 그래서 "팀"은 모델 하나를 공유하는 에이전트 셋을 가리킵니다. 필요한 키는 Gemini 하나입니다.
+디자인 화면 이미지를 올리고 분석 유형을 고른 뒤 버튼을 누르면, 에이전트 셋이 같은 이미지를 각자의 관점으로 읽고 결과 세 절을 한 화면에 써 주는 Streamlit 앱입니다. `design_agent_team.py` 한 파일(편집기 기준 264줄)에 agno의 `Agent` 셋이 있습니다. 시각 디자인, UX, 시장 조사 에이전트입니다. 앞 날들의 `Team`과 모양이 다릅니다. Day 079·Day 081·Day 110과 이 볼륨 첫날 Day 112는 agno `Team`을 만들었지만, 이 앱에는 `Team`이 없습니다. 버튼 핸들러가 세 에이전트를 정해진 순서로 한 번씩 직접 부르고(Step 5), 에이전트끼리는 서로의 답을 보지 못합니다. 그래서 "팀"은 모델 하나를 공유하는 에이전트 셋을 가리킵니다. 필요한 키는 Gemini 하나입니다.
 
 ⚠ 앱이 쓰는 모델 ID `gemini-2.0-flash-exp`는 Google의 모델 목록과 폐기 일정 어디에도 없습니다. 같은 계열인 `gemini-2.0-flash`는 폐기 일정에 2026년 6월 1일 종료로 올라 있고 대체 모델은 `gemini-3.6-flash`입니다(둘 다 https://ai.google.dev/gemini-api/docs/deprecations, 2026-10-09 확인). 이 문서에는 실제 모델 서버 호출이 없어 `-exp`가 지금 오류를 내는지는 확인하지 못했습니다(Step 3). 그 밖에 짚을 점이 넷 있습니다. `requirements.txt`에는 `google-genai`와 `ddgs`가 없어 설치만으로는 import가 막히고, 대신 앱이 쓰지 않는 `google-generativeai`와 `duckduckgo-search`가 들어 있습니다(Step 1). 앱은 에이전트를 화면을 다시 그릴 때마다 새로 만듭니다(Step 3). 업로드 이미지를 `temp_파일이름`으로 저장하고 지우지 않아서, 디자인과 경쟁사 이미지의 파일 이름이 같으면 뒤의 것이 앞의 것을 덮어 모델에는 같은 그림이 두 번 갑니다(Step 4). 모델 오류는 예외가 아니라 결과 칸에 JSON 그대로 나옵니다(Step 6). 이 문서는 Gemini·DuckDuckGo·agno 통계 서버 어디에도 요청을 보내지 않고, 모델 서버를 내 PC의 가짜 서버로 대신해 돌렸습니다. 그래서 아래 분석 텍스트는 전부 가짜 서버의 고정 문장이고, 진짜 Gemini가 이 프롬프트에 어떻게 답하는지는 확인하지 못했습니다. 아래는 완성된 아키텍처입니다. 임시 파일 읽기와 통계 전송은 선이 많아져 Step 4와 Step 6에서 따로 그렸습니다.
 
@@ -16,7 +16,7 @@
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python | 이 문서는 3.13.3으로 확인했다. 저장소 기준은 3.11~3.13 | 공통 사전 준비와 같음 |
-| Gemini API 키 | 화면 사이드바의 비밀번호 칸에 붙여넣는다(환경변수가 아님, `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team/design_agent_team.py:76-82`). 이 문서는 키 없이 가짜 서버로 확인한다 | https://aistudio.google.com/apikey |
+| Gemini API 키 | 화면 사이드바의 비밀번호 칸에 붙여넣는다(환경변수가 아님, `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team/design_agent_team.py:76-82`). 이 문서는 키 없이 가짜 서버로 확인한다. 앱의 모델 ID `gemini-2.0-flash-exp`는 공식 목록에 없어 키가 맞아도 실패할 수 있다(문제 해결) | https://aistudio.google.com/apikey |
 | 디자인 이미지 | JPG·JPEG·PNG만 올릴 수 있다(`advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team/design_agent_team.py:110`). 이 문서의 확인은 코드로 만든 작은 PNG를 쓴다 | 직접 준비(실제 서비스 화면은 올리기 전에 민감한 정보를 가린다) |
 | 인터넷 연결 | PyPI 설치. 앱을 실제로 쓸 때는 Gemini API(`generativelanguage.googleapis.com`), DuckDuckGo, agno 사용 통계 서버(`os-api.agno.com`)에 접속하고, 브라우저로 열면 Streamlit의 사용 통계도 나간다(Day 063이 확인했고 `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
 
@@ -85,7 +85,7 @@ ImportError: `google-genai` not installed. Please install it using `pip install 
 ImportError: `ddgs` not installed. Please install using `pip install ddgs`
 ```
 
-`uv pip install google-genai ddgs` 뒤에는 google-genai 2.29.0과 ddgs 9.16.0을 포함해 패키지가 6개 늘어 92개가 됐습니다(직접 확인, `tenacity`는 낮은 버전으로 바뀌었습니다). 이제 앱의 1~11행을 그대로 실행합니다.
+`uv pip install google-genai ddgs` 뒤에는 google-genai 2.29.0과 ddgs 9.16.0을 포함해 패키지가 6개 늘어 92개가 됐습니다(직접 확인, `tenacity`는 낮은 버전으로 바뀌었습니다). 이제 앱의 1~6행 import를 그대로 실행합니다.
 
 ```bash
 uv run --no-project python -m py_compile design_agent_team.py && echo compiled
@@ -102,7 +102,7 @@ print('google.generativeai' in sys.modules, 'duckduckgo_search' in sys.modules, 
 "
 ```
 
-직접 확인한 출력입니다. 첫 줄은 컴파일이 됐다는 뜻이고, 마지막 줄 셋은 `google.generativeai`와 `duckduckgo_search`는 불러지지 않았고 `ddgs`만 불러졌다는 뜻입니다. (Streamlit이 bare 모드 경고를 함께 출력하지만 무시해도 되어 생략했습니다.)
+직접 확인한 출력입니다. 첫 줄은 컴파일이 됐다는 뜻이고, 마지막 줄 셋은 `google.generativeai`와 `duckduckgo_search`는 불러지지 않았고 `ddgs`만 불러졌다는 뜻입니다.
 
 ```text
 compiled
@@ -187,7 +187,7 @@ print("         소제목", [h.value for h in at.header])
 uv run --no-project python check_gate.py
 ```
 
-직접 확인한 출력입니다(위젯 이름은 앱의 영어 그대로입니다).
+직접 확인한 출력입니다(위젯 이름은 앱의 영어 그대로입니다). `AppTest`를 쓰는 스크립트는 `missing ScriptRunContext! This warning can be ignored when running in bare mode.` 경고를 함께 출력하지만 무시해도 되어 이 문서의 출력에서는 생략했습니다.
 
 ```text
 키 없음: 입력칸 1 | 버튼 0 | 경고 ['Please enter your API key to proceed']
@@ -714,7 +714,7 @@ uv run --no-project python drive_app.py 58538 no-types
 uv run --no-project python drive_app.py 58538 bad-key
 ```
 
-직접 확인한 출력입니다. `no-design`은 디자인 없이 버튼을 누른 경우, `no-types`는 분석 유형을 모두 지운 경우, `bad-key`는 키를 `bad-key-1`로 둔 경우입니다. `bad-key`의 앞쪽 `ERROR` 줄은 agno가 터미널에 남기는 로그이고 화면에는 가지 않습니다.
+직접 확인한 출력입니다. `no-design`은 디자인 없이 버튼을 누른 경우, `no-types`는 분석 유형을 모두 지운 경우, `bad-key`는 키를 `bad-key`로 둔 경우입니다. `bad-key`는 앞쪽에 agno가 터미널에 남기는 `ERROR` 로그 세 줄(화면에는 가지 않습니다)과 끝에 서버 두 줄도 출력하는데, 아래에서는 뺐습니다.
 
 ```text
 소제목: []
@@ -761,7 +761,7 @@ UX 에이전트도 같은 길입니다. 프롬프트만 다릅니다.
 
 ![시장 조사 에이전트 요청](diagrams/extra-market-ask.svg)
 
-앱이 DuckDuckGo에서 결과를 받아 모델에 다시 보내면 모델이 분석 텍스트를 씁니다. 이 두 번째 요청에도 이미지가 다시 실립니다.
+앱이 DuckDuckGo에서 결과를 받으면, 두 번째 요청을 만들기 위해 임시 파일을 경로로 다시 열어 읽고 검색 결과와 함께 모델에 보냅니다. 이미지도 다시 실립니다. 그러면 모델이 분석 텍스트를 씁니다.
 
 ![시장 조사 검색](diagrams/extra-market-search.svg)
 
@@ -789,7 +789,7 @@ UX 에이전트도 같은 길입니다. 프롬프트만 다릅니다.
 |---|---|---|
 | `` ImportError: `google-genai` not installed. Please install it using `pip install google-genai` `` (직접 확인) | `requirements.txt`가 옛 SDK `google-generativeai==0.8.3`만 설치하는데 agno 3.1.2의 `Gemini`는 `google-genai`를 요구한다(Day 008·Day 009와 같은 원인) | `uv pip install google-genai` |
 | `` ImportError: `ddgs` not installed. Please install using `pip install ddgs` `` (직접 확인) | agno 3.1.2의 `DuckDuckGoTools`는 `ddgs`를 가져오는데 requirements의 `duckduckgo-search`는 다른 모듈이다(Day 103과 같은 원인) | `uv pip install ddgs` |
-| ⚠ 키가 맞는데도 결과 칸에 모델 오류가 나옴(이 문서는 실제 호출을 하지 않아 확인하지 못했다) | 앱의 모델 ID `gemini-2.0-flash-exp`(19행)가 Google의 모델 목록과 폐기 일정에 없고, 같은 계열 `gemini-2.0-flash`는 2026년 6월 1일 종료다. 이 가능성은 목록으로만 확인했다 | 19행의 `id`를 오늘 모델 목록에 있는 `gemini-2.5-flash` 등으로 바꾼다(원본은 고치지 않는다. 바꾼 모델이 이 프롬프트에서 어떻게 답하는지는 확인하지 못했다) |
+| ⚠ 키가 맞는데도 결과 칸에 모델 오류가 나옴(이 문서는 실제 호출을 하지 않아 확인하지 못했다) | 앱의 모델 ID `gemini-2.0-flash-exp`(19행)가 Google의 모델 목록과 폐기 일정에 없고, 같은 계열 `gemini-2.0-flash`는 2026년 6월 1일 종료다. 이 가능성은 목록으로만 확인했다 | 19행의 `id`를 폐기 표가 정한 대체 `gemini-3.6-flash`(새 프로젝트 권장은 3.8 Flash)로 바꾼다. 2.5 계열은 Google이 기존에 써 본 사용자로 접근을 제한했다(https://ai.google.dev/gemini-api/docs/deprecations, Last updated 2026-10-09 UTC, 같은 날 확인)(원본은 고치지 않는다. 바꾼 모델이 이 프롬프트에서 어떻게 답하는지는 확인하지 못했다) |
 | 결과 칸에 `{"error": {"code": 400, ... "API key not valid" ...}}`가 그대로 나옴 (직접 확인) | agno의 `run()`이 모델 오류를 예외로 던지지 않고 오류 상태로 돌려주어 앱의 `except`가 걸리지 않는다 | 키와 모델 ID를 확인한다. 로그에는 `Error from Gemini API: 400 INVALID_ARGUMENT`가 남는다 |
 | 경쟁사 이미지가 분석에 반영된 것 같지 않고 디자인 이미지가 경쟁사 그림으로 바뀐 듯함 (직접 확인) | 두 이미지의 파일 이름이 같으면 `temp_파일이름` 하나를 덮어써서 모델이 같은 그림을 두 번 받는다 | 올리기 전에 파일 이름을 서로 다르게 바꾼다 |
 | 분석 유형을 고르지 않고 버튼을 눌렀는데 아무것도 안 나옴 (직접 확인) | 유형이 비면 에이전트가 하나도 불리지 않고 "Analysis Results" 제목만 보인다 | 분석 유형을 하나 이상 고른다 |

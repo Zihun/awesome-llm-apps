@@ -1,11 +1,13 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
+tmp: 임시 이미지 { class: file }
 market: 시장 조사 에이전트 { class: ours }
 gemini: Gemini API { class: ext }
 ddg: DuckDuckGo 검색 { class: ext }
 
 market -> ddg: 검색어
 ddg -> market: 검색 결과
+market -> tmp: 경로를 다시 열어 바이트 읽기
 market -> gemini: 검색 결과 (이미지는 다시 실림)
 gemini -> market: 분석 텍스트
