@@ -21,12 +21,12 @@ team: "에이전트 다섯과 도구 둘 (backend/agents/)" {
   grid-columns: 4
   grid-gap: 8
   coordinator: "coordinator_agent\n(Team)" { class: ours }
-  facial_agent: "facial_expression_agent" { class: ours; height: 44 }
-  voice_agent: "voice_analysis_agent" { class: ours; height: 44 }
-  content_agent: "content_analysis_agent" { class: ours; height: 44 }
-  feedback_agent: "feedback_agent" { class: ours; height: 44 }
-  facial_tool: "facial_expression_tool" { class: ours; height: 44 }
-  voice_tool: "voice_analysis_tool" { class: ours; height: 44 }
+  facial_agent: "facial_expression_agent" { class: ours; height: 40 }
+  voice_agent: "voice_analysis_agent" { class: ours; height: 40 }
+  content_agent: "content_analysis_agent" { class: ours; height: 40 }
+  feedback_agent: "feedback_agent" { class: ours; height: 40 }
+  facial_tool: "facial_expression_tool" { class: ours; height: 40 }
+  voice_tool: "voice_analysis_tool" { class: ours; height: 40 }
 }
 
 together: "Together AI API" { class: ext; height: 60 }
@@ -40,6 +40,7 @@ front -> tmpvideo: "업로드 바이트 저장"
 front -> api: "POST /analyze {video_url: 경로}"
 api -> front: "JSON 응답 (7칸)"
 api -> team: "Analyze the following video: 경로"
+team -> api: "response.content\n(CoordinatorResponse)"
 tmpvideo -> team: "프레임 · 오디오 읽기"
 team -> together: "chat/completions 요청"
 together -> team: "응답 · 도구 호출 지시"

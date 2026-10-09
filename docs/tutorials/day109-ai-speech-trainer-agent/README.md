@@ -1,14 +1,14 @@
 # Day 109 · AI Speech Trainer Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(앱이 쓰는 Together의 `meta-llama/Llama-3.3-70B-Instruct-Turbo-Free`는 2025-11-13에 내려갔고, 버전이 없는 `requirements.txt`는 오늘 `agno` 3.1.2와 `mediapipe` 1.1.0으로 풀려 코드가 import되지 않는다) · 예상 소요 120분(앱은 일곱 파일이지만 확인 스크립트 다섯을 만들어 돌리고, 텐서플로가 든 환경을 한 번 설치하고, 가짜 서버를 띄워 끝까지 한 번 돌려 보는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 한 번에 $0.03 이하 — 유료 대체 모델 `Llama-3.3-70B-Instruct-Turbo`는 입력·출력 모두 $1.04/1M 토큰(https://www.together.ai/pricing, 2026-10-09 확인, 가격표에는 "Llama 3.3 70B"로 적혀 있음)이고, 요청 9건의 본문이 합쳐 52,625자(어림 입력 1.3만 토큰, 3초짜리 영상으로 가짜 서버가 받은 값)이며 출력 길이는 확인하지 못함. 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(앱이 쓰는 Together의 `meta-llama/Llama-3.3-70B-Instruct-Turbo-Free`는 2025-11-13에 내려갔고, 버전이 없는 `requirements.txt`는 오늘 `agno` 3.1.2와 `mediapipe` 1.1.0으로 풀려 코드가 import되지 않는다) · 예상 소요 145분(앱은 일곱 파일이지만 확인 스크립트 일곱을 만들어 돌리고, 텐서플로가 든 환경을 한 번 설치하고, 가짜 서버를 띄워 끝까지 돌려 보고 같은 백엔드로 한 번 더 분석해 세션이 섞이는 것까지 보는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 한 번에 $0.03 이하 — 유료 대체 모델 `Llama-3.3-70B-Instruct-Turbo`는 입력·출력 모두 $1.04/1M 토큰(https://www.together.ai/pricing, 2026-10-09 확인, 가격표에는 "Llama 3.3 70B"로 적혀 있음)이고, 요청 9건의 본문이 합쳐 52,625자(어림 입력 1.3만 토큰, 3초짜리 영상으로 가짜 서버가 받은 값)이며 출력 길이는 확인하지 못함. 영상이 길고 얼굴이 잡혀 `emotion_timeline`이 길어질수록, 그리고 백엔드를 다시 띄우지 않고 분석할수록 더 듭니다(같은 프로세스의 두 번째 분석은 같은 영상이어도 52,625자에서 56,488자, Step 5). 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent`
 
 ## 오늘 만들 것
 
 발표 연습을 찍은 mp4 한 개를 올리면 얼굴 표정, 목소리, 말 내용을 따로 분석해 점수와 조언을 보여 주는 발표 코치입니다. 프로세스가 둘입니다. Streamlit 화면(`frontend/`)이 영상을 임시 폴더에 저장하고 FastAPI 백엔드(`backend/`, 포트 8000)에 그 파일의 **경로**를 보냅니다. 백엔드는 agno `Team` 하나가 리더가 되어 멤버 에이전트 넷을 차례로 부립니다. 멤버 둘은 도구를 갖습니다. 얼굴 도구는 OpenCV로 프레임을 읽고 Mediapipe로 얼굴을 찾고 DeepFace로 감정을 맞히며, 음성 도구는 moviepy로 오디오를 뽑고 faster-whisper로 받아 적고 librosa로 속도·음높이·음량을 잽니다. 나머지 둘은 도구 없이 글만 쓰는 내용 분석과 채점 에이전트입니다. 다섯 모두 같은 Together 모델을 부르고, 결과는 JSON 7칸이 되어 화면으로 돌아옵니다.
 
-직접 돌려 보고 알게 된 특이점이 다섯입니다. 첫째, 이 앱은 오늘 그대로는 import조차 되지 않습니다. 버전 없는 `agno`가 3.1.2로 풀리면 `show_tool_calls`·`RunResponse`가 없고, `mediapipe`가 1.1.0이나 0.10.35로 풀리면 도구가 부르는 `mp.solutions`가 없습니다(Step 1·2). 둘째, 모델 `meta-llama/Llama-3.3-70B-Instruct-Turbo-Free`는 Together의 공식 폐기 목록에 제거일 2025-11-13으로 올라 있어 실제 호출이 성공하리라고 보장할 수 없습니다(Step 4). 셋째, 음성 도구는 처음 부를 때 Hugging Face에서 484MB짜리 Whisper 모델을, 얼굴 도구는 처음 얼굴을 만났을 때 약 6MB의 DeepFace 가중치를 받습니다. 이 문서는 어느 쪽도 받지 않으며 오프라인 변수로 막은 채 실패하는 길을 봅니다(Step 2·3). 넷째, Whisper를 못 불러도 앱은 멈추지 않고 "Model failed to load…" 문장을 전사문 삼아 말 속도를 계산하고 그 위에 LLM 분석을 쌓습니다(Step 3). 다섯째, 업로드한 영상 사본은 임시 폴더에 남고(Step 6), 오디오가 없는 영상을 음성 도구에 주면 빈 `.mp3`가 남습니다(Step 3).
+직접 돌려 보고 알게 된 특이점이 여섯입니다. 첫째, 이 앱은 오늘 그대로는 import조차 되지 않습니다. 버전 없는 `agno`가 3.1.2로 풀리면 `show_tool_calls`·`RunResponse`가 없고, `mediapipe`가 1.1.0이나 0.10.35로 풀리면 도구가 부르는 `mp.solutions`가 없습니다(Step 1·2). 둘째, 모델 `meta-llama/Llama-3.3-70B-Instruct-Turbo-Free`는 Together의 공식 폐기 목록에 제거일 2025-11-13으로 올라 있어 실제 호출이 성공하리라고 보장할 수 없습니다(Step 4). 셋째, 음성 도구는 처음 부를 때 Hugging Face에서 484MB짜리 Whisper 모델을, 얼굴 도구는 처음 얼굴을 만났을 때 약 6MB의 DeepFace 가중치를 받습니다. 이 문서는 어느 쪽도 받지 않으며 오프라인 변수로 막은 채 실패하는 길을 봅니다(Step 2·3). 넷째, Whisper를 못 불러도 앱은 멈추지 않고 "Model failed to load…" 문장을 전사문 삼아 말 속도를 계산하고 그 위에 LLM 분석을 쌓습니다(Step 3). 다섯째, 업로드한 영상 사본은 임시 폴더에 남고(Step 6), 오디오가 없는 영상을 음성 도구에 주면 빈 `.mp3`가 남습니다(Step 3). 여섯째, 리더 `Team`이 프로세스에 하나뿐이고 `main.py`가 세션 ID 없이 실행하므로, 백엔드를 다시 띄우지 않고 두 번째 영상을 분석하면 앞 영상의 멤버 응답(전사문 포함)이 다음 분석의 모든 멤버 요청에 섞여 들어갑니다(Step 5).
 
-키가 없어도 Step 1~7이 모두 됩니다. 도구는 가짜 영상으로 직접 부르고, Together는 내 PC의 가짜 서버가 대신하며, 화면은 `AppTest`로 확인합니다. 이 문서를 만들며 Together·Hugging Face·GitHub·agno의 서버에 닿은 요청은 한 건도 없습니다. 그래서 문서에 나오는 점수와 조언은 가짜 서버의 고정 문장이고 어떤 평가의 근거도 아닙니다. 얼굴이 있는 영상으로 DeepFace가 감정을 맞히는 부분, 실제 Whisper 전사, 실제 Together 응답은 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
+키가 없어도 Step 1~7이 모두 됩니다. 도구는 가짜 영상으로 직접 부르고, Together는 내 PC의 가짜 서버가 대신하며, 화면은 `AppTest`로 확인합니다. 이 문서를 만들며 앱 코드가 Together·Hugging Face·GitHub·agno로 보낸 요청은 한 건도 없습니다(값을 확인하려고 그 회사들의 문서 페이지는 읽었습니다). 그래서 문서에 나오는 점수와 조언은 가짜 서버의 고정 문장이고 어떤 평가의 근거도 아닙니다. 얼굴이 있는 영상으로 DeepFace가 감정을 맞히는 부분, 실제 Whisper 전사, 실제 Together 응답은 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -44,7 +44,7 @@ $env:PYTHONIOENCODING = "utf-8"
 | FastAPI 백엔드 (`main.py`) | `POST /analyze`가 `video_url` 문자열 하나를 받아 리더를 한 번 돌린다 | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/main.py:14-43` |
 | 리더 (`coordinator_agent`) | agno `Team`(`mode="coordinate"`)으로 멤버 넷을 부리고 JSON 7칸(`CoordinatorResponse`)을 만든다 | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/coordinator_agent.py:11-64` |
 | 멤버 넷 | 얼굴·음성(도구 있음), 내용·채점(도구 없음) | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/facial_expression_agent.py:11-41`, `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/voice_analysis_agent.py:12-36`, `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/content_analysis_agent.py:9-37`, `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/feedback_agent.py:9-52` |
-| 얼굴 도구 | 프레임을 5개마다 하나 읽어 얼굴이 있으면 DeepFace 감정과 눈 뜸 정도를 센다 | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/tools/facial_expression_tool.py:16-117` |
+| 얼굴 도구 | 프레임을 모두 읽되 5개마다 하나만 분석해, 얼굴이 있으면 DeepFace 감정과 눈 뜸 정도를 센다 | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/tools/facial_expression_tool.py:16-117` |
 | 음성 도구 | 영상에서 오디오를 뽑아 전사하고 속도·음높이 변화·음량 일관성을 잰다 | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/tools/voice_analysis_tool.py:13-135` |
 | 임시 폴더의 영상 사본 | 홈 화면이 저장하고 두 도구가 읽는다. `Upload Video`를 누를 때만 지워진다 | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/frontend/Home.py:66-81` |
 | Together AI API | 다섯 에이전트가 같은 모델 ID로 `chat/completions`를 부른다 | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/coordinator_agent.py:25` |
@@ -54,6 +54,14 @@ $env:PYTHONIOENCODING = "utf-8"
 위 그림은 에이전트 다섯과 도구 둘을 한 묶음으로 그렸습니다. 묶음 안의 호출을 하나하나 잇자 세로가 1,000px를 넘었기 때문입니다. 그 호출과 두 모델 내려받기가 누구에게서 나가는지는 아래 그림에 있습니다. 리더가 멤버에게 일을 넘기고 응답을 받으며, 얼굴·음성 에이전트만 자기 도구를 부르고, 영상 사본은 두 도구가 읽고, 모델 내려받기는 도구에서 나갑니다.
 
 ![묶음 안의 호출과 모델 내려받기](diagrams/extra-structure.svg)
+
+위 overview에서 프런트엔드 묶음에서 나가는 `업로드 바이트 저장`과 `POST /analyze`는 묶음 전체에서 그려졌지만 둘 다 `Home.py`가 합니다. 프런트엔드 안의 관계는 아래 그림에 있습니다. `Home.py`가 영상 사본을 저장하고 지우며(`Upload Video`), 백엔드에 요청하고 응답을 받고, 응답을 세션에 쓰고, `st.switch_page`로 피드백 화면을 열면, 피드백 화면이 세션을 읽습니다.
+
+![프런트엔드 안의 관계](diagrams/extra-front.svg)
+
+임시 파일은 두 종류입니다. 영상 사본은 얼굴·음성 도구가 읽고, 음성 도구는 오디오를 임시 `.mp3`로 뽑아 쓰고 읽고 (정상 경로에서만) 지웁니다.
+
+![임시 파일 둘](diagrams/extra-temp.svg)
 
 ## 단계별 진행
 
@@ -94,7 +102,7 @@ fastapi
 uvicorn
 ```
 
-명령 끝의 두 제약이 필요한 까닭은 이렇습니다. 오늘(2026-10-09) Python 3.13.3에서 이 파일만으로 풀면 151개 패키지가 깔리고 `agno` 3.1.2, `mediapipe` 1.1.0, `streamlit` 1.65.0, `tensorflow` 2.21.0, `numpy` 2.5.3이 됩니다(직접 확인). 그 환경에서 백엔드를 import하면 에이전트 파일은 `TypeError: Agent.__init__() got an unexpected keyword argument 'show_tool_calls'`로, 리더 파일과 `main.py`는 `ImportError: cannot import name 'RunResponse' from 'agno.agent'`로 멈춥니다(직접 확인). 앱이 쓰던 인자와 클래스가 agno 2.0에서 바뀌었기 때문으로 보이며, 이 문서는 1.x 마지막인 1.8.4(`agno<2`)에서 코드가 그대로 import되는 것을 확인했습니다(직접 확인). `mediapipe`는 따로 문제입니다. 1.1.0과 0.10.35에는 `solutions`가 없어서 import는 되지만 도구가 불리는 순간 `AttributeError`가 납니다(Step 2). `solutions`가 있는 0.10.21이 3.12까지의 휠이라 파이썬도 3.12로 내립니다.
+명령 끝의 두 제약이 필요한 까닭은 이렇습니다. 오늘(2026-10-09) Python 3.13.3에서 이 파일만으로 풀면 151개 패키지가 깔리고 `agno` 3.1.2, `mediapipe` 1.1.0, `streamlit` 1.65.0, `tensorflow` 2.21.0, `numpy` 2.5.3이 됩니다(직접 확인). 그 환경에서 백엔드를 import하면 도구 없는 두 멤버 파일은 `TypeError: Agent.__init__() got an unexpected keyword argument 'show_tool_calls'`로, 얼굴·음성 멤버 파일과 리더 파일과 `main.py`는 `ImportError: cannot import name 'RunResponse' from 'agno.agent'`로 멈춥니다(직접 확인). 앱이 쓰던 인자와 클래스가 agno 2.0에서 바뀌었기 때문으로 보이며, 이 문서는 1.x 마지막인 1.8.4(`agno<2`)에서 코드가 그대로 import되는 것을 확인했습니다(직접 확인). `mediapipe`는 따로 문제입니다. 1.1.0과 0.10.35에는 `solutions`가 없어서 import는 되지만 도구가 불리는 순간 `AttributeError`가 납니다(Step 2). `solutions`가 있는 0.10.21이 3.12까지의 휠이라 파이썬도 3.12로 내립니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -149,7 +157,7 @@ tensorflow                2.19.1
 def analyze_facial_expressions(video_path: str) -> dict:
 ```
 
-`stop_after_tool_call=True`는 도구가 부르면 모델에게 다시 묻지 않고 그 결과를 곧 에이전트의 응답으로 삼는다는 뜻입니다(Step 5에서 요청 수로 확인합니다). `cache_results=False`라서 `cache_dir`의 `/tmp/agno_cache`는 쓰이지 않습니다. 본문은 파일을 열어 프레임을 5개마다 하나씩 읽습니다.
+`stop_after_tool_call=True`는 도구가 부르면 모델에게 다시 묻지 않고 그 결과를 곧 에이전트의 응답으로 삼는다는 뜻입니다(Step 5에서 요청 수로 확인합니다). `cache_results=False`라서 `cache_dir`의 `/tmp/agno_cache`는 쓰이지 않습니다. 본문은 파일을 열어 프레임을 모두 읽되 5개마다 하나만 분석합니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/tools/facial_expression_tool.py:37-50`
 
@@ -287,7 +295,7 @@ uv run --no-project python check_tools.py ../media
 {"emotion_timeline": [], "engagement_metrics": {"eye_contact_frequency": 0.0, "smile_frequency": 0.0}}
 ```
 
-빈 `emotion_timeline`과 0.0은 얼굴이 없는 영상에서 나온 값입니다. 얼굴이 있는 영상으로 감정이 채워지는 모습은 가중치를 받아야 해서 확인하지 못했습니다. 파이썬 3.13 환경(`mediapipe` 0.10.35)에서 같은 도구를 부르면 agno가 오류를 잡아 `ERROR Error in tool 'analyze_facial_expressions': AttributeError("module 'mediapipe' has no attribute 'solutions'")`를 찍고 도구가 실패합니다(직접 확인).
+빈 `emotion_timeline`과 0.0은 얼굴이 없는 영상에서 나온 값입니다. 얼굴이 있는 영상으로 감정이 채워지는 모습은 가중치를 받아야 해서 확인하지 못했습니다. 파이썬 3.13 환경(`mediapipe` 0.10.35)에서 같은 도구를 직접 부르면 agno의 `@tool` 래퍼가 `ERROR Error in tool 'analyze_facial_expressions': AttributeError("module 'mediapipe' has no attribute 'solutions'")`와 트레이스백을 찍은 뒤 예외를 호출자에게 다시 던집니다(직접 확인).
 
 ### Step 3. 음성 도구 — 484MB를 받지 못하면 어떻게 이어지는가
 
@@ -354,7 +362,7 @@ def load_whisper_model():
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** Step 2의 같은 명령을 다시 보되 이번에는 나머지 줄을 봅니다. 출력은 직접 확인한 것입니다(경로와 임시 파일 이름은 매번 다릅니다).
+**확인.** Step 2의 같은 명령을 다시 보되 이번에는 나머지 줄을 봅니다. 출력은 직접 확인한 것입니다. 경로와 임시 파일 이름은 매번 다르고, moviepy의 `chunk:` 진행 줄과 트레이스백은 뺐습니다. 이 출력은 Whisper small이 Hugging Face 캐시에 아직 없을 때의 것입니다. 전에 받아 둔 캐시가 있으면 오프라인 변수를 걸어도 캐시로 로드되어 진짜 전사가 돌고 출력이 달라질 텐데, 이 PC에서는 캐시를 스크래치로 돌려 그 경우를 만들어 보지 않았습니다.
 
 ```text
 == 음성 도구, tone.mp4
@@ -373,7 +381,7 @@ ERROR    Error in tool 'analyze_voice_attributes': AttributeError("'NoneType' ob
 새로 남은 .mp3: [('tmpuol5qggu.mp3', 0)]
 ```
 
-임시 파일을 만든 직후 `extract_audio_from_video`가 `audio_clip = None`에서 죽어서 0바이트 `.mp3`가 임시 폴더에 남았습니다. 원본 영상 둘은 그대로입니다. agno는 이 예외를 잡아 위 `ERROR` 줄을 찍고 도구 호출을 실패로 처리합니다(로그에 `Could not run function`도 찍힘, 직접 확인). 그 뒤 모델에게 무엇이 전해지고 리더가 어떻게 이어 가는지는 가짜 서버로 만들어 보지 못했습니다. 이 누수를 막는 법은 더 해보기에 있습니다.
+임시 파일을 만든 직후 `extract_audio_from_video`가 `audio_clip = None`에서 죽어서 0바이트 `.mp3`가 임시 폴더에 남았습니다. 원본 영상 둘은 그대로입니다. agno의 `@tool` 래퍼는 위 `ERROR` 줄과 트레이스백을 찍고 예외를 다시 던집니다. 그래서 `check_tools.py`가 직접 부를 때는 `예외:` 줄이 나옵니다. 에이전트 실행 안에서는 `FunctionCall.execute`가 이를 잡아 `WARNING Could not run function analyze_voice_attributes(file_path=...)`를 찍고 실패로 처리합니다. Step 5의 백엔드로 `silent.mp4`를 분석시키면 그렇게 되어, 실행은 끝까지 가고 `voice_analysis_response`가 문자열 `None`이 됩니다(직접 확인, 임시 폴더에 빈 `.mp3`도 남음). 이 누수를 막는 법은 더 해보기에 있습니다.
 
 ### Step 4. 에이전트 다섯과 Together 모델
 
@@ -424,7 +432,7 @@ coordinator_agent = Team(
 )
 ```
 
-`response_model`과 `use_json_mode=True`가 리더의 마지막 답을 `CoordinatorResponse`(`advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/coordinator_agent.py:12-19`)의 일곱 칸으로 만들게 합니다. `debug_mode=True`는 모든 요청과 응답을 로그에 찍습니다. 아래 두 사실은 agno 1.8.4의 소스로 확인했습니다. 첫째, `Together`의 `base_url`은 클래스 기본값 `https://api.together.xyz/v1`이고 환경변수로 바꾸는 길이 없습니다. 둘째, `api_key`가 비어 있으면 `OPENAI_API_KEY`를 대신 씁니다. 그래서 `TOGETHER_API_KEY` 없이 `OPENAI_API_KEY`만 있는 셸에서 앱을 띄우면 OpenAI 키가 Together 주소로 나갑니다. 가짜 키로 클라이언트 설정만 만들어 보면 됩니다. 요청은 보내지 않습니다.
+`response_model`과 `use_json_mode=True`가 리더의 마지막 답을 `CoordinatorResponse`(`advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/coordinator_agent.py:12-19`)의 일곱 칸으로 만들게 합니다. `debug_mode=True`는 모든 요청과 응답을 로그에 찍습니다. 아래 두 사실은 agno 1.8.4의 소스로 확인했습니다. 첫째, `Together`의 `base_url`은 클래스 기본값 `https://api.together.xyz/v1`이고 환경변수로 바꾸는 길이 없습니다. 둘째, `api_key`가 비어 있으면 `OPENAI_API_KEY`를 대신 씁니다. 그래서 `TOGETHER_API_KEY` 없이 `OPENAI_API_KEY`만 있는 셸에서 앱을 띄우면 OpenAI 키가 Together 주소로 나갑니다. 키는 `.env`에도 둘 수 있습니다. 다섯 에이전트 모듈과 `main.py`가 모두 `load_dotenv()`를 부르고, 이 함수는 그 파일이 있는 폴더에서 **위쪽 폴더로 올라가며** `.env`를 찾습니다(직접 확인: 부모 폴더의 `.env` 값이 읽혔고, 실행한 폴더와는 무관했습니다). 저장소 위쪽에 `OPENAI_API_KEY`만 든 `.env`가 있으면 위 폴백으로 그 키가 Together 주소로 나갑니다. 원본 README가 안내하는 `.env`는 `TOGETHER_API_KEY` 한 줄이면 됩니다. 가짜 키로 클라이언트 설정만 만들어 보면 됩니다. 요청은 보내지 않습니다.
 
 ```bash
 OPENAI_API_KEY=sk-fake-not-a-key uv run --no-project python -c "from agno.models.together import Together; p = Together(id='x', api_key=None)._get_client_params(); print(p['base_url'], p['api_key'])"
@@ -506,7 +514,7 @@ async def analyze(request: AnalysisRequest):
     return JSONResponse(content=json_compatible_response)
 ```
 
-받는 것은 `video_url`이라는 이름의 **로컬 파일 경로 문자열**입니다. 이름은 URL이지만 두 도구가 `cv2.VideoCapture`와 `VideoFileClip`에 그대로 넘기므로 백엔드가 그 파일을 읽을 수 있어야 하고, 그래서 화면과 백엔드는 같은 PC에서 돌아야 합니다. 경로를 검사하는 코드는 없고(소스로 확인) CORS는 모든 출처를 허용합니다(`advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/main.py:17-23`). `async def`인데 안에서 부르는 `run()`은 동기 함수라 분석이 끝날 때까지 서버가 그 요청에 묶입니다(소스로 읽은 것이고 따로 재지는 않았습니다). 원본 안내의 `uvicorn main:app --reload`는 uvicorn의 기본 주소 127.0.0.1:8000에 열립니다(uvicorn 0.54의 `Config` 시그니처 기본값으로 직접 확인했고, 이 문서는 아래 래퍼로 같은 주소에 띄웠습니다).
+받는 것은 `video_url`이라는 이름의 **로컬 파일 경로 문자열**입니다. 이름은 URL이지만 두 도구가 `cv2.VideoCapture`와 `VideoFileClip`에 그대로 넘기므로 백엔드가 그 파일을 읽을 수 있어야 하고, 그래서 화면과 백엔드는 같은 PC에서 돌아야 합니다. 경로를 검사하는 코드는 없고(소스로 확인) CORS는 모든 출처를 허용합니다(`advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/main.py:17-23`). `async def`인데 안에서 부르는 `run()`은 동기 함수라 분석이 끝날 때까지 서버가 그 요청에 묶입니다(소스로 읽은 것이고 따로 재지는 않았습니다). 원본 안내의 `uvicorn main:app --reload`(독자가 쓸 형태는 아래)는 uvicorn의 기본 주소 127.0.0.1:8000에 열립니다(uvicorn 0.54의 `Config` 시그니처 기본값으로 직접 확인했고, 이 문서는 아래 래퍼로 같은 주소에 띄웠습니다).
 
 가짜 서버는 OpenAI 호환 `chat/completions` 요청에 정해진 답을 합니다. 리더가 도구 `transfer_task_to_member`를 가진 요청이면 멤버 넷에게 차례로 넘기게 하고, 넷의 결과가 쌓이면 그것을 JSON 7칸으로 묶어 돌려줍니다. 도구를 가진 멤버에게는 먼저 그 도구를 부르라고 하는데, 영상 경로는 리더가 받은 첫 질문(`Analyze the following video: …`)에서 읽어 둡니다. 그러면 얼굴·음성 도구가 **진짜로** 돌고, 오디오가 하는 일은 Step 3에서 본 그대로입니다.
 
@@ -571,6 +579,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+ThreadingHTTPServer.allow_reuse_address = False   # 다른 프로세스가 쓰는 포트를 겹쳐 잡지 않게 한다
 ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
 ```
 
@@ -594,6 +603,18 @@ uvicorn.run(main.app, host="127.0.0.1", port=8000)
 ```
 
 8000 포트를 다른 프로세스가 쓰고 있지 않은지 먼저 봅니다. 아래 `netstat` 줄이 아무것도 안 내면 비어 있는 것입니다. 포트 58231은 예시이니 겹치면 다른 높은 번호를 쓰세요.
+
+원본 그대로 띄우려면 `backend/`에서 이렇게 합니다. 이 명령은 키를 걸어 띄운 뒤 `GET /`가 같은 환영 문장을 돌려주는 것까지만 확인했고(모델은 부르지 않았습니다), `--reload`는 쓰지 않았습니다.
+
+```bash
+uv run --no-project uvicorn main:app
+```
+
+```powershell
+uv run --no-project uvicorn main:app
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다.) 아래는 가짜 서버를 쓰는 길입니다.
 
 ```bash
 netstat -ano | grep -E ":(8000|58231) "
@@ -639,21 +660,54 @@ weaknesses => ['Few pauses']
 suggestions => ['Slow down a little']
 ```
 
-앞 둘은 진짜 도구가 만든 값이고 뒤 다섯은 가짜 서버의 고정 문장입니다. 가짜 서버가 받은 요청은 `fake.log`에 쌓입니다. 한 번의 `POST`에 요청이 **아홉 건**이었고(직접 확인) 순서와 도구 목록은 이렇습니다.
+앞 둘은 진짜 도구가 만든 값이고 뒤 다섯은 가짜 서버의 고정 문장입니다. 가짜 서버가 받은 요청은 `fake.log`에 쌓입니다. 이 로그를 요청마다 한 줄로 줄이는 스크립트를 `backend/`에 둡니다.
 
-```text
-1 리더       ['set_shared_context', 'transfer_task_to_member']  response_format=json_object
-2 얼굴 멤버  ['analyze_facial_expressions']
-3 리더       ['set_shared_context', 'transfer_task_to_member']
-4 음성 멤버  ['analyze_voice_attributes']
-5 리더
-6 내용 멤버  []
-7 리더
-8 채점 멤버  []
-9 리더
+```python
+# fake.log를 요청마다 한 줄로 요약한다. 사용: python summarize_log.py fake.log
+import json
+import sys
+
+for i, line in enumerate(open(sys.argv[1], encoding="utf-8"), 1):
+    body = json.loads(line)["body"]
+    tools = [t["function"]["name"] for t in body.get("tools") or []]
+    who = "리더" if "transfer_task_to_member" in tools else "멤버"
+    members = json.dumps(body["messages"], ensure_ascii=False).count("Member: ")
+    fmt = "response_format" if body.get("response_format") else "-"
+    print(i, who, tools, fmt, "| 앞 멤버 응답 항목:", members, "| 본문", len(json.dumps(body, ensure_ascii=False)), "자")
 ```
 
-도구를 가진 얼굴·음성 멤버는 요청이 한 건씩뿐입니다. `stop_after_tool_call=True` 때문에 도구 결과가 곧 응답이 되어 모델에게 다시 묻지 않기 때문입니다. 요청 하나하나의 `model`은 모두 `meta-llama/Llama-3.3-70B-Instruct-Turbo-Free`였습니다. 확인을 마치면 두 프로세스를 `Ctrl+C`로 끝내고 포트가 비었는지 다시 봅니다.
+```bash
+uv run --no-project python summarize_log.py fake.log
+```
+
+한 번의 `POST`에 요청이 **아홉 건**이었습니다(직접 확인). 리더 다섯은 모두 도구가 `set_shared_context`·`transfer_task_to_member`이고 `response_format`이 `json_object`입니다. 줄이 길어 도구 목록은 `[...]`로 줄였습니다.
+
+```text
+1 리더 [...] response_format | 앞 멤버 응답 항목: 0 | 본문 7787 자
+2 멤버 ['analyze_facial_expressions'] - | 앞 멤버 응답 항목: 0 | 본문 2005 자
+3 리더 [...] response_format | 앞 멤버 응답 항목: 0 | 본문 8223 자
+4 멤버 ['analyze_voice_attributes'] - | 앞 멤버 응답 항목: 1 | 본문 1763 자
+5 리더 [...] response_format | 앞 멤버 응답 항목: 0 | 본문 8736 자
+6 멤버 [] - | 앞 멤버 응답 항목: 2 | 본문 1750 자
+7 리더 [...] response_format | 앞 멤버 응답 항목: 0 | 본문 9171 자
+8 멤버 [] - | 앞 멤버 응답 항목: 3 | 본문 3390 자
+9 리더 [...] response_format | 앞 멤버 응답 항목: 0 | 본문 9800 자
+```
+
+도구를 가진 얼굴·음성 멤버는 요청이 한 건씩뿐입니다. `stop_after_tool_call=True` 때문에 도구 결과가 곧 응답이 되어 모델에게 다시 묻지 않기 때문입니다. 요청 하나하나의 `model`은 모두 `meta-llama/Llama-3.3-70B-Instruct-Turbo-Free`였습니다.
+
+**앞 멤버의 응답은 agno가 붙입니다.** 가짜 서버는 리더의 `task_description`을 `task 0`~`task 3`으로만 줬는데도 멤버 요청의 `앞 멤버 응답 항목`이 0, 1, 2, 3으로 늘었습니다. 리더가 넘겨 주는 것이 아니라 `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/coordinator_agent.py:57`의 `share_member_interactions=True` 때문에 agno가 앞 멤버들의 응답을 다음 멤버의 user 메시지에 `Member:` 항목으로 붙입니다(agno 1.8.4의 `agno/team/team.py`를 소스로 읽었고 위 요청 4·6·8이 직접 확인). 그래서 채점 멤버는 앞 셋의 결과를 봅니다.
+
+**같은 백엔드로 한 번 더 분석하면 앞 영상의 결과가 섞입니다.** 위 `POST`를 백엔드를 끄지 않고 한 번 더 보낸 뒤 같은 스크립트를 돌렸습니다(직접 확인). 둘째 분석의 멤버 요청 줄입니다.
+
+```text
+11 멤버 ['analyze_facial_expressions'] - | 앞 멤버 응답 항목: 4 | 본문 3009 자
+13 멤버 ['analyze_voice_attributes'] - | 앞 멤버 응답 항목: 5 | 본문 2716 자
+15 멤버 [] - | 앞 멤버 응답 항목: 6 | 본문 2703 자
+17 멤버 [] - | 앞 멤버 응답 항목: 7 | 본문 4343 자
+```
+
+둘째 분석의 첫 멤버(얼굴)가 벌써 앞 분석의 응답 넷을 받았습니다(본문 2005자에서 3009자). `coordinator_agent`가 모듈에 하나뿐이고(`advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/coordinator_agent.py:22`) `main.py`가 `session_id` 없이 `run`을 부르기 때문에(`advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/main.py:39`) agno가 처음 만든 세션을 계속 쓰기 때문입니다(소스로 확인: agno 1.8.4 `Team`의 세션 초기화). 전사문이 뒤 영상의 분석에 들어가고, 요청이 분석마다 커지며(첫 분석 아홉 건 합 52,625자, 둘째 56,488자), 여러 사람이 한 백엔드를 쓰면 남의 전사문이 보입니다. 처방은 더 해보기에 있습니다. 확인을 마치면 두 프로세스를 `Ctrl+C`로 끝내고 포트가 비었는지 다시 봅니다.
 
 ### Step 6. Streamlit 홈 화면 — 업로드와 분석 요청
 
@@ -858,31 +912,39 @@ else:
 
 ## 요청 한 건이 흐르는 과정
 
-영상 한 개의 분석을 여섯 장으로 나눠 따라갑니다. 첫 장은 업로드에서 리더가 얼굴 멤버에게 일을 넘기기까지입니다.
+영상 한 개의 분석을 여덟 장으로 나눠 따라갑니다. 메시지는 모두 정확히 한 그림에, 코드의 순서대로 있습니다. 첫 장은 업로드에서 리더가 얼굴 멤버에게 일을 넘기기까지입니다.
 
 ![1단계: 업로드에서 얼굴 멤버로](diagrams/sequence.svg)
 
-홈 화면이 업로드 바이트를 임시 폴더에 저장하고, 그 경로를 `POST /analyze`로 보냅니다. 백엔드는 `Analyze the following video: 경로`라는 문장 하나로 리더를 돌립니다. 리더는 Together에 묻고(도구는 `transfer_task_to_member` 등), 첫 멤버로 얼굴 에이전트를 지목하는 도구 호출을 받아 일을 넘깁니다. 리더는 멤버 하나를 지목할 때마다 Together에 한 번 묻고 마지막에 한 번 더 물어 모두 다섯 건입니다. 아래 그림들은 이 리더의 턴을 다시 그리지 않고 멤버 쪽만 그립니다. 둘째 장은 얼굴 멤버입니다.
+사용자가 mp4를 고르면 홈 화면이 임시 폴더에 저장하고, 사용자가 `Analyze Video`를 누르면 그 경로를 `POST /analyze`로 보냅니다. 백엔드는 `Analyze the following video: 경로`라는 문장 하나로 리더를 돌립니다. 리더는 Together에 묻고(도구는 `set_shared_context`·`transfer_task_to_member`), 첫 멤버로 얼굴 에이전트를 지목하는 도구 호출을 받아 일을 넘깁니다. 리더는 멤버를 지목할 때마다 Together에 한 번 묻고 마지막에 한 번 더 물어 모두 다섯 건입니다. 둘째 장은 얼굴 멤버입니다.
 
 ![2단계: 얼굴 분석](diagrams/extra-facial.svg)
 
-얼굴 에이전트가 Together에 물으면 `analyze_facial_expressions`를 부르라는 답이 오고, 도구는 임시 폴더의 파일을 프레임 단위로 읽어 JSON 문자열을 돌려줍니다. 그 결과가 곧 응답이라 얼굴 멤버는 요청이 한 건뿐입니다. 셋째 장은 음성 멤버입니다.
+얼굴 에이전트가 Together에 물으면 `analyze_facial_expressions`를 부르라는 답이 오고, 도구는 임시 폴더의 파일을 프레임 단위로 읽습니다. 얼굴이 잡힌 프레임마다 `DeepFace.analyze`가 불리고 처음 부를 때 GitHub에서 가중치를 받습니다(이 문서의 얼굴 없는 영상에서는 불리지 않았습니다). 도구 결과가 곧 응답이라 얼굴 멤버는 요청이 한 건뿐입니다(그 응답이 리더로 돌아가는 메시지는 다음 그림의 첫 메시지입니다). 셋째 장은 얼굴 멤버의 응답으로 시작해, 리더가 음성 멤버를 지목하고 도구 호출을 시키는 데까지입니다.
 
-![3단계: 음성 분석](diagrams/extra-voice.svg)
+![3단계: 음성 멤버로 넘기기](diagrams/extra-voice.svg)
 
-음성 멤버의 첫 두 메시지는 얼굴 멤버와 모양이 같고 도구 이름만 다릅니다. 도구는 오디오를 임시 `.mp3`로 뽑고, Whisper 모델을 부르는데 캐시에 없으면 Hugging Face에서 받으려 하며(이 문서는 오프라인으로 막아 실패했습니다), 오디오를 `librosa`로 읽고, 임시 파일을 지우고 JSON을 돌려줍니다. 넷째 장은 도구가 없는 두 멤버입니다.
+리더의 두 번째 Together 요청이 음성 멤버를 지목하고, 리더는 `task`를 음성 에이전트에게 넘기며 agno가 앞 멤버 응답(`share_member_interactions`)을 붙입니다. 음성 에이전트가 Together에 물으면 `analyze_voice_attributes`를 부르라는 답이 와서 도구를 부릅니다. 넷째 장은 그 도구 안입니다.
 
-![4단계: 내용 분석과 채점](diagrams/extra-content.svg)
+![4단계: 음성 도구](diagrams/extra-voice-tool.svg)
 
-이 둘은 일을 받아 Together에 한 번 묻고 그 글을 그대로 응답으로 돌려줍니다. 리더가 그 글을 다음 멤버에게 넘겨 줘야 채점이 앞 결과를 보는데, 이 문서의 가짜 서버는 그것을 흉내 내지 않았으므로 실제 모델이 앞 결과를 제대로 넘기는지는 확인하지 못했습니다. 다섯째 장은 마무리입니다.
+도구는 오디오를 임시 `.mp3`로 뽑고, Whisper 모델을 부르는데 캐시에 없으면 Hugging Face에서 받으려 하며(이 문서는 오프라인으로 막아 실패했습니다), 오디오를 `librosa`로 읽고, 임시 파일을 지우고 JSON을 돌려줍니다. 그 결과가 곧 응답입니다. 다섯째 장은 내용 멤버입니다.
 
-![5단계: 최종 JSON과 화면 저장](diagrams/extra-final.svg)
+![5단계: 내용 분석](diagrams/extra-content.svg)
+
+리더의 세 번째 요청이 내용 멤버를 지목하고, 멤버는 일과 앞 멤버 응답을 받아 Together에 한 번 묻고 그 글을 그대로 응답으로 돌려줍니다. 여섯째 장은 채점 멤버입니다.
+
+![6단계: 채점](diagrams/extra-feedback.svg)
+
+같은 모양으로, 채점 멤버가 앞 셋의 응답을 `Member:` 항목으로 받아 한 번 묻고 글을 돌려줍니다(가짜 서버의 요청 8이 그 항목 셋을 받은 것을 봤고 실제 모델이 그것으로 채점하는지는 확인하지 못했습니다). 일곱째 장은 마무리입니다.
+
+![7단계: 최종 JSON과 화면 저장](diagrams/extra-final.svg)
 
 리더가 마지막으로 Together에 물어 멤버 넷의 결과를 7칸 JSON으로 묶습니다(리더의 요청은 모두 `response_format`이 `json_object`입니다, 직접 확인). 백엔드는 `response.content`를 JSON으로 바꿔 200으로 돌려줍니다. 홈 화면은 응답과 네 문자열을 세션에 담고 `st.rerun` 뒤 전사문을 보여 줍니다. 마지막 장은 피드백 화면입니다.
 
-![6단계: 피드백 화면](diagrams/extra-screen.svg)
+![8단계: 피드백 화면](diagrams/extra-screen.svg)
 
-사용자가 `Get Feedback`을 누르면 `st.switch_page`로 피드백 화면이 열리고, 화면은 세션의 값을 읽어 막대·총점·레이더 차트와 세 상자를 그려 돌려줍니다. 이 여섯 장 가운데 도구 호출과 임시 파일 처리는 도구를 진짜로 돌려 본 것이고, Together의 응답과 마지막 두 장의 화면 내용은 가짜 서버와 `AppTest`로 본 것입니다.
+사용자가 `Get Feedback`을 누르면 `st.switch_page`로 피드백 화면이 열리고, 화면은 세션의 값을 읽어 막대·총점·레이더 차트와 세 상자를 그려 돌려줍니다. 이 여덟 장 가운데 도구 호출과 임시 파일 처리는 도구를 진짜로 돌려 본 것이고, Together의 응답과 마지막 두 장의 화면 내용은 가짜 서버와 `AppTest`로 본 것입니다.
 
 ## 실행 체크리스트
 
@@ -893,7 +955,8 @@ else:
 - [ ] 오디오 없는 `silent.mp4`가 빈 `.mp3`를 남기는 것을 봤다
 - [ ] 에이전트 다섯의 모델 ID와 도구, 리더의 `coordinate`·`CoordinatorResponse`를 확인했다
 - [ ] Together의 폐기 표에서 `-Free` 모델의 제거일 2025-11-13을 읽었다
-- [ ] 가짜 서버로 `POST /analyze`를 끝까지 돌려 요청 9건과 JSON 7칸을 봤다
+- [ ] 가짜 서버로 `POST /analyze`를 끝까지 돌려 요청 9건과 JSON 7칸을 봤고, 멤버 요청의 앞 멤버 응답 항목이 0·1·2·3으로 느는 것을 봤다
+- [ ] 같은 백엔드로 한 번 더 분석하자 항목이 4~7로 이어져 앞 영상의 응답이 섞이는 것을 봤다
 - [ ] `check_home.py`로 업로드·분석·`Upload Video`가 임시 사본을 만들고 지우는 것을 봤다
 - [ ] 피드백 화면이 총점 19, 평균 3.80을 그리고, 홈보다 먼저 열면 `AttributeError`가 나는 것을 봤다
 - [ ] 띄운 서버를 모두 끝내고 8000·58231·58233 포트가 비었으며, 앱 폴더에 둔 확인용 파일을 지웠다
@@ -902,24 +965,26 @@ else:
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 에이전트 파일 import에서 `TypeError: Agent.__init__() got an unexpected keyword argument 'show_tool_calls'` | 버전 없는 `agno`가 3.x로 풀렸고 이 인자가 없다(직접 확인: 3.13 환경의 agno 3.1.2) | `uv pip install "agno<2"` (직접 확인: 1.8.4에서 import됨) |
-| `main.py`나 리더 import에서 `ImportError: cannot import name 'RunResponse' from 'agno.agent'` | 같은 원인. 3.x에는 이 이름이 없다(직접 확인) | 같음 |
+| 도구 없는 두 멤버 파일(`content_analysis_agent`·`feedback_agent`) import에서 `TypeError: Agent.__init__() got an unexpected keyword argument 'show_tool_calls'` | 버전 없는 `agno`가 3.x로 풀렸고 이 인자가 없다(직접 확인: 3.13 환경의 agno 3.1.2) | `uv pip install "agno<2"` (직접 확인: 1.8.4에서 import됨) |
+| 얼굴·음성 멤버 파일, 리더 파일, `main.py` import에서 `ImportError: cannot import name 'RunResponse' from 'agno.agent'` | 같은 원인. 3.x에는 이 이름이 없고 이 파일들이 첫 줄에서 가져온다(직접 확인) | 같음 |
 | 도구 로그에 `AttributeError: module 'mediapipe' has no attribute 'solutions'` | `mediapipe` 1.1.0·0.10.35에는 `solutions`가 없다(직접 확인: 3.13 환경). 코드는 `mp.solutions.face_mesh`를 부른다(`advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/tools/facial_expression_tool.py:37`) | Python 3.12에서 `mediapipe==0.10.21`(직접 확인: `solutions`가 있고 `FaceMesh`가 만들어짐) |
 | `mediapipe==0.10.21`을 3.13에서 설치하려 하자 `with the following Python ABI tags: cp39, cp310, cp311, cp312` | 그 버전의 휠이 3.12까지다(직접 확인) | 파이썬을 3.12로 |
 | 도구가 `Model failed to load. Please check system resources or model path.`를 전사문으로 돌려줌 | Whisper 모델을 받지 못했다. 오프라인이거나 받는 중 실패했고, 앱은 이 문장을 전사문으로 쓴다(직접 확인) | 네트워크를 열고 `HF_HUB_OFFLINE`을 걸지 않은 채 처음 한 번 484MB를 받는다. 이 문서는 받지 않았다 |
 | `ERROR OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.` | `TOGETHER_API_KEY`가 비어 agno가 `OPENAI_API_KEY`로 폴백했다(소스로 확인, 가짜 키로 직접 확인) | `TOGETHER_API_KEY`를 건다. `OPENAI_API_KEY`가 있으면 그 키가 Together 주소로 나간다 |
-| 오디오 없는 mp4에서 `AttributeError: 'NoneType' object has no attribute 'write_audiofile'`, 임시 폴더에 0바이트 `.mp3` | 임시 파일을 먼저 만들고 추출이 죽어 `os.remove`에 닿지 못한다(직접 확인) | 더 해보기 |
+| 오디오 없는 mp4에서 `AttributeError: 'NoneType' object has no attribute 'write_audiofile'`, 임시 폴더에 0바이트 `.mp3` | 임시 파일을 먼저 만들고 추출이 죽어 `os.remove`에 닿지 못한다(직접 확인). 에이전트 실행 안에서는 `WARNING Could not run function analyze_voice_attributes(file_path=...)`가 찍히고 그 멤버의 응답이 `None`이 된다(직접 확인) | 더 해보기 |
+| 같은 백엔드로 두 번째 영상을 분석하자 요청이 커지고 멤버 요청에 앞 분석의 `Member:` 항목이 들어 있음 | 리더 `Team`이 모듈에 하나뿐이고 `main.py`가 `session_id` 없이 `run`을 불러 한 세션이 계속 쓰인다(직접 확인: 항목 0~3 다음 4~7) | 분석마다 새 `session_id`(더 해보기, 직접 확인) 또는 백엔드를 다시 띄운다 |
 | 화면이 `FileNotFoundError: [Errno 2] No such file or directory: 'style.css'` | `frontend/`가 아닌 곳에서 돌렸다(직접 확인) | `frontend/`에서 `streamlit run Home.py` |
 | 피드백 화면을 먼저 열자 `st.session_state has no attribute "feedback_response"` | 키가 홈 화면에서만 만들어진다(직접 확인) | 홈을 먼저 연다. 더 해보기 |
 | 홈 화면이 `JSONDecodeError: Expecting value: line 1 column 1 (char 0)`로 죽음 | `voice_analysis_response`가 JSON이 아니다(직접 확인: 앞에 말이 붙은 문자열) | 모델 출력 형식을 확인한다. 앱 쪽 방어는 없다 |
 | 처음 임포트할 때 `oneDNN custom operations are on` 안내와 DeepFace `DEPRECATION WARNING` 상자 | 텐서플로·DeepFace가 찍는 안내다(직접 확인, 동작에는 영향이 없었다) | 무시한다 |
 | 피드백 화면에 `use_container_width` 경고 | `st.plotly_chart(..., use_container_width=True)`가 폐기 예정이다(직접 확인: streamlit 1.60.0) | 그려지는 데는 지장이 없다. `width='stretch'`로 바꿀 수 있다 |
-| 분석이 아무 오류 없이 실패하거나 모델 관련 오류 | 앱의 `-Free` 모델이 2025-11-13에 제거됨(공식 폐기 표). 실제 오류 문장은 확인하지 못함 | 모델 ID를 `meta-llama/Llama-3.3-70B-Instruct-Turbo`로 바꾼다 |
+| 백엔드 로그에 `ERROR API status error from OpenAI API: Error code: 404 - …`와 `WARNING Attempt 1/4 failed: …`가 이어지고 `POST /analyze`가 `500 Internal Server Error`, 화면에 `🚨 Error during video analysis. Please try again.` | 모델 주소가 404를 돌려주면 agno가 재시도한 끝에 예외로 끝나고 백엔드가 500을 낸다(직접 확인: 404를 돌려주는 localhost 가짜 서버와 `curl`. 화면 문구는 `Home.py:117-118`을 소스로 확인). 앱의 `-Free` 모델이 2025-11-13에 제거됐으므로 실제 Together도 이런 오류를 낼 수 있으나 실제 오류 본문은 확인하지 못함 | 모델 ID를 `meta-llama/Llama-3.3-70B-Instruct-Turbo`로 바꾼다 |
 
 ## 더 해보기
 
 - 모델을 유료 모델로 바꿔 보세요. 복사본에서 다섯 파일(`advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/coordinator_agent.py:25`, `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/facial_expression_agent.py:13`, `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/voice_analysis_agent.py:14`, `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/content_analysis_agent.py:12`, `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/feedback_agent.py:12`)의 ID에서 `-Free`를 지우고 `TOGETHER_API_KEY`를 걸어 실제 키로 한 번 돌립니다. 문서의 가격 어림($0.03 이하)이 맞는지 Together의 사용량 화면과 견주세요. 이 문서는 키가 없어 하지 못했습니다.
 - 음성 도구가 임시 `.mp3`를 흘리지 않게 해 보세요. 복사본에서 `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/agents/tools/voice_analysis_tool.py:99-100`의 두 줄을 "`with`로 이름만 받아 두고 닫은 뒤 `try`에서 추출하고, `except`에서 `os.remove` 후 `raise`"로 바꾸면, `silent.mp4`를 부른 뒤 임시 폴더에 새 `.mp3`가 생기지 않았습니다(복사본에서 직접 확인. 열린 채로는 Windows가 지우지 못해 `with` 밖에서 지웁니다).
+- 분석마다 새 세션을 쓰게 해 보세요. 복사본의 `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/backend/main.py:39`를 `coordinator_agent.run(prompt, session_id=str(uuid.uuid4()))`로 바꾸고 `import uuid`를 더하면, 같은 백엔드로 두 번 분석해도 멤버 요청의 앞 멤버 응답 항목이 두 번 다 0, 1, 2, 3이었습니다(복사본으로 `summarize_log.py`까지 직접 확인).
 - 피드백 화면이 홈보다 먼저 열려도 죽지 않게 해 보세요. 복사본의 `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/frontend/pages/1 - Feedback.py:9`와 `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/frontend/pages/1 - Feedback.py:43`의 `st.session_state.feedback_response`·`.response`를 `st.session_state.get(...)`로 바꾸면 첫 화면에서 예외 없이 `No feedback available!` 경고가 떴습니다(복사본에서 `AppTest`로 직접 확인).
 
 ## 다음 날 예고

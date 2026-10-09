@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+tmpvideo: "임시 폴더의 영상 사본\n({난수}_{이름}.mp4)" { class: file; height: 70 }
+facial_tool: "facial_expression_tool" { class: ours; height: 44 }
+voice_tool: "voice_analysis_tool" { class: ours; height: 44 }
+tmpmp3: "임시 .mp3\n(추출한 오디오)" { class: file; height: 70 }
+
+tmpvideo -> facial_tool: "프레임 읽기"
+tmpvideo -> voice_tool: "오디오 추출용으로 읽기"
+voice_tool -> tmpmp3: "추출해 쓰기"
+tmpmp3 -> voice_tool: "librosa.load로 읽기"
+voice_tool -> tmpmp3: "os.remove\n(끝까지 간 경로만)"

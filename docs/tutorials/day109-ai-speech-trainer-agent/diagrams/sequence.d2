@@ -11,8 +11,9 @@ tmp: 임시 폴더 { class: file }
 
 user -> home: mp4 선택
 home -> tmp: "{난수}_{이름}.mp4\n저장"
+user -> home: "Analyze Video 클릭"
 home -> api: "POST /analyze\n{video_url: 경로}"
 api -> coord: "run(Analyze the\nfollowing video: 경로)"
-coord -> together: "chat/completions\n(도구: transfer_task_to_member)"
+coord -> together: "chat/completions\n(도구: set_shared_context · transfer_task_to_member)"
 together -> coord: "tool_call:\ntransfer_task_to_member"
-coord -> facial_agent: 작업 전달
+coord -> facial_agent: "작업 전달\n(task)"

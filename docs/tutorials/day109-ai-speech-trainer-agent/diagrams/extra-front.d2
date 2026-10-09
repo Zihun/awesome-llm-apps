@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+home: "Home.py\n(업로드 · 분석 요청)" { class: ours }
+feedback: "pages/1 - Feedback.py\n(점수 · 차트)" { class: ours }
+session: "st.session_state\n(response 등)" { class: store; height: 80 }
+tmpvideo: "임시 폴더의 영상 사본\n({난수}_{이름}.mp4)" { class: file; height: 70 }
+api: "FastAPI 백엔드\n(포트 8000)" { class: ours; height: 56; width: 480 }
+
+home -> tmpvideo: "업로드 바이트 저장"
+home -> tmpvideo: "Upload Video: os.remove"
+home -> api: "POST /analyze\n{video_url: 경로}"
+api -> home: "JSON 응답\n(7칸)"
+home -> session: "response · 네 응답 문자열 저장"
+session -> feedback: "feedback_response ·\nresponse 읽기"
+home -> feedback: "st.switch_page"

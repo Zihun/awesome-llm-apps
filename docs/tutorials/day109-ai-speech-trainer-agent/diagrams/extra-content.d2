@@ -2,15 +2,12 @@
 shape: sequence_diagram
 
 coord: coordinator_agent { class: ours }
-content_agent: content_analysis_agent { class: ours }
 together: Together AI { class: ext }
-feedback_agent: feedback_agent { class: ours }
+content_agent: content_analysis_agent { class: ours }
 
-coord -> content_agent: 작업 전달
+coord -> together: "chat/completions\n(도구: set_shared_context · transfer_task_to_member)"
+together -> coord: "tool_call:\ntransfer_task_to_member"
+coord -> content_agent: "작업 전달\n(task + 앞 멤버 응답)"
 content_agent -> together: "chat/completions\n(도구 없음)"
 together -> content_agent: "JSON 텍스트\n(grammar_corrections 등)"
-content_agent -> coord: 응답
-coord -> feedback_agent: 작업 전달
-feedback_agent -> together: "chat/completions\n(도구 없음)"
-together -> feedback_agent: "JSON 텍스트\n(scores · total_score 등)"
-feedback_agent -> coord: 응답
+content_agent -> coord: "응답 (그 글 그대로)"
