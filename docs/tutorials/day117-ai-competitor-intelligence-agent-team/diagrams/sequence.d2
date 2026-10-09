@@ -5,15 +5,10 @@ user: 사용자 { class: person }
 ui: Streamlit 화면 { class: ours }
 finder: 주소 찾기 { class: ours }
 perplexity: Perplexity API { class: ext }
-extractor: 정보 추출 { class: ours }
-firecrawl: Firecrawl API { class: ext }
 
 user -> ui: 키 · URL · 설명 입력, 버튼 클릭
 ui -> finder: "get_competitor_urls(url, description)"
 finder -> perplexity: "POST /chat/completions\n(sonar-pro, 메시지 2개)"
 perplexity -> finder: 줄바꿈으로 이어진 주소 문자열
 finder -> ui: 주소 리스트 (줄마다 하나)
-ui -> extractor: "extract_competitor_info\n(주소) · 주소마다 한 번"
-extractor -> firecrawl: "extract([주소/*], prompt, schema)"
-firecrawl -> extractor: "추출 결과 (success · data)"
-extractor -> ui: "6칸 딕셔너리 또는 None"
+ui -> user: "Found N competitor URLs"

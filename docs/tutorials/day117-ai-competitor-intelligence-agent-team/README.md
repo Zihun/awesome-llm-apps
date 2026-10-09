@@ -1,6 +1,6 @@
 # Day 117 · 🧲 AI Competitor Intelligence Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★☆ · 예상 소요 120분(앱은 343줄이지만 설치부터 막히는 곳이 셋이고, Step 4에서 가짜 서버와 구동 스크립트를 직접 저장해 터미널 둘로 시나리오를 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 확인하지 못함(⚠ 이 문서는 어떤 서비스도 실제로 부르지 않았고 이 앱은 오늘 그대로는 화면이 뜨기 전에 죽습니다. 추정만 적습니다. 질문 1건에 OpenAI `gpt-4o`는 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)이고 경쟁사 셋의 JSON과 지시문이 입력 1,500토큰 안팎, 보고서가 `max_tokens` 제한 없는 여섯 항목 답이라 출력 1,000~1,500토큰으로 어림해 약 $0.02입니다. Perplexity `sonar-pro`는 입력 $3·출력 $15(1M 토큰당)에 요청 수수료가 검색 맥락 크기에 따라 1,000건당 $6·$10·$14이고(https://docs.perplexity.ai/getting-started/models, 2026-10-09 확인, 조회 도구의 요약이라 원문과 한 글자씩 대조하지는 못했습니다) 요청 하나가 짧아 수수료가 대부분이니 약 $0.01입니다. Firecrawl은 `extract`가 크레딧을 쓰고 한 크레딧이 15토큰이라고 문서가 적지만(https://docs.firecrawl.dev/features/extract, 같은 날 확인) 이 앱의 경쟁사 하나가 몇 토큰인지는 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★(에이전트를 넷 만들고 외부 API가 셋이며 설치부터 막히는 곳이 여럿이라 Day 114·115와 같은 등급으로 맞췄습니다) · 예상 소요 130분(앱은 343줄이지만 설치부터 막히는 곳이 셋이고, Step 4에서 가짜 서버와 구동 스크립트를 직접 저장해 터미널 둘로 시나리오를 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 확인하지 못함(⚠ 이 문서는 어떤 서비스도 실제로 부르지 않았고 이 앱은 오늘 그대로는 화면이 뜨기 전에 죽습니다. 추정만 적습니다. 질문 1건에 OpenAI `gpt-4o`는 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)이고 경쟁사 셋의 JSON과 지시문이 입력 1,500토큰 안팎, 보고서가 `max_tokens` 제한 없는 여섯 항목 답이라 출력 1,000~1,500토큰으로 어림해 약 $0.02입니다. Perplexity `sonar-pro`는 입력 $3·출력 $15(1M 토큰당)에 요청 수수료가 검색 맥락 크기에 따라 1,000건당 $6·$10·$14이고(https://docs.perplexity.ai/docs/getting-started/pricing, 2026-10-09 원문을 받아 확인) 요청 하나가 짧아 수수료가 대부분이니 약 $0.01입니다. 다만 아래 ⚠대로 이 요청이 지금은 Agent API 요청으로 바뀌어 처리되므로 이 요금으로 청구되는지는 확인하지 못했습니다. Firecrawl은 `extract`가 크레딧을 쓰고 한 크레딧이 15토큰이라고 문서가 적지만(https://docs.firecrawl.dev/features/extract, 같은 날 확인) 이 앱의 경쟁사 하나가 몇 토큰인지는 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team`
 
 ## 오늘 만들 것
 
@@ -8,7 +8,7 @@
 
 폴더 이름은 `agent_teams`이고 앱 README는 에이전트 셋(Firecrawl, Analysis, Comparison)의 "Multi-agent System"이라고 소개하지만(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/README.md:11-14`), 코드에는 agno `Team`이 없고(`Team(`이 한 번도 나오지 않음, grep으로 확인) 에이전트 넷 가운데 실제로 `run`이 불리는 것은 분석 에이전트 하나뿐이고(Exa를 고르면 탐색 에이전트가 하나 더) 에이전트를 넷 만드는 것도 Exa를 고를 때뿐입니다. 도구를 단 `firecrawl_agent`와 `comparison_agent`는 만들어지기만 하고 어디서도 쓰이지 않습니다(Step 3). 비교 표는 모델 없이 pandas가 그립니다(Step 6). `Team`을 가장 작게 만나는 날은 이 볼륨을 연 Day 112이고, Day 114는 `Team` 없이 에이전트 셋을 버튼 핸들러가 차례로 부르는 앱이었습니다.
 
-⚠ 오늘 `requirements.txt`를 그대로 설치하면 앱은 화면이 뜨기 전에 막힙니다. 막히는 곳이 셋이고 설치만으로는 풀리지 않는 것이 하나 더 있습니다. 첫째, `exa-py`·`ddgs`가 requirements에 없어 첫 import에서 `ImportError`가 납니다(Step 1). 둘째, 고정된 `firecrawl-py==1.9.0`에는 agno의 `FirecrawlTools`가 가져오는 `firecrawl.types`가 없고, 앱이 부르는 `extract(..., prompt=..., schema=...)`도 1.9.0은 받지 않습니다. 그래서 이 고정은 풀어야 하고 오늘은 4.50.0이 깔립니다(Step 1). 셋째, 그렇게 풀고 키 셋을 넣으면 70행 `FirecrawlTools(api_key=..., scrape=False, crawl=True, limit=5)`가 `TypeError: Toolkit.__init__() got an unexpected keyword argument 'scrape'`로 죽습니다. agno의 이 인자 이름은 `enable_scrape`·`enable_crawl`이고, 요구 하한인 2.2.10부터 3.1.0까지 열 개 버전의 소스에서 모두 그랬습니다(소스로 확인, Step 3). 앱 코드를 고치지 않는 이 시리즈의 원칙대로 이 문서는 70~75행만 `enable_*` 이름으로 바꿔 끼운 대역을 구동 스크립트에서 걸어 나머지를 돌렸습니다. 그 밖에 짚을 점이 넷 있습니다. 어떤 이유로 추출이 실패해도 화면에는 똑같이 "Failed to analyze"만 나옵니다(Step 5). Perplexity 답의 줄을 하나하나 주소로 믿어서 안내 문장이 한 줄 섞이면 그 줄로도 Firecrawl 요청이 나갑니다(Step 4). 에이전트 셋을 화면을 다시 그릴 때마다 새로 만듭니다(Step 3). Firecrawl의 `extract`는 SDK가 "유지보수 모드, 사용을 권하지 않음"이라고 경고를 다는 엔드포인트입니다(Step 5).
+⚠ 오늘 `requirements.txt`를 그대로 설치하면 앱은 화면이 뜨기 전에 막힙니다. 막히는 곳이 셋이고 설치만으로는 풀리지 않는 것이 하나 더 있으며, 주소를 찾는 서비스에도 일정이 걸려 있습니다. 첫째, `exa-py`·`ddgs`가 requirements에 없어 첫 import에서 `ImportError`가 납니다(Step 1). 둘째, 고정된 `firecrawl-py==1.9.0`에는 agno의 `FirecrawlTools`가 가져오는 `firecrawl.types`가 없고, 앱이 부르는 `extract(..., prompt=..., schema=...)`도 1.9.0은 받지 않습니다. 그래서 이 고정은 풀어야 하고 오늘은 4.50.0이 깔립니다(Step 1). 셋째, 그렇게 풀고 키 셋을 넣으면 70행 `FirecrawlTools(api_key=..., scrape=False, crawl=True, limit=5)`가 `TypeError: Toolkit.__init__() got an unexpected keyword argument 'scrape'`로 죽습니다. agno의 이 인자 이름은 `enable_scrape`·`enable_crawl`이고, 요구 하한인 2.2.10부터 3.1.0까지 열 개 버전의 소스에서 모두 그랬습니다(소스로 확인, Step 3). 앱 코드를 고치지 않는 이 시리즈의 원칙대로 이 문서는 70~75행만 `enable_*` 이름으로 바꿔 끼운 대역을 구동 스크립트에서 걸어 나머지를 돌렸습니다. 그리고 Perplexity는 이 앱이 부르는 Sonar Chat Completions의 지원을 2026년 9월 27일에 끝냈다고 문서에 적었습니다. 동기 요청은 Agent API 요청으로 바뀌어 계속 받는다고 하지만 응답 필드가 그대로라는 보장은 없습니다(Step 4). 그 밖에 짚을 점이 넷 있습니다. 어떤 이유로 추출이 실패해도 화면에는 똑같이 "Failed to analyze"만 나옵니다(Step 5). Perplexity 답의 줄을 하나하나 주소로 믿어서 안내 문장이 한 줄 섞이면 그 줄로도 Firecrawl 요청이 나갑니다(Step 4). 에이전트 셋을 화면을 다시 그릴 때마다 새로 만듭니다(Step 3). Firecrawl의 `extract`는 SDK가 "유지보수 모드, 사용을 권하지 않음"이라고 경고를 다는 엔드포인트입니다(Step 5).
 
 이 문서는 OpenAI·Perplexity·Exa·Firecrawl·DuckDuckGo·agno 통계 서버 어디에도 요청을 보내지 않았고, 서비스는 모두 내 PC의 가짜 서버나 대역으로 확인했습니다. 그래서 아래 보고서 문장과 추출 결과는 전부 가짜 서버의 고정 값이고, 진짜 서비스가 이 프롬프트에 어떻게 답하는지는 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
 
@@ -22,7 +22,7 @@
 | Python | 이 문서는 3.13.3으로 확인했다. 저장소 기준은 3.11~3.13 | 공통 사전 준비와 같음 |
 | OpenAI API 키 | `gpt-4o` 호출. 화면 사이드바의 비밀번호 칸에 붙여넣는다(환경변수가 아님, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/competitor_agent_team.py:20`) | https://platform.openai.com/api-keys |
 | Firecrawl API 키 | 경쟁사 사이트 추출. 같은 사이드바의 칸(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/competitor_agent_team.py:21`) | https://www.firecrawl.dev/app/api-keys |
-| Perplexity API 키 또는 Exa API 키 | 경쟁사 주소를 찾는다. 사이드바 선택 상자에서 하나를 고르고 그 키 칸에 넣는다(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/competitor_agent_team.py:24-41`). 기본은 Perplexity다 | Perplexity는 https://www.perplexity.ai/settings/api, Exa는 https://dashboard.exa.ai/api-keys(앱 README의 안내) |
+| Perplexity API 키 또는 Exa API 키 | 경쟁사 주소를 찾는다. 사이드바 선택 상자에서 하나를 고르고 그 키 칸에 넣는다(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/competitor_agent_team.py:24-41`). 기본은 Perplexity다. Perplexity는 앱이 부르는 Sonar Chat Completions의 지원을 2026-09-27에 끝냈고 동기 요청은 Agent API 요청으로 바뀌어 계속 받는다고 문서가 적는다(Step 4) | Perplexity는 https://www.perplexity.ai/settings/api, Exa는 https://dashboard.exa.ai/api-keys(앱 README의 안내) |
 | 인터넷 연결 | PyPI 설치. 앱을 실제로 쓸 때는 OpenAI, Perplexity(또는 Exa), Firecrawl, agno 사용 통계 서버(`os-api.agno.com`)에 접속하고 Firecrawl 서버가 경쟁사 사이트를 읽는다. 브라우저로 열면 Streamlit의 사용 통계도 나간다(Day 054가 확인했고 `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
 
 이 문서의 확인 스크립트는 한글을 출력합니다. 한국어 Windows에서 출력을 파이프나 파일로 받으면 기본 인코딩(`cp949`)이 모자랄 수 있으니 셸을 먼저 이렇게 맞춰 두세요(Day 105와 같은 처방이고, 이 문서에서 이 설정 없이 돌려 보지는 않았습니다).
@@ -169,6 +169,8 @@ uv run --no-project python -c "exec('\n'.join(open('competitor_agent_team.py', e
 uv run --no-project python -m py_compile competitor_agent_team.py && echo compiled
 ```
 
+(PowerShell 5.1은 `&&`를 받지 않습니다. 각 명령에서 `&& echo …`를 빼고 한 줄씩 실행하세요. 오류 없이 끝나면 통과입니다. 실행해 보지 못했습니다.)
+
 ```text
 imports OK
 compiled
@@ -253,7 +255,7 @@ print("키 셋: 경고", [w.value for w in at.sidebar.warning], "| 예외", [e.m
 uv run --no-project python check_gate.py
 ```
 
-직접 확인한 출력입니다(위젯 이름은 앱의 영어 그대로입니다). 맨 위의 Streamlit 경고 줄은 `streamlit run` 없이 돌릴 때의 안내라 뺐습니다.
+직접 확인한 출력입니다(위젯 이름은 앱의 영어 그대로입니다). Streamlit이 `streamlit run` 없이 돌릴 때 찍는 경고 줄과, 마지막 단계에서 stderr에 찍히는 예외 트레이스백(`TypeError: Toolkit.__init__() …` 이하 열댓 줄)은 뺐습니다.
 
 ```text
 선택지: ['Perplexity AI - Sonar Pro', 'Exa AI'] | 기본: Perplexity AI - Sonar Pro
@@ -477,7 +479,7 @@ URL과 설명이 모두 비면 예외를 던지는데, 버튼 핸들러가 먼�
                     return []
 ```
 
-모델은 `sonar-pro`, `max_tokens` 1000, `temperature` 0.2이고 시스템 메시지와 사용자 메시지 둘이 갑니다. 주소는 `requests.post(perplexity_url, json=payload, headers=headers)`로 보내며 시간 제한(`timeout`)이 없습니다. 답의 첫 후보 내용을 `strip().split('\n')`로 쪼개 비지 않은 줄을 모두 돌려줍니다. 줄이 `http`로 시작하는지도, 세 개로 자르는지도 보지 않습니다. 오류는 `st.error`로 띄우고 빈 리스트를 돌려줍니다. Perplexity 쪽 `sonar-pro`가 오늘 제공되는지는 Perplexity 모델 표에 올라 있고 폐기 안내는 읽은 범위에 없었습니다(https://docs.perplexity.ai/getting-started/models, 2026-10-09 확인, 조회 도구의 요약이고 페이지 끝 일부는 읽지 못했습니다). Exa 갈래는 다릅니다.
+모델은 `sonar-pro`, `max_tokens` 1000, `temperature` 0.2이고 시스템 메시지와 사용자 메시지 둘이 갑니다. 주소는 `requests.post(perplexity_url, json=payload, headers=headers)`로 보내며 시간 제한(`timeout`)이 없습니다. 답의 첫 후보 내용을 `strip().split('\n')`로 쪼개 비지 않은 줄을 모두 돌려줍니다. 줄이 `http`로 시작하는지도, 세 개로 자르는지도 보지 않습니다. 오류는 `st.error`로 띄우고 빈 리스트를 돌려줍니다. 앱이 부르는 곳은 Sonar Chat Completions 엔드포인트(`https://api.perplexity.ai/chat/completions`, `model: "sonar-pro"`, 121·133·154행)입니다. 이 서비스에 일정이 걸려 있습니다. Perplexity의 이관 안내(https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview.md, 2026-10-09 원문을 받아 확인)는 "Sonar Chat Completions support ended on September 27, 2026. Synchronous and streaming requests keep working: they are being reformulated as Agent API requests, rolling out gradually by model."이라고 적고, 같은 문서의 표는 Sonar Pro의 이관 대상 프리셋으로 `fast`를 듭니다. 이 앱은 동기 요청이라 계속 받는 쪽으로 읽히지만, 재구성된 뒤에도 `choices[0].message.content`가 그대로 오는지는 이 문서가 확인하지 못했습니다(가짜 서버는 옛 모양으로만 답합니다). 요금표(https://docs.perplexity.ai/docs/getting-started/pricing, 같은 날 받아 확인)는 `sonar-pro`를 입력 $3·출력 $15, 요청 수수료 $6·$10·$14(1,000건당)로 적습니다. Exa 갈래는 다릅니다.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/competitor_agent_team.py:162-176`
 
@@ -503,7 +505,7 @@ URL과 설명이 모두 비면 예외를 던지는데, 버튼 핸들러가 먼�
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** 앱 폴더에 가짜 서버 `fake_services.py`를 저장합니다. 한 프로세스가 네 서비스를 흉내 냅니다. 경로가 겹치지 않습니다(`/chat/completions`는 Perplexity, `/v1/chat/completions`는 OpenAI, `/v2/extract`는 Firecrawl). 받은 요청을 `requests.jsonl`에 한 줄씩 적고, 키가 `pp-bad`(Perplexity)나 `fc-bad`(Firecrawl)로 끝나면 401을 돌려줍니다. 포트는 49152~65535에서 비어 있는 것을 고르세요(이 문서는 53917을 썼습니다). `allow_reuse_address = False`는 윈도에서 다른 프로그램의 포트에 오류 없이 겹쳐 뜨는 일을 막습니다. 응답 모양과 숫자는 SDK와 앱이 읽는 필드에 맞춰 내가 지어낸 것입니다. 이름이 `fail`로 시작하는 경쟁사 주소는 Firecrawl이 실패로 답하게 했습니다.
+**확인.** 앱 폴더에 가짜 서버 `fake_services.py`를 저장합니다. 한 프로세스가 세 서비스를 흉내 냅니다. 경로가 겹치지 않습니다(`/chat/completions`는 Perplexity, `/v1/chat/completions`는 OpenAI, `/v2/extract`는 Firecrawl, Exa는 흉내 내지 않습니다). 받은 요청을 `requests.jsonl`에 한 줄씩 적고, 키가 `pp-bad`(Perplexity)나 `fc-bad`(Firecrawl)로 끝나면 401을 돌려줍니다. 포트는 49152~65535에서 비어 있는 것을 고르세요(이 문서는 53917을 썼습니다). 윈도에는 이 범위 안에도 시스템이 예약한 제외 구간이 있어 `WinError 10013`으로 바인드가 실패할 수 있습니다. `netsh interface ipv4 show excludedportrange protocol=tcp`로 구간을 보고 피하세요(이 PC에서는 58626~58925, 60635~60734, 61196~61395 등이 제외돼 있었습니다, 직접 확인). `allow_reuse_address = False`는 윈도에서 다른 프로그램의 포트에 오류 없이 겹쳐 뜨는 일을 막습니다. 응답 모양과 숫자는 SDK와 앱이 읽는 필드에 맞춰 내가 지어낸 것입니다. 이름이 `fail`로 시작하는 경쟁사 주소는 Firecrawl이 실패로 답하게 했습니다.
 
 `fake_services.py`
 
@@ -1036,7 +1038,7 @@ write: ['Found 3 competitor URLs']
 서버: openai {"auth": "Bearer sk-fake", "model": "gpt-4o", "roles": ["developer", "user"], "tools": [], …
 ```
 
-읽는 법입니다. 모델 요청은 한 건이고(분석), `roles`가 `developer`와 `user`인 것은 agno가 지시문 성격의 메시지를 `system`이 아니라 `developer` 역할로 보내기 때문입니다(요청 본문으로 확인). 그 내용은 터미널의 `DEBUG` 줄에 `<additional_information>`으로 나왔고 `markdown=True` 때문인지는 확인하지 못했습니다. Firecrawl에는 주소마다 시작 요청 하나와 상태 확인 둘이 갔고(SDK가 2초 간격으로 묻습니다), `에이전트 실행: [[]]`은 도구 없는 에이전트가 한 번 불렸다는 뜻이며 `firecrawl_agent`·`comparison_agent`는 불리지 않았습니다. 주소 셋 가운데 둘이 표에 올랐습니다. 이제 나머지 시나리오입니다.
+읽는 법입니다. 모델 요청은 한 건이고(분석), `roles`가 `developer`와 `user`인 것은 agno 3.1.2의 역할 매핑이 `"system": "developer"`이기 때문입니다(소스로 확인, `agno/models/openai/chat.py` 95행). 그 내용은 터미널의 `DEBUG` 줄에 `<additional_information>`으로 나왔고, 앱의 `markdown=True`가 "Use markdown to format your answers."를 덧붙이는 것입니다(소스로 확인, `agno/agent/_messages.py` 996~997행). Firecrawl에는 주소마다 시작 요청 하나와 상태 확인 둘이 갔고(SDK가 2초 간격으로 묻습니다), `에이전트 실행: [[]]`은 도구 없는 에이전트가 한 번 불렸다는 뜻이며 `firecrawl_agent`·`comparison_agent`는 불리지 않았습니다. 주소 셋 가운데 둘이 표에 올랐습니다. 이제 나머지 시나리오입니다.
 
 ```bash
 uv run --no-project python drive_app.py 53917 no-input
@@ -1061,13 +1063,17 @@ Exa 선택에서는 탐색 에이전트가 모델 요청을 먼저 보내고(도
 
 ## 요청 한 건이 흐르는 과정
 
-버튼을 눌러 경쟁사 주소를 얻고 정보를 뽑는 앞부분을 먼저 봅니다. 이 앱은 한 그림에 다 넣으면 이웃하지 않은 배우 사이 메시지의 라벨이 다른 배우의 수명선 위에 놓이거나 그림이 1500px을 넘어서, 앱의 실제 시간 경계인 "경쟁사 정보가 모두 모인 뒤"에서 둘로 나눴습니다. 모든 메시지는 한 그림에만 있고 코드의 순서 그대로입니다. 아래는 Perplexity를 고른 경우이고 주소 하나의 추출을 그렸습니다. 주소는 셋이라 `extract_competitor_info`부터 `6칸 딕셔너리 또는 None`까지가 주소마다 되풀이됩니다. Exa를 고르면 탐색 에이전트가 끼어듭니다(Step 7).
+이 앱은 한 그림에 다 넣으면 이웃하지 않은 배우 사이 메시지의 라벨이 다른 배우의 수명선 위에 놓이거나 그림이 1500px을 넘어서, 앱의 실제 시간 경계에서 셋으로 나눴습니다. 화면에 쓰는 문장(`Found N competitor URLs` 같은 것)도 사용자에게 가는 메시지라서 `ui -> user`로 모두 그렸습니다. 모든 메시지는 한 그림에만 있고 코드의 순서 그대로입니다. 먼저 버튼을 눌러 경쟁사 주소를 얻기까지입니다. 아래는 Perplexity를 고른 경우이고, Exa를 고르면 탐색 에이전트가 끼어듭니다(Step 7).
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-경쟁사 정보가 모이면 비교 표와 분석 보고서입니다. 표는 모델 없이 화면이 직접 만들고, 보고서는 분석 에이전트가 `gpt-4o`에 한 번 묻습니다. 통계 전송은 성공한 `run` 뒤에 나가고, 마지막에 화면이 표와 보고서를 씁니다. 통계 전송은 `run` 안에서 성공 뒤에 일어나므로(소스로 확인, agno 3.1.2의 `agno/agent/_run.py` 673행) `report.content`가 돌아오기 앞에 그렸습니다.
+다음은 주소마다 되풀이되는 추출입니다. 주소는 셋이라 `extract_competitor_info`부터 주소마다 성공·실패 문장까지가 세 번 돌고, 모두 끝난 뒤 `Successfully analyzed M/N competitors!`가 한 번 나옵니다. 비교 표는 그다음, 분석 요청보다 앞에 화면에 나갑니다(`generate_comparison_report`가 327행에서 불리고 보고서는 331행에서 시작합니다).
 
-![비교 표와 분석 보고서](diagrams/extra-report.svg)
+![정보 추출과 비교 표](diagrams/extra-extract.svg)
+
+마지막은 분석 보고서입니다. 분석 에이전트가 `gpt-4o`에 한 번 묻고, 통계 전송은 `run` 안에서 성공 뒤에 일어나므로(소스로 확인, agno 3.1.2의 `agno/agent/_run.py` 673행) `report.content`가 돌아오기 앞에 그렸습니다. 보고서를 쓰고 나서 `Analysis complete!`가 나옵니다.
+
+![분석 보고서](diagrams/extra-report.svg)
 
 이 전체 왕복은 유효한 키 셋과 앞의 설치 문제 해결 없이는 끝까지 이어지지 않습니다. 이 문서는 서비스를 가짜로 대신해 각 구간을 확인했을 뿐이고, 진짜 서비스가 어떻게 답하는지는 확인하지 못했습니다.
 
@@ -1093,6 +1099,8 @@ Exa 선택에서는 탐색 에이전트가 모델 요청을 먼저 보내고(도
 | 추출이 모두 "✗ Failed to analyze …"로 끝남 (`bad-fc`로 직접 확인) | 키 오류·네트워크·추출 실패·SDK 인자 불일치가 235~239행에서 모두 `None`이 된다 | 터미널 로그와 키를 확인한다. 고정 `firecrawl-py==1.9.0`이면 `extract(prompt=…)`가 `TypeError`가 되어 모든 주소가 이렇게 실패하는데 이 경우는 설치된 환경으로 직접 돌려 보지는 못했다(`sig.py`로만 확인) |
 | `Found 4 competitor URLs`처럼 주소가 셋보다 많고 이상한 행이 표에 섞임 (`chatty`로 직접 확인) | Perplexity 답의 비지 않은 모든 줄을 주소로 쓴다(156~157행). Exa 갈래와 달리 `http` 검사와 3개 제한이 없다 | 답에 안내 문장이 섞이지 않게 시스템 메시지를 고치거나 `http`로 걸러 내는 줄을 더한다(더 해보기) |
 | `Error fetching competitor URLs from Perplexity: 401 Client Error: Unauthorized …` (직접 확인) | Perplexity 키가 틀렸다. 이 경우 Firecrawl·OpenAI에는 요청이 가지 않는다 | 키를 확인한다 |
+| Perplexity 응답 모양이나 요금이 문서와 다름(이 문서는 실제 호출을 하지 않아 확인하지 못했다) | Sonar Chat Completions 지원이 2026-09-27에 끝났고 동기 요청은 Agent API 요청으로 재구성돼 처리된다고 문서가 적는다. 모든 필드가 같다는 보장은 없다 | https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview.md의 이관 안내를 따라 Agent API로 옮긴다. 옮긴 뒤 `choices[0].message.content` 읽기(156행)를 시험한다(확인하지 못했다) |
+| `OSError: [WinError 10013]` 등으로 가짜 서버가 안 뜸 (직접 확인) | 고른 포트가 윈도의 제외 포트 구간 안에 있다 | `netsh interface ipv4 show excludedportrange protocol=tcp`로 보고 다른 포트를 고른다 |
 | 보고서가 내 회사 이야기를 하지 않고 경쟁사만 비교함 (소스로 확인) | 분석 프롬프트(277~291행)에 사용자가 적은 URL·설명이 들어가지 않는다 | 프롬프트에 내 회사 설명을 더하는 변경을 시험한다(더 해보기) |
 | 화면을 건드렸더니 결과가 사라짐 | 결과를 `st.session_state`에 저장하지 않아서 스크립트가 다시 실행되면 지워진다 | 버튼 뒤에 다른 위젯을 건드리지 않는다 |
 | 터미널에 프롬프트 전문과 `Analysis Data:`가 길게 찍힘 (직접 확인) | 에이전트의 `debug_mode=True`(87·99·105·112행)와 274행의 `print` | 로그를 공유하기 전에 경쟁사 데이터가 들어 있는지 본다 |
@@ -1105,4 +1113,4 @@ Exa 선택에서는 탐색 에이전트가 모델 요청을 먼저 보내고(도
 
 ## 다음 날 예고
 
-[Day 118 · 👨‍💼 AI Services Agency](../day118-ai-services-agency/README.md) — 예전 제목에는 "(CrewAI)"가 붙어 있었지만 `agency.py`의 4행은 `agency_swarm`을 가져오는 앱입니다(소스로 확인). 에이전트 여럿이 역할을 나눠 맡는 쪽으로 한 걸음 더 가는 날입니다.
+[Day 118 · 👨‍💼 AI Services Agency](../day118-ai-services-agency/README.md) — 저장소 README 목록(177행)의 제목에는 "(CrewAI)"가 붙어 있지만 `agency.py`의 4행은 `agency_swarm`을 가져오는 앱입니다(소스로 확인). 에이전트 여럿이 역할을 나눠 맡는 쪽으로 한 걸음 더 가는 날입니다.
