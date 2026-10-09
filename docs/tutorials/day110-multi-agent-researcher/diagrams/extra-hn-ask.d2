@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: HackerNews Team { class: ours }
+hn: HackerNews Researcher { class: ours }
+openai: OpenAI API { class: ext }
+
+team -> hn: task 문자열
+hn -> openai: 역할 · task\n+ 도구 스키마 둘
+openai -> hn: get_top_hackernews_stories(\nnum_stories)

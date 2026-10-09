@@ -1,6 +1,6 @@
 # Day 110 · 📰 Multi-Agent AI Researcher
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 110분(앱은 65줄이지만 Step 3·6·7에서 가짜 서버와 확인 스크립트를 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 질문 1건에 $0.02 이하(`gpt-4o-mini` 호출이 최소 10번이고 — 직접 확인 — 모델 페이지의 입력 $0.15·출력 $0.60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-09 확인)을 대입한 어림이며, 기사 원문 길이에 상한이 없어 입력 토큰은 기사에 따라 크게 달라지고 키가 없어 실제 토큰 수는 재지 못했습니다. Ollama판은 무료) · 원본 앱: `advanced_ai_agents/multi_agent_apps/multi_agent_researcher`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 120분(앱은 65줄이지만 Step 2·3·6·7에서 가짜 서버와 확인 스크립트를 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 질문 1건에 $0.02 이하(가짜 서버 대본으로는 `gpt-4o-mini` 호출이 10번이었고(직접 확인) 진짜 모델은 위임을 한 차례에 묶으면 줄이고 도구를 여러 번 부르면 늘 수 있어 몇 번일지는 확인하지 못했습니다. 모델 페이지의 입력 $0.15·출력 $0.60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-09 확인)을 대입한 어림이며, 기사 원문 길이에 상한이 없어 입력 토큰은 기사에 따라 크게 달라지고 키가 없어 실제 토큰 수는 재지 못했습니다. Ollama판은 무료) · 원본 앱: `advanced_ai_agents/multi_agent_apps/multi_agent_researcher`
 
 ## 오늘 만들 것
 
@@ -104,7 +104,7 @@ uv run --no-project python imp.py
 uv run --no-project python -m py_compile research_agent.py && echo compiled
 ```
 
-(PowerShell 5.1에서는 `&&` 대신 두 줄로 `uv run --no-project python -m py_compile research_agent.py`, `echo compiled`. 실행해 보지 못했습니다.) 직접 확인한 출력은 `compiled`입니다. Ollama판 컴파일도 통과합니다. 문법이 아니라 실행에서 멈추기 때문입니다(Step 7).
+(PowerShell 5.1에서는 `uv run --no-project python -m py_compile research_agent.py; if ($?) { echo compiled }`로 씁니다. 컴파일이 실패하면 `compiled`를 찍지 않습니다. 실행해 보지 못했습니다.) 직접 확인한 출력은 `compiled`입니다. Ollama판 컴파일도 통과합니다. 문법이 아니라 실행에서 멈추기 때문입니다(Step 7).
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -161,6 +161,8 @@ print("A typed key  :", repr(os.environ["OPENAI_API_KEY"]))
 b = AppTest.from_file("research_agent.py", default_timeout=60)
 b.run()
 print("session B load:", repr(os.environ["OPENAI_API_KEY"]))
+print("no key :", len(b.text_input), [t.label for t in b.text_input])
+print("with key:", len(a.text_input), [t.label for t in a.text_input])
 ```
 
 ```bash
@@ -174,13 +176,36 @@ start        : 'sk-from-shell'
 session A load: ''
 A typed key  : 'sk-typed-in-A'
 session B load: ''
-```
-
-화면을 연 것만으로 쉘의 키가 `''`가 되었고, 세션 A가 키를 넣은 뒤 새 세션 B가 열리자 A의 키도 지워졌습니다. 에이전트는 리런마다 새로 만들어지고 키는 모델을 처음 부를 때 읽히므로, A가 키를 넣은 뒤 질문을 보내기 전에 다른 세션이 열리면 A의 요청이 빈 키로 나갈 수 있습니다(소스로 확인, 이 순서로 요청이 나가는 것까지는 돌려 보지 않았습니다). 반대로 한 세션이 넣은 키가 다른 세션의 요청에도 쓰일 수 있으니 여럿이 쓰는 서버에는 맞지 않는 구조입니다. 화면 상태는 키가 없을 때 입력 위젯 하나, 있을 때 둘이었습니다.
-
-```
 no key : 1 ['OpenAI API Key']
 with key: 2 ['OpenAI API Key', 'Enter your report query']
+```
+
+화면을 연 것만으로 쉘의 키가 `''`가 되었고, 세션 A가 키를 넣은 뒤 새 세션 B가 열리자 A의 키도 지워졌습니다. 에이전트는 리런마다 새로 만들어지고 키는 모델을 처음 부를 때 읽히므로, A가 키를 넣은 뒤 질문을 보내기 전에 다른 세션이 열리면 A의 모델은 키를 못 찾습니다. 빈 키로 요청을 보내는 것이 아니라 요청 자체를 보내지 않고 `OPENAI_API_KEY not set` 오류로 끝납니다(소스로 확인, 같은 파일 109~113행. 아래 `check_empty.py`로 직접 확인). 리더가 그렇게 되면 화면에 그 문장이 글자로 뜨고, 멤버만 그렇게 되면 리더가 그 멤버의 결과 없이 요약을 쓸 수 있습니다(이 부분은 소스를 읽은 추정이고 돌려 보지 않았습니다). 반대로 한 세션이 넣은 키가 다른 세션의 요청에도 쓰일 수 있으니 여럿이 쓰는 서버에는 맞지 않는 구조입니다. 화면 상태는 마지막 두 줄처럼 키가 없을 때 입력 위젯 하나, 있을 때 둘이었습니다. 키가 빈 문자열이면 요청이 안 나간다는 것은 따로 확인합니다. 앱 폴더에 `check_empty.py`를 저장합니다.
+
+`check_empty.py`
+
+```python
+import os
+
+os.environ["AGNO_TELEMETRY"] = "false"
+os.environ["OPENAI_BASE_URL"] = "http://127.0.0.1:62143/v1"
+os.environ["OPENAI_API_KEY"] = ""
+
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+result = Agent(model=OpenAIChat(id="gpt-4o-mini")).run("hi")
+print(result.status, "|", result.content)
+```
+
+```bash
+uv run --no-project python check_empty.py
+```
+
+직접 확인한 출력(`ERROR` 로그 두 줄은 뺐습니다. 62143에 서버가 없는데도 `Connection error.`가 아니라 키 오류가 나왔고, 가짜 서버를 띄운 채 돌렸을 때도 서버에 들어온 요청은 0건이었습니다):
+
+```
+RunStatus.error | OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
 ```
 
 서버만 띄워 응답을 보려면 `--server.address localhost`를 붙입니다. 안 붙이면 Streamlit이 시작하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 접속합니다(Day 054가 확인한 사실).
@@ -256,8 +281,11 @@ Newspaper4kTools ['read_article']
 
 ```python
 import json
+import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
+os.environ["TLDEXTRACT_CACHE"] = "tldcache"
 
 import httpx
 
@@ -322,11 +350,11 @@ article keys: ['text', 'title'] | title: Rust 2.0 announced | text chars: 1349
 
 이야기 둘을 받는 데 요청이 3번(목록 1번에 이야기마다 1번)이고, 각 이야기에는 `by`를 복사한 `username`이 붙습니다(소스 37~70행의 `story["username"] = story.get("by", "unknown")`). 기사 도구는 가짜 페이지에서 제목과 본문을 뽑았고 저자·날짜가 없는 페이지라 그 키는 빠졌습니다. DuckDuckGo 도구는 외부 검색 서비스라 이 확인에서 부르지 않았고, `web_search`가 `ddgs`에 `backend="duckduckgo"`로 검색을 넘기는 것은 소스로만 확인했습니다(`agno/tools/websearch.py` 87~98행).
 
-기사 도구를 처음 부르면 오류 문구가 길게 나오는 까닭은 `newspaper4k`가 주소의 도메인을 나누려고 쓰는 `tldextract` 패키지가 첫 사용 때 공개 접미사 목록을 `https://publicsuffix.org/list/public_suffix_list.dat`에서, 실패하면 `raw.githubusercontent.com`에서 받으려 하기 때문입니다(직접 확인: 접속을 막으면 두 주소를 모두 시도하고 `Exception reading Public Suffix List url ...`를 두 번 찍은 뒤 내장 사본으로 넘어갑니다). 결과는 캐시로 저장되는데, 위치는 `TLDEXTRACT_CACHE`가 있으면 그곳이고 아니면 `HOME`이 있을 때 `~/.cache/python-tldextract/`입니다(소스로 확인, tldextract 5.4.0의 `tldextract/cache.py` 55~76행. 이 문서의 첫 실행이 홈에 그 폴더를 만들었고 지웠습니다). 이 앱의 외부 서비스 목록에 공개 접미사 서버가 하나 더 있는 셈입니다. 홈에 캐시를 남기기 싫으면 `TLDEXTRACT_CACHE`를 다른 폴더로 돌립니다.
+기사 도구를 처음 부르면 오류 문구가 길게 나오는 까닭은 `newspaper4k`가 주소의 도메인을 나누려고 쓰는 `tldextract` 패키지가 첫 사용 때 공개 접미사 목록을 `https://publicsuffix.org/list/public_suffix_list.dat`에서, 실패하면 `raw.githubusercontent.com`에서 받으려 하기 때문입니다(직접 확인: 접속을 막으면 두 주소를 모두 시도하고 `Exception reading Public Suffix List url ...`를 두 번 찍은 뒤 내장 사본으로 넘어갑니다). 결과는 캐시로 저장되는데, 위치는 `TLDEXTRACT_CACHE`가 있으면 그곳이고, 아니면 `XDG_CACHE_HOME`, 그것도 없고 `HOME`이 있으면 `~/.cache/python-tldextract/`이며, 셋 다 없으면(PowerShell 기본 환경이 보통 그렇습니다) 패키지 폴더 안의 `tldextract/.suffix_cache`입니다(소스로 확인, tldextract 5.4.0의 `tldextract/cache.py` 55~76행. 이 문서의 첫 실행이 홈에 그 폴더를 만들었고 지웠습니다). 그래서 아래 `check_tools.py`는 맨 위에서 `TLDEXTRACT_CACHE`를 앱 폴더의 `tldcache`로 돌립니다(`tldextract`를 import하기 전에 걸어야 합니다). 이 앱의 외부 서비스 목록에 공개 접미사 서버가 하나 더 있는 셈입니다. 홈에 캐시를 남기기 싫으면 `TLDEXTRACT_CACHE`를 다른 폴더로 돌립니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 위 출력의 `requests:` 줄에서 이야기 둘에 요청 셋이 나갔는지 봅니다. 끝나면 `check_tools.py`를 지웁니다.
+**확인.** 위 출력의 `requests:` 줄에서 이야기 둘에 요청 셋이 나갔는지 봅니다. 끝나면 `check_tools.py`와 `tldcache` 폴더를 지웁니다.
 
 ### Step 4. 팀 리더 — 지시문과 쓰이지 않는 인자
 
@@ -373,6 +401,7 @@ print('member debug after init:', a.debug_mode, '| id:', t.id, '| member id:', a
 
 ```
 mode: TeamMode.coordinate | team debug: True | member debug before init: False
+DEBUG   Team ID: hackernews-team
 member debug after init: True | id: hackernews-team | member id: hackernews-researcher
 ```
 
@@ -380,9 +409,9 @@ member debug after init: True | id: hackernews-team | member id: hackernews-rese
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** 위 명령의 두 줄이 그대로 나오는지 봅니다. 리더에게 가는 요청에 멤버 명단이 어떻게 들어가는지는 Step 6에서 봅니다.
+**확인.** 위 명령의 `mode:`와 `member debug after init:` 두 줄(사이에 `debug_mode`가 찍는 DEBUG 한 줄이 끼어 있습니다)이 그대로 나오는지 봅니다. 리더에게 가는 요청에 멤버 명단이 어떻게 들어가는지는 Step 6에서 봅니다.
 
-### Step 5. 질문 입력과 실행 — 한 줄이 모델 호출 열 번이 됩니다
+### Step 5. 질문 입력과 실행 — 한 줄이 모델 호출 여러 번이 됩니다(대본으로는 10번)
 
 **목적.** 질문이 들어와 `run()`이 불리고 결과가 화면에 그려지는 마지막 줄들을 읽습니다.
 
@@ -406,7 +435,7 @@ Day 081 Step 6과 같은 모양입니다. 버튼이 없어 `st.text_input`이 En
 
 **확인.** 이 줄이 실제로 몇 번의 호출이 되는지는 다음 단계에서 셉니다.
 
-### Step 6. 가짜 서버로 끝까지 — 호출 열 번, 도구 셋, 통계 넷
+### Step 6. 가짜 서버로 끝까지 — 호출 10번(대본), 도구 셋, 통계 넷
 
 **목적.** OpenAI와 외부 서비스에 요청을 보내지 않고 질문 한 건의 흐름을 끝까지 돌려, 요청 수·멤버가 받는 내용·도구 호출·통계를 직접 셉니다.
 
@@ -654,13 +683,14 @@ class Server(ThreadingHTTPServer):
 Server(("127.0.0.1", int(sys.argv[1])), Handler).serve_forever()
 ```
 
-`check_llama.py`
+`check_llama.py` (성공한 팀 실행은 agno 통계를 `os-api.agno.com`에 보내므로 맨 위에서 꺼 둡니다. 직접 확인: 끄지 않고 고친 파일을 돌리면 통계 전송 시도가 1건 있었습니다)
 
 ```python
 import os
 import sys
 
 os.environ["OLLAMA_HOST"] = "127.0.0.1:56402"
+os.environ["AGNO_TELEMETRY"] = "false"
 
 from streamlit.testing.v1 import AppTest
 
@@ -675,7 +705,7 @@ if len(at.text_input):
     print(script, "| page text:", [m.value for m in at.markdown])
 ```
 
-고친 복사본은 원본 폴더를 건드리지 않게 `sed`로 만듭니다(PowerShell이면 편집기로 세 군데의 `max_tokens=1024`를 `options={"num_predict": 1024}`로 바꿔도 됩니다).
+고친 복사본은 원본 폴더를 건드리지 않게 `sed`로 만듭니다(PowerShell이면 편집기로 네 군데(18·25·33·40행, 에이전트 셋과 팀)의 `max_tokens=1024`를 `options={"num_predict": 1024}`로 바꿔도 됩니다).
 
 ```bash
 sed 's/max_tokens=1024/options={"num_predict": 1024}/' research_agent_llama3.py > llama3_fixed.py
@@ -705,7 +735,7 @@ llama3_fixed.py | page text: ['FAKE LLAMA ANSWER']
 POST /api/chat | model: llama3.2 | keys: ['messages', 'model', 'options', 'stream', 'tools'] | options: {'num_predict': 1024} | stream: False | tools: ['delegate_task_to_member']
 ```
 
-원본은 화면에 오류만 뜨고 입력창이 생기지 않았으며 가짜 서버에는 요청이 한 건도 오지 않았습니다. agno를 최소 버전 2.2.10으로 따로 깔아 같은 `Ollama(id="llama3.2", max_tokens=1024)`를 만들어도 같은 `TypeError`가 났습니다(직접 확인). 즉 이 파일은 `requirements.txt`가 허용하는 어떤 agno에서도 에이전트를 만들지 못합니다. 고친 판은 요청이 `/api/chat`으로 가고 `options`에 `num_predict`가 실렸으며 스트리밍은 꺼져 있고 도구 목록은 리더의 `delegate_task_to_member`였습니다. 모델이 도구 호출을 지원해야 팀이 돌아가는데 `llama3.2`가 그렇다는 것은 Ollama 라이브러리 페이지의 `tools` 표시로만 확인했고 실제 Ollama로 돌려 보지는 않았습니다. 이 단계의 구조는 아래와 같습니다.
+원본은 화면에 오류만 뜨고 입력창이 생기지 않았으며 가짜 서버에는 요청이 한 건도 오지 않았습니다. agno를 최소 버전 2.2.10으로 따로 깔아 같은 `Ollama(id="llama3.2", max_tokens=1024)`를 만들어도 같은 `TypeError`가 났습니다(직접 확인). 즉 이 파일은 확인한 최소 버전 2.2.10과 오늘 설치되는 3.1.2 모두에서 에이전트를 만들지 못합니다. 2.2.10 확인은 새 가상환경에 `uv pip install agno==2.2.10 ollama openai`를 하고 같은 `Ollama(id="llama3.2", max_tokens=1024)`와 `options={"num_predict": 1024}`를 만들어 본 것입니다(앞은 같은 `TypeError`, 뒤는 `{'num_predict': 1024}`로 만들어졌습니다). 고친 판은 요청이 `/api/chat`으로 가고 `options`에 `num_predict`가 실렸으며 스트리밍은 꺼져 있고 도구 목록은 리더의 `delegate_task_to_member`였습니다. 모델이 도구 호출을 지원해야 팀이 돌아가는데 `llama3.2`가 그렇다는 것은 Ollama 라이브러리 페이지의 `tools` 표시로만 확인했고 실제 Ollama로 돌려 보지는 않았습니다. 이 단계의 구조는 아래와 같습니다.
 
 ![Ollama판의 구조](diagrams/extra-ollama.svg)
 
@@ -715,27 +745,47 @@ POST /api/chat | model: llama3.2 | keys: ['messages', 'model', 'options', 'strea
 
 ## 요청 한 건이 흐르는 과정
 
-사용자가 질문을 적고 Enter를 누르면 리더가 멤버 셋을 차례로 부르는 흐름을 다섯 그림으로 나눠 따라갑니다. 배우가 일곱이라 한 그림에 다 넣으면 폭이 넘치거나 수명선이 라벨을 지나서 앱의 시간 경계에서 나눴고, 메시지는 모두 원래 순서로 정확히 한 그림에 있습니다.
+사용자가 질문을 적고 Enter를 누르면 리더가 멤버 셋을 차례로 부르는 흐름을 열 그림으로 나눠 따라갑니다. 배우가 많고 메시지가 40개를 넘어 한 그림에 다 넣으면 폭과 높이가 상한(1200×1000)을 넘으므로 앱의 시간 경계와 도구 호출 경계에서 나눴고, 메시지는 모두 원래 순서로 정확히 한 그림에 있습니다. 첫 그림을 뺀 아홉 장은 `extra-` 이름입니다.
 
 ![1단계: 질문과 첫 위임](diagrams/sequence.svg)
 
 1단계는 화면이 `run`을 부르고, 리더가 지시문·멤버 명단·질문과 위임 도구 스키마를 모델에 보내 `delegate_task_to_member`를 받는 데까지입니다.
 
-![2단계: HackerNews 멤버](diagrams/sequence-hn.svg)
+![2단계 가: HackerNews 멤버가 도구 호출을 받음](diagrams/extra-hn-ask.svg)
 
-2단계는 리더가 HackerNews 멤버에게 `task` 문자열만 넘기는 데서 시작합니다. 멤버는 역할과 task에 도구 스키마 둘을 붙여 모델에 보내고, 모델이 `get_top_hackernews_stories`를 요청하면 목록 요청 하나와 이야기 요청 `num_stories`개를 Hacker News에 보냅니다. 결과는 `tool` 메시지로 모델에 가고, 이야기 정리 글을 받은 멤버가 통계 1건을 큐에 넣고 보고서를 리더에게 돌려줍니다.
+리더가 HackerNews 멤버에게 `task` 문자열만 넘깁니다. 멤버는 역할과 task에 도구 스키마 둘을 붙여 모델에 보내고 `get_top_hackernews_stories`를 요청받습니다.
 
-![3단계: Article Reader](diagrams/sequence-article.svg)
+![2단계 나: Hacker News 요청 둘](diagrams/extra-hn-fetch.svg)
 
-3단계는 리더의 두 번째 요청에서 시작합니다. 그림의 "앞선 위임·보고서"는 질문 뒤에 첫 위임 호출과 HN 멤버의 보고서가 `tool` 메시지로 쌓인 것입니다. 모델이 기사 읽기 멤버를 고르면, 이 멤버는 `read_article`을 부르고 기사 서버에서 본문을 내려받습니다(처음에는 공개 접미사 목록 요청도 따릅니다). 본문 전체가 `tool` 메시지로 모델에 가고 요약 글이 보고서가 됩니다. 기사 도구가 실패해도 오류 문장이 같은 길로 갑니다.
+도구는 먼저 `topstories.json`으로 이야기 번호 목록을 받고, 그 번호 `num_stories`개마다 `item/{id}.json`을 따로 요청해 이야기 JSON을 받습니다(Step 3에서 요청 3건으로 확인).
 
-![4단계: Web Searcher](diagrams/sequence-search.svg)
+![2단계 다: 이야기 정리와 보고](diagrams/extra-hn-report.svg)
 
-4단계는 웹 검색 멤버입니다. 이 멤버의 요청에만 현재 시각이 붙고, `web_search`가 DuckDuckGo에서 제목·주소·본문 조각을 받아 모델에 넘깁니다. 그림에서 통계 서버가 맨 왼쪽에 있는 것은 선이 글자를 지나지 않게 배우 순서를 탐색해 고른 결과입니다.
+이야기 JSON이 `tool` 메시지로 모델에 가고, 정리 글을 받은 멤버가 통계 1건을 큐에 넣고 보고서를 리더에게 돌려줍니다.
 
-![5단계: 최종 요약과 표시](diagrams/sequence-final.svg)
+![3단계 가: Article Reader가 기사를 내려받음](diagrams/extra-article-read.svg)
 
-5단계는 리더의 마지막 모델 요청입니다. 질문, 위임 호출 셋, 멤버 보고서 셋을 보고 요약 글을 받으면 팀의 통계 1건이 큐에 들어가고, 글이 `st.write`로 화면에 그려집니다. 이 시퀀스는 가짜 서버로 직접 돌려 본 것이고, 각 도구가 돌려주는 실제 내용과 진짜 모델의 위임 순서는 확인하지 못했습니다.
+리더의 두 번째 요청에서 시작합니다. 그림의 "앞선 위임 호출·보고서"는 질문 뒤에 첫 위임 호출과 HN 멤버의 보고서가 `tool` 메시지로 쌓인 것입니다. 모델이 기사 읽기 멤버를 고르면 이 멤버가 `read_article`을 부르고 기사 서버에서 페이지를 받습니다.
+
+![3단계 나: 접미사 목록과 기사 JSON](diagrams/extra-article-parse.svg)
+
+기사를 처음 읽을 때는 `tldextract`가 공개 접미사 목록 서버에도 요청합니다(Step 3, 직접 확인). 소스로 호출 시점을 정확히 가리지 않아 페이지를 받은 뒤로 그렸고, 못 받으면 내장 사본으로 넘어갑니다. 이어서 본문 전체가 든 기사 JSON이 `tool` 메시지로 모델에 가고 정리 글이 돌아옵니다. 기사 도구가 실패해도 오류 문장이 같은 길로 갑니다.
+
+![3단계 다: 통계와 보고](diagrams/extra-article-report.svg)
+
+멤버가 통계 1건을 큐에 넣고 보고서를 리더에게 돌려줍니다.
+
+![4단계 가: Web Searcher가 검색함](diagrams/extra-search-ask.svg)
+
+세 번째 위임입니다. 이 멤버의 요청에만 현재 시각이 붙고, `web_search`가 DuckDuckGo에서 제목·주소·본문 조각을 받습니다.
+
+![4단계 나: 검색 정리와 보고](diagrams/extra-search-report.svg)
+
+검색 JSON이 `tool` 메시지로 모델에 가고 정리 글을 받은 멤버가 통계 1건과 보고서를 보냅니다.
+
+![5단계: 최종 요약과 표시](diagrams/extra-final.svg)
+
+리더의 마지막 모델 요청입니다. 질문, 위임 호출 셋, 멤버 보고서 셋을 보고 요약 글을 받으면 팀의 통계 1건이 큐에 들어가고, 글이 `st.write`로 화면에 그려집니다. 이 시퀀스는 가짜 서버로 직접 돌려 본 것이고, 각 도구가 돌려주는 실제 내용과 진짜 모델의 위임 순서는 확인하지 못했습니다.
 
 ## 실행 체크리스트
 
@@ -747,7 +797,7 @@ POST /api/chat | model: llama3.2 | keys: ['messages', 'model', 'options', 'strea
 - [ ] 가짜 서버가 요청 10건을 받고 멤버 요청에는 `role`과 task만 있는 것을 봤다
 - [ ] 도구 호출이 `get_top_hackernews_stories`·`read_article`·`web_search` 셋이고 통계가 4건인 것을 봤다
 - [ ] `research_agent_llama3.py`가 `max_tokens` `TypeError`로 입력창도 만들지 못하고 `options={"num_predict": 1024}` 복사본은 `/api/chat`으로 가는 것을 봤다
-- [ ] 끝나고 가짜 서버를 모두 멈췄고 홈에 `.cache/python-tldextract`가 없는지 봤다
+- [ ] `check_tools.py`가 캐시를 앱 폴더의 `tldcache`로 보냈고, 끝나고 가짜 서버를 모두 멈췄다
 
 ## 문제 해결
 
@@ -758,12 +808,13 @@ POST /api/chat | model: llama3.2 | keys: ['messages', 'model', 'options', 'strea
 | ``ImportError: `ollama` not installed. Please install using `pip install ollama` `` (직접 확인, Ollama판만) | Ollama 클라이언트가 `requirements.txt`에 없다 | `uv pip install ollama` |
 | `TypeError: Ollama.__init__() got an unexpected keyword argument 'max_tokens'` (직접 확인) | agno의 `Ollama`에 `max_tokens`가 없다. agno 3.1.2와 2.2.10에서 모두 같았다 | 복사본에서 `options={"num_predict": 1024}`로 바꾼다(Step 7) |
 | 질문을 넣었는데 글 대신 `Connection error.`가 일반 글자로 나옴 | 모델 서버에 닿지 못해도 `Team.run`이 예외 대신 오류 문장을 `content`에 담고 앱이 그대로 `st.write`한다(직접 확인) | 키·네트워크·`OPENAI_BASE_URL`을 확인한다 |
-| 키를 넣었는데 요청이 빈 키로 나가거나 남의 세션 키가 쓰임 | 18행이 키를 프로세스 전체의 `os.environ`에 쓰고 모델이 첫 호출 때 읽는다(직접 확인: 두 세션을 열자 환경변수가 바뀜. 요청이 실제로 빈 키로 가는 것까지는 돌려 보지 않았다) | 한 사람이 쓸 때만 쓴다. 복사본에서 `OpenAIChat(api_key=openai_api_key)`로 넘긴다 |
+| 글 대신 `OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.`이 나오거나, 요약에 멤버 결과가 빠지거나, 남의 세션 키가 쓰임 | 18행이 키를 프로세스 전체의 `os.environ`에 쓰고 모델이 첫 호출 때 읽는다(직접 확인: 두 세션을 열자 환경변수가 바뀌고, 빈 환경변수로는 요청이 나가지 않고 이 오류로 끝남) | 한 사람이 쓸 때만 쓴다. 복사본에서 `OpenAIChat(api_key=openai_api_key)`로 넘긴다 |
 | 이야기가 질문과 상관없는 오늘의 인기 글 | `get_top_hackernews_stories`에 검색어 인자가 없다(직접 확인: 시그니처가 `num_stories`뿐) | 웹 검색 멤버의 결과로 맞춘다. 지시문을 현실에 맞게 고치는 것은 더 해보기 |
 | 서버 터미널에 질문과 기사 본문이 길게 찍힘 | `debug_mode=True`가 멤버까지 퍼져 프롬프트와 도구 결과를 DEBUG로 찍는다(직접 확인: 질문 1건에 169줄) | 복사본에서 `debug_mode`를 지운다 |
-| 터미널에 `--- Logging error ---`와 `UnicodeEncodeError: 'cp949' codec can't encode character '\u2014'` | 콘솔 인코딩이 cp949일 때 agno의 프롬프트에 든 `—`를 DEBUG 로그로 쓰다 난다(직접 확인: 출력을 파일로 돌릴 때 한 건. 앱 동작은 그대로) | `PYTHONUTF8=1`을 건다(직접 확인: 사라짐) |
-| 기사를 처음 읽을 때 `Exception reading Public Suffix List url ...` 오류가 길게 나옴 | `tldextract`가 공개 접미사 목록을 받으려다 못 받으면 내장 사본으로 넘어간다(직접 확인: 접속을 막은 환경) | 접속이 되면 목록을 받아 캐시한다. 캐시 위치는 `TLDEXTRACT_CACHE`로 정한다 |
+| 터미널에 `--- Logging error ---`와 `UnicodeEncodeError: 'cp949' codec can't encode character '\u2014'` | 콘솔 인코딩이 cp949일 때 agno의 프롬프트에 든 `—`를 DEBUG 로그로 쓰다 난다(직접 확인: 출력을 파일로 돌릴 때 한 건. 앱 동작은 그대로) | `PYTHONUTF8=1`을 건다(PowerShell은 `$env:PYTHONUTF8 = "1"`, 실행해 보지 못했습니다. bash에서는 직접 확인: 사라짐) |
+| 기사를 처음 읽을 때 `Exception reading Public Suffix List url ...` 오류가 길게 나옴 | `tldextract`가 공개 접미사 목록을 받으려다 못 받으면 내장 사본으로 넘어간다(직접 확인: 접속을 막은 환경) | 접속이 되면 목록을 받아 캐시한다. 캐시 위치는 `TLDEXTRACT_CACHE`로 정한다(없으면 `XDG_CACHE_HOME`, `~/.cache`, 패키지 폴더 순) |
 | 가짜 서버를 띄웠는데 응답이 내가 만든 것이 아님 | 다른 프로세스가 이미 쓰는 포트에 두 번째 서버가 오류 없이 떴다. Windows에서 파이썬 서버의 기본 `allow_reuse_address`가 그렇게 한다(직접 확인: 이 문서를 만들다 한 번 겪었다) | `netstat -ano`로 포트를 먼저 보고 서버 클래스에서 `allow_reuse_address = False`로 둔다 |
+| 가짜 서버가 `PermissionError: [WinError 10013]`로 뜨지 않음(Streamlit은 `Port ... is not available`) | Windows가 예약한 포트 범위에 들었다(직접 확인: 58917이 `netsh interface ipv4 show excludedportrange protocol=tcp`의 `58826 58925`에 들어 있었고, 이 문서를 만들 때 60731도 같은 이유로 쓸 수 없었다. 범위는 PC마다 다르다) | 위 `netsh` 명령으로 범위를 보고 그 밖의 번호로 바꾼다 |
 | `AppTest`를 돌릴 때마다 `missing ScriptRunContext!` 경고 | `streamlit run` 없이 스크립트를 돌릴 때 Streamlit이 내는 안내다(직접 확인) | 무시한다 |
 
 ## 더 해보기

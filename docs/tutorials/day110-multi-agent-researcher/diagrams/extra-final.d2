@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+openai: OpenAI API { class: ext }
+team: HackerNews Team { class: ours }
+agno_api: Agno 통계 API { class: ext }
+
+team -> openai: user(질문) + 위임 호출 셋과 보고서 셋
+openai -> team: 최종 요약 글
+team -> agno_api: 팀 실행 메타데이터
+team -> ui: content
+ui -> user: st.write로 표시

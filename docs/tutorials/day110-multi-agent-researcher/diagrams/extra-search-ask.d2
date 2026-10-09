@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: HackerNews Team { class: ours }
+openai: OpenAI API { class: ext }
+web: Web Searcher { class: ours }
+ddg: DuckDuckGo 검색 { class: ext }
+
+team -> openai: user(질문) + 앞선 위임 호출 · 보고서(tool 메시지)
+openai -> team: delegate_task_to_member(\nweb-searcher, task)
+team -> web: task 문자열
+web -> openai: 역할 · 시각 · task\n+ 도구 스키마
+openai -> web: web_search(query,\nmax_results)
+web -> ddg: 검색어 (ddgs)
+ddg -> web: 검색 결과 JSON

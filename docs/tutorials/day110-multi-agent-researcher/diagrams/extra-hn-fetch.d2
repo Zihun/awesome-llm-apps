@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+hn: HackerNews Researcher { class: ours }
+hn_api: Hacker News API { class: ext }
+
+hn -> hn_api: GET topstories.json
+hn_api -> hn: 이야기 번호 목록
+hn -> hn_api: "GET item/{id}.json\n(num_stories번)"
+hn_api -> hn: 이야기 JSON

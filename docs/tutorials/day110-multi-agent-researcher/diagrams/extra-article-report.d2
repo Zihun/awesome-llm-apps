@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: HackerNews Team { class: ours }
+reader: Article Reader { class: ours }
+agno_api: Agno 통계 API { class: ext }
+
+reader -> agno_api: 실행 메타데이터
+reader -> team: 멤버 보고서

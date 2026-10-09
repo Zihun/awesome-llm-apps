@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: HackerNews Team { class: ours }
+openai: OpenAI API { class: ext }
+reader: Article Reader { class: ours }
+pages: 기사 웹페이지 { class: ext }
+
+team -> openai: user(질문) + 앞선 위임 호출 · 보고서(tool 메시지)
+openai -> team: delegate_task_to_member(\narticle-reader, task)
+team -> reader: task 문자열
+reader -> openai: 역할 · task\n+ 도구 스키마
+openai -> reader: read_article(url)\n호출 요청
+reader -> pages: newspaper.article(url)\n기사 내려받기
+pages -> reader: 기사 HTML

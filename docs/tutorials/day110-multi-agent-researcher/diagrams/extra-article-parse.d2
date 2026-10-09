@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+psl: 공개 접미사 목록 서버 { class: ext }
+reader: Article Reader { class: ours }
+openai: OpenAI API { class: ext }
+
+reader -> psl: 목록 요청\n(첫 사용 때만)
+psl -> reader: 접미사 목록\n(못 받으면 내장 사본)
+reader -> openai: tool 메시지\n(기사 JSON · 본문 전체)
+openai -> reader: 기사 정리 글

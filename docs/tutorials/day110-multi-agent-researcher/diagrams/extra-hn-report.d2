@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: HackerNews Team { class: ours }
+hn: HackerNews Researcher { class: ours }
+openai: OpenAI API { class: ext }
+agno_api: Agno 통계 API (os-api.agno.com, POST /telemetry/runs) { class: ext }
+
+hn -> openai: tool 메시지\n(이야기 JSON)
+openai -> hn: 이야기 정리 글
+hn -> agno_api: 실행 메타데이터
+hn -> team: 멤버 보고서
