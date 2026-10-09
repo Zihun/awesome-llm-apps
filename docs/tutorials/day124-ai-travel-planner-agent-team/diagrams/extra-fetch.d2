@@ -7,5 +7,5 @@ playwright: try.playwright.tech { class: ext }
 
 flight -> gflights: "GET /travel/flights\n(fast-flights, verify=False)"
 gflights -> flight: "HTML 응답"
-flight -> playwright: "200이 아니면 POST\n/service/control/run"
+flight -> playwright: "200이 아니거나 항공편을 못 읽으면\nPOST /service/control/run"
 playwright -> flight: "output (HTML)"

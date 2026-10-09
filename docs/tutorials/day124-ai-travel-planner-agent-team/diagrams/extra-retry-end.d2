@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+task: 백그라운드 작업 { class: ours }
+api: FastAPI { class: ours }
+route: Next.js 라우트 { class: ours }
+page: plan/page.tsx { class: ours }
+
+api -> task: "asyncio.create_task\n(generate_plan_with_tracking)"
+api -> route: "200 {success, message,\ntrip_plan_id}"
+route -> page: "200 {success, message,\nresponse}"
+page -> route: "GET /api/plans/{id}\n(fetchTripDetails)"
+page -> page: "setPolling(true)"

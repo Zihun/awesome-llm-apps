@@ -8,4 +8,6 @@ db: PostgreSQL { class: store }
 
 user -> page: "재시도 버튼"
 page -> route: "POST /api/plans/{id}/retry"
+route -> db: "tripPlan.findUnique\n(include status, output)"
+db -> route: "TripPlan + status 행\n(저장된 폼 값)"
 route -> db: "tripPlanStatus.upsert\n(processing, Restarting...)"

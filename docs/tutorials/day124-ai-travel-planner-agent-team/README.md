@@ -1,6 +1,6 @@
 # Day 124 · 🌏 AI Travel Planner Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(앱이 쓰는 모델 `google/gemini-2.0-flash-001`은 Google 폐기 문서에 종료일 2026-06-01로 올라 있고 OpenRouter의 오늘 모델 목록에도 없으며, `uv sync`가 오늘 풀어내는 환경은 import조차 되지 않는다) · 예상 소요 180분(앱은 `backend/`와 `client/` 두 덩어리에 파일이 92개지만 여행 계획 요청 하나가 지나가는 길만 따라가고, 설치를 세 번 고쳐야 하고, 가짜 서버 셋과 대역 DB를 세워 터미널 둘로 돌려 보고, 실패 경로 넷을 일부러 일으켜 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 한 번에 $0.1 이하 — 모델 부분만의 어림입니다. 가짜 서버가 받은 모델 요청 12건의 본문이 합쳐 228,213자(4자당 1토큰으로 어림잡아 입력 5.7만 토큰)였고, 대체 모델로 쓸 `google/gemini-3.6-flash`는 OpenRouter 모델 목록(https://openrouter.ai/api/v1/models, 2026-10-10 확인)에서 입력 $0.75·출력 $3.75/1M 토큰입니다. 출력 길이와 실제 Exa·Firecrawl 도구 결과의 크기, 두 서비스의 요금은 확인하지 못했습니다. 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(앱이 쓰는 모델 `google/gemini-2.0-flash-001`은 Google 폐기 문서에 종료일 2026-06-01로 올라 있고 OpenRouter의 오늘 모델 목록에도 없으며, `uv sync`가 오늘 풀어내는 환경은 import조차 되지 않는다) · 예상 소요 200분(앱은 `backend/`와 `client/` 두 덩어리에 파일이 92개지만 여행 계획 요청 하나가 지나가는 길만 따라가고, 설치를 세 번 고쳐야 하고, 가짜 서버 셋과 대역 DB를 세워 터미널 둘로 돌려 보고, 실패 경로 넷을 일부러 일으켜 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 한 번에 $0.1 이하 — 모델 부분만의 어림입니다. 가짜 서버가 받은 모델 요청 12건의 본문(`json.dumps`한 요청 전체)이 합쳐 78,164자(4자당 1토큰으로 어림잡아 입력 약 2만 토큰)였고, 대체 모델로 쓸 `google/gemini-3.6-flash`는 OpenRouter 모델 목록(https://openrouter.ai/api/v1/models, 2026-10-10 확인)에서 입력 $0.75·출력 $3.75/1M 토큰입니다. 출력 길이와 실제 Exa·Firecrawl 도구 결과의 크기, 두 서비스의 요금은 확인하지 못했습니다. 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team`
 
 ## 오늘 만들 것
 
@@ -42,6 +42,9 @@ $env:PYTHONIOENCODING = "utf-8"
 | 일곱 단계 폼 (`client/app/plan/page.tsx`) | 폼 값을 모아 `/api/plan/submit`에 POST하고 1.5초 뒤 `/plan/{id}`로 넘어간다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/plan/page.tsx:285-318` |
 | 제출 라우트 (`client/app/api/plan/submit/route.ts`) | 폼 값을 `trip_plan`에 저장하고, 같은 값을 백엔드 `/api/plan/trigger`로 보낸다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/api/plan/submit/route.ts:29-154` |
 | 상세 화면 (`client/app/plan/[id]/page.tsx`) | 5초마다 `/api/plans/{id}`를 읽고, 완료되면 결과 JSON을 두 번 파싱해 그린다. 실패하면 재시도 버튼 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/plan/[id]/page.tsx:224-410` |
+| 폴링 라우트 (`client/app/api/plans/[id]/route.ts`) | 상세 화면이 5초마다 부르는 GET. `tripPlan.findUnique`로 계획과 상태·결과를 읽어 돌려준다(DELETE도 있음) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/api/plans/[id]/route.ts:4-46` |
+| 로그인 가드 (`client/middleware.ts`) | `/plan`에 `matcher`가 걸려 better-auth 세션이 없으면 `/auth`로 보낸다. 폼에 닿기 전에 로그인이 필요하다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/middleware.ts:5-33` |
+| 나머지 클라이언트 | 인증 화면(`app/auth/page.tsx`)·인증 라우트(`app/api/auth/[...all]/route.ts`, `lib/auth.ts`), 계획 목록(`app/plans/page.tsx`·`app/api/plans/route.ts`), 첫 화면(`app/page.tsx`), UI 부품(`components/`), 스키마 SQL(`client/schema.sql`)과 Prisma 마이그레이션(`prisma/migrations/`). 요청 경로 밖이라 다루지 않는다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/plans/page.tsx:1-389` |
 | 재시도 라우트 | 상태 행을 `processing`으로 바꾸고 저장된 폼 값으로 백엔드를 다시 부른다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/api/plans/[id]/retry/route.ts:1-139` |
 | Prisma 스키마 | 사용자·세션(better-auth)과 `trip_plan`·`trip_plan_status`·`trip_plan_output`·`plan_tasks` | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/prisma/schema.prisma:1-162` |
 | FastAPI 앱 (`api/app.py`) | 시작할 때 DB 풀을 만들고, CORS를 모두 허용하고, `/api/health`와 `/api/plan/trigger`를 단다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/api/app.py:12-55` |
@@ -51,7 +54,7 @@ $env:PYTHONIOENCODING = "utf-8"
 | 변환 에이전트 | 앞 다섯 글을 `TravelPlanTeamResponse` 스키마의 JSON 문자열로 바꾼다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/structured_output.py:36-127` |
 | `Team` | 만들어지기만 하고 `run`되지 않는다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/team.py:22-321` |
 | 모델 설정 | OpenRouter 모델 셋. 쓰이는 것은 `model` 하나 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/config/llm.py:8-12` |
-| 앱 도구 셋 | 구글 항공편 조회, Kayak 호텔·항공 URL 만들기, Firecrawl 스크랩 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/google_flight.py:8-52`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/kayak_hotel.py:7-56`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/kayak_flight.py:7-59`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:7-34` |
+| 앱 도구 넷 | 구글 항공편 조회, Kayak 호텔·항공 URL 만들기, Firecrawl 스크랩 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/google_flight.py:8-52`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/kayak_hotel.py:7-56`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/kayak_flight.py:7-59`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:7-34` |
 | DB 서비스·저장소 | SQLAlchemy 비동기 엔진, 세션, 작업·상태·결과 행 읽고 쓰기 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/services/db_service.py:24-101`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/repository/plan_task_repository.py:11-76`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/repository/trip_plan_repository.py:11-152` |
 | 마이그레이션 SQL | 백엔드 쪽 표 정의. Prisma 스키마와 겹친다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/migrations/create_plan_tasks_table.sql:1-34`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/migrations/create_trip_plan_tables.sql:1-50` |
 | 곁가지 스크립트 | `broswer.py`는 호텔 에이전트를 import하자마자 돌린다(브라우저를 쓰지 않는다). `travel_planning_team.py`는 import하자마자 구글 항공편을 조회한다. 둘 다 요청 경로 밖이다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/broswer.py:1-54`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/travel_planning_team.py:1-14` |
@@ -66,9 +69,13 @@ $env:PYTHONIOENCODING = "utf-8"
 
 ![에이전트와 도구](diagrams/extra-tools.svg)
 
-도구가 바깥으로 보내는 요청은 아래 그림입니다. Kayak URL 도구는 문자열만 만들어 외부로 나가는 선이 없습니다.
+도구가 바깥으로 보내는 요청과, 에이전트가 OpenRouter·agno 통계 API로 보내는 요청은 아래 그림입니다. 모델 요청은 에이전트 일곱 모두에서 나가고, 통계는 `AGNO_TELEMETRY`를 끄지 않으면 에이전트 일곱 모두가 보내려 합니다(Step 7). Kayak URL 도구는 문자열만 만들어 외부로 나가는 선이 없습니다.
 
-![도구와 외부 서비스](diagrams/extra-externals.svg)
+![도구·모델·통계와 외부 서비스](diagrams/extra-externals.svg)
+
+`Team`이 어디에 있는지는 아래 그림입니다. 정의 파일은 import되고 멤버로 여섯을 갖지만, 서비스가 부르는 것은 `Team`이 아니라 에이전트 여섯입니다.
+
+![Team과 에이전트](diagrams/extra-team.svg)
 
 ## 단계별 진행
 
@@ -86,7 +93,7 @@ uv pip install -U google-genai "firecrawl-py>=3"
 
 (pip 대안은 `pip install -r`로 풀 수 없습니다. 이 폴더에는 `requirements.txt`가 없고 `pyproject.toml`과 `uv.lock`뿐이기 때문입니다. PowerShell도 같은 세 줄입니다. `cd`만 `\`로 쓰면 됩니다. 실행해 보지 못했습니다.) 이 문서의 출력은 저장소 안의 폴더에 `.venv`를 만들지 않으려고 폴더를 스크래치로 복사해 `UV_PROJECT_ENVIRONMENT`로 가상환경 위치를 따로 준 환경에서 얻었습니다. 같은 명령을 앱 폴더에서 돌리면 `backend/.venv`가 생기는데 이 경로는 저장소의 `.gitignore`에 있습니다(`git check-ignore`로 직접 확인). 대신 `uv.lock`이 고쳐 쓰입니다. 아래 둘째 단락의 까닭 때문입니다.
 
-의존성은 `pyproject.toml`이 정합니다. 열다섯 개 가운데 요청 경로에 쓰이는 것은 `agno`, `fastapi`, `uvicorn`, `sqlalchemy`, `asyncpg`(DB 드라이버), `exa-py`, `firecrawl-py`, `fast-flights`, `loguru`, `python-dotenv`, `pydantic`, `cuid2`입니다. `boto3`·`mem0ai`는 코드 어디에도 import되지 않고, `google-genai`는 쓰지 않는 Gemini 클래스를 agno가 불러오는 바람에 필요합니다(Step 2).
+의존성은 `pyproject.toml`이 정합니다. 열다섯 개 가운데 요청 경로에 쓰이는 것은 `agno`, `fastapi`, `uvicorn`, `sqlalchemy`, `asyncpg`(DB 드라이버), `exa-py`, `firecrawl-py`, `fast-flights`, `loguru`, `python-dotenv`, `pydantic`, `cuid2`입니다. `boto3`·`mem0ai`는 코드 어디에도 import되지 않고, `google-genai`는 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/config/llm.py:1`이 쓰지도 않는 Gemini 클래스를 불러오고 agno 3.1.2의 그 클래스가 새 `google-genai`를 요구해서 필요합니다(Step 2).
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/pyproject.toml:1-23`
 
@@ -127,6 +134,8 @@ Resolved 91 packages in 369ms
 error: The lockfile at `uv.lock` needs to be updated, but `--locked` was provided. To update the lockfile, run `uv lock`.
 ```
 
+(위는 uv 0.7.2의 문구입니다. uv 0.11.33은 같은 잠금에 `error: The lockfile at uv.lock needs to be updated, but --check was provided.`와 `hint: To update the lockfile, run uv lock.`을 냅니다. 둘 다 직접 확인했습니다.)
+
 두 길이 있고 둘 다 막힙니다. 잠금 그대로(`uv sync --frozen`) 설치하면 `agno` 1.5.6이 들어오고, 앱은 첫 에이전트 파일에서 멈춥니다(`agno` 2.x 이후의 이름 `add_datetime_to_context`를 씀: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/destination.py:63`). 잠금을 갱신하는 `uv sync`는 `agno`를 3.1.2로 올리지만 잠금에 있던 `google-genai`·`firecrawl-py` 같은 패키지는 그대로 둡니다. 그러면 세 곳에서 막힙니다. 직접 확인한 출력입니다(`uv sync --frozen` 환경의 `import agents.destination`, `uv sync` 환경의 `import config.llm`과 `import agents.destination` 끝 줄).
 
 ```text
@@ -135,7 +144,7 @@ ImportError: `google-genai` not installed or not at the latest version. Please i
 ImportError: `firecrawl-py` not installed. Please install using `pip install firecrawl-py`
 ```
 
-첫 줄이 `--frozen`, 나머지 둘이 `uv sync` 환경입니다. 둘째 줄은 `config/llm.py`의 첫 줄이 쓰지 않는 `Gemini`를 불러와서 나고(잠금의 `google-genai` 1.18.0이 agno 3.1.2가 요구하는 이름 `FileSearch`를 갖지 못함), 셋째 줄은 `agno.tools.firecrawl`이 `from firecrawl.types import ScrapeOptions`를 하는데 잠금의 `firecrawl-py` 2.7.1에 `firecrawl.types`가 없어서 납니다. 위 명령의 `uv pip install -U`가 이 둘을 올립니다. 그런데 올리면 **앱 자신의** import가 새로 막힙니다.
+첫 줄이 `--frozen`, 나머지 둘이 `uv sync` 환경입니다(첫 줄은 이 Step 끝의 가짜 키를 셸에 둔 상태에서 나오고, 키가 없으면 그보다 먼저 `ValueError: API key must be provided as an argument or in EXA_API_KEY environment variable`로 멈춥니다. 직접 확인). 둘째 줄은 `config/llm.py`의 첫 줄이 쓰지 않는 `Gemini`를 불러와서 나고(잠금의 `google-genai` 1.18.0이 agno 3.1.2가 요구하는 이름 `FileSearch`를 갖지 못함), 셋째 줄은 `agno.tools.firecrawl`이 `from firecrawl.types import ScrapeOptions`를 하는데 잠금의 `firecrawl-py` 2.7.1에 `firecrawl.types`가 없어서 납니다. 위 명령의 `uv pip install -U`가 이 둘을 올립니다. 그런데 올리면 **앱 자신의** import가 새로 막힙니다.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:1`
 
@@ -143,7 +152,7 @@ ImportError: `firecrawl-py` not installed. Please install using `pip install fir
 from firecrawl import FirecrawlApp, ScrapeOptions
 ```
 
-`firecrawl-py` 4.50.0에는 이 이름이 없고(`V1ScrapeOptions`로 바뀜) `FirecrawlApp`도 새 클래스라 `scrape_url`이 없습니다. 어느 버전이 둘을 함께 만족하는지 찾아봤습니다. 2.7.1·2.16.0·2.16.5는 앱이 쓰는 이름과 `scrape_url`이 있지만 `firecrawl.types`가 없고, 3.0.2·3.0.3·3.4.0·4.0.0·4.50.0은 `firecrawl.types`가 있지만 `from firecrawl import ScrapeOptions`와 `FirecrawlApp.scrape_url`이 없습니다(직접 확인). agno 쪽도 시험한 일곱 버전(2.0.0·2.2.10·2.3.23·2.3.24·2.6.22·3.0.0·3.1.2) 모두 `firecrawl.types`를 요구해 agno를 내려도 풀리지 않습니다(2.0.0·2.2.10·2.3.23·3.1.2는 import를 해 봤고 2.3.24·2.6.22·3.0.0은 소스를 읽어 확인). 그래서 앱 파일을 고치지 않고 풀려면 별칭이 필요합니다. 4.x에는 옛 API가 `V1FirecrawlApp`·`V1ScrapeOptions`로 남아 있습니다. 별칭 파일을 `backend/`에 둡니다. 앱보다 **먼저** import해야 하고, agno가 새 `FirecrawlApp`을 먼저 잡게 하려고 `agno.tools.firecrawl`을 그 안에서 import합니다.
+`firecrawl-py` 4.50.0에는 이 이름이 없고(`V1ScrapeOptions`로 바뀜) `FirecrawlApp`도 새 클래스라 `scrape_url`이 없습니다. 어느 버전이 둘을 함께 만족하는지 찾아봤습니다. 2.7.1·2.16.0·2.16.5는 앱이 쓰는 이름과 `scrape_url`이 있지만 `firecrawl.types`가 없고, 3.0.2·3.0.3·3.4.0·4.0.0·4.50.0은 `firecrawl.types`가 있지만 `from firecrawl import ScrapeOptions`와 `FirecrawlApp.scrape_url`이 없습니다(직접 확인). agno 쪽도 시험한 일곱 버전(2.0.0·2.2.10·2.3.23·2.3.24·2.6.22·3.0.0·3.1.2) 모두 `firecrawl.types`를 요구해 agno를 내려도 풀리지 않습니다(2.0.0·2.2.10·2.3.23·3.1.2는 import를 해 봤고 2.3.24·2.6.22·3.0.0은 소스를 읽어 확인). 그래서 앱 파일을 고치지 않고 풀려면 별칭이 필요합니다. 4.x에는 옛 API가 `V1FirecrawlApp`·`V1ScrapeOptions`로 남아 있습니다. 별칭 파일 `shim.py`를 `backend/`에 둡니다. 앱보다 **먼저** import해야 하고, agno가 새 `FirecrawlApp`을 먼저 잡게 하려고 `agno.tools.firecrawl`을 그 안에서 import합니다.
 
 ```python
 # firecrawl-py 3.x 이상에서도 앱의 옛 import(tools/scrape.py:1)가 되게 하는 별칭이다. 앱 파일은 고치지 않는다.
@@ -230,7 +239,21 @@ model_zero = OpenRouter(
 )
 ```
 
-주석 처리된 5·6행은 Gemini·OpenAI 직접 호출이고 실제로는 모두 OpenRouter 경유입니다. 쓰이는 것은 `model`(8행) 하나입니다. `model2`는 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/team.py:2`가 import만 하고 쓰지 않으며, `model_zero`는 아무도 쓰지 않습니다(`grep -rn "model2\|model_zero" --include=*.py .`로 직접 확인). `agno`의 `OpenRouter`는 `base_url`이 `https://openrouter.ai/api/v1`이고 키는 `OPENROUTER_API_KEY`에서 읽습니다(agno 3.1.2 소스로 확인). 같은 방식으로 `.env.example`의 변수 열 개 가운데 코드가 읽는 것을 세어 봤습니다.
+주석 처리된 5·6행은 Gemini·OpenAI 직접 호출이고 실제로는 모두 OpenRouter 경유입니다. 쓰이는 것은 `model`(8행) 하나입니다. `model2`는 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/team.py:2`가 import만 하고 쓰지 않으며, `model_zero`는 아무도 쓰지 않습니다(`--exclude-dir=.venv`를 붙인 `grep`으로 직접 확인. 출력은 아래와 같고, 앞 Step에서 만든 `.venv`를 빼지 않으면 패키지 파일까지 걸립니다). `agno`의 `OpenRouter`는 `base_url`이 `https://openrouter.ai/api/v1`이고 키는 `OPENROUTER_API_KEY`에서 읽습니다(agno 3.1.2 소스로 확인).
+
+```bash
+grep -rn "model2\|model_zero" --include=*.py --exclude-dir=.venv .
+```
+
+```text
+./agents/team.py:2:from config.llm import model, model2
+./broswer.py:20:#     model=model2,
+./config/llm.py:6:# model2 = OpenAIChat(id="gpt-4o", temperature=0.1)
+./config/llm.py:9:model2 = OpenRouter(id="openai/gpt-4o", temperature=0.1)
+./config/llm.py:10:model_zero = OpenRouter(
+```
+
+같은 방식으로 `.env.example`의 변수 열 개 가운데 코드가 읽는 것을 세어 봤습니다.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/.env.example:1-20`
 
@@ -257,7 +280,7 @@ CLOUDFLARE_R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
 EXA_API_KEY=EXA_API_KEY
 ```
 
-`DATABASE_URL`(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/services/db_service.py:24`), `OPENROUTER_API_KEY`(agno), `EXA_API_KEY`(agno의 `ExaTools`), `FIRECRAWL_API_KEY`(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:7`) 넷만 쓰입니다. 나머지 여섯 — `OPENAI_API_KEY`, `BRIGHT_DATA_*` 둘, `CLOUDFLARE_*` 셋 — 은 어떤 `.py`에서도 읽지 않습니다(`grep -rniE "OPENAI_API_KEY|BRIGHT_DATA|CLOUDFLARE|boto3|mem0" --include=*.py .`가 아무것도 내놓지 않음, 직접 확인). 앱 README의 "Gemini (LLM)"도 정확하지 않습니다. 모델 제공자는 OpenRouter이고 Gemini는 그 뒤의 모델 이름입니다.
+`DATABASE_URL`(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/services/db_service.py:24`), `OPENROUTER_API_KEY`(agno), `EXA_API_KEY`(agno의 `ExaTools`), `FIRECRAWL_API_KEY`(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:7`) 넷만 쓰입니다. 나머지 여섯 — `OPENAI_API_KEY`, `BRIGHT_DATA_*` 둘, `CLOUDFLARE_*` 셋 — 은 어떤 `.py`에서도 읽지 않습니다(`grep -rniE "OPENAI_API_KEY|BRIGHT_DATA|CLOUDFLARE|boto3|mem0" --include=*.py --exclude-dir=.venv .`가 아무것도 내놓지 않음, 직접 확인. `--exclude-dir=.venv`를 빼면 `.venv/…/agno/cloud/aws/base.py`의 `boto3` 같은 패키지 파일이 수백 줄 걸립니다). 앱 README의 "Gemini (LLM)"도 정확하지 않습니다. 모델 제공자는 OpenRouter이고 Gemini는 그 뒤의 모델 이름입니다.
 
 에이전트 하나는 이렇게 만들어집니다. 목적지 에이전트입니다.
 
@@ -284,7 +307,11 @@ destination_agent = Agent(
     exponential_backoff=True,
 ```
 
-`retries`·`delay_between_retries`·`exponential_backoff`가 실패 때의 재시도를 정합니다(Step 7에서 몇 번 더 요청하는지 셉니다). 구성을 읽는 스크립트는 `backend/`에 둡니다. 앞 Step의 `shim`을 먼저 import합니다.
+`retries`·`delay_between_retries`·`exponential_backoff`가 실패 때의 재시도를 정합니다(Step 7에서 몇 번 더 요청하는지 셉니다). 
+
+![Step 2까지의 구성](diagrams/step2.svg)
+
+**확인.** 구성을 읽는 스크립트는 `backend/`에 둡니다. 앞 Step의 `shim`을 먼저 import합니다.
 
 ```python
 # backend/ 에서 실행. 에이전트 구성을 읽기만 한다(모델은 부르지 않는다).
@@ -325,11 +352,12 @@ Team: TripCraft AI Team | members: ['Destination Explorer', 'Hotel Search Assist
 **`Team`은 일하지 않습니다.** 마지막 줄의 `TripCraft AI Team`은 `coordinate` 모드로 여섯을 멤버로 갖도록 만들어졌지만, 요청 경로에서 `run`되는 곳이 없습니다.
 
 ```bash
-grep -rn "trip_planning_team" --include=*.py .
+grep -rn "trip_planning_team" --include=*.py --exclude-dir=.venv .
 ```
 
 ```text
 ./agents/team.py:22:trip_planning_team = Team(
+./check_agents.py:3:from agents.team import trip_planning_team as team
 ./services/plan_service.py:11:from agents.team import trip_planning_team
 ./services/plan_service.py:172:        # ai_response = await trip_planning_team.arun(prompt)
 ```
@@ -343,8 +371,6 @@ gemini-2.0-flash-001 | February 5, 2025 | June 1, 2026 | gemini-3.6-flash
 ```
 
 머리는 `Model | Release date | Shutdown date | Recommended replacement`입니다. OpenRouter의 공개 모델 목록(https://openrouter.ai/api/v1/models, 2026-10-10 확인, 458개)에는 `google/gemini-2.0-flash-001`이 없고 `google/gemini-2.0`으로 시작하는 ID가 하나도 없습니다(직접 확인). 키가 없어 실제 요청이 어떤 오류를 돌려주는지는 보지 못했습니다. `model2`의 `openai/gpt-4o`는 목록에 있고($2.5·$10/1M) OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-10 확인)에서 `gpt-4o`는 대체 모델 칸에만 나옵니다. 쓰이는 것은 `model`뿐이라 바꿔야 하는 것은 8행의 ID 하나입니다. 복사본에서 8행과 11행의 ID를 `google/gemini-3.6-flash`로 바꾸고 같은 흐름을 돌리자 모델 요청 12건이 모두 새 ID로 나갔습니다(Step 5의 가짜 서버 로그로 직접 확인).
-
-![Step 2까지의 구성](diagrams/step2.svg)
 
 ### Step 3. 도구 — 항공편 조회는 실패를 삼키고, 호텔 URL은 문자열일 뿐입니다
 
@@ -375,7 +401,7 @@ gemini-2.0-flash-001 | February 5, 2025 | June 1, 2026 | gemini-3.6-flash
         return []
 ```
 
-두 가지를 봅니다. 첫째, `except Exception`이 **모든 예외를** 로그 한 줄로 바꾸고 빈 목록을 돌려줍니다. 모델은 "조회 실패"와 "항공편 없음"을 구별할 수 없습니다. 둘째, `fetch_mode="fallback"`이 무엇을 하는지는 설치된 `fast-flights` 2.2의 소스(`core.py`·`fallback_playwright.py`)로 확인했습니다. 먼저 `https://www.google.com/travel/flights`를 `verify=False`(TLS 인증서 검증 끔)로 가져오고, 응답이 200이 아니면 두 번째 길로 갑니다. `https://try.playwright.tech/service/control/run`에 파이썬 코드와 조회 주소(출발·도착 공항, 날짜, 승객 수가 인코딩되어 들어 있음)를 POST해 제3자 서비스가 브라우저를 대신 돌리게 합니다. 이 문서는 어느 쪽도 부르지 않았습니다. `fast-flights`의 요청은 파이썬 소켓이 아니라 Rust 기반 클라이언트(`primp`)가 보내 파이썬 쪽에서 막을 수 없으므로(프록시 환경변수가 통한다는 보장도 없습니다), 실제 함수는 한 번도 부르지 않고 `get_flights`를 대역으로 바꿨습니다.
+두 가지를 봅니다. 첫째, `except Exception`이 **모든 예외를** 로그 한 줄로 바꾸고 빈 목록을 돌려줍니다. 모델은 "조회 실패"와 "항공편 없음"을 구별할 수 없습니다. 둘째, `fetch_mode="fallback"`이 무엇을 하는지는 설치된 `fast-flights` 2.2의 소스(`core.py`·`fallback_playwright.py`)로 확인했습니다. 먼저 `https://www.google.com/travel/flights`를 `verify=False`(TLS 인증서 검증 끔)로 가져오고, 응답이 200이 아니면 두 번째 길로 가고, 200이어도 응답에서 항공편을 읽지 못하면(`parse_response`가 `No flights found`로 `RuntimeError`) `fetch_mode`가 `fallback`일 때 같은 두 번째 길로 다시 갑니다(`core.py`·`fallback_playwright.py`). `https://try.playwright.tech/service/control/run`에 파이썬 코드와 조회 주소(출발·도착 공항, 날짜, 승객 수가 인코딩되어 들어 있음)를 POST해 제3자 서비스가 브라우저를 대신 돌리게 합니다. 이 문서는 어느 쪽도 부르지 않았습니다. `fast-flights`의 요청은 파이썬 소켓이 아니라 Rust 기반 클라이언트(`primp`)가 보내 파이썬 쪽에서 막을 수 없으므로(프록시 환경변수가 통한다는 보장도 없습니다), 실제 함수는 한 번도 부르지 않고 `get_flights`를 대역으로 바꿨습니다.
 
 호텔 도구는 외부로 나가지 않습니다.
 
@@ -416,14 +442,18 @@ Kayak 주소를 문자열로 이어 붙일 뿐입니다. 호텔 에이전트의 
     return scrape_status.markdown
 ```
 
-`wait_for=30000`·`timeout=60000`이라 한 번에 최대 1분 넘게 걸릴 수 있습니다. `kayak_flight.py`의 항공 URL 도구는 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/flight.py:10-11`에서 주석 처리되어 에이전트가 쓰지 않습니다. 네 도구를 모델 없이 직접 부르는 스크립트입니다. 가짜 Firecrawl 서버(아래 Step 4의 `fake_services.py`)가 떠 있어야 마지막 줄이 됩니다. 이 서버를 먼저 띄웁니다. 포트는 49152~65535 중 다른 프로그램이 쓰지 않는 번호를 고르세요(이 문서는 53417).
+`wait_for=30000`·`timeout=60000`이라 한 번에 최대 1분 넘게 걸릴 수 있습니다. `kayak_flight.py`의 항공 URL 도구는 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/flight.py:10-11`에서 주석 처리되어 에이전트가 쓰지 않습니다. 
+
+![Step 3까지의 구성](diagrams/step3.svg)
+
+**확인.** 도구를 모델 없이 직접 부르는 스크립트입니다. 가짜 Firecrawl 서버(아래 Step 4의 `fake_services.py`)가 떠 있어야 마지막 줄이 됩니다. 이 서버를 먼저 띄웁니다. 포트는 49152~65535 중 다른 프로그램이 쓰지 않는 번호를 고르세요(이 문서는 53417).
 
 ```bash
 uv run --no-project python fake_services.py 53417 fake.jsonl mode.txt
 ```
 
 ```python
-# backend/ 에서 실행한다. 도구 셋을 모델 없이 직접 부른다. 사용: python check_tools.py <가짜 서버 포트>
+# backend/ 에서 실행한다. 도구 넷을 모델 없이 직접 부른다. 사용: python check_tools.py <가짜 서버 포트>
 import os, sys
 FAKE = f"http://127.0.0.1:{sys.argv[1]}"
 os.environ["FIRECRAWL_API_URL"] = FAKE
@@ -457,6 +487,13 @@ export FIRECRAWL_API_KEY=fc-fake EXA_API_KEY=exa-fake
 uv run --no-project python check_tools.py 53417
 ```
 
+```powershell
+$env:FIRECRAWL_API_KEY = "fc-fake"; $env:EXA_API_KEY = "exa-fake"
+uv run --no-project python check_tools.py 53417
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다.)
+
 직접 확인한 출력입니다(앞의 `INFO` 로그 줄들은 뺐고, 오류 로그 한 줄은 맨 앞에 나왔습니다).
 
 ```text
@@ -474,8 +511,6 @@ https://www.kayak.com/flights/BOM-SIN/2026-12-01/2026-12-10/business/2adults/chi
 ```
 
 도구 설명문이 예시로 든 `City Center, Singapore`는 공백과 쉼표가 그대로 주소에 들어갑니다(실제 Kayak이 이 주소를 받아 주는지는 확인하지 못했습니다). 항공 URL의 `children-11`은 아이마다 나이 11을 박아 넣은 코드(`kayak_flight.py:47-50`)입니다. 가짜 Firecrawl 서버가 받은 요청 본문은 `{"url": …, "origin": "python-sdk@None", "formats": ["markdown"], "waitFor": 30000, "timeout": 60000}`였습니다(`fake.jsonl`).
-
-![Step 3까지의 구성](diagrams/step3.svg)
 
 ### Step 4. 백엔드 입구 — DB가 없으면 서버가 뜨지 않습니다
 
@@ -566,7 +601,7 @@ uv run --no-project python prep_db.py fake.db
 ['plan_tasks'] ['trip_plan', 'trip_plan_output', 'trip_plan_status']
 ```
 
-두 `Base`가 따로 있어(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/models/plan_task.py:24-25`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/models/trip_db.py:13-14`) 표 만들기가 두 번 나뉩니다. 이것이 SQLite 대역이라는 점을 분명히 합니다. Postgres의 `plan_task_status` 열거형, `trip_plan_status.tripPlanId`의 UNIQUE·외래 키(Prisma 스키마의 `@unique`와 `trip_plan`으로의 참조, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/prisma/schema.prisma:79-105`)는 만들어지지 않았고, 따라서 이 문서가 보는 동작에는 들어 있지 않습니다. 이제 서버를 띄웁니다. 앞 Step의 가짜 서버가 떠 있어야 합니다. 서버를 바깥으로 안내하는 대역은 `run_backend.py`입니다. 앱의 `main`을 고치지 않고 가져온 뒤 모델·Exa·Firecrawl 주소를 가짜 서버로 돌리고, 구글 항공편 조회를 인자를 기록하는 대역으로 바꾸고, 루프백에만 엽니다.
+두 `Base`가 따로 있어(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/models/plan_task.py:24-25`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/models/trip_db.py:13-14`) 표 만들기가 두 번 나뉩니다. 이것이 SQLite 대역이라는 점을 분명히 합니다. 실제 PostgreSQL에서는 `trip_plan_status`·`trip_plan_output`이 `trip_plan`을 외래 키로 참조하므로(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/schema.sql:14`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/schema.sql:26`) 이 문서처럼 지어낸 `trip_plan_id`로 백엔드를 직접 부르면 `create_trip_plan_status`가 외래 키 위반으로 실패해 계획이 돌지 않습니다. `trip_plan` 행이 먼저 있어야 하고, 클라이언트의 제출 라우트가 그 행을 만듭니다. 마이그레이션의 `error_message VARCHAR(500)`(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/migrations/create_plan_tasks_table.sql:12`)도 SQLite에는 길이 제한이 없습니다. 이 문서가 보여 주는 호출 순서·누락·두 겹 JSON·`error` 잔존은 이 대체로 바뀌지 않습니다(같은 모델 정의로 재현). Postgres의 `plan_task_status` 열거형, `trip_plan_status.tripPlanId`의 UNIQUE·외래 키(Prisma 스키마의 `@unique`와 `trip_plan`으로의 참조, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/prisma/schema.prisma:79-105`)는 만들어지지 않았고, 따라서 이 문서가 보는 동작에는 들어 있지 않습니다. 이제 서버를 띄웁니다. 앞 Step의 가짜 서버가 떠 있어야 합니다. 서버를 바깥으로 안내하는 대역은 `run_backend.py`입니다. 앱의 `main`을 고치지 않고 가져온 뒤 모델·Exa·Firecrawl 주소를 가짜 서버로 돌리고, 구글 항공편 조회를 인자를 기록하는 대역으로 바꾸고, 루프백에만 엽니다.
 
 ```python
 # backend/ 에서 실행한다. main.py를 고치지 않고 그대로 import한 뒤, 바깥으로 나가는 주소만 가짜 서버로 돌리고 127.0.0.1에만 연다.
@@ -633,7 +668,12 @@ N = [0]
 
 def mode():
     try:
-        return open(MODE_FILE, encoding="utf-8").read().strip() if MODE_FILE else "ok"
+        if not MODE_FILE:
+            return "ok"
+        raw = open(MODE_FILE, "rb").read()
+        # PowerShell 5.1의 `>`는 UTF-16(BOM)으로 쓴다. 둘 다 읽는다.
+        text = raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8-sig")
+        return text.strip()
     except OSError:
         return "ok"
 
@@ -747,7 +787,9 @@ ThreadingHTTPServer.allow_reuse_address = False   # 다른 프로세스가 쓰�
 ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
 ```
 
-서버를 띄웁니다. 이 문서의 가짜 서버는 53417, 백엔드는 53418이었습니다.
+![Step 4까지의 구성](diagrams/step4.svg)
+
+**확인.** 서버를 띄웁니다. 이 문서의 가짜 서버는 53417, 백엔드는 53418이었습니다.
 
 ```bash
 export FIRECRAWL_API_KEY=fc-fake EXA_API_KEY=exa-fake OPENROUTER_API_KEY=or-fake AGNO_TELEMETRY=false
@@ -844,7 +886,7 @@ ERROR:    Application startup failed. Exiting.
         )
 ```
 
-순서를 봅니다. 요청 본문(`TravelPlanAgentRequest`)을 받아, 작업 행을 `queued`로 만들고(36~40행), 백그라운드 작업을 만들고(67행), 곧바로 `success: True`를 돌려줍니다(73~77행). 에이전트는 응답이 나간 **뒤에** 돕니다. 71~77행의 응답에는 계획이 없고 `trip_plan_id`뿐입니다. 클라이언트가 보낼 본문은 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/api/plan/submit/route.ts:80-109`에 있고, 값 이름을 `snake_case`로 바꿉니다. 같은 모양의 본문을 직접 만들었습니다(이름·도시는 지어낸 값입니다).
+순서를 봅니다. 요청 본문(`TravelPlanAgentRequest`)을 받아, 작업 행을 `queued`로 만들고(36~40행), 백그라운드 작업을 만들고(67행), 곧바로 `success: True`를 돌려줍니다(73~77행). 에이전트는 응답이 나간 **뒤에** 돕니다. 73~77행의 응답에는 계획이 없고 `trip_plan_id`뿐입니다. 클라이언트가 보낼 본문은 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/api/plan/submit/route.ts:80-109`에 있고, 값 이름을 `snake_case`로 바꿉니다. 같은 모양의 본문을 직접 만들었습니다(이름·도시는 지어낸 값입니다).
 
 ```json
 {
@@ -882,12 +924,18 @@ ERROR:    Application startup failed. Exiting.
 curl -s -w "\nHTTP %{http_code} in %{time_total}s\n" -X POST http://127.0.0.1:53418/api/plan/trigger -H "Content-Type: application/json" --data-binary @request.json
 ```
 
+```powershell
+curl.exe -s -w "\nHTTP %{http_code} in %{time_total}s\n" -X POST http://127.0.0.1:53418/api/plan/trigger -H "Content-Type: application/json" --data-binary '@request.json'
+```
+
+(PowerShell에서는 `@request.json`을 따옴표로 감싸야 합니다. 실행해 보지 못했습니다.)
+
 ```text
 {"success":true,"message":"Travel plan agent triggered successfully","trip_plan_id":"trip-demo-001"}
 HTTP 200 in 0.013168s
 ```
 
-응답은 0.013초였습니다. 이 사이 DB에는 작업 행 하나(`in_progress`)가 생깁니다. 계획은 Step 5에서 봅니다.
+응답은 0.013초였습니다. 이 사이 DB에는 작업 행이 `queued`로 만들어지고, 응답이 나간 뒤 백그라운드에서 `in_progress`가 됩니다. 계획은 Step 5에서 봅니다.
 
 **배포 파일은 이 코드를 담지 못합니다.** `Dockerfile`이 복사하는 경로를 앱 폴더에서 찾아봤습니다(직접 확인).
 
@@ -907,8 +955,6 @@ for p in app/ agents/ config/ models/ routers/ services/ api.py server.py; do [ 
 ```
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/Dockerfile:33-39`에 `COPY app/ app/`, `COPY routers/ routers/`, `COPY api.py server.py ./`가 있는데 이 폴더와 파일은 없습니다(실제 폴더는 `api/`·`router/`이고 `main.py`가 진입점). `tools/`·`repository/`는 복사 목록에도 없고, `EXPOSE 8001`과 `gunicorn server:app`(44·47행)은 `main.py`의 8000과도 다릅니다. 이 문서는 Docker를 실행하지 않았고 `docker.sh`(이미지를 `mtwn105` 레지스트리에 푸시)도 실행하지 않았습니다.
-
-![Step 4까지의 구성](diagrams/step4.svg)
 
 ### Step 5. 계획 서비스 — 여섯 에이전트를 차례로, 그리고 변환 한 번
 
@@ -951,7 +997,7 @@ async def generate_travel_plan(request: TravelPlanAgentRequest) -> str:
         )
 ```
 
-상태 행이 없으면 만들고, `processing`으로 바꾸고, 폼 값을 마크다운으로 바꿔(`travel_request_to_markdown`, 30~128행) 모든 에이전트의 프롬프트에 붙입니다. 이름은 `title()`로, 여행 스타일·분위기·속도는 설명 문장으로 풀립니다. 아래 입력은 이 문서의 요청 본문을 이 함수에 통과시킨 앞부분입니다(변환 에이전트가 받은 글에서 가짜 서버 로그로 꺼냈습니다).
+상태 행이 없으면 만들고, `processing`으로 바꾸고, 폼 값을 마크다운으로 바꿔(`travel_request_to_markdown`, 30~128행) 모든 에이전트의 프롬프트에 붙입니다. 이름은 `title()`로, 여행 스타일·분위기·속도는 설명 문장으로 풀립니다. 아래 입력은 이 문서의 요청 본문을 이 함수에 통과시킨 앞부분입니다(목적지 에이전트가 받은 프롬프트에서 가짜 서버 로그로 꺼냈습니다).
 
 ```text
 # 🧳 Travel Plan Request
@@ -1004,7 +1050,7 @@ async def generate_travel_plan(request: TravelPlanAgentRequest) -> str:
 """
 ```
 
-`await 에이전트.arun(프롬프트)`를 하고, 결과의 **마지막 메시지의 `content`**를 `last_response_content`에 이어 붙입니다. 항공·호텔·식당·일정이 같은 모양이고(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/services/plan_service.py:219-330`), 달라지는 점은 일정(313~321행)이 지금까지 쌓인 글을 프롬프트에 함께 받는다는 것, 그리고 예산이 그 뒤에 부른다는 것입니다.
+`await 에이전트.arun(프롬프트)`를 하고, 결과의 **마지막 메시지의 `content`**를 `last_response_content`에 이어 붙입니다. 항공·호텔·식당·일정이 같은 모양이고(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/services/plan_service.py:219-330`), 달라지는 점은 일정(313~321행)이 지금까지 쌓인 글을 프롬프트에 함께 받는다는 것, 그리고 그 뒤에 예산 에이전트를 부른다는 것입니다.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/services/plan_service.py:338-364`
 
@@ -1038,7 +1084,9 @@ async def generate_travel_plan(request: TravelPlanAgentRequest) -> str:
         logger.info(f"Converted Structured Response: {json_response_output[:500]}...")
 ```
 
-예산 에이전트의 글은 `budget_response`에만 담기고 **`last_response_content`에는 이어 붙지 않습니다.** 변환(361~363행)이 받는 것은 그 변수라 예산 글은 변환 입력에 없습니다. 에이전트 일곱을 한 번 끝까지 돌려 확인합니다. 진행을 지켜볼 스크립트와 로그 요약 스크립트입니다.
+예산 에이전트의 글은 `budget_response`에만 담기고 **`last_response_content`에는 이어 붙지 않습니다.** 변환(361~363행)이 받는 것은 그 변수라 예산 글은 변환 입력에 없습니다. ![Step 5까지의 구성](diagrams/step5.svg)
+
+**확인.** 에이전트 일곱을 한 번 끝까지 돌려 확인합니다. 진행을 지켜볼 스크립트와 로그 요약 스크립트입니다.
 
 ```python
 # SQLite 파일을 읽기 전용으로 0.2초마다 보고, trip_plan_status.currentStep/status와 plan_tasks.status가 바뀔 때마다 한 줄씩 찍는다.
@@ -1084,9 +1132,20 @@ for r in rows:
 
 가짜 서버를 `FAKE_DELAY=0.3`(모델 요청마다 0.3초 지연)으로 다시 띄운 뒤 한 터미널에서 지켜보고, 다른 터미널에서 요청을 보냈습니다.
 
+앞 Step에서 띄운 가짜 서버를 끄고(Ctrl+C), Step 3의 확인이 쌓아 둔 요청 기록을 비운 뒤 다시 띄웁니다. 기록을 비우지 않으면 `summarize_log.py`의 첫 줄이 Step 3의 Firecrawl 요청이 되고 시각도 거기서부터 잽니다.
+
 ```bash
+rm -f fake.jsonl flight.jsonl
 FAKE_DELAY=0.3 uv run --no-project python fake_services.py 53417 fake.jsonl mode.txt
 ```
+
+```powershell
+Remove-Item fake.jsonl, flight.jsonl -ErrorAction SilentlyContinue
+$env:FAKE_DELAY = "0.3"
+uv run --no-project python fake_services.py 53417 fake.jsonl mode.txt
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다. 끝나면 `Remove-Item Env:FAKE_DELAY`.)
 
 ```bash
 uv run --no-project python watch_db.py fake.db 60
@@ -1191,8 +1250,6 @@ itinerary_agent_response   str
 
 세 가지를 읽습니다. 첫째, 변환 에이전트의 입력에는 예산 에이전트의 글이 없습니다(`budget False`). 그래서 `TravelPlanTeamResponse`의 `budget_insights`는 예산 에이전트의 최적화가 아니라 앞 다섯 글에서 모델이 뽑은 것입니다. 예산 글은 JSON 맨 밖의 `budget_agent_response` 문자열로만 저장됩니다. 둘째, 저장된 JSON은 두 겹입니다. 바깥 객체의 `itinerary`는 객체가 아니라 **JSON 문자열**이고(`str`), 클라이언트는 그래서 두 번 파싱합니다(Step 6). 셋째, 같은 문자열이 `plan_tasks.output_data`에도 한 번 더 저장됩니다. 이 JSON을 만드는 곳은 `plan_service.py:369-384`입니다. 호텔 에이전트의 글은 `hotel_agent_response`로 저장되지만 클라이언트는 읽지 않습니다(`client/app/plan/[id]/page.tsx:263-282`에 이 키가 없음).
 
-![Step 5까지의 구성](diagrams/step5.svg)
-
 ### Step 6. 상태 추적과 클라이언트 — 서버는 막히지 않고, 오류 문구는 화면에 닿지 않습니다
 
 **목적.** 계획이 도는 동안 백엔드가 다른 요청에 응답하는지, 클라이언트가 상태를 어떻게 읽고 보여 주는지, 재시도가 DB에 무엇을 남기는지 확인합니다. 클라이언트는 소스로 읽었고 실행하지 않았습니다.
@@ -1260,7 +1317,9 @@ itinerary_agent_response   str
 
 백엔드 상태 문자열이 화면 상태로 바뀌는 곳은 243~254행(`completed`→완료, `processing`→진행 중, `failed`→실패, 그 밖은 `pending`)입니다. 백엔드가 쓰는 `processing`·`completed`·`failed`와 맞습니다. `trip_plan_status`의 `error` 열은 클라이언트 어디서도 읽지 않습니다(`grep`으로 `status.error`·`.error`를 찾아 직접 확인: 인증 화면과 삭제 토스트의 `error`뿐). 즉 백엔드가 `error`에 쓰는 오류 문구는 화면에 닿지 않고, 실패 화면은 "Failed to Generate Trip Plan"이라는 고정 문구와 재시도 버튼뿐입니다(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/plan/[id]/page.tsx:739-781`).
 
-**계획이 도는 동안 서버는 다른 요청에 응답합니다.** 항공편 도구(`get_google_flights`)는 동기 함수입니다. 이 함수가 오래 걸리면 비동기 서버가 막힐지 시험했습니다. 대역 함수가 4초 자는 동안(`FLIGHT_DELAY=4`) 0.25초마다 건강 확인을 불렀습니다.
+![Step 6까지의 구성](diagrams/step6.svg)
+
+**확인.** **계획이 도는 동안 서버는 다른 요청에 응답합니다.** 항공편 도구(`get_google_flights`)는 동기 함수입니다. 이 함수가 오래 걸리면 비동기 서버가 막힐지 시험했습니다. 대역 함수가 4초 자는 동안(`FLIGHT_DELAY=4`) 0.25초마다 건강 확인을 불렀습니다.
 
 ```python
 # 0.25초마다 /api/health를 불러 응답 시간을 기록한다. 사용: python probe_health.py <포트> <초>
@@ -1280,10 +1339,32 @@ while time.time() - t0 < secs:
 print("calls:", n, "slow(>0.5s) [시작초, 걸린초]:", slow)
 ```
 
+백엔드를 `FLIGHT_DELAY=4`로 다시 띄웁니다(가짜 서버는 그대로).
+
 ```bash
-FLIGHT_DELAY=4 uv run --no-project python run_backend.py 53418 53417   # 서버를 이렇게 띄운 뒤
+FLIGHT_DELAY=4 uv run --no-project python run_backend.py 53418 53417
+```
+
+```powershell
+$env:FLIGHT_DELAY = "4"
+uv run --no-project python run_backend.py 53418 53417
+```
+
+다른 터미널에서 `probe_health.py`를 돌리고, 곧바로 또 다른 터미널에서 요청을 보냅니다(Step 4의 `request.json`).
+
+```bash
 uv run --no-project python probe_health.py 53418 14
 ```
+
+```bash
+curl -s -X POST http://127.0.0.1:53418/api/plan/trigger -H "Content-Type: application/json" --data-binary @request.json
+```
+
+```powershell
+curl.exe -s -X POST http://127.0.0.1:53418/api/plan/trigger -H "Content-Type: application/json" --data-binary '@request.json'
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다. 끝나면 `Remove-Item Env:FLIGHT_DELAY`.)
 
 ```text
 calls: 51 slow(>0.5s) [시작초, 걸린초]: [(1.36, 0.76)]
@@ -1291,31 +1372,33 @@ calls: 51 slow(>0.5s) [시작초, 걸린초]: [(1.36, 0.76)]
 
 14초 동안 51번 불렀고 0.5초를 넘긴 응답은 한 번(0.76초, 요청을 보낸 직후)뿐이었습니다. 같은 실행의 로그에서 항공편 모델 요청의 간격은 0.26초(도구 호출 지시)에서 4.37초(도구 결과를 받은 두 번째 요청)로 4초 넘게 벌어졌으니 도구는 실제로 4초를 썼습니다. 4초짜리 호출이 서버를 막지 않았으므로, agno가 동기 도구를 별도 실행 흐름에서 돌린다고 읽을 수 있습니다(소스까지는 따라가지 않았습니다). 실제 `fast-flights` 호출이 같다는 보장은 없습니다. 그 호출은 하지 않았습니다.
 
-**재시도.** 실패한 계획을 같은 `trip_plan_id`로 다시 부르면 어떻게 되는지 보려고, 변환 단계를 일부러 실패시킨 뒤(`echo badjson > mode.txt`) 모드를 되돌리고(`echo ok > mode.txt`) 같은 요청을 다시 보냈습니다. 결과를 읽는 쿼리와 직접 확인한 값입니다.
+**재시도.** 실패한 계획을 같은 `trip_plan_id`로 다시 부르면 어떻게 되는지 보려고, 변환 단계를 일부러 실패시킨 뒤(`echo badjson > mode.txt`, PowerShell은 `Set-Content mode.txt badjson -Encoding ascii`) 모드를 되돌리고(`echo ok > mode.txt`) 같은 요청을 다시 보냈습니다. 순서는 이렇습니다. 먼저 `request.json`(`trip-demo-001`)을 한 번 성공시키고, `sed 's/trip-demo-001/trip-demo-002/' request.json > request2.json`으로 만든 요청(`trip-demo-002`)을 `badjson`일 때 한 번, `ok`일 때 한 번 보냅니다. 결과를 읽는 쿼리는 `trip-demo-002`만 고릅니다. 직접 확인한 값입니다.
 
 ```python
 import sqlite3
 c = sqlite3.connect("fake.db")
-print(c.execute("select tripPlanId,status,currentStep,error from trip_plan_status").fetchall())
-print(c.execute("select id,trip_plan_id,status,error_message from plan_tasks").fetchall())
-print(c.execute("select count(*) from trip_plan_output").fetchall())
+print(c.execute("select tripPlanId,status,currentStep,error from trip_plan_status where tripPlanId='trip-demo-002'").fetchall())
+print(c.execute("select id,trip_plan_id,status,error_message from plan_tasks where trip_plan_id='trip-demo-002'").fetchall())
+print(c.execute("select count(*) from trip_plan_output where tripPlanId='trip-demo-002'").fetchall())
 ```
 
 ```text
 [('trip-demo-002', 'completed', 'Plan generated and saved', 'Failed to parse response into TravelPlanTeamResponse: Invalid JSON response: Expecting value: line 1 column 1 (char 0)')]
-[(1, 'trip-demo-001', 'success', None), (2, 'trip-demo-002', 'error', 'Failed to parse response into TravelPlanTeamResponse: Invalid JSON response: Expecting value: line 1 column 1 (char 0)'), (3, 'trip-demo-002', 'success', None)]
+[(2, 'trip-demo-002', 'error', 'Failed to parse response into TravelPlanTeamResponse: Invalid JSON response: Expecting value: line 1 column 1 (char 0)'), (3, 'trip-demo-002', 'success', None)]
 [(1,)]
 ```
 
-세 가지가 보입니다. 같은 계획의 상태 행은 하나이고 그대로 `completed`가 되지만, `error` 열에는 앞 실패의 문구가 **그대로 남습니다**(`update_trip_plan_status`는 `error`를 `None`이 아닐 때만 씁니다: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/repository/trip_plan_repository.py:38-67`). 작업 행은 요청마다 새로 쌓여(1·2·3) 이 계획에 작업 행이 둘입니다. 결과 행은 하나입니다. 완료 때 `delete_trip_plan_outputs`가 먼저 지우기 때문이고(`plan_service.py:366-367`), Prisma 스키마의 `trip_plan_output.tripPlanId @unique`와도 맞습니다. 클라이언트가 `error`를 읽지 않으므로 이 남은 문구는 화면에는 보이지 않습니다.
-
-![Step 6까지의 구성](diagrams/step6.svg)
+세 가지가 보입니다. 같은 계획의 상태 행은 하나이고 그대로 `completed`가 되지만, `error` 열에는 앞 실패의 문구가 **그대로 남습니다**(`update_trip_plan_status`는 `error`를 `None`이 아닐 때만 씁니다: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/repository/trip_plan_repository.py:38-67`). 작업 행은 요청마다 새로 쌓입니다(번호 1은 앞서 성공시킨 `trip-demo-001`의 것이라 이 계획에는 2·3, 둘). 결과 행은 하나입니다. 완료 때 `delete_trip_plan_outputs`가 먼저 지우기 때문이고(`plan_service.py:366-367`), Prisma 스키마의 `trip_plan_output.tripPlanId @unique`와도 맞습니다. 클라이언트가 `error`를 읽지 않으므로 이 남은 문구는 화면에는 보이지 않습니다.
 
 ### Step 7. 실패와 통계 — 모델이 죽어도 `arun`은 예외를 던지지 않습니다
 
 **목적.** 모델 호출이 실패하는 세 가지 경우에 앱이 어떻게 끝나는지, 그리고 agno가 보내려는 통계가 무엇인지 확인합니다.
 
-**할 일.** 먼저 `agent.arun()`이 모델 실패를 어떻게 다루는지 한 에이전트로 봅니다(예산 에이전트: `retries=0`). 가짜 서버를 `http500` 모드로 둔 채 돌립니다.
+**할 일.** 앱이 모델 응답을 쓰는 곳은 서비스의 `.messages[-1].content` 읽기(Step 5의 발췌)와 `router/plan.py`의 `except`입니다. 모델이 실패했을 때 그 읽기가 무엇을 받는지, 실패가 DB에 어떤 문구로 남는지, agno가 무엇을 통계로 보내려 하는지를 아래에서 봅니다.
+
+![Step 7까지의 구성](diagrams/step7.svg)
+
+**확인.** 먼저 `agent.arun()`이 모델 실패를 어떻게 다루는지 한 에이전트로 봅니다(예산 에이전트: `retries=0`). 가짜 서버를 `http500` 모드로 둔 채 돌립니다.
 
 ```python
 # 모델 서버가 오류를 돌려줄 때 agent.arun()이 무엇을 돌려주는지 본다. 사용: python probe_fail.py <가짜 서버 포트>
@@ -1340,6 +1423,14 @@ uv run --no-project python probe_fail.py 53417
 echo ok > mode.txt
 ```
 
+```powershell
+Set-Content mode.txt http500 -Encoding ascii
+uv run --no-project python probe_fail.py 53417
+Set-Content mode.txt ok -Encoding ascii
+```
+
+(PowerShell 5.1의 `>`는 파일을 UTF-16으로 씁니다. 이 문서의 `fake_services.py`는 UTF-16도 읽도록 되어 있어, UTF-16으로 쓴 `badjson`이 먹는 것을 직접 확인했습니다. PowerShell 줄은 실행해 보지 못했습니다.)
+
 ```text
 ERROR   API status error from OpenAI API: Error code: 500 - {'error': {'message': 'fake server error', 'code': 500}}
 ERROR   Error in Agent run: fake server error
@@ -1353,10 +1444,10 @@ roles: ['system', 'user'] | messages[-1].content: 'hello budget'
 | 경우 | 설정 | 걸린 시간 | 끝난 상태 | `trip_plan_status.error` |
 |---|---|---|---|---|
 | 변환 에이전트가 JSON이 아닌 글을 돌려줌 | `echo badjson > mode.txt` | 약 4초(`startedAt`~`completedAt` 3.78초) | `failed`, 단계 `Adding finishing touches` | `Failed to parse response into TravelPlanTeamResponse: Invalid JSON response: Expecting value: line 1 column 1 (char 0)` |
-| 모델 서버가 모든 요청에 500 | `echo http500 > mode.txt` | 약 90초(500 응답 63건) | `failed`, 같은 단계 | 같은 문구 |
+| 모델 서버가 모든 요청에 500 | `echo http500 > mode.txt` | 약 90초(500 응답 63건, `FAKE_DELAY` 없이) | `failed`, 같은 단계 | 같은 문구 |
 | `OPENROUTER_API_KEY` 없음 | 키를 빼고 서버를 띄움 | 약 65초(`Model authentication error` 21줄) | `failed`, 같은 단계 | 같은 문구 |
 
-(둘째·셋째 줄의 걸린 시간은 요청을 보낸 뒤 상태가 `failed`가 될 때까지 폴링한 값이고, 셋째 줄의 서비스 로그 `Total time taken`은 62.21초였습니다. 500 응답 63건은 목적지·항공·호텔·식당이 각 12건, 일정 9건, 예산·변환이 각 3건으로 에이전트의 `retries`(3·3·3·3·2·0·0)에 1을 더한 실행 횟수에, 한 번의 실행이 모델 서버에 요청을 세 번(처음과 재시도 둘) 보내는 것을 곱한 값과 맞습니다. 예산 에이전트 단독 실험의 3건이 근거입니다.) 세 경우 모두 오류 문구는 **JSON 오류**입니다. 앞 에이전트들의 실패는 예외가 아니라 질문이 답으로 흘러가서, 모델이 죽었다는 사실은 로그의 `ERROR` 줄에만 남고 DB와 화면에는 "JSON 변환 실패"로만 보입니다. 같은 상황에서 변환 에이전트만 성공하는 경우(예: 한 에이전트에만 일시적 429가 난 경우)에는 그 에이전트의 "답"이 프롬프트 본문이 되어 계획 안으로 들어갈 것입니다. 이 경우는 만들어 보지 않았습니다. 실패한 쪽에서는 `500` 실행의 변환 입력이 `## Destination Attractions:` 아래에 목적지 에이전트가 받은 프롬프트 전체를 담은 것을 가짜 서버 로그에서 직접 봤습니다.
+(모델 요청마다 `FAKE_DELAY`를 주면 63건에 곱해져 그만큼 늘어납니다(0.3초면 약 19초). 둘째·셋째 줄의 걸린 시간은 요청을 보낸 뒤 상태가 `failed`가 될 때까지 폴링한 값이고, 셋째 줄의 서비스 로그 `Total time taken`은 62.21초였습니다. 500 응답 63건은 목적지·항공·호텔·식당이 각 12건, 일정 9건, 예산·변환이 각 3건으로 에이전트의 `retries`(3·3·3·3·2·0·0)에 1을 더한 실행 횟수에, 한 번의 실행이 모델 서버에 요청을 세 번(처음과 재시도 둘) 보내는 것을 곱한 값과 맞습니다. 예산 에이전트 단독 실험의 3건이 근거입니다.) 세 경우 모두 오류 문구는 **JSON 오류**입니다. 앞 에이전트들의 실패는 예외가 아니라 질문이 답으로 흘러가서, 모델이 죽었다는 사실은 로그의 `ERROR` 줄에만 남고 DB와 화면에는 "JSON 변환 실패"로만 보입니다. 같은 상황에서 변환 에이전트만 성공하는 경우(예: 한 에이전트에만 일시적 429가 난 경우)에는 그 에이전트의 "답"이 프롬프트 본문이 되어 계획 안으로 들어갈 것입니다. 이 경우는 만들어 보지 않았습니다. 실패한 쪽에서는 `500` 실행의 변환 입력이 `## Destination Attractions:` 아래에 목적지 에이전트가 받은 프롬프트 전체를 담은 것을 가짜 서버 로그에서 직접 봤습니다.
 
 실패한 요청의 뒷정리도 봅니다. 위 세 경우에서 상태·작업 행은 `failed`·`error`가 되고 DB에 남지만, 에이전트가 이미 얻은 결과(앞 에이전트들의 글)는 저장되지 않아 재시도하면 처음부터 모두 다시 돕니다. 그리고 `generate_plan_with_tracking`이 오류를 기록한 뒤 `raise`를 하므로 백그라운드 작업의 예외를 아무도 받지 않아 서버 로그에 `Task exception was never retrieved`가 찍힙니다(직접 확인, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/router/plan.py:58-65`).
 
@@ -1368,8 +1459,13 @@ unset AGNO_TELEMETRY; TELEMETRY_SPY=spy-on.jsonl uv run --no-project python run_
 ```
 
 ```powershell
-Remove-Item Env:AGNO_TELEMETRY
+$env:AGNO_TELEMETRY = "false"; $env:TELEMETRY_SPY = "spy-off.jsonl"
+uv run --no-project python run_backend.py 53418 53417
+Remove-Item Env:AGNO_TELEMETRY; $env:TELEMETRY_SPY = "spy-on.jsonl"
+uv run --no-project python run_backend.py 53418 53417
 ```
+
+(PowerShell 줄은 실행해 보지 못했습니다. 두 줄 사이에 서버를 끄고 요청을 한 번씩 보냅니다.)
 
 (PowerShell 줄은 실행해 보지 못했습니다.) 끈 쪽은 파일이 만들어지지 않았고(0건), 켠 쪽은 한 요청에 일곱 건(에이전트 여섯과 변환 에이전트)이었습니다. 한 건의 내용은 이렇습니다(직접 확인).
 
@@ -1379,13 +1475,11 @@ Remove-Item Env:AGNO_TELEMETRY
 
 프롬프트나 응답 본문은 없고 에이전트 이름·모델 ID·기능 여부·SDK 버전입니다. 변환 에이전트는 호출마다 무작위 이름(`bold-tesla-88e2f64d` 같은)으로 만들어져 통계에서도 매번 다른 에이전트로 보입니다. 이 문서의 확인에는 모두 통계를 껐습니다.
 
-![Step 7까지의 구성](diagrams/step7.svg)
-
 **끝내기.** 띄운 서버를 모두 끄고 포트가 비었는지 봅니다. 앱 폴더에 둔 확인용 파일(`shim.py`, `fake_services.py`, `run_backend.py`, `prep_db.py`, `check_*.py`, `watch_db.py`, `summarize_log.py`, `probe_*.py`, `request.json`, `fake.db`, `*.jsonl`, `mode.txt`)을 지웁니다. `uv sync`가 고쳐 쓴 `uv.lock`은 `git checkout -- uv.lock`으로 되돌립니다. 포트가 비었는지는 `netstat -ano | grep :53418`로 봅니다.
 
 ## 요청 한 건이 흐르는 과정
 
-폼 제출에서 결과 화면까지를 스물한 장으로, 실패와 재시도를 네 장으로 나눠 따라갑니다. 메시지는 모두 정확히 한 그림에, 코드의 순서대로 있습니다. 장이 많은 까닭은 sequence 그림이 메시지 하나에 높이가 고정으로 붙어, 메시지 열 개를 넘으면 세로 1,000px를 넘기 때문입니다. 클라이언트의 메시지는 소스로 읽은 것이고, 백엔드·에이전트·도구·DB의 메시지는 가짜 서버로 돌려 본 것입니다. 첫 장은 폼 제출에서 DB 저장까지입니다.
+폼 제출에서 결과 화면까지를 스물한 장으로, 실패와 재시도를 다섯 장으로 나눠 따라갑니다. 메시지는 모두 정확히 한 그림에, 코드의 순서대로 있습니다. 장이 많은 까닭은 sequence 그림이 메시지 하나에 높이가 고정으로 붙어, 메시지가 여덟아홉 개를 넘으면 세로 1,000px를 넘기 때문입니다(7개인 5단계가 879px, 한 그림에 6~10개를 넣었을 때 1,040~1,116px를 직접 쟀습니다). 클라이언트의 메시지는 소스로 읽은 것이고, 백엔드·에이전트·도구·DB의 메시지는 가짜 서버로 돌려 본 것입니다. 첫 장은 폼 제출에서 DB 저장까지입니다.
 
 ![1단계: 폼 제출과 저장](diagrams/sequence.svg)
 
@@ -1421,7 +1515,7 @@ Remove-Item Env:AGNO_TELEMETRY
 
 ![9단계: 구글 항공편 조회](diagrams/extra-fetch.svg)
 
-도구가 구글 항공편 주소를 가져오고, 200이 아니면(조건 분기, 소스로 읽은 것이고 이 문서는 돌리지 않았습니다) `try.playwright.tech`에 코드를 보냅니다. 이 조회가 이 문서에서는 인자를 기록하는 대역이었습니다. 열째 장은 항공편 글입니다.
+도구가 구글 항공편 주소를 가져오고, 200이 아니거나 200이어도 항공편을 읽지 못하면(조건 분기, 소스로 읽은 것이고 이 문서는 돌리지 않았습니다) `try.playwright.tech`에 코드를 보냅니다. 이 조회가 이 문서에서는 인자를 기록하는 대역이었습니다. 열째 장은 항공편 글입니다.
 
 ![10단계: 항공편 글과 호텔로](diagrams/extra-fallback.svg)
 
@@ -1479,13 +1573,17 @@ Firecrawl가 마크다운을 돌려주고 모델이 호텔 글을 쓰며, 서비
 
 서비스가 상태를 `failed`로 쓰고 예외를 다시 던지고, 백그라운드 작업이 작업 행을 `error`로 쓴 뒤 다시 던져 아무도 받지 않는 예외가 로그에 남습니다. 사용자가 실패 화면의 재시도를 누르면 이렇게 됩니다.
 
-![재시도 1: 상태 행 되돌리기](diagrams/extra-retry.svg)
+![재시도 1: 저장된 폼 값 읽기와 상태 행 되돌리기](diagrams/extra-retry.svg)
 
-라우트가 상태 행을 `processing`·`Restarting trip plan generation...`으로 바꿉니다. 이어서 백엔드를 다시 부릅니다.
+라우트가 DB에서 계획과 상태를 읽어(저장된 폼 값이 여기서 옵니다) 상태 행을 `processing`·`Restarting trip plan generation...`으로 바꿉니다. 이어서 백엔드를 다시 부릅니다.
 
 ![재시도 2: 백엔드 재호출](diagrams/extra-retry-trigger.svg)
 
-저장된 폼 값으로 `/api/plan/trigger`를 다시 부르고 작업 행이 새로 생깁니다. 이 뒤는 위 4단계부터와 같습니다.
+저장된 폼 값으로 `/api/plan/trigger`를 다시 부르면 작업 행이 새로 생기고 id가 돌아옵니다. 응답과 화면 쪽은 이렇습니다.
+
+![재시도 3: 응답과 폴링 재개](diagrams/extra-retry-end.svg)
+
+백엔드가 작업을 띄우고 200을 돌려주면 재시도 라우트가 `{success, message, response}`로 감싸 페이지에 넘기고, 페이지는 `fetchTripDetails()`로 한 번 읽은 뒤 `setPolling(true)`로 5초 폴링을 다시 켭니다. 작업이 시작된 뒤는 위 4단계부터와 같습니다.
 
 ## 실행 체크리스트
 
@@ -1508,10 +1606,10 @@ Firecrawl가 마크다운을 돌려주고 모델이 호텔 글을 쓰며, 서비
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `uv lock --check`가 `needs to be updated, but --locked was provided` | `uv.lock`이 `agno` 1.5.6에 묶였고 `pyproject.toml`은 `agno>=2.3.24`(직접 확인) | `uv sync`가 잠금을 고쳐 씁니다. 끝나면 `git checkout -- uv.lock`으로 되돌릴 수 있습니다 |
+| `uv lock --check`가 `needs to be updated, but --locked was provided` | `uv.lock`이 `agno` 1.5.6에 묶였고 `pyproject.toml`은 `agno>=2.3.24`(직접 확인). uv 버전에 따라 문구가 `--locked`가 아니라 `--check`로 나옵니다 | `uv sync`가 잠금을 고쳐 씁니다. 끝나면 `git checkout -- uv.lock`으로 되돌릴 수 있습니다 |
 | `TypeError: Agent.__init__() got an unexpected keyword argument 'add_datetime_to_context'` | `uv sync --frozen`이 `agno` 1.5.6을 설치했다. 이 이름은 agno 2.x 이후의 것(직접 확인) | `--frozen`을 쓰지 않는다 |
-| `ImportError: `google-genai` not installed or not at the latest version` | agno 3.1.2의 Gemini 클래스가 `FileSearch` 등을 요구하는데 잠금의 `google-genai` 1.18.0에는 없다. `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/config/llm.py:1`이 쓰지도 않는 `Gemini`를 import한다(직접 확인) | `uv pip install -U google-genai`(직접 확인: 2.29.0에서 import됨) |
-| `ImportError: `firecrawl-py` not installed` (`agno/tools/firecrawl.py`) | agno는 `firecrawl.types`를 요구하는데 2.7.1에는 없다(직접 확인) | `uv pip install -U "firecrawl-py>=3"` |
+| ``ImportError: `google-genai` not installed or not at the latest version`` | agno 3.1.2의 Gemini 클래스가 `FileSearch` 등을 요구하는데 잠금의 `google-genai` 1.18.0에는 없다. `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/config/llm.py:1`이 쓰지도 않는 `Gemini`를 import한다(직접 확인) | `uv pip install -U google-genai`(직접 확인: 2.29.0에서 import됨) |
+| ``ImportError: `firecrawl-py` not installed`` (`agno/tools/firecrawl.py`) | agno는 `firecrawl.types`를 요구하는데 2.7.1에는 없다(직접 확인) | `uv pip install -U "firecrawl-py>=3"` |
 | `ImportError: cannot import name 'ScrapeOptions' from 'firecrawl'` (`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:1`) | `firecrawl-py` 3.x 이상은 옛 이름이 `V1ScrapeOptions`·`V1FirecrawlApp`이다. 어느 버전도 agno와 앱을 함께 만족하지 않는다(직접 확인) | 별칭 `shim.py`를 앞에 import하거나 복사본의 `scrape.py:1`을 고친다 |
 | `ValueError: No API key provided` 또는 `API key must be provided as an argument or in EXA_API_KEY` | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:7`과 `ExaTools`가 import 때 키를 요구한다(직접 확인) | 두 키를 셸이나 `.env`에 둔다 |
 | `uv run python …` 뒤 갑자기 `ImportError`가 다시 난다 | `uv run`이 환경을 잠금에 맞춰 되돌려 올린 패키지를 지웠다(직접 확인: 25개) | `uv run --no-project`를 쓴다 |
@@ -1524,7 +1622,7 @@ Firecrawl가 마크다운을 돌려주고 모델이 호텔 글을 쓰며, 서비
 | `Task exception was never retrieved`가 서버 로그에 | 실패 뒤 `generate_plan_with_tracking`이 다시 `raise`해 받는 곳이 없다(직접 확인) | 상태는 이미 `failed`로 기록된다. 로그 소음이다 |
 | 재시도해 `completed`가 됐는데 상태 행에 옛 `error` 문구가 남음 | 상태 갱신이 `error`를 `None`이 아닐 때만 쓴다(직접 확인) | 클라이언트는 이 열을 읽지 않는다 |
 | `docker build`가 `app/`·`routers/`·`api.py`·`server.py`를 찾지 못함 | `Dockerfile`이 없는 경로를 복사한다(직접 확인: `없음`). 이 문서는 빌드를 실행하지 않았다 | 폴더 이름을 맞추고 `tools/`·`repository/`를 복사 목록에 더해야 합니다 |
-| `client/`의 제출이 `Failed to trigger trip planning` | `BACKEND_API_URL`이 없으면 `undefined/api/plan/trigger`로 요청이 간다. `.env.example`에도 없다(소스로 확인, 실행하지 않음) | `.env.local`에 백엔드 주소를 넣는다 |
+| `client/`의 제출이 500 `Failed to save trip plan to database`, 화면에 `Failed to submit trip plan`인데 `trip_plan` 행은 생김. 서버 로그에 `Failed to parse URL from undefined/api/plan/trigger` | `BACKEND_API_URL`이 없으면 주소가 `undefined/api/plan/trigger`(상대 주소)가 되고, Node의 `fetch`는 요청을 보내지 않고 `TypeError`를 던져 `!backendResponse.ok` 분기가 아니라 바깥 `catch`로 간다. 행은 그 앞에서 이미 저장됐다. `.env.example`에도 없다(Node 24에서 `fetch("undefined/api/plan/trigger")`로 직접 확인, Next.js 서버는 실행하지 않음) | `.env.local`에 백엔드 주소를 넣는다 |
 | 출력에 한글이 깨지거나 `UnicodeEncodeError` | 한국어 Windows의 기본 인코딩(`cp949`) | `PYTHONIOENCODING=utf-8` |
 
 ## 더 해보기

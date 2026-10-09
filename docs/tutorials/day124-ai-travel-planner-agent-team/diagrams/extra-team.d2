@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+service: "계획 서비스\n(plan_service.py)" { class: ours; height: 50 }
+team: "TripCraft AI Team\n(team.py · 호출 안 됨)" { class: ours; height: 50 }
+agents: "에이전트 여섯\n(backend/agents/)" { class: ours; height: 50 }
+
+service -> team: "import만\n(arun 호출은 주석)"
+team -> agents: "members=[여섯]"
+service -> agents: "arun(프롬프트) 여섯"
+agents -> service: "messages[-1].content"

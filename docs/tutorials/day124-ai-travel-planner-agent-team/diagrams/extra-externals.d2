@@ -1,18 +1,23 @@
 ...@../../_tools/theme
-direction: down
+direction: right
 
+agents: "에이전트 일곱\n(backend/agents/)" { class: ours; height: 44 }
 exa_tools: "ExaTools" { class: ours; height: 44 }
 flights_tool: "get_google_flights" { class: ours; height: 44 }
 scrape_tool: "scrape_website\n(tools/scrape.py)" { class: ours; height: 44 }
 fc_tools: "FirecrawlTools (agno)" { class: ours; height: 44 }
 
+openrouter: "OpenRouter" { class: ext; height: 56 }
+agno_api: "agno 통계 API" { class: ext; height: 56 }
 exa: "Exa 검색 API" { class: ext; height: 56 }
 gflights: "Google Flights" { class: ext; height: 56 }
 playwright: "try.playwright.tech" { class: ext; height: 56 }
 firecrawl: "Firecrawl API" { class: ext; height: 56 }
 
+agents -> openrouter: "chat/completions\n(모델 요청)"
+agents -> agno_api: "실행 통계\n(AGNO_TELEMETRY를 끄지 않으면)"
 exa_tools -> exa: "POST /search {query, numResults, contents}"
 flights_tool -> gflights: "GET /travel/flights\n(fast-flights, fetch_mode=fallback)"
-flights_tool -> playwright: "200이 아니면 POST /service/control/run\n(코드와 조회 주소)"
+flights_tool -> playwright: "200이 아니거나 항공편을 못 읽으면\nPOST /service/control/run\n(코드와 조회 주소)"
 scrape_tool -> firecrawl: "scrape_url(url, markdown,\nwait_for=30000)"
 fc_tools -> firecrawl: "scrape (formats=markdown)"
