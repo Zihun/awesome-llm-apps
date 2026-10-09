@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+e2b: E2B 클라우드 샌드박스 { class: ext }
+
+ui -> e2b: files.list("/")
+e2b -> ui: 파일 목록
+ui -> user: Generated Files 표시 (st.json)

@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+openai: OpenAI API (o3-mini) { class: ext }
+coder: 코딩 에이전트 { class: ours }
+agno_api: Agno 통계 API { class: ext }
+
+ui -> user: 스피너 Generating solution...
+ui -> coder: run(문제 글)
+coder -> openai: developer 메시지 · user 메시지(문제 글)
+openai -> coder: 풀이 마크다운 (python 코드 블록 포함)
+coder -> agno_api: 실행 메타데이터 (성공 시)
+coder -> ui: response.content
+ui -> user: 첫 python 블록 st.code

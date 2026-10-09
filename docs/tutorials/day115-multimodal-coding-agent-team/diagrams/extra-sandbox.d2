@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+e2b: E2B 클라우드 샌드박스 { class: ext }
+
+ui -> user: 스피너 Executing code...
+ui -> e2b: Sandbox(timeout=60)
+e2b -> ui: 샌드박스 객체 (e2b 1.x 기준)
+ui -> e2b: set_timeout(30)
+ui -> e2b: run_code(코드)
+e2b -> ui: Execution (logs · error)
+ui -> e2b: files.list("/")
+e2b -> ui: 파일 목록
