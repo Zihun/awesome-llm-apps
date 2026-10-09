@@ -859,6 +859,8 @@ uv run --no-project python lab/run_app.py local_ai_real_estate_agent_team.py 552
 
 ![로컬판의 구성](diagrams/extra-local.svg)
 
+이 Step에는 `step7` 그림이 없습니다. 앞 Step의 그림은 요소를 하나씩 채워 가는데 로컬판은 새로 붙는 요소 없이 모델 자리만 바꾼 같은 구조(순서 함수도 같은 이름으로 있음, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_real_estate_agent_team/local_ai_real_estate_agent_team.py:252`)라 채울 `new`가 없어서, 달라진 연결을 보이는 `extra-local`로 대신했습니다.
+
 **확인.** 위 그림처럼 로컬판에서 모델 화살표만 이 PC의 Ollama를 가리키고, 이 PC 밖으로 나가는 것은 Firecrawl 호출과 agno 통계입니다(브라우저로 열면 Streamlit 사용 통계도 나가고 `--browser.gatherUsageStats false`로 끕니다). 가짜 서버 기록에서 `/api/chat` 둘과 `/v2/extract` 하나를 확인했습니다(직접 확인). 실제 `gpt-oss:20b`로 돌려 보지는 않았습니다.
 
 ## 요청 한 건이 흐르는 과정
