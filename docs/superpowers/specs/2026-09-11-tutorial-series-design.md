@@ -446,7 +446,7 @@ docs/tutorials/
 | 115 | 💻 Multimodal Coding Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team` | `day115-multimodal-coding-agent-team` | 282 |
 | 116 | 🎨 AI Game Design Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team` | `day116-ai-game-design-agent-team` | 290 |
 | 117 | 🧲 AI Competitor Intelligence Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team` | `day117-ai-competitor-intelligence-agent-team` | 343 |
-| 118 | 👨‍💼 AI Services Agency (CrewAI) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency` | `day118-ai-services-agency` | 369 |
+| 118 | 👨‍💼 AI Services Agency | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency` | `day118-ai-services-agency` | 369 |
 | 119 | 🧭 AG2 Adaptive Research Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team` | `day119-ag2-adaptive-research-team` | 402 |
 | 120 | 💼 AI Recruitment Agent Team | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team` | `day120-ai-recruitment-agent-team` | 522 |
 | 121 | 👨‍⚖️ AI Legal Agent Team (Cloud & Local) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_legal_agent_team` | `day121-ai-legal-agent-team` | 664 |
