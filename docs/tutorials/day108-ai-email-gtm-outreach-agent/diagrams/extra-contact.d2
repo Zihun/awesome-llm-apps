@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "화면 (main)" { class: ours }
+contact: "연락처 탐색\n(ContactFinderAgent)" { class: ours }
+openai: "OpenAI API\n(gpt-4o)" { class: ext }
+
+main -> contact: "run(\"For each company below,\nfind 2-3 decision makers...\nCompanies JSON\")"
+contact -> openai: "gpt-4o 요청"
+openai -> contact: "{\"companies\": [{name,\ncontacts}]} 텍스트"
+contact -> main: "resp.content\n→ extract_json_or_raise"
+main -> user: "progress 50 ·\n\"Collected contacts...\""

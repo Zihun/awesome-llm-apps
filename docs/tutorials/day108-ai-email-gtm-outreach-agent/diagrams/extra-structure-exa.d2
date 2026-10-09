@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: right
+
+finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
+contact: "연락처 탐색\n(ContactFinderAgent)" { class: ours }
+research: "기업 조사\n(ResearchAgent)" { class: ours }
+exa: "Exa API" { class: ext }
+
+finder -> exa: "ExaTools\n(category=company)"
+exa -> finder: "검색 결과"
+contact -> exa: "ExaTools()"
+exa -> contact: "검색 결과"
+research -> exa: "ExaTools()"
+exa -> research: "검색 결과"

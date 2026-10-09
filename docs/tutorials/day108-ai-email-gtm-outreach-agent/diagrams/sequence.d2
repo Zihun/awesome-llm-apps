@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "화면 (main)" { class: ours }
+db: "SQLite\n(tmp/gtm_outreach.db)" { class: store }
+
+user -> main: "\"Start Outreach\" 클릭\n(설명 · 회사 수 · 스타일)"
+main -> main: "키 두 개 · 설명 둘이\n채워졌는지 검사"
+main -> user: "st.progress(0) ·\n빈 메시지 칸 둘"
+main -> main: "create_*_agent() 넷 호출\n(ExaTools 셋 · Agent 넷)"
+main -> db: "SqliteDb(db_file=\n\"tmp/gtm_outreach.db\")\n에이전트마다 한 번"
+main -> user: "\"1/4 Finding companies...\""

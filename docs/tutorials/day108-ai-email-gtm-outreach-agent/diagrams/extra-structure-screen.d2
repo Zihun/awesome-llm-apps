@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: right
+
+main: "화면\n(main)" { class: ours }
+run: "단계 함수\n(run_*)" { class: ours }
+json: "JSON 읽기\n(extract_json_or_raise)" { class: ours }
+
+main -> run: "설명 · 회사 수 ·\n스타일 · 발신자"
+run -> main: "결과 dict"
+run -> json: "응답 텍스트"
+json -> run: "파싱된 dict"

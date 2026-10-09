@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: right
+
+finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
+contact: "연락처 탐색\n(ContactFinderAgent)" { class: ours }
+research: "기업 조사\n(ResearchAgent)" { class: ours }
+writer: "이메일 작성\n(EmailWriterAgent)" { class: ours }
+openai: "OpenAI API" { class: ext }
+
+finder -> openai: "gpt-5 요청"
+openai -> finder: "응답"
+contact -> openai: "gpt-4o 요청"
+openai -> contact: "응답"
+research -> openai: "gpt-5 요청"
+openai -> research: "응답"
+writer -> openai: "gpt-5 요청"
+openai -> writer: "응답"

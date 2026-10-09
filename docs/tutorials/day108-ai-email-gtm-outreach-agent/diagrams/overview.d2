@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+
+app: "ai_email_gtm_outreach_agent.py (한 파일)" {
+  class: group
+  grid-columns: 4
+  grid-gap: 8
+  main: "화면\n(main)" { class: ours }
+  run: "단계 함수\n(run_*)" { class: ours }
+  json: "JSON 읽기\n(extract_json_or_raise)" { class: ours }
+  finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
+  contact: "연락처 탐색\n(ContactFinderAgent)" { class: ours }
+  research: "기업 조사\n(ResearchAgent)" { class: ours }
+  writer: "이메일 작성\n(EmailWriterAgent)" { class: ours }
+}
+
+db: "SQLite\n(tmp/gtm_outreach.db)" { class: store }
+openai: "OpenAI API\n(gpt-5 · gpt-4o)" { class: ext }
+exa: "Exa API\n(검색·본문)" { class: ext }
+agno: "agno 통계 API\n(os-api.agno.com)" { class: ext }
+
+user -> app: "화면 입력 · API 키 ·\n시작 버튼"
+app -> user: "진행 막대 ·\n결과 카드"
+app -> openai: "모델 요청\n(+ 메모리 요청)"
+openai -> app: "응답 · 도구\n호출 요청"
+app -> exa: "search_exa 등\n(세 에이전트)"
+exa -> app: "검색 결과"
+app -> db: "세션·실행 기록\n저장"
+db -> app: "이전 실행 기록\n(최근 6회)"
+app -> agno: "실행 통계\n(run 성공마다)"

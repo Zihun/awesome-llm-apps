@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
+exa: "Exa API" { class: ext }
+
+finder -> exa: "search_and_contents(\nquery, category=\"company\")"
+exa -> finder: "검색 결과"

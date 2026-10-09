@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: right
+
+run: "단계 함수\n(run_*)" { class: ours }
+finder: "기업 탐색\n(CompanyFinderAgent)" { class: ours }
+contact: "연락처 탐색\n(ContactFinderAgent)" { class: ours }
+research: "기업 조사\n(ResearchAgent)" { class: ours }
+writer: "이메일 작성\n(EmailWriterAgent)" { class: ours }
+
+run -> finder: "run(검색 프롬프트)"
+finder -> run: ".content\n(회사 JSON)"
+run -> contact: "run(회사 JSON)"
+contact -> run: ".content\n(연락처 JSON)"
+run -> research: "run(회사 JSON)"
+research -> run: ".content\n(조사 JSON)"
+run -> writer: "run(연락처 JSON ·\n조사 JSON)"
+writer -> run: ".content\n(이메일 JSON)"
