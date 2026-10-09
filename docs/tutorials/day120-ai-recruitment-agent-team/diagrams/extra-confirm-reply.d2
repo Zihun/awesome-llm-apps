@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+openai: OpenAI API { class: ext }
+agno_api: Agno 통계 API { class: ext }
+emailer: 메일 에이전트 { class: ours }
+ui: Streamlit 화면 { class: ours }
+
+emailer -> openai: "POST /v1/chat/completions\n(model gpt-4o · 도구 결과 문자열 추가)"
+openai -> emailer: "마무리 문장"
+emailer -> agno_api: "익명 메타데이터 (에이전트 id · 모델 ID · has_* 표시, 성공 시)"
+emailer -> ui: "반환값 (쓰지 않음)"
+ui -> user: "\"Interview scheduled successfully!\" 성공 문구"

@@ -1,0 +1,31 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+
+app: "ai_recruitment_agent_team.py (한 파일)" {
+  class: group
+  grid-columns: 3
+  grid-gap: 8
+  ui: "Streamlit 화면\n(사이드바 · 업로드 ·\n버튼)" { class: ours }
+  session: "세션 상태\n(키 · 이메일 ·\n이력서 글)" { class: store; height: 96 }
+  pdf: "PDF 읽기\n(extract_text_\nfrom_pdf)" { class: ours }
+  analyzer: "이력서 분석 에이전트\n(create_resume_analyzer)" { class: ours }
+  emailer: "메일 에이전트\n(create_email_agent ·\nEmailTools)" { class: ours }
+  scheduler: "일정 에이전트\n(create_scheduler_agent)" { class: ours }
+  zoomtool: "Zoom 도구\n(CustomZoomTool)" { class: ours }
+}
+
+openai: "OpenAI API\n(gpt-4o)" { class: ext; height: 60 }
+smtp: "Gmail SMTP\n(smtp.gmail.com:465)" { class: ext; height: 60 }
+zoom_oauth: "Zoom 토큰 서버\n(zoom.us)" { class: ext; height: 60 }
+zoom_api: "Zoom API\n(api.zoom.us)" { class: ext; height: 60 }
+agno_api: "Agno 통계 API" { class: ext; height: 60 }
+
+user -> app: "키 · PDF ·\n이메일 · 버튼"
+app -> user: "판정 · 안내 문구"
+app -> openai: "chat 요청\n(gpt-4o)"
+app -> smtp: "SMTP_SSL\n로그인 · 발송"
+app -> zoom_oauth: "토큰 요청\n(requests.post)"
+app -> zoom_api: "회의 만들기\n(requests.post)"
+app -> agno_api: "메타데이터\n(성공 시)"

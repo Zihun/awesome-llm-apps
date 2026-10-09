@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+analyzer: 이력서 분석 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+agno_api: Agno 통계 API { class: ext }
+
+user -> ui: "Analyze Resume 클릭"
+ui -> analyzer: "analyze_resume →\nrun(역할 요건 + 이력서 글)"
+analyzer -> openai: "POST /v1/chat/completions\n(model gpt-4o · 메시지 2개: developer, user · 도구 없음)"
+openai -> analyzer: "JSON 문자열"
+analyzer -> agno_api: "익명 메타데이터\n(에이전트 id · 모델 ID ·\nhas_* 표시, 성공 시)"
+analyzer -> ui: "RunOutput.messages"
+ui -> ui: "json.loads → (selected, feedback)"

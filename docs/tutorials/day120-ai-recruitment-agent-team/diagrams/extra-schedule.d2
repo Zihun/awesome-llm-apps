@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: Streamlit 화면 { class: ours }
+scheduler: 일정 에이전트 { class: ours }
+agno_api: Agno 통계 API { class: ext }
+openai: OpenAI API { class: ext }
+
+ui -> ui: "내일 11:00 (Asia/Kolkata) 계산\n→ 2026-10-10T11:00:00 꼴 문자열"
+ui -> scheduler: "schedule_interview → run(60분 면접 지시)"
+scheduler -> openai: "POST /v1/chat/completions\n(model gpt-4o · 메시지 2개 · 도구 0개)"
+openai -> scheduler: "일반 문장 (도구 호출 없음)"
+scheduler -> agno_api: "익명 메타데이터 (에이전트 id · 모델 ID · has_* 표시, 성공 시)"
+scheduler -> ui: "meeting_response (RunOutput)"

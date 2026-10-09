@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+openai: OpenAI API { class: ext }
+emailer: 메일 에이전트 { class: ours }
+smtp: Gmail SMTP { class: ext }
+
+user -> ui: "Proceed with Application 클릭"
+ui -> emailer: "send_selection_email →\nrun(선발 메일 지시)"
+emailer -> openai: "POST /v1/chat/completions\n(model gpt-4o · 메시지 2개 · 도구 email_user)"
+openai -> emailer: "tool_calls: email_user(subject, body)"
+emailer -> smtp: "SMTP_SSL(smtp.gmail.com, 465)\n로그인 · send_message"
+smtp -> emailer: "성공 또는 예외 → 문자열"

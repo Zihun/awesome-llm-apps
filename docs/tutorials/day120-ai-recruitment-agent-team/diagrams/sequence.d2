@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+pdf: PDF 읽기 { class: ours }
+
+user -> ui: "키 일곱 칸 · PDF 업로드 · 지원자 이메일 입력"
+ui -> pdf: "extract_text_from_pdf(pdf_file)"
+pdf -> ui: "페이지별 글을 이어 붙인 이력서 글"
