@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+worker: 파일별 워커 { class: ours }
+ui: Streamlit 화면 { class: ours }
+user: 사용자 { class: person }
+
+worker -> ui: stream 이벤트 (refactor_worker, results) × 파일 수
+ui -> user: 진행 상자에 Refactor worker completed 한 줄씩

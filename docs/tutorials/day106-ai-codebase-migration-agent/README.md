@@ -1,12 +1,12 @@
 # Day 106 · ⚡ Codebase Migration & Refactor Planner (LangGraph)
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(오늘 설치 그대로는 승인 버튼이 "Please provide both a target repository…" 오류만 내고, 기본 모델 `gpt-5-mini`의 스냅샷은 2026-12-11 종료 예정) · 예상 소요 125분(앱은 972줄 한 파일이고 그래프 노드 다섯과 화면을 Step마다 가짜 서버로 직접 돌려 앞뒤를 비교하며, 시퀀스 그림 여덟을 따라가는 손 시간이 읽는 시간보다 더 듭니다) · API 비용 대략 한 번의 계획·실행에 $0.3 안팎 — 빠른 모델 `gpt-5-mini` 입력 $0.25·출력 $2, 프로 모델 `gpt-5.5` 입력 $5·출력 $30(모두 1M 토큰당, 2026-10-09에 받은 OpenAI 모델 페이지 원문의 "Text tokens" 표. 같은 표 머리에 "Batch API price"라는 말이 붙어 있어 표준 단가인지는 확인하지 못함)에 가정한 토큰 수(파일 4개 기준, 워커 호출마다 출력 약 3,000토큰, 집계 호출 입력 약 14,000·출력 약 6,000토큰)를 대입한 어림이고 키가 없어 실제 토큰 수는 확인하지 못함. 추론 토큰이 더해지면 더 커질 수 있음 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(Streamlit이 버튼마다 스크립트를 다시 실행하는 방식 때문에 승인·수정 버튼이 "Please provide both a target repository…" 오류만 내고, 기본 모델 `gpt-5-mini`의 스냅샷은 2026-12-11 종료 예정) · 예상 소요 150분(앱은 972줄 한 파일이고 그래프 노드 다섯과 화면을 Step마다 가짜 서버로 직접 돌려 앞뒤를 비교하고 승인·수정 경로는 원본과 고친 복사본 둘을 각각 돌려 보며, 시퀀스 그림 열을 따라가는 손 시간이 읽는 시간보다 더 듭니다) · API 비용 대략 한 번의 계획·실행에 $0.35 안팎 — 빠른 모델 `gpt-5-mini` 입력 $0.25·출력 $2, 프로 모델 `gpt-5.5` 입력 $5·출력 $30(모두 1M 토큰당, 2026-10-09에 받은 OpenAI 가격표 `/api/docs/pricing` 원문의 Standard 표와 같은 값. 모델 페이지 표 머리의 "Batch API price"는 표준·배치를 바꾸는 토글의 라벨이었음)에 가정한 토큰 수(파일 4개 기준, 워커 호출마다 출력 약 3,000토큰, 집계는 도구 호출 때문에 프로 모델을 최소 두 번 불러 입력 약 14,000토큰씩 두 번에 출력 약 6,000토큰)를 대입한 어림이고 키가 없어 실제 토큰 수는 확인하지 못함. 추론 토큰이 더해지면 더 커질 수 있고, `MODEL_FAST`를 폐기 표의 대체 `gpt-5.6-terra`(Standard 입력 $2.00·출력 $12.00)로 바꾸면 빠른 모델 몫이 6~8배가 됨 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent`
 
 ## 오늘 만들 것
 
-저장소 주소(또는 경로)와 이주 목표를 적으면 계획 담당 모델이 파일별 이주 계획과 위험도(`Low`·`Medium`·`High`·`Critical`)를 만들고, 사람이 그 계획을 승인하거나 고쳐 달라고 한 다음, 승인된 파일마다 워커가 하나씩 병렬로 달라붙어 diff와 테스트 제안을 쓰고, 마지막으로 집계 담당 모델이 보고서와 위험 차트를 합치는 Streamlit 앱입니다. 새로 배우는 것은 LangGraph입니다. `StateGraph`로 노드 다섯을 잇고, `interrupt()`로 그래프를 사람 앞에서 멈췄다가 `Command(resume=…)`로 이어 가고, `Send()`로 파일 수만큼 워커를 한꺼번에 띄우고, `MemorySaver`가 멈춘 상태를 붙들어 줍니다. 앞 날들의 Streamlit 앱은 에이전트 하나를 `run`으로 한 번 부르는 모양이었는데, 이 앱은 호출 순서가 그래프 자체에 들어 있습니다.
+저장소 주소(또는 경로)와 이주 목표를 적으면 계획 담당 모델이 파일별 이주 계획과 위험도(`Low`·`Medium`·`High`·`Critical`)를 만들고, 사람이 그 계획을 승인하거나 고쳐 달라고 한 다음, 승인된 파일마다 워커가 하나씩 병렬로 달라붙어 diff와 테스트 제안을 쓰고, 마지막으로 집계 담당 모델이 보고서와 위험 차트를 합치는 Streamlit 앱입니다. LangGraph의 `StateGraph`와 조건부 갈래는 Day 059 Step 5와 Day 061 Step 5·7이 이미 다뤘으므로 여기서는 이 앱의 그래프 모양만 확인합니다. 오늘 새로 만나는 것은 `interrupt()`로 그래프를 사람 앞에서 멈췄다가 `Command(resume=…)`로 이어 가는 것, `Send()`로 파일 수만큼 워커를 한꺼번에 띄우는 것, 멈춘 상태를 붙드는 `MemorySaver` 체크포인터, 동시에 쓰는 값을 이어 붙이는 `operator.add` 리듀서입니다(이 낱말들은 Day 001~105 README에서 찾지 못했습니다, grep으로 확인).
 
-직접 돌려 보고 알게 된 사실이 셋 있습니다. 첫째, 저장소 주소는 문자열일 뿐입니다. 앱은 어떤 저장소도 내려받거나 읽지 않고, 계획 담당 모델은 이름만 보고 파일 경로를 지어냅니다(Step 3). 그래서 diff와 보고서는 코드를 본 결과가 아니라 모델의 추측입니다. 둘째, 오늘 설치 그대로는 승인 버튼이 동작하지 않습니다. Streamlit이 버튼을 누를 때마다 `app.py`를 처음부터 다시 실행해서 `MemorySaver`가 매번 새로 만들어지고, 멈춰 있던 계획이 사라진 그래프에 `resume`을 보내면 그래프가 처음부터 다시 시작해 검증 노드가 빈 입력을 거절합니다(Step 7). 앱 README의 "interrupts survive Streamlit reruns"와 반대입니다. 셋째, 연결 오류는 검증 노드에서 조용히 삼켜지고 계획 노드에서야 오류로 나옵니다(Step 3).
+직접 돌려 보고 알게 된 사실이 셋 있습니다. 첫째, 저장소 주소는 문자열일 뿐입니다. 앱은 어떤 저장소도 내려받거나 읽지 않고, 계획 담당 모델은 저장소를 보지 않고 이름과 목표만으로 파일 경로를 추측합니다(Step 3). 그래서 diff와 보고서는 코드를 본 결과가 아니라 모델의 추측입니다. 둘째, 승인·수정 버튼이 동작하지 않습니다(버전을 올려서 생긴 문제가 아니라 앱이 Streamlit의 실행 방식과 맞지 않는 것입니다). Streamlit이 버튼을 누를 때마다 `app.py`를 처음부터 다시 실행해서 `MemorySaver`가 매번 새로 만들어지고, 멈춰 있던 계획이 사라진 그래프에 `resume`을 보내면 그래프가 처음부터 다시 시작해 검증 노드가 빈 입력을 거절합니다(Step 7). 앱 README의 "interrupts survive Streamlit reruns"와 반대입니다. 셋째, 연결 오류는 검증 노드에서 조용히 삼켜지고 계획 노드에서야 오류로 나옵니다(Step 3).
 
 키가 없어도 Step 1~7의 확인이 모두 됩니다. 앱이 읽는 `LLM_BASE_URL`을 내 PC의 가짜 서버로 돌려 OpenAI 호환 엔드포인트를 흉내 내고, 화면은 `AppTest`로 확인합니다. 이 문서를 만들며 OpenAI에 닿은 요청은 한 건도 없습니다. 그래서 문서의 계획·diff·보고서 문장은 가짜 서버의 고정 응답일 뿐이고, 진짜 모델이 `json_object` 응답 형식과 도구 호출을 이 앱이 기대하는 모양으로 돌려주는지는 확인하지 못했습니다. 실제 브라우저에서 버튼을 눌러 보지도 못했습니다. 아래는 앱이 의도한 아키텍처입니다.
 
@@ -102,11 +102,15 @@ from dotenv import load_dotenv
 load_dotenv()
 ```
 
-두 폴더 위에 만든 `.env`의 `OPENAI_API_KEY`와 `MODEL_FAST`가 `import app` 직후 환경변수에 올라온 것을 직접 확인했습니다(작업 폴더를 다른 곳으로 해도 `app.py` 위치를 기준으로 찾아 같았습니다). 상위 폴더에 다른 프로젝트의 `.env`가 있으면 그 키가 이 앱에 들어옵니다. 이미 있는 환경변수를 덮어쓰지는 않는다는 점은 확인하지 못했습니다.
+두 폴더 위에 만든 `.env`의 `OPENAI_API_KEY`와 `MODEL_FAST`가 `import app` 직후 환경변수에 올라온 것을 직접 확인했습니다(작업 폴더를 다른 곳으로 해도 `app.py` 위치를 기준으로 찾아 같았습니다. 다만 이것은 파일로 실행할 때입니다. `python -c "import app"`처럼 `__main__`에 `__file__`이 없으면 python-dotenv의 `find_dotenv`가 작업 폴더에서 찾기 때문에 다른 폴더에서는 `.env`가 읽히지 않았습니다). 상위 폴더에 다른 프로젝트의 `.env`가 있으면 그 키가 이 앱에 들어옵니다. 이미 있는 환경변수는 덮어쓰지 않습니다(직접 확인: `MODEL_FAST=preset`으로 돌렸을 때 `.env`의 `MODEL_FAST`가 있어도 `preset`이 남았고 `OPENAI_API_KEY`는 `.env` 값이 들어왔습니다. python-dotenv 1.2.4).
 
-이제 키 없이 그래프를 끝까지 돌려 봅니다. 먼저 어디서 끝나는지 봅니다.
+이제 키 없이 그래프를 끝까지 돌려 봅니다. 먼저 어디서 끝나는지 봅니다. 이 확인은 앱 폴더와 위쪽 폴더에 `.env`가 없고 셸에 키가 없을 때의 것이라, 스크립트가 맨 앞에서 `OPENAI_API_KEY`·`LLM_API_KEY`·`LLM_BASE_URL`을 환경에서 지웁니다. 지우지 않으면 기본 주소인 실제 OpenAI로 요청이 나갈 수 있습니다.
 
 ```python
+import os
+
+for name in ("OPENAI_API_KEY", "LLM_API_KEY", "LLM_BASE_URL"):
+    os.environ.pop(name, None)
 import app
 
 graph = app.get_graph()
@@ -134,7 +138,7 @@ Error during query validation LLM call: LLM API Key is not set. Set it in the .e
 error | API key is missing or invalid. Open the sidebar to configure your API keys. | next: ()
 ```
 
-키가 없으면 `llm.flash()`가 `RuntimeError`를 던지고(Step 2), 검증 노드의 `except`가 메시지에 "api key"가 들어 있는 것을 알아보고 상태를 `error`로 바꿔 그래프를 끝냅니다. 네트워크 요청은 한 건도 나가지 않았습니다.
+키가 없으면 `llm.flash()`가 `RuntimeError`를 던지고(Step 2), 검증 노드의 `except`가 메시지에 "api key"가 들어 있는 것을 알아보고 상태를 `error`로 바꿔 그래프를 끝냅니다. 이 환경에서는 네트워크 요청이 한 건도 나가지 않았습니다.
 
 ### Step 2. 모델 공급자와 가짜 서버 — 모델 둘, 주소 하나
 
@@ -267,7 +271,9 @@ ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
 uv run --no-project python fake_llm.py 53817 llm.jsonl
 ```
 
-(PowerShell도 같은 형태입니다. 실행해 보지 못했습니다. 이 서버는 `127.0.0.1`에만 열립니다. 이 문서의 확인은 모두 환경변수로 `HTTP_PROXY` 같은 프록시를 막아 둔 채 돌렸는데, 독자가 따라 할 때 필요한 것은 아니므로 명령에는 넣지 않았습니다.) 다른 터미널에서 앱 폴더에 `step2_llm.py`를 만듭니다. 환경변수는 파이썬 안에서 `import app` 전에 정하므로 셸 문법이 달라도 같습니다.
+(PowerShell도 같은 형태입니다. 실행해 보지 못했습니다. 이 서버는 `127.0.0.1`에만 열립니다. 이 문서의 확인은 모두 환경변수로 `HTTP_PROXY` 같은 프록시를 막아 둔 채 돌렸는데, 독자가 따라 할 때 필요한 것은 아니므로 명령에는 넣지 않았습니다.) 
+
+**확인.** 다른 터미널에서 앱 폴더에 `step2_llm.py`를 만듭니다. 환경변수는 파이썬 안에서 `import app` 전에 정하므로 셸 문법이 달라도 같습니다.
 
 ```python
 import os
@@ -395,7 +401,9 @@ def query_validator(state: MigrationState) -> dict:
     logger.info("Query validation successful.")
 ```
 
-예외가 나면 메시지에 키 관련 낱말이 있을 때만 `error`를 돌려주고, 연결 오류 같은 나머지 예외는 로그만 남긴 채 통과합니다. 마지막 줄 `return {}`는 "검증 통과"입니다. 앱 폴더에 `step3_plan.py`를 만들어 가짜 서버(Step 2에서 띄운 것)로 먼저 정상 경로를 봅니다.
+예외가 나면 메시지에 키 관련 낱말이 있을 때만 `error`를 돌려주고, 연결 오류 같은 나머지 예외는 로그만 남긴 채 통과합니다. 마지막 줄 `return {}`는 "검증 통과"입니다. 
+
+**확인.** 앱 폴더에 `step3_plan.py`를 만들어 가짜 서버(Step 2에서 띄운 것)로 먼저 정상 경로를 봅니다.
 
 ```python
 import os
@@ -455,7 +463,7 @@ status: awaiting_approval | next: ('approval',)
     ]
 ```
 
-모델이 받는 것은 저장소 문자열 하나와 목표 문장 하나, 그리고 시스템 지시문뿐입니다. `repo_target`은 앱 전체에서 프롬프트에 끼워 넣는 줄(350·548행)과 입력 검사(242행)에서만 쓰이고, 파일을 열거나 내려받거나 네트워크로 가져오는 코드는 `app.py`에 없습니다(소스로 확인: `clone`·`requests`·`subprocess`·`open(`·`httpx` 검색 결과 없음). 214행의 `github.com/my-org/my-project`와 `https://github.com/fastapi/fastapi`는 검증 지시문 안의 유효한 입력 예시 문자열일 뿐입니다. `MigrationTask`의 `code_context`(118행)는 선택 필드인데 계획 지시문의 JSON 스키마에는 없고 값을 채우는 코드도 없습니다(소스로 확인). 그래서 진짜 모델이 돌려주는 `src/models/user.py` 같은 경로는 저장소 이름과 목표 문장을 보고 지어낸 것입니다.
+모델이 받는 것은 저장소 문자열 하나와 목표 문장 하나, 그리고 시스템 지시문뿐입니다. `repo_target`을 읽는 곳은 프롬프트에 끼워 넣는 줄(350·548행)과 입력 검사(242행)뿐이고(화면이 입력을 받아 넘기는 곳은 812~834행), 파일을 열거나 내려받거나 네트워크로 가져오는 코드는 `app.py`에 없습니다(소스로 확인: `clone`·`subprocess`·`open(`·`httpx` 검색 결과 없음, `requests`는 지시문 속 낱말("illegal requests" 등)뿐이고 `requests` 라이브러리를 임포트하거나 부르지 않음). 214행의 `github.com/my-org/my-project`와 `https://github.com/fastapi/fastapi`는 검증 지시문 안의 유효한 입력 예시 문자열일 뿐입니다. `MigrationTask`의 `code_context`(118행)는 선택 필드인데 계획 지시문의 JSON 스키마에는 없고 값을 채우는 코드도 없습니다(소스로 확인). 그래서 진짜 모델이 돌려주는 `src/models/user.py` 같은 경로는 저장소를 보지 않고 이름과 목표 문장만으로 추측한 것입니다(`fastapi/fastapi`처럼 잘 알려진 저장소라면 학습한 기억이 실제 경로와 맞을 수도 있습니다).
 
 앞에서 읽은 검증 노드의 "연결 오류는 통과" 부분을 직접 봅니다. 아무도 듣지 않는 포트(`53818`)를 가리키게 해서 가짜 서버 없이 돌립니다.
 
@@ -492,7 +500,7 @@ uv run --no-project python step3_closed.py
 15.3초 {'planner': {'status': 'error', 'error': 'Failed to generate migration plan: Connection error.'}}
 ```
 
-검증 노드는 연결이 안 되는데도 `None`(통과)으로 끝났고, 오류는 계획 노드에서야 `Failed to generate migration plan: Connection error.`로 나왔습니다. 호출마다 7~8초가 걸린 것은 OpenAI SDK가 연결 실패를 기본 설정대로 재시도해서입니다. 계획 노드의 `except`(376~382행)는 `error`를 채우고, 그래프의 갈래(Step 4)가 `error`를 보고 `END`로 보냅니다.
+검증 노드는 연결이 안 되는데도 `None`(통과)으로 끝났고, 오류는 계획 노드에서야 `Failed to generate migration plan: Connection error.`로 나왔습니다. 호출마다 7~8초가 걸린 것은 이 PC(Windows)에서 닫힌 localhost 포트로의 연결 하나가 거부되기까지 약 2초 걸리고(직접 확인: `socket.create_connection`이 2.03초·2.04초 뒤 `ConnectionRefusedError`), OpenAI SDK가 기본 설정으로 두 번 더 시도해서입니다(소스로 확인: openai 3.26.1 `_constants.py`의 `DEFAULT_MAX_RETRIES = 2`, langchain-openai는 `max_retries`를 따로 정하지 않음). 거부가 즉시 오는 환경에서는 훨씬 짧을 것입니다. 계획 노드의 `except`(376~382행)는 `error`를 채우고, 그래프의 갈래(Step 4)가 `error`를 보고 `END`로 보냅니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -572,7 +580,7 @@ def plan_approval(state: MigrationState) -> dict:
     return builder.compile(checkpointer=MemorySaver())
 ```
 
-`approval`에서는 `route_after_approval`이 `Send` 목록(승인됐고 계획이 비지 않았을 때)이나 `"planner"`를 돌려줍니다. 승인됐는데 계획이 비어 있으면 워커가 0개가 되어 그래프가 갇히니 계획 노드로 되돌린다는 주석이 붙어 있습니다. `planner`와 `query_validator`는 `error`가 있으면 `END`로 갑니다. 앱이 컴파일한 갈래를 그대로 뽑아 봅니다. `step4_edges.py`입니다.
+`approval`에서는 `route_after_approval`이 `Send` 목록(승인됐고 계획이 비지 않았을 때)이나 `"planner"`를 돌려줍니다. 승인됐는데 계획이 비어 있으면 워커가 0개가 되어 그래프가 갇히니 계획 노드로 되돌린다는 주석이 붙어 있습니다. `planner`와 `query_validator`는 `error`가 있으면 `END`로 갑니다. 앱이 컴파일한 갈래를 그대로 뽑아 봅니다. Day 061 Step 7이 쓴 `get_graph().edges`와 같은 방법이니 여기서는 이 앱에만 있는 갈래(승인에서 계획으로 되돌아가는 것, 검증·계획에서 `END`로 빠지는 둘)만 짚습니다. `step4_edges.py`입니다.
 
 ```python
 import app
@@ -603,7 +611,7 @@ aggregator -> __end__
 
 ![계획 쪽 갈래](diagrams/extra-graph.svg)
 
-이제 멈추고 이어지는 것을 봅니다. 수정 요청을 한 번 보내 봅니다. `step4_approval.py`입니다.
+**확인.** 이제 멈추고 이어지는 것을 봅니다. 수정 요청을 한 번 보내 봅니다. `step4_approval.py`입니다.
 
 ```python
 import os
@@ -727,7 +735,9 @@ def refactor_worker_node(state: MigrationState) -> dict:
         }
 ```
 
-실패해도 예외가 아니라 `❌ **Refactoring Failed**` 문장이 결과 목록에 들어가고 그래프는 집계 노드까지 갑니다. 병렬이라는 것을 눈으로 봅니다. 가짜 서버를 워커 응답마다 6초 지연시키는 인자(세 번째)로 다시 띄웁니다.
+실패해도 예외가 아니라 `❌ **Refactoring Failed**` 문장이 결과 목록에 들어가고 그래프는 집계 노드까지 갑니다. 
+
+**확인.** 병렬이라는 것을 눈으로 봅니다. 가짜 서버를 워커 응답마다 6초 지연시키는 인자(세 번째)로 다시 띄웁니다.
 
 ```bash
 uv run --no-project python fake_llm.py 53817 llm.jsonl 6
@@ -863,7 +873,9 @@ def generate_matplotlib_chart(
                     )
 ```
 
-집계 노드는 프로 모델에 도구를 묶어(`bind_tools`) 최대 6번(`MAX_AGGREGATOR_ROUNDS`, 538행) 돕니다. 모델이 도구를 부르면 차트를 실제로 그리고, 모델에게는 PNG 대신 `<!--CHART_1-->` 같은 표식만 돌려줍니다. 큰 이미지를 대화에 되먹이지 않는 것입니다. 이어서 모든 어시스턴트 발화를 이어 붙이고 표식을 실제 `data:` 링크로 바꿉니다(607~614행). 도구는 직접 부르는 것으로도 확인합니다. `step6_report.py`는 도구 세 가지 호출과 그래프 끝까지의 실행을 합칩니다(서버는 지연 없는 판).
+집계 노드는 프로 모델에 도구를 묶어(`bind_tools`) 최대 6번(`MAX_AGGREGATOR_ROUNDS`, 538행) 돕니다. 모델이 도구를 부르면 차트를 실제로 그리고, 모델에게는 PNG 대신 `<!--CHART_1-->` 같은 표식만 돌려줍니다. 큰 이미지를 대화에 되먹이지 않는 것입니다. 이어서 모든 어시스턴트 발화를 이어 붙이고 표식을 실제 `data:` 링크로 바꿉니다(607~614행). 
+
+**확인.** 도구는 직접 부르는 것으로도 확인합니다. `step6_report.py`는 도구 세 가지 호출과 그래프 끝까지의 실행을 합칩니다(서버는 지연 없는 판).
 
 ```python
 import os
@@ -925,7 +937,7 @@ uv run --no-project python -m pytest -q -p no:cacheprovider test_app_security.py
 3 passed in 3.74s
 ```
 
-집계 노드가 끝에 반환하는 것은 `final_answer`와 `status="completed"`입니다. 모델이 빈 내용을 돌려주면 `error` 상태가 됩니다(616~625행). 도구 호출과 응답이 오가는 순서는 아래 그림이고, 앞 그림(`extra-collect`)은 이 반복의 첫 호출까지를 보여 줍니다.
+집계 노드가 끝에 반환하는 것은 `final_answer`와 `status="completed"`입니다. 모델이 빈 내용을 돌려주면 `error` 상태가 됩니다(616~625행). 도구 호출과 응답이 오가는 순서는 아래 그림이고, 시퀀스 절의 7번 그림(`extra-collect`)이 이 반복의 첫 호출까지를 보여 줍니다.
 
 ![집계와 차트의 흐름](diagrams/extra-chart.svg)
 
@@ -1046,9 +1058,11 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:53827
 curl -s http://localhost:53827/_stcore/health
 ```
 
-직접 확인한 출력은 `200`과 `ok`였고, 서버 로그는 `Uvicorn server started on localhost:53827`과 `URL: http://localhost:53827`을 찍었습니다. 서버는 `Ctrl+C`로 멈춥니다. (사용 통계 동의를 묻는 "Collecting usage statistics" 안내는 `~/.streamlit/credentials.toml`이 없을 때만 나오는데, 이 문서는 `--browser.gatherUsageStats false`를 줬고 홈을 비운 환경이라 보지 않았습니다. PowerShell에서도 같은 명령입니다. 실행해 보지 못했습니다.)
+(PowerShell 5.1의 `curl`은 `Invoke-WebRequest`의 별칭이라 위 옵션을 받지 않습니다. `(Invoke-WebRequest -Uri http://localhost:53827 -UseBasicParsing).StatusCode`로 바꿔 쓰세요. Day 054가 같은 형태를 썼습니다. 실행해 보지 못했습니다.)
 
-이제 승인 버튼의 문제입니다. Streamlit은 위젯을 누를 때마다 메인 스크립트를 처음부터 다시 실행하고, 실행마다 새 `__main__` 모듈을 만들어 그 안에서 `exec`합니다(소스로 확인: Streamlit 1.65.0 `runtime/scriptrunner/script_runner.py` 764행의 `_new_module("__main__")`와 924행의 `exec(code, module.__dict__)`). `app.py`가 메인 스크립트이므로 676~677행의 `_graph = None`도, `build_migration_graph()` 안의 `MemorySaver()`도 매번 새것입니다. 눈으로 봅니다. `step7_probe.py`는 `app.py`를 그대로 실행한 뒤 화면에 현재 체크포인터의 객체 번호를 덧붙여 세 번 실행합니다.
+직접 확인한 출력은 `200`과 `ok`였고, 서버 로그는 `Uvicorn server started on localhost:53827`과 `URL: http://localhost:53827`을 찍었습니다. 서버는 `Ctrl+C`로 멈춥니다. (사용 통계 안내 "Collecting usage statistics"는 `~/.streamlit/credentials.toml`이 없고, headless이고, `browser.gatherUsageStats`를 직접 정하지 않았을 때 셋이 모두 맞아야 나옵니다(소스로 확인: streamlit 1.65.0 `runtime/credentials.py`의 `check_credentials`). 이 문서는 홈을 비운 환경이었지만 `--browser.gatherUsageStats false`를 직접 줬기 때문에 나오지 않았습니다. 위 `streamlit run` 명령은 PowerShell에서도 같은 형태입니다. 실행해 보지 못했습니다.)
+
+**확인.** 이제 승인 버튼의 문제입니다. Streamlit은 위젯을 누를 때마다 메인 스크립트를 처음부터 다시 실행하고, 실행마다 새 `__main__` 모듈을 만들어 그 안에서 `exec`합니다(소스로 확인: Streamlit 1.65.0 `runtime/scriptrunner/script_runner.py` 764행의 `_new_module("__main__")`와 924행의 `exec(code, module.__dict__)`). `app.py`가 메인 스크립트이므로 676~677행의 `_graph = None`도, `build_migration_graph()` 안의 `MemorySaver()`도 매번 새것입니다. 눈으로 봅니다. `step7_probe.py`는 `app.py`를 그대로 실행한 뒤 화면에 현재 체크포인터의 객체 번호를 덧붙여 세 번 실행합니다.
 
 ```python
 import os
@@ -1072,9 +1086,10 @@ for n in (1, 2, 3):
 uv run --no-project python step7_probe.py
 ```
 
-직접 확인한 출력(숫자는 실행마다 다르고 서로 다르기만 하면 됩니다):
+직접 확인한 출력(숫자는 실행마다 다르고 서로 다르기만 하면 됩니다. 맨 위 `missing ScriptRunContext!` 경고는 Streamlit이 `streamlit run` 밖에서 앱을 돌릴 때 찍는 안내라 무시해도 되고, 앞의 시각은 실행마다 다릅니다. 이하 AppTest 출력도 같습니다):
 
 ```
+2026-10-09 16:09:22.027 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 실행 1 ['PROBE saver=2324564952128']
 실행 2 ['PROBE saver=2324646228560']
 실행 3 ['PROBE saver=2324565476688']
@@ -1112,9 +1127,10 @@ print("   보고서 부제:", [s.value for s in at.subheader], "| 다운로드 �
 uv run --no-project python step7_ui.py
 ```
 
-직접 확인한 출력(맨 윗줄은 로그):
+직접 확인한 출력(위 두 줄은 `Query validation failed…` 로그와 위의 Streamlit 경고입니다):
 
 ```
+2026-10-09 16:09:28.239 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 Query validation failed: Missing repo or migration goal.
 title: ⚡ Codebase Migration & Refactor Planner | exception: []
 1) Plan Migration -> awaiting_approval | 계획 3 개
@@ -1122,7 +1138,7 @@ title: ⚡ Codebase Migration & Refactor Planner | exception: []
    보고서 부제: [] | 다운로드 버튼: 0
 ```
 
-계획까지는 되고(`awaiting_approval`, 3개), 승인은 `Please provide both a target repository URL/path AND a clear migration goal.` 오류 상자로 끝납니다. 새 그래프에 `Command(resume=…)`를 보내자 체크포인트가 없어 그래프가 처음(`START`)부터 시작했고, 입력이 없으니 검증 노드가 빈 `repo_target`을 거절한 것입니다(로그의 `Query validation failed: Missing repo or migration goal.`). 앱 README는 "Session state is persisted using LangGraph's in-memory `MemorySaver`, allowing execution interrupts to survive Streamlit reruns seamlessly."라고 적었지만(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/README.md:55`) 오늘의 Streamlit에서는 그렇지 않습니다. 이 확인은 `AppTest`로 한 것이고 실제 브라우저에서 눌러 보지는 못했습니다. 같은 스크립트 러너를 쓰므로 같을 것으로 보지만 확인한 것은 아닙니다.
+계획까지는 되고(`awaiting_approval`, 3개), 승인은 `Please provide both a target repository URL/path AND a clear migration goal.` 오류 상자로 끝납니다. 새 그래프에 `Command(resume=…)`를 보내자 체크포인트가 없어 그래프가 처음(`START`)부터 시작했고, 입력이 없으니 검증 노드가 빈 `repo_target`을 거절한 것입니다(로그의 `Query validation failed: Missing repo or migration goal.`). 앱 README는 "Session state is persisted using LangGraph's in-memory `MemorySaver`, allowing execution interrupts to survive Streamlit reruns seamlessly."라고 적었지만(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/README.md:55`) 실제로는 그렇지 않습니다. 이 확인은 `AppTest`로 한 것이고 실제 브라우저에서 눌러 보지는 못했습니다. 다만 두 경로가 모두 실행마다 새 모듈을 만드는 것은 소스로 확인했습니다(streamlit 1.65.0: 서버 쪽 `runtime/scriptrunner/script_runner.py`의 `_new_module`이 `types.ModuleType(name)`을 새로 만들고, `AppTest`의 `testing/v1/local_script_runner.py`는 `ScriptRunner`를 이어받아 자기 `_new_module`로 역시 실행마다 새로 만듭니다). 그러니 이것은 버전을 올려서 생긴 문제가 아니라 앱과 Streamlit 실행 방식의 불일치입니다.
 
 고치는 방법의 하나는 그래프를 스크립트 밖에서 살아남는 곳에 두는 것입니다. 복사본에서 `_graph`를 `st.cache_resource`가 돌려주는 딕셔너리로 바꿉니다. 앱 파일은 건드리지 않고 복사본을 만드는 `step7_patch.py`입니다.
 
@@ -1160,6 +1176,7 @@ uv run --no-project python step7_ui.py app_cached.py
 
 ```
 app_cached.py written
+2026-10-09 16:09:35.093 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 title: ⚡ Codebase Migration & Refactor Planner | exception: []
 1) Plan Migration -> awaiting_approval | 계획 3 개
 2) Approve -> completed | 오류 상자: []
@@ -1168,11 +1185,102 @@ title: ⚡ Codebase Migration & Refactor Planner | exception: []
 
 같은 장면이 이번에는 `completed`이고 보고서 부제와 다운로드 버튼 하나가 나왔습니다. 이 고침은 키·주소·모델이 바뀌면 그래프를 새로 만드는 기존 동작을 `_holder()` 딕셔너리 안에서 그대로 지키지만, 서버를 쓰는 모든 세션이 같은 그래프와 `MemorySaver`를 공유하게 됩니다(`thread_id`가 세션마다 달라 상태는 섞이지 않습니다. 이 공유는 따로 확인하지 못했습니다).
 
+이 고침만으로는 수정 경로가 반만 고쳐집니다. Revise를 누르면 그래프는 수정된 계획을 만들어 다시 승인 노드에서 멈추는데, 화면은 옛 계획을 그대로 보여 주고 그 상태에서 Approve를 누르면 화면에 없던 수정 계획이 실행됩니다. 승인·수정 버튼의 끝(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:930-935`)이 `refactor_log`·`final_answer`·`status`·`error`만 `st.session_state`에 다시 쓰고, 계획 화면(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:852-876`)이 그리는 `strategy`·`plan`은 다시 쓰지 않기 때문입니다(소스로 확인). `step7_revise.py`는 Plan → Revise → Approve를 누르고 화면에 그려진 계획 수와 실행된 워커 수를 셉니다.
+
+```python
+import os
+import sys
+
+os.environ["LLM_BASE_URL"] = "http://127.0.0.1:53817/v1"
+os.environ["OPENAI_API_KEY"] = "sk-fake-not-real"
+from streamlit.testing.v1 import AppTest
+
+at = AppTest.from_file(sys.argv[1], default_timeout=120)
+at.run()
+repo = [t for t in at.main.text_input if t.label.startswith("Target")][0]
+goal = [t for t in at.main.text_area if t.label.startswith("Migration Goal")][0]
+repo.set_value("github.com/acme/shop")
+goal.set_value("Migrate Pydantic v1 to v2")
+[b for b in at.button if b.label.startswith("🚀")][0].click()
+at.run()
+
+
+def shown():
+    return [m.value.split("**")[1] for m in at.markdown if m.value.startswith("**") and "Risk:" in m.value]
+
+
+print("1) Plan Migration ->", at.session_state.status, "| 화면:", len(shown()), "개")
+fb = [t for t in at.main.text_area if t.label.startswith("Revision")][0]
+fb.set_value("mark models/user.py as Critical risk, skip config/settings.py")
+[b for b in at.button if "Revise" in b.label][0].click()
+at.run()
+print("2) Revise ->", at.session_state.status, "| 오류 상자:", [e.value for e in at.error])
+print("   화면의 계획:", len(shown()), "개 | session_state.plan:", len(at.session_state.plan))
+if at.session_state.status == "awaiting_approval":
+    [b for b in at.button if "Approve" in b.label][0].click()
+    at.run()
+    print("3) Approve ->", at.session_state.status, "| 실행된 워커:", len(at.session_state.refactor_log))
+```
+
+```bash
+uv run --no-project python step7_revise.py app.py
+uv run --no-project python step7_revise.py app_cached.py
+```
+
+직접 확인한 출력(둘 다 앞의 Streamlit 경고 줄은 뺐고, 원본의 윗줄은 로그입니다):
+
+```
+Query validation failed: Missing repo or migration goal.
+1) Plan Migration -> awaiting_approval | 화면: 3 개
+2) Revise -> None | 오류 상자: ['Please provide both a target repository URL/path AND a clear migration goal.']
+   화면의 계획: 0 개 | session_state.plan: 3
+```
+
+```
+1) Plan Migration -> awaiting_approval | 화면: 3 개
+2) Revise -> awaiting_approval | 오류 상자: []
+   화면의 계획: 3 개 | session_state.plan: 3
+3) Approve -> completed | 실행된 워커: 2
+```
+
+원본(`app.py`)은 Approve와 똑같이 Revise도 오류 상자로 끝납니다. 고친 복사본은 Revise 뒤에도 화면에 계획 3개가 남은 채 워커 2개가 돌았습니다(가짜 서버가 수정 요청에 돌려주는 계획이 파일 2개입니다). 복사본에 그 두 줄을 더하는 `step7_patch2.py`를 만들어 같은 장면을 다시 돌립니다.
+
+```python
+text = open("app_cached.py", encoding="utf-8").read()
+old = "            st.session_state.refactor_log = log\n"
+assert text.count(old) == 1
+text = text.replace(
+    old,
+    old
+    + '            st.session_state.strategy = state.values.get("strategy")\n'
+    + '            st.session_state.plan = state.values.get("plan")\n',
+)
+open("app_cached2.py", "w", encoding="utf-8").write(text)
+print("app_cached2.py written")
+```
+
+```bash
+uv run --no-project python step7_patch2.py
+uv run --no-project python step7_revise.py app_cached2.py
+```
+
+직접 확인한 출력(Streamlit 경고 줄은 뺐습니다):
+
+```
+app_cached2.py written
+1) Plan Migration -> awaiting_approval | 화면: 3 개
+2) Revise -> awaiting_approval | 오류 상자: []
+   화면의 계획: 2 개 | session_state.plan: 2
+3) Approve -> completed | 실행된 워커: 2
+```
+
+화면의 계획이 2개로 바뀌었습니다. 이 처방은 가짜 서버로만 확인했고 실제 모델이 돌려주는 수정 계획으로는 보지 못했습니다.
+
 ![Step 7까지의 구성](diagrams/step7.svg)
 
 ## 요청 한 건이 흐르는 과정
 
-계획 요청 하나에서 보고서까지를 그림 여덟 장으로 나눠 그렸습니다. 한 그림에 넣으면 한 배우가 이웃 둘과 동시에 주고받는 메시지가 다른 배우의 수명선 위에 라벨을 놓게 됩니다(모든 배우 순서를 시험했지만 선이 글자를 지나지 않는 순서가 없었습니다). 그래서 한 배우가 이웃 둘만 갖는 곳에서 나눴고, 메시지는 하나도 지우지 않고 원래 순서 그대로 한 그림에 하나씩 있습니다. 이 흐름은 소스가 그리는 것이고 모델 응답은 가짜 서버로만 확인했습니다. 다만 Step 7에서 본 대로 오늘의 화면에서는 네 번째 그림의 첫 메시지(승인 클릭) 이후가 새 그래프로 가서 이어지지 않습니다.
+계획 요청 하나에서 보고서까지를 그림 열 장으로 나눠 그렸습니다. 한 그림에 넣으면 한 배우가 이웃 둘과 동시에 주고받는 메시지가 다른 배우의 수명선 위에 라벨을 놓게 됩니다(모든 배우 순서를 시험했지만 선이 글자를 지나지 않는 순서가 없었습니다). 그래서 한 배우가 이웃 둘만 갖는 곳에서 나눴고, 메시지는 하나도 지우지 않고 원래 순서 그대로 한 그림에 하나씩 있습니다. 이 흐름은 소스가 그리는 것이고 모델 응답은 가짜 서버로만 확인했습니다. 다만 Step 7에서 본 대로 오늘의 화면에서는 네 번째 그림의 첫 메시지(승인 클릭) 이후가 새 그래프로 가서 이어지지 않습니다.
 
 ![1: 클릭에서 검증까지](diagrams/sequence.svg)
 
@@ -1194,17 +1302,25 @@ title: ⚡ Codebase Migration & Refactor Planner | exception: []
 
 승인이면 `Send`가 파일 수만큼 워커를 뜨게 하고 워커들은 각자 빠른 모델을 한 번씩 부릅니다.
 
-![6: 결과 모으기](diagrams/extra-collect.svg)
+![6: 진행 표시](diagrams/extra-progress.svg)
+
+승인 스트림은 워커 노드가 끝날 때마다 이벤트를 화면에 넘기고, 화면은 진행 상자(`st.status`)에 한 줄씩 씁니다(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:911-919`).
+
+![7: 결과 모으기](diagrams/extra-collect.svg)
 
 워커들의 결과가 `operator.add`로 합쳐져 집계 노드에 오고, 집계 노드가 프로 모델에게 결과와 차트 도구 정의를 주면 모델이 도구 호출을 돌려줍니다.
 
-![7: 차트](diagrams/extra-chart.svg)
+![8: 차트](diagrams/extra-chart.svg)
 
 집계 노드가 차트 도구를 불러 데이터 URI를 받고, 모델에게는 표식만 돌려준 뒤 보고서 마크다운을 받습니다.
 
-![8: 화면 표시](diagrams/extra-display.svg)
+![9: 마무리 이벤트](diagrams/extra-finish.svg)
 
-`final_answer`가 체크포인터에 저장되고, 화면은 `get_state`로 읽어 데이터 URI는 `st.image`로 그리며 마크다운 보고서와 다운로드 버튼을 보여 줍니다.
+집계 노드가 `final_answer`를 체크포인터에 저장하고 그 이벤트가 화면에 오면 진행 상자에 "Aggregator synthesizing" 줄이 한 줄 더 적힙니다(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:920-923`). 이 줄은 집계가 끝난 뒤에 찍히므로 "합성하는 중"이라는 문장과 시점이 어긋납니다(소스로 확인).
+
+![10: 화면 표시](diagrams/extra-display.svg)
+
+화면은 `get_state`로 읽어 데이터 URI는 `st.image`로 그리며 마크다운 보고서와 다운로드 버튼을 보여 줍니다.
 
 ## 실행 체크리스트
 
@@ -1215,31 +1331,33 @@ title: ⚡ Codebase Migration & Refactor Planner | exception: []
 - [ ] 계획 노드가 `awaiting_approval`에서 멈추는 것과, 저장소를 읽는 코드가 소스에 없는 것을 확인했다
 - [ ] 닫힌 포트에서 검증 노드는 통과하고 계획 노드에서 `Connection error.`가 나는 것을 봤다
 - [ ] `interrupt`로 멈춘 그래프에 수정 문장을 보내면 계획 노드를 거쳐 다시 승인 노드에서 멈추는 것을 확인했다
-- [ ] 워커 셋이 6초 지연에도 7.4초 안에 끝나 병렬로 도는 것을 확인했다
+- [ ] 워커 셋이 6초 지연에도 8초 안에 끝나(순차라면 18초 넘음) 병렬로 도는 것을 확인했다
 - [ ] 차트 도구가 데이터만 받고 잘못된 입력을 문자열로 거절하는 것과 테스트 3개 통과를 확인했다
 - [ ] 사이드바 키는 Save Settings 뒤에 반영되는 것을 확인했다
 - [ ] 스크립트를 다시 실행할 때마다 `MemorySaver`가 새로 만들어지고 승인 버튼이 오류로 끝나는 것을 `AppTest`로 확인했다
 - [ ] `st.cache_resource` 복사본에서 같은 장면이 `completed`까지 가는 것을 확인했다
+- [ ] 그 복사본에서도 Revise 뒤 화면이 옛 계획을 보여 주고, `strategy`·`plan`을 다시 쓰는 두 줄을 더하면 화면이 새 계획을 보여 주는 것을 확인했다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 계획까지는 뜨는데 Approve나 Revise를 누르면 `Please provide both a target repository URL/path AND a clear migration goal.` 오류 상자가 뜸(직접 확인: `AppTest`로) | 버튼마다 스크립트가 다시 실행되며 `MemorySaver`가 새로 만들어지고, 멈춰 있던 `thread_id`가 없는 그래프에 `resume`이 가서 그래프가 처음부터 시작해 빈 입력을 거절한다(Step 7) | 복사본에서 `get_graph`의 전역을 `st.cache_resource` 안으로 옮긴다(`step7_patch.py`). 실제 브라우저에서는 확인하지 못했다 |
+| 계획까지는 뜨는데 Approve나 Revise를 누르면 `Please provide both a target repository URL/path AND a clear migration goal.` 오류 상자가 뜸(직접 확인: `AppTest`로 Approve와 Revise 둘 다) | 버튼마다 스크립트가 다시 실행되며 `MemorySaver`가 새로 만들어지고, 멈춰 있던 `thread_id`가 없는 그래프에 `resume`이 가서 그래프가 처음부터 시작해 빈 입력을 거절한다(Step 7) | 복사본에서 `get_graph`의 전역을 `st.cache_resource` 안으로 옮긴다(`step7_patch.py`). 실제 브라우저에서는 확인하지 못했다 |
+| `st.cache_resource` 복사본에서 Revise를 눌렀는데 화면의 계획이 그대로이고, Approve를 누르면 화면에 없던 파일들이 실행됨(직접 확인: `AppTest`로 화면 계획 3개, 실행된 워커 2개) | 승인·수정 버튼의 끝(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:930-935`)이 `strategy`·`plan`을 `st.session_state`에 다시 쓰지 않아 화면이 옛 계획을 그린다(소스로 확인) | 복사본의 그 자리에 `st.session_state.strategy = state.values.get("strategy")`와 `st.session_state.plan = state.values.get("plan")`을 더한다(`step7_patch2.py`. 가짜 서버로 직접 확인) |
 | 사이드바에 키를 넣고 Plan Migration을 눌렀더니 `API key is missing or invalid. Open the sidebar to configure your API keys.` | 사이드바 값은 Save Settings를 눌러야 `os.environ`에 올라간다. 검증 노드는 환경변수만 읽는다(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:60`, `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:694-704`. 직접 확인) | Save Settings를 먼저 누른다. 또는 `.env`나 셸 환경변수에 키를 둔다 |
-| 키도 맞고 서버 주소도 맞는데 검증 단계는 지나고 `Failed to generate migration plan: Connection error.`가 뜸(직접 확인: 닫힌 포트로) | 검증 노드는 키 관련 낱말이 없는 예외를 삼키고 통과시킨다(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:271-292`). 계획 노드가 처음 오류를 낸다. SDK 재시도로 한 호출에 7~8초가 걸린다 | 주소와 `LLM_BASE_URL`의 `/v1`, 서버 상태를 본다 |
+| 키는 맞는데 `Failed to generate migration plan: Connection error.`가 뜸(직접 확인: 닫힌 포트로) | 검증 노드는 키 관련 낱말이 없는 예외를 삼키고 통과시킨다(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:271-292`). 계획 노드가 처음 오류를 낸다. 이 PC에서는 SDK 재시도까지 한 호출에 7~8초가 걸렸다(Step 3) | 주소·포트와 서버가 떠 있는지 본다. 주소 경로가 틀려 서버가 404 같은 HTTP 응답을 돌려주면 `Connection error.`가 아니라 상태 코드 오류가 난다(소스로 확인: `Connection error.`는 `openai`의 `APIConnectionError` 기본 문장). 이 경로는 재현하지 못했다 |
 | 같은 이름의 환경변수를 정하지 않았는데 키가 이미 들어 있음 | `load_dotenv()`가 `app.py`가 있는 폴더에서 위쪽으로 `.env`를 찾는다(`advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:39`. 직접 확인: 두 폴더 위의 `.env`를 읽었다) | 위쪽 폴더의 `.env`를 확인한다 |
 | 2026-12-11 이후 `gpt-5-mini` 호출이 거부될 것으로 예상됨(종료 뒤의 실제 오류는 볼 수 없어 직접 보지 못함) | `gpt-5-mini`가 가리키는 스냅샷 `gpt-5-mini-2025-08-07`이 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations, 2026-10-09에 받은 원문)에 2026-12-11 종료로 올라 있다. 대체는 `gpt-5.6-terra`다 | `MODEL_FAST`를 다른 모델로 정한다(Step 2). 그 모델로 호출해 보지는 못했다 |
-| 계획의 파일 경로가 내 저장소에 없는 이름임 | 앱은 저장소를 읽지 않는다. 모델이 저장소 이름과 목표 문장만 보고 지어낸다(Step 3. 소스로 확인) | 결과를 초안으로만 본다. 파일 내용을 프롬프트에 넣는 일은 더 해보기 |
+| 계획의 파일 경로가 내 저장소에 없는 이름임 | 앱은 저장소를 읽지 않는다. 모델이 저장소를 보지 않고 이름과 목표 문장만으로 추측한다(Step 3. 소스로 확인) | 결과를 초안으로만 본다. 파일 내용을 프롬프트에 넣는 일은 더 해보기 |
 | `No module named pytest` | `pytest`가 requirements에 없다 | `uv pip install pytest`(Step 6) |
 | `import app` 대신 빈 모듈이 불러짐(`app has no attribute …`) | 현재 폴더에 `app`이라는 폴더가 있으면 파이썬이 그 폴더를 먼저 불러온다(직접 확인: 작업 폴더에 `app/` 폴더가 있을 때 `AttributeError: module 'app' has no attribute 'get_graph'`) | 확인용 파일을 `app.py`와 같은 폴더에서 실행하고 작업 폴더에 `app`이라는 이름의 폴더를 두지 않는다 |
 
 ## 더 해보기
 
-- `st.cache_resource` 복사본(`app_cached.py`)에서 Revise를 눌러 수정 요청이 계획을 바꾸고 다시 멈추는지 `AppTest`로 확인해 보세요. 가짜 서버는 수정 요청에 `src/models/user.py`를 `Critical`로 올린 계획을 돌려주도록 되어 있습니다. 이 문서는 승인 경로만 화면에서 확인했고 수정 경로는 그래프 수준(Step 4)에서만 봤습니다.
+- `app_cached2.py`(`strategy`·`plan`을 다시 쓰는 두 줄이 들어간 복사본)에서 Revise 뒤 화면 계획의 위험도를 읽어 보세요. 가짜 서버는 수정 요청에 파일 두 개짜리 계획을 돌려주지만 그 안의 `src/models/user.py`는 `Critical`로 올라 있습니다(`fake_llm.py`의 `PLAN_V2`). 화면에 `Critical` 배지가 보이는지 `AppTest`의 마크다운에서 찾아 확인해 보세요. 이 문서는 화면 계획의 개수만 셌습니다.
 - 계획 노드가 실제 파일을 보게 해 보세요. 복사본에서 `MigrationState`에 읽은 파일 내용을 넣고 `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:344-363`의 `user_content`에 이어 붙이면 `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:118`의 `code_context`가 처음으로 쓰입니다. 로컬 경로만 읽고 `./src/my_app`을 입력해 보되, 내려받기는 추가하지 않는 편이 안전합니다. 이 문서는 시도하지 못했습니다.
 - 워커 수를 바꿔 보세요. `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:444`의 `[:8]`과 `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/app.py:340`의 `max_length`를 낮추고 Step 5의 시간 측정을 다시 하면 팬아웃이 시간에 얼마나 영향을 주는지 알 수 있습니다. 직접 해 보지는 않았습니다.
 
 ## 다음 날 예고
 
-[Day 107 · 🔍 AI Domain Deep Research Agent](../day107-ai-domain-deep-research-agent/README.md) — Together AI의 `Qwen/Qwen3-235B-A22B-fp8-tput` 모델과 Composio의 도구(Tavily 검색, Perplexity 검색, Google Docs 문서 생성)로 주제 하나를 질문 생성·조사·보고서 순서로 파고드는 agno 에이전트 앱을 다룹니다. 오늘은 그래프가 순서를 정했지만 그 앱은 에이전트 셋의 실행 순서를 코드가 직접 이어 줍니다(원본 앱 소스 기준).
+[Day 107 · 🔍 AI Domain Deep Research Agent](../day107-ai-domain-deep-research-agent/README.md) — Together AI의 `Qwen/Qwen3-235B-A22B-fp8-tput` 모델과 Composio의 도구(Tavily 검색, Perplexity 검색, Google Docs 문서 생성)로 주제 하나를 질문 생성·조사·보고서 순서로 파고드는 agno 에이전트 앱을 다룹니다. 오늘은 그래프가 순서를 정했지만 그 앱은 에이전트 셋의 실행 순서를 코드가 직접 이어 줍니다(원본 앱 소스 기준). 다만 Day 107이 확인한 대로 그 모델은 Together AI의 serverless에서 내려가 지금은 호출 자체가 되지 않을 것입니다.

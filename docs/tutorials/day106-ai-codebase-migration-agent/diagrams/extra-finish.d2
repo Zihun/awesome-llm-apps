@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+saver: 체크포인터 { class: store }
+aggregator: 집계 노드 { class: ours }
+ui: Streamlit 화면 { class: ours }
+user: 사용자 { class: person }
+
+aggregator -> saver: final_answer · status=completed
+aggregator -> ui: stream 이벤트 (aggregator)
+ui -> user: 진행 상자에 Aggregator synthesizing 한 줄
