@@ -57,6 +57,7 @@ Windows PowerShell 5.1에서는 bash 전용 줄이 그대로 돌지 않습니다
 | `sed -i 's/A/B/' app/app.py` (Step 8, A·B는 주소) | `(Get-Content app\app.py -Encoding utf8) -replace 'https://searxng.site/search','http://127.0.0.1:52718/search' \| Set-Content app\app.py -Encoding utf8` |
 | `curl http://localhost:8765/_stcore/health` | `curl.exe http://localhost:8765/_stcore/health` (`curl`은 `Invoke-WebRequest` 별칭) |
 | `fake.py ... >> fake.log 2>&1`, `cat fake.log` | 터미널 1에서 리디렉션 없이 `fake.py`를 실행하고 그 터미널에 찍히는 줄을 봅니다. 또는 `Get-Content fake.log` |
+| `cd app && uv run ... ; cd ..` (Step 1 확인) | 줄을 나눠 `cd app`, `uv run ...`, `cd ..` 순서로(5.1에는 `&&`가 없음) |
 | `-c "..."` 여러 줄 | 따옴표 문제가 나니 같은 내용을 `.py`로 저장해 `uv run --no-project python 파일.py` |
 
 ### Step 1. 환경 만들기 — `ag2`가 오늘 무엇으로 풀리는가
@@ -913,7 +914,7 @@ uv run --no-project python -X utf8 -B -W ignore apptest.py 52718
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
-**확인.** 직접 확인한 출력:
+**확인.** `AppTest`를 서버 밖에서 부르면 출력 맨 앞에 `missing ScriptRunContext!` 경고 줄이 찍힙니다(무시해도 되고, 아래는 그 줄을 뺀 직접 확인한 출력입니다).
 
 ```text
 첫 화면 예외: []
