@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 111 / 167일 완료
+진도: 117 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -207,12 +207,12 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 112](day112-ai-finance-agent-team/README.md) | 💲 AI Finance Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team/) |
-| ⬜ | [Day 113](day113-ai-teaching-agent-team/README.md) | 👨‍🏫 AI Teaching Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team/) |
-| ⬜ | [Day 114](day114-multimodal-design-agent-team/README.md) | ✨ Multimodal Design Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team/) |
-| ⬜ | [Day 115](day115-multimodal-coding-agent-team/README.md) | 💻 Multimodal Coding Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team/) |
-| ⬜ | [Day 116](day116-ai-game-design-agent-team/README.md) | 🎨 AI Game Design Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team/) |
-| ⬜ | [Day 117](day117-ai-competitor-intelligence-agent-team/README.md) | 🧲 AI Competitor Intelligence Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/) |
+| ✅ | [Day 112](day112-ai-finance-agent-team/README.md) | 💲 AI Finance Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_finance_agent_team/) |
+| ✅ | [Day 113](day113-ai-teaching-agent-team/README.md) | 👨‍🏫 AI Teaching Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team/) |
+| ✅ | [Day 114](day114-multimodal-design-agent-team/README.md) | ✨ Multimodal Design Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_design_agent_team/) |
+| ✅ | [Day 115](day115-multimodal-coding-agent-team/README.md) | 💻 Multimodal Coding Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team/) |
+| ✅ | [Day 116](day116-ai-game-design-agent-team/README.md) | 🎨 AI Game Design Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team/) |
+| ✅ | [Day 117](day117-ai-competitor-intelligence-agent-team/README.md) | 🧲 AI Competitor Intelligence Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/) |
 | ⬜ | [Day 118](day118-ai-services-agency/README.md) | 👨‍💼 AI Services Agency (CrewAI) | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency/) |
 | ⬜ | [Day 119](day119-ag2-adaptive-research-team/README.md) | 🧭 AG2 Adaptive Research Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ag2_adaptive_research_team/) |
 | ⬜ | [Day 120](day120-ai-recruitment-agent-team/README.md) | 💼 AI Recruitment Agent Team | [advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team](../../advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/) |
