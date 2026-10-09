@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+layer: "신뢰 계층 창구\n(TrustLayer)" { class: ours }
+policy: "정책 엔진\n(MultiAgentPolicyEngine)" { class: ours }
+trust: "신뢰 점수 엔진\n(TrustScoringEngine)" { class: ours }
+
+layer -> policy: "evaluate(\"researcher-002\", \"web_search\",\n[\"researcher\"], \"del-6c1f\")"
+policy -> trust: "get(\"researcher-002\")"
+trust -> policy: "TrustScore(750, standard)"

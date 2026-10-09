@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "에이전트\n(GovernedAgent)" { class: ours }
+demo: "데모\n(main)" { class: ours }
+audit: "감사 기록\n(audit_log 리스트)" { class: store }
+layer: "신뢰 계층 창구\n(TrustLayer)" { class: ours }
+trust: "신뢰 점수 엔진\n(TrustScoringEngine)" { class: ours }
+
+layer -> trust: "record_event(\"researcher-002\",\n\"stayed_in_scope\")"
+trust -> layer: "+5 (750 -> 755)"
+layer -> audit: "AuditEntry(result=\"allowed\")"
+layer -> agent: "(True, \"Action allowed\")"
+agent -> agent: "_execute_action:\n\"Executed web_search ...\""
+agent -> demo: "{success: True, result,\ntrust_score: 755}"
+

@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+demo: "데모\n(main)" { class: ours }
+agent: "에이전트\n(GovernedAgent)" { class: ours }
+layer: "신뢰 계층 창구\n(TrustLayer)" { class: ours }
+registry: "신원 등록부\n(IdentityRegistry)" { class: ours }
+
+demo -> agent: "execute(\"web_search\",\n{\"query\": \"AI safety papers 2024\"})"
+agent -> layer: "authorize_action(\"researcher-002\",\n\"web_search\", \"del-6c1f\")"
+layer -> registry: "get(\"researcher-002\")"
+registry -> layer: "AgentIdentity(\nroles=[\"researcher\"])"

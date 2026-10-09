@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+policy: "정책 엔진\n(MultiAgentPolicyEngine)" { class: ours }
+deleg: "위임 관리자\n(DelegationManager)" { class: ours }
+trust: "신뢰 점수 엔진\n(TrustScoringEngine)" { class: ours }
+registry: "신원 등록부\n(IdentityRegistry)" { class: ours }
+
+policy -> deleg: "validate_action(agent_id,\naction, delegation_id)"
+deleg -> policy: "True / False"
+deleg -> registry: "get(parent) ·\nget(child)"
+registry -> deleg: "AgentIdentity |\nNone"
+policy -> trust: "get(agent_id)"
+trust -> policy: "TrustScore | None"
+deleg -> trust: "get(parent_agent)"
+trust -> deleg: "TrustScore | None"

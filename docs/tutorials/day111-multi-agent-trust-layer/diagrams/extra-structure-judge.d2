@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: right
+
+layer: "신뢰 계층 창구\n(TrustLayer)" { class: ours }
+deleg: "위임 관리자\n(DelegationManager)" { class: ours }
+policy: "정책 엔진\n(MultiAgentPolicyEngine)" { class: ours }
+
+layer -> deleg: "create_delegation(...) ·\ndelegations[id].parent_agent"
+deleg -> layer: "Delegation | None"
+layer -> policy: "evaluate(agent_id, action,\nroles, delegation_id)"
+policy -> layer: "(allowed, reason)"

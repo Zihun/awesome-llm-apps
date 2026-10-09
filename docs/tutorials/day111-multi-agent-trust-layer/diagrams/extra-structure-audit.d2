@@ -1,0 +1,8 @@
+...@../../_tools/theme
+direction: right
+
+layer: "신뢰 계층 창구\n(TrustLayer)" { class: ours }
+audit: "감사 기록\n(audit_log 리스트)" { class: store }
+
+layer -> audit: "AuditEntry 추가\n(_log_audit)"
+audit -> layer: "항목 목록\n(get_audit_log)"

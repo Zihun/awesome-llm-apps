@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+layer: "신뢰 계층 창구\n(TrustLayer)" { class: ours }
+policy: "정책 엔진\n(MultiAgentPolicyEngine)" { class: ours }
+deleg: "위임 관리자\n(DelegationManager)" { class: ours }
+
+policy -> deleg: "validate_action(\"researcher-002\",\n\"web_search\", \"del-6c1f\")"
+deleg -> policy: "True"
+policy -> layer: "(True, \"Action allowed\")"

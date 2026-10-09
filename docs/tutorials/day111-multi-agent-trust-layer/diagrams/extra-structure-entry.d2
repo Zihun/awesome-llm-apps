@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: right
+
+demo: "데모\n(main)" { class: ours }
+agent: "에이전트\n(GovernedAgent)" { class: ours }
+layer: "신뢰 계층 창구\n(TrustLayer)" { class: ours }
+policy: "정책 엔진\n(MultiAgentPolicyEngine)" { class: ours }
+
+demo -> agent: "execute(action, params)"
+agent -> demo: "{success, result,\ntrust_score}"
+demo -> layer: "register_agent · create_delegation ·\nget_trust_score · get_trust_level ·\nget_audit_log"
+layer -> demo: "True · 위임 번호 · 점수 ·\n등급 · 감사 dict 목록"
+demo -> policy: "add_role_policy(role, policy)"
+agent -> layer: "authorize_action(agent_id,\naction, delegation_id)"
+layer -> agent: "(allowed, reason) ·\n신뢰 점수"
