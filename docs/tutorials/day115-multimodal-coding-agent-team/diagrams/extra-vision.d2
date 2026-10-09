@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+agno_api: Agno 통계 API { class: ext }
+vision: 비전 에이전트 { class: ours }
+gemini: Gemini API (gemini-2.0-flash) { class: ext }
+tmp: temp_image.png { class: file }
+ui: Streamlit 화면 { class: ours }
+
+vision -> gemini: 프롬프트 · PNG 이미지
+gemini -> vision: 문제 설명 글
+vision -> agno_api: 실행 메타데이터 (성공 시)
+vision -> ui: response.content
+ui -> tmp: 삭제 (finally)
+ui -> user: Extracted Problem 표시

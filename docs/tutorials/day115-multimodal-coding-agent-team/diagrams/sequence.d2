@@ -2,19 +2,12 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-agno_api: Agno 통계 API { class: ext }
-vision: 비전 에이전트 { class: ours }
 ui: Streamlit 화면 { class: ours }
 tmp: temp_image.png { class: file }
-gemini: Gemini API (gemini-2.0-flash) { class: ext }
+vision: 비전 에이전트 { class: ours }
 
 user -> ui: 이미지 선택 · Generate & Execute Solution 클릭
 ui -> user: 스피너 Processing image...
 ui -> tmp: RGB로 바꿔 PNG 저장
 ui -> vision: run(프롬프트, 이미지)
-vision -> gemini: 프롬프트 · PNG 이미지
-gemini -> vision: 문제 설명 글
-vision -> agno_api: 실행 메타데이터 (백그라운드, 성공 시)
-vision -> ui: response.content
-ui -> tmp: 삭제 (finally)
-ui -> user: Extracted Problem 표시
+vision -> tmp: temp_image.png 경로를 열어 PNG 바이트 읽기 (agno가 요청을 만들 때)

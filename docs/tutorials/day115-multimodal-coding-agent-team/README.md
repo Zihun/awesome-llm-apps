@@ -1,6 +1,6 @@
 # Day 115 · 💻 Multimodal Coding Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★☆ ⚠(앱의 두 모델이 모두 내려갔거나 내려갈 예정입니다. `gemini-2.0-flash`는 Google 사용 중단 표의 종료일 2026-06-01이 이미 지났고, `o3-mini`는 OpenAI 폐기 표에서 2026-10-23 종료로 올라 있습니다. 또 `requirements.txt`에는 `openai`와 `google-genai`가 없어 설치 그대로는 첫 임포트에서 막히고, 오늘 설치되는 e2b-code-interpreter 2.10.3에서는 `Sandbox(timeout=60)`이 TypeError를 냅니다) · 예상 소요 105분(앱은 282줄이지만 Step 4·5·6에서 가짜 서버와 확인 스크립트 셋을 직접 저장해 돌려 보고, 샌드박스는 가짜로 대신하며 시퀀스 그림 다섯 장을 따라가야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 문제 1건에 $0.01~0.03(`o3-mini` 호출 2회 — 입력은 지시문과 문제로 수백 토큰이고 출력은 추론 토큰을 포함해 2,000~6,000토큰이라고 가정하고 모델 페이지의 입력 $1.10·출력 $4.40(1M 토큰당, https://developers.openai.com/api/docs/models/o3-mini, 2026-10-09 확인)을 대입한 어림이며 키가 없어 실제 토큰 수는 재지 못했습니다. 이미지를 올리면 `gemini-2.0-flash` 호출이 1회 더 있으나 종료된 모델이라 요금을 확인하지 않았고, E2B 샌드박스는 유료 서비스인데 요금도 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(앱의 두 모델이 모두 내려갔거나 내려갈 예정입니다. `gemini-2.0-flash`는 Google 사용 중단 표의 종료일 2026-06-01이 이미 지났고 모델 페이지(Last updated 2026-10-06 UTC)에는 "Shut down"으로 표시돼 있으며, `o3-mini`는 OpenAI 폐기 표에서 2026-10-23 종료로 올라 있습니다. 또 `requirements.txt`에는 `openai`와 `google-genai`가 없어 설치 그대로는 첫 임포트에서 막히고, 오늘 설치되는 e2b-code-interpreter 2.10.3에서는 `Sandbox(timeout=60)`이 TypeError를 냅니다) · 예상 소요 105분(앱은 282줄이지만 Step 4·5·6에서 가짜 서버와 확인 스크립트 셋을 직접 저장해 돌려 보고, 샌드박스는 가짜로 대신하며 시퀀스 그림 여섯 장을 따라가야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 문제 1건에 $0.01~0.03(`o3-mini` 호출 2회 — 입력은 지시문과 문제로 수백 토큰이고 출력은 추론 토큰을 포함해 2,000~6,000토큰이라고 가정하고 모델 페이지의 입력 $1.10·출력 $4.40(1M 토큰당, https://developers.openai.com/api/docs/models/o3-mini, 2026-10-09 확인)을 대입한 어림이며 키가 없어 실제 토큰 수는 재지 못했습니다. 이미지를 올리면 `gemini-2.0-flash` 호출이 1회 더 있으나 종료된 모델이라 요금을 확인하지 않았고, E2B 샌드박스는 유료 서비스인데 요금도 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team`
 
 ## 오늘 만들 것
 
@@ -19,7 +19,7 @@
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python | 이 문서는 3.13.3으로 확인했다. 저장소 기준은 3.11~3.13 | 공통 사전 준비와 같음 |
 | OpenAI API 키 | 코딩·실행 에이전트의 `o3-mini` 호출 인증. 화면 사이드바의 비밀번호 칸에 붙여넣는다(`advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team/ai_coding_agent_o3.py:28`). `o3-mini`는 2026-10-23 종료 예정이라 그 뒤에는 키가 맞아도 호출이 실패할 것으로 예상된다(Step 5) | https://platform.openai.com/api-keys |
-| Gemini API 키 | 비전 에이전트의 `gemini-2.0-flash` 호출 인증(`advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team/ai_coding_agent_o3.py:31`). 이 모델의 종료일은 2026-06-01로 지났다. 키가 비어 있으면 이미지를 쓰지 않아도 화면이 열리지 않는다(Step 2) | https://aistudio.google.com/apikey |
+| Gemini API 키 | 비전 에이전트의 `gemini-2.0-flash` 호출 인증(`advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team/ai_coding_agent_o3.py:31`). 이 모델의 종료일은 2026-06-01로 지났고 모델 페이지에 "Shut down"으로 표시된다. 키가 비어 있으면 이미지를 쓰지 않아도 화면이 열리지 않는다(Step 2) | https://aistudio.google.com/apikey |
 | E2B API 키 | 코드를 돌릴 클라우드 샌드박스 인증(`advanced_ai_agents/multi_agent_apps/agent_teams/multimodal_coding_agent_team/ai_coding_agent_o3.py:34`). 이 문서는 키 없이, 샌드박스를 만들지 않고 확인한다 | https://e2b.dev/docs/getting-started/api-key (앱 README의 안내) |
 | 인터넷 연결 | PyPI 설치. 앱을 실제로 쓸 때는 OpenAI·Google·E2B API와 agno 사용 통계 서버(`os-api.agno.com`)에 접속하고, 브라우저로 열면 Streamlit의 사용 통계도 나간다(Day 063이 확인했고 `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
 
@@ -67,7 +67,7 @@ agno>=2.2.10
 Pillow
 ```
 
-4줄이고 마지막 줄에 개행이 없어 `wc -l`은 3으로 셉니다. 버전은 `agno`의 하한 말고는 정해져 있지 않아, 이 문서를 만들 때(2026-10-09) Python 3.13.3에서 패키지 73개가 깔렸습니다. 모델 클래스가 필요로 하는 `openai`(OpenAI 쪽)와 `google-genai`(Gemini 쪽)는 목록에 없습니다. agno의 모델 모듈이 임포트하는 순간 그 패키지를 요구하기 때문입니다(소스로 확인, agno 3.1.2의 `agno/models/openai/chat.py` 31행과 `agno/models/google/gemini.py`의 임포트 가드).
+4줄이고 마지막 줄에 개행이 없어 `wc -l`은 3으로 셉니다. 버전은 `agno`의 하한 말고는 정해져 있지 않아, 이 문서를 만들 때(2026-10-09) Python 3.13.3에서 패키지 73개가 깔렸습니다. 모델 클래스가 필요로 하는 `openai`(OpenAI 쪽)와 `google-genai`(Gemini 쪽)는 목록에 없습니다. agno의 모델 모듈이 임포트하는 순간 그 패키지를 요구하기 때문입니다(같은 원인을 `google-genai`는 Day 008·Day 009 Step 1이, `openai`는 Day 103 Step 1이 이미 다뤘습니다. 소스로 확인, agno 3.1.2의 `agno/models/openai/chat.py` 31행과 `agno/models/google/gemini.py`의 임포트 가드).
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -279,13 +279,13 @@ uv run --no-project streamlit run ai_coding_agent_o3.py --server.headless true -
 grep -c "Team" ai_coding_agent_o3.py
 ```
 
-(PowerShell: `(Select-String -CaseSensitive "Team" ai_coding_agent_o3.py).Count`. 아무것도 없으면 `0`이 아니라 빈 값이 나옵니다. 실행해 보지 못했습니다.) 직접 확인한 출력:
+(PowerShell: `(Select-String -CaseSensitive "Team" ai_coding_agent_o3.py).Count`. 실행해 보지 못했습니다.) 직접 확인한 출력:
 
 ```
 0
 ```
 
-위 `check_agents.py` 출력의 다섯째~일곱째 줄이 모델과 지시문이고 마지막 줄이 재생성입니다. 한 번 더 그리면 에이전트 셋이 새로 만들어져 6개가 됩니다. 에이전트는 화면이 그려질 때마다 새로 만들어지고, 이 앱은 에이전트에 기억을 두지 않아 잃는 것은 없습니다.
+위 `check_agents.py` 출력의 다섯째~일곱째 줄이 모델과 지시문이고 마지막 줄이 재생성입니다. 한 번 더 그리면 에이전트 셋이 새로 만들어져 6개가 됩니다. 에이전트는 화면이 그려질 때마다 새로 만들어지고, 이 앱은 에이전트에 기억을 두지 않아 잃는 것은 없습니다. 같은 현상을 바로 앞 Day 114 Step 3이 에이전트 셋을 만드는 함수에서 다뤘습니다.
 
 ### Step 4. 이미지를 문제 글로 — Gemini와 임시 파일
 
@@ -350,7 +350,7 @@ grep -c "Team" ai_coding_agent_o3.py
             os.remove(temp_path)
 ```
 
-그래서 올린 이미지 전체가 Gemini로 갑니다. `Agent.run`은 모델 오류를 예외로 던지지 않고 `status`가 `error`인 `RunOutput`에 오류 문장을 담아 돌려주는데(Day 102 Step 5가 확인한 사실이고 agno 3.1.2의 `agno/agent/_run.py`에도 `RunStatus.error`를 `content`와 함께 돌려주는 곳이 있습니다), 이 함수는 `status`를 보지 않습니다. 오류 문장이 그대로 `response.content`로 반환되고 216행의 검사는 `"Failed to process"`로 시작하는지만 보므로, 오류 문장은 "문제"가 되어 코딩 에이전트에 갑니다. 함수 안의 `except`(125~127행)에 걸리는 것은 `Image.open`이나 파일 저장 같은 파이썬 예외뿐이고, 모델이 돌려준 오류 문장은 예외가 아니라 값이라 그냥 지나갑니다.
+앱은 파일 경로만 넘기고, 그 경로를 열어 PNG 바이트를 읽는 것은 agno가 Gemini 요청을 만들 때입니다(소스로 확인, agno 3.1.2의 `agno/utils/gemini.py` 181~199행과 `agno/models/google/gemini.py` 864행 근처. 그림의 `vision -> tmp` 화살표입니다). 그래서 올린 이미지 전체가 Gemini로 갑니다. `Agent.run`은 모델 오류를 예외로 던지지 않고 `status`가 `error`인 `RunOutput`에 오류 문장을 담아 돌려주는데(Day 102 Step 5가 확인한 사실이고 agno 3.1.2의 `agno/agent/_run.py`에도 `RunStatus.error`를 `content`와 함께 돌려주는 곳이 있습니다), 이 함수는 `status`를 보지 않습니다. 오류 문장이 그대로 `response.content`로 반환되고 216행의 검사는 `"Failed to process"`로 시작하는지만 보므로, 오류 문장은 "문제"가 되어 코딩 에이전트에 갑니다(Day 114 Step 6도 모델 오류가 결과 칸에 일반 글자로 나오는 같은 구조를 다뤘습니다). 함수 안의 `except`(125~127행)에 걸리는 것은 RGB 변환이나 파일 저장 같은 파이썬 예외뿐이고(`Image.open`은 이 함수 밖의 213행이라 `main()`의 `except`(226~228행)가 받습니다), 모델이 돌려준 오류 문장은 예외가 아니라 값이라 그냥 지나갑니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -538,7 +538,7 @@ elif SCENARIO == "nokey":
     run(keys=("sk-test", "", "e2b-test"))
 ```
 
-첫 터미널(앱 폴더)에서 가짜 서버를 띄웁니다. 포트는 어떤 높은 번호여도 되지만 Windows에서는 `Port 61247 is not available`처럼 운영체제가 막아 둔 구간이 있어 쓰지 못하는 번호가 있습니다.
+첫 터미널(앱 폴더)에서 가짜 서버를 띄웁니다. 포트는 어떤 높은 번호여도 되지만 Windows에는 운영체제가 막아 둔 구간이 있어 그 번호에는 서버가 뜨지 못합니다. 이 PC에서 61247에 `fake_models.py`를 띄우자 `PermissionError: [WinError 10013]`(액세스 권한에 의해 숨겨진 소켓에 액세스하려는 시도)으로 멈췄습니다(직접 확인). 막힌 구간은 PC마다 달라서 `netsh interface ipv4 show excludedportrange protocol=tcp`로 볼 수 있습니다(61247은 이 PC의 61196–61295 구간 안이었습니다).
 
 ```bash
 uv run --no-project python fake_models.py 59303
@@ -957,27 +957,31 @@ warning: ['Please enter all required API keys in the sidebar.']
 
 ## 요청 한 건이 흐르는 과정
 
-이미지로 문제를 올린 요청 하나를 다섯 장으로 나눠 따라갑니다. 글로 입력하면 첫 장의 비전 구간 전체가 빠지고 둘째 장부터 시작합니다. 앱의 실제 시간 경계에서 자른 것이고 메시지는 모두 한 장에 정확히 한 번 있습니다.
+이미지로 문제를 올린 요청 하나를 여섯 장으로 나눠 따라갑니다. 글로 입력하면 첫 두 장의 비전 구간 전체가 빠지고 셋째 장부터 시작합니다. 앱의 실제 시간 경계에서 자른 것이고 메시지는 모두 한 장에 정확히 한 번 있습니다.
 
-![요청 시퀀스 — 이미지에서 문제 글까지](diagrams/sequence.svg)
+![요청 시퀀스 — 이미지 저장과 비전 호출](diagrams/sequence.svg)
 
-버튼 클릭이 일으킨 리런에서 이미지만 있으므로 화면은 스피너를 띄우고 이미지를 PNG로 저장해 비전 에이전트를 부릅니다. 비전 에이전트는 프롬프트와 이미지를 Gemini에 보내 문제 설명 글을 받고, 성공하면 통계 전송을 큐에 넣은 뒤 글을 돌려줍니다. 화면은 임시 파일을 지우고 "Extracted Problem"으로 보여 줍니다. 실패하면 오류 문장이 같은 길로 돌아와 문제 글이 됩니다(Step 4).
+버튼 클릭이 일으킨 리런에서 이미지만 있으므로 화면은 스피너를 띄우고 이미지를 PNG로 저장해 비전 에이전트를 부릅니다. 비전 에이전트는 넘겨받은 경로를 열어 PNG 바이트를 읽습니다. 이 읽기는 agno가 Gemini 요청을 만들 때 일어납니다(Step 4).
+
+![요청 시퀀스 — Gemini 응답과 문제 글](diagrams/extra-vision.svg)
+
+비전 에이전트가 프롬프트와 이미지를 Gemini에 보내 문제 설명 글을 받고, 성공하면 통계 전송을 큐에 넣은 뒤 글을 돌려줍니다. 화면은 임시 파일을 지우고 "Extracted Problem"으로 보여 줍니다. 실패하면 오류 문장이 같은 길로 돌아와 문제 글이 됩니다(Step 4).
 
 ![요청 시퀀스 — 풀이 요청](diagrams/extra-solve.svg)
 
-둘째 장은 글로 입력한 경우의 시작이기도 합니다. 코딩 에이전트가 `o3-mini`에 지시문과 문제를 보내 마크다운 풀이를 받고, 화면이 첫 파이썬 블록을 `st.code`로 보여 줍니다. 그림에서 OpenAI가 코딩 에이전트의 왼쪽에 있는 것은 통계 전송 화살표의 라벨이 수명선을 지나지 않게 배우 순서를 바꾼 것이고 호출 관계는 같습니다(첫째 그림과 넷째 그림도 같은 이유로 배우 순서가 다릅니다).
+셋째 장은 글로 입력한 경우의 시작이기도 합니다. 코딩 에이전트가 `o3-mini`에 지시문과 문제를 보내 마크다운 풀이를 받고, 화면이 첫 파이썬 블록을 `st.code`로 보여 줍니다. 그림에서 OpenAI가 코딩 에이전트의 왼쪽에 있는 것은 통계 전송 화살표의 라벨이 수명선을 지나지 않게 배우 순서를 바꾼 것이고 호출 관계는 같습니다(둘째 그림과 다섯째 그림도 같은 이유로 배우 순서가 다릅니다).
 
 ![요청 시퀀스 — 샌드박스](diagrams/extra-sandbox.svg)
 
-셋째 장은 `initialize_sandbox`부터 `run_code`까지입니다. 그림은 e2b 1.x에서 호출이 성공했을 때의 흐름입니다. 오늘 설치되는 2.x에서는 둘째 메시지(`Sandbox(timeout=60)`)가 TypeError로 끝나고 그 아래로는 이어지지 않습니다(Step 6).
+넷째 장은 `initialize_sandbox`부터 `run_code`까지입니다. 그림은 e2b 1.x에서 호출이 성공했을 때의 흐름입니다. 오늘 설치되는 2.x에서는 둘째 메시지(`Sandbox(timeout=60)`)가 TypeError로 끝나고 그 아래로는 이어지지 않습니다(Step 6).
 
 ![요청 시퀀스 — 결과 설명](diagrams/extra-report.svg)
 
-넷째 장에서 실행 에이전트가 로그·파일 목록을 `o3-mini`에 보내 설명을 받고 화면이 그것을 "Execution Results"로 보여 줍니다.
+다섯째 장에서 실행 에이전트가 로그·파일 목록을 `o3-mini`에 보내 설명을 받고 화면이 그것을 "Execution Results"로 보여 줍니다.
 
 ![요청 시퀀스 — 파일 목록](diagrams/extra-files.svg)
 
-다섯째 장은 마지막 `files.list("/")`와 `st.json` 표시입니다. 이 시퀀스는 가짜 서버와 가짜 샌드박스로 직접 돌려 본 것이고, 진짜 OpenAI·Gemini 응답과 E2B 샌드박스의 실제 동작은 확인하지 못했습니다.
+여섯째 장은 마지막 `files.list("/")`와 `st.json` 표시입니다. 이 시퀀스는 가짜 서버와 가짜 샌드박스로 직접 돌려 본 것이고, 진짜 OpenAI·Gemini 응답과 E2B 샌드박스의 실제 동작은 확인하지 못했습니다.
 
 ## 실행 체크리스트
 
@@ -998,14 +1002,14 @@ warning: ['Please enter all required API keys in the sidebar.']
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 설치 직후 `ImportError: `openai` not installed.` 또는 `` `google-genai` not installed.`` | `requirements.txt`에 두 패키지가 없다. agno의 모델 모듈이 임포트 순간 요구한다(직접 확인: 73개 설치 뒤 두 줄 모두 재현) | `uv pip install openai google-genai`(직접 확인: openai 3.26.1, google-genai 2.29.0) |
+| 설치 직후 ``ImportError: `openai` not installed.`` 또는 ``ImportError: `google-genai` not installed.`` | `requirements.txt`에 두 패키지가 없다. agno의 모델 모듈이 임포트 순간 요구한다(직접 확인: 73개 설치 뒤 두 줄 모두 재현) | `uv pip install openai google-genai`(직접 확인: openai 3.26.1, google-genai 2.29.0) |
 | 풀이 코드는 보이는데 그 아래에 `Failed to initialize sandbox: SandboxBase.__init__() got an unexpected keyword argument 'timeout'` | e2b-code-interpreter 2.x의 `Sandbox.__init__`이 `**opts`만 받아 `Sandbox(timeout=60)`이 부모 `__init__`에서 실패한다(Step 6. 부모 `__init__`을 같은 인자로 불러 직접 확인했고 생성자 자체는 부르지 않았다) | 복사본에서 `Sandbox.create(timeout=60)`로 바꾸거나 `e2b-code-interpreter<2`로 설치한다. 둘 다 실제 샌드박스를 만들어 보지 못했다 |
-| 이미지를 올렸는데 "Extracted Problem"에 오류 JSON이나 `Server disconnected without sending a response.` 같은 문장이 나옴 | `Agent.run`이 모델 오류를 예외 대신 `RunOutput.content`에 담고, 앱은 `status`를 보지 않아 그 문장을 문제로 코딩 에이전트에 넘긴다(Step 4. 가짜 서버가 404를 줄 때 직접 확인) | `gemini-2.0-flash`가 내려갔다면 모델 이름을 바꾼다. 표의 대체는 `gemini-3.6-flash`다(바꿔서 돌려 보지 못했다) |
+| 이미지를 올렸는데 "Extracted Problem"에 오류 JSON이나 `Server disconnected without sending a response.` 같은 문장이 나옴 | `Agent.run`이 모델 오류를 예외 대신 `RunOutput.content`에 담고, 앱은 `status`를 보지 않아 그 문장을 문제로 코딩 에이전트에 넘긴다(Step 4. 가짜 서버가 404를 줄 때 직접 확인) | `gemini-2.0-flash`는 Google 모델 페이지(https://ai.google.dev/gemini-api/docs/models, Last updated 2026-10-06 UTC, 2026-10-09 확인)에 "Shut down"으로 표시돼 있으니 모델 이름을 바꾼다. 표의 대체는 `gemini-3.6-flash`다(바꿔서 돌려 보지 못했다) |
 | 이미지와 글을 함께 줬는데 `Please use either image upload OR text input, not both.` | 235~237행이 둘을 함께 받지 않는다(직접 확인) | 하나만 쓴다 |
 | 버튼을 눌렀는데 "💻 Solution" 제목만 있고 아무것도 없음 | 응답에 python 코드 펜스가 없으면 247~253행이 통째로 건너뛰어진다(직접 확인: 코드 블록 없는 가짜 응답) | 질문에 파이썬 코드로 답하라고 적고 다시 누른다. 모델이 쓴 설명은 어디에도 표시되지 않는다 |
 | 2026-10-23 이후 풀이 요청이 실패할 것으로 예상됨 | `o3-mini`가 OpenAI 폐기 표(2026-10-09 받은 원문)에 그 날 종료, 대체 `gpt-5.6-sol`로 올라 있다 | 복사본에서 46행·61행의 `id`를 바꾼다. 종료 뒤 실제 오류 문구는 아직 볼 수 없어 직접 보지 못했다 |
-| 서버 포트를 정했더니 `Port 61247 is not available` | 이 PC의 Windows가 그 번호를 막아 둔 구간에 있다(직접 확인) | 다른 높은 번호를 쓴다(직접 확인: 53871, 59303) |
-| `AppTest`를 돌릴 때 `Please replace `use_container_width` with `width`.` 경고 | 198행의 `st.image(..., use_container_width=True)`가 이미지를 올린 리런마다 이 경고를 낸다. 경고는 2025-12-31에 제거 예정이라고 하지만 Streamlit 1.65.0에서는 아직 동작한다(직접 확인) | 무시하거나 복사본에서 `width="stretch"`로 바꾼다 |
+| 가짜 서버가 `PermissionError: [WinError 10013]`으로 멈추거나, `streamlit run`이 `Port 61247 is not available`을 냄 | 그 번호가 Windows가 막아 둔 포트 구간에 있다. 앞의 오류는 `fake_models.py`가, 뒤의 문구는 Streamlit이 낸다(직접 확인: 두 번호 모두 61196–61295 구간) | `netsh interface ipv4 show excludedportrange protocol=tcp`로 구간을 보고 밖의 번호를 쓴다(직접 확인: 53871, 59303) |
+| `AppTest`를 돌릴 때 ``Please replace `use_container_width` with `width`.`` 경고 | 198행의 `st.image(..., use_container_width=True)`가 이미지를 올린 리런마다 이 경고를 낸다. 경고는 2025-12-31에 제거 예정이라고 하지만 Streamlit 1.65.0에서는 아직 동작한다(직접 확인) | 무시하거나 복사본에서 `width="stretch"`로 바꾼다 |
 | `AppTest`를 돌릴 때마다 `missing ScriptRunContext!` 경고 | `streamlit run` 없이 스크립트를 돌릴 때 Streamlit이 내는 안내다(직접 확인: 이 경고가 있어도 결과는 같다) | 무시한다 |
 
 ## 더 해보기
