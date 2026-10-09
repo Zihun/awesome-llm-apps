@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+agno_api: Agno 통계 API { class: ext }
+ana: Contract Analyst (Agent) { class: ours }
+openai: OpenAI gpt-5 { class: ext }
+
+ana -> openai: 검색 결과 (tool 메시지)
+openai -> ana: 보고서 글
+ana -> agno_api: 실행 통계\n(AGNO_TELEMETRY가 없을 때)
+ana -> team: 보고서

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agno_api: Agno 통계 API { class: ext }
+team: 팀 리더 (Team) { class: ours }
+ui: 분석 화면 (Streamlit) { class: ours }
+user: 사용자 { class: person }
+
+team -> agno_api: 실행 통계\n(AGNO_TELEMETRY가 없을 때)
+team -> ui: RunOutput.content
+ui -> user: Recommendations 탭에 표시

@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+kb: 지식 베이스 (Knowledge) { class: ours }
+emb: OpenAI 임베딩 { class: ext }
+
+kb -> emb: 쪽 텍스트 (쪽마다 한 번)
+emb -> kb: 벡터 (1536차원)

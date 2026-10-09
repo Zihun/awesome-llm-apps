@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: 분석 화면 (Streamlit) { class: ours }
+tmp: 임시 파일 (.pdf) { class: file }
+
+user -> ui: PDF 업로드
+ui -> tmp: 바이트를 임시 .pdf로 씀

@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+emb: OpenAI 임베딩 { class: ext }
+
+team -> emb: 검색어
+emb -> team: 벡터 (1536차원)

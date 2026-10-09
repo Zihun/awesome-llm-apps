@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: down
+
+team: 팀 리더 (Team) { class: ours }
+res: Legal Researcher (Agent) { class: ours }
+ana: Contract Analyst (Agent) { class: ours }
+strat: Legal Strategist (Agent) { class: ours }
+ddgt: 검색 도구 (DuckDuckGoTools) { class: ours }
+kb: 지식 베이스 (Knowledge) { class: ours }
+vdb: 저장소 연결 (Qdrant) { class: ours }
+
+team -> res: 위임 task
+team -> ana: 위임 task
+team -> strat: 위임 task
+res -> ddgt: web_search · search_news
+team -> kb: search_knowledge_base
+res -> kb: search_knowledge_base
+ana -> kb: search_knowledge_base
+strat -> kb: search_knowledge_base
+kb -> vdb: 저장 · 검색

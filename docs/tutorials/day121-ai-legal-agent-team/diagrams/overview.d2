@@ -1,0 +1,33 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+
+app: legal_agent_team.py {
+  grid-columns: 2
+  vertical-gap: 0
+  horizontal-gap: 20
+  side: "사이드바\n(키 · URL 입력)" { class: ours }
+  proc: "문서 처리\n(process_document)" { class: ours }
+  kb: "지식 베이스\n(Knowledge)" { class: ours }
+  ui: "분석 화면\n(Analyze 버튼)" { class: ours }
+  team: "팀 리더\n(Team)" { class: ours }
+  res: "Legal\nResearcher\n(Agent)" { class: ours }
+  ana: "Contract\nAnalyst\n(Agent)" { class: ours }
+  strat: "Legal\nStrategist\n(Agent)" { class: ours }
+  ddgt: "검색 도구\n(DuckDuckGo\nTools)" { class: ours }
+}
+
+openai: OpenAI gpt-5 { class: ext }
+emb: "OpenAI 임베딩\n(text-embedding-\n3-small)" { class: ext }
+qdrant: "Qdrant 클라우드\n(legal_documents)" { class: store }
+ddg: DuckDuckGo { class: ext }
+agno_api: Agno 통계 API { class: ext }
+
+user -> app: "PDF · 키 · 유형"
+app -> user: 분석 탭 셋
+app -> openai: 질문 · 도구 스키마
+app -> emb: 쪽 텍스트 · 검색어
+app -> qdrant: 벡터 · 쪽 텍스트
+app -> ddg: 검색어
+app -> agno_api: 실행 통계

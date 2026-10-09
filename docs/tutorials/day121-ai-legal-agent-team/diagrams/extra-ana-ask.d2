@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+ana: Contract Analyst (Agent) { class: ours }
+openai: OpenAI gpt-5 { class: ext }
+
+team -> ana: task 문자열
+ana -> openai: 역할 · task\n+ 도구 스키마 하나
+openai -> ana: search_knowledge_base(query)

@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ana: Contract Analyst (Agent) { class: ours }
+emb: OpenAI 임베딩 { class: ext }
+
+ana -> emb: 검색어
+emb -> ana: 벡터 (1536차원)

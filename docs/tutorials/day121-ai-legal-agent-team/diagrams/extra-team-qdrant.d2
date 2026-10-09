@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+qdrant: Qdrant 클라우드 { class: store }
+
+team -> qdrant: 벡터로 검색
+qdrant -> team: 가까운 쪽 텍스트

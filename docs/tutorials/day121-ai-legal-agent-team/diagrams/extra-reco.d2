@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: 분석 화면 (Streamlit) { class: ours }
+team: 팀 리더 (Team) { class: ours }
+openai: OpenAI gpt-5 { class: ext }
+
+ui -> team: run(앞 분석 글\n+ 권고 요청)
+team -> openai: 지시문 · 멤버 명단\n· 앞 분석 글
+openai -> team: 권고 글

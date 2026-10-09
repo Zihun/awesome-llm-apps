@@ -1,0 +1,27 @@
+...@../../_tools/theme
+direction: right
+
+team: 팀 리더 (Team) { class: ours }
+res: Legal Researcher (Agent) { class: ours }
+ana: Contract Analyst (Agent) { class: ours }
+strat: Legal Strategist (Agent) { class: ours }
+ddgt: 검색 도구 (DuckDuckGoTools) { class: ours }
+vdb: 저장소 연결 (Qdrant) { class: ours }
+
+openai: OpenAI gpt-5 { class: ext }
+emb: OpenAI text-embedding-3-small { class: ext }
+qdrant: Qdrant 클라우드 { class: store }
+ddg: DuckDuckGo { class: ext }
+agno_api: Agno 통계 API { class: ext }
+
+team -> openai: 지시문 · 위임 스키마 · 검색 스키마
+res -> openai: 역할 · 도구 스키마
+ana -> openai: 역할 · 검색 스키마
+strat -> openai: 역할 · 검색 스키마
+team -> agno_api: 실행 통계
+res -> agno_api: 실행 통계
+ana -> agno_api: 실행 통계
+strat -> agno_api: 실행 통계
+ddgt -> ddg: 검색어
+vdb -> emb: 쪽 텍스트 · 검색어
+vdb -> qdrant: 벡터 · 쪽 텍스트

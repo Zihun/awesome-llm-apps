@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+openai: OpenAI gpt-5 { class: ext }
+
+team -> openai: 위임 호출 · 보고서\n(tool 메시지)
+openai -> team: 종합한 최종 답

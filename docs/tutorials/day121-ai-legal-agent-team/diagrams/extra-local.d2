@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+ui: 분석 화면 (Analyze 버튼) { class: ours }
+proc: 문서 처리 (process_document) { class: ours }
+kb: 지식 베이스 (Knowledge) { class: ours }
+team: 팀 리더 (Team) { class: ours }
+res: "Legal\nResearcher\n(Agent)" { class: ours }
+ana: "Contract\nAnalyst\n(Agent)" { class: ours }
+strat: "Legal\nStrategist\n(Agent)" { class: ours }
+
+chat: Ollama llama3.1:8b (이 PC, 로컬) { class: ext }
+emb: Ollama openhermes (이 PC, 로컬) { class: ext }
+qdrant: Qdrant localhost:6333 { class: store }
+
+user -> proc: PDF
+user -> ui: 분석 유형 · 질문
+proc -> kb: insert(path=임시 파일)
+kb -> emb: 쪽 텍스트 (4096차원)
+kb -> qdrant: 벡터 · 쪽 텍스트
+ui -> team: run(질문)
+team -> chat: 지시문 · 스키마
+res -> chat: 역할 · 스키마
+ana -> chat: 역할 · 스키마
+strat -> chat: 역할 · 스키마
