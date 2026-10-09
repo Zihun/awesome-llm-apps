@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+screen: Streamlit 화면 { class: ours }
+assistant: Teaching Assistant { class: ours }
+openai: OpenAI (gpt-4o-mini) { class: ext }
+composio: Composio API { class: ext }
+docs_tool: 문서 만들기 도구 { class: ours }
+
+assistant -> openai: "요청 (검색 결과 포함)"
+openai -> assistant: "도구 호출 요청 (문서 만들기)"
+assistant -> docs_tool: "함수 호출 (title, text)"
+docs_tool -> composio: "연결 계정 조회"
+composio -> docs_tool: "연결 계정 id"
+docs_tool -> composio: "문서 만들기 실행 요청"

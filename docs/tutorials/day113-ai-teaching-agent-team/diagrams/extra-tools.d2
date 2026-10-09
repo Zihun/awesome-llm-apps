@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+docs_tool: 문서 만들기 도구 { class: ours }
+serp_tool: 검색 도구 { class: ours }
+composio_api: Composio API { class: ext }
+gdocs: Google Docs { class: ext }
+serpapi: SerpAPI { class: ext }
+
+docs_tool -> composio_api: 연결 계정 조회
+docs_tool -> composio_api: 문서 만들기 실행 요청
+composio_api -> gdocs: 문서 만들기
+serp_tool -> serpapi: 검색어

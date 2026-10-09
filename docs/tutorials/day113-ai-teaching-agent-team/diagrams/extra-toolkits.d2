@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+screen: Streamlit 화면 { class: ours }
+toolset: Composio 도구 준비 { class: ours }
+composio: Composio API { class: ext }
+
+toolset -> composio: "연결 계정 조회 (전체)"
+composio -> toolset: "연결 계정 목록"
+toolset -> screen: "Toolkit (문서 만들기)"
+screen -> toolset: "get_tools(문서 고치기)"
+toolset -> composio: "액션 스키마 조회 (GOOGLEDOCS)"
+composio -> toolset: "액션 스키마"
+toolset -> screen: "Toolkit (문서 고치기)"

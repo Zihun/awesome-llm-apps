@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: right
+
+professor: Professor { class: ours }
+advisor: Academic Advisor { class: ours }
+librarian: Research Librarian { class: ours }
+assistant: Teaching Assistant { class: ours }
+agno_api: Agno 통계 API (os-api.agno.com) { class: ext }
+
+professor -> agno_api: 메타데이터
+advisor -> agno_api: 메타데이터
+librarian -> agno_api: 메타데이터
+assistant -> agno_api: 메타데이터

@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gdocs: Google Docs { class: ext }
+composio: Composio API { class: ext }
+docs_tool: 문서 만들기 도구 { class: ours }
+advisor: Academic Advisor { class: ours }
+openai: OpenAI (gpt-4o-mini) { class: ext }
+
+composio -> gdocs: "문서 만들기 (대신 호출)"
+gdocs -> composio: "문서 정보"
+composio -> docs_tool: "결과 JSON"
+docs_tool -> advisor: "결과 문자열"
+advisor -> openai: "요청 (도구 결과 포함)"
+openai -> advisor: "최종 답 (링크 포함)"

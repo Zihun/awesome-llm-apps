@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+ui: Streamlit 화면 { class: ours }
+professor: Professor { class: ours }
+advisor: Academic Advisor { class: ours }
+librarian: Research Librarian { class: ours }
+assistant: Teaching Assistant { class: ours }
+docs_tool: 문서 만들기 도구 { class: ours }
+serp_tool: 검색 도구 { class: ours }
+
+ui -> professor: run(주제 문장)
+ui -> advisor: run(주제 문장)
+ui -> librarian: run(주제 문장)
+ui -> assistant: run(주제 문장)
+professor -> docs_tool: tools 목록
+advisor -> docs_tool: tools 목록
+librarian -> docs_tool: tools 목록
+assistant -> docs_tool: tools 목록
+librarian -> serp_tool: tools 목록
+assistant -> serp_tool: tools 목록

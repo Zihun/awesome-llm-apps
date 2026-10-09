@@ -1,0 +1,44 @@
+...@../../_tools/theme
+direction: down
+
+browser: 사용자의 브라우저 (Streamlit 화면을 연 탭) {
+  class: group
+  user: 사용자 { class: person }
+}
+
+app: 앱 (teaching_agent_team.py) {
+  class: group
+  grid-rows: 2
+  ui: Streamlit 화면 { class: ours }
+  toolset: Composio 도구 준비 { class: ours }
+  docs_tool: 문서 만들기 도구 { class: ours }
+  update_tool: 문서 고치기 도구 { class: ours }
+  serp_tool: 검색 도구 { class: ours }
+  professor: Professor { class: ours }
+  advisor: Academic Advisor { class: ours }
+  librarian: Research Librarian { class: ours }
+  assistant: Teaching Assistant { class: ours }
+}
+
+composio_api: Composio API (backend.composio.dev) { class: ext }
+gdocs: Google Docs { class: ext }
+openai: OpenAI (gpt-4o-mini) { class: ext }
+serpapi: SerpAPI { class: ext }
+agno_api: Agno 통계 API { class: ext }
+
+browser -> app: 키 · 주제 입력
+app -> browser: 링크 · 답 표시
+app -> composio_api: 도구 정의 조회
+app -> composio_api: 문서 만들기 요청
+composio_api -> gdocs: 문서 만들기
+app -> serpapi: 검색어
+app -> openai: 대화 · 도구
+app -> agno_api: 실행 메타데이터
+
+app.*.height: 32
+composio_api.height: 40
+gdocs.height: 40
+openai.height: 40
+serpapi.height: 40
+agno_api.height: 40
+browser.user.height: 44

@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+screen: Streamlit 화면 { class: ours }
+openai: OpenAI (gpt-4o-mini) { class: ext }
+assistant: Teaching Assistant { class: ours }
+serp_tool: 검색 도구 { class: ours }
+serpapi: SerpAPI { class: ext }
+
+screen -> assistant: "run(주제 문장)"
+assistant -> openai: "요청 (지시문 · 주제 · 도구 정의 둘)"
+openai -> assistant: "도구 호출 요청 (search_google)"
+assistant -> serp_tool: "search_google(query, num_results)"
+serp_tool -> serpapi: "검색 요청 (query, num, 키)"
+serpapi -> serp_tool: "검색 결과"
+serp_tool -> assistant: "결과 JSON 문자열"

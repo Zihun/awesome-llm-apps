@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+extract: 링크 뽑기 함수 (extract_google_doc_link) { class: ours }
+screen: Streamlit 화면 { class: ours }
+terminal: 터미널 (stdout) { class: file }
+user: 사용자 { class: person }
+
+screen -> extract: "응답 본문 × 4"
+extract -> screen: "링크 조각 또는 None × 4"
+screen -> user: "링크 목록"
+screen -> user: "응답 넷"
+screen -> terminal: "pprint_run_response × 4"

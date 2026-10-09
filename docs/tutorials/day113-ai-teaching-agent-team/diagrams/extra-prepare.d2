@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+ui: Streamlit 화면 { class: ours }
+toolset: Composio 도구 준비 { class: ours }
+docs_tool: 문서 만들기 도구 { class: ours }
+update_tool: 문서 고치기 도구 { class: ours }
+composio_api: Composio API { class: ext }
+
+ui -> toolset: ComposioToolSet(키) · get_tools 두 번
+toolset -> composio_api: 카탈로그 요청 (캐시가 비었을 때만)
+toolset -> composio_api: 연결 계정 조회
+toolset -> composio_api: 액션 스키마 조회
+toolset -> docs_tool: Toolkit 생성
+toolset -> update_tool: Toolkit 생성 (쓰는 에이전트 없음)
