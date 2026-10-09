@@ -6,7 +6,7 @@ qgen: "질문 생성\n(generate_questions)" { class: ours }
 reporter: "보고서 작성\n(compile_report)" { class: ours }
 state: "세션 상태\n(st.session_state)" { class: store; height: 120 }
 
-screen -> state: "답 목록 저장"
+screen -> state: "초기값 · 답 목록 저장"
 qgen -> state: "질문 목록 저장"
 reporter -> state: "보고서 본문 ·\n완료 표시 저장"
 state -> screen: "저장된 값 읽기"

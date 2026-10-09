@@ -9,7 +9,7 @@ agno_api: Agno 통계 API { class: ext }
 composio: Composio API { class: ext }
 
 user -> screen: Compile Final Report 클릭
-screen -> reporter: compile_report_task.run(입력)
+screen -> reporter: run(입력)
 reporter -> together: 지시문 + 질문과 답
 together -> reporter: 도구 호출 요청
 reporter -> composio: 문서 만들기 요청

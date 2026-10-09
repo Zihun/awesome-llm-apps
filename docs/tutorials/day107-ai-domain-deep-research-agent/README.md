@@ -54,7 +54,7 @@ PowerShell 줄은 실행해 보지 못했습니다.
 
 ![모델·도구 준비 단계](diagrams/extra-prepare.svg)
 
-둘째는 세션 상태에 값을 쓰는 곳입니다. 질문 목록은 질문 생성 쪽(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:114-114`)이, 보고서 본문과 완료 표시는 보고서 작성 쪽(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:160-161`)이, 답 목록은 화면(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:217-217`)이 씁니다.
+둘째는 세션 상태에 값을 쓰는 곳입니다. 질문 목록은 질문 생성 쪽(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:114-114`)이, 보고서 본문과 완료 표시는 보고서 작성 쪽(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:160-161`)이, 답 목록은 화면(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:217-217`)이 쓰고, 화면은 맨 위(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:52-60`)에서 네 값의 초기값도 씁니다.
 
 ![세션 상태에 쓰는 곳](diagrams/extra-state.svg)
 
@@ -98,13 +98,13 @@ together
 
 다섯 줄 가운데 버전을 못 박은 것은 `agno`의 하한뿐입니다. 오늘(2026-10-09) Python 3.13.3에서 패키지 106개가 깔렸고 agno 3.1.2, composio 0.22.0, composio-agno 0.7.20, composio-core 0.7.21, openai 3.26.1, together 2.36.0, streamlit 1.65.0이 풀렸습니다(직접 확인). 눈여겨볼 것이 셋입니다.
 
-하나, `composio`(0.22.0)와 `composio-core`(0.7.21)가 둘 다 설치됩니다. `composio-agno` 0.7.20이 `composio_core>=0.7.0,<0.8.0`을 요구해서 옛 SDK가 따라오는데, 두 배포판이 같은 `composio/` 폴더에 같은 경로의 파일 12개(`__init__.py`, `__version__.py`, `client/__init__.py`, `core/__init__.py`, `exceptions.py`, `py.typed`, `utils/` 여섯 개)를 각자 설치합니다(두 `RECORD`의 교집합, 독립 검토에서 직접 확인). 어느 쪽 파일이 남느냐에 따라 섞이고, 섞이는 조합에 따라 오류 문구도 다릅니다. 같은 요구 파일로 새 가상환경을 일곱 번 만들었을 때 여섯 번은 import가 되고 처음(캐시가 비어 있던) 한 번이 아래처럼 깨졌습니다. 독립 검토에서 새로 만든 다섯 번은 모두 정상이어서 빈도는 환경에 따라 다를 것입니다.
+하나, `composio`(0.22.0)와 `composio-core`(0.7.21)가 둘 다 설치됩니다. `composio-agno` 0.7.20이 `composio_core>=0.7.0,<0.8.0`을 요구해서 옛 SDK가 따라오는데, 두 배포판이 같은 `composio/` 폴더에 같은 경로의 파일 12개(`__init__.py`, `__version__.py`, `client/__init__.py`, `core/__init__.py`, `exceptions.py`, `py.typed`, `utils/` 여섯 개)를 각자 설치합니다(두 `RECORD`의 교집합, `comm -12`로 확인). 어느 쪽 파일이 남느냐에 따라 섞이고, 섞이는 조합에 따라 오류 문구도 다릅니다. 같은 요구 파일로 새 가상환경을 일곱 번 만들었을 때 여섯 번은 import가 되고 처음(캐시가 비어 있던) 한 번이 아래처럼 깨졌습니다. 다른 환경에서 새로 만든 다섯 번은 모두 정상이었으니 결과는 설치마다, 환경마다 달랐습니다.
 
 ```
 ImportError: cannot import name 'Composio' from 'composio.client'
 ```
 
-`client/__init__.py`만 새 쪽이 남으면 `ImportError: cannot import name 'ComposioError' from 'composio.exceptions'`가 난다고 독립 검토가 흉내 내어 확인했습니다. 고치는 법은 옛 SDK를 다시 설치하는 것이고, 깨진 환경에서 이 한 줄로 import가 살아나는 것을 확인했습니다.
+`client/__init__.py`만 새 쪽이 남으면 `ImportError: cannot import name 'ComposioError' from 'composio.exceptions'`가 납니다(파일을 섞어 흉내 내어 확인했습니다). 고치는 법은 옛 SDK를 다시 설치하는 것이고, 깨진 환경에서 이 한 줄로 import가 살아나는 것을 확인했습니다.
 
 ```bash
 uv pip install --reinstall composio-core
@@ -619,7 +619,7 @@ sed -i 's/tools=\[composio_tools\]/tools=composio_tools/' fixed_app.py
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-위 결과는 이 문서를 만든 쪽의 가짜 Together·Composio 서버와 `AppTest` 스크립트에서 나왔고, 이 문서에는 싣지 않았으니 독자가 그대로 다시 볼 수는 없습니다. 독자가 서비스 없이 다시 볼 수 있는 확인은 아래 셋입니다. 고친 곳이 정확히 네 줄인지(`diff`), 사본이 컴파일되는지, 화면이 뜨는지입니다.
+위 결과는 이 문서를 만든 쪽의 가짜 Together·Composio 서버와 `AppTest` 스크립트에서 나왔고, 이 문서에는 싣지 않았으니 독자가 그대로 다시 볼 수는 없습니다. 독자가 서비스 없이 다시 볼 수 있는 확인은 아래 셋입니다. 고친 곳이 정확히 네 줄인지(`diff`), 사본이 컴파일되는지, 서버가 뜨는지입니다.
 
 **확인.**
 
@@ -661,7 +661,7 @@ curl --noproxy '*' http://localhost:53418/_stcore/health
 
 ## 요청 한 건이 흐르는 과정
 
-한 번의 사용(키 입력부터 보고서까지)은 버튼 셋의 클릭이고, 클릭마다 스크립트가 처음부터 다시 실행되어 `initialize_agents`가 다시 불립니다. 아래 그림에서는 이 반복을 한 번만 그렸습니다. 메시지가 33개라 한 장에 담으면 배우가 많아 화살표 라벨 위로 수명선이 지나가므로 시간 경계에서 여섯 장으로 나눴고, 모든 메시지는 정확히 한 그림에 원래 순서로 있습니다. 그림마다 Agent는 하나씩 나옵니다. 코드에서 셋은 다른 객체이기 때문에(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:83-83`, `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:119-119`, `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:136-136`) 그림에서도 질문 생성·질문별 조사·보고서 작성 Agent를 각자의 수명선으로 그렸습니다. 그림은 두 곳을 고친 사본의 흐름입니다. 원본은 조사의 `run` 호출에서 `TypeError`로 끝나므로 그 뒤의 모델·도구 메시지가 없습니다. 첫 그림은 키 입력, 화면이 `initialize_agents`를 부르고 거기서 `ComposioToolSet`과 `get_tools`가 Composio 서버로 가는 요청입니다.
+한 번의 사용(키 입력부터 보고서까지)은 버튼 셋의 클릭이고, 클릭마다 스크립트가 처음부터 다시 실행되어 `initialize_agents`가 다시 불립니다. 아래 그림에서는 이 반복을 한 번만 그렸습니다. 메시지가 36개라 한 장에 담으면 배우가 많아 화살표 라벨 위로 수명선이 지나가므로 시간 경계에서 여섯 장으로 나눴고, 모든 메시지는 정확히 한 그림에 원래 순서로 있습니다. 그림마다 Agent는 하나씩 나옵니다. 코드에서 셋은 다른 객체이기 때문에(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:83-83`, `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:119-119`, `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:136-136`) 그림에서도 질문 생성·질문별 조사·보고서 작성 Agent를 각자의 수명선으로 그렸습니다. 그림은 두 곳을 고친 사본의 흐름입니다. 원본은 조사의 `run` 호출에서 `TypeError`로 끝나므로 그 뒤의 모델·도구 메시지가 없습니다. 첫 그림은 키 입력, 화면이 `initialize_agents`를 부르고 거기서 `ComposioToolSet`과 `get_tools`가 Composio 서버로 가는 요청입니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -690,14 +690,15 @@ curl --noproxy '*' http://localhost:53418/_stcore/health
 - [ ] `Together(...).base_url`이 `https://api.together.xyz/v1`이고, `Action.COMPOSIO_SEARCH_TAVILY_SEARCH` 등이 import된다
 - [ ] `extract_questions_after_think`가 `</think>` 뒤만 돌려준다
 - [ ] `probe.py`가 이중 목록에서 `[]`, 평평한 목록에서 `['hello']`를 찍고 입력 없는 `run()`에서 `TypeError`를 찍는다
-- [ ] 사본의 `run` 호출 둘과 `tools=` 두 줄을 고쳐 `py_compile`이 통과한다
+- [ ] 사본의 `run` 호출 둘과 `tools=` 두 줄을 고쳐 `diff`가 네 줄만 보이고 `py_compile`이 통과한다
+- [ ] `streamlit run`으로 사본을 띄우고 `/_stcore/health`가 `ok`를 돌려준다(서버가 떴다는 뜻이고, 화면은 브라우저로 처음 접속할 때 그려진다)
 - [ ] 실제로 돌릴 계획이면 Together 모델 ID를 현재 serverless 목록의 것으로 바꿨다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| ImportError: cannot import name 'Composio' from 'composio.client'(또는 'ComposioError' from 'composio.exceptions') | `composio`와 `composio-core`가 같은 `composio/` 파일 12개를 설치해 섞임(조합에 따라 두 번째 문구가 나옴. 내 환경은 7번 중 1번, 독립 검토는 5번 모두 정상) | `uv pip install --reinstall composio-core`(직접 확인) |
+| ImportError: cannot import name 'Composio' from 'composio.client'(또는 'ComposioError' from 'composio.exceptions') | `composio`와 `composio-core`가 같은 `composio/` 파일 12개를 설치해 섞임(조합에 따라 두 번째 문구가 나옴. 새 설치마다 결과가 달랐다: 7번 중 1번 깨짐, 다른 환경에서는 5번 모두 정상) | `uv pip install --reinstall composio-core`(직접 확인) |
 | ImportError: openai not installed (agno의 안내 문구, 앞뒤에 역따옴표가 붙는다) | 요구 파일에 `openai`가 없고 `composio`를 뺐을 때 딸려 오지 않음 | `uv pip install openai`(직접 확인) |
 | "Start Research"에서 `TypeError: Agent.run() missing 1 required positional argument: 'input'`. "Compile Final Report" 버튼은 보이지도 않는다 | `run()`을 입력 없이 부름(`research_task.run()`, `compile_report_task.run()`). 조사가 멈춰 답 목록이 비므로 보고서 버튼이 안 그려지고, 조사만 고치면 보고서에서 같은 오류 | 사본에서 `run(question)`처럼 입력을 넘긴다(Step 7) |
 | 오류 없이 끝나는데 검색 결과나 Google Doc이 없다 | `tools=[composio_tools]`가 목록 안의 목록이라 모델이 도구를 받지 않고, 화면은 그래도 성공 문구를 보여 줌 | `tools=composio_tools`로 고친다(Step 5·7) |
