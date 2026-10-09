@@ -1,14 +1,14 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-critic: UICritic { class: ours }
+pipeline: AnalysisPipeline { class: ours }
 strategist: DesignStrategist { class: ours }
-implementer: VisualImplementer { class: ours }
 gemini: Gemini 텍스트 { class: ext }
+implementer: VisualImplementer { class: ours }
 
-critic -> strategist: "다음 하위 에이전트"
-strategist -> gemini: "지시문 + 대화(이미지 포함)"
+pipeline -> strategist: "2단계 run_async"
+strategist -> gemini: "지시문 + 대화(이미지 포함) + SearchAgent 도구 선언"
 gemini -> strategist: "개선 계획 글 (DESIGN PLAN COMPLETE)"
-strategist -> implementer: "다음 하위 에이전트"
+pipeline -> implementer: "3단계 run_async"
 implementer -> gemini: "지시문 + 대화 + 도구 선언"
 gemini -> implementer: "generate_improved_landing_page(inputs: prompt · aspect_ratio ·\nasset_name · reference_image)"

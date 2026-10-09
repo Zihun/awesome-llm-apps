@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+implementer: VisualImplementer { class: ours }
+tool: 생성 도구 { class: ours }
+artifacts: 아티팩트 { class: store }
+
+implementer -> tool: "inputs (모델 인스턴스)"
+tool -> artifacts: "load_artifact(original_landing_page.png)"
+artifacts -> tool: "None (없음, tools.py:50 경고)"
