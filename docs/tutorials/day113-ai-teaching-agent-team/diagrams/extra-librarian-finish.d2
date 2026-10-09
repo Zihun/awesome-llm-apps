@@ -2,8 +2,8 @@
 shape: sequence_diagram
 
 agno: Agno 통계 API { class: ext }
-librarian: Research Librarian { class: ours }
-screen: Streamlit 화면 { class: ours }
+librarian: Research Librarian (research_librarian_agent) { class: ours }
+screen: Streamlit 화면 (teaching_agent_team.py) { class: ours }
 
 librarian -> agno: "실행 메타데이터 (성공 시)"
 librarian -> screen: "RunOutput"

@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+screen: Streamlit 화면 (teaching_agent_team.py) { class: ours }
+
+screen -> user: "구분선 (st.markdown(\"---\"))"
+screen -> user: "제목 (### About the Agents:)"
+screen -> user: "에이전트 넷의 소개 목록 (여러 줄 st.markdown)"

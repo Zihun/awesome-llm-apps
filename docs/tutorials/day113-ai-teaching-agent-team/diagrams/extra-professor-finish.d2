@@ -2,8 +2,8 @@
 shape: sequence_diagram
 
 agno: Agno 통계 API { class: ext }
-professor: Professor { class: ours }
-screen: Streamlit 화면 { class: ours }
+professor: Professor (professor_agent) { class: ours }
+screen: Streamlit 화면 (teaching_agent_team.py) { class: ours }
 
 professor -> agno: "실행 메타데이터 (성공 시)"
 professor -> screen: "RunOutput"

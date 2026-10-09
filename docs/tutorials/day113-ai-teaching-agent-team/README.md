@@ -1,6 +1,6 @@
 # Day 113 · 👨‍🏫 AI Teaching Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ · 예상 소요 120분(앱은 207줄이지만 이 앱은 설치만으로는 import가 막혀 고쳐야 하고, 시퀀스가 스물네 장이라 따라 읽는 데도 시간이 들고, Step 7에서 가짜 서버와 구동 스크립트를 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 Start 한 번에 OpenAI 약 $0.01~0.02(`gpt-4o-mini`는 모델 요청이 대본 기준 10번입니다. 문서 하나가 도구 인자로 나가므로 문서당 출력 2,000~3,000토큰, 도구 결과가 다음 요청에 다시 실리는 것까지 더해 입력 합계 25,000~35,000토큰·출력 합계 10,000~14,000토큰으로 어림하고, 모델 페이지의 입력 $0.15·출력 $0.6(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-09 확인)을 대입한 대략치이며 키가 없어 실제 토큰 수는 확인하지 못했습니다. Composio와 SerpAPI의 요금은 확인하지 못했습니다. 이 문서의 가짜 서버 실험은 무료) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ · 예상 소요 120분(앱은 207줄이지만 이 앱은 설치만으로는 import가 막혀 고쳐야 하고, 시퀀스가 스물다섯 장이고 본문이 지난 판보다 267낱말(2269→2536) 늘어 그림 설명과 PowerShell 형태, 확인 명령을 따라 읽고 치는 데도 시간이 들고, Step 7에서 가짜 서버와 구동 스크립트를 직접 저장해 터미널 둘로 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 Start 한 번에 OpenAI 약 $0.01~0.02(`gpt-4o-mini`는 모델 요청이 대본 기준 10번입니다. 문서 하나가 도구 인자로 나가므로 문서당 출력 2,000~3,000토큰, 도구 결과가 다음 요청에 다시 실리는 것까지 더해 입력 합계 25,000~35,000토큰·출력 합계 10,000~14,000토큰으로 어림하고, 모델 페이지의 입력 $0.15·출력 $0.6(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-09 확인)을 대입한 대략치이며 키가 없어 실제 토큰 수는 확인하지 못했습니다. Composio와 SerpAPI의 요금은 확인하지 못했습니다. 이 문서의 가짜 서버 실험은 무료) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_teaching_agent_team`
 
 ## 오늘 만들 것
 
@@ -241,7 +241,7 @@ print(len(at.sidebar.text_input), [t.label for t in at.sidebar.text_input])
 3 ['Enter your OpenAI API Key', 'Enter your Composio API Key', 'Enter your SerpAPI Key']
 ```
 
-`composio`를 import하는 프로세스는 처음이든 아니든 매번 `backend.composio.dev`(sentry 설정)에 접속을 시도하고, 끝날 때 `pypi.org`(버전 확인)에도 시도합니다(프록시로 막은 상태에서 같은 캐시 폴더로 세 번 돌려도 매번 두 호스트의 연결 시도가 기록됐습니다). Day 107 Step 3이 소스로 설명한 같은 사실입니다. `COMPOSIO_DISABLE_VERSION_CHECK=true`를 걸면 `pypi.org` 시도가 사라지고 `backend.composio.dev`는 남았습니다(직접 확인). 두 접속은 위 "요청 한 건이 흐르는 과정"의 첫 그림에 있습니다. 명령 끝의 `2>/dev/null`은 PowerShell에서 `2>$null`이고(Step 3도 같습니다), 실행해 보지 못했습니다.
+`composio`를 import하는 프로세스는 처음이든 아니든 매번 `backend.composio.dev`(sentry 설정)에 접속을 시도하고, 끝날 때 `pypi.org`(버전 확인)에도 시도합니다(프록시로 막은 상태에서 같은 캐시 폴더로 세 번 돌려도 매번 두 호스트의 연결 시도가 기록됐습니다). Day 107 Step 3이 소스로 설명한 같은 사실입니다. `COMPOSIO_DISABLE_VERSION_CHECK=true`를 걸면 `pypi.org` 시도가 사라지고 `backend.composio.dev`는 남았습니다(직접 확인). 두 접속은 아래 "요청 한 건이 흐르는 과정"의 첫 그림에 있습니다. 명령 끝의 `2>/dev/null`은 PowerShell에서 `2>$null`이고(Step 3도 같습니다), 실행해 보지 못했습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -670,7 +670,7 @@ COMPOSIO_CACHE_DIR="$(mktemp -d)" OPENAI_BASE_URL=http://127.0.0.1:62085/v1 COMP
 Windows의 파이썬은 `.venv\Scripts\python.exe`입니다. PowerShell은 환경변수를 `$env:`로 따로 걸어야 하고, 이 변수들은 그 창에 남아 다음 `uv pip install`이나 다른 앱을 깨뜨릴 수 있으니(`HTTP_PROXY`가 가짜 서버를 가리킵니다) 끝나면 반드시 지웁니다. 서버는 같은 `python fake_servers.py 62085 fake.log`입니다.
 
 ```powershell
-$env:COMPOSIO_CACHE_DIR = Join-Path $env:TEMP "composio-cache-drive"
+$env:COMPOSIO_CACHE_DIR = Join-Path $env:TEMP ("composio-cache-" + [guid]::NewGuid())
 $env:OPENAI_BASE_URL = "http://127.0.0.1:62085/v1"
 $env:COMPOSIO_BASE_URL = "http://127.0.0.1:62085/api"
 $env:HTTP_PROXY = "http://127.0.0.1:62085"
@@ -679,10 +679,10 @@ $env:NO_PROXY = "localhost,127.0.0.1"
 $env:PORT = "62085"
 $env:APPFILE = "<저장소 경로>\advanced_ai_agents\multi_agent_apps\agent_teams\ai_teaching_agent_team\teaching_agent_team.py"
 & "<앱 폴더>\.venv\Scripts\python.exe" drive.py
-Remove-Item Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:NO_PROXY, Env:OPENAI_BASE_URL, Env:COMPOSIO_BASE_URL, Env:PORT, Env:APPFILE
+Remove-Item Env:COMPOSIO_CACHE_DIR, Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:NO_PROXY, Env:OPENAI_BASE_URL, Env:COMPOSIO_BASE_URL, Env:PORT, Env:APPFILE
 ```
 
-PowerShell 줄은 실행해 보지 못했습니다. 요약은 `drive.out`에 쓰이고 터미널에는 에이전트의 긴 로그가 찍힙니다. 직접 확인한 `drive.out`입니다.
+캐시 폴더는 실행마다 새로 만들어야 카탈로그 3건이 아래 출력처럼 나옵니다(bash의 `mktemp -d`와 같습니다). 끝나면 `COMPOSIO_CACHE_DIR`도 지우므로 사전 준비의 값이 필요하면 다시 거세요. PowerShell 줄은 실행해 보지 못했습니다. 요약은 `drive.out`에 쓰이고 터미널에는 에이전트의 긴 로그가 찍힙니다. 직접 확인한 `drive.out`입니다.
 
 ```
 [1] 키 없이 첫 화면: ['Please enter OpenAI, Composio, and SerpAPI keys in the sidebar.']
@@ -736,7 +736,7 @@ PowerShell은 `curl` 대신 `(Invoke-WebRequest -Uri http://localhost:50232/_stc
 
 ## 요청 한 건이 흐르는 과정
 
-아래 그림들은 위 구동에서 본 순서입니다. 모델 쪽 답과 Composio 뒤의 Google Docs 호출은 가짜 서버나 구조 설명이고, 진짜 서비스가 이 모양으로 답하는지는 확인하지 못했습니다. 시간 순으로 스물네 장입니다. 먼저 프로세스가 `composio`를 import할 때의 접속입니다. 첫째는 import 때의 sentry 설정 조회이고, 둘째는 프로세스가 끝날 때 도는 버전 확인입니다(`composio/__init__.py` 56행의 `atexit`, 소스로 확인). 이 그림은 뒤의 어느 그림보다 앞에서 일어나는 일(import)과 맨 끝에서 일어나는 일(종료)을 한 장에 모았습니다.
+아래 그림들은 위 구동에서 본 순서입니다. 모델 쪽 답과 Composio 뒤의 Google Docs 호출은 가짜 서버나 구조 설명이고, 진짜 서비스가 이 모양으로 답하는지는 확인하지 못했습니다. 시간 순으로 스물다섯 장입니다. 먼저 프로세스가 `composio`를 import할 때의 접속입니다. 첫째는 import 때의 sentry 설정 조회이고, 둘째는 프로세스가 끝날 때 도는 버전 확인입니다(`composio/__init__.py` 56행의 `atexit`, 소스로 확인). 이 그림은 뒤의 어느 그림보다 앞에서 일어나는 일(import)과 맨 끝에서 일어나는 일(종료)을 한 장에 모았습니다.
 
 ![import와 종료 때의 접속](diagrams/extra-import.svg)
 
@@ -810,9 +810,13 @@ Teaching Assistant도 같습니다. 대본에서 이 에이전트의 최종 답�
 
 ![응답 표시 1](diagrams/extra-show-answers-1.svg)
 
-Research Librarian과 Teaching Assistant이고, 맨 끝에 "About the Agents" 안내가 붙습니다.
+Research Librarian과 Teaching Assistant입니다.
 
 ![응답 표시 2](diagrams/extra-show-answers-2.svg)
+
+맨 끝에 "About the Agents" 안내가 붙습니다. 구분선, 제목, 에이전트 소개 목록의 `st.markdown`이 셋입니다(199~207행).
+
+![에이전트 소개](diagrams/extra-show-about.svg)
 
 ## 실행 체크리스트
 

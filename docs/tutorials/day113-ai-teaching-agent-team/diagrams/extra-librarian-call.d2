@@ -1,10 +1,10 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-librarian: Research Librarian { class: ours }
+librarian: Research Librarian (research_librarian_agent) { class: ours }
 openai: OpenAI (gpt-4o-mini) { class: ext }
 composio: Composio API { class: ext }
-docs_tool: 문서 만들기 도구 { class: ours }
+docs_tool: 문서 만들기 도구 (google_docs_tool) { class: ours }
 
 librarian -> openai: "요청 (검색 결과 포함)"
 openai -> librarian: "도구 호출 요청 (문서 만들기)"

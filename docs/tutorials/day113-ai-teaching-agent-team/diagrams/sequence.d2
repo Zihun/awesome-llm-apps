@@ -2,8 +2,8 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-screen: Streamlit 화면 { class: ours }
-toolset: Composio 도구 준비 { class: ours }
+screen: Streamlit 화면 (teaching_agent_team.py) { class: ours }
+toolset: Composio 도구 준비 (ComposioToolSet) { class: ours }
 composio: Composio API { class: ext }
 
 screen -> user: "키 셋이 다 차기 전에는 오류 안내 후 중단 (st.error · st.stop)"

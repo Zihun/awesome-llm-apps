@@ -1,10 +1,10 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-assistant: Teaching Assistant { class: ours }
+assistant: Teaching Assistant (teaching_assistant_agent) { class: ours }
 openai: OpenAI (gpt-4o-mini) { class: ext }
 composio: Composio API { class: ext }
-docs_tool: 문서 만들기 도구 { class: ours }
+docs_tool: 문서 만들기 도구 (google_docs_tool) { class: ours }
 
 assistant -> openai: "요청 (검색 결과 포함)"
 openai -> assistant: "도구 호출 요청 (문서 만들기)"
