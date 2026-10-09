@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+
+ui -> user: "Successfully analyzed M/N competitors!"
+ui -> ui: "비교 표 만들기\n(DataFrame)"
+ui -> user: "비교 표 표시 (st.dataframe ·\n원본 JSON 펼침 칸)"

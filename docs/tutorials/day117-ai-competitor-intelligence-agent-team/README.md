@@ -1,6 +1,6 @@
 # Day 117 · 🧲 AI Competitor Intelligence Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★(에이전트를 넷 만들고 외부 API가 셋이며 설치부터 막히는 곳이 여럿이라 Day 114·115와 같은 등급으로 맞췄습니다) · 예상 소요 130분(앱은 343줄이지만 설치부터 막히는 곳이 셋이고, Step 4에서 가짜 서버와 구동 스크립트를 직접 저장해 터미널 둘로 시나리오를 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 확인하지 못함(⚠ 이 문서는 어떤 서비스도 실제로 부르지 않았고 이 앱은 오늘 그대로는 화면이 뜨기 전에 죽습니다. 추정만 적습니다. 질문 1건에 OpenAI `gpt-4o`는 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)이고 경쟁사 셋의 JSON과 지시문이 입력 1,500토큰 안팎, 보고서가 `max_tokens` 제한 없는 여섯 항목 답이라 출력 1,000~1,500토큰으로 어림해 약 $0.02입니다. Perplexity `sonar-pro`는 입력 $3·출력 $15(1M 토큰당)에 요청 수수료가 검색 맥락 크기에 따라 1,000건당 $6·$10·$14이고(https://docs.perplexity.ai/docs/getting-started/pricing, 2026-10-09 원문을 받아 확인) 요청 하나가 짧아 수수료가 대부분이니 약 $0.01입니다. 다만 아래 ⚠대로 이 요청이 지금은 Agent API 요청으로 바뀌어 처리되므로 이 요금으로 청구되는지는 확인하지 못했습니다. Firecrawl은 `extract`가 크레딧을 쓰고 한 크레딧이 15토큰이라고 문서가 적지만(https://docs.firecrawl.dev/features/extract, 같은 날 확인) 이 앱의 경쟁사 하나가 몇 토큰인지는 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★(에이전트를 넷 만들고 외부 API가 셋이며 설치부터 막히는 곳이 여럿이라 Day 114·115와 같은 등급으로 맞췄습니다) · 예상 소요 130분(앱은 343줄이지만 설치부터 막히는 곳이 셋이고, Step 4에서 가짜 서버와 구동 스크립트를 직접 저장해 터미널 둘로 시나리오 여덟 개를 차례로 돌리고 Perplexity 이관 안내까지 따라 읽어야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 확인하지 못함(⚠ 이 문서는 어떤 서비스도 실제로 부르지 않았고 이 앱은 오늘 그대로는 화면이 뜨기 전에 죽습니다. 추정만 적습니다. 질문 1건에 OpenAI `gpt-4o`는 입력 $2.5·출력 $10(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-05 확인)이고 경쟁사 셋의 JSON과 지시문이 입력 1,500토큰 안팎, 보고서가 `max_tokens` 제한 없는 여섯 항목 답이라 출력 1,000~1,500토큰으로 어림해 약 $0.02입니다. Perplexity `sonar-pro`는 입력 $3·출력 $15(1M 토큰당)에 요청 수수료가 검색 맥락 크기에 따라 1,000건당 $6·$10·$14이고(https://docs.perplexity.ai/docs/getting-started/pricing, 2026-10-09 원문을 받아 확인) 요청 하나가 짧아 수수료가 대부분이니 약 $0.01입니다. 다만 아래 ⚠대로 이 요청이 지금은 Agent API 요청으로 바뀌어 처리되므로 이 요금으로 청구되는지는 확인하지 못했습니다. Firecrawl은 `extract`가 크레딧을 쓰고 한 크레딧이 15토큰이라고 문서가 적지만(https://docs.firecrawl.dev/features/extract, 같은 날 확인) 이 앱의 경쟁사 하나가 몇 토큰인지는 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team`
 
 ## 오늘 만들 것
 
@@ -271,7 +271,7 @@ Exa 선택 뒤 입력칸: ['OpenAI API Key', 'Firecrawl API Key', 'Exa API Key']
 uv run --no-project streamlit run competitor_agent_team.py --browser.gatherUsageStats false
 ```
 
-키 없이 서버만 띄워 응답을 보려면 `--server.headless true --server.address localhost --server.port 54233`을 더합니다. 안 붙이면 Streamlit이 시작하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 접속합니다(Day 054와 Day 060이 확인한 사실입니다. 포트는 겹치지 않는 아무 높은 번호입니다). 직접 띄워 보면 `curl http://localhost:54233`이 200, `curl http://localhost:54233/_stcore/health`가 `ok`를 돌려줬습니다(직접 확인).
+키 없이 서버만 띄워 응답을 보려면 `--server.headless true --server.address localhost --server.port 54233`을 더합니다. 안 붙이면 Streamlit이 시작하며 외부 IP를 알아내려고 `checkip.amazonaws.com`에 접속합니다(Day 054와 Day 060이 확인한 사실입니다. 포트는 겹치지 않는 아무 높은 번호입니다). 직접 띄워 보면 `curl http://localhost:54233`이 200, `curl http://localhost:54233/_stcore/health`가 `ok`를 돌려줬습니다(직접 확인). Windows PowerShell 5.1에서 `curl`은 `Invoke-WebRequest`의 별칭이라 `-s` 같은 옵션이 통하지 않으니 `curl.exe`로 쓰거나 `(Invoke-WebRequest -Uri http://localhost:54233/_stcore/health -UseBasicParsing).Content`로 확인하세요(실행해 보지 못했습니다).
 
 ### Step 3. 도구와 에이전트 넷 — 하나만 일하고 70행에서 죽습니다
 
@@ -1063,13 +1063,17 @@ Exa 선택에서는 탐색 에이전트가 모델 요청을 먼저 보내고(도
 
 ## 요청 한 건이 흐르는 과정
 
-이 앱은 한 그림에 다 넣으면 이웃하지 않은 배우 사이 메시지의 라벨이 다른 배우의 수명선 위에 놓이거나 그림이 1500px을 넘어서, 앱의 실제 시간 경계에서 셋으로 나눴습니다. 화면에 쓰는 문장(`Found N competitor URLs` 같은 것)도 사용자에게 가는 메시지라서 `ui -> user`로 모두 그렸습니다. 모든 메시지는 한 그림에만 있고 코드의 순서 그대로입니다. 먼저 버튼을 눌러 경쟁사 주소를 얻기까지입니다. 아래는 Perplexity를 고른 경우이고, Exa를 고르면 탐색 에이전트가 끼어듭니다(Step 7).
+이 앱은 한 그림에 다 넣으면 이웃하지 않은 배우 사이 메시지의 라벨이 다른 배우의 수명선 위에 놓이거나 그림이 1500px을 넘어서, 앱의 실제 시간 경계에서 넷으로 나눴습니다. 화면에 쓰는 문장(`Found N competitor URLs` 같은 것)도 사용자에게 가는 메시지라서 `ui -> user`로 모두 그렸습니다. 모든 메시지는 한 그림에만 있고 코드의 순서 그대로입니다. 먼저 버튼을 눌러 경쟁사 주소를 얻기까지입니다. 아래는 Perplexity를 고른 경우이고, Exa를 고르면 탐색 에이전트가 끼어듭니다(Step 7).
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-다음은 주소마다 되풀이되는 추출입니다. 주소는 셋이라 `extract_competitor_info`부터 주소마다 성공·실패 문장까지가 세 번 돌고, 모두 끝난 뒤 `Successfully analyzed M/N competitors!`가 한 번 나옵니다. 비교 표는 그다음, 분석 요청보다 앞에 화면에 나갑니다(`generate_comparison_report`가 327행에서 불리고 보고서는 331행에서 시작합니다).
+다음은 주소마다 되풀이되는 추출입니다. 주소는 셋이라 `extract_competitor_info`부터 성공·실패 문장까지가 세 번 돌고, 한 번에는 둘 중 하나만 나옵니다(`if`/`else`, 314~320행). 그래서 문장을 메시지 둘로 그렸습니다. 실제 문장은 `✓ Successfully analyzed 주소`와 `✗ Failed to analyze 주소`인데, 그림의 글꼴에 ✓·✗ 글자가 없어 라벨에는 "체크 표시"와 "가위표"로 적었습니다.
 
-![정보 추출과 비교 표](diagrams/extra-extract.svg)
+![정보 추출](diagrams/extra-extract.svg)
+
+모두 끝나면 `Successfully analyzed M/N competitors!`가 한 번 나오고, 비교 표는 그다음 분석 요청보다 앞에 화면에 나갑니다(`generate_comparison_report`가 327행에서 불리고 보고서는 331행에서 시작합니다).
+
+![비교 표](diagrams/extra-table.svg)
 
 마지막은 분석 보고서입니다. 분석 에이전트가 `gpt-4o`에 한 번 묻고, 통계 전송은 `run` 안에서 성공 뒤에 일어나므로(소스로 확인, agno 3.1.2의 `agno/agent/_run.py` 673행) `report.content`가 돌아오기 앞에 그렸습니다. 보고서를 쓰고 나서 `Analysis complete!`가 나옵니다.
 
