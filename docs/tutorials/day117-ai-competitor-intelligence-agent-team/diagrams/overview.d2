@@ -1,0 +1,43 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+
+app: "competitor_agent_team.py (한 파일)" {
+  class: group
+  front: "화면 쪽" {
+    class: group
+    grid-rows: 2
+    grid-gap: 8
+    ui: "Streamlit 화면\n(사이드바 · 입력 · 버튼)" { class: ours }
+    session: "세션 상태\n(API 키)" { class: store; height: 96 }
+  }
+  logic: "분석 쪽" {
+    class: group
+    grid-columns: 2
+    grid-gap: 8
+    finder: "경쟁사 주소 찾기\n(get_competitor_urls)" { class: ours }
+    exa_agent: "Exa 탐색 에이전트\n(competitor_finder_agent)" { class: ours }
+    extractor: "정보 추출\n(extract_competitor_info ·\nCompetitorDataSchema)" { class: ours }
+    report: "비교 표\n(generate_comparison_report)" { class: ours }
+    analysis: "분석 에이전트\n(analysis_agent)" { class: ours }
+    idle: "쓰이지 않는 에이전트 둘\n(firecrawl_agent ·\ncomparison_agent)" { class: ours }
+  }
+}
+
+perplexity: "Perplexity API\n(sonar-pro)" { class: ext; height: 70 }
+exa: "Exa API" { class: ext; height: 60 }
+firecrawl: "Firecrawl API\n(extract)" { class: ext; height: 70 }
+sites: "경쟁사 사이트" { class: ext; height: 60 }
+openai: "OpenAI API\n(gpt-4o)" { class: ext; height: 60 }
+agno_api: "Agno 통계 API" { class: ext; height: 60 }
+
+user -> app.front: "키 · URL ·\n설명"
+app.front -> user: "표 · 보고서"
+app.logic -> perplexity: "chat 요청\n(sonar-pro)"
+app.logic -> exa: "ExaTools 검색"
+app.logic -> openai: "Exa 탐색 요청"
+app.logic -> firecrawl: "extract 요청\n(URL/* · 스키마)"
+sites -> firecrawl: "페이지 내용"
+app.logic -> openai: "분석 요청"
+app.logic -> agno_api: "메타데이터\n(성공 시)"

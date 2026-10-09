@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+agno_api: Agno 통계 API { class: ext }
+analysis: 분석 에이전트 { class: ours }
+openai: OpenAI API { class: ext }
+
+ui -> ui: "비교 표 만들기\n(DataFrame)"
+ui -> analysis: "generate_analysis_report\n(경쟁사 JSON 프롬프트)"
+analysis -> openai: "메시지 1개"
+openai -> analysis: "보고서 텍스트"
+analysis -> agno_api: "익명 메타데이터 (에이전트 id · 모델 ID · has_* 표시, 성공 시)"
+analysis -> ui: report.content
+ui -> user: 비교 표와 분석 보고서 표시
