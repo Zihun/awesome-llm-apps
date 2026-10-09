@@ -1,10 +1,10 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-adkweb: adk web { class: ext }
+team: SeoAuditTeam { class: ours }
 serp: SerpAnalystAgent { class: ours }
 gemini: Gemini { class: ext }
 
-adkweb -> serp: "다음 하위 에이전트"
+team -> serp: "2단계 run_async (같은 세션)"
 serp -> gemini: "지시문 + 앞 에이전트 대화(인용) + 도구 선언"
 gemini -> serp: "perform_google_search(request=주 키워드)"

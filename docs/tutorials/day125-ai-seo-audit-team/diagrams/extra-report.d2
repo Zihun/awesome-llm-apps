@@ -3,11 +3,13 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 adkweb: adk web { class: ext }
+team: SeoAuditTeam { class: ours }
 advisor: OptimizationAdvisorAgent { class: ours }
 gemini: Gemini { class: ext }
 
-adkweb -> advisor: "마지막 하위 에이전트"
+team -> advisor: "3단계 run_async (같은 세션)"
 advisor -> gemini: "지시문 + 두 에이전트의 대화 전체(도구 결과 포함)"
 gemini -> advisor: "# SEO Audit Report 마크다운"
-advisor -> adkweb: "글 이벤트 (output_key 없음)"
+advisor -> team: "글 이벤트 (output_key 없음)"
+team -> adkweb: "이벤트 전달"
 adkweb -> user: "이벤트 목록 (최종 보고서)"

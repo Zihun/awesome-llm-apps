@@ -3,10 +3,12 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 adkweb: adk web { class: ext }
+team: SeoAuditTeam { class: ours }
 auditor: PageAuditorAgent { class: ours }
 mcp: Firecrawl MCP 서버 { class: ext }
 
 user -> adkweb: "URL + 요청 글 (POST /run)"
-adkweb -> auditor: "root_agent 실행 → 첫 하위 에이전트"
+adkweb -> team: "root_agent.run_async"
+team -> auditor: "1단계 run_async (같은 세션)"
 auditor -> mcp: "도구 목록 요청 (처음이면 npx로 서버를 띄움, 5초 제한)"
 mcp -> auditor: "도구 목록 (firecrawl_scrape만 남김)"

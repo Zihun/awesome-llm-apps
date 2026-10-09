@@ -2,9 +2,13 @@
 shape: sequence_diagram
 
 adkweb: adk web { class: ext }
+team: SeoAuditTeam { class: ours }
 auditor: PageAuditorAgent { class: ours }
 gemini: Gemini { class: ext }
+state: 세션 상태 { class: store }
 
 auditor -> gemini: "대화 + 도구 결과"
 gemini -> auditor: "set_model_response(audit_results · target_keywords)"
-auditor -> adkweb: "글 이벤트 + page_audit 상태 저장"
+auditor -> team: "글 이벤트 (output_key=page_audit)"
+team -> adkweb: "이벤트 전달"
+adkweb -> state: "page_audit 저장"

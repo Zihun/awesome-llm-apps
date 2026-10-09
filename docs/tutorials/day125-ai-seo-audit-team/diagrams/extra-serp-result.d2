@@ -2,9 +2,13 @@
 shape: sequence_diagram
 
 adkweb: adk web { class: ext }
-serp: SerpAnalystAgent { class: ours }
+state: 세션 상태 { class: store }
 gemini: Gemini { class: ext }
+serp: SerpAnalystAgent { class: ours }
+team: SeoAuditTeam { class: ours }
 
 serp -> gemini: "대화 + 도구 결과"
 gemini -> serp: "set_model_response(top_10_results 등)"
-serp -> adkweb: "글 이벤트 + serp_analysis 상태 저장"
+serp -> team: "글 이벤트 (output_key=serp_analysis)"
+team -> adkweb: "이벤트 전달"
+adkweb -> state: "serp_analysis 저장"
