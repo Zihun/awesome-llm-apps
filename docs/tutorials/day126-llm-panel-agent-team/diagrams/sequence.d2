@@ -1,17 +1,13 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자 { class: person }
 main: "main" { class: ours }
 round_one: "round_one" { class: ours }
 ask: "ask" { class: ours }
 openrouter: "OpenRouter" { class: ext }
 
-user -> main: "python llm_panel_agent_team.py --file sample_diff.patch --rebut"
 main -> round_one: "round_one(client, 모델 셋,\n프롬프트, timeout)"
 round_one -> ask: "ask(모델마다 스레드 하나)"
 ask -> openrouter: "POST chat/completions\n(프롬프트 · usage.include)"
 openrouter -> ask: "답 글 · 토큰 · cost"
 ask -> round_one: "Answer(ok, 글,\n시간, 토큰, 비용)"
-round_one -> user: "## 모델 (ok, 1.6s) + 답 전문\n(도착한 순서대로)"
-round_one -> main: "answers (모델 순서대로)"

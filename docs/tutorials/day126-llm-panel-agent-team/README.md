@@ -6,7 +6,7 @@
 
 오늘로 15일짜리 "🤝 Multi-agent Teams" 볼륨이 끝납니다. 앞 열네 날의 `requirements.txt`(Day 124는 `backend/pyproject.toml`)를 grep하면 agno가 아홉 날, autogen이 Day 116, agency-swarm이 Day 118, AG2가 Day 119, google-adk가 Day 122와 125에 들어 있습니다. 오늘 `requirements.txt`는 `openai>=1.50.0` 한 줄뿐이고, 팀을 만들어 주는 프레임워크가 없습니다. 파이썬 파일 하나가 스레드 풀로 모델 셋에게 같은 질문을 동시에 보내고(1라운드), `--rebut`를 주면 각 모델에게 나머지 모델의 답을 "Reviewer A, B"로 이름을 지우고 모델마다 따로 섞어 보여 준 뒤, 모델들의 입장(UPHOLD·REJECT·CONCEDE·MISSED)을 문제 제기별로 묶어 표로 냅니다. Day 112의 팀 리더는 역할이 다른 멤버에게 일을 위임했지만(그 날 README로 확인), 여기에는 리더도 역할 분담도 없습니다. 같은 일을 서로 모르게 하는 독립 검토자들이 있을 뿐입니다. 파일 머리 주석도 투표기가 아니라고 밝힙니다. 패널은 후보 결함을 내고, 코드와 대조하는 일은 사람이 합니다.
 
-직접 돌려 알게 된 것이 넷입니다. 첫째, 오늘 설치되는 openai는 3.27.0이지만 앱의 호출(`timeout`, `extra_body`, `usage.cost` 읽기)은 그대로 돕니다(Step 3). 둘째, 접속 주소가 `main()` 안에 박혀 있어 `OPENAI_BASE_URL`로는 돌릴 수 없으므로 복사본의 한 줄만 바꿔 가짜 서버로 보냅니다(Step 3·4). 셋째, 2라운드 프롬프트는 1라운드의 약 2.3배이고 Reviewer 순서는 모델마다, 실행마다 다릅니다(Step 5). 넷째, 한국어 Windows(cp949)에서는 답에 em dash 하나만 있어도 답을 이미 받은 뒤 `print`에서 죽고 `panel.md`는 0바이트가 됩니다(문제 해결).
+직접 돌려 알게 된 것이 넷입니다. 첫째, 오늘 설치되는 openai는 3.27.0이지만 앱의 호출(`timeout`, `extra_body`, `usage.cost` 읽기)은 그대로 돕니다(Step 3). 둘째, 접속 주소가 `main()` 안에 박혀 있어 `OPENAI_BASE_URL`로는 돌릴 수 없으므로 복사본의 한 줄만 바꿔 가짜 서버로 보냅니다(Step 3·4). 셋째, 2라운드 프롬프트는 1라운드의 약 2.3배이고 Reviewer 순서는 모델마다, 실행마다 다릅니다(Step 5). 넷째, 한국어 Windows(cp949)에서는 답에 em dash 하나만 있어도 답을 이미 받은 뒤 죽습니다. 출력이 파이프나 파일이면 `print`에서 죽어 `panel.md`가 아예 안 생기고, `PYTHONIOENCODING`만 고치면 파일 쓰기에서 죽어 0바이트 `panel.md`가 남습니다. 콘솔 창에서는 뒤쪽 경우가 됩니다(문제 해결).
 
 이 문서는 OpenRouter와 어느 모델 제공자에도 요청을 보내지 않습니다. 가짜 서버의 답은 대본이라 코드 리뷰의 근거가 아닙니다. 아래는 완성된 아키텍처입니다.
 
@@ -21,7 +21,7 @@
 | OpenRouter API 키 | 실제로 쓸 때만 필요하다. 앱은 `OPENROUTER_API_KEY` 환경변수를 읽는다. 이 문서는 가짜 값 `sk-fake`와 가짜 서버로 확인한다 | https://openrouter.ai/keys |
 | 터미널 둘 | 하나는 가짜 서버, 하나는 앱 | 별도 설치 없음 |
 
-기본 모델 셋(`~openai/gpt-mini-latest`·`~anthropic/claude-haiku-latest`·`~google/gemini-flash-latest`)은 버전이 아니라 OpenRouter의 "가장 새 모델" 별칭이라 제공자의 폐기 표에 올라 있을 수 없습니다. 별칭 규칙은 OpenRouter 문서(https://openrouter.ai/docs/guides/routing/routers/latest-resolution, 2026-10-10 확인)에 있고, 이 문서는 세 별칭이 지금 어느 모델로 풀리는지는 확인하지 못했습니다. 그래도 별칭을 고른 까닭은 오늘 실제로 보입니다. Anthropic 폐기 문서(https://platform.claude.com/docs/en/about-claude/model-deprecations, 2026-10-10 확인)에서 `claude-haiku-4-5-20251001`은 Active이지만 종료 예정일이 "Not sooner than October 15, 2026"이고 `claude-haiku-5-5`가 따로 올라 있어, 옛 id를 고정한 기본값은 이르면 며칠 뒤 깨질 수 있습니다. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-10 확인)에서 대화용 "mini"는 날짜가 붙은 스냅숏 `gpt-5-mini-2025-08-07`(2026-12-11 종료)뿐이라 `--models`로 고정해 쓸 때만 걸리고, Google 폐기 문서(https://ai.google.dev/gemini-api/docs/deprecations, 2026-10-10 확인)의 Flash 최신 계열에는 종료일이 발표되지 않았습니다. 그래서 ⚠ 경고는 달지 않습니다.
+기본 모델 셋(`~openai/gpt-mini-latest`·`~anthropic/claude-haiku-latest`·`~google/gemini-flash-latest`)은 버전이 아니라 OpenRouter의 "가장 새 모델" 별칭이라 제공자의 폐기 표에 올라 있을 수 없습니다. 별칭 규칙은 OpenRouter 문서(https://openrouter.ai/docs/guides/routing/routers/latest-resolution, 2026-10-10 확인)의 "slugs always resolve to the newest concrete model in a given family"입니다. 2026-10-10에 각 별칭의 OpenRouter 모델 페이지(`https://openrouter.ai/~openai/gpt-mini-latest` 등)를 내려받아 보니 `targetSlug`가 순서대로 `openai/gpt-5.4-mini`, `anthropic/claude-haiku-5.5`, `google/gemini-3.8-flash`였습니다. 별칭이라 가리키는 모델은 언제든 바뀝니다. 이 셋을 제공자 원문에서 확인한 결과(모두 2026-10-10)는 이렇습니다. Anthropic 폐기 문서(https://platform.claude.com/docs/en/about-claude/model-deprecations)에서 `claude-haiku-5-5`는 Active이고 종료 하한이 "Not sooner than October 7, 2027"입니다. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations)에는 `gpt-5.4-mini` 항목이 없고, 대화용 "mini" 가운데 올라 있는 것은 날짜가 붙은 스냅숏 `gpt-5-mini-2025-08-07`(2026-12-11 종료)뿐이라 `--models`로 그것을 고정해 쓸 때만 걸립니다. Google 폐기 문서(https://ai.google.dev/gemini-api/docs/deprecations)에서 `gemini-3.8-flash`는 "No shutdown date announced"입니다. 별칭을 고른 까닭도 같은 표에 보입니다. 옛 id `claude-haiku-4-5-20251001`은 아직 Active이지만 종료 하한이 "Not sooner than October 15, 2026"로 적혀 있고 `claude-haiku-5-5`가 따로 올라 있습니다. 같은 문서는 공개 모델의 종료 전에 최소 60일 공지를 준다고 하므로(Notifications 절) 당장 깨지지는 않지만, 고정 id는 언젠가 이 표를 따라 끝납니다. 그래서 ⚠ 경고는 달지 않습니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -106,7 +106,7 @@ uv run --no-project python llm_panel_agent_team.py --question hi
 uv run --no-project python llm_panel_agent_team.py
 ```
 
-(PowerShell 5.1에는 `&&`가 없으므로 첫 줄은 `uv run --no-project python -m py_compile llm_panel_agent_team.py; if ($?) { echo compiled }`로 씁니다. 실행해 보지 못했습니다. 셋째 줄은 `OPENROUTER_API_KEY`가 설정돼 있지 않은 셸에서 돌립니다.)
+(PowerShell 5.1에는 `&&`가 없으므로 첫 줄은 `uv run --no-project python -m py_compile llm_panel_agent_team.py; if ($?) { echo compiled }`로, 둘째 줄은 `Select-String -Pattern "requests|urlopen|socket|httpx" llm_panel_agent_team.py`로 씁니다. 실행해 보지 못했습니다. 셋째 줄은 `OPENROUTER_API_KEY`가 설정돼 있지 않은 셸에서 돌립니다.)
 
 직접 확인한 결과입니다. 2026-10-10에 14개가 설치됐고 openai 3.27.0, pydantic 2.14.0, httpx2 2.13.1이 들어 있었습니다. `grep`은 아무것도 찍지 않습니다.
 
@@ -231,7 +231,7 @@ def ask(client: OpenAI, model: str, prompt: str, timeout: float) -> Answer:
         return Answer(model, "error", msg, time.time() - t0)
 ```
 
-세 가지를 봅니다. `timeout`은 호출마다 적용되고, `extra_body={"usage": {"include": True}}`는 OpenRouter에 청구 비용을 응답에 넣어 달라고 요청하는 부분입니다(주석의 설명이며 실제 OpenRouter는 호출하지 않았으므로 확인하지 못했습니다). 마지막으로 모든 예외가 `Answer(..., "error", ...)`가 되어 돌아가므로, 한 모델의 장애가 나머지의 결과를 버리지 않습니다. 400이나 404이고 메시지에 `model`이 들어 있으면 카탈로그 주소를 덧붙입니다.
+세 가지를 봅니다. `timeout`은 호출마다 적용되고, `extra_body={"usage": {"include": True}}`는 OpenRouter에 청구 비용을 응답에 넣어 달라고 요청하는 부분입니다(앱 주석은 이렇게 설명하지만, OpenRouter의 사용량 집계 문서(https://openrouter.ai/docs/cookbook/administration/usage-accounting, 2026-10-10 확인)는 `usage: { include: true }`가 폐기돼 효과가 없고 전체 사용량이 응답마다 항상 들어간다고 적습니다. 그러니 이 인자는 지금 덧붙임일 뿐이고 `cost`는 인자 없이도 올 것이지만, 실제 OpenRouter는 호출하지 않았으므로 응답에서 확인하지는 못했습니다). 마지막으로 모든 예외가 `Answer(..., "error", ...)`가 되어 돌아가므로, 한 모델의 장애가 나머지의 결과를 버리지 않습니다. 400이나 404이고 메시지에 `model`이 들어 있으면 카탈로그 주소를 덧붙입니다.
 
 가짜 서버를 `fake_openrouter.py`로 저장합니다. 첫 두 라운드에서 모델 셋 각각의 대본 답을 돌려주고, 요청이 올 때마다 모델·라운드·프롬프트 길이·2라운드에서 본 다른 답들의 순서·프롬프트에 제공자 이름이 있는지를 stderr에 한 줄 JSON으로 적습니다. 아는 별칭이 아니면 400 `is not a valid model ID`를 돌려줍니다. 환경변수 `FAKE_PROSE`(그 모델의 반박을 라벨 없는 산문으로)와 `FAKE_DASH`(그 모델의 1라운드 답에 em dash)는 문제 해결에서 씁니다.
 
@@ -324,10 +324,16 @@ class S(ThreadingHTTPServer):
 S(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
 ```
 
-포트는 49152~65535에서 비어 있는 것을 고릅니다. 이 문서는 51877을 씁니다. `allow_reuse_address = False`이므로 이미 쓰는 포트에 겹쳐 뜨지 않고 오류로 끝납니다(Windows의 `OSError: [WinError 10048]`, 직접 확인). 터미널 하나에서 서버를 띄웁니다.
+포트는 49152~65535에서 비어 있는 것을 고르되, Windows가 예약해 둔 대역(`netsh int ipv4 show excludedportrange protocol=tcp`로 봅니다)은 피합니다. 이 문서는 51877을 씁니다. `allow_reuse_address = False`이므로 이미 쓰는 포트에 겹쳐 뜨지 않고 오류로 끝납니다(Windows의 `OSError: [WinError 10048]`, 직접 확인). 터미널 하나에서 서버를 띄웁니다.
 
 ```bash
 uv run --no-project python fake_openrouter.py 51877 2> server.log
+```
+
+Windows PowerShell 5.1의 `2>`는 네이티브 프로그램의 stderr를 UTF-16으로 감싸 써서 `show_log.py`의 `json.loads`가 깨질 수 있으므로, PowerShell에서는 `cmd`에 맡깁니다(실행해 보지 못했습니다).
+
+```powershell
+cmd /c "uv run --no-project python fake_openrouter.py 51877 2> server.log"
 ```
 
 **확인.** 다른 터미널에서 `try_ask.py`를 저장해 실행합니다. 앱의 `ask`를 가져와 내 클라이언트로 부르는 것이라 앱 파일은 그대로입니다.
@@ -356,6 +362,8 @@ error
 BadRequestError: Error code: 400 - {'error': {'message': 'openai/not-a-model is not a valid model ID', 'code': 400}}
   -> `openai/not-a-model` is not a model id OpenRouter serves. Pick a current one from https://openrouter.ai/models.
 ```
+
+(`try_ask.py`는 `main`도 키도 패치도 거치지 않고 `ask`만 부르지만, 단계 그림은 한 번 드러난 노드를 다시 흐리지 않는 규칙이라 그 넷은 평상으로 둡니다.)
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -402,7 +410,7 @@ def round_one(client, models, prompt, timeout) -> list[Answer]:
     return [answers[m] for m in models]
 ```
 
-`as_completed`는 끝난 순서로 결과를 주므로 `print`는 도착 순서이고, 반환 목록은 `models`의 순서입니다. 일부러 가장 느린 모델을 맨 앞에 두고 돌립니다.
+이 실행은 점수표와 `panel.md`까지 거치므로 그림에는 `scoreboard`·`write_panel`·`panel.md`가 함께 드러납니다(코드는 Step 7). `as_completed`는 끝난 순서로 결과를 주므로 `print`는 도착 순서이고, 반환 목록은 `models`의 순서입니다. 일부러 가장 느린 모델을 맨 앞에 두고 돌립니다.
 
 **확인.**
 
@@ -508,6 +516,8 @@ def round_two(client, answers, prompt, timeout) -> None:
 OPENROUTER_API_KEY=sk-fake uv run --no-project python panel_local.py --file sample_diff.patch --rebut
 ```
 
+(PowerShell은 Step 4처럼 `$env:OPENROUTER_API_KEY = "sk-fake"`를 먼저 둡니다. 이하 같습니다.)
+
 `show_log.py 6`으로 `server.log`의 마지막 여섯 줄(1라운드 셋과 2라운드 셋)을 봅니다. 직접 확인한 출력입니다. `order_seen`은 가짜 서버의 대본 답에 붙은 번호(`#1` gpt, `#2` haiku, `#3` gemini)로 모델이 받은 Reviewer 순서입니다.
 
 ```text
@@ -575,7 +585,7 @@ def grouped_positions(answers) -> list[str]:
     return out + ([""] + note if note else [])
 ```
 
-묶는 키는 `(문제를 낸 모델, 번호)`입니다. 이 모델의 packet에 없는 글자(`ref[0]`)는 버리고(183-184행), 한 모델이 같은 문제를 두 번 말해도 한 번만 셉니다(186-187행). CONTESTED는 REJECT가 있고 UPHOLD나 MISSED도 있을 때만입니다(198행). CONCEDE는 어느 쪽에도 안 셉니다. 반박이 와도 입장이 하나도 안 읽힌 모델은 이름을 대어 알립니다(190-192행).
+묶는 키는 `(문제를 낸 모델, 번호)`입니다. 이 모델의 packet에 없는 글자(`ref[0]`)는 버리고(183-184행), 한 모델이 같은 문제를 같은 라벨로 두 번 말하면 한 번만 셉니다(186-187행). 걸러내는 키가 `(라벨, 모델)`이라 같은 모델이 같은 문제에 UPHOLD와 REJECT를 함께 내면 둘 다 남습니다. CONTESTED는 REJECT가 있고 UPHOLD나 MISSED도 있을 때만입니다(198행). CONCEDE는 어느 쪽에도 안 셉니다. 반박이 와도 입장이 하나도 안 읽힌 모델은 이름을 대어 알립니다(190-192행).
 
 **확인.** `parse_cases.py`로 저장해 실행합니다.
 
@@ -686,6 +696,8 @@ OPENROUTER_API_KEY=sk-fake uv run --no-project python panel_local.py --file samp
 echo $?
 ```
 
+(PowerShell은 `$env:OPENROUTER_API_KEY = "sk-fake"`를 먼저 두고, 종료 코드는 `$?`가 아니라 `$LASTEXITCODE`로 봅니다. 실행해 보지 못했습니다.)
+
 직접 확인한 결과입니다. 표에는 `error` 행이 있고(`0/0` 토큰, `$0.0000`), 2라운드는 남은 셋이 진행했으며, 마지막에 문구와 종료 코드가 나옵니다. `panel_err.md`에도 같은 행과 오류 전문이 있습니다.
 
 ```text
@@ -701,9 +713,17 @@ full panel written to panel_err.md
 
 ## 요청 한 건이 흐르는 과정
 
-`python llm_panel_agent_team.py --file sample_diff.patch --rebut` 한 번의 흐름입니다. 먼저 1라운드입니다. 모델마다 스레드가 `ask`를 부르고, 각각이 OpenRouter에 같은 프롬프트를 보냅니다. 답이 오는 대로 `round_one`이 사용자에게 찍고, 끝나면 모델 순서의 목록을 `main`에 돌려줍니다.
+`python llm_panel_agent_team.py --file sample_diff.patch --rebut` 한 번의 흐름입니다. 먼저 `main`이 키를 읽고 패치 파일을 엽니다. 키가 없으면 여기서 끝납니다.
+
+![입력 읽기](diagrams/extra-input.svg)
+
+1라운드입니다. 모델마다 스레드가 `ask`를 부르고, 각각이 OpenRouter에 같은 프롬프트를 보냅니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
+
+답이 오는 대로 `round_one`이 사용자에게 찍고, 끝나면 모델 순서의 목록을 `main`에 돌려줍니다.
+
+![답 출력과 반환](diagrams/extra-collect.svg)
 
 2라운드는 같은 `ask`를 다른 프롬프트로 부릅니다. 모델마다 내 답과 섞은 남의 답을 보냅니다.
 
@@ -747,8 +767,9 @@ full panel written to panel_err.md
 | `one of the arguments --question --file is required`, 종료 코드 2 | 질문도 파일도 주지 않음 | 둘 중 하나를 준다. 둘 다 주면 argparse가 거부한다 |
 | 모델 행마다 `APIConnectionError: Connection error.`가 약 7초 뒤에 뜨고 `3 of 3 models did not answer` | 가짜 서버가 떠 있지 않거나 `sed`로 바꾼 포트가 서버와 다름 | 서버 터미널과 `panel_local.py`의 포트를 맞춘다 |
 | `OSError: [WinError 10048]` | 그 포트를 다른 프로그램이 이미 씀. `allow_reuse_address = False`이니 겹쳐 뜨지 않고 오류로 끝나는 것이 정상 | 49152~65535에서 다른 포트를 고른다 |
+| `OSError: [WinError 10013]` | 고른 포트가 Windows가 예약한 제외 대역 안에 있음 | `netsh int ipv4 show excludedportrange protocol=tcp`로 대역을 보고 밖의 포트를 고른다 |
 | `... is not a valid model ID`와 `-> ... is not a model id OpenRouter serves` | 모델 id가 틀렸거나 거둬짐. 앱이 카탈로그 주소를 덧붙인 것 | https://openrouter.ai/models에서 현재 id를 고른다. 그 모델 행만 `error`이고 나머지는 끝까지 간다 |
-| 한국어 Windows에서 답을 받은 뒤 `UnicodeEncodeError: 'cp949' codec can't encode character '\u2014'`, 종료 코드 1, `panel.md` 없음 | 표준 출력이 로캘 인코딩(cp949)이라 답의 em dash를 못 찍음. 가짜 서버를 `FAKE_DASH=gpt-mini`로 띄워 재현했다 | `python -X utf8`나 `PYTHONUTF8=1`. 출력만 고치려고 `PYTHONIOENCODING=utf-8`을 주면 `write_panel`의 `open(path, "w")`에서 같은 오류가 나고 0바이트 `panel.md`가 남는다 |
+| 한국어 Windows에서 답을 받은 뒤 `UnicodeEncodeError: 'cp949' codec can't encode character '\u2014'`, 종료 코드 1 | 답의 em dash를 로캘 인코딩(cp949)으로 쓰지 못함. 출력이 파이프나 파일이면 `round_one`의 `print`에서 죽어 `panel.md`가 없다. 가짜 서버를 `FAKE_DASH=gpt-mini`로 띄워 재현했다. PowerShell·cmd 콘솔 창에서는 CPython 3.6 이상이 콘솔에 UTF-8로 쓰므로(PEP 528) `print`는 통과하고 `write_panel`의 `open(path, "w")`(224행 `f.write`)에서 같은 오류가 나 0바이트 `panel.md`가 남을 것이다(콘솔 창은 열 수 없어 실행해 보지 못했다) | `python -X utf8`나 `PYTHONUTF8=1`은 두 경우 모두 고친다. 출력만 고치려고 `PYTHONIOENCODING=utf-8`을 주면 `write_panel`에서 죽어 0바이트 `panel.md`가 남는다(직접 확인) |
 | `rebuttal round skipped: it needs at least two answers to argue about` 뒤에 `No position cited a finding reference...` | `--rebut`인데 답한 모델이 하나 이하. 종료 코드는 0 | 모델을 둘 이상 준다 |
 | `No position could be read from the rebuttal of: <모델>` | 반박이 라벨 없는 산문이라 입장이 하나도 안 읽힘. `FAKE_PROSE=gemini-flash`로 재현 | 전문은 `panel.md`와 출력에 있으니 직접 읽는다 |
 | 같은 모델을 `--models`에 두 번 줬는데 호출은 4건이고 점수표 두 줄이 같고, 2라운드 프롬프트에 리뷰어 글이 없음 | 결과를 모델 id로 모아(`answers[a.model]`) 두 줄이 같은 객체이고, 2라운드의 `others`가 비어 버림 | 같은 id를 두 번 주지 않는다 |
@@ -756,9 +777,9 @@ full panel written to panel_err.md
 ## 더 해보기
 
 - 출력 인코딩을 앱 쪽에서 고쳐 봅니다. 복사본의 `write_panel`에서 `open(path, "w")`를 `open(path, "w", encoding="utf-8")`로, `main`의 `ap.parse_args()` 다음 줄에 `sys.stdout.reconfigure(encoding="utf-8")`를 더합니다. 이 문서는 이렇게 고친 복사본이 `FAKE_DASH` 서버에서 종료 코드 0으로 끝나고 `panel.md`에 em dash가 들어가는 것을 확인했습니다.
-- 라벨 읽기를 넓혀 봅니다. `advanced_ai_agents/multi_agent_apps/agent_teams/llm_panel_agent_team/llm_panel_agent_team.py:84`의 `POSITION`이 `###`와 소문자를 못 읽는 것을 Step 6의 `parse_cases.py`로 보였습니다. 정규식과 `advanced_ai_agents/multi_agent_apps/agent_teams/llm_panel_agent_team/llm_panel_agent_team.py:85`의 `REFERENCE`를 손봐 `A1-A3` 같은 범위를 펼치고, 사례가 모두 기대대로 나오는지 확인하세요.
+- 라벨 읽기를 넓혀 봅니다. `advanced_ai_agents/multi_agent_apps/agent_teams/llm_panel_agent_team/llm_panel_agent_team.py:84`의 `POSITION`이 `###`와 소문자를 못 읽는 것을 Step 6의 `parse_cases.py`로 보였습니다. 정규식과 `advanced_ai_agents/multi_agent_apps/agent_teams/llm_panel_agent_team/llm_panel_agent_team.py:85`의 `REFERENCE`를 손봐 `A1-A3` 같은 범위를 펼치고, 사례가 모두 기대대로 나오는지 확인하세요. 같은 모델이 같은 문제에 UPHOLD와 REJECT를 함께 내면 그 모델 혼자 CONTESTED를 만드는 것도 `grouped_positions`에 입장을 직접 넣어 보세요.
 - 같은 모델 id가 두 번 들어오면 거부하거나, `answers`를 id가 아니라 위치로 모으도록 `round_one`을 고쳐 봅니다. 문제 해결의 마지막 줄 증상이 사라져야 합니다. 그다음 `--models`에 고정 id를 줘 별칭 대신 재현 가능한 패널을 만들어 보세요.
 
 ## 다음 날 예고
 
-[Day 127 · 📑 Notion MCP Agent](../day127-notion-mcp-agent/README.md) — 볼륨 9 "♾️ MCP AI Agents"의 첫날입니다. 원본 앱 `notion_mcp_agent.py`(123줄)는 agno의 `Agent`에 `MCPTools`를 붙이고 `mcp`의 `StdioServerParameters`로 Notion 쪽 MCP 서버와 이야기하도록 되어 있습니다(소스의 import로 확인). 이 볼륨의 앱들이 MCP를 어떻게 쓰는지는 내일부터 소스로 확인합니다.
+[Day 127 · 📑 Notion MCP Agent](../day127-notion-mcp-agent/README.md) — 볼륨 9 "♾️ MCP AI Agents"의 첫날입니다. 원본 앱 `notion_mcp_agent.py`(124줄, 마지막 줄에 개행이 없어 `wc -l`은 123)는 agno의 `Agent`에 `MCPTools`를 붙이고 `mcp`의 `StdioServerParameters`로 Notion 쪽 MCP 서버와 이야기하도록 되어 있습니다(소스의 import로 확인). 이 볼륨의 앱들이 MCP를 어떻게 쓰는지는 내일부터 소스로 확인합니다.

@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+main: "main" { class: ours }
+round_one: "round_one" { class: ours }
+user: 사용자 { class: person }
+
+round_one -> user: "## 모델 (ok, 1.6s) + 답 전문\n(도착한 순서대로)"
+round_one -> main: "answers (모델 순서대로)"

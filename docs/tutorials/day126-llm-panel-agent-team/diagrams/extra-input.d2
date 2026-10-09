@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+main: "main" { class: ours }
+key: "OPENROUTER_API_KEY" { class: file }
+patch: "sample_diff.patch" { class: file }
+
+user -> main: "python llm_panel_agent_team.py\n--file sample_diff.patch --rebut"
+main -> key: "os.environ.get"
+key -> main: "키 문자열 (환경변수에 없으면 sys.exit(\"set OPENROUTER_API_KEY\"))"
+main -> patch: "open(--file)"
+patch -> main: "diff 본문 (1,282바이트)"
