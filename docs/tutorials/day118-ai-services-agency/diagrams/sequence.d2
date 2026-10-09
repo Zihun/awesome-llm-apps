@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: 화면 (agency.py) { class: ours }
+agency: Agency (agency-swarm) { class: ours }
+openai: OpenAI gpt-4.1 { class: ext }
+ctx: 공유 컨텍스트 { class: store }
+
+user -> ui: 폼 제출 (이름 · 설명 · 유형 · 예산)
+ui -> agency: Agency(에이전트 5, 흐름 7)
+ui -> agency: get_response_sync(CEO,\n"AnalyzeProjectRequirements로 분석")
+agency -> openai: 지시문 · 도구 둘\n(AnalyzeProjectRequirements, send_message)
+openai -> agency: 도구 호출\nAnalyzeProjectRequirements(인자)
+agency -> ctx: project_analysis 저장
+agency -> openai: 도구 결과 + 대화 기록
+openai -> agency: CEO 최종 문장
+agency -> ui: ceo_response
+ui -> agency: get_response_sync(CTO,\n"CreateTechnicalSpecification로 명세")

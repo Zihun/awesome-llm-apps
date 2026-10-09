@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: 화면 (agency.py) { class: ours }
+agency: Agency (agency-swarm) { class: ours }
+openai: OpenAI gpt-4.1 { class: ext }
+
+agency -> ui: developer_response
+ui -> agency: get_response_sync(고객 성공)
+agency -> openai: 고객 성공 지시문 · 도구 없음 + 기록 13건
+openai -> agency: 고객 성공 최종 문장
+agency -> ui: client_response

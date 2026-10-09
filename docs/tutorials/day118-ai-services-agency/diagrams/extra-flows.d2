@@ -1,0 +1,23 @@
+...@../../_tools/theme
+direction: down
+
+cm: Client Success Manager (Agent) { class: ours }
+pm: Product Manager (Agent) { class: ours }
+t1: 분석 도구 (AnalyzeProjectRequirements) { class: ours }
+ceo: Project Director (Agent) { class: ours }
+dev: Lead Developer (Agent) { class: ours }
+ctx: 공유 컨텍스트 (user_context) { class: store }
+t2: 명세 도구 (CreateTechnicalSpecification) { class: ours }
+cto: Technical Architect (Agent) { class: ours }
+
+ceo -> dev: send_message
+t1 -> ctx: project_analysis 저장
+pm -> cm: send_message
+ceo -> cm: send_message
+ceo -> cto: send_message
+cto -> t2: "tools=[...]"
+ceo -> pm: send_message
+pm -> dev: send_message
+ceo -> t1: "tools=[...]"
+cto -> dev: send_message
+t2 -> ctx: project_analysis 읽기 · technical_specification 저장

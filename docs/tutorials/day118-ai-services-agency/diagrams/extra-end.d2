@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: 화면 (agency.py) { class: ours }
+agency: Agency (agency-swarm) { class: ours }
+traces: OpenAI 트레이스 { class: ext }
+
+ui -> user: 탭 다섯 + 세션 기록 6건
+agency -> traces: 트레이스 5 · 스팬 14 (배치 전송)

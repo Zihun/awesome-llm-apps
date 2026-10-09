@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+openai: OpenAI gpt-4.1 { class: ext }
+agency: Agency (agency-swarm) { class: ours }
+ctx: 공유 컨텍스트 { class: store }
+
+agency -> openai: 지시문 · 도구 둘 + CEO까지의 기록 5건
+openai -> agency: 도구 호출\nCreateTechnicalSpecification(인자)
+agency -> ctx: project_analysis 읽기
+agency -> ctx: technical_specification 저장
+agency -> openai: 도구 결과 + 대화 기록
+openai -> agency: CTO 최종 문장

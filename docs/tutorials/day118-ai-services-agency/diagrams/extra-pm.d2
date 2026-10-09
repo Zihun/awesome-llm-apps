@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: 화면 (agency.py) { class: ours }
+agency: Agency (agency-swarm) { class: ours }
+openai: OpenAI gpt-4.1 { class: ext }
+
+agency -> ui: cto_response
+ui -> agency: get_response_sync(PM)
+agency -> openai: PM 지시문 · send_message + 기록 9건
+openai -> agency: PM 최종 문장
+agency -> ui: pm_response
+ui -> agency: get_response_sync(개발자)
+agency -> openai: 개발자 지시문 · 도구 없음 + 기록 11건
+openai -> agency: 개발자 최종 문장
