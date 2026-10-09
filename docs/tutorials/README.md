@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 105 / 167일 완료
+진도: 111 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -196,12 +196,12 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 | ✅ | [Day 103](day103-ai-recipe-meal-planning-agent/README.md) | 🍽️ AI Recipe & Meal Planning Agent | [advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent](../../advanced_ai_agents/single_agent_apps/ai_recipe_meal_planning_agent/) |
 | ✅ | [Day 104](day104-ai-startup-insight-fire1-agent/README.md) | 🔥 AI Startup Insight with Firecrawl FIRE-1 Agent | [advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent](../../advanced_ai_agents/single_agent_apps/ai_startup_insight_fire1_agent/) |
 | ✅ | [Day 105](day105-ai-aqi-analysis-agent/README.md) | 🌍 AQI Analysis Agent | [advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent](../../advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent/) |
-| ⬜ | [Day 106](day106-ai-codebase-migration-agent/README.md) | ⚡ Codebase Migration & Refactor Planner (LangGraph) | [advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent](../../advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/) |
-| ⬜ | [Day 107](day107-ai-domain-deep-research-agent/README.md) | 🔍 AI Domain Deep Research Agent | [advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent](../../advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/) |
-| ⬜ | [Day 108](day108-ai-email-gtm-outreach-agent/README.md) | AI Email GTM Outreach Agent | [advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent](../../advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent/) |
-| ⬜ | [Day 109](day109-ai-speech-trainer-agent/README.md) | AI Speech Trainer Agent | [advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent](../../advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/) |
-| ⬜ | [Day 110](day110-multi-agent-researcher/README.md) | 📰 Multi-Agent AI Researcher | [advanced_ai_agents/multi_agent_apps/multi_agent_researcher](../../advanced_ai_agents/multi_agent_apps/multi_agent_researcher/) |
-| ⬜ | [Day 111](day111-multi-agent-trust-layer/README.md) | 🤝 Multi-Agent Trust Layer - Secure Agent-to-Agent Communication | [advanced_ai_agents/multi_agent_apps/multi_agent_trust_layer](../../advanced_ai_agents/multi_agent_apps/multi_agent_trust_layer/) |
+| ✅ | [Day 106](day106-ai-codebase-migration-agent/README.md) | ⚡ Codebase Migration & Refactor Planner (LangGraph) | [advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent](../../advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent/) |
+| ✅ | [Day 107](day107-ai-domain-deep-research-agent/README.md) | 🔍 AI Domain Deep Research Agent | [advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent](../../advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/) |
+| ✅ | [Day 108](day108-ai-email-gtm-outreach-agent/README.md) | AI Email GTM Outreach Agent | [advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent](../../advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent/) |
+| ✅ | [Day 109](day109-ai-speech-trainer-agent/README.md) | AI Speech Trainer Agent | [advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent](../../advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent/) |
+| ✅ | [Day 110](day110-multi-agent-researcher/README.md) | 📰 Multi-Agent AI Researcher | [advanced_ai_agents/multi_agent_apps/multi_agent_researcher](../../advanced_ai_agents/multi_agent_apps/multi_agent_researcher/) |
+| ✅ | [Day 111](day111-multi-agent-trust-layer/README.md) | 🤝 Multi-Agent Trust Layer - Secure Agent-to-Agent Communication | [advanced_ai_agents/multi_agent_apps/multi_agent_trust_layer](../../advanced_ai_agents/multi_agent_apps/multi_agent_trust_layer/) |
 
 ### 볼륨 8. 🤝 Multi-agent Teams (Day 112–126, 15일)
 
