@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+adkweb: adk web { class: ext }
+advisor: OptimizationAdvisorAgent { class: ours }
+gemini: Gemini { class: ext }
+
+adkweb -> advisor: "마지막 하위 에이전트"
+advisor -> gemini: "지시문 + 두 에이전트의 대화 전체(도구 결과 포함)"
+gemini -> advisor: "# SEO Audit Report 마크다운"
+advisor -> adkweb: "글 이벤트 (output_key 없음)"
+adkweb -> user: "이벤트 목록 (최종 보고서)"

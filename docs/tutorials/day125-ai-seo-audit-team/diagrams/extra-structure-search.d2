@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+serp: "SerpAnalystAgent" { class: ours }
+searchtool: "google_search_tool\n(AgentTool)" { class: ours }
+searchagent: "perform_google_search\n(search_executor_agent)" { class: ours }
+gsearch: "google_search\n(Gemini 내장)" { class: ext }
+
+serp -> searchtool: "tools=[...]"
+searchtool -> searchagent: "AgentTool(...)"
+searchagent -> gsearch: "tools=[...]"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+serp: SerpAnalystAgent { class: ours }
+search: perform_google_search { class: ours }
+gemini: Gemini { class: ext }
+
+serp -> search: "AgentTool: 새 실행으로 키워드 전달"
+search -> gemini: "지시문 + googleSearch 선언"
+gemini -> search: "검색 결과 JSON 글 (검색은 Gemini 쪽)"
+search -> serp: "결과 글"

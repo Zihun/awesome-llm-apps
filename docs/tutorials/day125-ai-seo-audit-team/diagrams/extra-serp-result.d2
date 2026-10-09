@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+adkweb: adk web { class: ext }
+serp: SerpAnalystAgent { class: ours }
+gemini: Gemini { class: ext }
+
+serp -> gemini: "대화 + 도구 결과"
+gemini -> serp: "set_model_response(top_10_results 등)"
+serp -> adkweb: "글 이벤트 + serp_analysis 상태 저장"

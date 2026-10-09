@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+adkweb: adk web { class: ext }
+auditor: PageAuditorAgent { class: ours }
+gemini: Gemini { class: ext }
+
+auditor -> gemini: "대화 + 도구 결과"
+gemini -> auditor: "set_model_response(audit_results · target_keywords)"
+auditor -> adkweb: "글 이벤트 + page_audit 상태 저장"

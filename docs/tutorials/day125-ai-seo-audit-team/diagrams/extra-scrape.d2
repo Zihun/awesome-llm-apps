@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+auditor: PageAuditorAgent { class: ours }
+mcp: Firecrawl MCP 서버 { class: ext }
+firecrawl: Firecrawl 서비스 { class: ext }
+
+auditor -> mcp: "tools/call firecrawl_scrape (응답 제한 5초)"
+mcp -> firecrawl: "스크레이프 요청 (FIRECRAWL_API_KEY)"
+firecrawl -> mcp: "페이지 내용"
+mcp -> auditor: "도구 결과"

@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+adkweb: "adk web 서버\n(ADK 개발 서버)" { class: ext }
+
+app: "앱 코드 (agent.py)" {
+  class: group
+  grid-columns: 5
+  grid-gap: 2
+  auditor: "페이지 감사\n(PageAuditorAgent)" { class: ours }
+  serp: "SERP 분석\n(SerpAnalystAgent)" { class: ours }
+  advisor: "최적화 조언\n(OptimizationAdvisorAgent)" { class: ours }
+  search: "검색 도우미\n(perform_google_search)" { class: ours }
+  toolset: "MCP 도구 묶음\n(firecrawl_toolset)" { class: ours }
+}
+
+mcp: "Firecrawl MCP 서버 (npx firecrawl-mcp, 자식 프로세스)" { class: ext }
+firecrawl: "Firecrawl 서비스 (스크레이프 API)" { class: ext }
+gemini: "Gemini 모델 (gemini-2.5-flash)" { class: ext }
+state: "세션 상태\n(state)" { class: store }
+
+user -> adkweb: "URL + 요청 글"
+adkweb -> user: "이벤트 (최종 보고서)"
+adkweb -> app: "root_agent 실행"
+adkweb -> state: "output_key 값 저장"
+app -> gemini: "지시문 · 대화 · 도구 선언"
+gemini -> app: "글 · 함수 호출"
+app -> mcp: "tools/list · tools/call"
+mcp -> app: "도구 목록 · 결과"
+mcp -> firecrawl: "스크레이프 요청"
+firecrawl -> mcp: "페이지 내용"

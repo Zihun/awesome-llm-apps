@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+auditor: PageAuditorAgent { class: ours }
+gemini: Gemini { class: ext }
+
+auditor -> gemini: "지시문 + 도구 선언 (firecrawl_scrape · set_model_response)"
+gemini -> auditor: "firecrawl_scrape(url · formats · onlyMainContent · timeout)"

@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+team: "SeoAuditTeam\n(SequentialAgent)" { class: ours }
+
+members: "sub_agents (번호 순서)" {
+  class: group
+  auditor: "1. PageAuditorAgent" { class: ours }
+  serp: "2. SerpAnalystAgent" { class: ours }
+  advisor: "3. OptimizationAdvisorAgent" { class: ours }
+}
+
+toolset: "firecrawl_toolset\n(MCPToolset)" { class: ours }
+mcp: "Firecrawl MCP 서버\n(npx firecrawl-mcp)" { class: ext }
+state: "세션 상태\n(state)" { class: store }
+
+team -> members: "sub_agents"
+members.auditor -> toolset: "tools=[...]"
+toolset -> mcp: "StdioServerParameters"
+members.auditor -> state: "output_key=\npage_audit"
+members.serp -> state: "output_key=\nserp_analysis"
