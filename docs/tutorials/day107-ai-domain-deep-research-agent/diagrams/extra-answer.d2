@@ -3,13 +3,12 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 screen: Streamlit 화면 { class: ours }
-agent: agno Agent { class: ours }
 together: Together AI { class: ext }
-composio: Composio API { class: ext }
+researcher: 질문별 조사 Agent { class: ours }
 agno_api: Agno 통계 API { class: ext }
 
-agent -> together: 도구 결과
-together -> agent: 답 텍스트
-agent -> agno_api: 실행 메타데이터
-agent -> screen: 답
+researcher -> together: 도구 결과
+together -> researcher: 답 텍스트
+researcher -> agno_api: 실행 메타데이터
+researcher -> screen: 답
 screen -> user: 질문별 답 표시

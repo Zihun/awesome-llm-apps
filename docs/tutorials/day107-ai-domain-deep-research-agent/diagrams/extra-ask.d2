@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+screen: Streamlit 화면 { class: ours }
+qgen: 질문 생성 Agent { class: ours }
+together: Together AI { class: ext }
+composio: Composio API { class: ext }
+agno_api: Agno 통계 API { class: ext }
+
+user -> screen: 주제 · 분야 입력
+user -> screen: 질문 생성 클릭
+screen -> qgen: run(요청 문장)
+qgen -> together: 지시문 + 요청 문장
+together -> qgen: think 블록 + 질문 5줄
+qgen -> agno_api: 실행 메타데이터

@@ -8,16 +8,16 @@ app: "ai_domain_deep_research_agent.py (한 파일)" {
   grid-columns: 3
   grid-gap: 8
   screen: "Streamlit 화면\n(사이드바 · 입력 · 버튼)" { class: ours }
-  state: "세션 상태\n(st.session_state)" { class: store; height: 96 }
+  state: "세션 상태\n(st.session_state)" { class: store; height: 108 }
   init: "모델 · 도구 준비\n(initialize_agents)" { class: ours }
   qgen: "질문 생성 Agent\n(Question Generator)" { class: ours }
   researcher: "질문별 조사 Agent\n(research_question)" { class: ours }
   reporter: "보고서 작성 Agent\n(Report Compiler)" { class: ours }
 }
 
-together: "Together AI\n(Qwen3 235B)" { class: ext; height: 70 }
-composio: "Composio API" { class: ext; height: 70 }
-agno_api: "Agno 통계 API" { class: ext; height: 70 }
+together: "Together AI\n(Qwen3 235B)" { class: ext; height: 60 }
+composio: "Composio API" { class: ext; height: 60 }
+agno_api: "Agno 통계 API" { class: ext; height: 60 }
 services: "Composio가 대신 부르는 서비스" {
   class: group
   grid-columns: 3

@@ -1,12 +1,12 @@
 # Day 107 · 🔍 AI Domain Deep Research Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠ · 예상 소요 100분(앱은 273줄이지만 Step마다 확인 명령이 있고, 이 앱은 오늘 그대로는 끝까지 돌지 않아 막히는 지점 셋을 하나씩 재현하고 고친 사본으로 한 바퀴를 다시 돌려 보는 시간이 읽는 시간만큼 듭니다) · API 비용 대략 확인하지 못함(Together AI가 이 앱의 모델 `Qwen/Qwen3-235B-A22B-fp8-tput`를 2026-02-06에 serverless에서 내렸다고 공식 문서가 적어 지금은 그 모델로 호출 자체가 되지 않을 것이고, Composio 요금과 키가 없어 실제 토큰 수도 보지 못했습니다. 이 문서의 가짜 서버 실험은 무료) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠ · 예상 소요 120분(앱은 273줄이지만 Step마다 확인 명령이 있고, 이 앱은 오늘 그대로는 끝까지 돌지 않아 막히는 지점 셋을 하나씩 재현하고 고친 사본으로 한 바퀴를 다시 돌려 보는 시간이 읽는 시간만큼 듭니다) · API 비용 대략 확인하지 못함(Together AI가 이 앱의 모델 `Qwen/Qwen3-235B-A22B-fp8-tput`를 2026-02-06에 serverless에서 내렸다고 공식 문서가 적어 지금은 그 모델로 호출 자체가 되지 않을 것이고, Composio 요금과 키가 없어 실제 토큰 수도 보지 못했습니다. 이 문서의 가짜 서버 실험은 무료) · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent`
 
 ## 오늘 만들 것
 
-주제와 분야를 적으면 Together AI의 Qwen3 235B 모델이 예/아니오로 답할 수 있는 연구 질문 5개를 만들고, 질문마다 Composio가 연결해 주는 검색 도구(Tavily, Perplexity)로 조사해 답을 받고, 마지막에 그 답들을 McKinsey 스타일 보고서로 엮어 Google Docs 문서까지 만드는 Streamlit 앱입니다. 한 파일(273줄, 마지막 줄까지 편집기와 같은 숫자입니다)에 agno `Agent`가 셋 나오고, 모델과 도구는 둘 다 외부 서비스입니다. 모델은 Together AI의 OpenAI 호환 주소로 가고, 도구는 Composio가 정의를 내려 주고 실행도 대신 해 줍니다. Day 083의 "AI Deep Research Agent"와 이름이 비슷하지만 다른 앱입니다. Day 083은 OpenAI Agents SDK와 Firecrawl을 쓰는 한 에이전트 앱이고(그 날 README), 오늘은 agno와 Together, Composio입니다.
+주제와 분야를 적으면 Together AI의 Qwen3 235B 모델이 예/아니오로 답할 수 있는 연구 질문 5개를 만들고, 질문마다 Composio가 연결해 주는 검색 도구(Tavily, Perplexity)로 조사해 답을 받고, 마지막에 그 답들을 McKinsey 스타일 보고서로 엮어 Google Docs 문서까지 만드는 Streamlit 앱입니다. 한 파일(273줄, 마지막 줄까지 편집기와 같은 숫자입니다)에 agno `Agent`가 셋 나오고, 모델과 도구는 둘 다 외부 서비스입니다. 모델은 Together AI의 OpenAI 호환 주소로 가고, 도구는 Composio가 정의를 내려 주고 실행도 대신 해 줍니다. Day 083의 "AI Deep Research Agent"와 이름이 비슷하지만 다른 앱입니다. Day 083은 OpenAI Agents SDK와 Firecrawl을 쓰는, 에이전트 둘(조사·정교화)짜리 앱이고(그 날 README), 오늘은 agno와 Together, Composio입니다.
 
-직접 돌려 보고 알게 된 것이 여섯입니다. 첫째, 이 앱의 모델은 공식 문서상 이미 내려갔습니다(사전 준비). 둘째, `requirements.txt`를 그대로 설치하면 새 설치 7번 중 1번은 `composio` 패키지 파일이 섞여 import가 깨지고, `openai`는 이 파일 어디에도 없는데 우연히 딸려 옵니다(Step 1). 셋째, 두 키를 채워 두면 화면이 다시 그려질 때마다 Composio 서버에 요청 몇 건을 보냅니다(Step 3). 넷째, "Start Research"와 "Compile Final Report"는 오늘의 agno에서 `TypeError`로 멈춥니다. `Agent.run()`을 입력 없이 부르기 때문입니다(Step 5). 다섯째, 그것을 고쳐도 `tools=[composio_tools]`가 목록 안의 목록이라 모델은 도구를 하나도 받지 못합니다(Step 5). 여섯째, 보고서 단계는 문서가 만들어졌는지 보지 않고 "Google Doc has been created" 문구를 보여 줍니다(Step 6).
+직접 돌려 보고 알게 된 것이 여섯입니다. 첫째, 이 앱의 모델은 공식 문서상 이미 내려갔습니다(사전 준비). 둘째, `requirements.txt`를 그대로 설치하면 `composio`와 `composio-core`가 같은 파일 12개를 설치해 섞이는 조합에서는 import가 깨질 수 있고, `openai`는 이 파일 어디에도 없는데 우연히 딸려 옵니다(Step 1). 셋째, 두 키를 채워 두면 화면이 다시 그려질 때마다 Composio 서버에 요청 몇 건을 보냅니다(Step 3). 넷째, "Start Research"는 오늘의 agno에서 `TypeError`로 멈추고, 그 탓에 "Compile Final Report" 버튼은 그려지지도 않습니다. `Agent.run()`을 입력 없이 부르기 때문이고, 조사만 고쳐도 보고서 단계에서 같은 오류가 납니다(Step 5·6). 다섯째, 그것을 고쳐도 `tools=[composio_tools]`가 목록 안의 목록이라 모델은 도구를 하나도 받지 못합니다(Step 5). 여섯째, 보고서 단계는 문서가 만들어졌는지 보지 않고 "Google Doc has been created" 문구를 보여 줍니다(Step 6).
 
 키가 없어도 Step 1~7이 모두 됩니다. Together와 Composio의 주소를 내 PC의 가짜 서버로 돌리고 프록시를 막아 두 서비스를 흉내 냈고, 이 문서를 만들며 두 서비스에도 `os-api.agno.com`에도 닿은 요청은 없었습니다(막은 요청 목록은 Step 3·7). 그래서 문서의 질문·답·보고서 문장은 가짜 서버의 고정 응답이고, 가짜 Composio 응답의 모양은 SDK가 읽는 필드에 맞춘 것이라 실제 서비스가 같은 모양으로 답하는지는 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
 
@@ -18,7 +18,7 @@
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python | 이 저장소의 기준은 3.11~3.13이다. 이 문서는 3.13.3으로 확인했다 | 공통 사전 준비와 같음 |
-| Together AI API 키 | 모델 호출 인증. 화면 사이드바의 비밀번호 칸이나 `TOGETHER_API_KEY`(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:25-30`). ⚠ 앱이 쓰는 `Qwen/Qwen3-235B-A22B-fp8-tput`는 Together 공식 문서의 "Inference deprecation history"에 2026-02-06 제거, 대체 모델 없음으로 적혀 있다(2026-10-09 확인, 조회 도구의 요약이라 원문과 한 글자씩 대조하지는 못했다). 현재 serverless 목록에는 이 모델이 없고 다른 Qwen 모델(예: `Qwen/Qwen3.6-Plus`)이 있다. 실제로 쓰려면 68행의 모델 ID를 목록의 모델로 바꿔야 하고, 그러면 질문 속 `</think>` 처리가 맞는지도 다시 봐야 한다(Step 4) | https://api.together.ai (앱 안내는 https://together.ai) |
+| Together AI API 키 | 모델 호출 인증. 화면 사이드바의 비밀번호 칸이나 `TOGETHER_API_KEY`(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:25-30`). ⚠ 앱이 쓰는 `Qwen/Qwen3-235B-A22B-fp8-tput`는 Together 공식 문서(https://docs.together.ai/docs/deprecations)의 "Inference deprecation history" 표에 2026-02-06 serverless 제거로 올라 있고("The table below lists all models removed from serverless inference"), "Supported by on-demand dedicated endpoints" 칸이 No라 전용 엔드포인트로도 쓸 수 없다("Models marked "No" are not available as on-demand endpoints", 2026-10-09 원문 확인. 표에 대체 모델 칸은 없다). 현재 serverless 목록에는 이 모델이 없고 다른 Qwen 모델(예: `Qwen/Qwen3.6-Plus`)이 있다. 실제로 쓰려면 68행의 모델 ID를 목록의 모델로 바꿔야 하고, 그러면 질문 속 `</think>` 처리가 맞는지도 다시 봐야 한다(Step 4) | https://api.together.ai (앱 안내는 https://together.ai) |
 | Composio API 키 | 도구 정의를 받고 실행을 맡긴다(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:32-37`) | https://composio.ai (앱의 안내) |
 | Composio 연결 계정 | Google Docs와 Perplexity는 계정 연결이 필요하다. 앱 README는 `composio add googledocs`와 `composio add perplexityai`를 시킨다. Tavily 검색(`COMPOSIO_SEARCH`)은 연결 목록에 없어도 통과했다(가짜 서버에서 `no_auth`로 둔 것이라 실제 서비스가 같은지는 확인하지 못했다) | `composio` 명령은 `composio-core` 패키지가 설치한다(Step 1). 실행해 보지 못했다 |
 | 인터넷 연결 | PyPI 설치. 앱을 실제로 쓸 때는 Together AI, Composio API(그 뒤의 Tavily·Perplexity·Google Docs), agno 사용 통계 서버(`os-api.agno.com`)에 접속한다. `composio_agno`를 import만 해도 `backend.composio.dev`와 `pypi.org`에 접속하려 한다(Step 3). 브라우저가 화면을 열 때 Streamlit의 사용 통계도 나간다(Day 054가 소스로 확인했고, `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
@@ -50,19 +50,23 @@ PowerShell 줄은 실행해 보지 못했습니다.
 | Composio API | 도구 정의를 내려 주고(`get_tools`) 도구 실행을 대신한다. 그 뒤에서 Tavily·Perplexity·Google Docs를 부른다 | `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:71-76` |
 | Agno 통계 API | 성공한 `run`마다 agno가 익명 메타데이터를 보내려 한다 | 코드 없음 (agno 내부) |
 
-한 파일 안의 부품은 한 묶음으로 두고 묶음에서 나가는 화살표만 그렸습니다. 안쪽 호출은 네 장의 보조 그림에 있습니다. 첫째는 키로 모델과 도구를 만드는 준비 단계입니다.
+한 파일 안의 부품은 한 묶음으로 두고 묶음에서 나가는 화살표만 그렸습니다. 안쪽 호출은 다섯 장의 보조 그림에 있습니다. 첫째는 키로 모델과 도구를 만드는 준비 단계입니다.
 
 ![모델·도구 준비 단계](diagrams/extra-prepare.svg)
 
-둘째는 화면의 버튼 핸들러가 Agent를 부르고 결과를 받는 호출이며, 실행이 끝날 때마다 agno 통계 서버로 가는 선이 함께 있습니다.
+둘째는 세션 상태에 값을 쓰는 곳입니다. 질문 목록은 질문 생성 쪽(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:114-114`)이, 보고서 본문과 완료 표시는 보고서 작성 쪽(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:160-161`)이, 답 목록은 화면(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:217-217`)이 씁니다.
+
+![세션 상태에 쓰는 곳](diagrams/extra-state.svg)
+
+셋째는 화면의 버튼 핸들러가 Agent를 부르고 결과를 받는 호출이며, 실행이 끝날 때마다 agno 통계 서버로 가는 선이 함께 있습니다.
 
 ![화면과 Agent의 호출](diagrams/extra-calls.svg)
 
-셋째는 세 Agent가 Together AI와 주고받는 것입니다. 도구 호출이 끼는 쪽은 조사와 보고서 Agent입니다.
+넷째는 세 Agent가 Together AI와 주고받는 것입니다. 도구 호출이 끼는 쪽은 조사와 보고서 Agent입니다.
 
 ![Agent와 모델](diagrams/extra-agents.svg)
 
-넷째는 도구 호출이 Composio를 거쳐 세 서비스로 가는 길입니다.
+다섯째는 도구 호출이 Composio를 거쳐 세 서비스로 가는 길입니다.
 
 ![Composio와 도구 서비스](diagrams/extra-tools.svg)
 
@@ -94,13 +98,13 @@ together
 
 다섯 줄 가운데 버전을 못 박은 것은 `agno`의 하한뿐입니다. 오늘(2026-10-09) Python 3.13.3에서 패키지 106개가 깔렸고 agno 3.1.2, composio 0.22.0, composio-agno 0.7.20, composio-core 0.7.21, openai 3.26.1, together 2.36.0, streamlit 1.65.0이 풀렸습니다(직접 확인). 눈여겨볼 것이 셋입니다.
 
-하나, `composio`(0.22.0)와 `composio-core`(0.7.21)가 둘 다 설치됩니다. `composio-agno` 0.7.20이 `composio_core>=0.7.0,<0.8.0`을 요구해서 옛 SDK가 따라오는데, 두 배포판이 같은 `composio/` 폴더에 `composio/__init__.py`와 `composio/client/__init__.py`를 각자 설치합니다(두 배포판의 `RECORD`로 직접 확인). 어느 쪽이 나중에 쓰이느냐에 따라 파일이 섞이고, 같은 요구 파일로 새 가상환경을 일곱 번 만들었을 때 여섯 번은 import가 되고 한 번은 이렇게 깨졌습니다.
+하나, `composio`(0.22.0)와 `composio-core`(0.7.21)가 둘 다 설치됩니다. `composio-agno` 0.7.20이 `composio_core>=0.7.0,<0.8.0`을 요구해서 옛 SDK가 따라오는데, 두 배포판이 같은 `composio/` 폴더에 같은 경로의 파일 12개(`__init__.py`, `__version__.py`, `client/__init__.py`, `core/__init__.py`, `exceptions.py`, `py.typed`, `utils/` 여섯 개)를 각자 설치합니다(두 `RECORD`의 교집합, 독립 검토에서 직접 확인). 어느 쪽 파일이 남느냐에 따라 섞이고, 섞이는 조합에 따라 오류 문구도 다릅니다. 같은 요구 파일로 새 가상환경을 일곱 번 만들었을 때 여섯 번은 import가 되고 처음(캐시가 비어 있던) 한 번이 아래처럼 깨졌습니다. 독립 검토에서 새로 만든 다섯 번은 모두 정상이어서 빈도는 환경에 따라 다를 것입니다.
 
 ```
 ImportError: cannot import name 'Composio' from 'composio.client'
 ```
 
-고치는 법은 옛 SDK를 다시 설치하는 것이고, 이 문서는 깨진 환경에서 이 한 줄로 import가 살아나는 것을 확인했습니다.
+`client/__init__.py`만 새 쪽이 남으면 `ImportError: cannot import name 'ComposioError' from 'composio.exceptions'`가 난다고 독립 검토가 흉내 내어 확인했습니다. 고치는 법은 옛 SDK를 다시 설치하는 것이고, 깨진 환경에서 이 한 줄로 import가 살아나는 것을 확인했습니다.
 
 ```bash
 uv pip install --reinstall composio-core
@@ -207,6 +211,8 @@ else:
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
+앱을 직접 띄우는 명령은 Step 7에 있습니다(원본은 `streamlit run ai_domain_deep_research_agent.py`에 같은 옵션). 이 단계에서는 브라우저 없이 화면 구성만 봅니다.
+
 **확인.** 키 없이 화면을 `AppTest`로 한 번 그려 봅니다. 첫 실행은 import 때문에 느려서 시간 제한을 늘립니다. `TOGETHER_API_KEY`·`COMPOSIO_API_KEY` 환경변수가 없는 셸에서 돌립니다.
 
 ```bash
@@ -267,9 +273,9 @@ GET /api/v2/actions             apps=GOOGLEDOCS,COMPOSIO_SEARCH,PERPLEXITYAI
 GET /api/v1/connectedAccounts   pageSize=99999999
 ```
 
-앞의 넷은 캐시를 채우는 요청이라 한 프로세스에서 한 번 나가고(키 확인은 프로세스 안에서 기억합니다), 뒤의 셋이 `get_tools`와 연결 확인입니다. 그런데 `initialize_agents`는 두 키가 있을 때 화면이 다시 그려질 때마다 불립니다(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:165-167`). 가짜 서버에서 버튼을 누르거나 칸을 채워 화면을 다시 그릴 때마다 뒤의 셋이 다시 나갔습니다(직접 확인). 실제 서비스의 요청 수와 응답 시간은 확인하지 못했습니다.
+앞의 넷은 디스크 캐시를 채우는 요청입니다. 캐시가 비었거나 오래됐을 때만 나가서, 같은 캐시로 새 프로세스를 돌리면 `client_info`만 나가고 앱·액션·트리거 목록은 나가지 않았습니다. 다섯째(`showActiveOnly=true`)는 생성자의 연결 계정 확인이고, 뒤의 둘이 `get_tools`가 부른 스키마 요청과 연결 확인입니다. 여섯째 줄 `apps=`의 앱 순서는 실행마다 바뀌었습니다. 그런데 `initialize_agents`는 두 키가 있을 때 화면이 다시 그려질 때마다 불립니다(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:165-167`). 가짜 서버에서 버튼을 누르거나 칸을 채워 화면을 다시 그릴 때마다 생성자의 연결 확인과 뒤의 둘, 모두 셋이 다시 나갔습니다(직접 확인). 실제 서비스의 요청 수와 응답 시간은 확인하지 못했습니다.
 
-import만으로 나가는 요청도 있습니다. `composio` 0.7.x는 import할 때 `user_data.json`이 없으면 `https://backend.composio.dev/api/v1/cli/sentry-dns`로 접속하려 하고, 버전 확인으로 `pypi.org`에도 접속하려 합니다(소스로 확인하고, 프록시 자리에 세운 기록용 서버에서 두 호스트로의 접속 시도를 직접 확인했습니다. 막혀서 응답은 받지 못했습니다). 홈에는 `~/.composio/`가 생깁니다. 이 문서의 스크래치 홈에서는 import만 하면 `user_data.json`(내용 `{}`) 하나가, 가짜 서버로 `ComposioToolSet`을 만들면 앱·액션·태그·트리거 캐시 파일 86개가 생겼습니다(실제 카탈로그는 훨씬 클 텐데 크기는 보지 못했습니다). 그래서 `COMPOSIO_CACHE_DIR`로 위치를 돌립니다.
+import만으로 나가는 요청도 있습니다. `composio` 0.7.x는 import할 때 `https://backend.composio.dev/api/v1/cli/sentry-dns`에 접속하려 하고(`user_data.json`에 DSN이 저장되기 전까지는 `{}`가 이미 있어도 프로세스가 끝날 때마다 다시 시도합니다. `COMPOSIO_DISABLE_SENTRY=true`를 걸어도 같았습니다), 버전 확인으로 `pypi.org`에도 접속하려 합니다(소스로 확인하고, 프록시 자리에 세운 기록용 서버에서 두 호스트로의 접속 시도를 직접 확인했습니다. 막혀서 응답은 받지 못했습니다). 홈에는 `~/.composio/`가 생깁니다. 이 문서의 스크래치 홈에서는 import만 하면 `user_data.json`(내용 `{}`) 하나가, 가짜 서버로 `ComposioToolSet`을 만들면 앱·액션·태그·트리거 캐시 파일 86개가 생겼습니다(실제 카탈로그는 훨씬 클 텐데 크기는 보지 못했습니다). 그래서 `COMPOSIO_CACHE_DIR`로 위치를 돌립니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -434,7 +440,7 @@ def research_question(llm, composio_tools, topic, domain, question):
 TypeError: Agent.run() missing 1 required positional argument: 'input'
 ```
 
-둘, `tools=[composio_tools]`입니다. `get_tools`는 이미 `Toolkit` 세 개의 목록을 돌려주는데(직접 확인, 액션당 하나) 한 번 더 목록으로 감쌌습니다. agno의 `Agent`는 목록의 원소가 딕셔너리, `Toolkit`, `Function`, 호출 가능한 객체일 때만 도구로 받고 목록은 어느 것에도 해당하지 않아 경고 없이 건너뜁니다(소스로 확인, agno 3.1.2의 `agno/agent/_tools.py`). 이것은 모델이 도구를 받았는지를 서버가 받은 요청의 `tools` 필드로 보면 바로 보입니다. 아래 스크립트는 가짜 OpenAI 호환 서버를 직접 띄우고(포트는 운영체제가 고르게 `0`을 줍니다) 평평한 목록과 이중 목록을 비교합니다. `Agent`가 성공한 실행마다 agno 통계 서버에 접속하려 하니 `AGNO_TELEMETRY=false`를 걸어 두면 조용합니다. 이 환경변수의 효과는 이 문서에서 확인하지 못했습니다. `probe.py`로 저장합니다.
+둘, `tools=[composio_tools]`입니다. `get_tools`는 이미 `Toolkit` 세 개의 목록을 돌려주는데(직접 확인, 액션당 하나) 한 번 더 목록으로 감쌌습니다. agno의 `Agent`는 목록의 원소가 딕셔너리, `Toolkit`, `Function`, 호출 가능한 객체일 때만 도구로 받고 목록은 어느 것에도 해당하지 않아 경고 없이 건너뜁니다(소스로 확인, agno 3.1.2의 `agno/agent/_tools.py`). 이것은 모델이 도구를 받았는지를 서버가 받은 요청의 `tools` 필드로 보면 바로 보입니다. 아래 스크립트는 가짜 OpenAI 호환 서버를 직접 띄우고(포트는 운영체제가 고르게 `0`을 줍니다) 평평한 목록과 이중 목록을 비교합니다. `Agent`가 성공한 실행마다 agno 통계 서버에 접속하려 하니 `AGNO_TELEMETRY=false`를 걸어 두면 조용합니다. 이 환경변수의 효과는 Day 047 Step 5가 소스로 확인했고, 이 문서의 `probe.py`로도 확인했습니다(아래). `probe.py`로 저장합니다.
 
 ```python
 import json, threading
@@ -490,7 +496,7 @@ $env:AGNO_TELEMETRY = "false"
 uv run --no-project python probe.py
 ```
 
-PowerShell 줄은 실행해 보지 못했습니다. 직접 확인한 출력(프록시를 막고 `AGNO_TELEMETRY`를 걸지 않은 채 돌렸습니다. 통계 접속 시도 두 건이 막혔고 출력은 같았습니다):
+PowerShell 줄은 실행해 보지 못했습니다. 직접 확인한 출력은 아래 둘입니다. 프록시를 막고 `AGNO_TELEMETRY`를 걸지 않으면 같은 출력에 `os-api.agno.com:443` 접속 시도 2건이 막혔고, 걸면 0건이었습니다(기록용 프록시로 직접 확인).
 
 ```
 flat   tools sent to the model: ['hello']
@@ -552,7 +558,7 @@ def compile_report(llm, composio_tools, topic, domain, question_answers):
             st.markdown(report_content)
 ```
 
-`compile_report_task.run()`도 입력이 없어 같은 `TypeError`로 끝나고, `tools=[composio_tools]`도 같은 이중 목록입니다. 눈여겨볼 곳은 표시입니다. 컴파일이 끝나면 `st.success`로 "Your report has been compiled and a Google Doc has been created."를 보이는데, 이 문구는 Google Docs 도구가 실제로 불렸는지도 모델의 답에 문서 정보가 있는지도 보지 않습니다. `run`이 끝나기만 하면 나옵니다. 게다가 같은 버튼 클릭 한 번에 아래 블록이 한 번 더 같은 "Final Report"와 같은 문구를 그립니다.
+`compile_report_task.run()`도 입력이 없어 같은 `TypeError`로 끝납니다. 다만 원본에서는 "Start Research"가 먼저 `TypeError`로 끝나 답 목록이 비므로 "Compile Final Report" 버튼이 222행의 조건 때문에 그려지지 않습니다(`AppTest`로 직접 확인). 조사만 고치면 보고서 단계에서 같은 오류가 납니다. 또 `tools=[composio_tools]`도 같은 이중 목록입니다. 눈여겨볼 곳은 표시입니다. 컴파일이 끝나면 `st.success`로 "Your report has been compiled and a Google Doc has been created."를 보이는데, 이 문구는 Google Docs 도구가 실제로 불렸는지도 모델의 답에 문서 정보가 있는지도 보지 않습니다. `run`이 끝나기만 하면 나옵니다. 게다가 같은 버튼 클릭 한 번에 아래 블록이 한 번 더 같은 "Final Report"와 같은 문구를 그립니다.
 
 `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:244-253`
 
@@ -613,35 +619,65 @@ sed -i 's/tools=\[composio_tools\]/tools=composio_tools/' fixed_app.py
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 고친 사본이 문법과 import를 통과하는지는 서비스 없이 확인됩니다.
+위 결과는 이 문서를 만든 쪽의 가짜 Together·Composio 서버와 `AppTest` 스크립트에서 나왔고, 이 문서에는 싣지 않았으니 독자가 그대로 다시 볼 수는 없습니다. 독자가 서비스 없이 다시 볼 수 있는 확인은 아래 셋입니다. 고친 곳이 정확히 네 줄인지(`diff`), 사본이 컴파일되는지, 화면이 뜨는지입니다.
+
+**확인.**
 
 ```bash
+diff ai_domain_deep_research_agent.py fixed_app.py
 uv run --no-project python -m py_compile fixed_app.py && echo compiled
 ```
 
-직접 확인한 출력(스크래치에 둔 같은 사본):
+직접 확인한 출력(`diff`는 바뀐 줄만, 맨 앞 `<`는 원본 `>`는 사본):
 
 ```
+121c121
+<         tools=[composio_tools],
+---
+>         tools=composio_tools,
+125c125
+<     research_result: RunOutput = research_task.run()
+---
+>     research_result: RunOutput = research_task.run(question)
+139c139
+<             tools=[composio_tools],
+---
+>             tools=composio_tools,
+159c159
+<         compile_result: RunOutput = compile_report_task.run()
+---
+>         compile_result: RunOutput = compile_report_task.run("Compile the report now.")
 compiled
 ```
 
-실제 키와 서비스가 있는 독자는 이 사본으로 Together 모델 ID만 바꿔 끝까지 돌릴 수 있을 것입니다. 이 문서는 그것을 실행해 보지 못했습니다.
+사본을 브라우저로 여는 명령은 이렇습니다(`--server.address localhost`와 `--browser.gatherUsageStats false`가 없으면 Streamlit이 시작하며 외부 주소를 알아내려 하고 사용 통계도 보낼 수 있습니다). 포트는 비어 있는 높은 번호면 됩니다.
+
+```bash
+uv run --no-project streamlit run fixed_app.py --server.headless true --server.address localhost --server.port 53418 --browser.gatherUsageStats false
+curl --noproxy '*' http://localhost:53418/_stcore/health
+```
+
+두 번째 줄은 다른 터미널에서 돌리며, 직접 확인한 출력은 `ok`입니다(같은 명령, 포트 53418). 원본을 그대로 띄울 때는 `fixed_app.py` 자리에 `ai_domain_deep_research_agent.py`를 씁니다. 실제 키와 서비스가 있는 독자는 이 사본으로 Together 모델 ID만 바꿔 끝까지 돌릴 수 있을 것입니다. 이 문서는 그것을 실행해 보지 못했습니다.
 
 ## 요청 한 건이 흐르는 과정
 
-한 번의 사용(키 입력부터 보고서까지)은 버튼 셋의 클릭이고, 클릭마다 스크립트가 처음부터 다시 실행되어 `initialize_agents`가 다시 불립니다. 아래 그림에서는 이 반복을 한 번만 그렸습니다. 메시지가 33개라 한 장에 담으면 1,500px을 넘어서 시간 경계에서 다섯 장으로 나눴고, 모든 메시지는 정확히 한 그림에 원래 순서로 있습니다. 그림은 두 곳을 고친 사본의 흐름입니다. 원본은 조사와 보고서의 `run` 호출에서 `TypeError`로 끝나므로 그 뒤의 모델·도구 메시지가 없습니다. 첫 그림은 키 입력, `ComposioToolSet`과 `get_tools`가 Composio 서버로 가는 요청, "질문 생성" 클릭 뒤 Agent가 모델에 보내고 응답을 받는 부분이고 agno 통계 메시지로 끝납니다.
+한 번의 사용(키 입력부터 보고서까지)은 버튼 셋의 클릭이고, 클릭마다 스크립트가 처음부터 다시 실행되어 `initialize_agents`가 다시 불립니다. 아래 그림에서는 이 반복을 한 번만 그렸습니다. 메시지가 33개라 한 장에 담으면 배우가 많아 화살표 라벨 위로 수명선이 지나가므로 시간 경계에서 여섯 장으로 나눴고, 모든 메시지는 정확히 한 그림에 원래 순서로 있습니다. 그림마다 Agent는 하나씩 나옵니다. 코드에서 셋은 다른 객체이기 때문에(`advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:83-83`, `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:119-119`, `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent/ai_domain_deep_research_agent.py:136-136`) 그림에서도 질문 생성·질문별 조사·보고서 작성 Agent를 각자의 수명선으로 그렸습니다. 그림은 두 곳을 고친 사본의 흐름입니다. 원본은 조사의 `run` 호출에서 `TypeError`로 끝나므로 그 뒤의 모델·도구 메시지가 없습니다. 첫 그림은 키 입력, 화면이 `initialize_agents`를 부르고 거기서 `ComposioToolSet`과 `get_tools`가 Composio 서버로 가는 요청입니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-둘째 그림은 질문 텍스트를 화면에 돌려주고 사용자에게 보인 뒤 "Start Research"를 눌러 첫 질문에 대해 모델이 도구 호출을 요청하고 Composio가 검색 결과를 돌려주는 부분입니다. 모델이 도구 호출을 요청하면 agno가 Composio에 실행을 맡기고 결과를 받습니다.
+둘째 그림은 주제·분야를 입력하고(두 키가 있어야 그려지는 칸이라 도구 준비 뒤에 옵니다, Step 2) "질문 생성"을 눌러 질문 생성 Agent가 모델에 요청하고 응답을 받은 뒤 agno 통계 메시지를 보내는 부분입니다.
+
+![질문 생성 요청](diagrams/extra-ask.svg)
+
+셋째 그림은 질문 생성 Agent가 질문 텍스트를 화면에 돌려주고 사용자에게 보인 뒤 "Start Research"를 눌러 질문별 조사 Agent가 첫 질문에 대해 모델의 도구 호출 요청을 받고 Composio가 검색 결과를 돌려주는 부분입니다. 모델이 도구 호출을 요청하면 agno가 Composio에 실행을 맡기고 결과를 받습니다.
 
 ![조사 1: 도구 호출](diagrams/extra-research.svg)
 
-셋째는 도구 결과를 모델에 돌려주고 답을 받아 agno 통계 메시지를 보낸 뒤 질문별 답을 보이는 부분입니다. 질문이 다섯이라 둘째와 셋째 그림의 호출은 질문마다 한 번씩, 모두 다섯 번 반복되고 화면에는 질문마다 답이 이어서 나옵니다.
+넷째는 조사 Agent가 도구 결과를 모델에 돌려주고 답을 받아 agno 통계 메시지를 보낸 뒤 질문별 답을 보이는 부분입니다. 질문이 다섯이라 셋째와 넷째 그림의 호출은 질문마다 한 번씩, 모두 다섯 번 반복되고 화면에는 질문마다 답이 이어서 나옵니다.
 
 ![조사 2: 답](diagrams/extra-answer.svg)
 
-넷째는 "Compile Final Report"를 눌러 보고서 Agent가 모델에 지시문을 보내고, 모델의 도구 호출 요청에 따라 Google Docs 문서 만들기를 Composio에 요청해 결과를 받는 부분이고, 다섯째는 그 결과를 모델에 돌려주고 보고서 본문을 받아 agno 통계 메시지를 보낸 뒤 화면에 보이는 부분입니다.
+다섯째는 "Compile Final Report"를 눌러 보고서 작성 Agent가 모델에 지시문을 보내고, 모델의 도구 호출 요청에 따라 Google Docs 문서 만들기를 Composio에 요청해 결과를 받는 부분이고, 여섯째는 그 결과를 모델에 돌려주고 보고서 본문을 받아 agno 통계 메시지를 보낸 뒤 화면에 보이는 부분입니다.
 
 ![보고서 1: 문서 만들기 요청](diagrams/extra-report.svg)
 
@@ -661,12 +697,12 @@ compiled
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `ImportError: cannot import name 'Composio' from 'composio.client'` | `composio`와 `composio-core`가 같은 `composio/` 파일을 설치해 섞임(새 설치 7번 중 1번) | `uv pip install --reinstall composio-core`(직접 확인) |
+| ImportError: cannot import name 'Composio' from 'composio.client'(또는 'ComposioError' from 'composio.exceptions') | `composio`와 `composio-core`가 같은 `composio/` 파일 12개를 설치해 섞임(조합에 따라 두 번째 문구가 나옴. 내 환경은 7번 중 1번, 독립 검토는 5번 모두 정상) | `uv pip install --reinstall composio-core`(직접 확인) |
 | ImportError: openai not installed (agno의 안내 문구, 앞뒤에 역따옴표가 붙는다) | 요구 파일에 `openai`가 없고 `composio`를 뺐을 때 딸려 오지 않음 | `uv pip install openai`(직접 확인) |
-| "Start Research"나 "Compile Final Report"를 누르면 `TypeError: Agent.run() missing 1 required positional argument: 'input'` | `run()`을 입력 없이 부름(`research_task.run()`, `compile_report_task.run()`) | 사본에서 `run(question)`처럼 입력을 넘긴다(Step 7) |
+| "Start Research"에서 `TypeError: Agent.run() missing 1 required positional argument: 'input'`. "Compile Final Report" 버튼은 보이지도 않는다 | `run()`을 입력 없이 부름(`research_task.run()`, `compile_report_task.run()`). 조사가 멈춰 답 목록이 비므로 보고서 버튼이 안 그려지고, 조사만 고치면 보고서에서 같은 오류 | 사본에서 `run(question)`처럼 입력을 넘긴다(Step 7) |
 | 오류 없이 끝나는데 검색 결과나 Google Doc이 없다 | `tools=[composio_tools]`가 목록 안의 목록이라 모델이 도구를 받지 않고, 화면은 그래도 성공 문구를 보여 줌 | `tools=composio_tools`로 고친다(Step 5·7) |
 | 키를 채우자마자 페이지가 ConnectedAccountNotFoundError(No connected account found for app GOOGLEDOCS; Run composio add googledocs to fix this)로 바뀐다(Step 3의 문구에서 앱 이름과 명령은 역따옴표로 감싸여 있다) | 필요한 앱의 계정을 Composio에 연결하지 않음 | `composio add googledocs`, `composio add perplexityai`(명령은 실행해 보지 못했고, 예외 문구는 가짜 서버에서 직접 확인) |
-| Together가 모델을 찾지 못한다는 오류 | `Qwen/Qwen3-235B-A22B-fp8-tput`가 2026-02-06에 serverless에서 제거됨(공식 문서) | 현재 목록의 모델 ID로 바꾸고 `</think>` 처리를 다시 본다. 실제 오류 문구는 확인하지 못했다 |
+| Together가 모델을 찾지 못한다는 오류 | `Qwen/Qwen3-235B-A22B-fp8-tput`가 2026-02-06에 serverless에서 제거되고 전용 엔드포인트로도 쓸 수 없음(공식 문서) | 현재 목록의 모델 ID로 바꾸고 `</think>` 처리를 다시 본다. 실제 오류 문구는 확인하지 못했다 |
 | 홈에 `~/.composio/`가 생기고 첫 실행이 느리다 | `composio`가 import와 `ComposioToolSet` 생성 때 캐시를 만들고 서버 목록을 내려받음 | `COMPOSIO_CACHE_DIR`로 위치를 바꾼다(직접 확인) |
 | `AppTest script run timed out after 3(s)` | 첫 import가 느림(composio 네트워크 시도) | `AppTest.from_file(..., default_timeout=60)`(직접 확인) |
 
@@ -678,4 +714,4 @@ compiled
 
 ## 다음 날 예고
 
-[Day 108 · AI Email GTM Outreach Agent](../day108-ai-email-gtm-outreach-agent/README.md) — 원본의 `requirements.txt`가 agno, Exa 검색 클라이언트(`exa_py`), OpenAI를 쓰는 GTM(시장 진출) 아웃리치 메일 앱입니다. 오늘처럼 Streamlit 한 파일이고 agno `Agent`를 쓰는지는 내일 코드를 읽으며 확인합니다.
+[Day 108 · AI Email GTM Outreach Agent](../day108-ai-email-gtm-outreach-agent/README.md) — 원본의 `requirements.txt`가 agno, Exa 검색 클라이언트(`exa_py`), OpenAI를 쓰는 GTM(시장 진출) 아웃리치 메일 앱입니다. Day 108 README에 따르면 앱은 agno `Agent` 넷(기업 탐색·연락처·기업 조사·이메일 작성)을 차례로 부르고, 같은 SQLite 파일에 세션을 쌓습니다. 오늘의 에이전트 셋과 달리 서로 부르지 않고 단계 함수가 앞 답을 다음 프롬프트에 붙입니다.

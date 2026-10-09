@@ -2,18 +2,13 @@
 shape: sequence_diagram
 
 user: 사용자 { class: person }
-agno_api: Agno 통계 API { class: ext }
-composio: Composio API { class: ext }
 screen: Streamlit 화면 { class: ours }
-agent: agno Agent { class: ours }
-together: Together AI { class: ext }
+init: 모델 · 도구 준비 { class: ours }
+composio: Composio API { class: ext }
 
-user -> screen: 키 · 주제 · 분야 입력
-screen -> composio: ComposioToolSet(키)
-screen -> composio: get_tools(액션 3개)
-composio -> screen: 도구 정의 3개
-user -> screen: 질문 생성 클릭
-screen -> agent: Question Generator.run(요청 문장)
-agent -> together: 지시문 + 요청 문장
-together -> agent: think 블록 + 질문 5줄
-agent -> agno_api: 실행 메타데이터
+user -> screen: 키 입력
+screen -> init: initialize_agents(두 키)
+init -> composio: ComposioToolSet(키)
+init -> composio: get_tools(액션 3개)
+composio -> init: 도구 정의 3개
+init -> screen: llm, composio_tools
