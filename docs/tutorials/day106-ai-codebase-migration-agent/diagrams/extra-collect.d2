@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+worker: 파일별 워커 { class: ours }
+aggregator: 집계 노드 { class: ours }
+pro: 프로 모델 { class: ext }
+
+worker -> aggregator: results (operator.add)
+aggregator -> pro: 파일별 결과 + 차트 도구 정의
+pro -> aggregator: tool_calls (chart_type · labels · values)

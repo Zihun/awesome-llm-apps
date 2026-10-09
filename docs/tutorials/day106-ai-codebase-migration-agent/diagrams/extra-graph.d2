@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: right
+
+start: "START" { class: ours; height: 90 }
+approval: "approval" { class: ours; height: 90 }
+planner: "planner" { class: ours; height: 90 }
+end: "END" { class: ours; height: 90 }
+validator: "query_validator" { class: ours; height: 90 }
+
+planner -> end: "state.error"
+validator -> planner: "error 없음"
+planner -> approval: "error 없음"
+approval -> planner: "수정 요청 또는 빈 계획"
+start -> validator: "입력"
+validator -> end: "state.error"

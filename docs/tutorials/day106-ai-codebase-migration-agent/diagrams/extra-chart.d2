@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+chart: 차트 도구 { class: ours }
+aggregator: 집계 노드 { class: ours }
+pro: 프로 모델 { class: ext }
+
+aggregator -> chart: generate_matplotlib_chart.invoke
+chart -> aggregator: "![Generated Chart](data:image/png;base64)"
+aggregator -> pro: "ToolMessage(<!--CHART_1-->)"
+pro -> aggregator: 보고서 Markdown

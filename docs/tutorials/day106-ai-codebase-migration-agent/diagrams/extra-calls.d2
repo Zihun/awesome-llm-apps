@@ -1,0 +1,12 @@
+...@../../_tools/theme
+direction: down
+
+ui: "Streamlit 화면\n(render_ui)" { class: ours }
+start: "그래프 START\n(첫 실행)" { class: ours }
+approval: "approval 노드\n(interrupt 재개)" { class: ours }
+saver: "체크포인터\n(MemorySaver)" { class: store; height: 80 }
+
+ui -> start: "stream(저장소 · 목표)"
+ui -> approval: "stream(Command(resume))"
+ui -> saver: "get_state(thread_id)"
+approval -> saver: "멈춘 상태 저장"

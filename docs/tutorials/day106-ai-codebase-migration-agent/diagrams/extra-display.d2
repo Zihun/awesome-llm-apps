@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+saver: 체크포인터 { class: store }
+aggregator: 집계 노드 { class: ours }
+
+aggregator -> saver: final_answer · status=completed
+ui -> saver: get_state(config)
+saver -> ui: final_answer · status
+ui -> user: 보고서 · 차트 · 다운로드 버튼

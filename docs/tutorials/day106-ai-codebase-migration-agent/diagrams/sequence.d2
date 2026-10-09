@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+validator: 검증 노드 { class: ours }
+fast: 빠른 모델 { class: ext }
+
+user -> ui: 저장소 · 목표 입력, Plan Migration 클릭
+ui -> validator: graph.stream(저장소, 목표)
+validator -> fast: 검증 지시문 + 저장소 · 목표
+fast -> validator: "{is_valid, error_message}"

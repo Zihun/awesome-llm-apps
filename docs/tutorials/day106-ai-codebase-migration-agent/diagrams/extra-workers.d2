@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+approval: 승인 노드 { class: ours }
+worker: 파일별 워커 { class: ours }
+fast: 빠른 모델 { class: ext }
+
+approval -> worker: Send(refactor_worker) × 파일 수
+worker -> fast: 파일별 리팩터링 지시문
+fast -> worker: diff · 테스트 Markdown

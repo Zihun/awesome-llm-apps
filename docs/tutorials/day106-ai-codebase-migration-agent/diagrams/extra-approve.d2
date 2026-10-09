@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+approval: 승인 노드 { class: ours }
+fast: 빠른 모델 { class: ext }
+
+user -> ui: Approve 클릭 (또는 수정 문장 뒤 Revise)
+ui -> approval: stream(Command(resume))
+approval -> fast: 승인 분류 지시문 + 피드백 + 계획
+fast -> approval: "{plan_approved}"

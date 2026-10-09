@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+approval: "approval" { class: ours }
+worker: "refactor_worker\n(파일마다 하나)" { class: ours }
+aggregator: "aggregator" { class: ours }
+end: "END" { class: ours }
+
+approval -> worker: "Send × 파일 수"
+worker -> aggregator: "results"
+aggregator -> end: "final_answer"

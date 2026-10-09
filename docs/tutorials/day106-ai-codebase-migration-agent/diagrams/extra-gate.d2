@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: Streamlit 화면 { class: ours }
+planner: 계획 노드 { class: ours }
+approval: 승인 노드 { class: ours }
+saver: 체크포인터 { class: store }
+
+planner -> approval: status=awaiting_approval
+approval -> saver: interrupt()로 멈춘 상태 저장
+ui -> saver: get_state(config)
+saver -> ui: strategy · plan · status
+ui -> user: 전략 · 파일별 위험표 표시

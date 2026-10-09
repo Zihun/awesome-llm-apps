@@ -1,0 +1,36 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+envfile: ".env\n(load_dotenv)" { class: file }
+saver: "체크포인터\n(MemorySaver)" { class: store; height: 80 }
+
+app: "app.py (한 파일)" {
+  class: group
+  ui: "Streamlit 화면\n(render_ui)" { class: ours }
+  graph: "LangGraph 그래프와 차트 도구" {
+    class: group
+    grid-columns: 3
+    grid-gap: 8
+    validator: "검증 노드\n(query_validator)" { class: ours }
+    planner: "계획 노드\n(planner_node)" { class: ours }
+    approval: "승인 노드\n(plan_approval)" { class: ours }
+    worker: "파일별 워커\n(refactor_worker_node)" { class: ours }
+    aggregator: "집계 노드\n(aggregator_node)" { class: ours }
+    chart: "차트 도구\n(generate_matplotlib_chart)" { class: ours }
+  }
+}
+
+llmapi: "OpenAI 호환 API" {
+  class: group
+  fast: "빠른 모델 (MODEL_FAST, gpt-5-mini)" { class: ext; height: 60 }
+  pro: "프로 모델 (MODEL_PRO, gpt-5.5)" { class: ext; height: 60 }
+}
+
+user -> app.ui: "저장소 · 목표 · 승인 입력"
+app.ui -> user: "계획 · 보고서 표시"
+app.ui -> saver: "get_state(thread_id)"
+app.graph -> saver: "상태 체크포인트"
+envfile -> app.graph: "키 · URL · 모델 이름"
+app.graph -> llmapi.fast: "llm.flash() (검증 · 계획 · 승인 · 워커)"
+app.graph -> llmapi.pro: "llm.pro() (집계)"

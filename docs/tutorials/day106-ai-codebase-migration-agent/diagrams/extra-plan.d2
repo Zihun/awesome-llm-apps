@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+validator: 검증 노드 { class: ours }
+planner: 계획 노드 { class: ours }
+fast: 빠른 모델 { class: ext }
+
+validator -> planner: 오류 없음
+planner -> fast: 계획 지시문 + 저장소 · 목표
+fast -> planner: "{strategy, tasks[]}"
