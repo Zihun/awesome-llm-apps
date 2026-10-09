@@ -1,0 +1,48 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+
+front: "Streamlit 프론트엔드 (frontend/)" {
+  class: group
+  grid-columns: 3
+  grid-gap: 8
+  home: "Home.py\n(업로드 · 분석 요청)" { class: ours }
+  feedback: "pages/1 - Feedback.py\n(점수 · 차트)" { class: ours }
+  session: "st.session_state\n(response 등)" { class: store; height: 70 }
+}
+
+tmpvideo: "임시 폴더의 영상 사본\n({난수}_{이름}.mp4)" { class: file; height: 70 }
+
+api: "FastAPI 백엔드\n(main.py · 포트 8000)" { class: ours; height: 56 }
+
+team: "에이전트 다섯과 도구 둘 (backend/agents/)" {
+  class: group
+  grid-columns: 4
+  grid-gap: 8
+  coordinator: "coordinator_agent\n(Team)" { class: ours }
+  facial_agent: "facial_expression_agent" { class: ours; height: 44 }
+  voice_agent: "voice_analysis_agent" { class: ours; height: 44 }
+  content_agent: "content_analysis_agent" { class: ours; height: 44 }
+  feedback_agent: "feedback_agent" { class: ours; height: 44 }
+  facial_tool: "facial_expression_tool" { class: ours; height: 44 }
+  voice_tool: "voice_analysis_tool" { class: ours; height: 44 }
+}
+
+together: "Together AI API" { class: ext; height: 60 }
+whisper: "Hugging Face Hub" { class: ext; height: 60 }
+deepface_w: "GitHub 릴리스" { class: ext; height: 60 }
+agno_api: "Agno 통계 API" { class: ext; height: 60 }
+
+front -> user: "전사문 · 점수 · 차트"
+user -> front: "mp4 선택 · 버튼 클릭"
+front -> tmpvideo: "업로드 바이트 저장"
+front -> api: "POST /analyze {video_url: 경로}"
+api -> front: "JSON 응답 (7칸)"
+api -> team: "Analyze the following video: 경로"
+tmpvideo -> team: "프레임 · 오디오 읽기"
+team -> together: "chat/completions 요청"
+together -> team: "응답 · 도구 호출 지시"
+team -> whisper: "voice_analysis_tool: 첫 호출에\nfaster-whisper small 내려받기"
+team -> deepface_w: "facial_expression_tool: 첫 호출에\nDeepFace 가중치 내려받기"
+team -> agno_api: "실행 통계"

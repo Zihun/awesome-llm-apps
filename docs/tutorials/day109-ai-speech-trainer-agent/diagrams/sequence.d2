@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+home: Home.py { class: ours }
+api: FastAPI { class: ours }
+coord: coordinator_agent { class: ours }
+together: Together AI { class: ext }
+facial_agent: facial_expression_agent { class: ours }
+tmp: 임시 폴더 { class: file }
+
+user -> home: mp4 선택
+home -> tmp: "{난수}_{이름}.mp4\n저장"
+home -> api: "POST /analyze\n{video_url: 경로}"
+api -> coord: "run(Analyze the\nfollowing video: 경로)"
+coord -> together: "chat/completions\n(도구: transfer_task_to_member)"
+together -> coord: "tool_call:\ntransfer_task_to_member"
+coord -> facial_agent: 작업 전달

@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+home: Home.py { class: ours }
+user: 사용자 { class: person }
+feedback: pages/1 - Feedback.py { class: ours }
+session: st.session_state { class: store }
+
+user -> home: Get Feedback 클릭
+home -> feedback: st.switch_page
+feedback -> session: "feedback_response ·\nresponse 읽기"
+feedback -> user: "점수 막대 · 총점 · 레이더 차트 ·\n강점 · 약점 · 제안"

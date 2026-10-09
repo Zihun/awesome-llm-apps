@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+voice_agent: voice_analysis_agent { class: ours }
+together: Together AI { class: ext }
+hf: Hugging Face Hub { class: ext }
+voice_tool: voice_analysis_tool { class: ours }
+tmp: 임시 폴더 { class: file }
+
+voice_agent -> together: "chat/completions\n(도구: analyze_voice_attributes)"
+together -> voice_agent: "tool_call:\nanalyze_voice_attributes"
+voice_agent -> voice_tool: "analyze_voice_attributes\n(경로)"
+voice_tool -> tmp: "오디오를 임시 .mp3로\n추출 (moviepy)"
+voice_tool -> hf: "WhisperModel(small)\n캐시에 없으면 내려받기"
+voice_tool -> tmp: "librosa.load(.mp3)"
+voice_tool -> tmp: "os.remove(.mp3)"
+voice_tool -> voice_agent: "JSON 문자열\n(transcription 등)"

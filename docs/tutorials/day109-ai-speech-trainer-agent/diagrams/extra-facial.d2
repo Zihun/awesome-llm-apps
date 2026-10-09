@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+together: Together AI { class: ext }
+facial_agent: facial_expression_agent { class: ours }
+facial_tool: facial_expression_tool { class: ours }
+tmp: 임시 폴더 { class: file }
+coord: coordinator_agent { class: ours }
+
+facial_agent -> together: "chat/completions\n(도구: analyze_facial_expressions)"
+together -> facial_agent: "tool_call:\nanalyze_facial_expressions"
+facial_agent -> facial_tool: "analyze_facial_expressions\n(경로)"
+facial_tool -> tmp: "cv2.VideoCapture(경로)\n프레임 읽기"
+facial_tool -> facial_agent: "JSON 문자열\n(emotion_timeline 등)"
+facial_agent -> coord: "도구 결과가 곧 응답\n(stop_after_tool_call)"

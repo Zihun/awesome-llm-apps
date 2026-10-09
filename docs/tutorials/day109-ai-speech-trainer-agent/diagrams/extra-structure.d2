@@ -1,0 +1,31 @@
+...@../../_tools/theme
+direction: down
+
+coordinator: "coordinator_agent\n(Team)" { class: ours; height: 44 }
+facial_agent: "facial_expression_agent" { class: ours; height: 44 }
+voice_agent: "voice_analysis_agent" { class: ours; height: 44 }
+content_agent: "content_analysis_agent" { class: ours; height: 44 }
+feedback_agent: "feedback_agent" { class: ours; height: 44 }
+facial_tool: "facial_expression_tool" { class: ours; height: 44 }
+voice_tool: "voice_analysis_tool" { class: ours; height: 44 }
+
+tmpvideo: "임시 폴더의 영상 사본" { class: file; height: 44 }
+whisper: "Hugging Face Hub\n(faster-whisper small)" { class: ext }
+deepface_w: "GitHub 릴리스\n(DeepFace 감정 가중치)" { class: ext }
+
+coordinator -> facial_agent: "작업 전달"
+coordinator -> voice_agent: "작업 전달"
+coordinator -> content_agent: "작업 전달"
+coordinator -> feedback_agent: "작업 전달"
+facial_agent -> coordinator: "응답"
+voice_agent -> coordinator: "응답"
+content_agent -> coordinator: "응답"
+feedback_agent -> coordinator: "응답"
+facial_agent -> facial_tool: "analyze_facial_expressions(경로)"
+facial_tool -> facial_agent: "JSON 문자열"
+voice_agent -> voice_tool: "analyze_voice_attributes(경로)"
+voice_tool -> voice_agent: "JSON 문자열"
+tmpvideo -> facial_tool: "프레임 읽기"
+tmpvideo -> voice_tool: "오디오 추출"
+voice_tool -> whisper: "WhisperModel(small)\n첫 호출에 내려받기"
+facial_tool -> deepface_w: "DeepFace.analyze\n첫 호출에 가중치 내려받기"

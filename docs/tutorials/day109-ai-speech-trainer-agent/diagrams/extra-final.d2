@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+together: Together AI { class: ext }
+coord: coordinator_agent { class: ours }
+api: FastAPI { class: ours }
+session: st.session_state { class: store }
+home: Home.py { class: ours }
+user: 사용자 { class: person }
+
+coord -> together: "chat/completions\n(response_format: json_object)"
+together -> coord: "최종 JSON 텍스트\n(7칸)"
+coord -> api: "response.content\n(CoordinatorResponse)"
+api -> home: "200 JSON (7칸)"
+home -> session: "response · 네 응답 문자열 저장"
+home -> user: "st.rerun 뒤 전사문 표시"
