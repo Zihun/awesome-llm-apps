@@ -1,10 +1,10 @@
 # Day 118 · 👨‍💼 AI Services Agency
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(`requirements.txt` 그대로 설치하면 오늘은 첫 호출에서 앱이 `Runner execution failed`로 멈춥니다. `agency-swarm` 1.7.0이 고정해 끌어오는 `openai-agents` 0.6.4가 오늘 풀리는 `openai` 2.54.0과 맞지 않기 때문이고, `openai==2.44.0`으로 낮추면 풉니다) · 예상 소요 85분(앱은 369줄이지만 Step 4·5·6에서 가짜 서버와 확인 스크립트를 직접 저장해 터미널 둘로 돌려 보아야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 프로젝트 1건에 $0.05~0.15(`gpt-4.1` 호출이 일곱 번이고 호출마다 앞 에이전트들의 대화가 입력에 쌓여 입력이 1천 토큰대에서 1만 토큰대로 늘고 출력은 에이전트당 1천 토큰쯤이라고 가정해 모델 페이지의 입력 $2·출력 $8(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4.1, 2026-10-09 확인)을 대입한 어림입니다. 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(`requirements.txt` 그대로 설치하면 오늘은 첫 호출에서 앱이 `Runner execution failed`로 멈춥니다. `agency-swarm` 1.7.0이 고정해 끌어오는 `openai-agents` 0.6.4가 오늘 풀리는 `openai` 2.54.0과 맞지 않기 때문이고, `openai==2.44.0`으로 낮추면 풉니다) · 예상 소요 95분(앱은 369줄이지만 Step 4·5·6에서 가짜 서버와 확인 스크립트를 직접 저장해 터미널 둘로 돌려 보아야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 프로젝트 1건에 $0.05~0.15(`gpt-4.1` 호출이 일곱 번이고 호출마다 앞 에이전트들의 대화가 입력에 쌓여 입력이 1천 토큰대에서 1만 토큰대로 늘고 출력은 에이전트당 1천 토큰쯤이라고 가정해 모델 페이지의 입력 $2·출력 $8(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4.1, 2026-10-09 확인)을 대입한 어림입니다. 키가 없어 실제 토큰 수는 재지 못했습니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency`
 
 ## 오늘 만들 것
 
-프로젝트 이름과 설명, 유형, 예산을 폼에 적고 버튼을 누르면 "대행사 직원" 다섯이 차례로 의견을 내서 탭 다섯 개에 보여 주는 Streamlit 앱입니다. `agency.py` 한 파일(편집기 기준 369줄)에 Agency Swarm의 `Agent` 다섯과 도구 둘, 그리고 누가 누구에게 말을 걸 수 있는지 적은 `communication_flows` 일곱 줄이 있습니다. 이 앱은 일정표에 한동안 "(CrewAI)"라는 제목으로 올라 있었지만 CrewAI와 관계가 없습니다. `requirements.txt`와 `agency.py`에 `crewai`가 없고(grep으로 확인), 설치한 환경에도 없으며(`.venv`의 패키지 목록에서 `crew`로 시작하는 이름 0건), 4행이 `from agency_swarm import ...`입니다. Agency Swarm은 OpenAI Agents SDK 위에 얹은 프레임워크라서 설치 정보(`METADATA`)에 `openai-agents==0.6.4`가 고정 의존성으로 적혀 있습니다.
+프로젝트 이름과 설명, 유형, 예산을 폼에 적고 버튼을 누르면 "대행사 직원" 다섯이 차례로 의견을 내서 탭 다섯 개에 보여 주는 Streamlit 앱입니다. `agency.py` 한 파일(편집기 기준 369줄)에 Agency Swarm의 `Agent` 다섯과 도구 둘, 그리고 누가 누구에게 말을 걸 수 있는지 적은 `communication_flows` 일곱 줄이 있습니다. 이 앱은 저장소 루트 `README.md`의 목록(177행)에 지금도 "AI Services Agency (CrewAI)"로 올라 있지만 CrewAI와 관계가 없습니다. `requirements.txt`와 `agency.py`에 `crewai`가 없고(grep으로 확인), 설치한 환경에도 없으며(`.venv`의 패키지 목록에서 `crew`로 시작하는 이름 0건), 4행이 `from agency_swarm import ...`입니다. Agency Swarm은 OpenAI Agents SDK 위에 얹은 프레임워크라서 설치 정보(`METADATA`)에 `openai-agents==0.6.4`가 고정 의존성으로 적혀 있습니다.
 
 요점은 세 가지입니다. 첫째, Day 115가 "팀"이라는 이름과 달리 파이썬 코드가 에이전트를 차례로 부르는 파이프라인이라고 확인했던 것과 비슷하게, 이 앱의 다섯 호출 순서도 `main()` 안의 `get_response_sync` 다섯 줄이 정합니다. `communication_flows`는 그와 별개로 에이전트가 서로를 부를 수 있는 길을 열어 주는 선언이고, 이 길로 에이전트용 `send_message` 도구가 생깁니다(Step 3·5). 둘째, 도구가 쓰는 `self.context`는 한 `Agency` 안에서 호출 사이에 이어지는 공유 저장소입니다(Step 2·5). 셋째, 키를 입력한 순간 OpenAI의 트레이스 서버로도 실행 기록이 올라갑니다(Step 6). 이 문서는 OpenAI 어디에도 요청을 보내지 않습니다. 모델은 내 PC의 가짜 서버로 대신하고 트레이스는 프록시 차단 아래에서 확인했으며, 아래의 모델 답은 모두 가짜 서버가 만든 고정 문장입니다. 진짜 `gpt-4.1`이 어떤 분석을 쓰는지는 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
 
@@ -15,10 +15,10 @@
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 참고 |
-| Python | `agency-swarm` 1.7.0이 3.12 이상을 요구한다. 이 문서는 3.13.3으로 확인했다 | 공통 사전 준비와 같음 |
+| Python | `agency-swarm` 1.7.0이 3.12 이상을 요구한다(`METADATA`의 `Requires-Python`). 기본 Python이 3.11 이하면 `uv venv --python 3.13`처럼 버전을 지정한다. 이 문서는 3.13.3으로 확인했다 | 공통 사전 준비와 같음 |
 | OpenAI API 키 | 에이전트 호출과 트레이스 전송에 쓰인다. 앱은 키를 사이드바 입력칸에서 받아 `OPENAI_API_KEY` 환경변수에 넣는다(Step 4). 이 문서는 가짜 값 `sk-fake-key`로 확인한다 | https://platform.openai.com/api-keys |
 
-앱이 모델 이름을 적은 곳은 없습니다(`agency.py`에 `gpt`·`model=` grep 0건). 그래서 OpenAI Agents SDK의 기본값 `gpt-4.1`이 쓰입니다(`agents/models/default_models.py`의 `get_default_model`, 환경변수 `OPENAI_DEFAULT_MODEL`로 바꿀 수 있음. 요청 본문에서 `model=gpt-4.1`을 직접 확인, Step 5). `gpt-4.1`은 OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인)의 종료 목록에 없고 `gpt-4.5-preview`의 대체 모델 칸에만 나옵니다.
+앱이 모델 이름을 적은 곳은 없습니다(`agency.py`에 `gpt`·`model=` grep 0건). 그래서 OpenAI Agents SDK의 기본값 `gpt-4.1`이 쓰입니다(`agents/models/default_models.py`의 `get_default_model`, 환경변수 `OPENAI_DEFAULT_MODEL`로 바꿀 수 있음. 요청 본문에서 `model=gpt-4.1`을 직접 확인, Step 5). `gpt-4.1`은 OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인)의 종료 목록에 없고 `gpt-4.5-preview`와 2026-03-26 종료 표의 `gpt-4-0314` 등의 대체 모델 칸("`gpt-5` or `gpt-4.1*`")에만 나옵니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -31,9 +31,13 @@
 | `Agency` | 다섯을 모두 진입점으로 받고 `communication_flows` 일곱 줄로 에이전트 사이의 길을 만든다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency/agency.py:230-245` |
 | 순서대로 호출 | `get_response_sync`를 다섯 번 부르고 `final_output`을 탭에 채운다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency/agency.py:261-346` |
 
-외부로 나가는 곳은 모델 호출(`api.openai.com`의 Responses API)과 트레이스 전송(`api.openai.com/v1/traces/ingest`) 둘이고, 둘 다 `OPENAI_API_KEY`를 씁니다. 개요 그림에 다 넣지 못한 것은 `communication_flows`가 만드는 길과 도구가 공유 컨텍스트를 거치는 길이고, 아래 그림에 따로 그렸습니다.
+외부로 나가는 곳은 모델 호출(`api.openai.com`의 Responses API)과 트레이스 전송(`api.openai.com/v1/traces/ingest`) 둘이고, 둘 다 `OPENAI_API_KEY`를 씁니다. 개요 그림에 다 넣지 못한 것은 `communication_flows`가 만드는 길, 도구가 공유 컨텍스트를 거치는 길, 화면에서 진입점 다섯으로 가는 호출이고, 아래 그림 둘에 따로 그렸습니다.
 
 ![에이전트 사이의 길과 도구](diagrams/extra-flows.svg)
+
+그 길을 지나는 호출의 출발점은 다른 그림입니다. 화면이 `Agency`에 `get_response_sync`를 다섯 번 부르고, 그때마다 `recipient_agent=`로 진입점 에이전트 하나를 고릅니다. 모델을 부르는 쪽은 에이전트가 아니라 `Agency`입니다.
+
+![화면에서 진입점 다섯까지](diagrams/extra-calls.svg)
 
 ## 단계별 진행
 
@@ -48,7 +52,7 @@ mkdir services-agency-work
 cd services-agency-work
 cp <저장소>/advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency/agency.py .
 cp <저장소>/advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency/requirements.txt .
-uv venv
+uv venv --python 3.13
 uv pip install -r requirements.txt
 ```
 
@@ -59,7 +63,7 @@ mkdir services-agency-work
 cd services-agency-work
 Copy-Item <저장소>\advanced_ai_agents\multi_agent_apps\agent_teams\ai_services_agency\agency.py .
 Copy-Item <저장소>\advanced_ai_agents\multi_agent_apps\agent_teams\ai_services_agency\requirements.txt .
-uv venv
+uv venv --python 3.13
 uv pip install -r requirements.txt
 ```
 
@@ -82,7 +86,7 @@ uv run --no-project python -m py_compile agency.py && echo compiled
 uv run --no-project python -c "from agents import Usage; Usage()"
 ```
 
-(PowerShell 5.1에는 `&&`가 없으므로 첫 줄은 `uv run --no-project python -m py_compile agency.py; if ($?) { echo compiled }`로 씁니다. 실행해 보지 못했습니다.) `Usage()`는 토큰 사용량을 세는 SDK 객체로, 모델 호출 결과마다 만들어집니다. 직접 확인한 출력입니다.
+(PowerShell 5.1에는 `&&`가 없으므로 첫 줄은 `uv run --no-project python -m py_compile agency.py; if ($?) { echo compiled }`로 씁니다. 실행해 보지 못했습니다.) `Usage()`는 토큰 사용량을 세는 SDK 객체로, 모델 호출 결과마다 만들어집니다. 직접 확인한 출력(마지막 몇 줄만 옮겼습니다. 앞에 traceback 머리가, 끝에 pydantic 안내 URL 줄이 더 있습니다)입니다.
 
 ```text
 compiled
@@ -352,7 +356,7 @@ user_context: {}
     os.environ["OPENAI_API_KEY"] = st.session_state.api_key
 ```
 
-키가 없으면 106행의 `return`으로 `main()`이 끝나서 폼도 만들어지지 않습니다. 키가 있으면 `os.environ["OPENAI_API_KEY"]`에 넣는데, 이 환경변수는 프로세스 전체에 퍼집니다. 같은 서버에 접속한 다른 브라우저 세션이 다른 키를 입력하면 같은 환경변수를 덮어씁니다(소스로 확인, 두 세션으로는 돌려 보지 못함). 한 가지가 더 있습니다. `import agency_swarm`은 첫머리에서 `load_dotenv(override=True)`를 부릅니다(`agency_swarm/__init__.py`의 4행). 작업 폴더나 그 위쪽에 `.env`가 있으면 셸에 넣어 둔 값보다 `.env`가 이깁니다. 아래 `check_ui.py`를 저장해 폼과 키를 `AppTest`(Streamlit의 화면 시험 도구)로 확인합니다.
+키가 없으면 106행의 `return`으로 `main()`이 끝나서 폼도 만들어지지 않습니다. 키가 있으면 `os.environ["OPENAI_API_KEY"]`에 넣는데, 이 환경변수는 프로세스 전체에 퍼집니다. 같은 서버에 접속한 다른 브라우저 세션이 다른 키를 입력하면 같은 환경변수를 덮어씁니다(소스로 확인, 두 세션으로는 돌려 보지 못함). 한 가지가 더 있습니다. `import agency_swarm`은 첫머리에서 `load_dotenv(override=True)`를 부릅니다(`agency_swarm/__init__.py`의 4행). `.env`는 이 호출이 일어난 파일, 곧 설치된 `agency_swarm/__init__.py`의 위치에서 위로 올라가며 찾습니다(python-dotenv의 `find_dotenv`는 스크립트 실행일 때 호출한 파일 기준이고, `python -c`일 때만 현재 폴더 기준). 그래서 `.venv`가 들어 있는 폴더와 그 위쪽에 `.env`가 있으면 셸에 넣어 둔 값보다 `.env`가 이깁니다. 아래 `check_ui.py`를 저장해 폼과 키를 `AppTest`(Streamlit의 화면 시험 도구)로 확인합니다.
 
 ```python
 import os
@@ -385,7 +389,7 @@ selectbox: [('Project Type', 6), ('Expected Timeline', 4), ('Budget Range', 4), 
 buttons: ['Analyze Project', 'Clear History']
 ```
 
-`.env`는 다음처럼 직접 확인했습니다. 셸에 `OPENAI_API_KEY=sk-from-shell`을 두고 작업 폴더에 `OPENAI_API_KEY=sk-from-dotenv`가 든 `.env`를 만들면 `import agency_swarm` 뒤의 값이 `sk-from-dotenv`였고, 한 단계 위 폴더의 `.env`도 읽혔습니다. `.env`가 없으면 셸 값이 그대로였습니다. 제출 조건은 155행의 `if submitted and project_name and project_description:`이어서 이름과 설명이 비면 아무 일도 일어나지 않습니다.
+`.env`는 다음처럼 직접 확인했습니다. 셸에 `OPENAI_API_KEY=sk-from-shell`을 두고 `.venv`가 있는 작업 폴더에 `OPENAI_API_KEY=sk-from-dotenv`가 든 `.env`를 만들면 `import agency_swarm` 뒤의 값이 `sk-from-dotenv`였고, 한 단계 위 폴더의 `.env`도 읽혔습니다. `.env`가 없으면 셸 값이 그대로였습니다. 위 실험은 `python -c`로 돌렸기 때문에 현재 폴더에서 찾은 것입니다. `.venv`와 무관한 하위 폴더에 `.env`만 두고 스크립트 파일(`import agency_swarm`을 하는 `t.py`)로 돌리면 셸 값 `sk-from-shell`이 그대로였고 같은 폴더에서 `python -c`로 돌리면 `sk-from-sub`이었습니다(직접 확인). 앱은 `streamlit run`으로 스크립트가 돌기 때문에 앞의 경우, 곧 `.venv`가 든 폴더와 그 위쪽의 `.env`만 영향을 줍니다. 제출 조건은 155행의 `if submitted and project_name and project_description:`이어서 이름과 설명이 비면 아무 일도 일어나지 않습니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -516,10 +520,18 @@ tr.get_trace_provider()._multi_processor.force_flush()
 uv run --no-project python fake_openai.py 61407
 ```
 
-둘째 터미널에서 앱을 돌립니다. 모델 호출은 `OPENAI_BASE_URL` 때문에 가짜 서버로 갑니다. 이 문서는 트레이스가 새지 않도록 프록시 차단 변수(`HTTP_PROXY` 등을 `127.0.0.1:9`로)를 건 셸에서 돌렸고, 그 변수는 독자에게 필요하지 않습니다.
+둘째 터미널에서 앱을 돌립니다. 모델 호출은 `OPENAI_BASE_URL` 때문에 가짜 서버로 가지만 트레이스는 그렇지 않습니다. `run_app.py`는 트레이스 주소를 건드리지 않으므로(둘째 인자 `traces-local`이 없을 때) 그냥 돌리면 `openai-agents`의 내보내기가 가짜 키 `sk-fake-key`를 `Authorization`에 달고 프로젝트 이름이 든 도구 스팬과 함께 실제 `https://api.openai.com/v1/traces/ingest`로 POST합니다(주소는 `agents/tracing/processors.py`의 `BackendSpanExporter` 기본값이고 4xx 응답이면 `[non-fatal] Tracing client error ...` 줄을 찍고 재시도 없이 끝낸다는 것을 소스로 확인했고, 이 문서는 프록시 차단 아래에서만 돌려 실제 응답은 보지 못했습니다). 그래서 이 단계의 명령에는 트레이스를 끄는 환경변수를 반드시 붙입니다. 진짜 키로 앱을 쓸 때도 같은 전송이 나간다는 점은 Step 6에서 다룹니다.
 
 ```bash
+OPENAI_AGENTS_DISABLE_TRACING=1 uv run --no-project python run_app.py 61407
+```
+
+PowerShell은 두 줄입니다(실행해 보지 못했습니다). 환경변수는 그 창의 이후 실행에도 남으므로 끝나면 지웁니다.
+
+```powershell
+$env:OPENAI_AGENTS_DISABLE_TRACING = "1"
 uv run --no-project python run_app.py 61407
+Remove-Item Env:OPENAI_AGENTS_DISABLE_TRACING
 ```
 
 직접 확인한 첫째 터미널의 출력입니다.
@@ -536,7 +548,7 @@ responses model=gpt-4.1 temp=0.6 max_out=25000 tools=[] input_items=13 -> messag
 
 세 가지를 읽습니다. 첫째, 도구 목록이 에이전트마다 다릅니다. CEO·CTO는 자기 도구와 `send_message`, PM은 `send_message`만, 개발자와 고객 성공 담당은 빈 목록입니다. 흐름에서 말을 거는 쪽(CEO·CTO·PM)만 `send_message`를 받는다는 Step 3의 말이 맞습니다. 이 도구의 `recipient_agent`는 CEO의 경우 `Technical Architect`·`Product Manager`·`Lead Developer`·`Client Success Manager` 넷 중 하나로 제한됩니다(탐색 때 가짜 서버가 받은 도구 스키마에서 확인). 이 앱은 에이전트마다 직접 부르므로 가짜 서버는 `send_message`를 한 번도 부르지 않았고, 진짜 모델이 부를지는 확인하지 못했습니다. 둘째, `input_items`가 1, 3, 5, 7, 9, 11, 13으로 늘어납니다. 다섯 에이전트가 하나의 대화 기록을 나눠 써서, CTO는 CEO의 질문·도구 호출·답을, PM은 둘 다를 입력으로 받습니다. 그래서 CTO의 도구가 컨텍스트의 분석을 읽을 수 있었고(CTO의 첫 요청이 `CreateTechnicalSpecification` 호출로 이어짐), 뒤 에이전트일수록 입력이 길어져 비용도 커집니다. 셋째, `temp`와 `max_out=25000`은 `ModelSettings(temperature=..., max_tokens=25000)`가 요청에 그대로 실린 것입니다.
 
-둘째 터미널의 출력입니다(트레이스 전송 실패 줄은 Step 6에서 봅니다. 모델 답은 가짜 서버의 고정 문장입니다).
+둘째 터미널의 출력입니다(트레이스를 껐으므로 `Tracing:` 줄이 없습니다. 모델 답은 가짜 서버의 고정 문장입니다. 맨 앞에 Streamlit의 `missing ScriptRunContext` 경고 한 줄이 먼저 찍히지만 무시해도 되고 아래에서는 뺐습니다. 트레이스를 켠 채 프록시 차단 아래에서 돌린 결과와 이 부분이 같다는 것도 확인했습니다).
 
 ```text
 errors: []
@@ -557,7 +569,7 @@ tabs: ["CEO's Project Analysis", "CTO's Technical Specification", "Product Manag
 
 **목적.** 키를 넣는 순간 따라붙는 외부 전송을 확인하고, 끄는 법과 실제 실행 명령을 정리합니다.
 
-**할 일.** `openai-agents`는 기본으로 실행 기록을 OpenAI에 올립니다. 내보내는 곳의 기본 주소가 `https://api.openai.com/v1/traces/ingest`이고 인증은 `OPENAI_API_KEY`입니다(`agents/tracing/processors.py`의 `BackendSpanExporter`, 소스로 확인). Step 5의 `run_app.py`는 이 주소로도 가려고 시도합니다. 프록시 차단 아래에서 돌린 실행의 끝에는 이런 줄들이 있었습니다(직접 확인. 메시지는 Windows 한국어판이 한국어로 찍은 것이고 `10061`은 연결 거부입니다).
+**할 일.** `openai-agents`는 기본으로 실행 기록을 OpenAI에 올립니다. 내보내는 곳의 기본 주소가 `https://api.openai.com/v1/traces/ingest`이고 인증은 `OPENAI_API_KEY`입니다(`agents/tracing/processors.py`의 `BackendSpanExporter`, 소스로 확인). 진짜 키를 넣고 앱을 쓸 때도 같은 전송이 나갑니다. 앱이 사이드바의 키를 `OPENAI_API_KEY`에 넣기 때문입니다. Step 5에서 끄지 않고 돌리면 이 주소로 가려고 합니다. 프록시 차단 아래에서 끄지 않고 돌린 실행의 끝에는 이런 줄들이 있었습니다(직접 확인. 메시지는 Windows 한국어판이 한국어로 찍은 것이고 `10061`은 연결 거부입니다. 차단이 없는 독자 PC에서는 연결이 되고 가짜 키라서 4xx 응답 줄이 나올 것이라고 소스로 읽었으며 확인하지는 못했습니다).
 
 ```text
 [non-fatal] Tracing: request failed: [WinError 10061] ...
@@ -566,13 +578,13 @@ tabs: ["CEO's Project Analysis", "CTO's Technical Specification", "Product Manag
 [non-fatal] Tracing: max retries reached, giving up on this batch.
 ```
 
-세 번 재시도하고 포기하는 것이고 앱 결과에는 영향이 없었습니다. 이제 `run_app.py`의 둘째 인자 `traces-local`로 트레이스 주소만 가짜 서버로 돌려, 무엇이 올라가는지 봅니다(첫째 터미널의 서버를 껐다 다시 띄워 로그를 비운 뒤).
+세 번 시도하고(재시도는 두 번, `max_retries=3`은 시도 횟수) 포기한 것이고 앱 결과에는 영향이 없었습니다. 이제 `run_app.py`의 둘째 인자 `traces-local`로 트레이스 주소만 가짜 서버로 돌려, 무엇이 올라가는지 봅니다(첫째 터미널의 서버를 껐다 다시 띄워 로그를 비운 뒤. 이 명령은 트레이스 주소를 가짜 서버로 바꾸므로 밖으로 나가지 않습니다).
 
 ```bash
 uv run --no-project python run_app.py 61407 traces-local
 ```
 
-서버 출력은 이렇습니다(직접 확인, 모델 요청 줄은 줄였습니다).
+서버 출력은 이렇습니다(직접 확인한 한 예이고 모델 요청 줄은 줄였습니다).
 
 ```text
 /v1/traces/ingest auth=Bearer sk-... items=1
@@ -580,13 +592,21 @@ responses ... (7줄, Step 5와 같음)
 /v1/traces/ingest auth=Bearer sk-... items=18
 ```
 
-한 번에 한 건, 모델 요청이 모두 끝난 뒤 열여덟 건이 올라가 합계 열아홉 건입니다. 종류는 트레이스 5건(`Agency` 호출마다 하나, 이름은 `Unnamed Agency`)과 스팬 14건(에이전트 5, 모델 응답 7, 도구 2)이었고, 도구 스팬 두 개에는 프로젝트 이름 `Demo Shop`이 들어 있었습니다. 도구 인자가 그대로 올라간다는 뜻입니다. 끄려면 환경변수를 겁니다.
+이 실행에서는 처음에 한 건, 모델 요청이 모두 끝난 뒤 열여덟 건이 올라가 합계 열아홉 건이었습니다. 합계와 종류는 매번 같았지만 몇 번에 나뉘어 언제 올라가는지는 실행마다 달랐습니다. 내보내기가 5초 주기로 큐를 비우는 배치(`BatchTraceProcessor`의 `schedule_delay=5.0`, 소스로 확인)이기 때문이고, 실제 모델처럼 호출이 오래 걸리면 실행 도중에도 여러 번 나갑니다(내 실행 여섯 번은 모두 1건과 18건이었고 다른 나뉨은 재현하지 못했습니다). 합계의 종류는 트레이스 5건(`Agency` 호출마다 하나, 이름은 `Unnamed Agency`)과 스팬 14건(에이전트 5, 모델 응답 7, 도구 2)이었고, 도구 스팬 두 개에는 프로젝트 이름 `Demo Shop`이 들어 있었습니다. 도구 인자가 그대로 올라간다는 뜻입니다. 끄려면 환경변수를 겁니다.
 
 ```bash
 OPENAI_AGENTS_DISABLE_TRACING=1 uv run --no-project python run_app.py 61407 traces-local
 ```
 
-새로 띄운 서버에서 이렇게 돌리면 `traces/ingest` 줄이 0건이고 `responses` 줄은 그대로 7건이었습니다(직접 확인). PowerShell 형태는 `$env:OPENAI_AGENTS_DISABLE_TRACING = "1"`이고 실행해 보지 못했습니다. 실제 앱을 띄우는 명령은 다음과 같습니다.
+새로 띄운 서버에서 이렇게 돌리면 `traces/ingest` 줄이 0건이고 `responses` 줄은 그대로 7건이었습니다(직접 확인). PowerShell 형태는 다음 두 줄에 지우는 줄을 더한 것이고 실행해 보지 못했습니다(환경변수는 창에 남아 이후 실행의 트레이스도 끄므로 지웁니다).
+
+```powershell
+$env:OPENAI_AGENTS_DISABLE_TRACING = "1"
+uv run --no-project python run_app.py 61407 traces-local
+Remove-Item Env:OPENAI_AGENTS_DISABLE_TRACING
+```
+
+실제 앱을 띄우는 명령은 다음과 같습니다.
 
 ```bash
 uv run --no-project streamlit run agency.py
@@ -614,7 +634,7 @@ PM과 개발자는 도구를 쓰지 않아 모델 요청이 한 번씩이고 입
 
 ![고객 성공 담당 호출](diagrams/extra-cm.svg)
 
-마지막으로 화면이 탭을 채웁니다. 트레이스는 호출이 진행되는 동안 배경에서 묶음으로 나가므로 이 그림의 마지막 줄은 정리를 위한 배치이고 시각의 순서는 아닙니다. 실제로 첫 한 건은 CEO의 첫 모델 요청보다도 먼저 올라갔습니다(Step 6의 서버 출력).
+마지막으로 화면이 탭을 채웁니다. 트레이스는 호출이 진행되는 동안 배경에서 묶음으로 나가므로 이 그림의 마지막 줄은 정리를 위한 배치이고 시각의 순서는 아닙니다. 내가 돌린 실행에서는 첫 한 건이 CEO의 첫 모델 요청보다도 먼저 올라갔지만, 다른 실행에서는 첫 요청 뒤에 올라갔습니다(Step 6).
 
 ![마무리](diagrams/extra-end.svg)
 
@@ -625,7 +645,7 @@ PM과 개발자는 도구를 쓰지 않아 모델 요청이 한 번씩이고 입
 - [ ] `check_agency.py`가 진입점 다섯과 흐름 일곱 줄을 출력한다
 - [ ] `check_ui.py`에서 키를 넣기 전에는 폼이 없고 넣은 뒤에 나타난다
 - [ ] `run_app.py`가 탭 다섯과 세션 기록 여섯 건을 출력하고 가짜 서버가 `responses` 일곱 줄을 찍는다
-- [ ] `OPENAI_AGENTS_DISABLE_TRACING=1`로 돌리면 `traces/ingest`가 0건이다
+- [ ] Step 5의 `run_app.py`를 `OPENAI_AGENTS_DISABLE_TRACING=1`로 돌렸고, 트레이스를 가짜 서버로 돌린 실행은 `traces/ingest`가 합계 19건이다
 - [ ] 작업 폴더에 내가 저장한 파일 말고 새 파일이 없다
 
 ## 문제 해결
@@ -633,8 +653,8 @@ PM과 개발자는 도구를 쓰지 않아 모델 요청이 한 번씩이고 입
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 화면에 `Error during analysis: Runner execution failed for agent Project Director`, 모델 서버(가짜 서버 포함)에는 요청이 한 건도 안 옴 | `openai` 2.45.0 이상과 `openai-agents` 0.6.4가 맞지 않아 `Usage()`에서 `ValidationError`가 난다(직접 확인, Step 1) | `uv pip install "openai==2.44.0"` |
-| `[non-fatal] Tracing: request failed` 줄이 쌓임 | 트레이스를 `api.openai.com`으로 보내려다 막힘(앱 결과에는 영향 없음, 직접 확인) | 보내고 싶지 않으면 `OPENAI_AGENTS_DISABLE_TRACING=1` |
-| `.env`의 값이 셸 값을 이김 | `agency_swarm` import가 `load_dotenv(override=True)`를 부름(직접 확인) | 작업 폴더와 위쪽 폴더의 `.env`를 확인 |
+| `[non-fatal] Tracing: request failed` 줄이 쌓임 | 트레이스를 `api.openai.com`으로 보내려다 막힘(앱 결과에는 영향 없음, 직접 확인). 막히지 않는 PC에서는 가짜 키로 실제 요청이 나간다 | 보내고 싶지 않으면 `OPENAI_AGENTS_DISABLE_TRACING=1` |
+| `.env`의 값이 셸 값을 이김 | `agency_swarm` import가 `load_dotenv(override=True)`를 부름(직접 확인) | `.venv`가 있는 폴더와 그 위쪽 폴더의 `.env`를 확인 |
 | 가짜 서버가 `PermissionError: [WinError 10013]`으로 안 뜸 | Windows가 막아 둔 포트 번호(58713에서 직접 봄) | 다른 포트를 쓴다 |
 | 도구가 `Project analysis already exists`를 돌려줌 | 분석 도구는 한 `Agency`에서 한 번만 성공한다(Step 2에서 직접 확인) | 폼을 다시 제출해 `Agency`를 새로 만든다 |
 | 키를 넣기 전에는 폼이 없음 | 106행의 `return`(직접 확인) | 사이드바에 키를 넣는다 |

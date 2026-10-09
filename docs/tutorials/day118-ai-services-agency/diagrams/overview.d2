@@ -23,6 +23,7 @@ traces: "OpenAI 트레이스\n(api.openai.com\n/v1/traces/ingest)" { class: ext 
 
 user -> app: 프로젝트 폼
 key -> app: OPENAI_API_KEY\n환경변수로 설정
-app -> ctx: 분석 · 명세 저장 · 읽기
+app -> ctx: 분석 · 명세 저장
+ctx -> app: 분석 읽기
 app -> openai: 지시문 · 도구 스키마 · 대화 기록
 app -> traces: 트레이스 · 스팬

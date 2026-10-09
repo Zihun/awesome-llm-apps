@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+ui: "화면\n(agency.py)" { class: ours }
+agency: "Agency\n(agency-swarm)" { class: ours }
+ceo: "Project Director\n(Agent)" { class: ours }
+cto: "Technical Architect\n(Agent)" { class: ours }
+pm: "Product Manager\n(Agent)" { class: ours }
+dev: "Lead Developer\n(Agent)" { class: ours }
+cm: "Client Success\nManager (Agent)" { class: ours }
+openai: "OpenAI gpt-4.1" { class: ext }
+
+ui -> agency: "get_response_sync ×5\n(recipient_agent)"
+agency -> ceo: "ceo"
+agency -> cto: "cto"
+agency -> pm: "product_manager"
+agency -> dev: "developer"
+agency -> cm: "client_manager"
+agency -> openai: 모델 호출
