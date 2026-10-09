@@ -431,7 +431,7 @@ docs/tutorials/
 | 105 | 🌍 AQI Analysis Agent | `advanced_ai_agents/multi_agent_apps/ai_aqi_analysis_agent` | `day105-ai-aqi-analysis-agent` | 539 |
 | 106 | ⚡ Codebase Migration & Refactor Planner (LangGraph) | `advanced_ai_agents/multi_agent_apps/ai_codebase_migration_agent` | `day106-ai-codebase-migration-agent` | 1007 |
 | 107 | 🔍 AI Domain Deep Research Agent | `advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent` | `day107-ai-domain-deep-research-agent` | 273 |
-| 108 | Requirements | `advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent` | `day108-ai-email-gtm-outreach-agent` | 360 |
+| 108 | AI Email GTM Outreach Agent | `advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent` | `day108-ai-email-gtm-outreach-agent` | 360 |
 | 109 | AI Speech Trainer Agent | `advanced_ai_agents/multi_agent_apps/ai_speech_trainer_agent` | `day109-ai-speech-trainer-agent` | 908 |
 | 110 | 📰 Multi-Agent AI Researcher | `advanced_ai_agents/multi_agent_apps/multi_agent_researcher` | `day110-multi-agent-researcher` | 125 |
 | 111 | 🤝 Multi-Agent Trust Layer - Secure Agent-to-Agent Communication | `advanced_ai_agents/multi_agent_apps/multi_agent_trust_layer` | `day111-multi-agent-trust-layer` | 793 |
