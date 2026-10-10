@@ -11,6 +11,7 @@ ui -> ui: "tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')에\n이력�
 ui -> user: "pdf_viewer(임시 파일) 미리보기"
 ui -> ui: "os.unlink로 임시 파일 삭제"
 ui -> user: "Download 버튼"
+ui -> user: "spinner \"Processing your resume...\""
 ui -> pdf: "extract_text_from_pdf(pdf_file)"
 pdf -> ui: "페이지별 글을 이어 붙인 이력서 글"
 ui -> user: "\"Resume processed successfully!\""

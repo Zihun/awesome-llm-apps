@@ -6,7 +6,7 @@
 
 PDF 이력서를 올리고 지원자 이메일을 적은 뒤 `Analyze Resume`을 누르면 `gpt-4o`가 직무 요건과 견주어 합격 여부를 JSON으로 답하고, 탈락이면 피드백 메일을 바로 보내고, 합격이면 `Proceed with Application`으로 선발 메일, Zoom 면접 일정, 확인 메일을 이어서 보내려는 Streamlit 앱입니다. 한 파일 `ai_recruitment_agent_team.py`(편집기 기준 522줄, 마지막 줄에 개행이 없어 `wc -l`은 521)에 agno `Agent`가 셋 있습니다. 이력서 분석, 메일, 일정입니다. 이름은 "팀"이지만 `Team(`은 한 번도 나오지 않고(grep으로 확인), 버튼 핸들러가 에이전트를 차례로 부르는 쪽입니다. 같은 볼륨의 Day 114도 `Team` 없이 핸들러가 에이전트 셋을 부르는 앱이었고, `Team`을 가장 작게 만나는 날은 이 볼륨을 연 Day 112입니다.
 
-**이 앱은 바깥에 행동합니다.** 키를 넣으면 입력한 주소로 진짜 메일이 나가고(`agno`의 `EmailTools`가 `smtp.gmail.com:465`에 로그인합니다) Zoom에 진짜 회의를 만들려 합니다. 이 문서는 OpenAI·Gmail SMTP·Zoom·Agno 통계 어디에도 요청을 보내지 않습니다. 모델은 내 PC의 가짜 서버로, `requests.post`와 `smtplib.SMTP_SSL`은 호출을 기록만 하는 가짜로 바꿔 돌렸고, 이력서는 직접 만든 가짜 PDF(실존 인물 없음, 주소는 예약 도메인 `.test`)만 씁니다. 그래서 아래의 모델 답과 Zoom 응답은 모두 내가 쓴 대본이고, 진짜 `gpt-4o`가 이 프롬프트에 어떻게 답하는지, 진짜 Gmail과 Zoom이 어떻게 반응하는지는 확인하지 못했습니다.
+**이 앱은 바깥에 행동합니다.** 키를 넣으면 입력한 주소로 진짜 메일이 나가고(`agno`의 `EmailTools`가 `smtp.gmail.com:465`에 로그인합니다) Zoom에 진짜 회의를 만들려 합니다. 이 문서의 확인 실행은 OpenAI·Gmail SMTP·Zoom·Agno 통계 어디에도 요청을 보내지 않습니다(Step 7에서 하네스 없이 띄우는 절차만 예외이고, 거기서 무엇이 나갈 수 있는지는 그 절에 적었습니다). 모델은 내 PC의 가짜 서버로, `requests.post`와 `smtplib.SMTP_SSL`은 호출을 기록만 하는 가짜로 바꿔 돌렸고, 이력서는 직접 만든 가짜 PDF(실존 인물 없음, 주소는 예약 도메인 `.test`)만 씁니다. 그래서 아래의 모델 답과 Zoom 응답은 모두 내가 쓴 대본이고, 진짜 `gpt-4o`가 이 프롬프트에 어떻게 답하는지, 진짜 Gmail과 Zoom이 어떻게 반응하는지는 확인하지 못했습니다.
 
 직접 돌려 보고 알게 된 것이 여섯입니다. 첫째, `requirements.txt`만 설치하면 앱의 import가 13행(`openai`)과 15·16행(`phi`)에서 막힙니다(Step 1). 둘째, 일정 에이전트는 Zoom 도구를 받지만 모델에게 도구가 하나도 전달되지 않아서 Zoom에는 요청이 가지 않고, 화면은 그래도 "Interview scheduled successfully!"라고 합니다(Step 3·6). 셋째, SMTP 로그인이 실패하거나 OpenAI 키가 틀려도 화면은 "We've sent you an email…"라고 합니다(Step 5). 넷째, 모델 답이 `json` 코드 울타리(백틱 세 개)로 감싸이면 `json.loads`가 실패해 탈락 메일 쪽으로 가고, `"selected": "false"`처럼 문자열이면 합격으로 처리됩니다(Step 4). 다섯째, 확인 메일 지시문에 `RunOutput` 객체의 전체 repr이 통째로 들어갑니다(Step 6). 여섯째, 터미널 디버그 출력에 OpenAI 키가 찍힙니다(Step 6). 앱 README는 끝 무렵의 Disclaimer에서 자동 판정을 사람이 검토하라고 하지만(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/README.md:91-93`) 코드에는 판정과 메일 사이에 사람이 승인하는 단계가 없습니다(소스로 확인). 아래는 완성된 아키텍처입니다.
 
@@ -23,7 +23,7 @@ PDF 이력서를 올리고 지원자 이메일을 적은 뒤 `Analyze Resume`을
 | Zoom Server-to-Server OAuth 앱 | 회의 만들기. 사이드바의 Account ID·Client ID·Client Secret 셋(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py:331-333`). 앱 README가 필요한 권한(scope)을 적는다. 이 문서는 가짜 값으로 진행한다. 원본 그대로는 Zoom 요청이 가지 않는다(Step 6). 그래도 일곱 칸 문을 열려면 아무 값이나 넣어야 한다 | https://marketplace.zoom.us |
 | 인터넷 연결 | PyPI 설치. 앱을 실제로 쓸 때는 OpenAI, `smtp.gmail.com`, agno 사용 통계 서버(`os-api.agno.com`)에 접속한다(`zoom.us`·`api.zoom.us`는 원본 그대로는 접속하지 않는다. Step 6). 브라우저로 열면 Streamlit 사용 통계도 나간다(Day 054가 확인했고 `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
 
-앱이 쓰는 모델 ID `gpt-4o`는 별칭이고, OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인, 조회 도구의 요약)에서 별칭은 폐기 목록에 없으며 날짜가 붙은 `gpt-4o-2024-05-13`만 2026-10-23 종료로 올라 있습니다. 그래서 ⚠ 표시는 하지 않았습니다.
+앱이 쓰는 모델 ID `gpt-4o`는 별칭이고, OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-09 확인)에서 별칭은 폐기 목록에 없으며 날짜가 붙은 `gpt-4o-2024-05-13`만 2026-10-23 종료로 올라 있습니다. 그래서 ⚠ 표시는 하지 않았습니다.
 
 이 문서의 확인 스크립트는 한글을 출력합니다. 한국어 Windows에서 출력을 파이프나 파일로 받으면 기본 인코딩(`cp949`)이 모자랄 수 있으니 셸을 먼저 이렇게 맞춰 두세요(Day 105와 같은 처방이고, 이 설정 없이 돌려 보지는 않았습니다).
 
@@ -577,7 +577,7 @@ for line in open(LOG, encoding="utf-8"):
     print("  ", r["tools"], r["roles"], r["last_chars"])
 ```
 
-터미널 하나에서 서버를 띄웁니다. 포트는 49152~65535에서 비어 있는 것을 고르세요(나는 61877을 썼습니다). Windows에는 OS가 예약해 둔 제외 범위가 있어서, 그 안의 포트는 비어 있어도 `PermissionError: [WinError 10013]`으로 서버가 못 뜹니다. 이 문서를 처음 쓸 때 쓰던 61877도 나중에 이 범위에 들어가 있었습니다. 범위는 `netsh interface ipv4 show excludedportrange protocol=tcp`로 보고(재부팅마다 바뀔 수 있습니다), 그 안이면 다른 포트를 고르세요.
+터미널 하나에서 서버를 띄웁니다. 포트는 49152~65535에서 비어 있는 것을 고르세요(나는 61877을 썼습니다). Windows에는 OS가 예약해 둔 제외 범위가 있어서, 그 안의 포트는 비어 있어도 `PermissionError: [WinError 10013]`으로 서버가 못 뜹니다. 이 문서를 처음 쓸 때 쓰던 58231도 나중에 이 범위에 들어가 있었습니다. 범위는 `netsh interface ipv4 show excludedportrange protocol=tcp`로 보고(재부팅마다 바뀔 수 있습니다), 그 안이면 다른 포트를 고르세요.
 
 ```bash
 uv run --no-project python make_pdfs.py
@@ -1024,13 +1024,13 @@ POST : [{"url": "https://zoom.us/oauth/token", "basic_auth": true, "data": {"gra
 
 ![Step 7 — 전체 구성](diagrams/step7.svg)
 
-마지막으로 독자가 앱을 띄우는 명령입니다. **이 명령은 하네스 없이 원본 앱을 띄웁니다. 따라서 Step 4의 터미널에서 그대로 쓰면 안 됩니다.** 가짜 서버가 아직 떠 있고 그 터미널에 `OPENAI_BASE_URL`이 남아 있으면, 화면에서 버튼을 누르는 순간 가짜 서버의 대본이 `email_user`를 부르게 하고, 그러면 `EmailTools`가 진짜 `smtp.gmail.com:465`에 접속해 사이드바의 발신 계정으로 로그인합니다. 사이드바에 진짜 Gmail 계정과 앱 비밀번호를 넣었다면 "대본 메일"이 적은 지원자 주소로 진짜 메일이 나갑니다. 가짜 값을 넣어도 Gmail로 접속·로그인 시도가 나갑니다. 이 문서는 그 위험을 이렇게 확인했습니다. 하네스 대신 업로더만 바꾼 스크립트로 원본 앱을 돌리고 `127.0.0.1` 밖으로 나가는 이름 조회와 접속을 호출 전에 막으며 기록했습니다. 가짜 서버를 켜고 `OPENAI_BASE_URL`을 건 경우에는 `smtp.gmail.com` 이름 조회가 시도되어 막혔고(직접 확인), 가짜 서버를 끄고 `OPENAI_BASE_URL` 없이 돌린 경우에는 `smtp.gmail.com` 이름 조회 시도가 없었고 가짜 서버가 받은 요청도 0건이었습니다(직접 확인. 이 재현은 프록시로 바깥 접속을 막은 환경이라, 독자 환경에서 가짜 키 요청이 OpenAI까지 가서 어떻게 거절되는지는 확인하지 못했습니다).
+마지막으로 독자가 앱을 띄우는 명령입니다. **이 명령은 하네스 없이 원본 앱을 띄웁니다. 따라서 Step 4의 터미널에서 그대로 쓰면 안 됩니다.** 가짜 서버가 아직 떠 있고 그 터미널에 `OPENAI_BASE_URL`이 남아 있으면, 화면에서 버튼을 누르는 순간 가짜 서버의 대본이 `email_user`를 부르게 하고, 그러면 `EmailTools`가 진짜 `smtp.gmail.com:465`에 접속해 사이드바의 발신 계정으로 로그인합니다. 사이드바에 진짜 Gmail 계정과 앱 비밀번호를 넣었다면 "대본 메일"이 적은 지원자 주소로 진짜 메일이 나갑니다. 가짜 값을 넣어도 Gmail로 접속·로그인 시도가 나갑니다. 이 문서는 그 위험을 이렇게 확인했습니다. 하네스 대신 업로더만 바꾼 스크립트로 원본 앱을 돌리고 `127.0.0.1` 밖으로 나가는 이름 조회와 접속을 호출 전에 막으며 기록했습니다. 가짜 서버를 켜고 `OPENAI_BASE_URL`을 건 경우에는 `smtp.gmail.com` 이름 조회가 시도되어 막혔고(직접 확인), 가짜 서버를 끄고 `OPENAI_BASE_URL` 없이 돌린 경우에는 차단 훅이 기록한 `smtp.gmail.com` 이름 조회가 0건이었습니다(직접 확인. 이 재현은 프록시로 바깥 접속을 막은 환경이라, 독자 환경에서 가짜 키 요청이 OpenAI까지 가서 어떻게 거절되는지는 확인하지 못했습니다).
 
 그래서 순서는 이렇습니다.
 
 1. Step 4의 가짜 서버를 `Ctrl+C`로 멈춥니다.
 2. **새 터미널**을 열고 `recruit-lab`으로 가서 가짜 서버용 변수가 없는지 확인합니다. 있으면 지웁니다.
-3. 사이드바의 Gmail·Zoom 칸에는 **진짜가 아닌 값**을 넣습니다. 일곱 칸 문을 열려면 아무 값이나 있으면 됩니다.
+3. 사이드바의 **일곱 칸 모두**(OpenAI 키 포함)에 **진짜가 아닌 값**을 넣습니다. 일곱 칸 문을 열려면 아무 값이나 있으면 됩니다. OpenAI 키 칸에 진짜 키를 넣으면 진짜 모델이 메일 도구를 부를 수 있어서, Gmail 칸이 가짜여도 Gmail 로그인 시도가 나갑니다(로그인에 실패하면 발송은 안 되지만, 코드 경로를 읽어 안 것이고 진짜 키가 없어 실행해 보지는 않았습니다). 이 새 터미널에는 `AGNO_TELEMETRY=false`도 걸려 있지 않아서, 진짜 키로 `run`이 성공하면 agno 사용 통계도 나갑니다.
 
 ```bash
 env | grep OPENAI_BASE_URL
@@ -1044,11 +1044,11 @@ Remove-Item Env:OPENAI_BASE_URL
 uv run --no-project streamlit run ai_recruitment_agent_team.py --server.address localhost --browser.gatherUsageStats false
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다. `env | grep`은 변수가 없으면 아무것도 내지 않고, `Get-ChildItem Env:OPENAI_BASE_URL`은 없으면 오류를 냅니다. 둘 다 정상입니다.) 이 절차에서 화면의 버튼을 누르면 모델 서버가 가짜가 아니므로 메일 도구를 부르라는 대본 답이 올 길이 없습니다. 다만 가짜 키라도 모델 요청은 진짜 OpenAI로 나갑니다(그 응답은 확인하지 못했습니다). **진짜 키를 넣어 쓸 때는 진짜 메일이 지원자 칸에 적은 주소로 나가고 진짜 Zoom 회의 요청이 시도됩니다.** 따라서 본인 소유 주소만 지원자 칸에 쓰세요. headless로 임의 포트에 띄워 `curl`로 확인했을 때 화면 주소가 200, `/_stcore/health`가 `ok`였고, 같은 명령에 `--server.headless true --server.port <포트>`를 더했습니다. 서버와 확인 스크립트가 만든 파일은 모두 `recruit-lab` 안에 있으므로 서버를 `Ctrl+C`로 멈추고 폴더를 지우면 됩니다.
+(PowerShell 줄은 실행해 보지 못했습니다. `env | grep`은 변수가 없으면 아무것도 내지 않고, `Get-ChildItem Env:OPENAI_BASE_URL`은 없으면 오류를 냅니다. 둘 다 정상입니다.) 이 절차에서 화면의 버튼을 누르면 대본을 읽는 가짜 서버가 없으므로 메일 도구를 부르라는 답이 올 길이 없습니다. 다만 가짜 키라도 모델 요청은 진짜 OpenAI로 나갑니다(그 응답은 확인하지 못했습니다). **진짜 키를 넣어 쓸 때는 진짜 메일이 지원자 칸에 적은 주소로 나가고 진짜 Zoom 회의 요청이 시도됩니다.** 따라서 본인 소유 주소만 지원자 칸에 쓰세요. headless로 임의 포트에 띄워 `curl`로 확인했을 때 화면 주소가 200, `/_stcore/health`가 `ok`였고, 같은 명령에 `--server.headless true --server.port <포트>`를 더했습니다. 서버와 확인 스크립트가 만든 파일은 모두 `recruit-lab` 안에 있으므로 서버를 `Ctrl+C`로 멈추고 폴더를 지우면 됩니다.
 
 ## 요청 한 건이 흐르는 과정
 
-이 앱은 한 그림에 다 넣으면 이웃하지 않은 배우 사이 메시지의 라벨이 다른 배우의 수명선 위에 놓이거나 높이가 한계를 넘어서, 앱의 실제 시간 경계에서 여러 그림으로 나눴습니다. 모든 메시지는 한 그림에만 있고 코드의 순서 그대로입니다. 사용자에게 보이는 화면 문구(성공·경고·진행 표시)도 메시지로 그렸고, `Analyze Resume`을 누르는 순간의 기준은 코드의 버튼 핸들러입니다. 첫 그림은 키와 PDF를 넣는 앞부분입니다. 업로드하면 `pdf_viewer`가 쓸 임시 `.pdf` 파일이 `%TEMP%`에 만들어졌다가 바로 지워지고(385~392행), PDF 글은 그 뒤에 읽혀 `Resume processed successfully!`가 뜹니다(397~404행). 지원자 이메일은 그 아래 칸이라 마지막에 들어갑니다(407~412행). 이 모두가 버튼을 누르기 전에 끝납니다.
+이 앱은 한 그림에 다 넣으면 이웃하지 않은 배우 사이 메시지의 라벨이 다른 배우의 수명선 위에 놓이거나 높이가 한계를 넘어서, 앱의 실제 시간 경계에서 여러 그림으로 나눴습니다. 모든 메시지는 한 그림에만 있고 코드의 순서 그대로입니다. 사용자에게 보이는 화면 문구(성공·경고·진행 표시)도 하나씩 메시지로 그렸고, `Analyze Resume`을 누르는 순간의 기준은 코드의 버튼 핸들러입니다. 첫 그림은 키와 PDF를 넣는 앞부분입니다. 업로드하면 `pdf_viewer`가 쓸 임시 `.pdf` 파일이 `%TEMP%`에 만들어졌다가 바로 지워지고(385~392행), `Processing your resume...` 진행 표시 아래에서 PDF 글이 읽혀 `Resume processed successfully!`가 뜹니다(397~404행). 지원자 이메일은 그 아래 칸이라 마지막에 들어갑니다(407~412행). 이 모두가 버튼을 누르기 전에 끝납니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -1056,7 +1056,7 @@ uv run --no-project streamlit run ai_recruitment_agent_team.py --server.address 
 
 ![분석](diagrams/extra-analyze.svg)
 
-`json.loads`가 끝나면 판정이 화면에 나옵니다. 합격이면 성공 문구(그리고 다시 그려진 화면의 `Proceed` 안내), 탈락이면 경고와 피드백을 먼저 보여 주고 메일을 보내는 진행 표시를 띄웁니다.
+`json.loads`가 끝나면 판정이 화면에 나옵니다. 합격이면 성공 문구와, 다시 그려진 화면의 `Proceed` 안내를 따로 보여 줍니다. 탈락이면 경고와 피드백을 각각 먼저 보여 주고 메일을 보내는 진행 표시를 띄웁니다.
 
 ![판정 표시](diagrams/extra-verdict.svg)
 
@@ -1066,7 +1066,7 @@ uv run --no-project streamlit run ai_recruitment_agent_team.py --server.address 
 
 ![탈락 메일의 마무리](diagrams/extra-reject-reply.svg)
 
-합격이면 `Proceed with Application`을 누르고, 진행 표시 아래에서 선발 메일이 같은 두 갈래로 나갑니다. 메일 결과와 상관없이 `Confirmation email sent!` 표시가 뜨고, 이어서 일정 진행 표시(`Scheduling interview...`)가 뜹니다.
+합격이면 `Proceed with Application`을 누르고, 진행 표시와 `Sending confirmation email...` 상태 표시 아래에서 선발 메일이 같은 두 갈래로 나갑니다. 메일 결과와 상관없이 `Confirmation email sent!` 표시가 뜨고, 이어서 일정 진행 표시(`Scheduling interview...`)가 뜹니다.
 
 ![선발 메일 보내기](diagrams/extra-selected-send.svg)
 

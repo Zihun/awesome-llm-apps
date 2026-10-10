@@ -5,6 +5,8 @@ user: 사용자 { class: person }
 ui: Streamlit 화면 { class: ours }
 
 ui -> ui: "json.loads → (selected, feedback)"
-ui -> user: "합격이면 \"Congratulations!...\" 성공 문구\n(rerun 뒤 \"Click 'Proceed with Application'...\" 안내)"
-ui -> user: "탈락이면 \"Unfortunately...\" 경고 +\n\"Feedback: ...\" (메일 보내기 전)"
+ui -> user: "합격이면 \"Congratulations!...\" 성공 문구"
+ui -> user: "합격이면 rerun 뒤 \"Click 'Proceed with Application'...\" 안내"
+ui -> user: "탈락이면 \"Unfortunately...\" 경고"
+ui -> user: "탈락이면 \"Feedback: ...\" (메일 보내기 전)"
 ui -> user: "탈락이면 spinner \"Sending feedback email...\""
