@@ -6,7 +6,7 @@
 
 오늘로 15일짜리 "🤝 Multi-agent Teams" 볼륨이 끝납니다. 앞 열네 날의 `requirements.txt`(Day 124는 `backend/pyproject.toml`)를 grep하면 agno가 아홉 날, autogen이 Day 116, agency-swarm이 Day 118, AG2가 Day 119, google-adk가 Day 122와 125에 들어 있습니다. 오늘 `requirements.txt`는 `openai>=1.50.0` 한 줄뿐이고, 팀을 만들어 주는 프레임워크가 없습니다. 파이썬 파일 하나가 스레드 풀로 모델 셋에게 같은 질문을 동시에 보내고(1라운드), `--rebut`를 주면 각 모델에게 나머지 모델의 답을 "Reviewer A, B"로 이름을 지우고 모델마다 따로 섞어 보여 준 뒤, 모델들의 입장(UPHOLD·REJECT·CONCEDE·MISSED)을 문제 제기별로 묶어 표로 냅니다. Day 112의 팀 리더는 역할이 다른 멤버에게 일을 위임했지만(그 날 README로 확인), 여기에는 리더도 역할 분담도 없습니다. 같은 일을 서로 모르게 하는 독립 검토자들이 있을 뿐입니다. 파일 머리 주석도 투표기가 아니라고 밝힙니다. 패널은 후보 결함을 내고, 코드와 대조하는 일은 사람이 합니다.
 
-직접 돌려 알게 된 것이 넷입니다. 첫째, 오늘 설치되는 openai는 3.27.0이지만 앱의 호출(`timeout`, `extra_body`, `usage.cost` 읽기)은 그대로 돕니다(Step 3). 둘째, 접속 주소가 `main()` 안에 박혀 있어 `OPENAI_BASE_URL`로는 돌릴 수 없으므로 복사본의 한 줄만 바꿔 가짜 서버로 보냅니다(Step 3·4). 셋째, 2라운드 프롬프트는 1라운드의 약 2.3배이고 Reviewer 순서는 모델마다, 실행마다 다릅니다(Step 5). 넷째, 한국어 Windows(cp949)에서는 답에 em dash 하나만 있어도 답을 이미 받은 뒤 죽습니다. 출력이 파이프나 파일이면 `print`에서 죽어 `panel.md`가 아예 안 생기고, `PYTHONIOENCODING`만 고치면 파일 쓰기에서 죽어 0바이트 `panel.md`가 남습니다. 콘솔 창에서는 뒤쪽 경우가 됩니다(문제 해결).
+직접 돌려 알게 된 것이 넷입니다. 첫째, 오늘 설치되는 openai는 3.27.0이지만 앱의 호출(`timeout`, `extra_body`, `usage.cost` 읽기)은 그대로 돕니다(Step 3). 둘째, 접속 주소가 `main()` 안에 박혀 있어 `OPENAI_BASE_URL`로는 돌릴 수 없으므로 복사본의 한 줄만 바꿔 가짜 서버로 보냅니다(Step 3·4). 셋째, 2라운드 프롬프트는 1라운드의 약 2.3배이고 Reviewer 순서는 모델마다, 실행마다 다릅니다(Step 5). 넷째, 한국어 Windows(cp949)에서는 답에 em dash 하나만 있어도 답을 이미 받은 뒤 죽습니다. 출력이 파이프나 파일이면 `print`에서 죽어 `panel.md`가 아예 안 생기고, `PYTHONIOENCODING`만 고치면 파일 쓰기에서 죽어 0바이트 `panel.md`가 남습니다. 콘솔 창에서는 뒤쪽 경우가 될 것입니다(PEP 528 근거이며 콘솔 창은 열어 보지 못했습니다. 문제 해결).
 
 이 문서는 OpenRouter와 어느 모델 제공자에도 요청을 보내지 않습니다. 가짜 서버의 답은 대본이라 코드 리뷰의 근거가 아닙니다. 아래는 완성된 아키텍처입니다.
 
@@ -363,7 +363,7 @@ BadRequestError: Error code: 400 - {'error': {'message': 'openai/not-a-model is 
   -> `openai/not-a-model` is not a model id OpenRouter serves. Pick a current one from https://openrouter.ai/models.
 ```
 
-(`try_ask.py`는 `main`도 키도 패치도 거치지 않고 `ask`만 부르지만, 단계 그림은 한 번 드러난 노드를 다시 흐리지 않는 규칙이라 그 넷은 평상으로 둡니다.)
+(`try_ask.py`는 `ask`만 부르므로 이 단계는 `main`·사용자·키·패치를 거치지 않습니다. 그림에서 그 넷은 앞 단계에서 이미 나온 대로 평상으로 보입니다.)
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
