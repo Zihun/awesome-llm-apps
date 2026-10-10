@@ -567,9 +567,17 @@ PDF 두 쪽이 조각 둘이 됐습니다. 쪽마다 한 조각이고, 각 조�
 
 벡터와 쪽 텍스트가 Qdrant에 저장되고(`insert`), 돌아오면 화면이 "Documents stored successfully!"를 띄웁니다.
 
-![5단계: 임시 파일 삭제와 팀 만들기](diagrams/extra-ingest-end.svg)
+![5단계: 임시 파일 삭제와 첫 에이전트](diagrams/extra-ingest-end.svg)
 
-`process_document`가 임시 파일을 지우고 돌아오면 화면이 에이전트 셋과 팀을 만들고 "Document processed and team initialized!"를 띄웁니다.
+`process_document`가 임시 파일을 지우고 돌아오면 화면이 Legal Researcher를 만듭니다.
+
+![6단계: 나머지 에이전트 둘](diagrams/extra-ingest-ana.svg)
+
+Contract Analyst와 Legal Strategist가 차례로 만들어집니다.
+
+![7단계: 팀 만들기와 완료 표시](diagrams/extra-ingest-team.svg)
+
+세 멤버를 `members`로 묶어 팀을 만들고 "Document processed and team initialized!"를 띄웁니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -990,7 +998,7 @@ uv run --no-project python -c "p='local_legal_agent.py'; s=open(p,encoding='utf-
 >> 성공: ['Connected to local Qdrant!'] | 오류: ["Error processing document: Error processing document: 'Knowledge' object has no attribute 'add_content'"]
 ```
 
-(②를 고친 뒤부터 매 실행 첫 줄에 이 `Qdrant 대역` 줄이 나옵니다. 앱이 가리킨 곳이 `http://localhost:6333`임을 보여 줍니다. 이 실행들은 끝에서 팀이 없어 traceback으로 끝나지만 `grep`이 가려 보이지 않습니다.)
+(②를 고친 뒤부터 매 실행 첫 줄에 이 `Qdrant 대역` 줄이 나옵니다. 앱이 가리킨 곳이 `http://localhost:6333`임을 보여 줍니다. 이 실행들은 팀이 없어 끝에서 아무것도 더 찍지 않고 끝납니다. 직접 확인한 종료 코드는 0이고 `Traceback`은 없었습니다.)
 
 ③ 클라우드판과 같은 `add_content`입니다. 43행을 Step 3처럼 `insert`로 고칩니다. 다음은 PDF를 읽는 단계입니다.
 
@@ -1023,7 +1031,7 @@ ERROR    Error inserting document: Failed to generate embedding: Client.embed() 
 
 ## 요청 한 건이 흐르는 과정
 
-문서가 이미 올라간 뒤 사용자가 "Contract Review"를 골라 Analyze를 누르면 팀 실행이 셋 일어납니다. 배우가 여덟 곳이고 메시지가 서른아홉 개라 한 그림에 넣으면 선이 서로 가로질러 읽히지 않아, 모델 호출과 검색 경계에서 열네 그림으로 나눴고 메시지는 모두 원래 순서로 정확히 한 그림에 있습니다. 첫 그림을 뺀 열세 장은 `extra-` 이름입니다. 이 시퀀스는 Step 6의 가짜 서버 대본(멤버는 Contract Analyst 하나)으로 돌려 본 것이라 진짜 모델의 위임 순서는 확인하지 못했습니다. 핵심 요약과 권고에서 리더가 지식 검색을 하지 않은 것도 대본의 선택입니다. 문서 올리기 쪽 흐름은 Step 3에 그림 다섯으로 있습니다.
+문서가 이미 올라간 뒤 사용자가 "Contract Review"를 골라 Analyze를 누르면 팀 실행이 셋 일어납니다. 배우가 여덟 곳이고 메시지가 서른아홉 개라 한 그림에 넣으면 선이 서로 가로질러 읽히지 않아, 모델 호출과 검색 경계에서 열네 그림으로 나눴고 메시지는 모두 원래 순서로 정확히 한 그림에 있습니다. 첫 그림을 뺀 열세 장은 `extra-` 이름입니다. 이 시퀀스는 Step 6의 가짜 서버 대본(멤버는 Contract Analyst 하나)으로 돌려 본 것이라 진짜 모델의 위임 순서는 확인하지 못했습니다. 핵심 요약과 권고에서 리더가 지식 검색을 하지 않은 것도 대본의 선택입니다. 문서 올리기 쪽 흐름은 Step 3에 그림 일곱으로 있습니다.
 
 ![1단계: 클릭과 리더의 첫 요청](diagrams/sequence.svg)
 
@@ -1110,8 +1118,8 @@ ERROR    Error inserting document: Failed to generate embedding: Client.embed() 
 | 로컬판: ``ImportError: `openai` not installed``, ``pypdf not installed`` | 로컬판 `requirements.txt`에 둘이 없다 | `uv pip install openai pypdf` |
 | 로컬판: "✅ Document processed"인데 분석이 문서를 못 찾는다. 로그에 ``Client.embed() got an unexpected keyword argument 'dimensions'`` | `ollama==0.4.4`에 `dimensions`가 없다. agno는 오류를 로그로만 남기고 계속한다 | `uv pip install -U ollama`(Step 8) |
 | 로컬판: 버튼을 누를 때마다 느려지고 같은 조각이 쌓인다 | 문서 처리가 화면이 다시 그려질 때마다 돈다 | `st.session_state`에 처리한 파일 이름을 두는 클라우드판의 방식으로 감싼다(더 해보기) |
-| `fake_server.py`가 `PermissionError: [WinError 10013] ...`로 죽는다. 서버가 죽은 채 `drive.py`를 돌리면 오류 없이 세 탭에 `Connection error.`만 나온다 | 고른 포트가 Windows의 TCP 제외 범위에 들어 있다(검토 중 `58726-58825` 범위의 포트에서 재현됨) | 다른 포트를 고른다. 가짜 서버의 첫 줄 `가짜 모델 서버: 127.0.0.1:포트`가 찍혔는지 먼저 본다 |
-| `| grep "^>>"`가 `Binary file (standard input) matches`만 내거나 `drive.py`가 ``UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f916'``로 죽는다 | 한국어 Windows에서 파이프 출력의 기본 인코딩이 `cp949`다 | 사전 준비의 `PYTHONIOENCODING=utf-8`을 건다 |
+| `fake_server.py`가 `PermissionError: [WinError 10013] ...`로 죽는다. 서버가 죽은 채 `drive.py`를 돌리면 오류 없이 세 탭에 `Connection error.`만 나온다 | 고른 포트가 Windows의 TCP 제외 범위에 들어 있다(이 PC의 제외 범위 `58726-58825`에 든 포트로 서버를 띄워 재현했습니다. 범위는 PC마다 다릅니다) | 다른 포트를 고른다. 가짜 서버의 첫 줄 `가짜 모델 서버: 127.0.0.1:포트`가 찍혔는지 먼저 본다 |
+| `\| grep "^>>"`가 `Binary file (standard input) matches`만 내거나 `drive.py`가 ``UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f916'``로 죽는다 | 한국어 Windows에서 파이프 출력의 기본 인코딩이 `cp949`다 | 사전 준비의 `PYTHONIOENCODING=utf-8`을 건다 |
 | 머리말의 ⚠: 나중에 `gpt-5` 호출이 모델 없음으로 실패한다 | `gpt-5-2025-08-07` 스냅숏이 2026-12-11에 종료된다 | 네 곳의 `OpenAIChat(id="gpt-5")`를 다른 모델로 바꾼다 |
 
 ## 더 해보기

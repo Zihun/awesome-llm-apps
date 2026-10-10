@@ -3,9 +3,7 @@ shape: sequence_diagram
 
 tmp: 임시 파일 (.pdf) { class: file }
 ui: 분석 화면 (Streamlit) { class: ours }
-user: 사용자 { class: person }
-team: 팀 리더 (Team) { class: ours }
+res: Legal Researcher (Agent) { class: ours }
 
 ui -> tmp: 임시 파일 지움
-ui -> team: Agent 셋 · Team 만들기
-ui -> user: Document processed and team initialized! 표시
+ui -> res: Agent 만들기

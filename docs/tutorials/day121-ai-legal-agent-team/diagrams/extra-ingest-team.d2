@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+team: 팀 리더 (Team) { class: ours }
+ui: 분석 화면 (Streamlit) { class: ours }
+user: 사용자 { class: person }
+
+ui -> team: Team 만들기 (members 셋)
+ui -> user: Document processed and team initialized! 표시
