@@ -1372,7 +1372,7 @@ calls: 51 slow(>0.5s) [시작초, 걸린초]: [(1.36, 0.76)]
 
 14초 동안 51번 불렀고 0.5초를 넘긴 응답은 한 번(0.76초, 요청을 보낸 직후)뿐이었습니다. 같은 실행의 로그에서 항공편 모델 요청의 간격은 0.26초(도구 호출 지시)에서 4.37초(도구 결과를 받은 두 번째 요청)로 4초 넘게 벌어졌으니 도구는 실제로 4초를 썼습니다. 4초짜리 호출이 서버를 막지 않았으므로, agno가 동기 도구를 별도 실행 흐름에서 돌린다고 읽을 수 있습니다(소스까지는 따라가지 않았습니다). 실제 `fast-flights` 호출이 같다는 보장은 없습니다. 그 호출은 하지 않았습니다.
 
-**재시도.** 실패한 계획을 같은 `trip_plan_id`로 다시 부르면 어떻게 되는지 보려고, 변환 단계를 일부러 실패시킨 뒤(`echo badjson > mode.txt`, PowerShell은 `Set-Content mode.txt badjson -Encoding ascii`) 모드를 되돌리고(`echo ok > mode.txt`) 같은 요청을 다시 보냈습니다. 순서는 이렇습니다. 먼저 `request.json`(`trip-demo-001`)을 한 번 성공시키고, `sed 's/trip-demo-001/trip-demo-002/' request.json > request2.json`으로 만든 요청(`trip-demo-002`)을 `badjson`일 때 한 번, `ok`일 때 한 번 보냅니다. 결과를 읽는 쿼리는 `trip-demo-002`만 고릅니다. 직접 확인한 값입니다.
+**재시도.** 실패한 계획을 같은 `trip_plan_id`로 다시 부르면 어떻게 되는지 보려고, 변환 단계를 일부러 실패시킨 뒤(`echo badjson > mode.txt`, PowerShell은 `Set-Content mode.txt badjson -Encoding ascii`) 모드를 되돌리고(`echo ok > mode.txt`, PowerShell은 `Set-Content mode.txt ok -Encoding ascii`) 같은 요청을 다시 보냈습니다. 순서는 이렇습니다. 먼저 `request.json`(`trip-demo-001`)을 한 번 성공시키고, `sed 's/trip-demo-001/trip-demo-002/' request.json > request2.json`으로 만든 요청(`trip-demo-002`)을 `badjson`일 때 한 번, `ok`일 때 한 번 보냅니다. 결과를 읽는 쿼리는 `trip-demo-002`만 고릅니다. 직접 확인한 값입니다.
 
 ```python
 import sqlite3
@@ -1465,7 +1465,7 @@ Remove-Item Env:AGNO_TELEMETRY; $env:TELEMETRY_SPY = "spy-on.jsonl"
 uv run --no-project python run_backend.py 53418 53417
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다. 두 줄 사이에 서버를 끄고 요청을 한 번씩 보냅니다.)
+(두 줄 사이에 서버를 끄고 요청을 한 번씩 보냅니다.)
 
 (PowerShell 줄은 실행해 보지 못했습니다.) 끈 쪽은 파일이 만들어지지 않았고(0건), 켠 쪽은 한 요청에 일곱 건(에이전트 여섯과 변환 에이전트)이었습니다. 한 건의 내용은 이렇습니다(직접 확인).
 
@@ -1583,7 +1583,7 @@ Firecrawl가 마크다운을 돌려주고 모델이 호텔 글을 쓰며, 서비
 
 ![재시도 3: 응답과 폴링 재개](diagrams/extra-retry-end.svg)
 
-백엔드가 작업을 띄우고 200을 돌려주면 재시도 라우트가 `{success, message, response}`로 감싸 페이지에 넘기고, 페이지는 `fetchTripDetails()`로 한 번 읽은 뒤 `setPolling(true)`로 5초 폴링을 다시 켭니다. 작업이 시작된 뒤는 위 4단계부터와 같습니다.
+백엔드가 작업을 띄우고 200을 돌려주면 재시도 라우트가 `{success, message, response}`로 감싸 페이지에 넘기고, 페이지는 `fetchTripDetails()`로 한 번 읽은 뒤 `setPolling(true)`로 5초 폴링을 다시 켭니다. 이 `GET /api/plans/{id}`가 DB를 읽고 응답을 돌려받는 메시지는 위 20단계(`extra-poll`)의 그림과 같아 이 그림에는 다시 그리지 않았습니다. 작업이 시작된 뒤는 위 4단계부터와 같습니다.
 
 ## 실행 체크리스트
 
