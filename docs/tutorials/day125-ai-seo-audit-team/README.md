@@ -565,10 +565,20 @@ for c in last["contents"]:
     print("  ", c["role"], "|", texts[-1][:100].replace("\n", " "))
 ```
 
+첫 터미널(가짜 서버)입니다.
+
 ```bash
 mkdir -p dump
 FAKE_DUMP=dump uv run --no-project python fake_gemini.py 54171 gemini.log
 ```
+
+```powershell
+New-Item -ItemType Directory -Force dump
+$env:FAKE_DUMP = "dump"
+uv run --no-project python fake_gemini.py 54171 gemini.log
+```
+
+둘째 터미널(요청과 읽기)입니다.
 
 ```bash
 uv run --no-project python run_once.py "Audit https://example.com" > /dev/null
@@ -576,7 +586,6 @@ uv run --no-project python peek.py
 ```
 
 ```powershell
-$env:FAKE_DUMP = "dump"   # 가짜 서버를 띄우는 터미널에서
 uv run --no-project python run_once.py "Audit https://example.com" > $null
 uv run --no-project python peek.py
 ```
