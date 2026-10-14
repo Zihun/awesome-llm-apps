@@ -9,7 +9,7 @@ ics: "generate_ics_content" { class: ours; height: 44 }
 icsfile: "travel_itinerary.ics" { class: file }
 
 keys -> form: "키 둘이 있어야 폼이 그려짐"
-form -> sync: "버튼: 조건 다섯 + 키 둘"
+form -> sync: "버튼: 조건 넷 + 키 둘"
 sync -> show: "response → session_state.itinerary"
 show -> ics: "일정 글 · 시작일"
 ics -> show: "ics 바이트"

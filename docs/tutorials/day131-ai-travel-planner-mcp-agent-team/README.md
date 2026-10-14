@@ -1,6 +1,6 @@
 # Day 131 · 🌍 AI Travel Planner MCP Agent
 
-> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않고(오늘은 agno 3.1.3이 풀려 `MultiMCPTools`와 `GoogleSearchTools`가 둘 다 없음, Step 1), 앱이 쓰는 모델 `gpt-4o`의 스냅샷은 OpenAI 폐기 문서에 종료일 2027-01-14로 올라 있습니다(오늘 2026-10-14에 공지됨, Step 4) · 예상 소요 160분(앱은 파일 하나 320줄이지만, 읽을 산문이 3,100낱말쯤이고 실습 파일 열 개를 저장해 터미널 둘에 가짜 서버를 띄운 채 실패 경로 넷을 일부러 일으켜 서버 쪽 기록과 앱 출력을 맞대어 보는 시간이 더해집니다) · API 비용 대략 한 건에 $0.05~0.15(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았습니다. 모델 호출은 도구를 쓰면 두 번 이상이고, 입력은 지시문 약 2,500자와 도구 정의 일곱, Airbnb 목록 같은 도구 결과가 쌓여 1만~3만 토큰, 출력은 "아주 자세한 일정"이라 3천~6천 토큰으로 어림했습니다. `gpt-4o` 요금은 OpenAI 모델 페이지에서 2026-10-14에 읽은 입력 $2.50·출력 $10.00 / 1M 토큰입니다. Google Maps API의 요금은 확인하지 못했습니다) · 원본 앱: `mcp_ai_agents/ai_travel_planner_mcp_agent_team`
+> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않고(오늘은 agno 3.1.3이 풀려 `MultiMCPTools`와 `GoogleSearchTools`가 둘 다 없음, Step 1), 앱이 쓰는 모델 `gpt-4o`의 스냅숏은 OpenAI 폐기 문서에 종료일 2027-01-14로 올라 있습니다(오늘 2026-10-14에 공지됨, Step 4) · 예상 소요 160분(앱은 파일 하나 320줄이지만, 읽을 산문이 3,400낱말쯤이고 실습 파일 열 개를 저장해 터미널 둘에 가짜 서버를 띄운 채 실패 경로 넷을 일부러 일으켜 서버 쪽 기록과 앱 출력을 맞대어 보는 시간이 더해집니다) · API 비용 대략 한 건에 $0.05~0.15(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았습니다. 모델 호출은 도구를 쓰면 두 번 이상이고, 입력은 지시문 약 2,500자와 도구 정의 일곱, Airbnb 목록 같은 도구 결과가 쌓여 1만~3만 토큰, 출력은 "아주 자세한 일정"이라 3천~6천 토큰으로 어림했습니다. `gpt-4o` 요금은 OpenAI 모델 페이지에서 2026-10-14에 읽은 입력 $2.50·출력 $10.00 / 1M 토큰입니다. Google Maps API의 요금은 확인하지 못했습니다) · 원본 앱: `mcp_ai_agents/ai_travel_planner_mcp_agent_team`
 
 ## 오늘 만들 것
 
@@ -452,7 +452,8 @@ if __name__ == "__main__":
 import json, os, sys, types
 
 # 독자 실수 방지: 모델 주소가 루프백 가짜 서버가 아니면 앱 코드를 돌리기 전에 멈춘다.
-if not os.environ.get("OPENAI_BASE_URL", "").startswith(("http://127.0.0.1", "http://localhost")):
+from urllib.parse import urlparse
+if urlparse(os.environ.get("OPENAI_BASE_URL", "")).hostname not in ("127.0.0.1", "localhost"):
     sys.exit("OPENAI_BASE_URL이 루프백 가짜 서버가 아닙니다. Step 4의 export를 먼저 하세요.")
 
 import googlesearch
