@@ -8,7 +8,7 @@
 
 앞 날들과 이어지는 점부터 적습니다. Day 127~129의 원본 앱은 MCP 서버를 자식 프로세스로 띄우고(`mcp_ai_agents/notion_mcp_agent/notion_mcp_agent.py:60-62`의 `command="npx"`, `mcp_ai_agents/github_mcp_agent/github_agent.py:74-75`의 `command="docker"`, `mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml:13-14`의 `command: "npx"` — 셋 다 소스로 확인했고 실행하지 않았습니다), Day 130은 원격 주소 하나에 붙었습니다. 오늘은 서버 둘을 `MultiMCPTools` 하나에 한꺼번에 줍니다. `npx` 자리에 파이썬 가짜 서버를 두고 돌리는 방식은 Day 125와 같고, `mcp`를 `<2`로 묶어야 한다는 점은 Day 130과 같은 뿌리입니다. 이름이 비슷한 Day 124(볼륨 8)의 "AI Travel Planner Agent Team"은 다른 앱입니다. 그쪽은 `backend/`와 `client/`로 나뉜 웹 앱이고 agno 에이전트를 차례로 부르지만, 오늘 앱은 폴더 이름과 앱 README 제목에 "Agent Team"이 들어 있어도 `app.py`가 `Team`을 import하지 않고 `Agent` 하나만 만듭니다(소스로 확인, `app.py:4-8`).
 
-직접 돌려 알게 된 것이 일곱입니다. 첫째, `requirements.txt`만으로는 앱이 import되지 않습니다. agno는 3.1.3으로 풀리는데 그 판에는 앱이 쓰는 `MultiMCPTools`도 `GoogleSearchTools`도 없고, `mcp`는 requirements에 아예 없습니다(Step 1). 둘째, "Google Maps MCP"는 두 서버 가운데 `@gongrzhe/server-travelplanner-mcp`이고, Google Maps 키는 앱의 `env=`를 통해 **두 서버 모두**에게 전달됩니다(Step 3). 셋째, 구글 검색 도구는 requirements에 적힌 `google-search-results`(SerpApi)와 상관없이 `googlesearch-python`이 google.com/search를 직접 긁는 것이고, 설치해도 `google_search`는 `'str' object has no attribute 'url'`이라는 오류 글을 모델에 돌려줍니다(Step 4). 넷째, 시작일은 모델에게 가지 않고 달력 파일에만 쓰입니다(Step 5). 다섯째, 화면의 "Airbnb 데이터를 썼다"는 안내는 도구를 썼는지가 아니라 **모델이 쓴 글에 낱말이 있는지**로 정해집니다(Step 6). 여섯째, 달력 변환은 모델이 일정 제목을 어떻게 쓰느냐에 따라 하루짜리 이벤트가 하나로 뭉치기도 합니다(Step 7). 일곱째, MCP 서버 연결이 실패해도 예외가 나지 않고 로그 두 줄만 남으며, 서버 둘 가운데 하나만 죽어도 **살아 있는 서버의 도구까지** 모델에게 가지 않습니다(Step 8).
+직접 돌려 알게 된 것이 일곱입니다. 첫째, `requirements.txt`만으로는 앱이 import되지 않습니다. agno는 3.1.3으로 풀리는데 그 판에는 앱이 쓰는 `MultiMCPTools`도 `GoogleSearchTools`도 없고, `mcp`는 requirements에 아예 없습니다(Step 1). 둘째, "Google Maps MCP"는 두 서버 가운데 `@gongrzhe/server-travelplanner-mcp`이고, Google Maps 키는 앱의 `env=`를 통해 **두 서버 모두**에게 전달됩니다(Step 3). 셋째, 구글 검색 도구는 requirements에 적힌 `google-search-results`(SerpApi)와 상관없이 `googlesearch-python`이 google.com/search를 직접 긁는 것이고, 설치해도 `google_search`는 `'str' object has no attribute 'url'`이라는 오류 글을 모델에 돌려줍니다(Step 4). 넷째, 시작일은 모델에게 가지 않고 달력 파일에만 쓰입니다(Step 5). 다섯째, 화면의 "Airbnb 데이터를 썼다"는 안내는 도구를 썼는지가 아니라 **모델이 쓴 글에 낱말이 있는지**로 정해집니다(Step 6). 여섯째, 달력 변환은 모델이 일정 제목을 어떻게 쓰느냐에 따라 하루짜리 이벤트가 하나로 뭉치기도 합니다(Step 7). 일곱째, MCP 서버 연결이 실패해도 예외가 나지 않고 ERROR 로그 몇 줄만 남으며, 서버 둘 가운데 하나만 죽어도 **살아 있는 서버의 도구까지** 모델에게 가지 않습니다(Step 8).
 
 이 문서는 `npx`·`docker`를 한 번도 실행하지 않았습니다. 앱 코드를 돌린 셸은 PATH에서 Node와 Docker 폴더를 뺐고(`npx`·`docker`·`node`를 찾는 `shutil.which`가 모두 `None`), MCP 서버 자리에는 파이썬으로 쓴 가짜 서버를, OpenAI 자리에는 루프백의 가짜 서버를 두었습니다. 구글 검색은 `googlesearch` 라이브러리가 쓰는 HTTP 호출(`requests.get`)만 가짜 HTML로 바꾸고, 루프백 밖으로 나가는 이름 조회와 연결을 막는 가드를 걸어 두었는데 기록은 0건이었습니다. 그래서 Airbnb·Google Maps·Google 검색·OpenAI로 간 요청은 없고, 문서의 일정·목록은 모두 내가 쓴 대본입니다. 진짜 MCP 서버의 응답 모양, 진짜 `gpt-4o`가 도구를 고르는 모습, 진짜 Airbnb·Google 응답, `npx`가 Windows에서 실제로 서버를 띄우는 과정은 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
 
@@ -52,11 +52,19 @@ $env:PYTHONIOENCODING = "utf-8"
 | 여행 플래너 MCP 서버 (`@gongrzhe/server-travelplanner-mcp`) | 내 PC의 자식 프로세스. Google Maps API로 장소·경로·시간대를 조회한다(서버 README) | 코드 없음 (외부 패키지, 이 문서는 실행하지 않음) |
 | OpenAI·구글 검색·agno 통계 | 모델 응답, `google.com/search` 긁기, 실행이 끝날 때의 익명 통계 | 코드 없음 (외부 서비스) |
 
-위 그림은 에이전트와 도구를 한 상자(`app.py`) 안에 두었습니다. 에이전트가 어느 도구를 갖고 무엇이 외부로 나가는지는 아래 두 그림에 화살표로 있습니다. 첫 그림은 에이전트와 도구 묶음, 모델, 통계 API 사이입니다. `MultiMCPTools`가 내놓는 도구는 6개이고 `google_search`와 합쳐 모델에게 7개가 갑니다.
+위 그림에서 `app.py` 상자 안의 아홉 상자는 모두 한 프로세스, 한 파일의 부품입니다. 상자에 단 화살표는 **상자 전체의 것**이라서 그림에서는 엉뚱한 부품 아래에서 나가 보일 수 있습니다. 예컨대 `ics 바이트`는 폼 아래에서, `chat.completions · 구글 검색 · 통계`는 `generate_ics_content` 아래에서 나가 보이지만, 폼이 달력을 만들거나 달력 함수가 OpenAI를 부르는 것이 아닙니다. 상자 안의 호출은 아래 네 그림이 화살표로 그렸습니다. 첫째는 만드는 쪽입니다. 동기 래퍼가 `run_mcp_travel_planner`를 부르고, 그 함수가 도구 묶음과 구글 검색 도구와 에이전트를 만들어 돌립니다.
+
+![만드는 쪽](diagrams/extra-structure.svg)
+
+둘째는 화면 쪽입니다. 키가 있어야 폼이 그려지고, 버튼이 래퍼를 부르고, 돌아온 글이 표시와 `.ics` 변환으로 갑니다.
+
+![화면 쪽](diagrams/extra-screen.svg)
+
+셋째는 에이전트와 도구 묶음, 모델, 통계 API 사이입니다. `MultiMCPTools`가 내놓는 도구는 6개이고 `google_search`와 합쳐 모델에게 7개가 갑니다.
 
 ![에이전트·도구·모델](diagrams/extra-tools.svg)
 
-둘째 그림은 도구 쪽 외부 연결입니다. 두 MCP 서버는 서로 다른 외부 서비스에 닿고, 구글 검색 도구는 서버 없이 같은 프로세스에서 google.com으로 나갑니다.
+넷째는 도구 쪽 외부 연결입니다. 두 MCP 서버는 서로 다른 외부 서비스에 닿고, 구글 검색 도구는 서버 없이 같은 프로세스에서 google.com으로 나갑니다.
 
 ![MCP 서버와 외부 서비스](diagrams/extra-servers.svg)
 
@@ -84,7 +92,7 @@ uv pip install -r "$APP\requirements.txt" "agno>=2.2.10,<2.3" "mcp<2" googlesear
 Copy-Item "$APP\app.py" app.py
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다. pip 대안은 `python -m venv .venv`로 만들고 활성화한 뒤 같은 패키지 목록으로 `pip install`입니다.) 이 저장소는 루트에도 `pyproject.toml`이 있어서, 앞으로의 `uv run`에는 모두 `--no-project`를 붙이고 `travel-lab` 폴더 안에서 실행합니다.
+(PowerShell 줄은 실행해 보지 못했습니다. pip 대안은 `python -m venv .venv`로 만들고 활성화한 뒤 같은 패키지 목록으로 `pip install`입니다.) 시리즈의 규칙대로(위쪽 폴더의 프로젝트를 집지 않도록) 앞으로의 `uv run`에는 모두 `--no-project`를 붙이고 `travel-lab` 폴더 안에서 실행합니다.
 
 원본 `requirements.txt`는 다섯 줄(`streamlit`, `agno>=2.2.10`, `openai`, `icalendar`, `google-search-results`)입니다. 이것만 설치하고 `import app`을 해 보면, 패키지를 하나 보탤 때마다 다음 오류가 이어집니다. 이 문서의 환경 만들기에서 직접 확인한 순서입니다(각 줄은 `uv run --no-project python -c "import app"`의 끝 줄).
 
@@ -137,7 +145,7 @@ uv run --no-project python -c "import app; print('import ok')" 2>/dev/null
 
 - **Airbnb 서버(`@openbnb/mcp-server-airbnb`).** 도구는 `airbnb_search`와 `airbnb_listing_details` 둘입니다. 앱이 주는 `--ignore-robots-txt`는 README에서 "Bypass robots.txt restrictions when making requests to Airbnb", 권고는 "Keep disabled unless needed for testing purposes"입니다. 서버는 기본으로 airbnb.com의 robots.txt를 따르고, 이 플래그를 켜면 따르지 않습니다. 앱은 이 플래그를 항상 켭니다(`app.py:74`). 이 서버는 Airbnb의 공식 API가 아니라 airbnb.com의 페이지를 긁는 도구입니다(README의 "Efficient HTML parsing with Cheerio", "Respect Airbnb's Terms of Service"). 또 README의 "External Services"에 따르면 `placeId` 없이 `location` 문자열만 주면 서버가 그 문자열을 지오코더 둘(`photon.komoot.io`, 실패하면 `nominatim.openstreetmap.org`)에 보냅니다. 끄려면 환경변수 `DISABLE_GEOCODING=true`인데 앱은 주지 않습니다. 이 서버의 README에는 Google Maps 키가 필요하다는 말이 없습니다.
 - **여행 플래너 서버(`@gongrzhe/server-travelplanner-mcp`).** 이것이 앱 지시문이 말하는 "Google Maps MCP"입니다(8곳: `app.py:97`, `101`, `110`, `111`, `139`, `152`, `168`, `274`). 도구는 `searchPlaces`, `getPlaceDetails`, `calculateRoute`, `getTimeZone` 넷이고, 환경변수 `GOOGLE_MAPS_API_KEY`가 필수입니다(Places·Directions·Geocoding·Time Zone API를 켜야 함). 앱 README가 말하는 "Custom Google Maps MCP"는 앱이 만든 것이 아니라 이 외부 패키지입니다.
-- 앱의 둘째 명령 `npx @gongrzhe/server-travelplanner-mcp`에는 `-y`가 없습니다(첫째는 `npx -y`). npm 문서는 설치되지 않은 패키지에 대해 `npx`가 설치 전에 묻고 `-y`가 그 질문을 막는다고 합니다. 그 질문이 MCP 통신선(표준 입력·출력)에서 어떻게 되는지는 `npx`를 실행하지 않아 확인하지 못했습니다.
+- 앱의 둘째 명령 `npx @gongrzhe/server-travelplanner-mcp`에는 `-y`가 없습니다(첫째는 `npx -y`). npm 문서(https://docs.npmjs.com/cli/v11/commands/npm-exec, 2026-10-14에 읽음)는 설치되지 않은 패키지에 대해 `npx`가 설치 전에 묻고 `-y`가 그 질문을 막는다고 하면서, "When standard input is not a TTY or a CI environment is detected, `--yes` is assumed."라고 합니다. MCP의 stdio는 파이프라 표준 입력이 TTY가 아니므로 `-y`가 없는 둘째 명령도 묻지 않고 내려받아 실행될 것으로 읽히지만, `npx`를 실행하지 않아 확인하지는 못했습니다.
 
 이제 가짜 서버를 저장합니다. 도구 이름 여섯은 위 README에서 가져왔고, 인자는 줄였고, 돌려주는 내용은 내가 지었습니다. 진짜 서버의 응답 모양은 모릅니다. 서버는 시작할 때 받은 환경변수 **이름**(값은 적지 않음)과 도구 호출을 `mcp.log`에 한 줄씩 남깁니다.
 
@@ -371,7 +379,7 @@ rm mcp.log
         )
 ```
 
-- **모델.** `OpenAIChat(id="gpt-4o", api_key=openai_key)`에는 `base_url`이 없습니다. openai SDK가 `OPENAI_BASE_URL`을 읽어 주는지는 아래 확인에서 직접 봅니다. ⚠ **`gpt-4o`는 내려갑니다.** OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-14에 읽음)에 "2026-10-14에 공지, 2027-01-14에 API에서 제거"로 `GPT-4o (gpt-4o-2024-08-06, gpt-4o-2024-11-20)`가 올라 있고 권장 대체는 `gpt-6-luna`입니다. 별칭 `gpt-4o` 자체는 이 표의 행이 아니지만, `gpt-4o` 모델 페이지의 스냅샷 목록에는 `gpt-4o-2024-08-06`·`gpt-4o-2024-11-20`·`gpt-4o-2024-05-13`이 모두 Deprecated로 적혀 있습니다. 별칭이 어느 스냅샷을 가리키는지, 종료일 뒤에 호출하면 어떤 오류가 나는지, `gpt-6-luna`로 바꾸면 이 앱이 도는지는 확인하지 못했습니다.
+- **모델.** `OpenAIChat(id="gpt-4o", api_key=openai_key)`에는 `base_url`이 없습니다. openai SDK가 `OPENAI_BASE_URL`을 읽어 주는지는 아래 확인에서 직접 봅니다. ⚠ **기본 스냅숏이 내려갑니다.** `gpt-4o` 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-14에 읽음)는 이 모델의 "Default snapshot"을 `gpt-4o-2024-08-06`이라고 적습니다. 폐기 문서(https://developers.openai.com/api/docs/deprecations, 같은 날)에는 `gpt-4o`라는 id 자체의 종료 행은 없지만, 그 기본 스냅숏 `gpt-4o-2024-08-06`(과 `gpt-4o-2024-11-20`)이 "2026-10-14에 공지, 2027-01-14에 API에서 제거"로 올라 있고 권장 대체는 `gpt-6-luna`입니다. 별칭 `gpt-4o`가 그 뒤 어떻게 되는지는 두 문서 어디에도 적혀 있지 않아 이 문서도 확인하지 못했습니다. 2027-01-14 이후에 호출이 실패하면 `app.py:90`의 `OpenAIChat(id="gpt-4o", …)`를 새 모델로 바꿔야 할 수 있습니다. 종료일 뒤의 오류 문구와 `gpt-6-luna`로 바꿨을 때 이 앱이 도는지는 확인하지 못했습니다.
 - **지시문.** 지시문·프롬프트·화면 문구에 "Google Maps MCP"가 8번 나오지만, 모델이 보는 도구 이름은 `searchPlaces`·`calculateRoute` 같은 것뿐이고 "Google Maps"라는 이름의 도구는 없습니다. `add_datetime_to_context=True`는 현재 시각을 지시문 끝에 붙입니다(Step 5에서 확인).
 - **도구 둘.** `tools=[mcp_tools, GoogleSearchTools()]`. 구글 검색은 `agno.tools.googlesearch`(2.2.13의 `GoogleSearchTools`)이고 소스(`agno/tools/googlesearch.py`)를 읽으면 `from googlesearch import search`, 곧 `googlesearch-python` 라이브러리를 씁니다. 이 라이브러리는 API가 아니라 `https://www.google.com/search`를 `requests.get`으로 긁습니다. requirements의 `google-search-results`는 SerpApi용 패키지이고 이 경로와 관계가 없습니다.
 
@@ -441,7 +449,12 @@ if __name__ == "__main__":
 
 ```python
 """앱 복사본이 맨 위에서 불러오는 대역. googlesearch 라이브러리의 HTTP 호출(requests.get)만 가짜 HTML로 바꾸고 기록한다."""
-import json, os, types
+import json, os, sys, types
+
+# 독자 실수 방지: 모델 주소가 루프백 가짜 서버가 아니면 앱 코드를 돌리기 전에 멈춘다.
+if not os.environ.get("OPENAI_BASE_URL", "").startswith(("http://127.0.0.1", "http://localhost")):
+    sys.exit("OPENAI_BASE_URL이 루프백 가짜 서버가 아닙니다. Step 4의 export를 먼저 하세요.")
+
 import googlesearch
 
 LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "search.log")
@@ -619,9 +632,9 @@ maps exit
 airbnb exit 
 ```
 
-서버가 둘 다 이 한 번의 호출마다 새로 뜨고, `finally`의 `close()`로 끝납니다(둘 다 `exit`). 화면에서 버튼을 누를 때마다 서버 프로세스 둘이 새로 뜹니다. 도구 부름의 도착 순서는 실행마다 달랐습니다. `airbnb call`이 먼저인 실행도, `maps call`이 먼저인 실행도 봤습니다. 도구들이 겹쳐서 실행된다는 뜻으로 읽을 수 있지만, 같은 요청 안에서 동시에 실행되는지는 소스로 확인하지 않았습니다.
+서버가 둘 다 이 한 번의 호출마다 새로 뜨고, `finally`의 `close()`로 끝납니다(둘 다 `exit`). 화면에서 버튼을 누를 때마다 서버 프로세스 둘이 새로 뜹니다. 도구 부름의 도착 순서는 실행마다 달랐습니다. `airbnb call`이 먼저인 실행도, `maps call`이 먼저인 실행도 봤습니다. 까닭은 소스에 있습니다. 모델이 낸 도구 호출들을 agno가 `asyncio.gather`로 한꺼번에 돌립니다(agno 2.2.13 `agno/models/base.py`의 1824번째 줄 근처). 또 MCP 도구는 부를 때마다 먼저 `session.send_ping()`을 보냅니다(`agno/utils/mcp.py`의 31-35번째 줄). `call_plan.py` 출력에 섞이는 서버의 `PingRequest` 로그가 그것입니다.
 
-**통계.** 에이전트 실행이 끝나면 `_alog_agent_telemetry`가 불립니다(agno 2.2.13의 `agent/agent.py`의 1966번째 줄, `arun`의 비스트리밍 경로). `AGNO_TELEMETRY`를 `false`로 하지 않으면 `os-api.agno.com`에 `POST /telemetry/runs`를 보냅니다. 앱은 `telemetry=False`를 주지 않습니다. 보내는 내용을 보려고 가짜 서버로 돌려 봤습니다. 통계 주소는 환경변수로 바꾸기 어렵습니다(소스로 확인: `agno/api/settings.py`의 검증기가 들어온 값을 쓰지 않고 `api_runtime`으로만 주소를 정합니다). 그래서 `lab_patch`가 `LAB_AGNO_URL`이 있을 때만 파이썬에서 주소를 바꿉니다.
+**통계.** 에이전트 실행이 끝나면 `_alog_agent_telemetry`가 불립니다(agno 2.2.13의 `agent/agent.py`의 1966번째 줄, `arun`의 비스트리밍 경로). `AGNO_TELEMETRY`를 `false`로 하지 않으면(앱은 `telemetry=False`를 주지 않습니다) `os-api.agno.com`에 `POST /telemetry/runs`가 나갑니다. 보내는 방식과 끄는 법은 Day 047 Step 5가, 같은 볼륨에서 본문의 필드는 Day 127이 이미 보였으므로 되풀이하지 않고 달라진 점만 적습니다. 통계 주소는 환경변수로 바꾸기 어렵습니다(소스로 확인: `agno/api/settings.py`의 검증기가 들어온 값을 쓰지 않고 `api_runtime`으로만 주소를 정합니다). 그래서 `lab_patch`가 `LAB_AGNO_URL`이 있을 때만 파이썬에서 주소를 바꾸고, 한 번 가짜 서버로 받아 본문의 키를 읽었습니다.
 
 ```bash
 env -u AGNO_TELEMETRY LAB_AGNO_URL=http://127.0.0.1:59612 uv run --no-project python call_plan.py > /dev/null 2>&1
@@ -629,17 +642,15 @@ uv run --no-project python -c "
 import json
 for l in open('openai.log', encoding='utf-8'):
     d = json.loads(l)
-    if 'telemetry' in d['path']: print(d['path']); print(json.dumps(d['body']['data'], ensure_ascii=False)); print(d['body']['sdk_version'], d['body']['type'])
+    if 'telemetry' in d['path']: print(d['path'], ', '.join(d['body']['data']), '| +', ', '.join(k for k in d['body'] if k != 'data'))
 "
 ```
 
 ```text
-/telemetry/runs
-{"agent_id": "travel-planner", "db_type": null, "model_provider": "OpenAI", "model_name": "OpenAIChat", "model_id": "gpt-4o", "parser_model": null, "output_model": null, "has_tools": true, "has_memory": false, "has_culture": false, "has_reasoning": false, "has_knowledge": false, "has_input_schema": false, "has_output_schema": false, "has_team": false}
-2.2.13 agent
+/telemetry/runs agent_id, db_type, model_provider, model_name, model_id, parser_model, output_model, has_tools, has_memory, has_culture, has_reasoning, has_knowledge, has_input_schema, has_output_schema, has_team | + session_id, run_id, sdk_version, type
 ```
 
-(`env -u AGNO_TELEMETRY`는 이 한 줄에서만 변수를 지워 통계를 켜고, 가짜 서버로 가는 것은 `LAB_AGNO_URL` 덕분입니다. `AGNO_TELEMETRY=`처럼 빈 값을 주면 소스(`agent.py`의 `_set_telemetry`)가 `"".lower() == "true"`로 읽어 꺼집니다. PowerShell은 `$env:LAB_AGNO_URL = "http://127.0.0.1:59612"`와 `Remove-Item Env:AGNO_TELEMETRY`를 먼저 하고 같은 `uv run`을 부르세요. 실행해 보지 못했습니다. 끝나면 `$env:AGNO_TELEMETRY = "false"`로 되돌립니다.) 질문 글·답·키는 들어 있지 않고 에이전트 id·모델·도구 유무 같은 필드뿐입니다. Day 047 Step 5가 다룬 agno 3.0.10의 통계와 필드 구성이 같지는 않을 수 있습니다. 이 문서는 2.2.13에서만 확인했습니다.
+(`env -u AGNO_TELEMETRY`는 이 한 줄에서만 변수를 지워 통계를 켜고, 가짜 서버로 가는 것은 `LAB_AGNO_URL` 덕분입니다. `AGNO_TELEMETRY=`처럼 빈 값을 주면 소스(`agent.py`의 `_set_telemetry`)가 `"".lower() == "true"`로 읽어 꺼집니다. PowerShell은 `$env:LAB_AGNO_URL = "http://127.0.0.1:59612"`와 `Remove-Item Env:AGNO_TELEMETRY`를 먼저 하고 같은 `uv run`을 부르세요. 실행해 보지 못했습니다. 끝나면 `$env:AGNO_TELEMETRY = "false"`로 되돌립니다.) 질문 글·답·키는 들어 있지 않고 에이전트 id·모델·도구 유무 같은 필드뿐입니다. Day 127이 본 agno 3.1.3의 목록과 비교하면 `has_culture` 자리가 3.1.3에서는 `has_learnings`입니다.
 
 **`finally`의 함정.** `app.py:176-177`의 `finally: await mcp_tools.close()`는 `try` 안에서 `mcp_tools`가 만들어지기 전에 예외가 나면 `close()`를 부르다가 `UnboundLocalError`를 냅니다. `try`의 첫 줄(`os.environ[...] = google_maps_key`)이 `None` 키로 `TypeError`를 내는 경우로 직접 확인합니다(화면의 버튼은 키가 둘 다 있어야 눌리므로 원본 그대로는 이 경로에 닿기 어렵습니다).
 
@@ -716,10 +727,10 @@ print("다운로드 버튼:", len(at.get("download_button")), "| 저장된 일�
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 가짜 서버 앱(`app_lab.py`)으로 기본 글을 받습니다.
+**확인.** Step 4의 둘째 터미널(`OPENAI_BASE_URL`과 `AGNO_TELEMETRY`를 건 터미널)에서 실행합니다. 새 터미널을 열었다면 Step 4의 두 `export`(PowerShell은 두 `$env:`)를 먼저 다시 하세요. `lab_patch.py`는 `OPENAI_BASE_URL`이 루프백 주소가 아니면 앱 코드를 돌리기 전에 멈추게 해 두었습니다(안 걸린 채라면 앱 복사본이 진짜 `api.openai.com`으로 가짜 키를 보내게 되므로). 가짜 서버 앱(`app_lab.py`)으로 기본 글을 받습니다. agno의 로그와 추적이 출력 사이에 섞여 나와서 `grep`으로 거릅니다.
 
 ```bash
-uv run --no-project python apptest.py app_lab.py 2>/dev/null
+uv run --no-project python apptest.py app_lab.py 2>/dev/null | grep -E "^(키|success|info|error|다운)"
 ```
 
 ```text
@@ -743,7 +754,7 @@ success: ['Your travel itinerary is ready with Airbnb data!', 'All API keys conf
 info: ['Used real Airbnb listings for accommodation recommendations']
 ```
 
-같은 서버, 같은 호출이고 글만 바뀌었는데 문구가 "진짜 Airbnb 목록을 썼다"로 바뀌었습니다. Step 8에서 서버가 아예 안 뜬 상태로 이 글을 받아도 같은 문구가 나옵니다. 마지막으로 앱을 실제로 띄우는 명령입니다. 화면은 `app_lab.py`로 띄우고 키 칸에는 아무 값이나 넣습니다(서버 둘과 모델이 모두 가짜이므로). 이 문서는 이 명령을 띄워 상태 확인 주소(`/_stcore/health`)가 `ok`를 돌려주는 것까지만 확인했고, 브라우저로 화면을 열어 보지는 않았습니다.
+(PowerShell은 `Set-Content -Encoding utf8 plan.txt`에 같은 글을 줍니다. 인코딩을 안 주면 Windows PowerShell 5.1이 시스템 ANSI(한국어 Windows는 cp949)로 저장해 `fake_openai.py`의 UTF-8 읽기가 깨질 수 있습니다. 실행해 보지 못했습니다.) 같은 서버, 같은 호출이고 글만 바뀌었는데 문구가 "진짜 Airbnb 목록을 썼다"로 바뀌었습니다. Step 8에서 서버가 아예 안 뜬 상태로 이 글을 받아도 같은 문구가 나옵니다. 마지막으로 앱을 실제로 띄우는 명령입니다. 화면은 `app_lab.py`로 띄우고 키 칸에는 아무 값이나 넣습니다(서버 둘과 모델이 모두 가짜이므로). 이 문서는 이 명령을 띄워 상태 확인 주소(`/_stcore/health`)가 `ok`를 돌려주는 것까지만 확인했고, 브라우저로 화면을 열어 보지는 않았습니다.
 
 ```bash
 rm plan.txt
@@ -839,7 +850,13 @@ uv run --no-project python ics_check.py 2>/dev/null
 - 본문 문장 속의 "Day 2"("Return by Day 2 evening")도 새 하루로 쪼개서 이벤트가 셋이 됩니다. 모델이 일정 안에서 다른 날을 언급하면 일어납니다.
 - 요약: 모델이 제목을 어떤 모양으로 쓰는지에 따라 달력이 달라집니다. 진짜 `gpt-4o`가 어떤 모양으로 쓰는지는 확인하지 못했습니다.
 
-만들어진 파일의 모양은 이렇습니다(시작일 2027-03-01로 만든 두 이벤트의 앞부분). `DTSTAMP`는 파이썬이 `datetime.now()`(지역 시각)를 시간대 없이 넘긴 값인데 끝에 `Z`(UTC)가 붙어 나옵니다. 내 PC는 한국 시간이라 실제 UTC와 9시간 어긋났습니다.
+만들어진 파일의 모양은 이렇습니다. 시작일 2027-03-01로 `Day 1: arrive`와 `Day 2: museum` 두 줄을 넣은 결과이고, `DTSTAMP`는 실행 시각이라 매번 다릅니다.
+
+```bash
+uv run --no-project python -c "from datetime import datetime; import app_lab; print(app_lab.generate_ics_content('Day 1: arrive\nDay 2: museum\n', datetime(2027,3,1)).decode())" 2>/dev/null
+```
+
+`DTSTAMP`는 파이썬이 `datetime.now()`(지역 시각)를 시간대 없이 넘긴 값인데 끝에 `Z`(UTC)가 붙어 나옵니다. 내 PC는 한국 시간이라 실제 UTC와 9시간 어긋났습니다.
 
 ```text
 BEGIN:VCALENDAR
@@ -852,13 +869,21 @@ DTEND;VALUE=DATE:20270302
 DTSTAMP:20261014T230321Z
 DESCRIPTION:arrive
 END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Day 2 Itinerary
+DTSTART;VALUE=DATE:20270302
+DTEND;VALUE=DATE:20270303
+DTSTAMP:20261014T230321Z
+DESCRIPTION:museum
+END:VEVENT
+END:VCALENDAR
 ```
 
-### Step 8. 서버가 안 뜰 때 — 로그 두 줄과 조용한 도구 상실
+### Step 8. 서버가 안 뜰 때 — 로그 몇 줄과 조용한 도구 상실
 
 **목적.** MCP 서버가 안 뜨는 경우 앱이 어떻게 반응하는지 네 가지 실패를 일부러 일으켜 봅니다.
 
-**할 일.** Step 3의 `make_app.py`로 복사본 넷을 더 만듭니다. 모두 가짜 서버 시나리오이고 진짜 `npx`는 실행되지 않습니다.
+**할 일.** Step 4의 둘째 터미널(환경변수를 건 터미널)에서 합니다. Step 3의 `make_app.py`로 복사본 넷을 더 만듭니다. 모두 가짜 서버 시나리오이고 진짜 `npx`는 실행되지 않습니다.
 
 ```bash
 for m in nonode badcmd mapsdown airbnbdown; do uv run --no-project python make_app.py app.py $m; done
@@ -921,8 +946,8 @@ ERROR    Failed to connect to <MultiMCPTools name=MultiMCPTools functions=[]>:
 (PowerShell은 `: > file` 대신 `Clear-Content`, 파이프 뒤 `grep`·`cut` 대신 `Select-String`을 써야 하므로 실행해 보지 못했습니다.)
 
 - **`nonode`.** 같은 `ERROR Failed to connect … [WinError 2]`(한국어 Windows 문구) 줄이 **두 번** 나옵니다. 앱의 `connect()` 한 번, 그리고 `arun`이 도구가 연결되지 않은 것을 보고 다시 시도한 한 번입니다(`agent.py`의 5424번째 줄의 `_connect_mcp_tools`). 이후에도 앱은 멈추지 않고, 모델에게는 `google_search` 하나만 갑니다. 화면은 오류를 보여 주지 않고 일정을 그립니다. 이어서 Step 6의 "Airbnb" 글로 `app_nonode.py`를 돌리면 `success: ['Your travel itinerary is ready with Airbnb data!', …]`와 `info: ['Used real Airbnb listings for accommodation recommendations']`가 나옵니다. 서버가 하나도 안 떴는데도 화면은 진짜 Airbnb 목록을 썼다고 말합니다(직접 확인).
-- **`mapsdown`.** 첫째 서버(Airbnb)는 시작해서 `initialize`까지 하고, 둘째가 죽으면 예외가 나서 `build_tools`가 불리지 않습니다. 그래서 Airbnb 서버는 떴다가 `close()`로 끝나기만 하고 **Airbnb 도구도 모델에게 가지 않습니다.** 서버 하나가 죽으면 서버 둘의 도구가 모두 사라집니다. 이때 `ERROR` 줄은 한 번입니다(첫 `connect()`에서 첫째 세션이 이미 `initialized`로 표시되므로 `arun`이 다시 연결하지 않음).
-- **`airbnbdown`.** 첫째가 죽으면 둘째는 **시작조차 하지 않습니다**(`mcp.log`에 서버 기록이 없음). 예외가 나면 루프가 끝나기 때문입니다(`multi_mcp.py`의 217-251번째 줄). 이때는 `ERROR` 줄이 두 번입니다.
+- **`mapsdown`.** 첫째 서버(Airbnb)는 시작해서 `initialize`까지 하고, 둘째가 죽으면 예외가 나서 `build_tools`가 불리지 않습니다. 그래서 Airbnb 서버는 떴다가 `close()`로 끝나기만 하고 **Airbnb 도구도 모델에게 가지 않습니다.** 서버 하나가 죽으면 서버 둘의 도구가 모두 사라집니다. 이때 `Failed to connect`는 한 번입니다(`ERROR` 줄로는 둘, `Failed to get MCP tools`와 `Failed to connect`. 첫 `connect()`에서 첫째 세션이 이미 `initialized`로 표시되므로 `arun`이 다시 연결하지 않음).
+- **`airbnbdown`.** 첫째가 죽으면 둘째는 **시작조차 하지 않습니다**(`mcp.log`에 서버 기록이 없음). 예외가 나면 루프가 끝나기 때문입니다(`multi_mcp.py`의 217-251번째 줄). 이때는 `Failed to connect`가 두 번입니다(`ERROR` 줄로는 넷).
 - **`badcmd`.** 허용 목록에 없는 이름은 서버를 띄우기 전, `MultiMCPTools(...)`를 **만드는 줄에서** `ValueError`가 납니다. 그러면 `finally`의 `mcp_tools.close()`가 `UnboundLocalError`를 내고, 화면에는 이 문구가 나옵니다(직접 확인).
 
 ```bash
@@ -942,7 +967,7 @@ error: ["Error: cannot access local variable 'mcp_tools' where it is not associa
 
 ## 요청 한 건이 흐르는 과정
 
-버튼을 한 번 누르면 아래 여덟 그림이 차례로 일어납니다. 전부 한 번의 `run_travel_planner` 호출입니다. 첫 그림은 클릭에서 연결 시작까지입니다. `MultiMCPTools`를 만드는 줄은 서버를 띄우지 않고 `connect()`가 띄웁니다.
+버튼을 한 번 누르면 아래 아홉 그림이 차례로 일어납니다. 전부 한 번의 `run_travel_planner` 호출입니다. 첫 그림은 클릭에서 연결 시작까지입니다. `MultiMCPTools`를 만드는 줄은 서버를 띄우지 않고 `connect()`가 띄웁니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -954,23 +979,27 @@ error: ["Error: cannot access local variable 'mcp_tools' where it is not associa
 
 ![모델에게 묻기](diagrams/extra-ask.svg)
 
-넷째는 모델이 부른 도구 가운데 MCP 둘입니다. 서버는 자기 외부 서비스로 나갔다 돌아옵니다. 그림의 순서는 모델이 낸 `tool_calls` 순서이고, 실제 도착 순서는 실행마다 달랐습니다.
+넷째는 모델이 부른 도구 가운데 Airbnb 검색입니다. 도구 셋은 **동시에** 실행되므로(Step 5) 이 그림과 다음 두 그림의 선후는 실제로는 겹치고, 그림은 하나씩 따로 폅니다. MCP 도구는 부를 때마다 먼저 `ping`을 한 번 왕복합니다. 서버는 `placeId`가 없으면 위치 문자열을 지오코더(Photon, 실패하면 Nominatim)에 보내 지도 범위를 받은 뒤 airbnb.com에 요청합니다(서버 README).
 
-![MCP 도구 호출](diagrams/extra-calls.svg)
+![Airbnb 검색 호출](diagrams/extra-calls.svg)
 
-다섯째는 구글 검색입니다. 서버 없이 같은 프로세스에서 google.com으로 나가고, 오늘의 환경에서는 오류 글이 돌아옵니다.
+다섯째는 경로 도구입니다. 같은 `ping` 왕복 뒤에 `calculateRoute`를 부르고, 서버는 Google Maps API에 Directions를 요청합니다. 도착 순서는 실행마다 달랐습니다.
+
+![경로 도구 호출](diagrams/extra-route.svg)
+
+여섯째는 구글 검색입니다. 서버 없이 같은 프로세스에서 google.com으로 나가고, 오늘의 환경에서는 오류 글이 돌아옵니다.
 
 ![구글 검색 도구](diagrams/extra-search.svg)
 
-여섯째는 도구 결과를 받은 모델의 답과 통계입니다. 모델이 도구를 더 부르면 둘째~여섯째가 되풀이됩니다. 이 문서의 가짜 모델은 한 번만 불러서 되풀이를 보지 못했습니다.
+일곱째는 도구 결과를 받은 모델의 답과 통계입니다. 모델이 도구를 더 부르면 넷째~일곱째가 되풀이됩니다. 이 문서의 가짜 모델은 한 번만 불러서 되풀이를 보지 못했습니다.
 
 ![모델의 답과 통계](diagrams/extra-answer.svg)
 
-일곱째는 `finally`입니다. `close()`는 `AsyncExitStack`을 닫는데(`multi_mcp.py`의 272번째 줄) 나중에 연 것부터 닫혀서, Step 5의 `mcp.log`에서도 둘째 서버(`maps`)가 먼저 `exit`했습니다. `mcp`는 표준 입력을 닫아 종료를 기다리고, 2초 안에 안 끝나면 강제로 끝냅니다(`mcp/client/stdio/__init__.py`의 종료 순서 주석).
+여덟째는 `finally`입니다. `close()`는 `AsyncExitStack`을 닫는데(`multi_mcp.py`의 272번째 줄) 나중에 연 것부터 닫혀서, Step 5의 `mcp.log`에서도 둘째 서버(`maps`)가 먼저 `exit`했습니다. `mcp`는 표준 입력을 닫아 종료를 기다리고, 2초 안에 안 끝나면 강제로 끝냅니다(`mcp/client/stdio/__init__.py`의 종료 순서 주석).
 
 ![연결 닫기](diagrams/extra-close.svg)
 
-마지막은 화면으로 돌아와 일정을 저장하고 `.ics`를 만들어 버튼을 다는 부분입니다. 이 가운데 `generate_ics_content`는 화면이 다시 그려질 때마다 불립니다(`app.py:307`은 버튼 옆 칸에서 `session_state.itinerary`가 있으면 매번 실행됨).
+아홉째는 화면으로 돌아와 일정을 저장하고 `.ics`를 만들어 버튼을 다는 부분입니다. 이 가운데 `generate_ics_content`는 화면이 다시 그려질 때마다 불립니다(`app.py:307`은 버튼 옆 칸에서 `session_state.itinerary`가 있으면 매번 실행됨).
 
 ![결과 표시](diagrams/extra-show.svg)
 
@@ -994,7 +1023,7 @@ error: ["Error: cannot access local variable 'mcp_tools' where it is not associa
 | `ImportError: cannot import name 'MultiMCPTools'` | agno 3.x에는 `MultiMCPTools`가 없음 | `agno>=2.2.10,<2.3` (Step 1) |
 | ``ImportError: `mcp` not installed. Please install using `pip install mcp` `` — 설치돼 있는데도 | agno 2.2.13이 `mcp` 2.x에 없는 `streamablehttp_client`를 불러옴(문구가 거짓) | `"mcp<2"` |
 | `` ImportError: `googlesearch-python` not installed `` 또는 `pycountry` | requirements에 빠진 `GoogleSearchTools`의 의존성 | 둘을 설치 (Step 1) |
-| (아직 보지 못함) 종료일 뒤 `gpt-4o` 호출이 거부됨 | `gpt-4o`가 2027-01-14에 제거 예정 ⚠ | 오류 문구는 확인하지 못했다. OpenAI 폐기 문서의 권장 대체 `gpt-6-luna`로 바꿔도 이 앱이 도는지는 확인하지 못했다 (Step 4) |
+| (아직 보지 못함) 2027-01-14 이후 `gpt-4o` 호출이 실패한다 | 기본 스냅숏 `gpt-4o-2024-08-06`이 그날 종료 예정이다(폐기 문서). 별칭의 동작은 문서에 없다 ⚠ | `app.py:90`의 `OpenAIChat(id="gpt-4o", ...)`를 새 모델 id(권장 대체 `gpt-6-luna`)로 바꿔 시험한다(이 문서는 시험하지 못했다) (Step 4) |
 | 로그에 `'str' object has no attribute 'url'` | `GoogleSearchTools`가 `googlesearch`의 주소 문자열을 객체로 읽음 | 도구를 `advanced=True`로 부르는 자체 도구로 바꾼다("더 해보기"). 이 문서는 고쳐 보지 못했다 (Step 4) |
 | `ERROR Failed to connect to <MultiMCPTools …>: MCP connection failed: [WinError 2]`가 두 번 | Node(`npx`)가 없거나 PATH에 없음. 앱은 도구 없이 계속 진행 | Node를 설치하거나 PATH를 고친다. 일정이 그려져도 도구는 쓰이지 않았다 (Step 8) |
 | `ERROR Failed to get MCP tools: Connection closed` | 서버 프로세스가 시작 직후 끝남. 앞선 서버가 죽으면 뒤 서버는 시작도 안 함, 뒤가 죽으면 앞 서버의 도구도 사라짐 | 서버 명령을 터미널에서 따로 돌려 보고, 원인을 고친 뒤 다시 (Step 8) |

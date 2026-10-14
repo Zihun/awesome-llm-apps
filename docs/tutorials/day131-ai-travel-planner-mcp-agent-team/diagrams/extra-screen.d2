@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+keys: "사이드바 키 입력\n(st.sidebar)" { class: ours; height: 44 }
+form: "여행 조건 폼\n(st.text_input 등)" { class: ours; height: 44 }
+sync: "run_travel_planner\n(asyncio.run)" { class: ours; height: 44 }
+show: "일정 표시 · 다운로드\n(st.markdown)" { class: ours; height: 44 }
+ics: "generate_ics_content" { class: ours; height: 44 }
+icsfile: "travel_itinerary.ics" { class: file }
+
+keys -> form: "키 둘이 있어야 폼이 그려짐"
+form -> sync: "버튼: 조건 다섯 + 키 둘"
+sync -> show: "response → session_state.itinerary"
+show -> ics: "일정 글 · 시작일"
+ics -> show: "ics 바이트"
+show -> icsfile: "download_button"

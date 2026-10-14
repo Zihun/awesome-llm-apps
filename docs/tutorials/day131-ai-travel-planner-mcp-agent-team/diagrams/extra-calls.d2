@@ -3,15 +3,14 @@ shape: sequence_diagram
 
 agent: "여행 에이전트\n(Agent)" { class: ours }
 srva: "Airbnb MCP 서버" { class: ext }
-abnb: "airbnb.com ·\n지오코더" { class: ext }
-srvm: "여행 플래너\nMCP 서버" { class: ext }
-gmaps: "Google Maps\nAPI" { class: ext }
+geo: "Photon ·\nNominatim" { class: ext }
+abnb: "airbnb.com" { class: ext }
 
+agent -> srva: "ping"
+srva -> agent: "ping 응답"
 agent -> srva: "tools/call airbnb_search\n(location · maxPrice)"
-srva -> abnb: "HTTPS 요청"
-abnb -> srva: "지도 범위 · 페이지 HTML"
+srva -> geo: "location 문자열을 보냄\n(placeId가 없을 때, Photon이\n실패하면 Nominatim)"
+geo -> srva: "지도 범위"
+srva -> abnb: "HTTPS"
+abnb -> srva: "HTML"
 srva -> agent: "listings JSON"
-agent -> srvm: "tools/call calculateRoute\n(origin · destination · mode)"
-srvm -> gmaps: "Directions 요청"
-gmaps -> srvm: "경로 JSON"
-srvm -> agent: "거리 · 시간 JSON"
