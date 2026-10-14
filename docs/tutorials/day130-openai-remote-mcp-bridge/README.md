@@ -1,6 +1,6 @@
 # Day 130 · 🔌 OpenAI Remote MCP Tool Bridge
 
-> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 첫 연결에서 죽습니다(`mcp`가 2.3.0으로 풀림, Step 1) · 예상 소요 95분(앱은 파일 하나 269줄이지만 가짜 원격 MCP 서버와 가짜 OpenAI 서버를 직접 저장해 띄우고, 서버 쪽 기록과 앱 출력을 맞대어 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 한 건에 $0.01 안팎(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았습니다. 모델 호출은 도구를 한 번 쓰면 두 번이고, 입력은 도구 정의 전부와 결과(한 번에 12,000자까지)가 쌓여 수천~수만 토큰으로 어림했으며, `gpt-4o-mini`의 요금표는 확인하지 않았습니다. 기본 원격 서버 Parallel Search MCP는 키 없이 쓰는 무료 주소입니다) · 원본 앱: `mcp_ai_agents/openai_remote_mcp_bridge`
+> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 첫 연결에서 죽습니다(`mcp`가 2.3.0으로 풀림, Step 1) ⚠ 앱의 기본 모델 `gpt-4o-mini`는 모델 페이지의 기본 스냅숏 `gpt-4o-mini-2024-07-18`이 2027-01-14 종료 예정입니다(사전 준비) · 예상 소요 95분(앱은 파일 하나 269줄이지만 가짜 원격 MCP 서버와 가짜 OpenAI 서버를 직접 저장해 띄우고, 서버 쪽 기록과 앱 출력을 맞대어 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 한 건에 $0.01 이하(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았습니다. 단가는 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-14)의 표준 요금 입력 $0.15/백만 토큰, 출력 $0.60/백만 토큰입니다. 도구를 한 번 쓰면 모델 호출이 두 번이고 입력은 도구 정의 전부와 결과(한 번에 12,000자까지)가 쌓여 수천~1만 토큰이면 $0.002 안팎, 예산 6을 다 쓰고 결과가 모두 12,000자면 입력 누계 10만 토큰 안팎으로 어림해 $0.015 안팎입니다. 기본 원격 서버 Parallel Search MCP는 키 없이 쓰는 무료 주소입니다) · 원본 앱: `mcp_ai_agents/openai_remote_mcp_bridge`
 
 ## 오늘 만들 것
 
@@ -8,7 +8,7 @@
 
 직접 돌려 알게 된 것이 넷입니다. 첫째, 오늘 `requirements.txt`를 그대로 설치하면 `mcp` 2.3.0이 깔리고, 이 앱은 그 판에서 세 군데가 맞지 않아 첫 연결에서 죽습니다. `mcp<2`를 더해 1.30.0으로 돌립니다(Step 1). 둘째, `--list-tools`는 OpenAI 키가 없어도 되지만 원격 서버에는 바로 붙고, 기본 주소는 실제 `https://search.parallel.ai/mcp`입니다. 그래서 이 문서의 모든 명령은 `--server-url`을 루프백 가짜 서버로 줍니다(Step 3). 셋째, 서버가 도구 하나라도 OpenAI가 받지 못하는 모양이면 그 한 개 때문에 모델 호출 전에 전체가 멈추고, `--tools`로 골라 빼야 합니다(Step 4). 넷째, 터미널의 `[truncated N characters]` 숫자는 모델이 받은 글의 숫자가 아닙니다(Step 7).
 
-이 문서는 Parallel에도 OpenAI에도 요청을 보내지 않습니다. 두 서버를 모두 이 PC의 임의 포트에 띄운 가짜로 대신하고, 가짜 서버의 도구와 답은 제가 지어낸 대본입니다. 진짜 Parallel Search MCP의 도구는 `web_search`와 `web_fetch` 둘이고 키 없이 쓸 수 있다고 Parallel 문서(https://docs.parallel.ai/integrations/mcp/search-mcp, 2026-10-14 확인)에 적혀 있지만, 그 서버에 붙어 보지는 않았으므로 도구의 인자 모양은 모릅니다. 아래는 완성된 아키텍처입니다. 번호는 파일 안에서 코드가 실행되는 순서입니다.
+이 문서는 Parallel에도 OpenAI에도 요청을 보내지 않습니다. 두 서버를 모두 이 PC의 임의 포트에 띄운 가짜로 대신하고, 가짜 서버의 도구와 답은 제가 지어낸 대본입니다. 진짜 Parallel Search MCP의 도구는 `web_search`와 `web_fetch` 둘이고 키 없이 쓸 수 있다고 Parallel 문서(https://docs.parallel.ai/integrations/mcp/search-mcp, 2026-10-14 확인)에 적혀 있지만, 그 서버에 붙어 보지는 않았으므로 도구의 인자 모양은 모릅니다. 아래는 완성된 아키텍처입니다. 일곱 칸은 한 파일 안의 함수들이고 번호는 코드가 실행되는 순서입니다. 화살표는 칸이 아니라 파일 전체에 닿습니다. 칸 사이의 호출 순서는 아래 "요청 한 건이 흐르는 과정"이 맡고, 어느 칸이 바깥과 이야기하는지는 이렇습니다. 사용자의 인자는 1번이, `initialize`와 그 답은 2번이, `tools/list`와 도구 쪽은 3번이, `messages · tools`와 `tool_calls`는 5번이, `tools/call`과 `CallToolResult`는 6번이 주고받고(결과는 7번이 글로 만듭니다), `OPENAI_BASE_URL`은 5번의 SDK가 읽습니다(코드 위치는 아래 표).
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -22,7 +22,7 @@
 | 원격 MCP 서버 | 앱의 기본값은 `https://search.parallel.ai/mcp`. 이 문서는 쓰지 않고 가짜 서버로 대신한다 | 별도 설치 없음 |
 | 터미널 넷 | 가짜 MCP 서버, 가짜 OpenAI 서버, 앱, (Step 4의) 두 번째 가짜 MCP 서버 | 별도 설치 없음 |
 
-앱의 기본 모델 `gpt-4o-mini`(`openai_remote_mcp_bridge.py:18`)를 OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-14에 내려받아 읽음)에서 찾았습니다. 별칭 `gpt-4o-mini`는 표에 없고, 날짜가 붙은 스냅숏 `gpt-4o-mini-2024-07-18`이 2027-01-14 종료로 올라 있습니다. 별칭이 어느 스냅숏을 가리키는지는 확인하지 못했으므로 ⚠ 경고는 달지 않지만, 모델을 `--model`이나 `OPENAI_MODEL`로 바꾸는 길은 열려 있습니다.
+앱의 기본 모델은 `gpt-4o-mini`입니다(`mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:18`). OpenAI 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-14에 내려받아 읽음)는 "Default snapshot: `gpt-4o-mini-2024-07-18`"이라고 적고, 폐기 문서(https://developers.openai.com/api/docs/deprecations, 같은 날 읽음)는 "2026-10-14: GPT-4 series model deprecations" 아래에 "January 14, 2027 | GPT-4o mini (`gpt-4o-mini-2024-07-18`) | `gpt-6-luna`"를 올려 두었습니다. 별칭 `gpt-4o-mini` 자체는 폐기 표에 없고 종료 뒤 별칭이 어떻게 되는지는 폐기 문서가 말하지 않습니다. 그래서 머리말에 ⚠를 달았습니다. 2027-01-14 전에 `--model`이나 `OPENAI_MODEL`로 다른 모델을 줘야 할 수 있고, 도구 호출을 지원하는 모델이어야 합니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -33,7 +33,7 @@
 | 연결과 초기화 (`run_bridge`) | 원격 연결을 열고 세션을 초기화. 이 함수가 연결의 주인이다 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:113-129` |
 | 도구 발견 (`list_all_tools`) | `nextCursor`가 없어질 때까지 `list_tools`를 부름 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:43-52` |
 | 도구 고르기 (`select_tools`) | `--tools`를 검사해 부분집합을 돌려줌 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:99-110` |
-| 도구 변환 (`mcp_tool_to_openai`) | 이름과 스키마를 검사하고 OpenAI 함수 도구로 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:55-79` |
+| 도구 고르기·변환 (`select_tools`·`mcp_tool_to_openai`) | 이름과 스키마를 검사하고 OpenAI 함수 도구로 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:55-79` |
 | OpenAI 호출 루프 (`run_bridge` 안) | 메시지를 쌓고 `chat.completions.create`, 예산 검사 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:147-175, 216-225` |
 | 도구 호출 분배 (`run_bridge` 안) | 예산·이름·인자 검사 뒤 `session.call_tool` | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:177-214` |
 | 결과 글 만들기 | `tool_result_text`가 글을 뽑고 `limit_text`가 자름 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:26-31, 82-96` |
@@ -41,7 +41,7 @@
 | 원격 MCP 서버 | 앱 밖. 기본 `https://search.parallel.ai/mcp`, 이 문서는 가짜 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:17` |
 | OpenAI | 앱 밖. SDK의 기본 주소, 이 문서는 `OPENAI_BASE_URL`로 가짜 | `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:159` |
 
-앱이 밖으로 여는 연결은 둘뿐입니다. MCP 서버로 가는 HTTP(`streamable_http_client`)와 OpenAI로 가는 HTTP(`AsyncOpenAI`). `mcp` 1.30.0과 `openai` 3.31.0 소스에서 `posthog`·`sentry`·`analytics`를 grep하면 `mcp`에서는 아무것도 안 나오고, `openai`에서는 음성 받아쓰기의 "segment"만 걸렸습니다. 에이전트 프레임워크가 없으니 Day 047의 agno 익명 사용 통계도 이 앱과 상관없습니다.
+앱이 밖으로 여는 연결은 둘뿐입니다. MCP 서버로 가는 HTTP(`streamable_http_client`)와 OpenAI로 가는 HTTP(`AsyncOpenAI`). `mcp` 1.30.0과 `openai` 3.31.0 소스에서 `posthog`·`sentry`·`analytics`를 grep하면 두 패키지 모두 0건이었습니다(검색어에 `segment`를 더하면 `openai`의 음성 받아쓰기 파일만 걸립니다). 에이전트 프레임워크가 없으니 Day 047의 agno 익명 사용 통계도 이 앱과 상관없습니다.
 
 ## 단계별 진행
 
@@ -119,7 +119,7 @@ OPENAI_API_KEY is required when running a task.
 Bridge failed: All connection attempts failed
 ```
 
-셋째·넷째 명령의 `usage:` 여섯 줄은 `...`로 줄였고 종료 코드는 2입니다. 다섯째 명령은 키가 없다고 종료 코드 1로 끝나고 `[connect]`도 찍지 않습니다. 키 검사(`:246-248`)가 연결(`:122`)보다 앞이기 때문입니다. 여섯째는 키 없이 되는 `--list-tools`가 연결을 시도해, 듣는 이가 없어 실패한 것입니다. 인자 검사와 키 검사는 네트워크에 닿기 전에 끝납니다.
+셋째·넷째 명령의 `usage:` 줄들(터미널 폭에 따라 한 줄에서 다섯 줄)은 `...`로 줄였고 종료 코드는 2입니다. 다섯째 명령은 키가 없다고 종료 코드 1로 끝나고 `[connect]`도 찍지 않습니다. 키 검사(`:246-248`)가 연결(`:122`)보다 앞이기 때문입니다. 여섯째는 키 없이 되는 `--list-tools`가 연결을 시도해, 듣는 이가 없어 실패한 것입니다. 인자 검사와 키 검사는 네트워크에 닿기 전에 끝납니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -870,6 +870,7 @@ caption
 | 모델이 부른 도구가 `Error: unknown MCP tool '…'`로 돌아옴 | `--tools`로 노출하지 않은 이름. 서버에 있어도 막힘 | 필요한 도구를 `--tools`에 넣는다 |
 | `[truncated N characters]`의 N이 도구 결과의 실제 초과량과 다름 | 12,000자로 자른 글을 trace가 500자로 한 번 더 자르며 센 값 | 모델이 받은 길이는 12,000자에 표지 29자다(Step 7) |
 | `--server-url` 없이 돌렸더니 `https://search.parallel.ai/mcp`에 붙음 | 기본값이 실제 Parallel 주소이고 `--list-tools`도 키 없이 바로 붙음 | 실습할 때는 항상 루프백 `--server-url`을 준다 |
+| 2027-01-14 이후 모델 오류(그날 이후 실제로 어떤 문구가 나오는지는 보지 못했다) | 앱 기본 모델 `gpt-4o-mini`의 기본 스냅숏 `gpt-4o-mini-2024-07-18`이 그날 종료 예정(사전 준비) | `--model <대체 모델>` 또는 `OPENAI_MODEL`. 대체 모델이 도구 호출을 지원하는지 먼저 확인한다 |
 | 키를 넣고 task를 돌렸는데 가짜가 아니라 실제 OpenAI로 감 | `OPENAI_BASE_URL`이 그 터미널에 없으면 SDK가 `https://api.openai.com/v1`을 씀(소스로 확인, 이 경로는 돌려 보지 않았다) | 가짜 서버 실습은 변수를 건 터미널에서만 한다 |
 
 ## 더 해보기
