@@ -1,6 +1,6 @@
 # Day 127 · 📑 Notion MCP Agent
 
-> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않고, 고쳐도 `fastmcp`와 `enable_user_memories`에서 차례로 막힙니다(Step 1·3) · 예상 소요 100분(앱은 124줄이지만 가짜 MCP 서버와 가짜 OpenAI 서버를 직접 저장해 터미널 둘로 돌리고, 서버를 늦게 띄우거나 키를 빼 가며 같은 앱을 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 큽니다) · API 비용 대략 한 턴에 수 센트(⚠ 추정입니다. 이 문서는 OpenAI와 Notion을 한 번도 부르지 않았습니다. 모델 호출은 한 턴에 셋이고, `gpt-4o` 표준 요금은 입력 $2.50·출력 $10.00/백만 토큰입니다. 진짜 Notion 서버의 도구 목록이 입력에 얼마나 실리는지는 재지 못했습니다) · 원본 앱: `mcp_ai_agents/notion_mcp_agent`
+> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않고, 고쳐도 `fastmcp`와 `enable_user_memories`에서 차례로 막힙니다(Step 1·3). 앱이 쓰는 `gpt-4o`의 기본 스냅숏 `gpt-4o-2024-08-06`은 2027-01-14에 종료될 예정입니다(사전 준비) · 예상 소요 115분(앱은 124줄이지만 가짜 MCP 서버와 가짜 OpenAI 서버를 직접 저장해 터미널 둘로 돌리고, 서버를 늦게 띄우거나 키를 빼 가며 같은 앱을 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 큽니다) · API 비용 대략 한 턴에 수 센트(⚠ 추정입니다. 이 문서는 OpenAI와 Notion을 한 번도 부르지 않았습니다. 모델 호출은 한 턴에 셋이고, `gpt-4o` 표준 요금은 입력 $2.50·출력 $10.00/백만 토큰입니다. 진짜 Notion 서버의 도구 목록이 입력에 얼마나 실리는지는 재지 못했습니다) · 원본 앱: `mcp_ai_agents/notion_mcp_agent`
 
 ## 오늘 만들 것
 
@@ -28,7 +28,9 @@ Notion 페이지 ID 하나를 주고 터미널에서 "이 페이지 읽어 줘",
 | Node.js (`npx`) | 진짜로 쓸 때 `npx -y @notionhq/notion-mcp-server`를 내려받아 실행. 이 문서의 실습은 쓰지 않는다 | https://nodejs.org/ |
 | 인터넷 연결 | PyPI 설치. 실제로 쓸 때는 OpenAI, npm, Notion, agno 통계 서버에 접속한다 | 별도 설치 없음 |
 
-⚠ **모델.** 앱은 `gpt-4o`를 씁니다(`notion_mcp_agent.py:77`). OpenAI 공식 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-14 확인)에는 이 id 자체의 종료 행이 없습니다. 다만 같은 문서에 스냅샷 `gpt-4o-2024-08-06`·`gpt-4o-2024-11-20`이 2027-01-14에 종료된다는 행이 있어서, 별칭 `gpt-4o`가 그 뒤 무엇을 가리킬지는 이 문서가 확인하지 못했습니다.
+⚠ **모델.** 앱은 `gpt-4o`를 씁니다(`notion_mcp_agent.py:77`). OpenAI 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-14 확인)는 이 모델의 "Default snapshot"을 `gpt-4o-2024-08-06`이라고 적습니다. 공식 폐기 문서(https://developers.openai.com/api/docs/deprecations, 같은 날)에는 `gpt-4o`라는 id 자체의 종료 행이 없지만, 그 기본 스냅숏 `gpt-4o-2024-08-06`(과 `gpt-4o-2024-11-20`)이 2027-01-14에 종료된다는 행이 있습니다. 별칭 `gpt-4o`가 그 뒤 어떻게 되는지는 두 문서 어디에도 적혀 있지 않아 이 문서도 확인하지 못했습니다. 2027-01-14 이후에 호출이 실패하면 `OpenAIChat(id=...)`(77행)을 새 모델로 바꿔야 할 수 있습니다.
+
+⚠ **서버.** 진짜 서버 `@notionhq/notion-mcp-server`의 공개 README(https://github.com/makenotion/notion-mcp-server, 같은 날 읽음)는 맨 위에 "This repository is a separate, self-hosted MCP server implementation that is no longer actively maintained or supported."라고 적고 호스팅형 Remote Notion MCP(https://developers.notion.com/docs/mcp)를 권합니다. 이 앱이 `npx`로 붙이는 것이 바로 그 자체 호스팅 서버입니다. 같은 README의 `Notion-Version` 예는 `2025-09-03`과 `2026-03-11`뿐이고 앱이 고정한 `2022-06-28`은 없습니다.
 
 이 문서의 스크립트와 앱은 한글을 출력합니다. 한국어 Windows에서 출력을 파이프나 파일로 받으면 기본 인코딩이 모자랄 수 있으니 셸을 먼저 맞춰 두세요.
 
@@ -439,24 +441,33 @@ Get-Content mcp.jsonl
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** 터미널 둘로 합니다. 먼저 `notion-lab`의 첫 터미널에서 가짜 OpenAI 서버를 띄웁니다. 앞의 포트와 같은 값을 씁니다.
+**확인.** 터미널 둘로 합니다. 먼저 **새 터미널**을 하나 열고 `notion-lab`으로 가서 가짜 OpenAI 서버를 띄웁니다. 이 터미널에는 키나 `OPENAI_BASE_URL`을 걸지 않고, 포트 숫자(Step 4의 값)만 씁니다.
 
 ```bash
-uv run --no-project python fake_openai.py $PORT openai.jsonl
+uv run --no-project python fake_openai.py 54321 openai.jsonl
 ```
 
 ```powershell
-uv run --no-project python fake_openai.py $env:PORT openai.jsonl
+uv run --no-project python fake_openai.py 54321 openai.jsonl
 ```
 
-둘째 터미널에서 Step 4와 같은 환경변수를 걸고, 질문을 두 줄 넣은 뒤 끝냅니다.
+앱은 Step 4에서 쓰던 터미널에서 돌립니다. 새로 연 터미널이라면 아래 환경변수를 먼저 다시 걸고, 첫 줄로 가짜 주소가 걸렸는지 확인합니다. 앱은 `load_dotenv()`(15행)를 부르는데, python-dotenv는 스크립트 폴더에서 위로 올라가며 `.env`를 찾습니다. `notion-lab`의 상위 폴더에 진짜 키가 든 `.env`가 있어도 셸에 이미 걸린 값이 이기지만, 셸에 값이 없으면 그 파일의 진짜 키로 OpenAI를 부르니 `OPENAI_BASE_URL`이 걸렸는지 꼭 봅니다.
 
 ```bash
+export PORT=54321
+export OPENAI_BASE_URL=http://127.0.0.1:$PORT/v1 OPENAI_API_KEY=sk-fake NOTION_API_KEY=ntn_fake AGNO_TELEMETRY=false
+echo "$OPENAI_BASE_URL"
 rm -f mcp.jsonl openai.jsonl agno.db
 printf '페이지를 읽어줘\n고마워\nexit\n' | uv run --no-project python notion_mcp_agent.py abc123pageid
 ```
 
-앱은 질문마다 `Message` 상자, `Tool Calls` 상자(`read_page(page_id=abc123pageid)`), `Response` 상자를 찍습니다. 가짜 모델은 도구가 보이면 늘 `read_page`를 부르는 대본이라 둘째 질문 "고마워"에도 도구를 부릅니다. 모델이 받은 요청의 요약을 봅니다.
+```powershell
+$env:PORT = "54321"
+$env:OPENAI_BASE_URL = "http://127.0.0.1:$($env:PORT)/v1"; $env:OPENAI_API_KEY = "sk-fake"; $env:NOTION_API_KEY = "ntn_fake"; $env:AGNO_TELEMETRY = "false"
+echo $env:OPENAI_BASE_URL
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다. 첫 줄 `echo`가 `http://127.0.0.1:...`이 아니면 멈춥니다.) 앱은 질문마다 `Message` 상자, `Tool Calls` 상자(`read_page(page_id=abc123pageid)`), `Response` 상자를 찍습니다. 가짜 모델은 도구가 보이면 늘 `read_page`를 부르는 대본이라 둘째 질문 "고마워"에도 도구를 부릅니다. 모델이 받은 요청의 요약을 봅니다.
 
 ```bash
 uv run --no-project python -c "import json; [print(d['path'], 'stream=%s' % d['stream'], d['tools'], d['roles']) for d in map(json.loads, open('openai.jsonl', encoding='utf-8'))]"
@@ -509,6 +520,8 @@ mcp.shared.exceptions.MCPError: Request 'initialize' timed out
 
 15초를 기다리게 하면 위 오류로 죽고, 8초면 연결됐고 12초면 죽었습니다(직접 확인). 기준은 `MCPTools`의 생성자 인자 `timeout_seconds=10`입니다(소스, `agno/tools/mcp/mcp.py`의 `MCPTools.__init__` 시그니처). 71행을 `MCPTools(server_params=server_params, timeout_seconds=30)`으로 바꾸면 12초 지연에서 연결됐습니다(직접 확인). 실제 `npx -y`가 처음 패키지를 내려받는 데 얼마나 걸리는지는 `npx`를 실행하지 않아 재지 못했으니, 10초를 넘기면 같은 증상일 것이라는 것은 추정입니다.
 
+**확인이 끝나면 복사본을 되돌립니다.** 62행을 `args=["fake_notion_mcp.py", "mcp.jsonl"],`로 되돌리고, 71행에 `timeout_seconds=30`을 넣었다면 `MCPTools(server_params=server_params)`로 되돌립니다. 되돌리지 않으면 아래 재시작 확인은 두 번 모두 같은 `timed out`으로 죽고 `agno.db`는 빈 파일로 남아 `no such table: agno_sessions`로 끝납니다(직접 확인). 되돌렸는지는 `grep -n 'args=\|MCPTools(' notion_mcp_agent.py`로 봅니다. 62행에 `"15"`가 없고 71행에 `timeout_seconds`가 없어야 합니다.
+
 셋째는 재시작입니다. 같은 폴더에서 앱을 두 번 실행하고 `agno.db`를 열어 봅니다.
 
 ```bash
@@ -536,8 +549,8 @@ has_learnings, has_reasoning, has_knowledge, has_input_schema, has_output_schema
 
 **진짜로 붙이려면.** 이 문서는 아래를 실행하지 않았습니다. 가짜 값이 아닌 키를 쓰는 단계라서 직접 하실 때 신중히 하세요.
 
-1. 위 설치 명령으로 `agno[mcp,sqlite]`까지 설치하고, 복사본의 104행만 `update_memory_on_run=True`로 바꿉니다(61·62행은 원본 그대로 둡니다).
-2. `OPENAI_API_KEY`와 `NOTION_API_KEY`를 진짜 값으로 걸고(`OPENAI_BASE_URL`·`AGNO_TELEMETRY`는 지웁니다), 페이지를 통합에 공유합니다. Node.js가 있어야 `npx`가 돕니다.
+1. 위 설치 명령으로 `agno[mcp,sqlite]`까지 설치하고, 원본 파일을 새 폴더에 **새로 복사해** 104행만 `update_memory_on_run=True`로 바꿉니다. 지금의 복사본은 61·62행이 가짜 서버로 바뀌어 있고 `"15"`나 `timeout_seconds=30`이 남아 있을 수 있으니 쓰지 않습니다. 공개 README가 이 서버를 더 이상 유지하지 않는다고 적은 것(사전 준비)도 먼저 읽어 두세요.
+2. `OPENAI_API_KEY`와 `NOTION_API_KEY`를 진짜 값으로 걸고 `OPENAI_BASE_URL`은 지웁니다. `AGNO_TELEMETRY=false`는 둘 수도 지울 수도 있는데, 지우면 성공한 턴마다 통계 한 건이 `os-api.agno.com`으로 나갑니다(Step 6). 페이지를 통합에 공유하고, Node.js가 있어야 `npx`가 돕니다.
 3. `uv run --no-project python notion_mcp_agent.py <페이지 ID>`. 첫 실행은 `npx -y`가 서버를 내려받는 시간이 들고, 그 시간이 10초를 넘으면 위 `timed out`을 만날 수 있습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
@@ -573,7 +586,7 @@ has_learnings, has_reasoning, has_knowledge, has_input_schema, has_output_schema
 - [ ] `mcp.jsonl`에서 서버가 받은 환경 키가 허용 목록과 `OPENAPI_MCP_HEADERS`뿐임을 봤다
 - [ ] `NOTION_API_KEY`를 빼면 `Bearer None`이 되는 것을 봤다
 - [ ] `openai.jsonl`에서 한 턴이 모델 호출 셋임을 봤다
-- [ ] 서버를 15초 늦추면 `initialize`가 타임아웃으로 죽는 것을 봤다
+- [ ] 서버를 15초 늦추면 `initialize`가 타임아웃으로 죽는 것을 봤고, 62행과 71행을 되돌렸다
 - [ ] 두 번 실행한 `agno.db`에 세션이 둘 있는 것을 봤다
 - [ ] 가짜 서버(`fake_openai.py`)를 `Ctrl+C`로 끄고 포트가 비었는지 확인했다
 
@@ -582,12 +595,14 @@ has_learnings, has_reasoning, has_knowledge, has_input_schema, has_output_schema
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `ImportError: The SQLAlchemy asyncio module requires that the Python 'greenlet' library is installed`가 `notion_mcp_agent.py:10`에서 | `requirements.txt`의 `sqlalchemy`가 `greenlet`을 끌어오지 않는다 | `uv pip install "agno[mcp,sqlite]"` |
-| `ImportError: \`fastmcp\` not installed. MCPTools builds its connections with it.`가 71행(`async with`)에서 | agno 3.1.3의 `MCPTools`는 `fastmcp`로 연결을 만들고 `fastmcp`는 agno의 `mcp` 선택 항목에만 있다 | 같은 명령으로 `agno[mcp,sqlite]` |
+| ``ImportError: `fastmcp` not installed. MCPTools builds its connections with it.``가 71행(`async with`)에서 | agno 3.1.3의 `MCPTools`는 `fastmcp`로 연결을 만들고 `fastmcp`는 agno의 `mcp` 선택 항목에만 있다 | 같은 명령으로 `agno[mcp,sqlite]` |
 | `TypeError: Agent.__init__() got an unexpected keyword argument 'enable_user_memories'`가 75행에서 | agno 3.0.0부터 인자 이름이 `update_memory_on_run`으로 바뀌었다(Day 108) | 104행을 `update_memory_on_run=True`로 |
 | `mcp.shared.exceptions.MCPError: Request 'initialize' timed out`가 71행에서 | 서버가 10초(`timeout_seconds` 기본값) 안에 응답하지 못했다. 이 문서는 느린 가짜 서버로 재현했다 | `MCPTools(server_params=server_params, timeout_seconds=30)`. 진짜 서버가 첫 실행에 느린 것이 원인인지는 확인하지 못했다 |
 | `ModuleNotFoundError: No module named 'mcp.server.fastmcp'`가 가짜 서버에서 | `mcp` 2.x에서 `FastMCP`가 `MCPServer`(`mcp.server.mcpserver`)로 바뀌었다 | 이 문서의 `fake_notion_mcp.py`처럼 `MCPServer`를 쓴다 |
 | 키를 안 줬는데 서버가 뜨고 모델 호출에서 `OPENAI_API_KEY not set`이 네 번 시도 뒤에 난다 | 키 검사는 첫 모델 호출 때 일어난다. 서버는 그 전에 이미 떠 있다 | 키를 걸고 다시 실행 |
 | `Notion-Version`·`Authorization`이 Notion 오류로 끝나는 것으로 보인다 | 키가 없으면 헤더가 `Bearer None`이고, `2022-06-28`이 고정되어 있다 | 키를 건다. 버전 고정이 오늘의 서버와 맞는지는 이 문서가 확인하지 못했다 |
+| 2027-01-14 이후 `gpt-4o` 호출이 실패한다 | 기본 스냅숏 `gpt-4o-2024-08-06`이 그날 종료 예정이다(폐기 문서). 별칭의 동작은 문서에 없다 | 77행의 `OpenAIChat(id="gpt-4o", ...)`를 새 모델 id로 바꿔 시험한다(이 문서는 시험하지 못했다) |
+| 진짜 서버가 더 이상 갱신되지 않아 도구가 달라지거나 사라진다 | 공개 README가 이 서버를 "no longer actively maintained or supported"라고 적고 Remote Notion MCP를 권한다 | 호스팅형으로 옮길 때는 서버 명령(61·62행)이 아니라 연결 방식 자체를 바꿔야 한다. 이 문서는 시험하지 못했다 |
 | 앱을 다시 켰더니 앞 대화를 기억하지 못한다 | 켤 때마다 사용자·세션 ID가 새로 만들어진다(52~53행) | ID를 파일이나 인자로 고정하도록 코드를 고친다(더 해보기) |
 | 앱 README의 `NOTION_PAGE_ID`와 기본 페이지 ID가 먹지 않는다 | 소스에 그 변수가 없고 빈 입력은 오류로 끝난다(47~49행) | 페이지 ID를 첫 인자로 준다 |
 

@@ -23,7 +23,7 @@ db: "agno.db (SqliteDb)" { class: store }
 user -> app: "페이지 ID · 질문"
 app -> user: "답 글 · 도구 상자"
 env -> app: "키 둘"
-app -> server: "실행 · stdio"
+app -> server: "실행 (OPENAPI_MCP_HEADERS) · stdio"
 server -> app: "도구 목록 · 결과"
 server -> notion: "API 요청"
 notion -> server: "페이지 JSON"
