@@ -4,12 +4,9 @@ shape: sequence_diagram
 main: "main" { class: ours }
 agent: "MultiMCPAgent" { class: ours }
 mcp: "MultiMCPTools" { class: ours }
-gmail: "Gmail 서버" { class: ext }
+github: "GitHub 서버" { class: ext }
 
 main -> agent: "tools=[도구 없는 묶음]"
 agent -> mcp: "첫 질문: connect()\n(initialized 아님)"
-mcp -> mcp: "앞 서버 셋 다시 연결"
-mcp -> gmail: "자식 프로세스 실행 ·\ninitialize"
-gmail -> mcp: "프로세스 끝남\n(Connection closed)"
-mcp -> mcp: "열린 세션 모두 닫기\n(_safe_cleanup)"
-mcp -> agent: "도구 없이 답 만들기"
+mcp -> github: "자식 프로세스 실행 ·\ninitialize"
+github -> mcp: "initialize 응답"

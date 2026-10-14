@@ -629,13 +629,25 @@ False ['add_memory', 'delete_memory', 'update_memory'] ['developer', 'user']
 
 (줄 번호는 출력 앞쪽 줄 수에 따라 달라질 수 있고, 마지막 두 줄의 순서는 실행마다 바뀔 수 있습니다.) 읽을 것은 넷입니다. 첫째, 한 서버가 실패하면 `_connect()`가 `ValueError`로 반복을 끊고, `__aenter__`가 그 예외를 로그로 삼킵니다. 여기까지는 Day 131 Step 3·8이 2.2.13에서 본 것과 같습니다. 2.9.0은 한 걸음 더 갑니다. `_safe_cleanup()`을 불러 앞서 연결된 github·perplexity·calendar까지 닫고 `initialized`를 끄므로, 모델에 도구가 하나도 가지 않습니다(요청의 `tools`가 `[]`). 둘째, 앱의 68행은 아무것도 검사하지 않아 `✅ Successfully connected to all MCP servers!`가 그대로 찍힙니다. 셋째, `initialized`가 꺼져 있어서 첫 질문에서 에이전트가 `connect_mcp_tools`(agno 2.9.0 `agno/agent/_init.py`)로 `connect()`를 다시 불러 서버 넷이 한 번 더 뜨고, `mcp.jsonl`에 같은 다섯 줄이 또 생기고 같은 오류가 다시 나옵니다(질문 하나만 재 봤고, 질문마다 되풀이되는지는 재지 못했습니다). 넷째, 그래도 질문에는 답이 나옵니다. 도구 없이 답하는 모델이 도구를 쓴 척하지 않는지는 이 문서가 확인하지 못했습니다(가짜 모델은 그냥 대본을 읽습니다). 10초를 넘기는 느린 서버도 같은 길로 갑니다(Step 4의 출력).
 
-![서버가 죽었을 때](diagrams/extra-fail.svg)
+서버가 죽는 과정은 서버 이웃끼리 나눈 그림 셋입니다(서버 셋은 정상, 넷째가 죽음). 첫 그림은 `async with`와 GitHub 서버의 `initialize`입니다.
 
-![첫 질문에서 다시 연결](diagrams/extra-fail-retry.svg)
+![서버가 죽었을 때 1](diagrams/extra-fail.svg)
+
+![서버가 죽었을 때 2](diagrams/extra-fail-2.svg)
+
+![서버가 죽었을 때 3](diagrams/extra-fail-3.svg)
+
+첫 질문에서 같은 연결이 다시 일어나는 과정도 셋입니다.
+
+![첫 질문에서 다시 연결 1](diagrams/extra-fail-retry.svg)
+
+![첫 질문에서 다시 연결 2](diagrams/extra-fail-retry-2.svg)
+
+![첫 질문에서 다시 연결 3](diagrams/extra-fail-retry-3.svg)
 
 **두 날의 판 차이.** Day 131은 `agno>=2.2.10,<2.3`(2.2.13)을 썼습니다. 그 앱이 쓰는 `GoogleSearchTools`의 모듈 `agno.tools.googlesearch`가 2.3.0부터 없기 때문입니다. 오늘 앱은 그 도구를 쓰지 않으므로 `agno<3`(2.9.0)이 맞고, 두 처방은 모순이 아닙니다. 같은 실패에 대한 동작은 판마다 다릅니다(두 판의 `multi_mcp.py`를 소스로 비교했고, 2.2.13을 실행해 본 것은 Day 131입니다). 2.2.13의 `__aenter__`는 예외를 `log_error`만 하고 정리하지 않아(2.2.13 `multi_mcp.py`의 `__aenter__`) 앞 서버의 연결이 남습니다. 2.9.0의 `__aenter__`는 `_safe_cleanup()`을 부릅니다(2.9.0 `multi_mcp.py`의 `__aenter__`). 그래서 오늘은 연결이 모두 사라지고 첫 질문에서 다시 시도합니다.
 
-**서버 하나가 죽어도 나머지를 쓰기.** 2.9.0에도 `allow_partial_failure` 인자가 있습니다(Day 131 Step 8의 방법). 복사본 67행을 `async with MultiMCPTools(mcp_servers, env=env, allow_partial_failure=True) as mcp_tools:`로 바꾸고 60행의 `exit`를 그대로 두고 같은 명령을 돌리면, Gmail이 죽어도 모델에 도구 셋이 갔고 서버는 한 번만 시도됐습니다(직접 확인).
+**서버 하나가 죽어도 나머지를 쓰기.** 2.9.0에도 `allow_partial_failure` 인자가 있습니다(Day 131의 "더 해보기"가 2.2.13에서 같은 방법을 직접 돌려 확인했습니다). 복사본 67행을 `async with MultiMCPTools(mcp_servers, env=env, allow_partial_failure=True) as mcp_tools:`로 바꾸고 60행의 `exit`를 그대로 두고 같은 명령을 돌리면, Gmail이 죽어도 모델에 도구 셋이 갔고 서버는 한 번만 시도됐습니다(직접 확인).
 
 ```text
 ERROR    Failed to get MCP tools: Connection closed
@@ -643,9 +655,11 @@ ERROR    Failed to initialize MCP server with params command='python' ...
 ✅ Successfully connected to all MCP servers!
 [('github', 'start'), ('perplexity', 'start'), ('calendar', 'start'), ('gmail', 'start'), ('gmail', 'exit'), ('github', 'call')]
 True ['list_events', 'perplexity_ask', 'search_repositories']
+False ['add_memory', 'delete_memory', 'update_memory']
+True ['list_events', 'perplexity_ask', 'search_repositories']
 ```
 
-(`ERROR` 줄은 줄여 썼습니다.) 그래도 `✅`는 찍힙니다. agno 3에는 이 인자가 없습니다(릴리스 노트).
+(`ERROR` 줄은 줄여 썼습니다. 모델 요청은 질문 한 줄에 세 번이고 두 번째 줄은 메모리 호출입니다. 순서는 실행마다 바뀔 수 있습니다.) 그래도 `✅`는 찍힙니다. agno 3에는 이 인자가 없습니다(릴리스 노트).
 
 **진짜 서버 넷은 이 문서가 실행하지 않았습니다.** 공개 문서(2026-10-14에 읽음)로만 확인한 것은 이렇습니다.
 
