@@ -2,11 +2,13 @@
 shape: sequence_diagram
 
 board: "보드 (TicTacToeBoard)" { class: ours }
+user: 사용자 { class: person }
 ui: "화면 (main)" { class: ours }
 state: "session_state" { class: store }
 
-ui -> board: "make_move(0, 2) (X의 다섯째 수)"
-board -> ui: "(True, 'Move successful!')"
-ui -> state: "move_history에 수 추가"
 ui -> board: "get_game_state()"
 board -> ui: "(True, 'Player X wins!')"
+ui -> ui: "logger.info('Game Over - Player X wins!')"
+ui -> user: "st.success('Game Over! Player X wins!')"
+ui -> state: "game_paused = True"
+ui -> ui: "st.rerun()"

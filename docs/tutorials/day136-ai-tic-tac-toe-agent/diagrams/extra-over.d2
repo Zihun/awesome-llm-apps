@@ -1,15 +1,15 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-state: "session_state" { class: store }
 user: 사용자 { class: person }
 ui: "화면 (main)" { class: ours }
 board: "보드 (TicTacToeBoard)" { class: ours }
 
-ui -> ui: "logger.info('Game Over - Player X wins!')"
-ui -> user: "st.success('Game Over! Player X wins!')"
-ui -> state: "game_paused = True"
-ui -> ui: "st.rerun()"
+ui -> board: "get_game_state() (사이드바)"
+board -> ui: "(True, 'Player X wins!')"
+ui -> user: "머리글 'X 모델 vs O 모델'"
 ui -> board: "get_game_state()"
 board -> ui: "(True, 'Player X wins!')"
-ui -> user: "display_board · 우승 안내 · 기록 (HTML)"
+ui -> user: "display_board(판)"
+ui -> user: "st.success('Game Over! Player 1 (모델) wins!')"
+ui -> user: "display_move_history()"

@@ -2,9 +2,14 @@
 shape: sequence_diagram
 
 ui: "화면 (main)" { class: ours }
-agent: "플레이어 (Agent)" { class: ours }
+board: "보드 (TicTacToeBoard)" { class: ours }
 provider: "모델 제공자" { class: ext }
+agent: "플레이어 (Agent)" { class: ours }
 
+ui -> board: "get_valid_moves()"
+board -> ui: "빈 칸 목록"
+ui -> board: "get_board_state()"
+board -> ui: "판 글"
 ui -> agent: "run(판 + 빈 칸, stream=False)"
 agent -> provider: "채팅 요청 (지시문 + 질문)"
 provider -> agent: "답 글 ('0 0')"

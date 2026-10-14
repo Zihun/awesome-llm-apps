@@ -5,10 +5,12 @@ user: 사용자 { class: person }
 ui: "화면 (main)" { class: ours }
 board: "보드 (TicTacToeBoard)" { class: ours }
 
+ui -> board: "get_game_state() (사이드바)"
+board -> ui: "(False, 'Game in progress')"
+ui -> user: "머리글 'X 모델 vs O 모델'"
 ui -> board: "get_game_state()"
 board -> ui: "(False, 'Game in progress')"
-ui -> user: "display_board · 상태 · 기록 (HTML)"
-ui -> board: "get_valid_moves()"
-board -> ui: "빈 칸 목록"
-ui -> board: "get_board_state()"
-board -> ui: "판 글"
+ui -> user: "display_board(판)"
+ui -> user: "show_agent_status(차례)"
+ui -> user: "display_move_history()"
+ui -> user: "thinking 안내 상자"

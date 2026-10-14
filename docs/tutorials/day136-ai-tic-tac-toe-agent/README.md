@@ -1,20 +1,20 @@
 # Day 136 · 🎲 AI Tic-Tac-Toe Agent
 
-> 볼륨 10 🎮 Autonomous Game-Playing · 난이도 ★★☆ ⚠ 화면의 기본 선택(X `claude-3.7-thinking`, O `o3-mini`)은 처음 누르는 순간 실패합니다. X의 모델은 2026-02-19에 퇴역했고 O의 모델은 2026-10-23에 종료되며, `requirements.txt`는 그대로는 설치되지 않습니다(사전 준비, Step 1, Step 7) · 예상 소요 130분(앱은 파일 셋 890줄이지만 가짜 서버를 직접 저장해 띄우고, 확인용 스크립트 여섯을 저장해 돌리며, 서버 쪽 기록과 앱의 동작을 맞대어 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI·Anthropic·Google·Groq는 한 번도 부르지 않았고 요금표도 확인하지 못했습니다) · 원본 앱: `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent`
+> 볼륨 10 🎮 Autonomous Game-Playing · 난이도 ★★☆ ⚠ 화면의 기본 선택(X `claude-3.7-thinking`, O `o3-mini`)은 처음 누르는 순간 실패합니다. X의 모델은 2026-02-19에 퇴역했고 O의 모델은 2026-10-23에 종료되고, 중심 경로의 `gpt-4o`도 기본 스냅숏이 2027-01-14에 종료될 예정이며, `requirements.txt`는 그대로는 설치되지 않습니다(사전 준비, Step 1, Step 7) · 예상 소요 150분(앱은 파일 셋 890줄이지만 가짜 서버를 직접 저장해 띄우고, 확인용 스크립트 여섯을 저장해 돌리며, 서버 쪽 기록과 앱의 동작을 맞대어 보고, 보드 호출까지 그린 시퀀스 그림 아홉 장을 읽는 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI·Anthropic·Google·Groq는 한 번도 부르지 않았고 요금표도 확인하지 못했습니다. 진짜 키로 돌리면 틀린 답이나 호출 실패가 횟수 상한 없이 되풀이되어 요금이 계속 붙을 수 있습니다, Step 7) · 원본 앱: `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent`
 
 ## 오늘 만들 것
 
-Streamlit 화면에서 모델 둘을 골라 X와 O로 세우고, 두 모델이 3×3 판에서 서로 한 수씩 두는 것을 구경하는 앱입니다. 볼륨 10 "🎮 Autonomous Game-Playing"의 셋째 날이자 마지막 날입니다. 앞의 두 앱과 이어지는 부분은 이렇습니다. 세 앱 모두 Streamlit 화면입니다. Day 134의 체스 앱은 `autogen`의 `register_function`을 가져와(`ai_chess_agent.py:4`) 도구로 수를 두는 구조이고, Day 135의 앱은 `agno`와 `browser_use`를 가져옵니다(`ai_3dpygame_r1.py:3-7`). 오늘 앱에는 도구가 하나도 없습니다(`grep -c "tools=" agents.py app.py`가 둘 다 0). 모델에게 판과 빈 칸을 글로 보여 주고, 돌아온 글에서 숫자 둘을 정규식으로 뽑아 수로 씁니다.
+Streamlit 화면에서 모델 둘을 골라 X와 O로 세우고, 두 모델이 3×3 판에서 서로 한 수씩 두는 것을 구경하는 앱입니다. 볼륨 10 "🎮 Autonomous Game-Playing"의 셋째 날이자 마지막 날입니다. 앞의 두 앱과 이어지는 부분은 이렇습니다. 세 앱 모두 Streamlit 화면입니다. Day 134의 체스 앱은 `autogen`의 `register_function`을 가져와(`ai_chess_agent.py:4`) 도구로 수를 두는 구조이고, Day 135의 앱은 `agno`와 `browser_use`를 가져옵니다(`ai_3dpygame_r1.py:3-7`. agno는 가져오기만 하고 쓰지는 않는다고 Day 135 Step 1이 확인했으니, 이 볼륨에서 agno를 실제로 쓰는 앱은 오늘 것뿐입니다). 오늘 앱에는 도구가 하나도 없습니다(`grep -c "tools=" agents.py app.py`가 둘 다 0). 모델에게 판과 빈 칸을 글로 보여 주고, 돌아온 글에서 숫자 둘을 정규식으로 뽑아 수로 씁니다.
 
 이름과 달리 "심판 에이전트"는 없습니다. 앱의 README는 세 에이전트(Master Agent (Referee)와 플레이어 둘)라고 적고 `agents.py` 머리 주석도 `get_tic_tac_toe_referee()`를 부르라고 하지만, 그 함수는 파일에 없습니다(Step 3). 심판 일은 `utils.py`의 `TicTacToeBoard`와 `app.py`의 코드가 합니다. 이 문서는 OpenAI·Anthropic·Google·Groq 어디에도 요청을 보내지 않았습니다. 네 제공자 자리에는 `127.0.0.1`의 가짜 서버를 두었고, 그 서버가 주는 수는 제가 정한 규칙(X는 첫 빈 칸, O는 마지막 빈 칸)이라 틱택토를 두는 모델이 아닙니다. 따라서 실제 모델이 어떤 수를 두는지, 어떤 오류를 돌려주는지는 이 문서가 보여 주지 못합니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림에서 앱 코드 셋(`app.py`·`agents.py`·`utils.py`)은 한 묶음입니다. 파일 사이의 호출은 Step 5·6의 보조 구조 그림이 화살표로 보여 줍니다. 화살표 가운데 "모델 제공자"로 가는 것은 실제로는 플레이어(`agents.py`)가 보냅니다.
+그림에서 앱 코드 셋(`app.py`·`agents.py`·`utils.py`)은 한 묶음입니다. 파일 사이의 호출은 Step 5·6의 보조 구조 그림이 화살표로 보여 줍니다. 묶음에 달린 화살표는 묶음 전체의 것으로 읽습니다. 화살표 가운데 "모델 제공자"와 `agno 통계`로 가는 것은 실제로는 플레이어(`agents.py`)가 보냅니다.
 
-따라 하기의 중심은 한 제공자(OpenAI의 `gpt-4o`를 X와 O 모두에) 경로입니다. 화면의 기본값(Anthropic X, OpenAI O)이 독자가 처음 겪는 경로이지만, 그 경로는 퇴역한 모델 때문에 첫 수에서 멈춥니다. 그래서 기본값은 "어떻게 실패하는가"로 Step 7에서 보고, 한 판을 끝까지 보는 데는 모델 둘이 같은 제공자인 경로를 씁니다. 가짜 서버는 제공자마다 따로 짓지 않고 한 파일 하나가 네 제공자의 요청 주소를 모두 받습니다(Step 2). 네 제공자가 모두 가짜 서버로 오는지는 Step 2의 확인 스크립트가 한 번씩 보여 줍니다.
+따라 하기의 중심은 한 제공자(OpenAI의 `gpt-4o`를 X와 O 모두에) 경로입니다(`gpt-4o`도 종료 예정이라는 ⚠는 사전 준비에 있습니다). 화면의 기본값(Anthropic X, OpenAI O)이 독자가 처음 겪는 경로이지만, 그 경로는 퇴역한 모델 때문에 첫 수에서 멈춥니다. 그래서 기본값은 "어떻게 실패하는가"로 Step 7에서 보고, 한 판을 끝까지 보는 데는 모델 둘이 같은 제공자인 경로를 씁니다. 가짜 서버는 제공자마다 따로 짓지 않고 한 파일 하나가 네 제공자의 요청 주소를 모두 받습니다(Step 2). 네 제공자가 모두 가짜 서버로 오는지는 Step 2의 확인 스크립트가 한 번씩 보여 줍니다.
 
-직접 돌려 알게 된 것이 여섯입니다. 첫째, `requirements.txt`는 오늘 설치되지 않습니다. `agno>=2.2.10`이 `h11>=0.16.0`을 요구하는데 목록이 `h11==0.14.0`을 고정합니다(Step 1). 둘째, 그 두 줄만 풀어도 `agents.py`의 import가 죽습니다. 목록이 고정한 `anthropic`·`openai`·`google-genai`가 오늘의 agno(3.1.3)에 비해 낡았기 때문입니다(Step 1). 셋째, 모델 선택지 여덟 가운데 제공자 폐기 문서에서 종료 표시가 없는 것은 `gpt-4o`와 `gemini-2.0-pro-exp-02-05`뿐입니다(사전 준비). 넷째, 심판은 없고 판 검사는 보드와 화면 코드가 나눠 합니다(Step 3, 4). 다섯째, 모델 호출이 실패하면 agno는 예외를 던지지 않고 오류 글을 답으로 돌려주며, 앱은 그 글의 첫 숫자 둘(`404`, `3`)을 수로 읽어 요청을 쉬지 않고 되풀이합니다(Step 7). 여섯째, 틀린 수 한 번은 요청 세 번이고, 재시도의 답은 버려집니다(Step 7).
+직접 돌려 알게 된 것이 여섯입니다. 첫째, `requirements.txt`는 오늘 설치되지 않습니다. `agno>=2.2.10`이 `h11>=0.16.0`을 요구하는데 목록이 `h11==0.14.0`을 고정합니다(Step 1). 둘째, 그 두 줄만 풀어도 `agents.py`의 import가 죽습니다. 목록이 고정한 `anthropic`·`openai`·`google-genai`가 오늘의 agno(3.1.3)에 비해 낡았기 때문입니다(Step 1). 셋째, 모델 선택지 여덟 가운데 아직 종료되지 않은 것은 `gpt-4o`와 `o3-mini` 둘뿐이고 둘 다 종료 예정이며, 나머지 여섯은 이미 종료되었습니다(사전 준비). 넷째, 심판은 없고 판 검사는 보드와 화면 코드가 나눠 합니다(Step 3, 4). 다섯째, 모델 호출이 실패하면 agno는 예외를 던지지 않고 오류 글을 답으로 돌려주며, 앱은 그 글의 첫 숫자 둘(`404`, `3`)을 수로 읽어 요청을 쉬지 않고 되풀이합니다(Step 7). 여섯째, 틀린 수 한 번은 요청 세 번이고 재시도의 답은 버려지며, 모델이 같은 틀린 칸을 되풀이하면 요청이 상한 없이 나가 진짜 키에서는 요금이 계속 붙습니다(Step 7).
 
 ## 사전 준비
 
@@ -24,24 +24,24 @@ Streamlit 화면에서 모델 둘을 골라 X와 O로 세우고, 두 모델이 3
 | Python | 이 문서는 3.13.3으로 확인했다. 앱 README는 버전을 적지 않는다 | 공통 사전 준비와 같음 |
 | OpenAI API 키 | 실제로 쓸 때 `gpt-4o`만 쓴다면 이것 하나면 된다. 이 문서는 가짜 값 `sk-fake-openai`와 가짜 서버로 확인한다 | https://platform.openai.com/api-keys |
 | Anthropic·Google·Groq 키 | 화면의 다른 선택지를 쓸 때만. 대부분 종료되었다(아래 표). 이 문서는 가짜 값만 쓴다 | 각 제공자 콘솔 |
-| 터미널 둘 | 가짜 서버를 띄우는 터미널(A)과 나머지 모두를 돌리는 터미널(B) | 별도 설치 없음 |
+| 터미널 둘 | 가짜 서버를 띄우는 터미널(A)과 나머지 모두를 돌리는 터미널(B). 둘 다 `ttt-work` 폴더에서 연다(Step 1에서 만드는 폴더, `cd ttt-work`) | 별도 설치 없음 |
 
 환경변수 `PYTHONIOENCODING=utf-8`을 아래 `envfake.sh`가 함께 겁니다. 한국어 Windows의 Git Bash에서 파이썬 출력이 cp949로 깨지는 것을 막으려는 것입니다.
 
-**이 앱의 선택지 여덟 개가 아직 살아 있는지.** `app.py:67-76`의 선택지 여덟 개가 가리키는 모델 ID를 제공자의 공식 폐기 문서에서 하나씩 찾았습니다. 모든 문서는 2026-10-15에 페이지 변환 도구(WebFetch)로 읽었고, 각 판정은 그 문서의 해당 항목에서 가져왔습니다.
+**이 앱의 선택지 여덟 개가 아직 살아 있는지.** `app.py:67-76`의 선택지 여덟 개가 가리키는 모델 ID를 제공자의 공식 폐기 문서에서 하나씩 찾았습니다. 각 문서는 2026-10-15에 원문을 내려받아 해당 항목을 직접 읽었습니다. 처음에는 페이지 변환 도구(WebFetch)로 읽었는데, 그 도구는 표의 회색 행 표시를 잃어 Google 줄이 틀렸고 OpenAI 줄은 모델 페이지를 보지 않아 빠진 것이 있어서 원문으로 고쳤습니다.
 
 | 화면의 선택지 | 실제 모델 ID(`agents.py:54-75`) | 제공자 문서의 판정 |
 |---|---|---|
-| `gpt-4o` | `gpt-4o` | OpenAI 폐기 문서에 별칭 `gpt-4o` 항목은 없다. 날짜 붙은 스냅숏 `gpt-4o-2024-08-06`·`gpt-4o-2024-11-20`은 2026-10-14에 공지되어 2027-01-14 종료, `gpt-4o-2024-05-13`은 2026-10-23 종료다. 별칭이 어느 스냅숏을 가리키는지는 문서가 말하지 않는다 |
+| `gpt-4o` | `gpt-4o` | ⚠ OpenAI 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o)가 GPT-4o를 Deprecated로 표시하고, 스냅숏 목록 첫 항목이 `gpt-4o`와 `gpt-4o-2024-08-06`(Deprecated)이라 별칭의 기본 스냅숏은 `gpt-4o-2024-08-06`으로 읽힌다. 폐기 문서는 `gpt-4o-2024-08-06`·`gpt-4o-2024-11-20`을 2026-10-14에 공지해 **2027-01-14 종료**(권장 대체 `gpt-6-luna`), `gpt-4o-2024-05-13`은 2026-10-23 종료(대체 `gpt-5.6-sol`)로 올렸다. 폐기 문서에 별칭 `gpt-4o` 항목은 없고, 종료 뒤 별칭이 어떻게 되는지는 두 문서 어디에도 없다 |
 | `o3-mini` | `o3-mini` | ⚠ 2026-04-22 공지, **2026-10-23 종료**, 권장 대체 `gpt-5.6-sol`. 이 문서를 쓴 2026-10-15 기준 8일 남았다 |
 | `claude-3.5` | `claude-3-5-sonnet-20241022` | Anthropic 폐기 문서에서 Retired, 2025-10-28 퇴역, 권장 대체 `claude-sonnet-5-5` |
 | `claude-3.7` | `claude-3-7-sonnet-20250219` | Retired, 공지 2025-10-28, 퇴역 2026-02-19, 권장 대체 `claude-sonnet-5-5` |
 | `claude-3.7-thinking` | 위와 같은 ID에 `thinking` 설정(`agents.py:66-71`) | 위와 같다. **화면의 X 기본값이 이것이다** |
-| `gemini-flash` | `gemini-2.0-flash` | Google 폐기 문서에 종료일 2026-06-01, 권장 대체 `gemini-3.6-flash`. 문서는 종료일을 "가능한 가장 이른 날짜"라고 설명하고 "퇴역"이라는 상태 표시는 붙이지 않는다. 날짜는 이미 지났다 |
-| `gemini-pro` | `gemini-2.0-pro-exp-02-05` | 폐기 문서(마지막 갱신 2026-10-12)에 이 ID도 `gemini-2.0-pro-exp`도 없다. 폐기 문서에 없다는 것만 확인했고, 지금 이 ID로 요청이 받아지는지는 확인하지 못했다 |
-| `llama-3.3` | `llama-3.3-70b-versatile` | Groq 폐기 문서에서 deprecated, 2026-06-17 메일 공지, **종료 2026-08-16**, 권장 대체 `openai/gpt-oss-120b` 또는 `qwen/qwen3.6-27b`. 유료 약정 기업 고객은 영향 없다고 적는다 |
+| `gemini-flash` | `gemini-2.0-flash` | 이미 종료. Google 폐기 문서(https://ai.google.dev/gemini-api/docs/deprecations)에서 이 행은 회색 배경이고(문서가 "Already-shutdown models are indicated with gray backgrounds"라 설명), 종료일 2026-06-01, 권장 대체 `gemini-3.6-flash`다. 변경 기록(https://ai.google.dev/gemini-api/docs/changelog)의 2026-06-01 항목도 `gemini-2.0-flash`가 "now shut down"이라 적고 `gemini-3.5-flash` 또는 `gemini-3.1-flash-lite`를 권한다 |
+| `gemini-pro` | `gemini-2.0-pro-exp-02-05` | 폐기 표(마지막 갱신 2026-10-12)에는 없다. Gemini API 변경 기록의 2025-11-04 항목("Deprecation announcement")이 `gemini-2.0-pro-exp`·`gemini-2.0-pro-exp-02-05`를 2025-12-09 종료 목록에 올렸고 그날은 지났다. 원문에 권장 대체는 없다. 이 ID로 실제 요청은 보내 보지 않았다 |
+| `llama-3.3` | `llama-3.3-70b-versatile` | Groq 폐기 문서에서 deprecated, 2026-06-17 메일 공지, **종료 2026-08-16**, 권장 대체 `openai/gpt-oss-120b` 또는 `qwen/qwen3.6-27b`(그런데 `qwen/qwen3.6-27b`도 같은 문서의 2026-09-14 항목에서 이미 종료되었고 대체는 `qwen/qwen3.8-27b`). 유료 약정 기업 고객은 영향 없다고 적는다 |
 
-출처 주소는 OpenAI https://developers.openai.com/api/docs/deprecations, Anthropic https://platform.claude.com/docs/en/about-claude/model-deprecations, Google https://ai.google.dev/gemini-api/docs/deprecations, Groq https://console.groq.com/docs/deprecations입니다. Anthropic 문서는 퇴역한 모델로 보낸 요청은 실패한다고 적습니다. 그러니 이 앱의 기본값은 진짜 키를 넣어도 X의 첫 호출에서 실패할 것으로 보이지만, 실제 Anthropic은 부르지 않았으므로 어떤 오류가 오는지는 보지 못했습니다(Step 7의 404는 제 가짜 서버가 흉내 낸 것입니다). 바꾸는 방법은 문제 해결 표에 있습니다.
+출처 주소는 OpenAI https://developers.openai.com/api/docs/deprecations, Anthropic https://platform.claude.com/docs/en/about-claude/model-deprecations, Google https://ai.google.dev/gemini-api/docs/deprecations, Groq https://console.groq.com/docs/deprecations입니다. Anthropic 문서는 퇴역한 모델로 보낸 요청은 실패한다고 적습니다. 그러니 이 앱의 기본값은 진짜 키를 넣어도 X의 첫 호출에서 실패할 것으로 보이지만, 실제 Anthropic은 부르지 않았으므로 어떤 오류가 오는지는 보지 못했습니다(Step 7의 404는 제 가짜 서버가 흉내 낸 것입니다). 한 판을 끝까지 보는 중심 경로의 `gpt-4o`도 ⚠이지만 이 문서의 따라 하기는 가짜 서버만 부르므로 영향이 없습니다. 진짜 키로 쓰는 독자를 위한 교체 행을 문제 해결 표에 두었습니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -55,7 +55,7 @@ Streamlit 화면에서 모델 둘을 골라 X와 O로 세우고, 두 모델이 3
 | 그리기 (`display_board` 등) | 판과 수 기록을 HTML로 그림, 모양을 정하는 CSS 문자열 | `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent/utils.py:125-416` |
 | 모델 제공자 넷 | 앱 밖. 고른 모델의 제공자만 쓰임. 이 문서는 가짜 서버 | `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent/agents.py:54-75` |
 
-앱이 밖으로 여는 길은 고른 모델 둘의 제공자 둘뿐이고, 대화 기록을 저장하는 곳은 없습니다(`Agent`에 `db`가 없고 화면의 `session_state`에만 수 기록이 쌓입니다). agno의 익명 사용 통계는 Day 047 Step 5가 `agno/agent/_telemetry.py`로 확인한 대로, `agent.run()`이 성공할 때마다 `os-api.agno.com`에 가려 합니다. 오늘 agno 3.1.3으로도 같았습니다. 모든 요청을 기록만 하고 거절하는 프록시를 걸어 두고 `AGNO_TELEMETRY`를 끄지 않은 채 한 판(성공한 호출 5번)을 돌리자 프록시 기록에 `CONNECT os-api.agno.com:443`이 다섯 줄 남았습니다(직접 확인). 아래 `envfake.sh`는 `AGNO_TELEMETRY=false`를 겁니다. 이 문서의 모든 실행 명령은 이 줄을 건 터미널에서만 돌립니다.
+모델 요청이 가는 곳은 고른 제공자 둘뿐이고, 대화 기록을 저장하는 곳은 없습니다(`Agent`에 `db`가 없고 화면의 `session_state`에만 수 기록이 쌓입니다). agno의 익명 사용 통계는 Day 047 Step 5가 `agno/agent/_telemetry.py`로 확인한 대로, `agent.run()`이 성공할 때마다 `os-api.agno.com`에 가려 합니다. 오늘 agno 3.1.3으로도 같았습니다. 모든 요청을 기록만 하고 거절하는 프록시를 걸어 두고 `AGNO_TELEMETRY`를 끄지 않은 채 한 판(성공한 호출 5번)을 돌리자 프록시 기록에 `CONNECT os-api.agno.com:443`이 다섯 줄 남았습니다(직접 확인). 아래 `envfake.sh`는 `AGNO_TELEMETRY=false`를 겁니다. 이 문서의 모든 실행 명령은 이 줄을 건 터미널에서만 돌립니다.
 
 ## 단계별 진행
 
@@ -149,7 +149,7 @@ agno 3.1.3 | anthropic 0.85.0 | openai 2.2.0 | google-genai 1.55.0 | groq 0.18.0
 import agents: ok
 ```
 
-숫자는 2026-10-15의 값입니다. 목록에 남은 나머지 고정판(`pydantic==2.10.6`, `streamlit==1.42.2` 등)은 이 문서의 모든 실행에서 문제를 일으키지 않았습니다. 저장소 안에서 `uv run`은 루트 환경을 쓰려 하므로 이후 `uv run`에는 모두 `--no-project`를 붙입니다.
+숫자는 2026-10-15의 값입니다. 목록에 남은 나머지 고정판(`pydantic==2.10.6`, `streamlit==1.42.2` 등)은 이 문서의 모든 실행에서 문제를 일으키지 않았습니다. 이 시리즈의 규칙대로(위쪽 폴더의 프로젝트나 환경을 집지 않도록) 이후 `uv run`에는 모두 `--no-project`를 붙입니다.
 
 ### Step 2. 가짜 서버 하나와 환경변수 — 네 제공자의 주소 바꾸기
 
@@ -166,7 +166,7 @@ import agents: ok
 
 OpenAI·Groq는 agno 쪽 `base_url`이 비어 있으면 SDK가 환경변수를 따르고(agno `models/openai/chat.py`가 값이 `None`인 인자를 빼고 넘깁니다), Anthropic·Google도 같았습니다. 실제로 네 곳에 요청을 보내 보는 것은 아래 확인에서 합니다.
 
-터미널 A에서 가짜 서버를 저장합니다. 제가 만든 서버이고 틱택토를 두는 모델이 아닙니다. 요청 본문의 `Available valid moves (row, col): [...]` 줄에서 빈 칸을 읽어 X에게는 첫 칸, O에게는 마지막 칸을 답하고, 모든 요청을 기록 파일에 남깁니다. 네 번째 인자 `MODE`는 Step 7의 실패를 흉내 내는 데 쓰고, 세 번째 인자의 모델 ID는 404 오류(Anthropic 오류 모양을 제가 지어 흉내 냄)로 답합니다. `allow_reuse_address=False`는 Windows에서 다른 프로그램이 쓰는 포트에 오류 없이 겹쳐 뜨는 것을 막으려는 것입니다.
+두 터미널 모두 `ttt-work`에서 엽니다. 다른 폴더에서 열면 `fake.log`가 엉뚱한 폴더에 생겨 `show_log.py fake.log`가 파일을 찾지 못할 것입니다(소스로 판단했고 일부러 어겨 보지는 않았습니다). 터미널 A에서 가짜 서버를 저장합니다. 제가 만든 서버이고 틱택토를 두는 모델이 아닙니다. 요청 본문의 `Available valid moves (row, col): [...]` 줄에서 빈 칸을 읽어 X에게는 첫 칸, O에게는 마지막 칸을 답하고, 모든 요청을 기록 파일에 남깁니다. 네 번째 인자 `MODE`는 Step 7의 실패를 흉내 내는 데 쓰고, 세 번째 인자의 모델 ID는 404 오류(Anthropic 오류 모양을 제가 지어 흉내 냄)로 답합니다. `allow_reuse_address=False`는 Windows에서 다른 프로그램이 쓰는 포트에 오류 없이 겹쳐 뜨는 것을 막으려는 것입니다.
 
 ```bash
 cat > fake_llm.py <<'PY'
@@ -176,7 +176,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT, LOG = int(sys.argv[1]), sys.argv[2]
 DEAD = set(filter(None, (sys.argv[3] if len(sys.argv) > 3 else "").split(",")))  # 이 모델 ID는 404
-MODE = sys.argv[4] if len(sys.argv) > 4 else "normal"  # normal | illegal | chatter | words
+MODE = sys.argv[4] if len(sys.argv) > 4 else "normal"  # normal | illegal | stuck | chatter | words
 calls = {"X": 0, "O": 0}
 
 
@@ -187,6 +187,8 @@ def pick(body, player):
     r, c = moves[0] if player == "X" else moves[-1]  # X는 첫 칸, O는 마지막 칸
     if MODE == "illegal" and player == "O" and calls["O"] == 2:
         r, c = "0", "0"  # O의 두 번째 수: 이미 X가 둔 칸
+    if MODE == "stuck" and player == "O":
+        return "0 0"  # O는 늘 이미 X가 둔 칸만 답한다
     if MODE == "words" and player == "O":
         return "I pass"
     if MODE == "chatter" and player == "O":
@@ -271,7 +273,7 @@ PY
 uv run --no-project python fake_llm.py 52875 fake.log "" normal
 ```
 
-터미널 B에서 환경변수 파일을 저장하고 걸어 둡니다. **이 파일을 건 터미널에서만 앱 코드를 돌립니다.** 네 키를 가짜 값으로 덮고 네 주소를 가짜 서버로 돌립니다. 앱이 `load_dotenv()`를 부르지만(`app.py:7`) 이미 셸에 있는 변수는 `.env`가 덮지 않으므로(직접 확인, Step 5) 가짜 값이 이깁니다.
+터미널 B에서 환경변수 파일을 저장하고 걸어 둡니다. **이 파일을 건 터미널에서만 앱 코드를 돌립니다.** 네 키를 가짜 값으로 덮고 네 주소를 가짜 서버로 돌립니다. 앱이 `load_dotenv()`를 부르지만(`app.py:7`) 이미 셸에 있는 변수는 `.env`가 덮지 않으므로(직접 확인, Step 5) 가짜 값이 이깁니다. `GOOGLE_GENAI_USE_VERTEXAI=false`는 셸 프로필에 이 변수를 `true`로 둔 독자를 위한 것입니다. agno의 Gemini는 이 값이 `true`면 Vertex 방식으로 가고(agno 3.1.3 `gemini.py`의 182행 근처), google-genai는 그 방식에서 `GOOGLE_VERTEX_BASE_URL`만 읽으므로(`_base_url.py`의 47~50행) 위의 `GOOGLE_GEMINI_BASE_URL`이 무시되어 `probe.py`의 Google 호출이 진짜 Vertex로 갈 수 있습니다. 소스로만 읽었고 `true`로 돌려 보지는 않았습니다.
 
 ```bash
 cat > envfake.sh <<'EOF'
@@ -279,7 +281,7 @@ cat > envfake.sh <<'EOF'
 export OPENAI_API_KEY=sk-fake-openai ANTHROPIC_API_KEY=sk-ant-fake GOOGLE_API_KEY=fake-google GROQ_API_KEY=gsk_fake
 export OPENAI_BASE_URL=http://127.0.0.1:$1/v1 ANTHROPIC_BASE_URL=http://127.0.0.1:$1
 export GROQ_BASE_URL=http://127.0.0.1:$1 GOOGLE_GEMINI_BASE_URL=http://127.0.0.1:$1
-export AGNO_TELEMETRY=false PYTHONIOENCODING=utf-8
+export AGNO_TELEMETRY=false PYTHONIOENCODING=utf-8 GOOGLE_GENAI_USE_VERTEXAI=false
 EOF
 . ./envfake.sh 52875
 echo $OPENAI_BASE_URL
@@ -293,7 +295,7 @@ echo $OPENAI_BASE_URL
 $env:OPENAI_API_KEY="sk-fake-openai"; $env:ANTHROPIC_API_KEY="sk-ant-fake"; $env:GOOGLE_API_KEY="fake-google"; $env:GROQ_API_KEY="gsk_fake"
 $env:OPENAI_BASE_URL="http://127.0.0.1:52875/v1"; $env:ANTHROPIC_BASE_URL="http://127.0.0.1:52875"
 $env:GROQ_BASE_URL="http://127.0.0.1:52875"; $env:GOOGLE_GEMINI_BASE_URL="http://127.0.0.1:52875"
-$env:AGNO_TELEMETRY="false"; $env:PYTHONIOENCODING="utf-8"
+$env:AGNO_TELEMETRY="false"; $env:PYTHONIOENCODING="utf-8"; $env:GOOGLE_GENAI_USE_VERTEXAI="false"
 ```
 
 ![Step 2까지의 구성](diagrams/step2.svg)
@@ -531,7 +533,7 @@ True <- 이긴 뒤에도 보드는 수를 받는다
 
 시작 버튼은 `get_tic_tac_toe_players`로 플레이어를 만들어 `session_state`에 두고, 새 `TicTacToeBoard()`를 만들고 `game_started`를 켠 뒤 `st.rerun()`합니다(`app.py:126-138`). 화면 위쪽의 "X 모델 vs O 모델" 제목과 승자 안내는 선택 상자의 **현재 값**에서 읽습니다(`app.py:165-169`, `app.py:186`). 플레이어는 시작할 때의 선택으로 만들어져 있으니, 판 도중에 상자를 바꾸면 제목과 승자 이름이 실제로 두는 모델과 어긋납니다(소스로 확인, 실행해 보지는 않았습니다).
 
-앱의 구조 관계를 화살표로 보면, 시작에서 만들어진 것들이 `session_state`에 쌓이고, 그리기 함수들이 그것을 읽습니다.
+앱의 구조 관계를 화살표로 보면, 시작에서 만들어진 것들이 `session_state`에 쌓이고, 그리기 함수들이 그것을 읽습니다. 화면은 보드를 만들 뿐 아니라(`app.py:134`, `157`) 승부 상태를 직접 묻기도 합니다(`app.py:140`, `175`).
 
 ![시작과 그리기의 구조](diagrams/extra-structure.svg)
 
@@ -605,9 +607,12 @@ Respond with ONLY two numbers for row and column, e.g. "1 2".""",
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 터미널 B에서(`envfake.sh`를 건 채) 가짜 서버를 새 기록으로 다시 띄우고 한 판을 돌립니다. 터미널 A에서 서버를 Ctrl+C로 멈춘 뒤 `uv run --no-project python fake_llm.py 52875 fake.log "" normal`로 다시 띄워도 됩니다(기록 파일은 `: > fake.log`로 비움). 아래 `play.py`는 선택 상자를 고르고 Start를 누른 뒤 제한 시간까지 기다립니다.
+**확인.** 터미널 A의 서버는 Step 2에서 띄운 그대로 둡니다(포트 52875). 터미널 B에서 아래 첫 세 줄로 변수를 걸고, 값을 확인하고, 기록을 비운 뒤 한 판을 돌립니다. `echo`가 `http://127.0.0.1:52875/v1`을 찍지 않으면 멈추고 다시 겁니다. 아래 `play.py`는 선택 상자를 고르고 Start를 누른 뒤 제한 시간까지 기다립니다.
 
 ```bash
+. ./envfake.sh 52875
+echo $OPENAI_BASE_URL
+: > fake.log
 cat > play.py <<'PY'
 """브라우저 없이 app.py를 돌린다: 선택 상자를 고르고 Start Game을 누르고, 제한 시간까지 기다린다."""
 import sys
@@ -681,7 +686,7 @@ Respond with ONLY two numbers for row and column, e.g. "1 2".""",
                 st.rerun()
 ```
 
-넷을 차례로 돌립니다. 각각 터미널 A에서 서버를 멈추고 아래 모드로 다시 띄운 뒤 터미널 B(`envfake.sh`를 건 채)에서 `play.py`를 돌립니다. 포트가 바뀌면 `. ./envfake.sh <새 포트>`를 다시 겁니다. 기록 파일은 서버를 띄우기 전에 `: > fake.log`로 비웁니다.
+다섯을 차례로 돌립니다. 각각 터미널 A에서 서버를 멈추고 아래 모드로 다시 띄운 뒤 터미널 B(`envfake.sh`를 건 채)에서 `play.py`를 돌립니다. 포트가 바뀌면 `. ./envfake.sh <새 포트>`를 다시 겁니다. 기록 파일은 서버를 띄우기 전에 `: > fake.log`로 비웁니다.
 
 **(가) 틀린 수 한 번 — `illegal` 모드.** O의 두 번째 답이 이미 X가 둔 `0 0`입니다.
 
@@ -709,7 +714,31 @@ RESULT 판: XXX/.../.OO
 7 X gpt-4o '0 2' messages=2
 ```
 
-틀린 수 하나가 요청 세 건이 되었습니다. 4번이 틀린 답, 5번이 재시도(질문에 `Invalid move:`가 들어 있음)인데 그 답 `2 1`은 버려졌고, `st.rerun()` 뒤 6번에서 같은 질문을 처음부터 다시 해서 받은 `2 1`이 실제 수가 되었습니다. 재시도 질문에 실린 오류 설명은 그다음 호출에 따라가지 않으니(에이전트에 대화 기록이 없습니다), 모델은 자기가 틀렸다는 것을 한 번도 배우지 못한 채 같은 질문을 다시 받습니다.
+틀린 수 하나가 요청 세 건이 되었습니다. 4번이 틀린 답, 5번이 재시도(질문에 `Invalid move:`가 들어 있음)인데 그 답 `2 1`은 버려졌고, `st.rerun()` 뒤 6번에서 같은 질문을 처음부터 다시 해서 받은 `2 1`이 실제 수가 되었습니다. 재시도 질문에 실린 오류 설명은 그다음 호출에 따라가지 않으니(에이전트에 대화 기록이 없습니다), 모델은 자기가 틀렸다는 것을 한 번도 배우지 못한 채 같은 질문을 다시 받습니다. 이것은 다음 답이 맞을 때의 수입니다. 같은 틀린 답을 되풀이하면 끝나지 않습니다(바로 아래 (가-2)).
+
+**(가-2) 같은 틀린 칸을 고집 — `stuck` 모드.** O가 늘 `0 0`만 답합니다. (가)의 틀린 수가 한 번이 아니라 매번이면 어떻게 되는지 봅니다. 끝나지 않으므로 5초만 기다립니다.
+
+```bash
+uv run --no-project python fake_llm.py 52882 fake.log "" stuck
+```
+
+```bash
+. ./envfake.sh 52882
+echo $OPENAI_BASE_URL
+uv run --no-project python play.py gpt-4o gpt-4o 5 2>&1 | grep -E "^RESULT"
+uv run --no-project python -c "
+import json, collections
+print(dict(collections.Counter((json.loads(l)['player'], json.loads(l)['retry']) for l in open('fake.log'))))"
+```
+
+```text
+RESULT 제한 5초가 지나도 안 끝남
+RESULT 수: ['0,0']
+RESULT 판: X../.../...
+{('X', False): 1, ('O', False): 75, ('O', True): 74}
+```
+
+5초 동안 O에게 149번(75번은 처음부터 묻는 질문, 74번은 재시도 질문) 갔고 X의 첫 수 뒤로 판은 그대로입니다. 재시도의 답은 버려지고 다음 실행이 같은 판·같은 질문을 처음부터 다시 보내므로, 같은 틀린 칸을 고집하는 모델이면 끝이 없습니다. 진짜 제공자라면 이 요청 하나하나가 요금이 붙는 완료 요청입니다. 횟수는 실행마다 다릅니다.
 
 **(나) 숫자가 낀 설명 — `chatter` 모드.** O가 `Move 1: I choose row 2, column 2.` 같은 문장으로 답합니다.
 
@@ -780,8 +809,8 @@ RESULT 제한 5초가 지나도 안 끝남
 RESULT 수: []
 RESULT 판: .../.../...
     242 ERROR   Non-retryable model provider error: Error code: 404 - {'type': 'error', 'error': {'type': 'not_found_...
-    242 ERROR   Claude API error (status 404)
     242 ERROR   Error in Agent run: Error code: 404 - {'type': 'error', 'error': {'type': 'not_found_...
+    242 ERROR   Claude API error (status 404)
     121 ERROR   Invalid move attempt: Invalid move: Position out of bounds. Please choose row and column between 0 and 2.
 {('claude-3-7-sonnet-20250219', '404'): 242}
 ```
@@ -808,17 +837,17 @@ content: Error code: 404 - {'type': 'error', 'error': {'type': 'not_found_error'
 숫자   : ['404', '3']
 ```
 
-agno 3.1.3의 `Agent.run()`은 모델 호출이 실패해도 예외를 던지지 않고, 상태가 `error`인 결과의 `content`에 오류 글을 담아 돌려줍니다. 앱은 그 글에서 숫자 둘 `404`, `3`을 뽑아 `make_move(404, 3)`을 부르고, 판 밖이라 거절되어 (가)의 재시도 분기로 들어갑니다. 재시도도 같은 이유로 실패하고, 그 결과는 버려지고, `st.rerun()`이 처음부터 다시 시작합니다. 앱에는 `RunOutput`의 상태를 보는 곳이 없습니다(`grep -c "RunStatus|response.status" app.py`가 0). 진짜 제공자가 퇴역한 모델에 어떤 글을 돌려주는지는 확인하지 못했습니다. 다만 Anthropic SDK의 예외 글이 `Error code: <상태코드>`로 시작한다는 것은 이 실행에서 보았으므로, 상태코드 세 자리가 첫 "숫자"가 되는 점은 진짜 제공자에서도 같을 것으로 보입니다. 상태코드가 `0`~`2`에 걸릴 일은 없어 늘 판 밖으로 읽힙니다.
+agno 3.1.3의 `Agent.run()`은 모델 호출이 실패해도 예외를 던지지 않고, 상태가 `error`인 결과의 `content`에 오류 글을 담아 돌려줍니다. 앱은 그 글에서 숫자 둘 `404`, `3`을 뽑아 `make_move(404, 3)`을 부르고, 판 밖이라 거절되어 (가)의 재시도 분기로 들어갑니다. 재시도도 같은 이유로 실패하고, 그 결과는 버려지고, `st.rerun()`이 처음부터 다시 시작합니다. 앱에는 `RunOutput`의 상태를 보는 곳이 없습니다(`grep -cE "RunStatus|response\.status" app.py`가 0). 진짜 제공자가 퇴역한 모델에 어떤 글을 돌려주는지는 확인하지 못했습니다. 다만 Anthropic SDK의 예외 글이 `Error code: <상태코드>`로 시작한다는 것은 이 실행에서 보았으므로, 상태코드 세 자리가 첫 "숫자"가 되는 점은 진짜 제공자에서도 같을 것으로 보입니다. 상태코드가 `0`~`2`에 걸릴 일은 없어 늘 판 밖으로 읽힙니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
 **확인.** 위 네 실행의 서버 기록과 출력이 증거입니다. 끝나면 터미널 A의 서버를 Ctrl+C로 멈추고 포트가 비었는지 봅니다.
 
 ```bash
-netstat -ano | grep :52880
+netstat -ano | grep :52880 | grep LISTEN
 ```
 
-아무것도 나오지 않으면 비었습니다(PowerShell: `netstat -ano | Select-String ":52880"`, 실행해 보지 못했습니다).
+아무것도 나오지 않으면 비었습니다. `LISTEN`을 거르지 않으면 서버를 멈춘 직후 `TIME_WAIT` 줄이 수백 개 나올 수 있는데, 요청마다 연결을 새로 연 (라)의 흔적이라 잠시 뒤 사라지는 정상 기록입니다(PowerShell: `netstat -ano | Select-String "LISTENING" | Select-String ":52880"`, 실행해 보지 못했습니다).
 
 화면으로 보려면 가짜 서버(예: `normal` 모드)를 띄운 터미널 A를 그대로 두고, 터미널 B에서 환경변수를 다시 걸고 앱을 띄웁니다. `--server.address localhost`와 `--server.headless true`가 없으면 Streamlit이 시작하며 외부 주소를 알아내려고 바깥에 요청을 보낼 수 있고(Day 060에서 확인), 사용 통계도 끕니다.
 
@@ -828,7 +857,9 @@ echo $OPENAI_BASE_URL
 uv run --no-project streamlit run app.py --server.headless true --server.address localhost --server.port 52881 --browser.gatherUsageStats false
 ```
 
-브라우저로 http://localhost:52881 을 열어 X를 `gpt-4o`로 바꾸고(O도 `gpt-4o`로) Start Game을 누르면 화면이 한 수씩 갱신됩니다. 이 문서는 브라우저로 화면을 열어 보지 않았고, `curl http://localhost:52881/_stcore/health`가 `ok`를 돌려주는 것까지만 확인했습니다. 화면의 동작은 `AppTest`로 대신 확인했습니다. 진짜 키로 쓰려면 `envfake.sh`를 걸지 않은 새 터미널에서 `OPENAI_API_KEY`만 넣고 같은 명령을 쓰되, 아래 "문제 해결"의 모델 교체를 먼저 합니다.
+브라우저로 http://localhost:52881 을 열어 X를 `gpt-4o`로 바꾸고(O도 `gpt-4o`로) Start Game을 누르면 화면이 한 수씩 갱신됩니다. 이 문서는 브라우저로 화면을 열어 보지 않았고, `curl http://localhost:52881/_stcore/health`가 `ok`를 돌려주는 것까지만 확인했습니다. 화면의 동작은 `AppTest`로 대신 확인했습니다. 
+
+**진짜 키로 돌리기 전에.** 이 앱은 모델의 답이 틀리거나 비어 있거나 호출이 실패하면 횟수 제한도 대기도 없이 다시 묻습니다(Step 7의 (가-2)·(다)·(라)). 진짜 제공자에서는 그 요청 하나하나가 요금이 붙는 완료 요청이고, 화면 기본값의 X(`claude-3.7-thinking`)에는 생각 토큰 예산 최대 4,096이 더해질 수 있습니다. 진짜 키로 돌린다면 앱을 띄운 터미널의 로그를 지켜보다가 `Invalid move attempt`·`Error processing move`·`Error code`가 같은 줄로 되풀이되면 곧바로 그 터미널에서 Ctrl+C로 Streamlit을 멈추세요. 서버 프로세스를 끝내면 되풀이가 끝나는 것은 이 문서의 실행에서 확인했습니다(`taskkill`로 끝냈고 Ctrl+C는 눌러 보지 않았습니다). 브라우저 탭을 닫는 것만으로 멈추는지는 확인하지 못했고, 제공자 콘솔에서 사용 한도를 걸 수 있는지도 확인하지 못했으니 직접 살펴보세요. 그다음 `envfake.sh`를 걸지 않은 새 터미널에서 `OPENAI_API_KEY`만 넣고 같은 명령을 쓰되, 아래 "문제 해결"의 모델 교체를 먼저 합니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -836,27 +867,35 @@ uv run --no-project streamlit run app.py --server.headless true --server.address
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-`st.rerun()` 뒤의 두 번째 실행은 판을 그리고 빈 칸과 판 글을 만듭니다(`app.py:175-201`, `app.py:215-224`).
+`st.rerun()` 뒤의 두 번째 실행은 판을 그립니다. 사이드바의 Pause 판단(`app.py:140`)이 본문(`app.py:175`)보다 먼저 `get_game_state()`를 부르므로 한 실행에 두 번 부릅니다. 머리글(166), 판(177), 차례 표시(196), 수 기록(201), thinking 안내(205)도 사용자 쪽으로 그려지는 별개의 호출입니다.
 
-![다시 실행: 그리고, 빈 칸 만들기](diagrams/extra-render.svg)
+![다시 실행: 그리기](diagrams/extra-render.svg)
 
-이어서 현재 차례의 플레이어에게 묻습니다. 앞선 `get_board_state()`는 질문 문자열을 만들 때 불립니다.
+이어서 빈 칸과 판 글을 만들고(`app.py:215`, 질문 문자열 안의 `get_board_state()`는 224) 현재 차례의 플레이어에게 묻습니다.
 
 ![모델에게 묻기](diagrams/extra-ask.svg)
 
-답을 받으면 수를 두고 기록하고 다시 실행합니다. 이 세 그림(다시 실행, 묻기, 두기)이 한 수이고, 같은 일이 X, O, X, O, X로 되풀이되었습니다(Step 6의 서버 기록).
+답을 받으면 수를 두고 기록합니다. 성공 갈래는 수 기록(240) 뒤에 `Move` 로그(248)와 판 글을 담은 `Board state` 로그(251-253)를 남깁니다.
 
 ![수 두기](diagrams/extra-place.svg)
 
-예외 둘도 같은 방식으로 그렸습니다. 보드가 수를 거절하면 재시도 질문을 보내고 답을 받아 버립니다. 아래는 Step 7 (가)의 O의 4~6번째 요청 부분입니다.
+그다음 승부를 확인하고, 승부가 나지 않았으면 다시 실행합니다(256, 264). 이 네 그림(그리기, 묻기, 두기, 확인)이 한 수이고, 같은 일이 X, O, X, O, X로 되풀이되었습니다(Step 6의 서버 기록).
 
-![틀린 수](diagrams/extra-retry.svg)
+![수 확인과 다시 실행](diagrams/extra-check.svg)
 
-승부가 나는 수는 이렇게 끝납니다. 이긴 수를 둔 직후의 검사와, 그 뒤 다시 실행에서 안내를 그리는 부분을 둘로 나눠 그렸습니다.
+이긴 수는 위 "수 두기" 그림까지 같고, 승부 확인(256)에서 갈라집니다. 이긴 쪽 갈래는 로그와 안내를 남기고 멈춤 표시를 켠 뒤 다시 실행합니다(258-264).
 
 ![이긴 수](diagrams/extra-finish.svg)
 
+그 뒤 다시 실행에서는 에이전트를 부르지 않고 이긴 판을 그립니다(`app.py:203`이 막음). 안내 상자의 문구에는 이모지가 있는데 그림 라벨에서는 뺐습니다.
+
 ![끝난 판 그리기](diagrams/extra-over.svg)
+
+예외 둘도 같은 방식으로 그렸습니다. 보드가 수를 거절하면 오류를 남기고 재시도 질문을 만듭니다(`app.py:266-271`). 아래 두 그림은 Step 7 (가)의 4번 답의 처리와 5번 재시도입니다. 6번은 다음 실행의 보통 질문이라 위의 그리기·묻기 그림에 해당합니다.
+
+![틀린 수](diagrams/extra-retry.svg)
+
+![재시도 질문](diagrams/extra-reask.svg)
 
 ## 실행 체크리스트
 
@@ -867,7 +906,7 @@ uv run --no-project streamlit run app.py --server.headless true --server.address
 - [ ] `board_check.py`가 판 밖·찬 칸을 거르고, 이긴 뒤에도 보드가 수를 받는 것을 보았다
 - [ ] `keyprobe.py`로 기본 선택에서 Start가 막히는 것을 보았다
 - [ ] `play.py gpt-4o gpt-4o 60`으로 한 판이 X의 5수로 끝나고 요청이 5건이다
-- [ ] 틀린 수 한 번이 요청 세 건이고, 숫자 없는 답과 죽은 모델은 요청이 멈추지 않는 것을 보았다
+- [ ] 틀린 수 한 번이 요청 세 건이고, 같은 틀린 칸을 고집하는 답·숫자 없는 답·죽은 모델은 요청이 멈추지 않는 것을 보았다
 - [ ] 가짜 서버를 모두 멈췄고 쓴 포트가 비었다
 
 ## 문제 해결
@@ -876,19 +915,20 @@ uv run --no-project streamlit run app.py --server.headless true --server.address
 |---|---|---|
 | `uv pip install -r requirements.txt`가 `agno>=2.2.10 depends on h11>=0.16.0`로 실패 | 고정 목록의 `h11==0.14.0`·`httpcore==1.0.7`이 오늘의 agno와 충돌 | Step 1의 `grep -vE`로 `h11`·`httpcore`·`anthropic`·`openai`·`google-genai` 줄을 뺀 `requirements-fixed.txt`로 설치하고 세 SDK를 따로 설치 |
 | `import agents`가 ``ImportError: `anthropic` not installed``(또는 `openai`·`google-genai`)로 죽는데 패키지는 깔려 있음 | 목록이 고정한 SDK가 agno 3.1.3이 요구하는 것보다 낡음. 메시지는 "없다"고 하지만 실제로는 판이 낮음 | 같은 명령에 `-U anthropic openai google-genai`를 붙여 올림. 바로 위 줄(`cannot import name ...`)이 진짜 이유 |
-| 기본 선택으로 Start를 눌렀더니 로그에 `Error code: 404`가 끝없이 찍히고 판이 비어 있음 | X의 `claude-3-7-sonnet-20250219`는 2026-02-19 퇴역. 에이전트가 오류 글을 답으로 돌려주고 앱이 그 글의 숫자로 수를 두려다 되풀이(Step 7 라) | 브라우저 탭을 닫고 Streamlit을 멈춘다. `app.py:67-76`의 값을 살아 있는 모델로 바꾼다. 예: `"claude-3.7-thinking": "anthropic:claude-3-7-sonnet-thinking"` 줄의 값을 `"anthropic:claude-sonnet-5-5"`로(Anthropic 문서의 권장 대체. `agents.py:73`의 `else` 분기가 `Claude(id=model_name)`로 받는다. 이 문서는 이 모델로 실제 호출을 해 보지 못했다) |
+| 기본 선택으로 Start를 눌렀더니 로그에 `Error code: 404`가 끝없이 찍히고 판이 비어 있음 | X의 `claude-3-7-sonnet-20250219`는 2026-02-19 퇴역. 에이전트가 오류 글을 답으로 돌려주고 앱이 그 글의 숫자로 수를 두려다 되풀이(Step 7 라) | Streamlit을 띄운 터미널에서 Ctrl+C로 멈춘다. `app.py:67-76`의 값을 살아 있는 모델로 바꾼다. 예: `"claude-3.7-thinking": "anthropic:claude-3-7-sonnet-thinking"` 줄의 값을 `"anthropic:claude-sonnet-5-5"`로(Anthropic 문서의 권장 대체. `agents.py:73`의 `else` 분기가 `Claude(id=model_name)`로 받는다. 이 문서는 이 모델로 실제 호출을 해 보지 못했다) |
 | 화면에서 Start가 회색이고 `requires ANTHROPIC_API_KEY` 같은 빨간 상자 | 고른 모델의 제공자 키가 환경변수에 없음(`app.py:96-100`) | 두 선택 상자를 키가 있는 제공자의 모델로 바꾸거나 키를 환경변수에 넣는다. 지울 때는 `unset`이 아니라 `ANTHROPIC_API_KEY=`처럼 빈 값으로 덮는다. `load_dotenv()`가 상위 폴더 `.env`에서 다시 채울 수 있다 |
-| `o3-mini`를 골랐더니 2026-10-23 뒤에 요청이 거절됨 | OpenAI 폐기 문서의 종료일 2026-10-23, 권장 대체 `gpt-5.6-sol` | `"o3-mini": "openai:o3-mini"` 줄(`app.py:69`)의 값을 `"openai:gpt-5.6-sol"` 등 문서의 대체로 바꾼다. 이 문서는 이 모델로 호출해 보지 못했다 |
+| `gpt-4o`가 2027-01-14 뒤 거절됨 | 기본 스냅숏 `gpt-4o-2024-08-06`이 종료 예정(OpenAI 폐기 문서, 권장 대체 `gpt-6-luna`) | `"gpt-4o": "openai:gpt-4o"` 줄(`app.py:68`)의 값을 `"openai:gpt-6-luna"` 등 문서의 대체로 바꾼다. 이 문서는 이 모델로 호출해 보지 못했다. 종료 뒤 별칭 `gpt-4o`가 어떻게 되는지는 문서에 없다 |
+| `o3-mini`를 골랐더니 2026-10-23 뒤에 요청이 거절됨 | OpenAI 폐기 문서의 종료일 2026-10-23, 권장 대체 `gpt-5.6-sol` | `"o3-mini": "openai:o3-mini"` 줄(`app.py:69`)의 값을 `"openai:gpt-5.6-sol"` 등 문서의 대체로 바꾼다. 이 문서는 이 모델로 호출해 보지 못했다. OpenAI가 돌려주는 오류 글은 보지 못했지만, 글에 숫자가 하나뿐이면 (다)처럼 끝없이 되풀이할 것으로 보이니 로그가 되풀이되면 Ctrl+C로 멈춘다 |
 | 한 수가 엉뚱한 칸에 두어지고 오류는 없음 | 답 속의 첫 숫자 둘을 수로 쓰는 정규식(`app.py:234`)이 설명 속 숫자를 집음(Step 7 나) | 응답을 숫자만 받도록 지시문을 강화하거나 `app.py:234`를 바꿔 "줄 전체가 `\d \d`일 때만" 받도록 고친다. 원본을 고치는 일은 이 문서가 하지 않았다 |
-| 모델이 `I pass` 같은 글만 돌려주면 로그에 `not enough values to unpack`가 계속 | 숫자가 없어 `row, col = map(int, numbers[:2])`가 실패하고 `st.rerun()`이 곧바로 다시 질문(Step 7 다) | 같은 해결. 요청 횟수 상한이 코드에 없으니 비용이 걸린 키로 돌릴 때는 지켜본다 |
+| 모델이 `I pass` 같은 글만 돌려주면 로그에 `not enough values to unpack`가 계속 | 숫자가 없어 `row, col = map(int, numbers[:2])`가 실패하고 `st.rerun()`이 곧바로 다시 질문(Step 7 다) | 같은 해결. 요청 횟수 상한이 코드에 없으니 비용이 걸린 키로 돌릴 때는 로그를 지켜보다가 되풀이되면 Ctrl+C로 멈춘다 |
 | 제목에 적힌 모델과 실제 두는 모델이 다름 | 제목·승자 이름은 선택 상자의 현재 값에서 읽고 플레이어는 시작 때 만들어짐(`app.py:165-169`, `186`) | 판 도중에 선택 상자를 바꾸지 않는다. 바꾸려면 New Game을 누른다 |
 | 로그에 `API connection error from OpenAI API`(또는 진짜 주소 오류)가 쏟아짐 | 앱을 돌린 터미널에 `envfake.sh`가 걸리지 않아 진짜 제공자 주소로 가려 함(`echo $OPENAI_BASE_URL`이 비어 있음) | 즉시 중단하고 `. ./envfake.sh <포트>`를 걸고 `echo`로 확인한 뒤 다시 돌린다. `.env`에 진짜 키가 있다면 이 상태에서는 그 키가 진짜 주소로 나간다 |
-| 따라 하기 중 터미널 A의 서버가 `Address already in use`로 안 뜸 | 고른 포트가 이미 쓰이는 중(`allow_reuse_address=False`라 겹쳐 뜨지 않음) | 49152~65535 사이의 다른 포트로 바꾸고 `. ./envfake.sh <새 포트>`를 다시 건다 |
+| 따라 하기 중 터미널 A의 서버가 `OSError: [WinError 10048] 각 소켓 주소(프로토콜/네트워크 주소/포트)는 하나만 사용할 수 있습니다`로(macOS·Linux에서는 `Address already in use`) 안 뜸 | 고른 포트가 이미 쓰이는 중(`allow_reuse_address=False`라 겹쳐 뜨지 않음) | 49152~65535 사이의 다른 포트로 바꾸고 `. ./envfake.sh <새 포트>`를 다시 건다 |
 
 ## 더 해보기
 
 - `app.py:234`의 숫자 뽑는 줄을 `re.fullmatch(r"\s*(\d)\s+(\d)\s*", ...)`로 바꾸고, Step 7의 가), 나), 다)를 같은 서버로 다시 돌려 요청 수와 결과가 어떻게 달라지는지 비교해 보세요(원본이 아니라 `ttt-work`의 복사본을 고칩니다).
-- `response.status`를 `RunStatus.error`와 비교해 오류일 때 `st.error`를 띄우고 `st.session_state.game_paused = True`로 멈추는 분기를 `app.py:222-229` 사이에 넣어 보세요. Step 7 (라)가 요청 몇 건에서 멈추는지 세어 보세요.
+- `response.status`를 `RunStatus.error`와 비교해 오류일 때 `st.error`를 띄우고 `st.session_state.game_paused = True`로 멈추는 분기를 `app.py:229`(`run` 호출 끝) 뒤, `app.py:231`(`try:`) 앞에 넣어 보세요. Step 7 (라)가 요청 몇 건에서 멈추는지 세어 보세요.
 - `fake_llm.py`의 `pick`을 바꿔 O가 X의 이길 칸을 막는 수를 두게 하고, X의 "첫 빈 칸" 전략과 몇 판 두게 해 보세요. 앱의 틀린 수 처리가 쓰일 일이 줄어드는지 서버 기록으로 세어 봅니다.
 
 ## 다음 날 예고
