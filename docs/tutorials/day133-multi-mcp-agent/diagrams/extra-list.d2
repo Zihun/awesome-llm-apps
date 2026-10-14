@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+perplexity: "Perplexity 서버" { class: ext }
+mcp: "MultiMCPTools" { class: ours }
+calendar: "캘린더 서버" { class: ext }
+
+mcp -> perplexity: "tools/list"
+perplexity -> mcp: "도구 목록"
+mcp -> calendar: "tools/list"
+calendar -> mcp: "도구 목록"

@@ -1,12 +1,10 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: "사용자" { class: person }
-db: "multi_mcp_agent.db" { class: store }
 main: "main" { class: ours }
 agent: "MultiMCPAgent" { class: ours }
+user: "사용자" { class: person }
 
-main -> db: "SqliteDb(db_file)"
 main -> agent: "Agent(...) 만들기"
 main -> agent: "acli_app(...)"
 agent -> user: "프롬프트 You :"

@@ -6,6 +6,6 @@ mcp: "MultiMCPTools" { class: ours }
 calendar: "캘린더 서버" { class: ext }
 
 mcp -> perplexity: "자식 프로세스 실행 ·\ninitialize"
-perplexity -> mcp: "도구 목록"
+perplexity -> mcp: "initialize 응답"
 mcp -> calendar: "자식 프로세스 실행 ·\ninitialize"
-calendar -> mcp: "도구 목록"
+calendar -> mcp: "initialize 응답"

@@ -3,10 +3,12 @@ shape: sequence_diagram
 
 user: "사용자" { class: person }
 main: "main" { class: ours }
-mcp: "MultiMCPTools" { class: ours }
+db: "multi_mcp_agent.db" { class: store }
 github: "GitHub 서버" { class: ext }
+mcp: "MultiMCPTools" { class: ours }
 
 user -> main: "python multi_mcp_agent.py"
+main -> db: "SqliteDb(db_file)"
 main -> mcp: "async with\nMultiMCPTools(...)"
 mcp -> github: "자식 프로세스 실행 ·\ninitialize"
-github -> mcp: "도구 목록"
+github -> mcp: "initialize 응답"

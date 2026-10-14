@@ -4,10 +4,10 @@ shape: sequence_diagram
 main: "main" { class: ours }
 mcp: "MultiMCPTools" { class: ours }
 gmail: "Gmail 서버" { class: ext }
-agent: "MultiMCPAgent" { class: ours }
 
 main -> mcp: "async with 들어서기"
+mcp -> mcp: "앞 서버 셋 연결 (initialize)"
 mcp -> gmail: "자식 프로세스 실행 ·\ninitialize"
 gmail -> mcp: "프로세스 끝남\n(Connection closed)"
+mcp -> mcp: "열린 세션 모두 닫기\n(_safe_cleanup)"
 mcp -> main: "오류는 로그만 찍고 반환"
-main -> agent: "tools=[도구 없는 묶음]"

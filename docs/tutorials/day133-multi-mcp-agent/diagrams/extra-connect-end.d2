@@ -5,6 +5,6 @@ main: "main" { class: ours }
 mcp: "MultiMCPTools" { class: ours }
 gmail: "Gmail 서버" { class: ext }
 
-mcp -> gmail: "자식 프로세스 실행 ·\ninitialize"
+mcp -> gmail: "tools/list"
 gmail -> mcp: "도구 목록"
 mcp -> main: "연결 끝 (Successfully 출력)"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+github: "GitHub 서버" { class: ext }
+mcp: "MultiMCPTools" { class: ours }
+gmail: "Gmail 서버" { class: ext }
+
+mcp -> gmail: "자식 프로세스 실행 ·\ninitialize"
+gmail -> mcp: "initialize 응답"
+mcp -> github: "tools/list"
+github -> mcp: "도구 목록"
