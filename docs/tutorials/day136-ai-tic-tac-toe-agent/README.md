@@ -1,6 +1,6 @@
 # Day 136 · 🎲 AI Tic-Tac-Toe Agent
 
-> 볼륨 10 🎮 Autonomous Game-Playing · 난이도 ★★☆ ⚠ 화면의 기본 선택(X `claude-3.7-thinking`, O `o3-mini`)은 처음 누르는 순간 실패합니다. X의 모델은 2026-02-19에 퇴역했고 O의 모델은 2026-10-23에 종료되고, 중심 경로의 `gpt-4o`도 기본 스냅숏이 2027-01-14에 종료될 예정이며, `requirements.txt`는 그대로는 설치되지 않습니다(사전 준비, Step 1, Step 7) · 예상 소요 120분(읽는 시간보다 손으로 하는 일이 큽니다. 어림은 설치 실패와 수선 15분, 파일 여덟 개 저장 16분, 가짜 서버를 여섯 번 띄우고 바꾸는 데 12분, 스크립트 실행과 출력 대조 열네 번에 28분, 소스 발췌 읽기 25분, 그림 열아홉 장 훑기 15분, 모델 표 읽기 5분이고 터미널은 둘입니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI·Anthropic·Google·Groq는 한 번도 부르지 않았고 요금표도 확인하지 못했습니다. 진짜 키로 돌리면 틀린 답이나 호출 실패가 횟수 상한 없이 되풀이되어 요금이 계속 붙을 수 있습니다, Step 7) · 원본 앱: `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent`
+> 볼륨 10 🎮 Autonomous Game-Playing · 난이도 ★★☆ ⚠ 화면의 기본 선택(X `claude-3.7-thinking`, O `o3-mini`)은 처음 누르는 순간 실패합니다. X의 모델은 2026-02-19에 퇴역했고 O의 모델은 2026-10-23에 종료되고, 중심 경로의 `gpt-4o`도 기본 스냅숏이 2027-01-14에 종료될 예정이며, `requirements.txt`는 그대로는 설치되지 않습니다(사전 준비, Step 1, Step 7) · 예상 소요 150분(앱은 파일 셋 890줄이지만 가짜 서버를 직접 저장해 띄우고, 확인용 스크립트 여섯을 저장해 돌리며, 서버 쪽 기록과 앱의 동작을 맞대어 보고, 보드 호출까지 그린 시퀀스 그림 아홉 장을 훑는 데 드는 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI·Anthropic·Google·Groq는 한 번도 부르지 않았고 요금표도 확인하지 못했습니다. 진짜 키로 돌리면 틀린 답이나 호출 실패가 횟수 상한 없이 되풀이되어 요금이 계속 붙을 수 있습니다, Step 7) · 원본 앱: `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent`
 
 ## 오늘 만들 것
 
