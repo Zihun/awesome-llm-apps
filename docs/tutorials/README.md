@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 133 / 167일 완료
+진도: 136 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -239,9 +239,9 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 134](day134-ai-chess-agent/README.md) | ♜ AI Chess Agent | [advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent](../../advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent/) |
-| ⬜ | [Day 135](day135-ai-3dpygame-r1/README.md) | 🎮 AI 3D Pygame Agent | [advanced_ai_agents/autonomous_game_playing_agent_apps/ai_3dpygame_r1](../../advanced_ai_agents/autonomous_game_playing_agent_apps/ai_3dpygame_r1/) |
-| ⬜ | [Day 136](day136-ai-tic-tac-toe-agent/README.md) | 🎲 AI Tic-Tac-Toe Agent | [advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent](../../advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent/) |
+| ✅ | [Day 134](day134-ai-chess-agent/README.md) | ♜ AI Chess Agent | [advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent](../../advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent/) |
+| ✅ | [Day 135](day135-ai-3dpygame-r1/README.md) | 🎮 AI 3D Pygame Agent | [advanced_ai_agents/autonomous_game_playing_agent_apps/ai_3dpygame_r1](../../advanced_ai_agents/autonomous_game_playing_agent_apps/ai_3dpygame_r1/) |
+| ✅ | [Day 136](day136-ai-tic-tac-toe-agent/README.md) | 🎲 AI Tic-Tac-Toe Agent | [advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent](../../advanced_ai_agents/autonomous_game_playing_agent_apps/ai_tic_tac_toe_agent/) |
 
 ### 볼륨 11. 🗣️ Voice AI Agents (Day 137–140, 4일)
 
