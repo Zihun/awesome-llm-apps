@@ -1,0 +1,36 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+env: "환경변수\n(os.environ)" { class: file }
+
+app: "agent_forge.py" {
+  class: group
+  grid-columns: 1
+  grid-gap: 6
+  ui: "1. 화면\n(main)" { class: ours }
+  router: "2. 라우터\n(classify_query)" { class: ours }
+  agents: "3. 에이전트 넷\n(AGENTS)" { class: ours }
+  connect: "4. 서버 연결\n(connect_mcp_servers)" { class: ours }
+  loop: "5. 도구 루프\n(run_agent_async)" { class: ours }
+  store: "대화 기록\n(session_state)" { class: store }
+}
+
+servers: "MCP 서버 (npx 자식 프로세스)" {
+  class: group
+  grid-columns: 1
+  gh: "github" { class: ext }
+  fs: "filesystem" { class: ext }
+  ft: "fetch" { class: ext }
+}
+
+anthropic: "Anthropic\n(messages.create)" { class: ext }
+
+user -> app: "API 키 · 질문 · 모드"
+app -> user: "라우팅 안내 · 답"
+app -> env: "ANTHROPIC_API_KEY"
+env -> app: "환경 전체 (env)"
+app -> servers: "실행 · initialize ·\ntools/list · tools/call"
+servers -> app: "도구 정의 · 결과 글"
+app -> anthropic: "messages · tools"
+anthropic -> app: "tool_use 또는 글"

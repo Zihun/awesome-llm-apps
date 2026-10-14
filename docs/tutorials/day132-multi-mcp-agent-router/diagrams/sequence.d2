@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면 (main)" { class: ours }
+router: "라우터 (classify_query)" { class: ours }
+mcp: "MCP 서버들 (npx 자식 프로세스)" { class: ext }
+runner: "도구 루프 (run_agent_async)" { class: ours }
+
+user -> ui: "질문 (chat_input)"
+ui -> router: "classify_query(prompt)"
+router -> ui: "agent_id"
+ui -> user: "Routed to ... ·\nMCP servers: ..."
+ui -> runner: "run_agent(client, agent,\nprompt, 이 에이전트의 기록)"
+runner -> mcp: "서버마다 차례로 실행\n(env = 환경 전체)"
+runner -> mcp: "initialize · tools/list"
+mcp -> runner: "도구 정의"

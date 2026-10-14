@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+anthropic: "Anthropic" { class: ext }
+runner: "도구 루프 (run_agent_async)" { class: ours }
+mcp: "MCP 서버들 (npx 자식 프로세스)" { class: ext }
+
+runner -> anthropic: "messages.create\n(system · messages · tools)"
+anthropic -> runner: "stop_reason tool_use ·\ntool_use 블록"
+runner -> mcp: "tools/call (이름 · 입력)"
+mcp -> runner: "결과 content"
