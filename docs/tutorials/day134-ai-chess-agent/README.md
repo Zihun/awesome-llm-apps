@@ -1,6 +1,6 @@
 # Day 134 · ♜ AI Chess Agent
 
-> 볼륨 10 🎮 Autonomous Game-Playing · 난이도 ★★☆ ⚠(앱이 쓰는 `gpt-4o-mini`의 기본 스냅숏 `gpt-4o-mini-2024-07-18`은 OpenAI 폐기 문서에서 2027-01-14에 종료될 예정입니다 — 사전 준비. 또 `max_turns`를 101 이상으로 두거나 게임이 중간에 막히면, 이 앱은 Streamlit을 띄운 터미널에서 사람의 입력을 기다리며 멈추고 화면에는 API 키 탓이라는 오류가 뜹니다 — Step 8) · 예상 소요 130분(앱은 248줄 단일 파일이지만 AutoGen 에이전트 둘과 진행자가 주고받는 메시지를 가짜 서버 기록으로 하나하나 세어 보고, 가짜 서버 하나(모드 셋)와 확인 스크립트 넷을 직접 저장해 돌리고, 같은 앱을 `max_turns`와 서버 모드를 바꿔 가며 열 번 넘게 돌려 보는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 기본값(5턴, 9수)에 약 $0.002, 100턴(199수)에 약 $0.04(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았습니다. `gpt-4o-mini`는 OpenAI 모델 페이지의 입력 $0.15·출력 $0.60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-15 확인)이고, 한 수당 모델 호출 3번에 입력 약 770토큰·출력 약 100토큰을 가정했습니다. 입력은 가짜 서버가 받은 요청 본문의 글자 수를 4로 나눈 어림이고 출력 길이는 지어낸 값이라, 진짜 모델이 길게 말하면 몇 배가 될 수 있습니다) · 원본 앱: `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent`
+> 볼륨 10 🎮 Autonomous Game-Playing · 난이도 ★★☆ ⚠(앱이 쓰는 `gpt-4o-mini`의 기본 스냅숏 `gpt-4o-mini-2024-07-18`은 OpenAI 폐기 문서에서 2027-01-14에 종료될 예정입니다 — 사전 준비. 또 `max_turns`를 101 이상으로 두거나 게임이 중간에 막히면, 이 앱은 Streamlit을 띄운 터미널에서 사람의 입력을 기다리며 멈추고 화면에는 API 키 탓이라는 오류가 뜹니다 — Step 8) · 예상 소요 140분(앱은 248줄 단일 파일이지만 시퀀스 그림 열 장을 따라가야 하고 AutoGen 에이전트 둘과 진행자가 주고받는 메시지를 가짜 서버 기록으로 하나하나 세어 보고, 가짜 서버 하나(모드 셋)와 확인 스크립트 넷을 직접 저장해 돌리고, 같은 앱을 `max_turns`와 서버 모드를 바꿔 가며 열 번 넘게 돌려 보는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 기본값(5턴, 9수)에 약 $0.002, 100턴(199수)에 약 $0.04(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았습니다. `gpt-4o-mini`는 OpenAI 모델 페이지의 입력 $0.15·출력 $0.60(1M 토큰당, https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-15 확인)이고, 한 수당 모델 호출 3번에 입력 약 770토큰·출력 약 100토큰을 가정했습니다. 입력은 가짜 서버가 받은 요청 본문의 글자 수를 4로 나눈 어림이고 출력 길이는 지어낸 값이라, 진짜 모델이 길게 말하면 몇 배가 될 수 있습니다) · 원본 앱: `advanced_ai_agents/autonomous_game_playing_agent_apps/ai_chess_agent`
 
 ## 오늘 만들 것
 
@@ -25,7 +25,7 @@
 
 앱이 닿는 외부 서비스는 OpenAI 하나입니다. 이 앱은 agno를 쓰지 않으므로 앞 날들의 agno 통계 전송이 없습니다(`import` 줄이 `chess`·`streamlit`·`autogen`뿐 — 소스로 확인). 설치된 `autogen` 소스에서 `posthog`·`telemetry`를 언급하는 `.py`는 이 앱이 쓰지 않는 `teachability.py` 하나였습니다(grep으로 확인).
 
-⚠ 모델. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-15 확인)에는 별칭 `gpt-4o-mini` 자체가 아니라 날짜 붙은 `gpt-4o-mini-2024-07-18`이 "January 14, 2027" 종료로 올라 있고 권하는 대체는 `gpt-6-luna`입니다. 모델 페이지는 별칭 `gpt-4o-mini`가 `gpt-4o-mini-2024-07-18`을 가리킨다고 적습니다. 종료일 뒤에 별칭이 어떻게 움직이는지는 폐기 문서가 말하지 않습니다. 교체할 때는 `ai_chess_agent.py`를 고치지 말고 복사본의 102행과 109행 `"model"` 값 두 곳을 바꿉니다(사이드 안내문 194·195행의 "GPT-4o-mini"는 화면 글일 뿐입니다).
+⚠ 모델. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-15 확인)에는 별칭 `gpt-4o-mini` 자체가 아니라 날짜 붙은 `gpt-4o-mini-2024-07-18`이 "January 14, 2027" 종료로 올라 있고 권하는 대체는 `gpt-6-luna`입니다. 모델 페이지의 "Default snapshot"(기본 스냅숏)이 `gpt-4o-mini-2024-07-18`입니다. 종료일 뒤에 별칭이 어떻게 움직이는지는 폐기 문서가 말하지 않습니다. 교체할 때는 `ai_chess_agent.py`를 고치지 말고 복사본의 102행과 109행 `"model"` 값 두 곳을 바꿉니다(사이드 안내문 194·195행의 "GPT-4o-mini"는 화면 글일 뿐입니다).
 
 ## 아키텍처 한눈에 보기
 
@@ -43,7 +43,7 @@
 
 ## 단계별 진행
 
-명령은 bash 기준이고 앱을 띄우는 터미널마다 환경변수를 다시 줍니다. PowerShell은 줄바꿈이 든 `-c "..."`가 따옴표 문제를 일으키니 같은 내용을 `.py`로 저장해 실행하고, `&&`는 줄을 나누고, `< 파일` 입력 연결은 `Get-Content 파일 | 명령`으로 바꾸세요(PowerShell 형태는 모두 실행해 보지 못했습니다). 저장소 루트에는 `pyproject.toml`이 있어서 모든 `uv run`에 `--no-project`를 붙입니다.
+명령은 bash 기준이고 앱을 띄우는 터미널마다 환경변수를 다시 줍니다. PowerShell은 줄바꿈이 든 `-c "..."`가 따옴표 문제를 일으키니 같은 내용을 `.py`로 저장해 실행하고, `&&`는 줄을 나누고, `< 파일` 입력 연결은 `Get-Content 파일 | 명령`으로, 입력을 막는 `< /dev/null`(PowerShell에는 `/dev/null`이 없습니다)은 `$null | 명령`으로 바꾸세요(PowerShell 형태는 모두 실행해 보지 못했습니다). 저장소 루트에는 `pyproject.toml`이 있어서 모든 `uv run`에 `--no-project`를 붙입니다.
 
 ### Step 1. 환경 만들기 — `autogen==0.6.1`은 무엇으로 풀리는가
 
@@ -184,7 +184,7 @@ print("버튼:", [b.label for b in at.button], "| 소제목:", [s.value for s in
 uv run --no-project python -X utf8 -W ignore appcheck.py
 ```
 
-직접 확인한 출력입니다(`missing ScriptRunContext` 경고 한 줄은 무시해도 됩니다).
+직접 확인한 출력입니다(`missing ScriptRunContext` 경고 한 줄은 무시해도 됩니다. 키를 넣은 `run`부터 "The API key specified is not a valid OpenAI format" 경고가 여섯 줄 나오는데 아래에서는 생략했습니다. Step 4에서 설명합니다).
 
 ```text
 키 없을 때 경고: ['Please enter your OpenAI API key in the sidebar to start the game.']
@@ -378,7 +378,7 @@ if st.session_state.openai_api_key:
 
 백과 흑은 같은 모양입니다. `config_list`에 모델 이름과 사이드바에서 받은 키를 넣고, 시스템 메시지는 한 문장(이름·색·"먼저 `available_moves()`, 그다음 `execute_move(move)`")뿐입니다. `cache_seed`가 `None`이라 AutoGen의 디스크 캐시를 끕니다. Day 085·116에서는 이 값이 없어 작업 폴더에 `.cache/41/cache.db`가 생겼지만, 오늘은 문서의 모든 실행을 마친 `chess-lab`에 `.cache/`가 없었습니다(직접 확인). 진행자 `Game_Master`는 `llm_config=False`라서 모델을 부르지 않고, 받은 메시지가 `check_made_move`를 통과하면(방금 수를 뒀으면) 대화를 끝내고, 아니면 "Please make a move."를 자동으로 답합니다.
 
-`config_list` 항목에 `base_url`이 없습니다. 이 앱에서는 `OPENAI_BASE_URL` 환경변수가 대신 먹힙니다. Step 7에서 그 변수만으로 요청이 가짜 서버에 도착하는 것을 서버 기록으로 봅니다. 항목에 `base_url`을 직접 넣는 것도 AutoGen이 받아 줍니다(`oai/client.py`가 `OpenAI.__init__`의 키워드 인자를 그대로 통과시키는 것을 소스로 확인했습니다). 가짜 키 `sk-fake-...`는 AutoGen이 "The API key specified is not a valid OpenAI format" 경고 한 줄을 찍지만 동작에는 지장이 없었습니다(직접 확인).
+`config_list` 항목에 `base_url`이 없습니다. 이 앱에서는 `OPENAI_BASE_URL` 환경변수가 대신 먹힙니다. Step 7에서 그 변수만으로 요청이 가짜 서버에 도착하는 것을 서버 기록으로 봅니다. 항목에 `base_url`을 직접 넣는 것도 AutoGen이 받아 줍니다(`oai/client.py`가 `OpenAI.__init__`의 키워드 인자를 그대로 통과시키는 것을 소스로 확인했습니다). 둘이 겹치면 항목이 이깁니다. 가짜 서버 둘(하나는 `OPENAI_BASE_URL`, 하나는 항목의 `base_url`)을 띄우고 `OpenAIWrapper`로 한 번씩 요청해 보니 항목에 `base_url`이 없을 때는 환경변수 쪽 서버만, 있을 때는 항목 쪽 서버만 요청을 받았고, 두 요청의 `Authorization`은 모두 항목의 `api_key`(`Bearer sk-fake-config-ke…`)였지 셸의 `OPENAI_API_KEY`(`sk-fake-shell-key`)가 아니었습니다(직접 확인, `pyautogen 0.6.1`·`openai 3.31.0`). 이 앱은 키를 항상 사이드바에서 받아 항목에 넣으므로 셸의 키는 쓰이지 않습니다. 가짜 키 `sk-fake-...`는 AutoGen이 "The API key specified is not a valid OpenAI format" 경고를 찍지만 동작에는 지장이 없었습니다. 에이전트 둘이 만들어질 때 둘, `register_function` 넷이 클라이언트를 새로 만들 때 넷이라 모두 여섯 줄이 나옵니다(직접 확인).
 
 기본값 둘이 Step 8에서 중요합니다. 백과 흑은 `human_input_mode`를 주지 않아 기본값 `"TERMINATE"`이고, `max_consecutive_auto_reply`도 기본 100입니다. 진행자는 `"NEVER"`입니다. 그리고 진행자에게는 `code_execution_config`가 없어 코드 실행이 꺼져 있어서 `docker`를 쓰지 않습니다(직접 확인, 아래 출력).
 
@@ -437,7 +437,7 @@ print("진행자 종료 판정:", gm._is_termination_msg.__name__, "| 기본 답
 uv run --no-project python -X utf8 -W ignore agentcheck.py
 ```
 
-직접 확인한 출력입니다(위의 가짜 키 경고 두 줄은 생략했습니다).
+직접 확인한 출력입니다(위의 가짜 키 경고 여섯 줄은 생략했습니다).
 
 ```text
 Agent_White | llm_config: ['cache_seed', 'tools'] | human_input_mode: TERMINATE | max_consecutive_auto_reply: 100
@@ -529,7 +529,11 @@ available_moves 인자: {"type": "object", "properties": {}, "required": []}
 
 ![백·흑·진행자의 바깥 대화와 중첩 대화](diagrams/extra-chats.svg)
 
-그림은 같은 두 에이전트 사이의 두 종류 대화를 보여 줍니다. 백·흑 사이의 바깥 대화는 "한 줄 알림"만 오가고, 도구 호출과 결과는 각자 진행자와의 중첩 대화 안에서 오갑니다. 진행자가 두 도구를 실행할 때 판 상태와 오가는 것은 아래 그림입니다. 진행자는 도구 함수에 실행을 맡기고, 종료 판정 `check_made_move`로 `made_move`를 읽고 되돌립니다.
+화면과 흑 사이에는 호출과 반환이 하나씩 있습니다. 화면이 `initiate_chat(...)`을 부르고(218행) 대화가 끝나면 `ChatResult`가 돌아와 요약을 씁니다(224행).
+
+![화면과 흑 사이의 initiate_chat 호출과 ChatResult 반환](diagrams/extra-run.svg)
+
+아래 그림은 같은 두 에이전트 사이의 두 종류 대화를 보여 줍니다. 백·흑 사이의 바깥 대화는 "한 줄 알림"만 오가고, 도구 호출과 결과는 각자 진행자와의 중첩 대화 안에서 오갑니다. 진행자가 두 도구를 실행할 때 판 상태와 오가는 것은 아래 그림입니다. 진행자는 도구 함수에 실행을 맡기고, 종료 판정 `check_made_move`로 `made_move`를 읽고 되돌립니다.
 
 ![진행자와 도구 함수, 판 상태의 관계](diagrams/extra-master.svg)
 
@@ -832,9 +836,9 @@ uv run --no-project python -X utf8 -W ignore drive.py 101 < exit.txt
 | 101턴, Enter | 201 | 1 | 없음 | 604 |
 | 101턴, `exit` | 200 | 1 | 없음 | 601 |
 
-100턴까지는 한 번도 묻지 않고 199수를 둡니다. 101턴째에 터미널이 `Please give feedback to Agent_Black. Press enter to skip and use auto-reply, or type 'exit' to stop the conversation:`이라고 묻습니다. Enter를 누르면 자동 응답으로 계속되고 201수까지 갑니다. `exit`를 입력하면 대화가 거기서 끝나지만 화면은 그때까지의 200수를 보여 줍니다. 표준 입력이 없는 터미널(여기서는 `/dev/null`)이면 `input()`이 `EOFError`를 내고, 앱의 가장 바깥 `except`(245~246행)가 이것을 잡아 "API 키를 확인하라"는 문구를 보여 줍니다. 키 문제가 아닌데 키 문제처럼 보이는 오류이고, 그때까지 둔 수는 화면에 남지 않습니다(`화면의 수` 0). 그래서 사이드바가 권하는 "200턴 이상"은 이 앱에서 Enter를 눌러 줄 사람이 터미널 앞에 있어야만 갑니다. 한 판이 보통 몇 수에서 끝나는지는 이 문서가 재지 못했습니다.
+100턴까지는 한 번도 묻지 않고 199수를 둡니다. 101턴째에 터미널이 `Please give feedback to Agent_Black. Press enter to skip and use auto-reply, or type 'exit' to stop the conversation:`이라고 묻습니다. Enter를 누르면 자동 응답으로 계속되고 201수까지 갑니다. `exit`를 입력하면 대화가 거기서 끝나지만 화면은 그때까지의 200수를 보여 줍니다. 표준 입력이 없는 터미널(여기서는 `/dev/null`)이면 `input()`이 `EOFError`를 내고, 앱의 가장 바깥 `except`(245~246행)가 이것을 잡아 "API 키를 확인하라"는 문구를 보여 줍니다. 키 문제가 아닌데 키 문제처럼 보이는 오류이고, 그때까지 둔 수는 화면에 남지 않습니다(`화면의 수` 0). Enter는 자동 응답 횟수를 0으로 되돌리지 않아서(소스: 빈 입력이면 횟수가 하나 더 오릅니다) 한 번으로 끝나지 않습니다. `max_turns=104`에 Enter 스무 번을 준 결과 화면에 207수가 나왔고 `input()`은 7번 불렸습니다(직접 확인). 101턴째에 1번, 102턴부터는 턴마다 백과 흑이 한 번씩이라 200턴이면 약 199번입니다. 그래서 사이드바가 권하는 "200턴 이상"은 이 앱에서 Enter를 눌러 줄 사람이 터미널 앞에 있어야만 갑니다. 한 판이 보통 몇 수에서 끝나는지는 이 문서가 재지 못했습니다.
 
-**게임이 막히면.** 체크메이트가 난 판이나 모델이 수를 못 두는 판에서는 진행자가 "Please make a move."를 계속 보내고 모델은 계속 답합니다. 서버를 `mate`(바보의 메이트로 네 수에 흑이 이기게 하는 모드) 또는 `text`(도구를 안 쓰고 말만 하는 모드)로 띄워 봅니다. `mate`는 서버 하나당 한 번만 수를 짜 주니, 다시 돌릴 때는 서버를 새로 띄우세요.
+**게임이 막히면.** 체크메이트가 난 판이나 모델이 수를 못 두는 판에서는 진행자가 "Please make a move."를 계속 보내고 모델은 계속 답합니다. 서버를 `mate`(바보의 메이트로 네 수에 흑이 이기게 하는 모드) 또는 `text`(도구를 안 쓰고 말만 하는 모드)로 띄워 봅니다. `mate`는 서버 하나당 한 번만 수를 짜 주니, 다시 돌릴 때는 서버를 새로 띄우세요. 51733 서버가 첫 터미널을 차지하고 있으니 아래 서버는 새 터미널(`cd chess-lab` 먼저)에, `drive.py`는 또 다른 터미널에서 돌립니다.
 
 ```bash
 uv run --no-project python fake_openai.py 51734 mate
@@ -845,7 +849,18 @@ export OPENAI_BASE_URL=http://127.0.0.1:51734/v1
 uv run --no-project python -X utf8 -W ignore drive.py 4 < /dev/null
 ```
 
-직접 확인한 결과입니다. 흑이 네 번째 수로 체크메이트를 낸 뒤(`Moved queen (♛) from d8 to h4.` / `Checkmate! Black wins!`) 백의 다섯 번째 수에서 모델은 빈 합법 수 목록을 받고 빈 수를 두려다 "Invalid move format"을 받고 말하고, 진행자가 "Please make a move."로 다시 시키는 일을 되풀이합니다. `input()`이 불릴 때까지 서버 호출이 정확히 112번(`mate`) 나갔고(앞의 12번은 정상적인 네 수), 이어서 터미널이 `Please give feedback to Game_Master. ...`라고 묻습니다. 그 사이 요청의 `messages`가 2, 4, 6, ... 200으로 늘고 `chars`는 700에서 23,000을 넘습니다. 중첩 대화 안에서는 기록이 지워지지 않기 때문입니다. 입력을 막고 돌리면 같은 EOF 오류 상자, Enter를 주면 호출이 114번(요약 한 번 포함)에서 끝나고 화면에는 네 수가 남았습니다. `text` 서버(도구를 안 쓰는 모델)로 `max_turns=1`을 돌려도 호출 100번 뒤에 같은 물음이 나왔습니다. 진짜 `gpt-4o-mini`가 같은 식으로 되풀이할지는 확인하지 못했습니다. 이 동작은 모델이 수를 못 두면 어떻게 되는지에 대한 소스상의 결과이고, 모델이 빈 목록 앞에서 `TERMINATE` 같은 말을 할지는 알 수 없습니다.
+직접 확인한 결과입니다. 흑이 네 번째 수로 체크메이트를 낸 뒤(`Moved queen (♛) from d8 to h4.` / `Checkmate! Black wins!`) 판 전체의 다섯 번째 수(백의 세 번째 수)에서 모델은 빈 합법 수 목록을 받고 빈 수를 두려다 "Invalid move format"을 받고 말하고, 진행자가 "Please make a move."로 다시 시키는 일을 되풀이합니다. `input()`이 불릴 때까지 서버 호출이 정확히 112번(`mate`) 나갔고(앞의 12번은 정상적인 네 수), 이어서 터미널이 `Please give feedback to Game_Master. ...`라고 묻습니다. 그 사이 요청의 `messages`가 2, 4, 6, ... 200으로 늘고 `chars`는 700에서 23,000을 넘습니다. 중첩 대화 안에서는 기록이 지워지지 않기 때문입니다. 입력을 막고 돌리면 같은 EOF 오류 상자, Enter를 주면 호출이 114번(요약 한 번 포함)에서 끝나고 화면에는 네 수가 남았습니다. `text` 서버(도구를 안 쓰는 모델)로 `max_turns=1`을 돌려도 호출 100번 뒤에 같은 물음이 나왔습니다(직접 확인). 다음 명령입니다. 새 터미널에서 서버를 띄우고 `drive.py`를 다른 터미널에서 돌립니다.
+
+```bash
+uv run --no-project python fake_openai.py 51735 text
+```
+
+```bash
+export OPENAI_BASE_URL=http://127.0.0.1:51735/v1
+uv run --no-project python -X utf8 -W ignore drive.py 1 < /dev/null
+```
+
+출력은 `error:`에 같은 EOF 문구, `input() 호출: 1`이고 서버 기록은 100줄입니다. 진짜 `gpt-4o-mini`가 같은 식으로 되풀이할지는 확인하지 못했습니다. 이 동작은 모델이 수를 못 두면 어떻게 되는지에 대한 소스상의 결과이고, 모델이 빈 목록 앞에서 `TERMINATE` 같은 말을 할지는 알 수 없습니다.
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
@@ -853,27 +868,47 @@ uv run --no-project python -X utf8 -W ignore drive.py 4 < /dev/null
 
 ## 요청 한 건이 흐르는 과정
 
-버튼 한 번의 메시지를 `max_turns=1`로 모두 그렸습니다. 29개 메시지가 한 장에 들어가지 않아(전부를 한 장에 그려 재 보니 1445×2952였고 상한은 1400×1500입니다) 코드 순서 그대로 다섯 장으로 나눴고, 메시지는 하나도 빼지 않았습니다. 2턴째부터는 같은 수 하나가 백과 흑에게 번갈아 반복되므로, 한 수의 구조는 첫 수에 모두 들어 있습니다.
+버튼 한 번의 메시지를 `max_turns=1`로 모두 그렸고, 판 상태를 읽고 쓰는 것도 메시지로 폈습니다. 진행자의 종료 판정 `check_made_move`는 진행자가 백의 메시지를 받을 때마다 판 상태의 `made_move`를 읽는 일이라 한 수에 세 번(앞의 둘은 `False`, 마지막이 `True`) 나오고, 화면도 마지막에 `move_history`를 읽습니다. 메시지는 모두 37개입니다. 판 상태 읽기 여섯 개를 뺀 29개만 한 장에 그려도 1445×2952였고 상한은 1400×1500이라, 코드 순서 그대로 열 장으로 나눴고 메시지는 하나도 빼거나 합치지 않았습니다. 백이 흑·진행자·GPT 셋과 한꺼번에 주고받는 구간은 어떤 배우 순서로 놓아도 수명선이 라벨을 지나서(`seqsearch`로 모든 순서를 확인했습니다) 짧게 끊었습니다. 2턴째부터는 같은 수 하나가 백과 흑에게 번갈아 반복되므로, 한 수의 구조는 첫 수에 모두 들어 있습니다.
 
-![1: 클릭에서 합법 수 결과까지](diagrams/sequence.svg)
+![1: 클릭과 판 초기화](diagrams/sequence.svg)
 
-1번은 버튼 클릭부터 백이 합법 수 목록을 받는 곳까지입니다. 화면이 판을 초기화하고 흑에게 `initiate_chat`을 시키고, 흑의 시작 문장이 백에게 가며, 그 문장으로 진행자가 중첩 대화를 엽니다. 백은 모델에게 도구 스키마 둘과 함께 묻고 `available_moves` 호출을 받아 진행자에게 넘기고, 진행자는 도구 함수를 실행해 판에서 합법 수를 읽어 문자열로 돌려줍니다.
+1번은 버튼 클릭에서 화면이 판을 초기화하기까지입니다.
 
-![2: 수 두기](diagrams/extra-move.svg)
+![2: 대화 시작](diagrams/extra-start.svg)
 
-2번은 백이 합법 수 목록을 보고 `execute_move`를 부르는 곳입니다. 도구 함수가 판에 수를 두고, 그림을 저장하고, `made_move`를 `True`로 세운 뒤 판에서 말과 체크 여부를 읽어 "Moved ..." 문장을 만들어 진행자에게 돌려줍니다.
+2번에서 화면이 흑에게 `initiate_chat`을 시키고, 흑의 시작 문장이 백에게 가며, 그 문장으로 진행자가 중첩 대화를 엽니다.
 
-![3: 한 수의 마지막 글](diagrams/extra-text.svg)
+![3: 합법 수 요청과 첫 종료 판정](diagrams/extra-ask.svg)
 
-3번에서 백이 결과를 보고 "I have made my move."라고 말하고, 진행자가 받은 이 메시지에서 `check_made_move`가 `True`를 돌려 중첩 대화가 끝납니다.
+3번은 백이 모델에게 도구 스키마 둘과 함께 묻고 `available_moves` 호출을 받아 진행자에게 넘기는 곳이고, 진행자는 이 메시지를 받자마자 `check_made_move`로 `made_move`를 읽어 `False`를 얻습니다.
 
-![4: 바깥 대화로 돌아가 요약](diagrams/extra-result.svg)
+![4: 합법 수 목록](diagrams/extra-list.svg)
 
-4번은 중첩 대화의 마지막 글이 바깥 대화로 흑에게 가는 곳이고, `max_turns=1`이라 턴이 끝나 흑이 `reflection_with_llm`으로 요약 호출을 합니다.
+4번은 진행자가 도구 함수를 실행해 판에서 합법 수를 읽어 문자열로 돌려주는 곳입니다.
 
-![5: 화면에 결과 표시](diagrams/extra-end.svg)
+![5: execute_move 호출과 둘째 종료 판정](diagrams/extra-call.svg)
 
-5번은 요약이 화면에 `st.markdown`으로 나오고 수마다 판 그림이 쌓여 사용자에게 보이는 마무리입니다. 29개 메시지의 존재·순서는 `max_turns=1`로 서버 기록과 `TRACE=1` 출력으로 직접 확인했고, 진짜 모델의 문장은 확인하지 못했습니다.
+5번에서 백이 목록을 보고 `execute_move`를 고르고, 진행자는 이 메시지에서도 `made_move`를 읽어 아직 `False`임을 봅니다.
+
+![6: 수 두기](diagrams/extra-move.svg)
+
+6번은 도구 함수가 판에 수를 두고, 그림을 저장하고, `made_move`를 `True`로 세운 뒤 말과 체크 여부를 읽어 "Moved ..." 문장을 진행자에게 돌려주는 곳입니다.
+
+![7: 한 수의 마지막 글과 셋째 종료 판정](diagrams/extra-text.svg)
+
+7번에서 백이 결과를 보고 "I have made my move."라고 말하고, 진행자가 이 메시지에서 `check_made_move`로 `made_move`를 읽어 `True`를 얻고 `False`로 되돌리며 중첩 대화가 끝납니다.
+
+![8: 바깥 대화로 돌아가 요약](diagrams/extra-result.svg)
+
+8번은 중첩 대화의 마지막 글이 바깥 대화로 흑에게 가는 곳이고, `max_turns=1`이라 턴이 끝나 흑이 `reflection_with_llm`으로 요약 호출을 합니다.
+
+![9: 결과를 받아 수 기록 읽기](diagrams/extra-end.svg)
+
+9번은 흑이 화면에 `ChatResult`를 돌려주고, 화면이 판 상태의 `move_history`를 읽는 곳입니다.
+
+![10: 화면에 표시](diagrams/extra-show.svg)
+
+10번은 요약 글과 수마다의 판 그림이 사용자에게 보이는 마무리입니다. 37개 메시지 가운데 판 상태 읽기 여섯 개를 뺀 29개의 존재·순서는 `max_turns=1`로 서버 기록과 `TRACE=1` 출력으로 직접 확인했고, 진행자의 `check_made_move`가 한 수에 세 번 불리는 것은 앱 사본의 `check_made_move`에 stderr 출력 한 줄을 넣어 돌려 `False`, `False`, `True`가 차례로 찍히는 것으로 직접 확인했고, 불리는 자리는 `conversable_agent.py`의 `check_termination_and_human_reply`를 소스로 읽어 확인했습니다. 진짜 모델의 문장은 확인하지 못했습니다.
 
 ## 실행 체크리스트
 
@@ -910,8 +945,8 @@ uv run --no-project python -X utf8 -W ignore drive.py 4 < /dev/null
 
 - `drive.py`와 앱 사본에서 `"human_input_mode": "NEVER"`와 `max_consecutive_auto_reply`를 백·흑에 주고, `mate` 서버로 Step 8을 다시 돌려 막힌 판에서 호출이 몇 번에 끝나는지, 터미널이 더는 묻지 않는지 비교해 보기
 - 사본의 `execute_move`가 돌려주는 문장에 판의 FEN(`chess.Board.fen()`)을 덧붙이면 상대에게 판이 전달되는지, 서버 기록의 `messages`·`chars`가 어떻게 달라지는지 보기
-- `config_list` 항목에 `"base_url"`을 직접 넣어 환경변수 없이도 가짜 서버로 가는지, 환경변수와 둘 다 있으면 무엇이 이기는지 확인해 보기(소스로 받아 준다는 것까지만 확인했고 돌려 보지 않았습니다)
+- 사본의 `config_list` 항목에 `"base_url"`을 직접 넣고 `OPENAI_BASE_URL`은 걸지 않은 채 Step 7을 돌려, 환경변수 없이도 서버 기록에 요청이 찍히는지 보기(둘이 겹치면 항목이 이긴다는 것은 Step 4에서 확인했습니다)
 
 ## 다음 날 예고
 
-[Day 135 · 🎮 AI 3D Pygame Agent](../day135-ai-3dpygame-r1/README.md) — 같은 볼륨의 다음 앱입니다. `ai_3dpygame_r1.py`(187줄, Streamlit)는 OpenAI `gpt-4o`(86행)나 Google Gemini `gemini-1.5-pro`(96행)로 pygame 코드를 만들고, "Visualize" 버튼은 browser-use의 `BrowserSession()`(126행)으로 브라우저를 띄우는 구조이며 폴더 이름의 `r1`과 달리 두 `.py` 파일에는 `r1`도 `deepseek`도 없습니다(grep으로 확인). 같은 폴더의 `ai_gen_game01.py`(84줄)는 pygame 예시입니다(모두 소스로 확인).
+[Day 135 · 🎮 AI 3D Pygame Agent](../day135-ai-3dpygame-r1/README.md) — 같은 볼륨의 다음 앱입니다. `ai_3dpygame_r1.py`(187줄, Streamlit)는 OpenAI `gpt-4o`(86행)나 Google Gemini `gemini-1.5-pro`(96행)로 pygame 코드를 만들고, "Generate Visualization" 버튼(64행)이 browser-use의 `BrowserSession()`(126행)으로 브라우저를 띄우는 구조이며 폴더 이름의 `r1`과 달리 두 `.py` 파일에는 `r1`도 `deepseek`도 없습니다(grep으로 확인). 같은 폴더의 `ai_gen_game01.py`(마지막 줄에 개행이 없어 편집기 기준 85줄)는 pygame 예시입니다(모두 소스로 확인).

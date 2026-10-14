@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "Streamlit 화면" { class: ours }
+black: "흑 (Agent_Black)" { class: ours }
+white: "백 (Agent_White)" { class: ours }
+gm: "진행자 (Game_Master)" { class: ours }
+
+ui -> black: "initiate_chat(white,\nmax_turns=1)"
+black -> white: "Let's play chess!\nYou go first"
+gm -> white: "같은 문장으로\n중첩 대화 시작"

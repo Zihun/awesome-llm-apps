@@ -1,0 +1,8 @@
+...@../../_tools/theme
+direction: right
+
+ui: "Streamlit 화면\n(Start Game 버튼)" { class: ours }
+black: "흑 (Agent_Black)" { class: ours }
+
+ui -> black: "initiate_chat(white,\nmax_turns) (218행)"
+black -> ui: "ChatResult\n(.summary) (224행)"

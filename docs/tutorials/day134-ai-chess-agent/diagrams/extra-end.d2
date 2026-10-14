@@ -3,7 +3,8 @@ shape: sequence_diagram
 
 black: "흑 (Agent_Black)" { class: ours }
 ui: "Streamlit 화면" { class: ours }
-user: "사용자" { class: person }
+board: "판 상태" { class: store }
 
 black -> ui: "ChatResult(summary)"
-ui -> user: "요약 글 + 수 기록의\n판 그림"
+ui -> board: "move_history 읽기\n(228행)"
+board -> ui: "수마다 SVG 그림"

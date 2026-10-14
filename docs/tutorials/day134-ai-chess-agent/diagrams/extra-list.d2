@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gm: "진행자 (Game_Master)" { class: ours }
+tools: "도구 함수" { class: ours }
+board: "판 상태" { class: store }
+white: "백 (Agent_White)" { class: ours }
+
+gm -> tools: "available_moves()"
+tools -> board: "legal_moves"
+board -> tools: "합법 수 20개"
+tools -> gm: "Available moves are:\ng1h3,g1f3,..."
+gm -> white: "tool_responses"

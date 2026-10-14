@@ -1,7 +1,6 @@
 ...@../../_tools/theme
 direction: down
 
-user: 사용자 { class: person }
 
 app: "ai_chess_agent.py" {
   class: group
@@ -24,11 +23,13 @@ board: "판 상태\n(st.session_state)" { class: store }
 
 gpt: "GPT-4o mini\n(OpenAI)" { class: ext }
 
+user: 사용자 { class: person }
 user -> app: "키 · max_turns · Start Game"
-app -> user: "수마다 판 그림"
+app -> user: "요약 글 · 수마다 판 그림"
 app -> agents: "initiate_chat(\nmax_turns)"
 agents -> app: "함수 실행\n요청"
 app -> agents: "함수 결과\n문자열"
+agents -> app: "ChatResult\n(summary)"
 agents -> gpt: "대화 · 도구 스키마 · 요약 요청"
 gpt -> agents: "도구 호출 · 글"
 app -> board: "reset() · 수 두기 · SVG 저장"

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+white: "백 (Agent_White)" { class: ours }
+gpt: "GPT-4o mini" { class: ext }
+board: "판 상태" { class: store }
+gm: "진행자 (Game_Master)" { class: ours }
+
+white -> gpt: "대화 + 합법 수 목록"
+gpt -> white: "tool_calls:\nexecute_move(c2c4)"
+white -> gm: "tool_calls 메시지"
+gm -> board: "check_made_move():\nmade_move 읽기"
+board -> gm: "False"
