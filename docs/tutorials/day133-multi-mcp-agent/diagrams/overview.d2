@@ -1,0 +1,57 @@
+...@../../_tools/theme
+direction: right
+
+servers: "서버 넷 (npx)" {
+  class: group
+  grid-columns: 1
+  grid-gap: 0
+  github: "GitHub" { class: ext }
+  perplexity: "Perplexity" { class: ext }
+  calendar: "캘린더" { class: ext }
+  gmail: "Gmail" { class: ext }
+}
+
+
+apis: "API" {
+  class: group
+  grid-columns: 1
+  grid-gap: 0
+  ghapi: "GitHub\nAPI" { class: ext }
+  pplxapi: "Perplexity\nAPI" { class: ext }
+  google: "Google\nAPI" { class: ext }
+}
+
+
+openai: "OpenAI\n(gpt-4o)" { class: ext }
+
+stats: "agno 통계" { class: ext }
+
+db: "SqliteDb" { class: store }
+
+user: 사용자 { class: person }
+
+env: ".env ·\n환경변수" { class: file }
+
+
+app: "multi_mcp_agent.py" {
+  class: group
+  grid-columns: 1
+  grid-gap: 0
+  main: "진입 (main)" { class: ours }
+  mcp: "MCP 도구\n(MultiMCPTools)" { class: ours }
+  agent: "에이전트\n(MultiMCPAgent)" { class: ours }
+  cli: "대화 루프\n(acli_app)" { class: ours }
+}
+
+
+user -> app: "질문"
+app -> user: "답 글"
+env -> app: "키 셋"
+app -> servers: "실행 ·\n환경 전체"
+servers -> app: "도구 목록 ·\n결과"
+servers -> apis: "API ·\n요청"
+apis -> servers: "응답 JSON"
+app -> openai: "대화 ·\n도구 스키마"
+openai -> app: "글 조각 ·\n도구 호출"
+app -> db: "세션 · 기록"
+app -> stats: "익명 통계"

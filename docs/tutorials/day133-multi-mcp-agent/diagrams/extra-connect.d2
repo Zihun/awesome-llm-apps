@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+perplexity: "Perplexity 서버" { class: ext }
+mcp: "MultiMCPTools" { class: ours }
+calendar: "캘린더 서버" { class: ext }
+
+mcp -> perplexity: "자식 프로세스 실행 ·\ninitialize"
+perplexity -> mcp: "도구 목록"
+mcp -> calendar: "자식 프로세스 실행 ·\ninitialize"
+calendar -> mcp: "도구 목록"

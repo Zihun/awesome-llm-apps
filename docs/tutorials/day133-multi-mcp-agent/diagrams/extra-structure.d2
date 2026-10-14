@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+main: "진입 · 키 검사 (main)" { class: ours }
+mcp: "MCP 도구 (MultiMCPTools)" { class: ours }
+agent: "에이전트 (MultiMCPAgent)" { class: ours }
+cli: "대화 루프 (acli_app)" { class: ours }
+db: "multi_mcp_agent.db (SqliteDb)" { class: store }
+
+main -> mcp: "명령 넷 · env (67행)"
+main -> db: "SqliteDb(db_file) (64행)"
+main -> agent: "Agent(...) (71행)"
+mcp -> agent: "tools=[mcp_tools]"
+db -> agent: "db=db"
+main -> cli: "acli_app(...) (147행)"

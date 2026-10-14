@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+cli: "대화 루프 (acli_app)" { class: ours }
+agent: "에이전트 (MultiMCPAgent)" { class: ours }
+mcp: "MCP 도구 (MultiMCPTools)" { class: ours }
+servers: "MCP 서버 넷 (npx)" { class: ext }
+openai: "OpenAI (gpt-4o)" { class: ext }
+
+cli -> agent: "입력 한 줄마다 답 요청"
+agent -> mcp: "도구 호출 전달"
+mcp -> servers: "자식 프로세스 넷 (stdio)"
+agent -> openai: "모델 호출"

@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: down
+
+github: "GitHub 서버" { class: ext }
+perplexity: "Perplexity 서버" { class: ext }
+calendar: "캘린더 서버" { class: ext }
+gmail: "Gmail 서버" { class: ext }
+ghapi: "GitHub API" { class: ext }
+pplxapi: "Perplexity API" { class: ext }
+gcal: "Google Calendar API" { class: ext }
+gmailapi: "Gmail API" { class: ext }
+calcred: "~/.calendar-mcp/\ncredentials.json" { class: file }
+gmcred: "~/.gmail-mcp/\ncredentials.json" { class: file }
+
+github -> ghapi: "저장소 · 이슈 요청"
+perplexity -> pplxapi: "검색 질문"
+calendar -> gcal: "일정 요청"
+gmail -> gmailapi: "메일 요청"
+calcred -> calendar: "OAuth 토큰"
+gmcred -> gmail: "OAuth 토큰"

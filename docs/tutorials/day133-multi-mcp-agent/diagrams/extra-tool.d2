@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "MultiMCPAgent" { class: ours }
+mcp: "MultiMCPTools" { class: ours }
+github: "GitHub 서버" { class: ext }
+ghapi: "GitHub API" { class: ext }
+
+agent -> mcp: "도구 호출 전달"
+mcp -> github: "tools/call\nsearch_repositories"
+github -> ghapi: "API 요청"
+ghapi -> github: "응답 JSON"
+github -> mcp: "결과 글"
+mcp -> agent: "결과 글"
