@@ -1,38 +1,34 @@
 ...@../../_tools/theme
 direction: right
 
-example: "ai_gen_game01.py\n(예시, 호출 없음)" { class: file }
+example: "ai_gen_game01.py\n(앱이 부르지 않는 예시)" { class: file }
 
 web: "브라우저 쪽" {
   class: group
   grid-columns: 1
   grid-gap: 0
-  chrome: "Chrome 창\n(CDP)" { class: ext }
+  chrome: "Chrome 창\n(CDP, 이 PC)" { class: ext }
   trinket: "trinket.io" { class: ext }
 }
 
-agents: "BrowserAgent 넷\n(+ 세션)" { class: ours }
+agents: "BrowserSession +\nBrowserAgent 넷" { class: ours }
 
-stats: "browser-use\n익명 통계" { class: ext }
-pypi: "PyPI\n(버전 확인)" { class: ext }
-gemini: "Gemini 1.5 Pro\n(종료됨)" { class: ext }
+gemini: "Gemini\n(gemini-1.5-pro)" { class: ext }
 
 user: 사용자 { class: person }
 
 openai: "OpenAI\n(gpt-4o)" { class: ext }
 
-app: "Streamlit 앱\n(앱 파일)" { class: ours }
+app: "Streamlit 앱\n(ai_3dpygame_r1.py)" { class: ours }
 
-user -> app: "질의 · 클릭"
+user -> app: "질의 · 키 · 클릭"
 app -> user: "코드 · 문구"
 app -> openai: "system + user"
 openai -> app: "코드 글"
-app -> gemini: "생성 요청"
-gemini -> app: "응답 글"
-app -> agents: "과제 글 넷"
+app -> gemini: "generate_content"
+gemini -> app: "response.text"
+app -> agents: "과제 글 넷\n(코드 전문 포함)"
 agents -> openai: "과제 · 화면"
 openai -> agents: "다음 행동"
-agents -> web: "CDP 조작"
+agents -> web: "CDP 조작 ·\n접속 · 실행"
 web -> agents: "화면 · 요소"
-agents -> stats: "익명 통계"
-agents -> pypi: "버전 확인"

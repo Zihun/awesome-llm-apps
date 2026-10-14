@@ -612,18 +612,27 @@ generated_code: 8 줄 | 첫 줄: import pygame | 끝 줄: pygame.quit()
 
 이 자리표시자 아래에서만 화면을 직접 눌러 보고 싶다면 터미널 B에서 아래를 돌리고 주소를 엽니다. 사이드바에는 가짜 키만 넣으세요. 자리표시자 파일이 `pygame-lab`에 있는 동안에만 안전합니다. 여기서 시각화를 눌러도 성공 문구가 뜨지만 브라우저는 뜨지 않고 `visualize_calls.jsonl`에 줄이 쌓일 뿐입니다.
 
-먼저 Step 2의 확인 두 줄을 이 터미널에서 다시 돌립니다. 첫 줄이 `pygame-lab`의 `browser_use.py`가 아니거나 둘째 줄이 가짜 서버 주소가 아니면 아래 명령을 돌리지 마세요.
+먼저 Step 2의 확인 두 줄을 이 터미널에서 다시 돌립니다. 첫 줄이 `pygame-lab`의 `browser_use.py`가 아니거나 둘째 줄이 가짜 서버 주소가 아니면 다음 블록을 돌리지 마세요.
 
 ```bash
 uv run --no-project python -c "import browser_use; print(browser_use.__file__)"
 echo "$OPENAI_BASE_URL"
-uv run --no-project streamlit run ai_3dpygame_r1.py --server.headless true --server.address localhost --server.port 54124
+```
+
+아래 블록은 스스로 검사합니다. 파이썬 한 줄이 `browser_use`가 자리표시자이고 `OPENAI_BASE_URL`이 루프백일 때만 종료 코드 0으로 끝나고, 아니면 1로 끝나 서버를 띄우지 않습니다. 그래도 블록을 붙여 넣기 전에 위 확인을 한 번 읽으세요.
+
+```bash
+uv run --no-project python -c "import os, sys, browser_use; sys.exit(int(hasattr(browser_use, '__path__') or not os.environ.get('OPENAI_BASE_URL', '').startswith('http://127.0.0.1:')))" && uv run --no-project streamlit run ai_3dpygame_r1.py --server.headless true --server.address localhost --server.port 54124
 ```
 
 ```powershell
 uv run --no-project python -c "import browser_use; print(browser_use.__file__)"
 $env:OPENAI_BASE_URL
-uv run --no-project streamlit run ai_3dpygame_r1.py --server.headless true --server.address localhost --server.port 54124
+```
+
+```powershell
+uv run --no-project python -c "import os, sys, browser_use; sys.exit(int(hasattr(browser_use, '__path__') or not os.environ.get('OPENAI_BASE_URL', '').startswith('http://127.0.0.1:')))"
+if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run ai_3dpygame_r1.py --server.headless true --server.address localhost --server.port 54124 }
 ```
 
 (PowerShell 줄은 실행해 보지 못했습니다.)
@@ -721,7 +730,11 @@ code: generated_game.py  -> None
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 위 `grep` 둘과 `probe_url.py`의 출력이 기대와 같은지 봅니다. 아래는 이 Step이 그리는 진짜 시각화의 메시지 순서입니다. Chrome·trinket.io 쪽 화살표는 소스와 앱 README로 그렸고 이 문서가 실행해 본 것이 아닙니다. 먼저 시작과 에이전트 만들기입니다. 아래 그림은 `run()`마다 시작·행동·끝 세 장입니다. 시작은 PyPI 확인과 `start()`, 행동은 Chrome에서 받은 화면을 모델에 보내 다음 행동을 얻는 부분, 끝은 통계 전송과 Chrome 종료입니다.
+**확인.** 위 `grep` 둘과 `probe_url.py`의 출력이 기대와 같은지 봅니다. 아래는 이 Step이 그리는 진짜 시각화의 메시지 순서입니다. Chrome·trinket.io 쪽 화살표는 소스와 앱 README로 그렸고 이 문서가 실행해 본 것이 아닙니다. 먼저 에이전트가 밖으로 내는 호출 전부입니다(통계와 PyPI 확인은 첫 그림에서 폭 때문에 이 그림으로 옮겼습니다).
+
+![에이전트의 바깥 호출](diagrams/extra-agents-out.svg)
+
+이어서 시작과 에이전트 만들기입니다. 아래 그림은 `run()`마다 시작·행동·끝 세 장입니다. 행동 그림은 모델 호출을 한 번만 그렸습니다. 실제로는 모델이 `done`을 고를 때까지 단계가 되풀이되고(최대 500단계), 그림의 "예: done"은 한 사이클의 예입니다. 시작은 PyPI 확인과 `start()`, 행동은 Chrome에서 받은 화면을 모델에 보내 다음 행동을 얻는 부분, 끝은 통계 전송과 Chrome 종료입니다.
 
 ![시각화 시작](diagrams/extra-visualize.svg)
 
@@ -900,7 +913,7 @@ SyntaxError: invalid syntax
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-질의와 키가 앱에 들어오면 앱은 키부터 검사하고(70~75행), 통과하면 `gpt-4o`에 시스템·사용자 메시지 둘을 보냅니다. 응답 글을 받으면 백틱을 걷어 내 `session_state`에 저장하고 화면에 코드를 보입니다. 모델 호출은 한 번이고, 그 뒤는 모두 문자열 처리입니다. 시각화 버튼은 이 저장된 코드를 꺼내(122행) 브라우저 에이전트를 돕니다. 그 길은 Step 7의 그림 열네 장이 이어서 그렸고, Gemini를 고른 경우는 다음 그림이 그렸습니다.
+질의와 키가 앱에 들어오면 앱은 키부터 검사하고(70~75행), 통과하면 `gpt-4o`에 시스템·사용자 메시지 둘을 보냅니다. 응답 글을 받으면 백틱을 걷어 내 `session_state`에 저장하고 화면에 코드를 보입니다. 모델 호출은 한 번이고, 그 뒤는 모두 문자열 처리입니다. 시각화 버튼은 이 저장된 코드를 꺼내(122행) 브라우저 에이전트를 돕니다. 그 길은 Step 7의 그림 열다섯 장이 이어서 그렸고, Gemini를 고른 경우는 다음 그림이 그렸습니다.
 
 ![Gemini 경로](diagrams/extra-gemini.svg)
 
@@ -921,7 +934,7 @@ SyntaxError: invalid syntax
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `browser_use.__file__`이 `site-packages` 아래를 가리킨다 | `pygame-lab`이 아닌 폴더에서 실행했거나 `browser_use.py`를 저장하지 않았다. 그대로 두면 확인 스크립트의 `assert`가 멈춘다. 이 `assert` 없이 시각화 경로를 돌리면 모델 호출 전에 진짜 Chrome이 trinket.io로 이동하고, PyPI에 버전을 묻고, 브라우저가 하나도 없으면 `uvx playwright install chromium`을 실행한다(소스로 확인) | Step 2의 `browser_use.py`를 `pygame-lab`에 저장하고 그 폴더에서 다시 확인. 확인되기 전에는 앱을 띄우지 않는다 |
-| `AssertionError: 진짜 browser_use가 잡혔습니다 ...` 또는 `OPENAI_BASE_URL을 먼저 거세요 ...` | `check_generate.py`의 안전 검사가 걸렸다. 진짜 패키지가 가져와졌거나 가짜 서버 주소가 없다(진짜 패키지를 가져오는 순간 홈 아래 `.config/browseruse`가 만들어질 수 있다) | 자리표시자가 있는 `pygame-lab`에서 다시 돌리고 Step 2의 변수를 준다. 이미 진짜 패키지를 가져왔다면 홈의 `.config/browseruse` 폴더가 생겼을 수 있고 지워도 된다 |
+| `AssertionError: 진짜 browser_use가 잡혔습니다 ...` 또는 `OPENAI_BASE_URL을 먼저 거세요 ...` | `check_generate.py`의 안전 검사가 걸렸다. 진짜 패키지가 가져와졌거나 가짜 서버 주소가 없다(`import browser_use`만으로는 설정 폴더가 만들어지지 않았다, 직접 확인) | 자리표시자가 있는 `pygame-lab`에서 다시 돌리고 Step 2의 변수를 준다. `from browser_use import Agent`처럼 `Agent`·`BrowserSession`을 가져오거나 만들면 설정 폴더(`BROWSER_USE_CONFIG_DIR`, 기본은 홈 아래 `.config/browseruse`, 소스 `config.py`)와 임시 폴더가 생긴다(직접 확인). 이 `assert` 경로에서는 생기지 않는다 |
 | `ValidationError ... ANONYMIZED_TELEMETRY ... Input should be a valid boolean, unable to interpret input` (직접 확인, 진짜 `browser_use`를 가져올 때) | 통계를 끄려고 `ANONYMIZED_TELEMETRY`를 빈 값으로 두었다 | 값을 `false`로 준다. 빈 값으로 덮어쓰지 않는다 |
 | `No module named 'google.generativeai'` | `requirements.txt`가 옛 SDK를 설치하지 않는다. 설치해도 모델 `gemini-1.5-pro`가 2025-09-29에 종료됐다 | Gemini를 쓰지 않거나 Step 5와 더 해보기대로 `google-genai`와 현재 모델 ID로 94~98행을 바꾼다 |
 | 화면은 성공인데 실행하면 `SyntaxError`(첫 줄이 인사말) | 응답이 코드 블록으로 시작하지 않아 101~107행의 정리가 걸리지 않았다 | 응답 앞뒤의 글을 걷어 내는 정리를 더하거나(더 해보기), 코드를 읽고 직접 지운 뒤 돌린다 |

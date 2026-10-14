@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: right
+
+agents: "BrowserSession +\nBrowserAgent 넷" { class: ours }
+
+web: "브라우저 쪽" {
+  class: group
+  chrome: "Chrome 창\n(CDP, 이 PC)" { class: ext }
+  trinket: "trinket.io" { class: ext }
+}
+
+stats: "browser-use\n익명 통계" { class: ext }
+pypi: "PyPI\n(버전 확인)" { class: ext }
+
+agents -> web.chrome: "CDP 조작 ·\n접속 · 실행"
+web.chrome -> agents: "화면 · 요소"
+web.chrome -> web.trinket: "접속 · 실행"
+agents -> stats: "익명 통계\n(task 전문 포함)"
+agents -> pypi: "버전 확인"
