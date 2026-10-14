@@ -8,6 +8,24 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-15 낮) — 볼륨 10 끝. Day 136까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 136/167). 다음(Day 137~, 볼륨 11 🗣️ Voice AI Agents)은 사용자 지시를 받고.**
+- Task 26(134~136) 전부 complete. 날마다 커밋(작성 → 수정):
+  - 134: 4de924f → 6786e24·0629ffa
+  - 135: 222efbf → 34b3806·febaba8·a33ed5d(내가 고침: Step 6 Streamlit 통계 플래그)
+  - 136: d90d1b9 → dfa7614·e11fd39·d22ce36(내가 고침: CRLF→LF, 머리말 150분 복원)
+  - 범위 밖 정정: Day 007 a34d488·3caf04e(browser-use 0.13.8은 브라우저가 없으면 `uvx playwright install chromium`을 스스로 실행 — 135 작성자가 찾고 134~135 리뷰가 소스로 판정).
+- 리뷰(opus) 134~135 / 136, 재확인(sonnet) 134 / 135+007 / 136.
+- 검사: npm test 56/56, Day 001~136 check 0건(56건은 미작성 골격 137~150), 134~136 분당 21.6~21.9, 007 16.3→17.1.
+- 브리프: task-26-write-brief.md·review-26-brief.md. 다음 묶음은 이 둘을 고쳐 쓰면 된다. 새 규칙: 진짜 키가 있는 독자로 따라 하기(셸·상위 .env 가짜 키+감시), 새 스크래치 재현, cp949, 터미널마다 변수, 빈 heredoc·하니스 완화 금지.
+- Ruling(2026-10-15): 머리말 예상 소요는 스펙 §4대로 낱말 수에서 정하고 긴 날은 이유절. 재확인이 "대역에 맞춘 값"이라 지적해도 스펙이 그렇게 정한다.
+- 사용자에게 보고할 사고·근접 사고:
+  - 136 재검토자가 탭 닫기 시험용 Chrome을 차단 옵션 없이 띄워 **Chrome 자체가 Google에 등록 요청을 보냈다**(앱·API 요청 아님).
+  - 136 작성자의 실행 하나가 변수를 파이프 뒤 하위 셸에만 걸어, load_dotenv가 상위 가짜 .env 키로 api.openai.com:443에 132번 연결 시도 — 기록·거절 로컬 프록시가 모두 받아 바깥 0.
+  - 135 작성자가 TEMP를 돌리기 전 실제 %TEMP%에 browser-use 폴더 6개를 만들었다 → 자기 것만 지움(지금 없음).
+  - 136 원판 README가 CRLF로 통째로 커밋됨(round 2) → 내가 LF로 되돌림.
+  - 빈 heredoc·빈 stdin: 136 작성자 2회, 136 재검토자 1회(~/.python_history는 mtime만, 내용 그대로).
+- 범위 밖·deferred minor: 없음(134 ChatResult 화살촉은 본문 설명으로 처리).
+
 **멈춤 지점 (2026-10-15) — 볼륨 9 끝. Day 133까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 133/167). 다음(Day 134~, 볼륨 10 🎮 Autonomous Game-Playing)은 사용자 지시를 받고.**
 - Task 25(127~133) 전부 complete. 날마다 커밋(작성 → 수정 1·2라운드):
   - 127: cb88484 → a01b3a4·8619add
@@ -1298,3 +1316,31 @@ Task 25: 재확인 132 DONE (af1681aec5b3f2f84, 재개 뒤) — C1·I4·M7 모�
 Task 25: 재확인 133 DONE (ab0bcde5607dcb462, 재개 뒤) — C·I 6 모두 반영, **독자 안전 합격**(상위 .env 가짜 키+감시 npx·docker·uvx+바깥 감시, Step 1~8 그대로 따라 해 0건, 원본을 고치기 전에 돌리는 명령 없음). 새 Minor 3(extra-fail 자기 화살표에 세 서버 접음, 'Day 131 Step 8' 위치, openai.jsonl 줄임 표기). 133 fix round 2 dispatched (resume a5566af952ffa83be).
 Task 25: 133 fix round 2 DONE — efede43. 내가 확인: extra-fail·extra-fail-retry가 서버마다 메시지(github → perplexity·calendar → gmail, mcp_servers 순서)로 3장씩, README 634~646에 모두 실림, Day 131 "더 해보기"(967·1036행) 실재, check 통과·21.1/분 → 133 complete.
 Task 25: 132 fix round 2 DONE — 1c3cb13. 내가 확인: 추리기 명령을 합성 anth.log로 돌려 문서 기대 두 줄과 글자 일치, extra-echo가 agent_forge.py 339~347 순서와 맞고 README에서 sequence 다음(926행), check 통과 → 132 complete. Task 25(127~133) 전부 complete.
+Task 26(볼륨 10, 134~136) 시작 2026-10-15 — 사용자 "이어서 진행해". BASE 06004eb. 브리프 task-26-write-brief.md·review-26-brief.md(볼륨 9 규칙: 진짜 키 독자로 따라 하기·새 스크래치 재현·cp949·터미널마다 변수·빈 heredoc·하니스 완화 금지·모델 ⚠ 기준, 135 browser-use 브라우저·trinket.io 금지, 커밋 꼬리말에 Claude-Session 줄). 작성 sonnet 3: 134(a0c1000b89d4b7ca7)·135(a1cfc0a8ce33ae92d)·136(a2c8aaeadeb438812). 리뷰 계획(opus): 134~135 / 136.
+Task 26: 135 작성 DONE_WITH_CONCERNS — 222efbf, check 통과, 19.7/분. 새 스크래치·가짜 키·상위 .env·하니스로 Step 1~8 따라 해 바깥 0. DeepSeek·agno 사용 없음, gemini-1.5-pro 2025-09-29 종료, google.generativeai 미설치, browser-use 통계 기본 켬(과제 글=코드 전문 포함), ai_gen_game01.py 78행 TypeError. 실수: TEMP를 돌리기 전 실제 %TEMP%에 browser-use 폴더 6개 → 자기 것만 지움(확인: 지금 $TEMP/browser* 없음).
+범위 밖 후보: Day 007(browser-use 0.13.8)이 "Playwright 같은 브라우저 설치 필요 없음"이라 썼는데 135 작성자는 같은 0.13.8 소스 365행이 브라우저가 없으면 `uvx playwright install chromium`을 실행한다고 함 → 134~135 리뷰어에게 확인 요청, 맞으면 볼륨 끝에 Day 007 한 줄 정정 검토.
+Task 26: 136 작성 DONE_WITH_CONCERNS — d90d1b9, check 통과, 21.2/분(130분). 기본 X claude-3-7-sonnet 2026-02-19 퇴역, O o3-mini 2026-10-23 종료, requirements 설치 불가(h11 충돌)·고정 SDK 낡음, 심판 에이전트는 주석뿐, 모델 오류 글의 첫 숫자를 수로 읽어 무한 반복(5초 242건). **근접 사고:** 작성자 실행 하나가 변수를 파이프 뒤 하위 셸에만 걸어 load_dotenv가 상위 가짜 .env 키로 api.openai.com:443에 132번 연결 시도 — 기록·거절 로컬 프록시가 모두 받음, 바깥 0. 빈 stdin python 2회(python_history mtime만).
+Task 26: 136 작성자 백그라운드 작업 남음 → 정리 요청(resume). 리뷰 136 dispatched (opus, a8ceab738237672b0) → review-136.md. 동시: 134 작성, 리뷰 136 (+136 정리 잠깐).
+Task 26: 136 작성자 정리 끝(하네스: 남은 백그라운드 작업 없음).
+Task 26: 리뷰 136 DONE (a8ceab738237672b0) — ❌ C0·I5·M13(gpt-4o ⚠ 기준 미적용, Gemini 두 줄 원문과 다름(2.0-flash 이미 종료, pro-exp 2025-12-09 종료), Step 6 envfake 줄 없음, 끝없는 재요청 경고 없음(O가 늘 0 0이면 5초 153건), 시퀀스에서 보드 호출 셋 삭제). 독자 안전: 진짜 키 독자 재현 바깥 0, 하위 셸 모양 없음. 136 fix round 1 dispatched (resume a2c8aaeadeb438812).
+Task 26: 136 fix round 1 DONE — dfa7614, check 통과, 21.5/분(150분). 진짜 같은 가짜 키·상위 .env·거절 프록시로 새 스크래치 재현 0줄. M7 일부(agno 통계 -todo)는 검사 19 때문에 미반영. diff fix-R26-136-round1.diff.
+Task 26: 재확인 136 dispatched (sonnet, a3bb6efe8749212a5) → rereview-136.md. 동시 2: 134 작성, 재확인 136.
+Task 26: 134 작성 DONE_WITH_CONCERNS — 4de924f, check 통과, 20.7/분(130분). autogen==0.6.1→pyautogen 0.6.1(Day 085와 같음, 116과 다름), cairosvg·pillow 미사용, 모델 호출 3(2N−1)+1, 수마다 기록 비움, 101턴부터 터미널 input() 대기, gpt-4o-mini ⚠. base_url vs 환경변수 우선 미확인 → 리뷰. netstat+taskkill로 정리(자기 프로세스인지 리뷰에서 확인할 필요는 없음 — 남은 프로세스는 끝에 내가 봄).
+Task 26: 리뷰 134~135 dispatched (opus, a7c4790c23c9ce547) → review-134-135.md(Day 007 충돌 판정 포함). 동시 2: 재확인 136, 리뷰 134~135.
+Task 26: 재확인 136 DONE (a3bb6efe8749212a5) — I5 모두 반영, 진짜 키 독자 재현 바깥 0. Ctrl+C·탭 닫기로 반복이 멈춤 확인. 새 Minor 3(players -new 두 번, '서버 프로세스' 모호, 머리말 150분 근거). **사고:** 재검토자가 탭 닫기 시험용 Chrome을 차단 옵션 없이 띄워 Chrome 자체가 Google에 등록 요청을 보냄(앱·API 요청 아님, 사용자에게 보고). 빈 heredoc 1회, rm 1회 하네스가 막음(스크래치 png 남음).
+Task 26: 136 fix round 2 dispatched (resume a2c8aaeadeb438812). 브라우저 재현은 차단 옵션 없이 금지 지시.
+메모: 지금 python.exe 9개(돌고 있는 리뷰어·수정자 것일 수 있음). 볼륨 끝에 모든 에이전트가 끝난 뒤 다시 보고, 남으면 각 에이전트에게 정리 요청.
+Task 26: 136 fix round 2 DONE — e11fd39(players -new 한 번, 서버 모호 문장, 탭 닫기 사실, 머리말 120분). 문제 둘: (1) README를 CRLF로 통째로 다시 씀(내용 변경은 2줄), (2) 머리말 120분이면 27.0/분으로 대역 밖.
+Ruling: 머리말 예상 소요는 round 1의 150분(21.6/분)과 이유절로 되돌린다 — 스펙 §4가 "그 수치(낱말 수)로 예상 소요 시간을 정한다, 긴 날은 현실적인 값과 짧은 이유절"이라 하므로 재확인 N3("대역에 맞춘 값")은 스펙과 맞지 않음 — cost if wrong: 머리말 시간 한 줄.
+Task 26: 내가 고침 — LF로 되돌리고(--ignore-cr-at-eol로 내용 변경 없음 확인) 150분 이유절 문장 다듬음, check 통과·21.6/분 → 136 complete.
+Task 26: 리뷰 134~135 DONE (a7c4790c23c9ce547) — 134 ❌ C0·I1·M8(시퀀스가 made_move·move_history 접근을 라벨로 접음, initiate_chat·ChatResult 노드 없음; config_list base_url이 환경변수를 이김 — 직접 확인, 문서 방식 안전), 135 ❌ C0·I4·M8(I-1 안전: 자리표시자 빠뜨리면 확인 스크립트가 진짜 Chrome→trinket.io·PyPI·uvx playwright, 막는 assert 없음; 시각화 시퀀스 순서·Chrome 에이전트마다 kill; 화살표 삭제; Step 8 cp 덮어씀). Day 007 판정: 135가 맞음(local_browser_watchdog.py:365), Day 007 16·20·60·80·409행 정정 필요.
+Task 26: 134·135 fix round 1 dispatched (resume a0c1000b89d4b7ca7·a1cfc0a8ce33ae92d). 135 작성자에게 Day 007 정정(따로 커밋)도 맡김 — 제가 정하고 진행: Day 007은 범위 밖이지만 같은 라이브러리의 독자 안전 사실(자동 다운로드)이 틀렸으므로 이번 볼륨에서 고침.
+Task 26: 134 fix round 1 DONE — 6786e24, check 통과, 21.6/분(140분). 시퀀스 37메시지 10장, base_url·api_key 우선순위 직접 확인, LF. diff fix-R26-134-round1.diff.
+Task 26: 재확인 134 dispatched (sonnet, aadc00c12e0a55694) → rereview-134.md. 동시 2: 수정 135(+Day 007), 재확인 134.
+Task 26: 135 fix round 1 DONE — 34b3806(assert 둘·자리표시자 빼고 AssertionError로 멈춤 확인, 시퀀스 12장, Step 8 나눔), Day 007 정정 a34d488(7·16·18·20·60·80·409행). check 둘 통과, 135 21.2/분, 007 16.3→17.1. overview는 반환 화살표로 1333px → 노드·라벨 줄여 1196px(축약 여부 재확인에서 볼 것). diff fix-R26-135-round1.diff·fix-R26-007.diff.
+Task 26: 재확인 135+007 dispatched (sonnet, a43e09bb3f6824441) → rereview-135-007.md. 동시 2: 재확인 134·135+007.
+Task 26: 재확인 134 DONE (aadc00c12e0a55694) — I-1·M8 모두 반영, 수치 재현, 진짜 키 독자 바깥 0(pypi.org 12줄은 재검토자의 uv pip install). 새 Minor 2(29개 산수→여덟 개, ChatResult 화살촉 위치). 134 fix round 2 dispatched (resume a0c1000b89d4b7ca7).
+Task 26: 134 fix round 2 DONE — 0629ffa(37−8=29 산수, ChatResult 화살촉은 본문 설명 — 라벨에 붙이면 step6~8 겹침 검사 실패). 내가 확인: diff 3줄, LF, check 통과·21.9/분 → 134 complete.
+Task 26: 재확인 135+007 DONE (a43e09bb3f6824441) — 135 I4·M8 모두 반영(assert 둘이 브라우저 전에 멈춤, 감시 0), 새 Minor 4(N-1 overview 축약으로 식별자·데이터 6개 사라짐 — §5라 반드시 고침, N-2 확인과 streamlit run 한 블록, N-3 .config/browseruse 근거 없음, N-4 done 가정). 007 정정 맞음, 남은 어긋남 Minor 2(7행 --doctor, 393행 SKILL.md, 398행 Chrome). 135+007 fix round 2 dispatched (resume a1cfc0a8ce33ae92d).
+Task 26: 135+007 fix round 2 DONE — febaba8(overview 라벨 모두 되살림, stats·pypi 화살표는 extra-agents-out으로, Step 6 확인이 실패하면 서버 안 뜸, .config/browseruse 사실, done 가정 표시), 3caf04e(Day 007 7·393·398행). 내가 확인: overview 라벨 6개 복원(키·generate_content·코드 전문 포함·접속·실행·이 PC·파일명), extra-agents-out에 stats·pypi·trinket 화살표, check 둘 통과.
+Task 26: 내가 고침 a33ed5d2 — Day 135 Step 6 streamlit에 --browser.gatherUsageStats false(독자에게 브라우저를 열게 하는데 134·136과 달리 빠짐, Day 128 Important와 같은 종류)와 Day 054 한 줄. check 통과·21.6/분 → 135 complete. Task 26(134~136) + Day 007 정정 전부 complete.
