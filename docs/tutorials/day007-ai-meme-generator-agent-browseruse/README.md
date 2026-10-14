@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-지금까지 6일은 모두 agno의 `Agent`였습니다. 오늘은 완전히 다른 프레임워크인 **browser-use**의 `Agent`를 씁니다 — 도구 목록을 선언하는 대신, "imgflip.com에 가서 검색하고, 템플릿을 고르고, 텍스트를 넣고, 생성 버튼을 눌러라"는 자연어 지시문 하나를 주면 에이전트가 실제 브라우저 화면을 스크린샷으로 보며 클릭·타이핑을 스스로 결정합니다. 이 앱은 Claude, GPT-4o, Deepseek, Gemini 네 모델 중 하나를 골라 쓸 수 있고, 이 문서에서 가장 중요하게 다루는 사실은 따로 있습니다: 앱 자체 `README.md`는 `playwright install`로 브라우저를 설치하라고 안내하지만, `pyproject.toml`이 고정한 **browser-use 0.13.8은 Playwright에 전혀 의존하지 않습니다**(직접 확인: `uv.lock`에 `playwright` 패키지가 아예 없음) — 대신 `browser-harness`라는 자체 도구가 CDP(Chrome DevTools Protocol)로 **여러분이 실제로 쓰는 Chrome**에 곧바로 연결하거나 필요하면 그 Chrome을 직접 실행합니다(직접 확인, 아래 Step 1). 이 문서의 확인 명령들은 이 사실 때문에 한 가지를 의도적으로 하지 않습니다 — 실제 `agent.run()` 호출입니다. 유효하지 않은 키로도 이 호출은 실제로 여러분의 Chrome을 열거나 전환해 imgflip.com으로 이동시키므로, 이 문서에서는 그 앞뒤 구성 요소(모델 생성, 에이전트 생성, 결과 파싱, 화면 흐름)만 직접 실행해 확인하고 전체 실행은 코드와 `--doctor` 진단 결과로 설명합니다. 아래는 완성된 아키텍처입니다.
+지금까지 6일은 모두 agno의 `Agent`였습니다. 오늘은 완전히 다른 프레임워크인 **browser-use**의 `Agent`를 씁니다 — 도구 목록을 선언하는 대신, "imgflip.com에 가서 검색하고, 템플릿을 고르고, 텍스트를 넣고, 생성 버튼을 눌러라"는 자연어 지시문 하나를 주면 에이전트가 실제 브라우저 화면을 스크린샷으로 보며 클릭·타이핑을 스스로 결정합니다. 이 앱은 Claude, GPT-4o, Deepseek, Gemini 네 모델 중 하나를 골라 쓸 수 있고, 이 문서에서 가장 중요하게 다루는 사실은 따로 있습니다: 앱 자체 `README.md`는 `playwright install`로 브라우저를 설치하라고 안내하지만, `pyproject.toml`이 고정한 **browser-use 0.13.8은 Playwright에 전혀 의존하지 않습니다**(직접 확인: `uv.lock`에 `playwright` 패키지가 아예 없음) — 대신 `BrowserSession`이 컴퓨터에 설치된 Chromium 계열 브라우저를 새 프로세스로 띄워 CDP(Chrome DevTools Protocol)로 조종합니다(소스로 확인, 아래 Step 1). 브라우저가 하나도 없을 때만 `uvx playwright install chromium`을 실행해 내려받으려 합니다. 이 문서의 확인 명령들은 이 사실 때문에 한 가지를 의도적으로 하지 않습니다 — 실제 `agent.run()` 호출입니다. 유효하지 않은 키로도 이 호출은 실제로 새 Chrome 창을 띄워 imgflip.com으로 이동시키므로, 이 문서에서는 그 앞뒤 구성 요소(모델 생성, 에이전트 생성, 결과 파싱, 화면 흐름)만 직접 실행해 확인하고 전체 실행은 코드와 `--doctor` 진단 결과로 설명합니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -13,11 +13,11 @@
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
 | API 키 (Claude/Deepseek/OpenAI/Gemini 중 1개) | 사이드바에서 고른 모델 호출 인증. 해당 서비스 키 입력창만 나타남(환경변수 아님) | Claude → https://console.anthropic.com, Deepseek → https://platform.deepseek.com, OpenAI → https://platform.openai.com, Gemini → https://aistudio.google.com/app/api-keys |
-| Google Chrome(또는 Chromium) | browser-use 0.13.8이 CDP로 직접 연결·조작하는 실제 브라우저. Playwright 같은 별도 브라우저 바이너리 설치가 필요 없음(직접 확인) | 이미 설치돼 있지 않다면 https://www.google.com/chrome/ 에서 설치 |
+| Chromium 계열 브라우저 하나(Chrome·Chromium·Brave·Edge 중) | browser-use 0.13.8이 직접 띄워 CDP로 조작하는 로컬 브라우저. `start()` 때 Chromium → Chrome → Brave → Edge 순으로 설치 경로를 찾아 하나라도 있으면 별도 설치가 필요 없고(이 PC는 Chrome), 하나도 없으면 browser-use가 스스로 `uvx playwright install chromium`을 실행해 내려받으려 합니다(소스로 확인: browser-use의 `local_browser_watchdog.py` 123~135행과 365행) | 이미 설치돼 있지 않다면 https://www.google.com/chrome/ 에서 설치 |
 | uv | 프로젝트 동기화(`uv sync`)와 실행 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| 인터넷 연결 | 선택한 LLM API와 imgflip.com 접속 | 별도 설치 없음 |
+| 인터넷 연결 | 선택한 LLM API와 imgflip.com 접속. 그 밖에 `run()`을 시작할 때 browser-use가 PyPI에 최신 버전을 묻고, 끝날 때 익명 통계를 보냅니다(소스로 확인: browser-use의 `agent/service.py` 2541행과 2692행) | 별도 설치 없음 |
 
-⚠️ 실제로 "Generate Meme"을 누르면 **진짜 Chrome 창**이 열리거나 전환되어 imgflip.com을 자동으로 조작합니다. 다른 작업 중인 탭이 있다면 미리 저장해 두세요.
+⚠️ 실제로 "Generate Meme"을 누르면 **새 Chrome 창**이 따로 열려 imgflip.com을 자동으로 조작합니다. 띄우는 것은 임시 프로필(`browser-use-user-data-dir-…`, 소스 `profile.py:553`)의 새 브라우저 프로세스라 평소 쓰는 창이 전환되지는 않지만, 화면 위에 창이 뜨고 에이전트가 마우스와 키보드처럼 조작하니 작업 중인 것은 미리 저장해 두세요.
 
 ## 아키텍처 한눈에 보기
 
@@ -57,7 +57,7 @@ error: Failed to spawn: `playwright`
   Caused by: program not found
 ```
 
-`uv.lock`을 직접 확인하면 `browser-use`(0.13.8)의 의존성 목록에 `playwright`가 아예 없고, 대신 `browser-harness`·`cdp-use`라는 패키지가 있습니다. 즉 이 버전의 browser-use는 Playwright로 브라우저를 내려받아 관리하던 예전 방식을 버리고, CDP로 **여러분의 로컬 Chrome에 직접 연결**하는 방식으로 바뀌었습니다 — 별도 설치 명령의 필요 여부를 `browser-use` 자체의 진단 도구로 확인합니다.
+`uv.lock`을 직접 확인하면 `browser-use`(0.13.8)의 의존성 목록에 `playwright`가 아예 없고, 대신 `browser-harness`·`cdp-use`라는 패키지가 있습니다. 즉 이 버전의 browser-use는 Playwright를 의존성으로 두지 않습니다. `Agent`가 만드는 `BrowserSession`은 설치된 Chromium 계열 브라우저를 새 프로세스로 띄워 CDP로 붙고, 하나도 없을 때만 `uvx playwright install chromium`을 실행합니다(소스로 확인, 실행하지 않음). 아래 `--doctor`는 이 경로가 아니라 `browser-harness`라는 별도 CLI 도구의 진단입니다.
 
 ```bash
 uv run --no-project browser-use --doctor
@@ -77,7 +77,7 @@ browser-harness doctor
   [FAIL] Browser Use cloud auth — optional: browser-harness auth login
 ```
 
-`chrome running`이 `ok`인 것은 이 컴퓨터에 이미 Chrome이 떠 있어서이고, `browser-harness`의 `SKILL.md`(패키지에 동봉)에는 "Chrome이 전혀 떠 있지 않으면 harness가 자동으로 실행한다"고 적혀 있습니다(직접 확인: 파일 내용). 즉 `playwright install` 같은 다운로드 단계 없이, 설치된 실제 Chrome만 있으면 됩니다.
+`chrome running`이 `ok`인 것은 이 컴퓨터에 이미 Chrome이 떠 있어서이고, `browser-harness`의 `SKILL.md`(패키지에 동봉)에는 "Chrome이 전혀 떠 있지 않으면 harness가 자동으로 실행한다"고 적혀 있습니다(직접 확인: 파일 내용). 이 진단은 CLI 도구의 것이고(`browser_use/cli.py`가 `browser_harness`를 부릅니다) 앱의 `Agent`는 `BrowserSession`이 직접 브라우저를 띄우므로 이 출력이 앱의 동작을 말해 주지는 않습니다. 브라우저가 이미 설치돼 있으면 `playwright install` 같은 다운로드 단계가 필요 없습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -406,7 +406,7 @@ ST.ERROR: Error: expected string or bytes-like object, got 'NoneType'
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 앱 README의 안내대로 `uv run playwright install --with-deps`를 실행하면 ``error: Failed to spawn: `playwright` `` / `Caused by: program not found` | `pyproject.toml`이 고정한 browser-use==0.13.8은 Playwright에 의존하지 않는다(직접 확인: `uv.lock`에 `playwright` 패키지 없음) — 대신 `browser-harness`가 CDP로 로컬 Chrome에 직접 연결한다 | 이 설치 단계를 건너뛰고, 대신 Google Chrome이 설치돼 있는지만 확인. 연결 상태는 `uv run --no-project browser-use --doctor`로 진단 |
+| 앱 README의 안내대로 `uv run playwright install --with-deps`를 실행하면 ``error: Failed to spawn: `playwright` `` / `Caused by: program not found` | `pyproject.toml`이 고정한 browser-use==0.13.8은 Playwright에 의존하지 않는다(직접 확인: `uv.lock`에 `playwright` 패키지 없음) — 대신 `BrowserSession`이 로컬 브라우저를 새 프로세스로 띄워 CDP로 붙는다(하나도 없으면 `uvx playwright install chromium`) | 이 설치 단계를 건너뛰고, 대신 Chromium 계열 브라우저(Chrome 등)가 설치돼 있는지만 확인. `uv run --no-project browser-use --doctor`는 `browser-harness` CLI의 진단이라 앱 경로의 연결 여부를 말해 주지 않는다 |
 | `uv sync --python 3.12`처럼 다른 버전을 지정하면 ``error: The requested interpreter resolved to Python 3.12.10, which is incompatible with the project's Python requirement: `==3.11.*` `` | `pyproject.toml`의 `requires-python = "==3.11.*"`를 `uv sync`가 엄격히 검사한다(직접 확인) — 단, 이 검사는 `uv sync`/`uv run` 같은 프로젝트 인식 명령에만 적용되고, `uv pip install -r requirements.txt`는 이 제약과 무관하게 아무 Python에나 설치된다(직접 확인: 3.12에서도 설치·임포트 성공) | `--python` 지정 없이 `uv sync`만 실행(로컬에 3.11이 없으면 uv가 자동 설치) |
 | 밈 생성이 실패하면 "밈 생성 실패" 대신 `Error: expected string or bytes-like object, got 'NoneType'`처럼 원인을 알기 어려운 오류가 표시됨 | `history.final_result()`가 `None`을 반환할 수 있는데(browser-use 소스에 `-> None | str`로 명시, 직접 확인) `ai_meme_generator_agent.py:62`의 `re.search(패턴, final_result)`가 `None`을 그대로 받으면 `TypeError`가 나고, 이를 감싸는 `except Exception`(`ai_meme_generator_agent.py:133`)이 이 예외 문구를 그대로 화면에 띄운다(직접 확인, Step 6) | 화면의 오류 문구가 이 패턴이면 실제로는 "에이전트가 끝내 답을 못 찾음"으로 이해하고 다른 프롬프트로 재시도 |
 | 앱 README의 Features에는 "Claude 3.5 Sonnet"이라 적혀 있지만 실제로는 다른 모델이 호출됨 | 코드는 `model="claude-sonnet-4-5"`를 쓴다(`ai_meme_generator_agent.py:10`, 직접 확인) — README가 갱신되지 않음. Gemini 선택지도 README의 기능 목록·필요 키 목록 어디에도 없지만 코드에는 있다(직접 확인) | README 문구는 무시하고 코드의 모델 이름을 기준으로 삼기 |
