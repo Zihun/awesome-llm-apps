@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "Streamlit 앱" { class: ours }
+agents: "BrowserAgent" { class: ours }
+openai: "OpenAI (gpt-4o)" { class: ext }
+chrome: "Chrome 창" { class: ext }
+trinket: "trinket.io" { class: ext }
+
+app -> agents: "executor.run() (174행)"
+agents -> openai: "과제 + 화면 캡처 + 페이지 요소 목록"
+openai -> agents: "다음 행동"
+agents -> chrome: "CDP:\nRun 클릭"
+chrome -> trinket: "코드 실행 요청"
+agents -> app: "run() 반환"

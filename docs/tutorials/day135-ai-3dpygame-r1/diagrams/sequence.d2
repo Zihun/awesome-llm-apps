@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+state: "session_state" { class: store }
+app: "Streamlit 앱" { class: ours }
+openai: "OpenAI (gpt-4o)" { class: ext }
+
+user -> app: "질의 · 키 ·\nGenerate Code"
+app -> app: "키 검사 (70-75행)"
+app -> openai: "chat.completions.create\n(system + user)"
+openai -> app: "message.content"
+app -> app: "백틱 걷어내기 (101-107행)"
+app -> state: "st.session_state.generated_code =\n정리한 코드 (110행)"
+app -> user: "st.code + 성공 문구"

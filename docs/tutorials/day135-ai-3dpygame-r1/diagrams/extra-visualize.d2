@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+chrome: "Chrome 창" { class: ext }
+session: "BrowserSession" { class: ours }
+app: "Streamlit 앱" { class: ours }
+state: "session_state" { class: store }
+
+user -> app: "Generate Visualization"
+app -> state: "generated_code 있나 (122행)"
+state -> app: "코드 글"
+app -> session: "BrowserSession().start()\n(126-128행)"
+session -> chrome: "Chrome 실행 ·\nCDP 연결"
+chrome -> session: "CDP 주소"
+app -> app: "ChatOpenAI · 에이전트 넷 만들기\n(129-168행)"

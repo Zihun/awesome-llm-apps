@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+app: "Streamlit 앱" { class: ours }
+
+user -> app: "Gemini 선택 ·\nGenerate Code"
+app -> app: "import google.generativeai\n(94행) → ModuleNotFoundError"
+app -> user: "st.error: An error occurred:\nNo module named ... (119행)"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+app: "Streamlit 앱" { class: ours }
+session: "BrowserSession" { class: ours }
+chrome: "Chrome 창" { class: ext }
+
+app -> user: "Code is running on\nTrinket! (176행)"
+app -> session: "stop() (181행)"
+session -> chrome: "Chrome 종료"

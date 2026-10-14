@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+ui: "화면\n(사이드바 · 입력 · 버튼)" { class: ours }
+gen: "코드 생성\n(Generate Code)" { class: ours }
+state: "session_state\n(generated_code)" { class: store }
+vis: "시각화\n(Generate Visualization)" { class: ours }
+
+ui -> gen: "질의 · 키 ·\n제공자"
+gen -> ui: "코드 · 성공 문구"
+ui -> vis: "클릭"
+gen -> state: "정리한 코드"
+state -> vis: "저장된 코드"
