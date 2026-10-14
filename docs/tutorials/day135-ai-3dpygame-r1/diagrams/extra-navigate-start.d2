@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "Streamlit 앱" { class: ours }
+agents: "BrowserAgent" { class: ours }
+pypi: "PyPI" { class: ext }
+session: "BrowserSession" { class: ours }
+
+app -> agents: "agent1.run() (172행)"
+agents -> pypi: "GET pypi.org/pypi/browser-use/json (2541행)"
+pypi -> agents: "info.version (최신 버전)"
+agents -> session: "start() (2566행)"
+session -> agents: "이미 연결돼 있어 건너뜀"

@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+chrome: "Chrome 창" { class: ext }
+agents: "BrowserAgent" { class: ours }
+openai: "OpenAI (gpt-4o)" { class: ext }
+trinket: "trinket.io" { class: ext }
+
+agents -> chrome: "CDP: 주소 이동\n(과제의 URL, 초기 동작)"
+chrome -> trinket: "features/pygame 요청"
+trinket -> chrome: "페이지"
+chrome -> agents: "화면 캡처 · 페이지 요소 (CDP)"
+agents -> openai: "과제 + 화면 캡처 + 페이지 요소 목록"
+openai -> agents: "다음 행동 (done)"

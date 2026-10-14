@@ -7,7 +7,8 @@ app: "Streamlit 앱" { class: ours }
 openai: "OpenAI (gpt-4o)" { class: ext }
 
 user -> app: "질의 · 키 ·\nGenerate Code"
-app -> app: "키 검사 (70-75행)"
+app -> state: "api_keys · model_provider 읽기\n(67-73행)"
+state -> app: "키 · 제공자"
 app -> openai: "chat.completions.create\n(system + user)"
 openai -> app: "message.content"
 app -> app: "백틱 걷어내기 (101-107행)"

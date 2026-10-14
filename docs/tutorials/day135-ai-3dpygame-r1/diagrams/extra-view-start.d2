@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "Streamlit 앱" { class: ours }
+agents: "BrowserAgent" { class: ours }
+pypi: "PyPI" { class: ext }
+session: "BrowserSession" { class: ours }
+chrome: "Chrome 창" { class: ext }
+
+app -> agents: "viewer.run() (175행)"
+agents -> pypi: "GET pypi.org/pypi/browser-use/json (2541행)"
+pypi -> agents: "info.version (최신 버전)"
+agents -> session: "start() (2566행)"
+session -> chrome: "Chrome 실행 ·\nCDP 연결"
+chrome -> session: "CDP 주소"

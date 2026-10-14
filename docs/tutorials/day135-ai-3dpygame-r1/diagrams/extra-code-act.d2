@@ -1,13 +1,11 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-app: "Streamlit 앱" { class: ours }
+chrome: "Chrome 창" { class: ext }
 agents: "BrowserAgent" { class: ours }
 openai: "OpenAI (gpt-4o)" { class: ext }
-chrome: "Chrome 창" { class: ext }
 
-app -> agents: "coder.run() (173행)"
+chrome -> agents: "화면 캡처 · 페이지 요소 (CDP)"
 agents -> openai: "과제(코드 전문) + 화면 캡처 + 페이지 요소 목록"
 openai -> agents: "다음 행동"
 agents -> chrome: "CDP:\n코드 입력"
-agents -> app: "run() 반환"

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+stats: "PostHog 통계" { class: ext }
+agents: "BrowserAgent" { class: ours }
+session: "BrowserSession" { class: ours }
+chrome: "Chrome 창" { class: ext }
+app: "Streamlit 앱" { class: ours }
+
+agents -> stats: "agent_event (task 포함,\n기본 켜짐)"
+agents -> session: "close() → kill() (2729행)"
+session -> chrome: "Chrome 종료"
+agents -> app: "run() 반환"
