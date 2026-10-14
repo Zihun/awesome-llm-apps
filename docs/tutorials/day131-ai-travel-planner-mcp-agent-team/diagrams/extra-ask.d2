@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+planner: "run_mcp_travel_planner" { class: ours }
+agent: "여행 에이전트\n(Agent)" { class: ours }
+openai: "OpenAI\n(gpt-4o)" { class: ext }
+
+planner -> planner: "Agent(model gpt-4o,\ntools=[mcp, 구글 검색]) 만들기"
+planner -> agent: "arun(프롬프트)"
+agent -> agent: "연결된 MCP 도구는 다시\n연결하지 않고 도구 7개를 모음"
+agent -> openai: "chat.completions\n(지시문 · 프롬프트 · 도구 7개)"
+openai -> agent: "tool_calls 셋\n(Airbnb · 경로 · 구글 검색)"

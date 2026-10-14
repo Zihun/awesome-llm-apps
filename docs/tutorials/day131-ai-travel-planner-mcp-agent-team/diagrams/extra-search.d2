@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "여행 에이전트\n(Agent)" { class: ours }
+gs: "구글 검색 도구\n(GoogleSearchTools)" { class: ours }
+google: "google.com/search" { class: ext }
+
+agent -> gs: "google_search(query)"
+gs -> google: "GET /search?q=\n(결과를 모으며 여러 번)"
+google -> gs: "결과 HTML"
+gs -> agent: "AttributeError →\n오류 글"

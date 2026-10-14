@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: down
+
+mcp: "MCP 도구 묶음\n(MultiMCPTools)" { class: ours }
+gs: "구글 검색 도구\n(GoogleSearchTools)" { class: ours }
+airbnb: "Airbnb MCP 서버\n(@openbnb)" { class: ext }
+maps: "여행 플래너 MCP 서버\n(@gongrzhe)" { class: ext }
+abnb: "airbnb.com" { class: ext }
+geo: "Photon · Nominatim" { class: ext }
+gmaps: "Google Maps API" { class: ext }
+gsearch: "google.com/search" { class: ext }
+
+mcp -> airbnb: "stdio: airbnb_search ·\nairbnb_listing_details"
+airbnb -> mcp: "listings JSON"
+mcp -> maps: "stdio: searchPlaces ·\ngetPlaceDetails ·\ncalculateRoute · getTimeZone"
+maps -> mcp: "장소 · 경로 JSON"
+airbnb -> abnb: "HTTPS (robots.txt 무시)"
+airbnb -> geo: "location 문자열"
+maps -> gmaps: "Places · Directions ·\nGeocoding · Time Zone"
+gs -> gsearch: "GET /search?q="
+abnb -> airbnb: "페이지 HTML"
+geo -> airbnb: "지도 범위"
+gmaps -> maps: "API 응답 JSON"
+gsearch -> gs: "결과 HTML"

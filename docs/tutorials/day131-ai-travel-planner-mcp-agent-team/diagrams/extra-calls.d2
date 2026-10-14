@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "여행 에이전트\n(Agent)" { class: ours }
+srva: "Airbnb MCP 서버" { class: ext }
+abnb: "airbnb.com ·\n지오코더" { class: ext }
+srvm: "여행 플래너\nMCP 서버" { class: ext }
+gmaps: "Google Maps\nAPI" { class: ext }
+
+agent -> srva: "tools/call airbnb_search\n(location · maxPrice)"
+srva -> abnb: "HTTPS 요청"
+abnb -> srva: "지도 범위 · 페이지 HTML"
+srva -> agent: "listings JSON"
+agent -> srvm: "tools/call calculateRoute\n(origin · destination · mode)"
+srvm -> gmaps: "Directions 요청"
+gmaps -> srvm: "경로 JSON"
+srvm -> agent: "거리 · 시간 JSON"

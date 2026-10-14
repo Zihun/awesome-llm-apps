@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+srva: "Airbnb MCP 서버\n(@openbnb/\nmcp-server-airbnb)" { class: ext }
+mcp: "MultiMCPTools" { class: ours }
+srvm: "여행 플래너 MCP 서버\n(@gongrzhe/\nserver-travelplanner-mcp)" { class: ext }
+
+mcp -> srva: "npx -y @openbnb/mcp-server-airbnb --ignore-robots-txt로\n자식 프로세스 시작 · initialize"
+srva -> mcp: "서버 정보"
+mcp -> srvm: "npx로 자식 프로세스 시작\n· initialize"
+srvm -> mcp: "서버 정보"
+mcp -> srva: "tools/list"
+srva -> mcp: "도구 2개 (airbnb_search ·\nairbnb_listing_details)"
+mcp -> srvm: "tools/list"
+srvm -> mcp: "도구 4개 (searchPlaces ·\ngetPlaceDetails · calculateRoute ·\ngetTimeZone)"

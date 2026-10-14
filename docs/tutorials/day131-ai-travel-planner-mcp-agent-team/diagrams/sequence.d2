@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(app.py 아래쪽)" { class: ours }
+planner: "run_mcp_travel_planner" { class: ours }
+mcp: "MultiMCPTools" { class: ours }
+
+user -> ui: "Generate Itinerary 클릭\n(키 · 목적지 · 일수 · 예산 · 취향)"
+ui -> planner: "run_travel_planner →\nasyncio.run(run_mcp_travel_planner)"
+planner -> planner: "os.environ[GOOGLE_MAPS_API_KEY]\n= 입력한 키"
+planner -> mcp: "MultiMCPTools(명령 둘,\nenv, timeout 60)"
+planner -> mcp: "connect()"

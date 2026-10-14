@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(app.py 아래쪽)" { class: ours }
+planner: "run_mcp_travel_planner" { class: ours }
+
+planner -> ui: "일정 글"
+ui -> ui: "session_state.itinerary에 저장,\n성공 안내 문구 고르기"
+ui -> ui: "generate_ics_content(일정 글, 시작일)\n→ ics 바이트"
+ui -> user: "일정 마크다운 +\n달력 다운로드 버튼"

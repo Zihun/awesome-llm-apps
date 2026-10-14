@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+openai: "OpenAI\n(gpt-4o)" { class: ext }
+agent: "여행 에이전트\n(Agent)" { class: ours }
+agnoapi: "agno 통계 API" { class: ext }
+
+agent -> openai: "chat.completions\n(assistant tool_calls ·\ntool 결과 셋)"
+openai -> agent: "일정 글"
+agent -> agnoapi: "POST /telemetry/runs"

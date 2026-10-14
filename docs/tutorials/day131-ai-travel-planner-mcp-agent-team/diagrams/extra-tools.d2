@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: right
+
+agent: "여행 에이전트\n(Agent)" { class: ours }
+mcp: "MCP 도구 묶음\n(MultiMCPTools)" { class: ours }
+gs: "구글 검색 도구\n(GoogleSearchTools)" { class: ours }
+openai: "OpenAI\n(gpt-4o)" { class: ext }
+agnoapi: "agno 통계 API" { class: ext }
+
+agent -> mcp: "tools=[mcp_tools, 검색 도구]"
+mcp -> agent: "도구 6개의 정의 · 결과"
+agent -> gs: "google_search(query)"
+gs -> agent: "결과 JSON 또는 오류 글"
+agent -> openai: "messages · 도구 7개"
+openai -> agent: "tool_calls 또는 답"
+agent -> agnoapi: "POST /telemetry/runs"

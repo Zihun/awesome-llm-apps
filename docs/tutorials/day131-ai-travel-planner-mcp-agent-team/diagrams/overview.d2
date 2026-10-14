@@ -1,0 +1,51 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+env: "requirements.txt\n+ 고친 설치" { class: file }
+
+app: "app.py (Streamlit 프로세스 하나)" {
+  class: group
+  grid-columns: 5
+  grid-gap: 6
+  keys: "사이드바 키 입력\n(st.sidebar)" { class: ours; height: 48 }
+  form: "여행 조건 폼\n(st.text_input 등)" { class: ours; height: 48 }
+  sync: "run_travel_planner\n(asyncio.run)" { class: ours; height: 48 }
+  plan: "run_mcp_travel_planner\n(서버 · 에이전트 · 실행)" { class: ours; height: 48 }
+  show: "일정 표시 · 다운로드\n(st.markdown)" { class: ours; height: 48 }
+  agent: "여행 에이전트\n(Agent)" { class: ours; height: 48 }
+  mcp: "MCP 도구 묶음\n(MultiMCPTools)" { class: ours; height: 48 }
+  gs: "구글 검색 도구\n(GoogleSearchTools)" { class: ours; height: 48 }
+  ics: "generate_ics_content\n(.ics 만들기)" { class: ours; height: 48 }
+}
+
+servers: "내 PC의 MCP 서버 프로세스 (npx)" {
+  class: group
+  grid-columns: 2
+  grid-gap: 6
+  airbnb: "Airbnb MCP 서버\n(@openbnb)" { class: ext; height: 56 }
+  maps: "여행 플래너 MCP 서버\n(@gongrzhe)" { class: ext; height: 56 }
+}
+
+ext: "외부 서비스" {
+  class: group
+  grid-columns: 6
+  grid-gap: 6
+  abnb: "airbnb.com" { class: ext; height: 48 }
+  geo: "Photon · Nominatim\n(지오코더)" { class: ext; height: 48 }
+  gmaps: "Google Maps API" { class: ext; height: 48 }
+  gsearch: "google.com/search" { class: ext; height: 48 }
+  openai: "OpenAI\n(gpt-4o)" { class: ext; height: 48 }
+  agnoapi: "agno 통계 API" { class: ext; height: 48 }
+}
+
+icsfile: "travel_itinerary.ics" { class: file }
+
+env -> app: "agno 2.2.13 · mcp 1.30"
+user -> app: "API 키 · 여행 조건"
+app -> user: "일정 · .ics 다운로드"
+app -> icsfile: "ics 바이트"
+app -> servers: "tools/list · tools/call (stdio)"
+servers -> app: "도구 결과"
+servers -> ext: "HTTPS 요청"
+app -> ext: "chat.completions ·\n구글 검색 · 통계"

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "여행 에이전트\n(Agent)" { class: ours }
+planner: "run_mcp_travel_planner" { class: ours }
+srvm: "여행 플래너\nMCP 서버" { class: ext }
+mcp: "MultiMCPTools" { class: ours }
+srva: "Airbnb MCP 서버" { class: ext }
+
+agent -> planner: "response.content"
+planner -> mcp: "close()\n(finally)"
+mcp -> srvm: "표준 입력 닫기 → 프로세스 종료\n(2초 안에 안 끝나면 강제 종료)"
+mcp -> srva: "같은 방식으로 종료"
