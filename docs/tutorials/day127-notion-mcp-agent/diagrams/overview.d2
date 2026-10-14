@@ -1,0 +1,33 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (터미널) { class: person }
+env: "OPENAI_API_KEY ·\nNOTION_API_KEY" { class: file }
+
+app: "notion_mcp_agent.py" {
+  class: group
+  grid-columns: 4
+  grid-gap: 4
+  main: "진입 · 입력 (main)" { class: ours }
+  mcp: "MCP 도구 (MCPTools)" { class: ours }
+  agent: "에이전트 (NotionDocsAgent)" { class: ours }
+  cli: "대화 루프 (acli_app)" { class: ours }
+}
+
+server: "Notion MCP 서버 (npx)" { class: ext }
+notion: "Notion API" { class: ext }
+openai: "OpenAI (gpt-4o)" { class: ext }
+stats: "agno 통계" { class: ext }
+db: "agno.db (SqliteDb)" { class: store }
+
+user -> app: "페이지 ID · 질문"
+app -> user: "답 글 · 도구 상자"
+env -> app: "키 둘"
+app -> server: "실행 · stdio"
+server -> app: "도구 목록 · 결과"
+server -> notion: "API 요청"
+notion -> server: "페이지 JSON"
+app -> openai: "대화 · 도구 스키마"
+openai -> app: "글 조각 · 도구 호출"
+app -> db: "세션 · 기록"
+app -> stats: "익명 통계"

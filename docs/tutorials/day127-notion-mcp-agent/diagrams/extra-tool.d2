@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "NotionDocsAgent" { class: ours }
+mcp: "MCPTools" { class: ours }
+server: "Notion MCP 서버" { class: ext }
+notion: "Notion API" { class: ext }
+
+agent -> mcp: "도구 호출 전달"
+mcp -> server: "tools/call"
+server -> notion: "Notion API 요청"
+notion -> server: "페이지 JSON"
+server -> mcp: "도구 결과"
+mcp -> agent: "결과 글"

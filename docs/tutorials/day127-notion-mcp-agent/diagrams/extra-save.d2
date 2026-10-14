@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+db: "agno.db" { class: store }
+agent: "NotionDocsAgent" { class: ours }
+stats: "agno 통계" { class: ext }
+
+agent -> db: "세션 · 실행 저장"
+agent -> stats: "익명 실행 통계"

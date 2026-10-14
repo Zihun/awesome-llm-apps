@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+main: "main" { class: ours }
+mcp: "MCPTools" { class: ours }
+server: "Notion MCP 서버" { class: ext }
+agent: "NotionDocsAgent" { class: ours }
+
+user -> main: "페이지 ID (인자 또는 입력)"
+main -> mcp: "async with MCPTools(\nserver_params)"
+mcp -> server: "자식 프로세스 실행 ·\ninitialize"
+server -> mcp: "도구 목록 (list_tools)"
+mcp -> main: "연결 끝 (Connected 출력)"
+main -> agent: "Agent(...) 만들기 ·\nacli_app(...)"

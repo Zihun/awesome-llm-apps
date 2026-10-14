@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+agent: "NotionDocsAgent" { class: ours }
+openai: "OpenAI gpt-4o" { class: ext }
+
+agent -> openai: "대화 + 도구 결과\n(스트림)"
+openai -> agent: "답 글 조각"
+agent -> user: "답 글 · 도구 상자"
+openai -> agent: "메모리 호출의 답"
