@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면 (main)" { class: ours }
+store: "대화 기록 (session_state)" { class: store }
+
+ui -> user: "답 (st.markdown)"
+ui -> store: "histories[agent_id]에\n질문 · 답 추가"
+ui -> store: "messages에 질문 · 답 ·\n아이콘 추가"

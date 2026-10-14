@@ -1,7 +1,6 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자 { class: person }
 ui: "화면 (main)" { class: ours }
 anthropic: "Anthropic" { class: ext }
 runner: "도구 루프 (run_agent_async)" { class: ours }
@@ -11,4 +10,3 @@ runner -> anthropic: "messages.create\n(+ assistant · tool_result)"
 anthropic -> runner: "end_turn · 글"
 runner -> mcp: "stack.aclose()\n(프로세스 닫기)"
 runner -> ui: "최종 글"
-ui -> user: "답 · 기록에 질문과 답 추가"

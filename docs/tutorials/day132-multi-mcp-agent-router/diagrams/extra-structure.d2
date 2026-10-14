@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: right
+
+ui: "화면\n(main)" { class: ours }
+router: "라우터\n(classify_query)" { class: ours }
+agents: "에이전트 넷\n(AGENTS)" { class: ours }
+store: "대화 기록\n(session_state)" { class: store }
+loop: "도구 루프\n(run_agent_async)" { class: ours }
+connect: "서버 연결\n(connect_mcp_servers)" { class: ours }
+
+ui -> router: "질문 (Auto-Route)"
+router -> ui: "agent_id"
+ui -> agents: "AGENTS[agent_id]\n(Manual은 선택값)"
+agents -> ui: "Agent"
+store -> ui: "histories[agent_id]"
+ui -> store: "질문 · 답 추가"
+ui -> loop: "run_agent(agent,\n질문, 기록)"
+loop -> ui: "최종 글"
+loop -> connect: "agent"
+connect -> loop: "도구 목록 ·\n세션 맵"

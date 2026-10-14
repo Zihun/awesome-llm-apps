@@ -1,10 +1,10 @@
 # Day 132 · 🔀 Multi-MCP Agent Router
 
-> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ 앱이 쓰는 모델 `claude-sonnet-4-20250514`는 2026-06-15에 퇴역했고, `requirements.txt`만 설치하면 `mcp` 2.3.0이 깔려 첫 질문에서 죽습니다(Step 1) · 예상 소요 90분(앱은 파일 하나 371줄이지만 가짜 MCP 서버와 가짜 Anthropic 서버를 직접 저장해 띄우고, 서버 쪽 기록과 앱의 동작을 맞대어 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 Anthropic 호출은 한 번도 하지 않았고 요금표도 확인하지 못했습니다) · 원본 앱: `mcp_ai_agents/multi_mcp_agent_router`
+> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ 앱이 쓰는 모델 `claude-sonnet-4-20250514`는 2026-06-15에 퇴역했고, `requirements.txt`만 설치하면 `mcp` 2.3.0이 깔려 첫 질문에서 죽습니다(Step 1) · 예상 소요 100분(앱은 파일 하나 371줄이지만 가짜 MCP 서버와 가짜 Anthropic 서버를 직접 저장해 띄우고, 확인용 스크립트 넷을 저장해 돌리며 서버 쪽 기록과 앱의 동작을 맞대어 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 Anthropic 호출은 한 번도 하지 않았고 요금표도 확인하지 못했습니다) · 원본 앱: `mcp_ai_agents/multi_mcp_agent_router`
 
 ## 오늘 만들 것
 
-Streamlit 화면에 질문을 치면 에이전트 넷(코드 리뷰어·보안 감사관·리서처·BIM 엔지니어) 가운데 하나가 받아 MCP 서버의 도구로 답하는 앱입니다. 볼륨 9 "♾️ MCP AI Agents"의 다섯째 날입니다. 이름의 "라우터"가 가리키는 것은 모델이 아니라 파이썬 키워드 목록입니다. `classify_query`가 질문 속 낱말을 찾아 에이전트를 고르고(`agent_forge.py:121-138`), 화면에서 Manual을 고르면 사람이 고릅니다. 에이전트마다 가진 MCP 서버가 다르고, 서버는 `npx`가 내려받아 띄우는 자식 프로세스입니다. 모델 호출과 도구 반복은 에이전트 프레임워크 없이 Anthropic SDK로 파일 하나가 직접 짭니다.
+Streamlit 화면에 질문을 치면 에이전트 넷(코드 리뷰어·보안 감사관·리서처·BIM 엔지니어) 가운데 하나가 받아 MCP 서버의 도구로 답하는 앱입니다. 볼륨 9 "♾️ MCP AI Agents"의 여섯째 날입니다. 이름의 "라우터"가 가리키는 것은 모델이 아니라 파이썬 키워드 목록입니다. `classify_query`가 질문 속 낱말을 찾아 에이전트를 고르고(`agent_forge.py:121-138`), 화면에서 Manual을 고르면 사람이 고릅니다. 에이전트마다 가진 MCP 서버가 다르고, 서버는 `npx`가 내려받아 띄우는 자식 프로세스입니다. 모델 호출과 도구 반복은 에이전트 프레임워크 없이 Anthropic SDK로 파일 하나가 직접 짭니다.
 
 앞 날과 이어지는 부분은 이렇습니다. Day 130도 라이브러리 없이 도구 반복을 손으로 짰습니다. 그 날 앱은 OpenAI와 원격 MCP 서버 하나를 쓰고, 도구 호출 예산(`--max-tool-calls`, 기본 6)과 결과 12,000자 제한 같은 방어 코드를 갖췄습니다(Day 130 README에 있는 내용입니다). 오늘 앱에는 그런 방어가 없습니다. 이 앱이 쓰는 GitHub MCP 서버는 Day 128과 다릅니다. Day 128은 `docker`로 GitHub 공식 서버를 띄웠고, 오늘은 `npx`로 npm 패키지 `@modelcontextprotocol/server-github`를 띄웁니다.
 
@@ -12,7 +12,9 @@ Streamlit 화면에 질문을 치면 에이전트 넷(코드 리뷰어·보안 �
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-직접 돌려 알게 된 것이 여섯입니다. 첫째, 앱의 모델은 2026-06-15에 퇴역했습니다(사전 준비). 둘째, 오늘 `requirements.txt`를 그대로 설치하면 `mcp` 2.3.0이 깔리고 첫 질문이 `'Tool' object has no attribute 'inputSchema'`로 죽습니다. `mcp<2`를 더해 1.30.0으로 돌립니다(Step 1, 5). 셋째, 네 에이전트 중 둘이 쓰는 `@modelcontextprotocol/server-fetch`는 npm 레지스트리에 없었고, 다른 하나가 쓰는 `server-github`는 npm에서 지원 종료로 표시돼 있습니다(Step 3). 넷째, 라우터는 낱말을 부분 문자열로 찾아서 "latest"가 코드 리뷰로, "architecture"가 BIM 엔지니어로 갑니다(Step 4). 다섯째, 서버는 질문마다 새로 뜨고 셸 환경 전체가 넘어가서 사이드바에 넣은 Anthropic 키까지 모든 서버가 받습니다(Step 5). 여섯째, 도구 반복에는 상한이 없고, 서버가 알려 준 도구 오류에는 `is_error`가 붙지 않으며, 두 번째 서버가 못 뜨면 첫 서버가 정리되지 않습니다(Step 5, 6).
+그림의 화살표는 `agent_forge.py` 묶음 전체에서 나가고 들어오는 것으로 읽습니다. 실제로는 서버 쪽 화살표(`실행 · initialize · tools/list · tools/call`)가 서버 연결과 도구 루프에서, `ANTHROPIC_API_KEY`는 화면(`agent_forge.py:286`)에서, `환경 전체`는 서버 연결(`agent_forge.py:163`)로, Anthropic 쪽은 도구 루프에서 오갑니다. 앱 안의 호출은 Step 7의 보조 구조 그림이 화살표로 보여 줍니다.
+
+직접 돌려 알게 된 것이 여섯입니다. 첫째, 앱의 모델은 2026-06-15에 퇴역했습니다(사전 준비). 둘째, 오늘 `requirements.txt`를 그대로 설치하면 `mcp` 2.3.0이 깔리고 첫 질문이 `'Tool' object has no attribute 'inputSchema'`로 죽습니다. `mcp<2`를 더해 1.30.0으로 돌립니다(Step 1, 5). 같은 처방을 Day 130(`mcp` 2.3.0에서 세 군데가 어긋남)과 Day 131(agno 2.2.13이 불러오는 `streamablehttp_client`가 2.3.0에 없음)이 이미 썼고, 오늘의 어긋남은 그 둘과 다른 곳입니다. 셋째, 네 에이전트 중 둘이 쓰는 `@modelcontextprotocol/server-fetch`는 npm 레지스트리에 없었고, 다른 하나가 쓰는 `server-github`는 npm에서 지원 종료로 표시돼 있습니다(Step 3). 넷째, 라우터는 낱말을 부분 문자열로 찾아서 "latest"가 코드 리뷰로, "architecture"가 BIM 엔지니어로 갑니다(Step 4). 다섯째, 서버는 질문마다 새로 뜨고 셸 환경 전체가 넘어가서 사이드바에 넣은 Anthropic 키까지 모든 서버가 받습니다(Step 5). 여섯째, 도구 반복에는 상한이 없고, 서버가 알려 준 도구 오류에는 `is_error`가 붙지 않으며, 두 번째 서버가 못 뜨면 첫 서버가 정리되지 않습니다(Step 5, 6).
 
 ## 사전 준비
 
@@ -23,9 +25,9 @@ Streamlit 화면에 질문을 치면 에이전트 넷(코드 리뷰어·보안 �
 | Anthropic API 키 | 실제로 쓸 때만 필요하다. 이 문서는 가짜 값 `sk-ant-fake-132`와 가짜 서버로 확인한다 | https://console.anthropic.com |
 | Node.js(`npx`) | 진짜 MCP 서버를 내려받아 띄울 때만 필요하다. 이 문서의 실습은 쓰지 않는다 | https://nodejs.org/ |
 | GitHub 토큰 | 진짜 `server-github`는 `GITHUB_PERSONAL_ACCESS_TOKEN`을 읽는다(서버 README). 앱은 이 변수를 따로 넣지 않으므로 셸에 있어야 한다. 이 문서는 쓰지 않는다 | GitHub 설정의 개인 액세스 토큰 |
-| 터미널 둘 | 가짜 Anthropic 서버, Streamlit 앱 | 별도 설치 없음 |
+| 터미널 셋 | 가짜 Anthropic 서버, Streamlit 앱, 그리고 Step 3~6의 스크립트와 `tail`을 돌리는 터미널 | 별도 설치 없음 |
 
-앱이 쓰는 모델 `claude-sonnet-4-20250514`(`agent_forge.py:192, 203, 251`)를 Anthropic의 폐기 문서(https://platform.claude.com/docs/en/about-claude/model-deprecations, 2026-10-14에 내려받아 읽음)에서 찾았습니다. 이 모델은 "Retired"이고 폐기 공지 2026-04-14, 퇴역 2026-06-15, 권장 대체는 `claude-sonnet-5-5`입니다. 문서는 퇴역한 모델로 보낸 요청이 실패한다고 적습니다. 그러니 오늘 이 앱은 진짜 키를 넣어도 모델 호출 단계에서 실패할 것으로 보이지만, 실제 Anthropic은 부르지 않았으므로 어떤 오류가 오는지는 보지 못했습니다(Step 6의 404는 제 가짜 서버가 흉내 낸 것입니다). 세 곳의 모델 이름을 바꾸는 일은 "더 해보기"에 두었습니다.
+앱이 쓰는 모델 `claude-sonnet-4-20250514`(`agent_forge.py:192, 203, 251`)를 Anthropic의 폐기 문서(https://platform.claude.com/docs/en/about-claude/model-deprecations, 2026-10-14에 내려받아 읽음)에서 찾았습니다. 이 모델은 "Retired"이고 폐기 공지 2026-04-14, 퇴역 2026-06-15, 권장 대체는 `claude-sonnet-5-5`입니다. 문서는 퇴역한 모델로 보낸 요청이 실패한다고 적습니다. 그러니 오늘 이 앱은 진짜 키를 넣어도 모델 호출 단계에서 실패할 것으로 보이지만, 실제 Anthropic은 부르지 않았으므로 어떤 오류가 오는지는 보지 못했습니다(Step 6의 404는 제 가짜 서버가 흉내 낸 것입니다). `anthropic` 1.13.0은 이 모델 이름을 알아보고 `messages.create`를 부를 때마다 Streamlit 터미널에 `DeprecationWarning: The model 'claude-sonnet-4-20250514' is deprecated and will reach end-of-life on June 15th, 2026.`을 찍었습니다(직접 확인). 세 곳의 모델 이름을 바꾸는 일은 "더 해보기"에 두었습니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -90,6 +92,8 @@ from mcp.client.stdio import stdio_client
 
 `requirements.txt`는 `pydantic>=2.0.0`도 적지만 `grep -c pydantic agent_forge.py`는 0이라, 앱은 `pydantic`을 직접 가져오지 않습니다. 
 
+![Step 1까지의 구성](diagrams/step1.svg)
+
 **확인.** 설치된 판과 `npx`가 나오는 줄, 모델 이름이 나오는 줄을 봅니다.
 
 ```bash
@@ -106,7 +110,7 @@ mcp 1.30.0 | anthropic 1.13.0 | streamlit 1.65.0
 7
 ```
 
-`"mcp<2"`를 빼고 설치하면 `mcp` 2.3.0이 깔립니다(이 문서는 두 번째 가상환경으로 직접 확인했습니다). 2.x의 `Tool`은 `inputSchema` 대신 `input_schema`를 쓰므로 Step 5의 변환 함수가 죽습니다. 숫자는 오늘(2026-10-14)의 값입니다.
+`"mcp<2"`를 빼고 설치하면 `mcp` 2.3.0이 깔립니다(이 문서는 두 번째 가상환경으로 직접 확인했습니다). 2.x의 `Tool`은 `inputSchema` 대신 `input_schema`를 쓰므로 Step 5의 변환 함수가 죽습니다. 이 어긋남은 Day 130 문제 해결 첫 행(스트림 개수)이나 Day 131의 `streamablehttp_client`와 다른 곳이고, 처방(`mcp<2`)만 같습니다. 숫자는 2026-10-14의 값입니다.
 
 ### Step 2. 가짜 서버 둘과 `npx` 자리 바꾸기
 
@@ -293,6 +297,8 @@ uv run --no-project python fake_anthropic.py
 
 세 번째 명령은 터미널 하나를 차지하고 포트를 찍습니다(49152~65535의 임의 값). 다른 터미널에서 계속합니다.
 
+![Step 2까지의 구성](diagrams/step2.svg)
+
 **확인.**
 
 ```text
@@ -368,6 +374,8 @@ class Agent:
 
 시스템 프롬프트는 "Revit에는 MCP 브리지를 쓰라"고 하지만 이 에이전트의 서버는 `filesystem` 하나입니다. 앱 README는 "Custom MCP (named pipes)"를 적지만 코드에는 그런 서버가 없습니다. 네 에이전트 모두 서버가 하나 이상이어서 서버가 없을 때의 갈래(`agent_forge.py:190-197`)는 한 번도 실행되지 않습니다.
 
+![Step 3까지의 구성](diagrams/step3.svg)
+
 **확인.**
 
 ```bash
@@ -440,6 +448,8 @@ def classify_query(query: str) -> str:
 
         agent = AGENTS[agent_id]
 ```
+
+![Step 4까지의 구성](diagrams/step4.svg)
 
 **확인.** 질문 일곱 개를 넣어 봅니다.
 
@@ -530,6 +540,8 @@ async def connect_mcp_servers(agent: Agent) -> tuple[AsyncExitStack, list[dict],
 
 세 가지를 짚습니다. 첫째, `env = {**os.environ}`(163행)이라 셸 환경 전체가 서버 프로세스에 갑니다. `env` 인자를 주지 않으면 `mcp`가 이름 몇 개만 물려주고(`mcp` 1.30.0의 `mcp/client/stdio/__init__.py` 127행), 앱 방식은 전부 물려줍니다. 둘째, 이 함수는 `run_agent_async`가 질문마다 부르므로(`agent_forge.py:199`) 서버는 질문 하나에 새로 떴다가 닫힙니다. 셋째, `session_map`은 도구 이름으로 세션을 찾으므로 두 서버가 같은 이름의 도구를 내면 뒤의 것이 이깁니다(이 문서는 해 보지 않았습니다).
 
+![Step 5까지의 구성](diagrams/step5.svg)
+
 **확인.** 먼저 환경이 넘어가는지 재 봅니다. 아래 `env_test.py`를 저장하고 가짜 키를 넣어 돌립니다.
 
 ```python
@@ -547,7 +559,7 @@ async def start(env):
 
 
 for label, env in [("env 인자 없음", None), ("env={**os.environ} (앱 방식)", {**os.environ})]:
-    n = len(open("mcp.log", encoding="utf-8").readlines())
+    n = len(open("mcp.log", encoding="utf-8").readlines()) if os.path.exists("mcp.log") else 0
     asyncio.run(start(env))
     last = json.loads(open("mcp.log", encoding="utf-8").readlines()[n])
     print(label, "->", "키 길이", last["anthropic_key_len"], "| DEMO_TOKEN", last["has_demo_token"])
@@ -581,7 +593,13 @@ Review again @@tool:get_file_contents {"owner": "demo", "repo": "app", "path": "
 cat mcp.log
 ```
 
-기록에서 서버 줄만 추리면 이렇습니다(`t`는 줄였습니다). 두 질문 모두 `github`와 `filesystem`이 새 `pid`로 시작합니다.
+```powershell
+Get-Content mcp.log
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다.)
+
+기록에서 서버 줄만 추리면 이렇습니다(`t`는 줄였습니다). 파일 맨 앞의 `fetch` 두 줄은 앞의 `env_test.py`가 남긴 것이라 뺐습니다. 두 질문 모두 `github`와 `filesystem`이 새 `pid`로 시작합니다.
 
 ```text
 {"event": "start", "args": [], "anthropic_key_len": 15, "has_demo_token": true, "server": "github", "pid": 28848}
@@ -593,6 +611,8 @@ cat mcp.log
 ```
 
 `pid`는 매번 다른 값이 나옵니다. 서버 둘의 시작 시각은 0.4~0.5초씩 벌어져 있어(`t`), 서버가 차례로 하나씩 뜬다는 소스의 모양과 맞습니다. 이제 두 번째 서버가 못 뜨는 경우입니다. 아래 `leak_test.py`는 `github` 가짜 서버 다음에 곧바로 종료 코드 1로 끝나는 프로세스를 세운 에이전트를 만듭니다(진짜 `npx`가 아니라 제가 만든 시뮬레이션입니다).
+
+`leak_test.py`
 
 ```python
 import json, os, subprocess, sys, time, warnings
@@ -626,6 +646,13 @@ for p in pids:  # 정리: 내가 띄운 프로세스만 끝낸다
 ```bash
 ANTHROPIC_BASE_URL=http://127.0.0.1:<포트> uv run --no-project python leak_test.py
 ```
+
+```powershell
+$env:ANTHROPIC_BASE_URL = "http://127.0.0.1:<포트>"
+uv run --no-project python leak_test.py
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다. 이 변수가 그 터미널에 없으면 스크립트가 실제 `api.anthropic.com`으로 요청을 보내려 하므로 반드시 먼저 겁니다. `leak_test.py`는 요청을 보내기 전에 끝나지만 `block_test.py`는 보냅니다.)
 
 ```text
 예외: McpError | Connection closed
@@ -721,22 +748,36 @@ ANTHROPIC_BASE_URL=http://127.0.0.1:<포트> uv run --no-project python leak_tes
         await stack.aclose()
 ```
 
-**확인.** 화면에서 질문 셋을 칩니다. Auto-Route인지 확인합니다.
+![Step 6까지의 구성](diagrams/step6.svg)
+
+**확인.** 화면에서 질문 둘을 칩니다. Auto-Route인지 확인합니다.
 
 ```text
 tool error test (review) @@tool:boom {"why": "x"}
 unknown tool test (review) @@tool:nope {}
+```
+
+`anth.log`에서 도구 결과가 실린 요청만 뽑아 마지막 둘을 봅니다.
+
+```bash
+uv run --no-project python -c "import json; rs = [r['tool_results'] for r in map(json.loads, open('anth.log', encoding='utf-8')) if r['tool_results']]; print(*rs[-2:], sep='
+')"
+```
+
+```text
+[{'is_error': None, 'head': 'Error executing tool boom: boom: x'}]
+[{'is_error': True, 'head': "Error: Unknown tool 'nope'"}]
+```
+
+서버가 예외를 `Error executing tool …` 글로 돌려줬는데도 `is_error`는 `None`(요청 JSON에서는 `null`)이라, 모델은 이것을 정상 결과로 받습니다. 이어서 같은 화면에서 세 번째 질문을 칩니다.
+
+```text
 Review this code @@loop
 ```
 
-`anth.log`에서 `tool_results`만 추리면 첫 두 질문의 두 번째 요청은 이렇습니다.
+가짜 서버가 25번 도구를 부르라고 한 뒤에야 글로 답하게 만들어 둔 질문입니다. 끝난 뒤 `anth.log`는 요청 26건이 늘었고, 마지막 요청의 `n_messages`는 59였습니다. 이 숫자는 같은 에이전트(코드 리뷰어)의 앞 기록 8글(Step 5의 두 질문과 위 두 질문, 질문·답 두 글씩)에 새 질문 1개와 25번 왕복의 50개를 더한 값입니다. 화면을 새로 고쳐 기록이 비었다면 51입니다. 앱이 스스로 멈춘 것이 아니라 가짜 서버가 멈춘 것입니다. 이어서 동기 호출이 이벤트 루프를 얼마나 막는지 재 봅니다.
 
-```text
-{"is_error": null, "head": "Error executing tool boom: boom: x"}
-{"is_error": true, "head": "Error: Unknown tool 'nope'"}
-```
-
-서버가 예외를 `Error executing tool …` 글로 돌려줬는데도 `is_error`는 `null`이라, 모델은 이것을 정상 결과로 받습니다. 세 번째 질문은 가짜 서버가 25번 도구를 부르라고 한 뒤에야 글로 답하게 만들어 둔 것입니다. 끝난 뒤 `anth.log`는 요청 26건이 늘었고 마지막 요청의 `n_messages`는 51이었습니다. 앱이 스스로 멈춘 것이 아니라 가짜 서버가 멈춘 것입니다. 이어서 동기 호출이 이벤트 루프를 얼마나 막는지 재 봅니다.
+`block_test.py`
 
 ```python
 import asyncio, time, warnings
@@ -771,11 +812,20 @@ asyncio.run(main())
 ANTHROPIC_BASE_URL=http://127.0.0.1:<포트> uv run --no-project python block_test.py
 ```
 
-```text
-가장 긴 간격 1.53초, 중앙값 0.06초
+```powershell
+$env:ANTHROPIC_BASE_URL = "http://127.0.0.1:<포트>"
+uv run --no-project python block_test.py
 ```
 
-가짜 서버가 1.5초 늦게 답하는 동안 같은 루프의 다른 작업이 1.5초 멈췄습니다. 이 앱은 질문마다 새 루프를 만들고 그 안에 다른 작업이 없어(`run_agent`, `agent_forge.py:266-272`) 눈에 띄는 피해는 보지 못했습니다. 이 문서가 본 것은 루프가 멈춘다는 사실뿐입니다. 끝으로 `@retired`를 넣은 질문은 가짜 서버가 404를 내서 Streamlit 화면에 예외를 그대로 올리고, 그때 두 서버 프로세스는 `finally` 덕분에 모두 닫혔습니다(Step 5의 누수와 달리 `try` 안이라서입니다). 이 404는 퇴역 모델이 실제로 주는 응답이 아닙니다.
+(PowerShell 줄은 실행해 보지 못했습니다. 위 `leak_test.py` 때 이미 건 터미널이면 다시 걸지 않아도 됩니다.)
+
+```text
+가장 긴 간격 1.52초, 중앙값 0.06초
+```
+
+(1.5초대의 값이 나오면 같은 결과입니다. 제 실행은 1.52와 1.53이었습니다.)
+
+가짜 서버가 1.5초 늦게 답하는 동안 같은 루프의 다른 작업이 1.5초쯤 멈췄습니다. 이 앱은 질문마다 새 루프를 만들고 그 안에 다른 작업이 없어(`run_agent`, `agent_forge.py:266-272`) 눈에 띄는 피해는 보지 못했습니다. 이 문서가 본 것은 루프가 멈춘다는 사실뿐입니다. 끝으로 `Review this @@retired`처럼 `@@retired`를 넣은 질문(Auto-Route에서 코드 리뷰어로 갑니다)은 가짜 서버가 404를 내서 Streamlit 화면에 예외를 그대로 올리고, 그때 두 서버 프로세스는 `finally` 덕분에 모두 닫혔습니다(Step 5의 누수와 달리 `try` 안이라서입니다). 이 404는 퇴역 모델이 실제로 주는 응답이 아닙니다.
 
 ### Step 7. 화면과 기록 — 키는 프로세스 전체가 공유합니다
 
@@ -843,30 +893,48 @@ ANTHROPIC_BASE_URL=http://127.0.0.1:<포트> uv run --no-project python block_te
             {"role": "assistant", "content": response, "avatar": agent.icon}
 ```
 
+화면이 부르고 받는 앱 안의 관계를 한 장으로 그리면 이렇습니다. 읽기(`agent_forge.py:352-353`)와 쓰기(`agent_forge.py:359-367`)가 서로 다른 화살표입니다.
+
+![앱 안의 구조](diagrams/extra-structure.svg)
+
 도구를 부른 중간 과정은 기록에 남지 않고, 에이전트마다 기록이 따로입니다. 키가 없으면 서버를 띄우기 전에 멈추는 것도 이 순서(`agent_forge.py:326-328`) 덕분입니다.
 
-**확인.** 화면에서 Manual로 바꿔 아무 질문이나 쳐 보면 선택한 에이전트의 서버 이름이 안내 줄에 뜹니다. Step 5의 두 질문 사이를 `anth.log`로 보면 같은 에이전트의 기록이 이어집니다.
+![Step 7까지의 구성](diagrams/step7.svg)
+
+**확인.** 화면에서 질문 `tell me about the architecture`를 칩니다. BIM 엔지니어가 받습니다. 그다음 라디오를 Manual로 바꿔 리서처를 골라 아무 질문이나 치면 안내 줄에 선택한 에이전트의 서버 이름이 뜹니다. Step 5의 두 질문 사이를 `anth.log`로 보면 같은 에이전트의 기록이 이어집니다.
 
 ```text
 n_messages 1 → 3     (첫 질문: 요청 둘)
 n_messages 3 → 5     (두 번째 질문: 첫 요청이 이미 3)
 ```
 
-두 번째 질문의 첫 요청이 3인 것은 기록의 두 글(질문·답)에 새 질문이 붙었기 때문입니다. 질문 "tell me about the architecture"는 BIM 엔지니어에게 가서 `n_messages`가 다시 1부터 시작했습니다. 앱 README가 말하는 "스트리밍 응답"은 코드에 없습니다. `messages.create`에 `stream`을 주지 않고 가짜 서버가 받은 요청에도 `stream`이 없었습니다. 앱 README의 `cd mcp_ai_agents/multi_mcp_agent_forge`도 실제 폴더 이름(`multi_mcp_agent_router`)과 다릅니다.
+두 번째 질문의 첫 요청이 3인 것은 기록의 두 글(질문·답)에 새 질문이 붙었기 때문입니다. 방금 BIM 엔지니어에게 간 질문은 `n_messages`가 다시 1부터 시작했습니다. 앱 README가 말하는 "스트리밍 응답"은 코드에 없습니다. `messages.create`에 `stream`을 주지 않고 가짜 서버가 받은 요청에도 `stream`이 없었습니다. 앱 README의 `cd mcp_ai_agents/multi_mcp_agent_forge`도 실제 폴더 이름(`multi_mcp_agent_router`)과 다릅니다.
 
 ## 요청 한 건이 흐르는 과정
 
-질문 하나는 라우팅, 서버 연결, 모델과 도구의 반복, 정리의 순서로 지납니다. 앞쪽은 이렇습니다.
+질문 하나는 라우팅, 기록 읽기, 서버 연결, 모델과 도구의 반복, 정리, 화면과 기록 갱신의 순서로 지납니다. 먼저 질문이 들어와 에이전트가 정해지고 안내 줄이 찍힙니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-서버가 뜨고 도구 정의가 돌아온 뒤, 모델과 도구가 오갑니다. 아래는 모델이 도구를 부르게 하는 첫 왕복입니다.
+이어서 화면이 에이전트의 기록을 읽어 도구 루프에 넘깁니다.
+
+![기록 읽기와 호출](diagrams/extra-history.svg)
+
+도구 루프는 서버를 차례로 띄우고 `initialize`와 `tools/list`를 서버마다 따로 보냅니다.
+
+![서버 연결](diagrams/extra-connect.svg)
+
+도구 정의를 받으면 모델이 도구를 부르게 하는 첫 왕복입니다.
 
 ![첫 왕복](diagrams/extra-loop.svg)
 
-모델이 글로 답하면 서버를 닫고 화면에 올립니다.
+모델이 글로 답하면 서버를 닫고 글을 화면에 돌려줍니다.
 
 ![마무리](diagrams/extra-finish.svg)
+
+마지막으로 화면이 답을 찍고 기록 두 곳에 질문과 답을 더합니다.
+
+![답과 기록](diagrams/extra-record.svg)
 
 ## 실행 체크리스트
 
@@ -878,7 +946,7 @@ n_messages 3 → 5     (두 번째 질문: 첫 요청이 이미 3)
 - [ ] 같은 에이전트에 질문 두 개를 하면 `mcp.log`의 `pid`가 둘 다 새 값이다
 - [ ] `env_test.py`에서 앱 방식은 키 길이 15, `env` 인자 없음은 0이다
 - [ ] `boom` 결과의 `is_error`가 `null`이고 `nope`는 `true`다
-- [ ] `@@loop` 질문 뒤 `anth.log`가 요청 26건 늘고 마지막 `n_messages`가 51이다
+- [ ] `@@loop` 질문 뒤 `anth.log`가 요청 26건 늘고 마지막 `n_messages`가 59다(기록이 비어 있으면 51)
 - [ ] `leak_test.py`가 `McpError | Connection closed`와 `[True]`를 찍는다
 
 ## 문제 해결
@@ -886,7 +954,7 @@ n_messages 3 → 5     (두 번째 질문: 첫 요청이 이미 3)
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 질문하면 `'Tool' object has no attribute 'inputSchema'` | `requirements.txt`의 `mcp>=0.1.0`이 오늘 2.3.0으로 풀림. 2.x의 `Tool`은 `input_schema` | `uv pip install -r requirements.txt "mcp<2"`. 2.x로 가려면 `agent_forge.py:146`을 `tool.input_schema`로 고침(이것 한 곳만 고친 복사본은 가짜 서버로 질문이 통과했고 다른 곳은 확인하지 않음) |
-| `Error code: 404 … not_found_error`(진짜 서버에서) | 모델 `claude-sonnet-4-20250514`가 2026-06-15에 퇴역. 이 문서는 진짜 응답을 보지 못함 | 세 곳(`agent_forge.py:192, 203, 251`)의 모델 이름을 바꾼다 |
+| 진짜 서버에서 모델 호출이 실패함(`DeprecationWarning`이 먼저 찍힘) | 모델 `claude-sonnet-4-20250514`가 2026-06-15에 퇴역. 폐기 문서는 "Requests to retired models will fail."까지만 적고 오류 코드는 말하지 않음. 이 문서는 진짜 응답을 보지 못함(404는 제 가짜 서버가 흉내 낸 것) | 세 곳(`agent_forge.py:192, 203, 251`)의 모델 이름을 권장 대체 `claude-sonnet-5-5`로 바꾼다 |
 | `Connection closed`로 질문이 죽음 | 서버 프로세스가 시작하자마자 종료. `server-fetch`처럼 패키지가 없거나 `npx`가 없는 경우를 이 문서는 시뮬레이션으로만 봄 | 에이전트의 서버 목록에서 그 서버를 빼거나 파이썬 참조 서버(`uvx mcp-server-fetch`)로 바꾼다 |
 | 가짜 서버 없이 키를 넣었더니 실제 `api.anthropic.com`으로 감 | `ANTHROPIC_BASE_URL`이 그 터미널에 없으면 SDK가 기본 주소를 씀(소스로 확인, 돌려 보지 않음) | 앱을 띄우기 전에 변수를 건다 |
 | 소프트웨어 질문이 BIM 엔지니어로 감 | 키워드 `architecture`·`detail`·`building`·`wall`을 부분 문자열로 찾음 | Manual로 고르거나 목록을 고친다 |
@@ -901,4 +969,4 @@ n_messages 3 → 5     (두 번째 질문: 첫 요청이 이미 3)
 
 ## 다음 날 예고
 
-[Day 133 · 🚀 Multi-MCP Intelligent Assistant](../day133-multi-mcp-agent/README.md) — 오늘은 에이전트마다 서버를 따로 줬지만 마지막 날의 앱은 에이전트 하나에 서버 넷(`server-github`, `@chatmcp/server-perplexity-ask`, `@gongrzhe/server-calendar-autoauth-mcp`, `@gongrzhe/server-gmail-autoauth-mcp`)을 한꺼번에 줍니다. 원본 앱 `multi_mcp_agent.py`(157줄)가 agno의 `MultiMCPTools`로 묶습니다(`mcp_ai_agents/multi_mcp_agent/multi_mcp_agent.py:56-61, 67`, 소스로 확인).
+[Day 133 · 🚀 Multi-MCP Intelligent Assistant](../day133-multi-mcp-agent/README.md) — 오늘은 에이전트마다 서버를 따로 줬지만 마지막 날의 앱은 에이전트 하나에 서버 넷(`server-github`, `@chatmcp/server-perplexity-ask`, `@gongrzhe/server-calendar-autoauth-mcp`, `@gongrzhe/server-gmail-autoauth-mcp`)을 한꺼번에 줍니다. 원본 앱 `multi_mcp_agent.py`(편집기 기준 158줄, 마지막 줄에 개행이 없어 `wc -l`은 157)가 agno의 `MultiMCPTools`로 묶습니다(`mcp_ai_agents/multi_mcp_agent/multi_mcp_agent.py:56-61, 67`, 소스로 확인).
