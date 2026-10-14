@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: right
+
+loop: "게임 루프\n(Start 이후)" { class: ours }
+players: "플레이어 둘\n(Agent.run)" { class: ours }
+board: "보드 · 규칙\n(TicTacToeBoard)" { class: ours }
+state: "session_state" { class: store }
+
+loop -> players: "run(판 + 빈 칸)"
+players -> loop: "답 글 (content)"
+loop -> board: "수 (row, col)"
+board -> loop: "(성공?, 메시지)"
+loop -> state: "수 기록 추가"

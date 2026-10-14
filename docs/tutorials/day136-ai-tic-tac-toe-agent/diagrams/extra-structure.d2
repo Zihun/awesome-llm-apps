@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: right
+
+ui: "화면 · 선택\n(main)" { class: ours }
+players: "플레이어 둘\n(get_tic_tac_toe_players)" { class: ours }
+state: "session_state" { class: store }
+loop: "게임 루프\n(Start 이후)" { class: ours }
+view: "판 · 기록 그리기\n(display_board ·\ndisplay_move_history)" { class: ours }
+
+ui -> players: "모델 id 둘"
+players -> ui: "Agent 둘"
+ui -> state: "플레이어 · 보드 저장"
+ui -> loop: "game_started 뒤"
+state -> view: "move_history"
+ui -> view: "display_board(판)"

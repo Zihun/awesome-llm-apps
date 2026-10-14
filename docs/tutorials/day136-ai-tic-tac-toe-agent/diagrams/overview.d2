@@ -1,0 +1,36 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+env: "환경변수 · .env\n(load_dotenv)" { class: file }
+
+app: "앱 코드 (app.py · agents.py · utils.py)" {
+  class: group
+  grid-columns: 3
+  grid-gap: 6
+  ui: "화면 · 선택\n(app.py main)" { class: ours }
+  loop: "게임 루프\n(app.py)" { class: ours }
+  state: "session_state" { class: store }
+  players: "플레이어 둘\n(agents.py)" { class: ours }
+  board: "보드 · 규칙\n(utils.py)" { class: ours }
+  view: "판 · 기록 그리기\n(utils.py)" { class: ours }
+}
+
+providers: "모델 제공자 (고른 둘만 쓰임)" {
+  class: group
+  grid-columns: 4
+  grid-gap: 4
+  openai: "OpenAI" { class: ext }
+  anthropic: "Anthropic" { class: ext }
+  google: "Google" { class: ext }
+  groq: "Groq" { class: ext }
+}
+
+agno: "agno 통계\n(os-api.agno.com)" { class: ext }
+
+user -> app: "모델 선택 · Start"
+app -> user: "HTML 판 · 기록"
+env -> app: "API 키"
+app -> providers: "채팅 요청"
+providers -> app: "답"
+app -> agno: "run 통계"

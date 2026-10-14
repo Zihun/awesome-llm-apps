@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+board: "보드 (TicTacToeBoard)" { class: ours }
+ui: "화면 (main)" { class: ours }
+state: "session_state" { class: store }
+
+ui -> board: "make_move(0, 0)"
+board -> ui: "(True, 'Move successful!')"
+ui -> state: "move_history에 수 추가"
+ui -> board: "get_game_state()"
+board -> ui: "(False, 'Game in progress')"
+ui -> ui: "st.rerun()"

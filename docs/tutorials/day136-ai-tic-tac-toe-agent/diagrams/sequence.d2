@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+agent: "플레이어 (Agent)" { class: ours }
+ui: "화면 (main)" { class: ours }
+state: "session_state" { class: store }
+board: "보드 (TicTacToeBoard)" { class: ours }
+
+user -> ui: "Start Game 클릭"
+ui -> agent: "get_tic_tac_toe_players(model_x, model_o)"
+agent -> ui: "Agent 둘 (Player X · O)"
+ui -> state: "player_x · player_o 저장"
+ui -> board: "TicTacToeBoard()"
+board -> ui: "빈 판 (차례 X)"
+ui -> state: "game_board 저장"
+ui -> state: "game_started · game_paused · move_history 저장"
+ui -> ui: "st.rerun()"

@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+board: "보드 (TicTacToeBoard)" { class: ours }
+ui: "화면 (main)" { class: ours }
+agent: "플레이어 (Agent)" { class: ours }
+provider: "모델 제공자" { class: ext }
+
+ui -> board: "make_move(0, 0) (이미 찬 칸)"
+board -> ui: "(False, 'Invalid move: Position (0, 0) is already occupied.')"
+ui -> ui: "logger.error('Invalid move attempt: ...')"
+ui -> agent: "run('Invalid move: ...' + 판 + 빈 칸)"
+agent -> provider: "채팅 요청 (재시도 질문)"
+provider -> agent: "답 글 ('2 1')"
+agent -> ui: "RunOutput (받고 버림)"
+ui -> ui: "st.rerun()"

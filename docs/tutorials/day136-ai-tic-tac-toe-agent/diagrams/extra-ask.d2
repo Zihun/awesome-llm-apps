@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "화면 (main)" { class: ours }
+agent: "플레이어 (Agent)" { class: ours }
+provider: "모델 제공자" { class: ext }
+
+ui -> agent: "run(판 + 빈 칸, stream=False)"
+agent -> provider: "채팅 요청 (지시문 + 질문)"
+provider -> agent: "답 글 ('0 0')"
+agent -> ui: "RunOutput.content"
