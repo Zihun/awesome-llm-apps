@@ -1,6 +1,6 @@
 # Day 129 · ♾️ Browser MCP Agent
 
-> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않습니다(`mcp` 2.x가 깔림, Step 1) · 앱의 `gpt-4o-mini`는 스냅샷이 2027-01-14 종료 예정입니다 · 예상 소요 125분(앱은 `main.py` 180줄 하나지만, 저장할 파일 다섯 개를 만들고 폴더·키·`npx` 상태를 바꿔 가며 같은 명령을 여러 번 돌려 보는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 재지 못함(이 문서는 키 없이 가짜 서버로만 돌렸습니다. 실제로는 명령 하나에 모델 요청이 최대 10번이고 도구 결과와 대화가 매번 다시 실립니다. Step 6) · 원본 앱: `mcp_ai_agents/browser_mcp_agent`
+> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않습니다(`mcp` 2.x가 깔림, Step 1) · 앱의 `gpt-4o-mini`는 스냅샷이 2027-01-14 종료 예정입니다 · 예상 소요 145분(앱은 `main.py` 180줄 하나지만, 저장할 파일 다섯 개를 만들고 폴더·키·`npx` 상태를 바꿔 가며 같은 명령을 여러 번 돌려 보는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 재지 못함(이 문서는 키 없이 가짜 서버로만 돌렸습니다. 실제로는 명령 하나에 모델 요청이 최대 10번이고 도구 결과와 대화가 매번 다시 실립니다. Step 6) · 원본 앱: `mcp_ai_agents/browser_mcp_agent`
 
 ## 오늘 만들 것
 
@@ -8,7 +8,7 @@
 
 Day 125가 같은 모양을 먼저 보였습니다. 그 날의 ADK 앱은 `MCPToolset(...)`을 코드에서 만들어 `npx -y firecrawl-mcp`를 띄웠고, 서버는 앱을 불러올 때가 아니라 첫 모델 요청이 도구를 모을 때 떴습니다(그 날 Step 3). 오늘 앱도 서버가 처음 뜨는 때를 따로 봅니다. 다른 점은 서버 선언의 위치입니다. 오늘은 `main.py`에 `npx`라는 글자가 한 번도 나오지 않고 `mcp_agent.config.yaml`에만 있습니다. Day 127·128의 원본 앱(`notion_mcp_agent.py`, `github_agent.py`)은 오늘 앱과 달리 agno의 `MCPTools`와 `mcp`의 `StdioServerParameters`를 코드 안에서 만들어 `npx`와 `docker`를 적습니다(두 파일의 import와 `command=`로 확인).
 
-직접 돌려 알게 된 것이 넷입니다. 첫째, `requirements.txt` 그대로 설치하면 오늘은 `mcp` 2.3.0이 깔리고 `mcp-agent`가 import 단계에서 죽습니다(Step 1). 둘째, 설정 파일은 앱 폴더가 아니라 **명령을 실행한 폴더에서 위로 올라가며** 찾고, 못 찾아도 오류 없이 빈 설정으로 갑니다(Step 2·7). 셋째, 화면을 띄우는 것만으로는 서버도 로그 폴더도 생기지 않고 **첫 명령**이 둘 다 만듭니다(Step 4·5). 넷째, 서버를 못 띄움·모델 오류·설정을 못 찾음은 화면에 아무것도 내지 않거나 도구 없는 답으로 끝나고, 화면에 오류 문장이 나오는 것은 키가 없을 때뿐입니다(Step 7).
+직접 돌려 알게 된 것이 넷입니다. 첫째, `requirements.txt` 그대로 설치하면 오늘은 `mcp` 2.3.0이 깔리고 `mcp-agent`가 import 단계에서 죽습니다(Step 1). 둘째, 설정 파일은 앱 폴더가 아니라 **명령을 실행한 폴더에서 위로 올라가며** 찾고, 못 찾아도 오류 없이 빈 설정으로 갑니다(Step 2·7). 셋째, 화면을 띄우는 것만으로는 서버도 로그 폴더도 생기지 않고 **첫 명령**이 둘 다 만듭니다(Step 4·5). 넷째, 서버를 못 띄움·모델 오류·설정을 못 찾음은 화면에 아무것도 내지 않거나 도구 없는 답으로 끝나고, 화면에 오류 문장이 나오는 길은 키가 없을 때와 예외가 난 때뿐입니다(Step 7).
 
 이 문서는 `npx`를 한 번도 실행하지 않았고 OpenAI와 Playwright가 여는 어떤 사이트에도 요청을 보내지 않았습니다. 앱을 돌린 셸은 PATH에서 Node와 Docker 폴더를 뺐고(`which npx docker`가 아무것도 찾지 못함), `npx` 자리에는 파이썬으로 쓴 가짜 MCP 서버를, OpenAI 자리에는 localhost 가짜 서버를 두었습니다. 그래서 아래의 답과 "페이지 내용"은 모두 내가 쓴 대본이고, 가짜 서버의 도구 셋(`browser_navigate`·`browser_snapshot`·`browser_click`)은 내가 고른 것입니다. 이름과 인자는 Playwright MCP 공개 README(https://github.com/microsoft/playwright-mcp, 2026-10-14 확인)에 있는 것을 따랐지만 응답 모양과 진짜 서버가 내놓는 도구 전체는 확인하지 못했습니다. 화면은 브라우저 없이 Streamlit의 `AppTest`로 돌렸습니다. 아래는 완성된 아키텍처입니다.
 
@@ -24,7 +24,20 @@ Day 125가 같은 모양을 먼저 보였습니다. 그 날의 ADK 앱은 `MCPTo
 | 터미널 둘 | 하나는 가짜 OpenAI 서버, 하나는 앱 | 별도 설치 없음 |
 | 빈 포트 하나 | 가짜 OpenAI 서버용. 이 문서는 58231을 쓴다. 아무 높은 번호면 되고 겹치면 바꾼다 | 별도 설치 없음 |
 
-앱의 모델 `gpt-4o-mini`(`mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml:20`)를 2026-10-14에 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations)에서 찾았습니다. 별칭 `gpt-4o-mini`는 표에 올라 있지 않고, 스냅샷 `gpt-4o-mini-2024-07-18`이 2027-01-14 종료(대체 `gpt-6-luna`)로 올라 있습니다. 별칭이 그 스냅샷을 가리키는지는 확인하지 못했습니다. 모델 이름은 설정 파일 한 줄이라 바꾸기 쉽습니다. 설정 파일의 주석은 `http://localhost:11434/v1`의 Ollama를 권하지만 이 문서는 11434에 묻지 않았습니다. 같은 `base_url` 칸에 가짜 서버 주소를 넣어 같은 경로를 확인합니다.
+이 문서의 확인 명령은 한글을 출력하고 그 출력을 파이프(`| grep`)나 파일(`> run.out`)로 받습니다. 한국어 Windows에서는 이때 Python의 기본 인코딩이 `cp949`라, `| grep 모델`은 아무 줄도 찾지 못하고 `grep "^##" run.out`은 `Binary file run.out matches` 한 줄만 냅니다(직접 확인). 셸을 먼저 이렇게 맞춰 두세요. 이 문서의 명령은 모두 이 설정을 건 상태에서 돌려 출력을 얻었습니다. 가짜 MCP 서버가 받는 환경은 열두 이름뿐이라(Step 5) 이 변수는 서버로 넘어가지 않습니다. PowerShell 줄은 실행해 보지 못했습니다.
+
+```bash
+export PYTHONIOENCODING=utf-8
+```
+
+```powershell
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+```
+
+또 하나, 이 시리즈를 따라온 셸에는 진짜 `OPENAI_API_KEY`가 걸려 있을 수 있습니다. `mcp-agent`는 이 환경변수를 `openai.api_key`로 읽고, 설정 파일에 `base_url`이 없으면 `OPENAI_BASE_URL`과 기본 주소 `https://api.openai.com/v1`로 갑니다. 이 문서는 키가 새어 나가지 않도록 `show_settings.py`가 키의 앞 일곱 글자만 찍게 했고, 설정 파일을 일부러 못 찾게 하는 Step 7의 두 경우는 `env -u OPENAI_API_KEY -u OPENAI_BASE_URL`로 두 변수를 지우고 돌립니다. 나머지 단계는 설정 복사본의 `base_url`이 가짜 서버를 가리키고 비밀 파일의 가짜 키가 셸의 키를 이깁니다(직접 확인).
+
+앱의 모델 `gpt-4o-mini`(`mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml:20`)를 2026-10-14에 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations)에서 찾았습니다. 별칭 `gpt-4o-mini`는 표에 올라 있지 않고, 스냅샷 `gpt-4o-mini-2024-07-18`이 2027-01-14 종료(대체 `gpt-6-luna`)로 올라 있습니다. 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o-mini, 같은 날 확인)는 기본 스냅샷을 `gpt-4o-mini-2024-07-18`로 적고, 폐기 문서는 별칭이 종료 뒤 어떻게 되는지 말하지 않습니다. 모델 이름은 설정 파일 한 줄이라 바꾸기 쉽습니다. 설정 파일의 주석은 `http://localhost:11434/v1`의 Ollama를 권하지만 이 문서는 11434에 묻지 않았습니다. 같은 `base_url` 칸에 가짜 서버 주소를 넣어 같은 경로를 확인합니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -41,11 +54,11 @@ Day 125가 같은 모양을 먼저 보였습니다. 그 날의 ADK 앱은 `MCPTo
 | Playwright MCP 서버 | `npx`로 뜨는 자식 프로세스. 브라우저를 조작하는 도구를 내놓는다 | 코드 없음 (외부 npm 패키지, 선언은 `mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml:11-15`) |
 | OpenAI API | 모델 `gpt-4o-mini`의 채팅 호출 | 코드 없음 (설정 `mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml:18-20`) |
 
-완성 그림은 프로세스 하나를 묶음으로 그리고 바깥으로 나가는 화살표만 달았습니다. 묶음 안에서 누가 누구를 부르는지는 두 그림이 화살표로 그렸습니다. 먼저 `main.py`가 라이브러리 객체 셋을 어떻게 부르는지입니다.
+완성 그림은 프로세스 하나를 묶음으로 그리고 바깥으로 나가는 화살표만 달았습니다. 그 화살표는 묶음 전체에 닿는 것이고, 칸 아래에서 나가는 것처럼 보이는 위치는 의미가 없습니다. 어느 객체가 어디에 닿는지는 아래 두 그림이 말합니다. 묶음 안에서 누가 누구를 부르는지는 두 그림이 화살표로 그렸습니다. 먼저 `main.py`의 `setup_agent`가 라이브러리 객체 셋을 어떻게 부르는지입니다. `attach_llm`은 `Agent`의 메서드이므로 `Agent` 쪽 화살표에 있습니다.
 
 ![main.py가 부르는 것](diagrams/extra-structure.svg)
 
-그리고 라이브러리 객체가 파일과 바깥 서비스에 닿는 곳입니다. 설정·비밀·로그는 `MCPApp`이, 서버는 `Agent`가, 모델은 `OpenAIAugmentedLLM`이 맡습니다.
+그리고 화면 모듈이 `MCPApp`을 만드는 곳(`main.py:43`)과 라이브러리 객체가 파일과 바깥 서비스에 닿는 곳입니다. 설정·비밀·로그는 `MCPApp`이, 서버는 `Agent`가, 모델은 `OpenAIAugmentedLLM`이 맡고, `OpenAIAugmentedLLM`은 `Agent`가 만들어 줍니다.
 
 ![라이브러리 객체와 바깥](diagrams/extra-structure-ext.svg)
 
@@ -119,11 +132,11 @@ uv run --no-project python -c "from mcp_agent.app import MCPApp"
 직접 확인한 결과입니다. 2026-10-14에 103개가 설치됐습니다(`uv`가 `Installed 103 packages`라고 보고).
 
 ```text
- + mcp==2.3.0
- + mcp-agent==0.2.6
- + mcp-types==2.3.0
- + openai==3.31.0
- + streamlit==1.65.0
+mcp                                      2.3.0
+mcp-agent                                0.2.6
+mcp-types                                2.3.0
+openai                                   3.31.0
+streamlit                                1.65.0
 ```
 
 두 번째 명령은 다음 오류로 끝납니다.
@@ -143,6 +156,7 @@ uv run --no-project python -c "from mcp_agent.app import MCPApp; from mcp_agent.
 ```
 
 ```text
+ + httpx-sse==0.4.3
  - mcp==2.3.0
  + mcp==1.30.0
 imports ok
@@ -223,7 +237,8 @@ print("설정 파일:", Settings.find_config())
 print("비밀 파일:", Settings.find_secrets())
 s = get_settings()
 print("서버:", {k: (v.command, v.args) for k, v in s.mcp.servers.items()})
-print("모델:", s.openai.default_model, "| base_url:", s.openai.base_url, "| api_key:", s.openai.api_key)
+key = s.openai.api_key
+print("모델:", s.openai.default_model, "| base_url:", s.openai.base_url, "| api_key:", key and key[:7] + "…")
 print("로거:", s.logger.transports, s.logger.level, getattr(s.logger.path_settings, "path_pattern", None))
 print("otel:", s.otel.enabled, "| usage_telemetry:", s.usage_telemetry.enabled)
 ```
@@ -242,7 +257,7 @@ cd ../elsewhere
 cd ../browser-work
 ```
 
-경로는 `<작업 폴더>`로 줄였습니다. 첫째는 설정 파일을 현재 폴더에서, 둘째는 위쪽 폴더에서 찾고, 둘 다 같은 출력이며 키는 `None`입니다.
+경로는 `<작업 폴더>`로 줄였습니다. 첫째는 설정 파일을 현재 폴더에서, 둘째는 위쪽 폴더에서 찾고, 둘 다 같은 출력이며 키는 `None`입니다(셸에 `OPENAI_API_KEY`가 걸려 있으면 `None` 자리에 그 키의 앞 일곱 글자와 `…`가 나옵니다).
 
 ```text
 설정 파일: <작업 폴더>/mcp_agent.config.yaml
@@ -275,10 +290,10 @@ OPENAI_BASE_URL=http://127.0.0.1:9/v1 uv run --no-project python show_settings.p
 (PowerShell은 `@("openai:", "  api_key: sk-fake-day129") | Set-Content mcp_agent.secrets.yaml`, 환경변수는 `$env:OPENAI_BASE_URL="http://127.0.0.1:9/v1"`입니다.)
 
 ```text
-모델: gpt-4o-mini | base_url: http://127.0.0.1:9/v1 | api_key: sk-fake-day129
+모델: gpt-4o-mini | base_url: http://127.0.0.1:9/v1 | api_key: sk-fake…
 ```
 
-설정 파일에 `base_url`이 없으면 환경변수가 그 자리를 채웁니다(포트 9는 아무도 듣지 않는 주소이고 이 줄은 설정만 읽을 뿐 요청하지 않습니다). 비밀 파일의 키도 `api_key`로 들어왔습니다.
+설정 파일에 `base_url`이 없으면 환경변수가 그 자리를 채웁니다(포트 9는 아무도 듣지 않는 주소이고 이 줄은 설정만 읽을 뿐 요청하지 않습니다). 비밀 파일의 키도 `api_key`로 들어왔고(앞 일곱 글자만 찍습니다), 셸에 다른 키가 있어도 비밀 파일의 키가 이겼습니다(직접 확인).
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -407,8 +422,9 @@ class Server(ThreadingHTTPServer):
     allow_reuse_address = False
 
 
+server = Server(("127.0.0.1", PORT), Handler)  # 포트를 못 잡으면 여기서 OSError로 끝난다
 print("listening", PORT, flush=True)
-Server(("127.0.0.1", PORT), Handler).serve_forever()
+server.serve_forever()
 ```
 
 셋째는 설정 복사본을 만드는 스크립트입니다. 원본 설정의 `npx` 두 줄을 가짜 서버로, `default_model` 아래에 `base_url`을 더합니다. 다시 돌려도 원본에서 새로 만듭니다.
@@ -442,24 +458,28 @@ uv run --no-project python fake_openai.py 58231
 
 ```bash
 uv run --no-project python prepare_lab.py <저장소>/mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml 58231
+diff --strip-trailing-cr <저장소>/mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml mcp_agent.config.yaml
 OPENAI_BASE_URL=http://127.0.0.1:9/v1 uv run --no-project python show_settings.py | grep -E "서버|모델"
 ```
 
-**확인.** 첫 터미널에는 `listening 58231`이 찍혀 있어야 합니다. 설정 복사본에서 바뀐 곳은 세 줄입니다(경로는 줄였습니다).
+**확인.** 첫 터미널에는 `listening 58231`이 찍혀 있어야 하고 그 아래에 `OSError`가 없어야 합니다(`fake_openai.py`는 포트를 잡은 뒤에 이 줄을 찍습니다. 같은 포트를 다른 프로그램이 쥐고 있으면 `listening` 없이 `OSError: [WinError 10048]`로 끝납니다). 설정 복사본에서 바뀐 곳은 세 줄입니다. 경로는 줄였고, `--strip-trailing-cr`는 Windows에서 `prepare_lab.py`가 줄 끝을 CRLF로 써서 모든 줄이 달라 보이는 것을 막습니다.
 
 ```text
-<    command: "npx"
-<    args: ["@playwright/mcp@latest"]
->    command: '<작업 폴더>/.venv/Scripts/python.exe'
->    args: ['<작업 폴더>/fake_playwright.py', 'mcp.log']
->    base_url: "http://127.0.0.1:58231/v1"
+14,15c14,15
+<       command: "npx"
+<       args: ["@playwright/mcp@latest"]
+---
+>       command: '<작업 폴더>/.venv/Scripts/python.exe'
+>       args: ['<작업 폴더>/fake_playwright.py', 'mcp.log']
+20a21
+>   base_url: "http://127.0.0.1:58231/v1"
 ```
 
 Step 2와 달리 이번에는 `OPENAI_BASE_URL`을 줘도 설정 파일의 값이 이깁니다. 서버 줄에 가짜 서버가 보이는 것도 같은 출력에서 확인합니다.
 
 ```text
 서버: {'playwright': ('<작업 폴더>/.venv/Scripts/python.exe', ['<작업 폴더>/fake_playwright.py', 'mcp.log'])}
-모델: gpt-4o-mini | base_url: http://127.0.0.1:58231/v1 | api_key: sk-fake-day129
+모델: gpt-4o-mini | base_url: http://127.0.0.1:58231/v1 | api_key: sk-fake…
 ```
 
 설정 파일의 값이 환경변수를 이기므로, 독자가 `OPENAI_BASE_URL`로 주소를 바꾸려면 설정 파일에 `base_url`이 없어야 합니다. 앱이 실제로 요청을 보낼 주소는 Step 6에서 `openai.log`에 요청이 도착하는 것으로 다시 확인합니다.
@@ -610,17 +630,19 @@ grep -o '"namespace":"[^"]*","message":"[^"]*"' logs/*.jsonl | sed 's/.*"namespa
 ## 첫 화면 예외: [] | 도움말 박스: True
 ## 화면만 그린 뒤 | 파일: []
 ## 'Go to github.com/Shubhamsaboo/awesome-llm-apps' -> 화면 응답: '가짜 모델의 답: 이번 명령에서 도구 결과 2개를 읽었습니다.' | 도움말 박스: True
-## 이 명령 뒤 | 파일: ['logs/mcp-agent-20261014_223339.jsonl', 'mcp.log']
-22:33:40.582993 [MCP pid=17112] 시작 argv=['mcp.log'] 환경 키=['APPDATA', 'HOMEDRIVE', 'HOMEPATH', 'LOCALAPPDATA', 'PATH', 'PATHEXT', 'PROCESSOR_ARCHITECTURE', 'SYSTEMDRIVE', 'SYSTEMROOT', 'TEMP', 'USERNAME', 'USERPROFILE']
+## 이 명령 뒤 | 파일: ['logs/mcp-agent-20261014_233105.jsonl', 'mcp.log']
+23:31:06.637047 [MCP pid=19960] 시작 argv=['mcp.log'] 환경 키=['APPDATA', 'HOMEDRIVE', 'HOMEPATH', 'LOCALAPPDATA', 'PATH', 'PATHEXT', 'PROCESSOR_ARCHITECTURE', 'SYSTEMDRIVE', 'SYSTEMROOT', 'TEMP', 'USERNAME', 'USERPROFILE']
 10:agents.agent | Initializing agent browser...
 13:mcp.mcp_connection_manager | playwright: Up and running with a persistent connection!
 27:streamlit_mcp_agent | Tools available:
 29:workflows.llm.augmented_llm_openai.browser | Completion request arguments:
 39:workflows.llm.augmented_llm_openai.browser | Completion request arguments:
-48:workflows.llm.augmented_llm_openai.browser | Completion request arguments:
+47:workflows.llm.augmented_llm_openai.browser | Completion request arguments:
 ```
 
-세 가지가 보입니다. 첫째, 파일 두 개가 이 명령 뒤에야 생깁니다. Step 4의 빈 목록과 비교됩니다. 로그 파일 이름은 `logs/mcp-agent-<시각>.jsonl`이라 **실행한 폴더 아래**에 생깁니다. 둘째, 로그의 순서가 서버 연결(13번째 줄) → 도구 목록(27) → 첫 모델 요청(29)이고, 요청은 한 명령에 세 번(29·39·48) 나갑니다. 서버는 첫 모델 요청보다 앞에 뜹니다. 진짜 `npx`라면 내려받기와 브라우저 시작이 여기서 첫 명령의 시간이 되지만 재지 못했습니다. 셋째, 서버가 받은 환경은 열두 개의 이름뿐입니다. 셸에 둔 `OPENAI_API_KEY`와 `DAY129_TOKEN`은 서버에 넘어가지 않았고(`mcp.log`에 두 이름이 없음, 직접 확인), `mcp` 1.30.0의 `stdio_client`가 쓰는 기본 환경은 안전하다고 본 이름 목록(`mcp/client/stdio/__init__.py`의 `DEFAULT_INHERITED_ENV_VARS`, 소스로 확인)만 상속합니다. 이 목록에 `PATH`가 있어서 `npx`를 찾을 수 있습니다. 설정 파일의 서버 칸에 `env:`를 쓰면 그 값이 더해집니다(`mcp_connection_manager.py`의 `{**get_default_environment(), **(config.env or {})}`, 소스로 확인).
+줄 번호는 실행마다 한두 줄 달라집니다(같은 명령을 다시 돌리면 `9·12·26·28·38·47`로도 나옵니다). 순서가 요점입니다.
+
+세 가지가 보입니다. 첫째, 파일 두 개가 이 명령 뒤에야 생깁니다. Step 4의 빈 목록과 비교됩니다. 로그 파일 이름은 `logs/mcp-agent-<시각>.jsonl`이라 **실행한 폴더 아래**에 생깁니다. 둘째, 로그의 순서가 서버 연결(13번째 줄) → 도구 목록(27) → 첫 모델 요청(29)이고, 요청은 한 명령에 세 번(29·39·47) 나갑니다. 서버는 첫 모델 요청보다 앞에 뜹니다. 진짜 `npx`라면 내려받기와 브라우저 시작이 여기서 첫 명령의 시간이 되지만 재지 못했습니다. 셋째, 서버가 받은 환경은 열두 개의 이름뿐입니다. 셸에 둔 `OPENAI_API_KEY`와 `DAY129_TOKEN`은 서버에 넘어가지 않았고(`mcp.log`에 두 이름이 없음, 직접 확인), `mcp` 1.30.0의 `stdio_client`가 쓰는 기본 환경은 안전하다고 본 이름 목록(`mcp/client/stdio/__init__.py`의 `DEFAULT_INHERITED_ENV_VARS`, 소스로 확인)만 상속합니다. 이 목록에 `PATH`가 있어서 `npx`를 찾을 수 있습니다. 설정 파일의 서버 칸에 `env:`를 쓰면 그 값이 더해집니다(`mcp_connection_manager.py`의 `{**get_default_environment(), **(config.env or {})}`, 소스로 확인).
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -712,7 +734,7 @@ grep -c "browser_snapshot" mcp.log
 10
 ```
 
-모델 요청이 정확히 10번, 도구 호출도 10번이고 화면 응답은 빈 문자열입니다. 마지막 응답이 도구 호출이라 글이 없기 때문입니다. 한도에 닿았다고 알리는 줄은 화면에도 터미널에도 없었고, 실행하는 동안 경고나 오류 줄도 하나 없었습니다.
+모델 요청이 정확히 10번, 도구 호출도 10번이고 화면 응답은 빈 문자열입니다. 마지막 응답이 도구 호출이라 글이 없기 때문입니다. 반복 한도에 닿았다고 알리는 줄은 화면에도 터미널에도 없었습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -720,20 +742,22 @@ grep -c "browser_snapshot" mcp.log
 
 **목적.** 독자가 가장 먼저 만나는 실패 넷이 화면에 어떻게 나타나는지 봅니다.
 
-**할 일.** 코드의 길은 이렇습니다. 화면에 오류 문장이 나오는 길은 `run_mcp_agent`의 키 확인 하나(95-102행)와 `except`(117-118행)뿐입니다. 서버 연결 실패와 모델 오류는 `mcp-agent` 안에서 잡혀 로그로만 가고, `generate_str`는 오류가 아니라 빈 글을 돌려줍니다.
+**할 일.** 코드의 길은 이렇습니다. 화면에 오류 문장이 나오는 길은 셋입니다. `run_mcp_agent`의 키 확인(95-102행), `setup_agent`의 `except`(85-86행, `Error during initialization: ...`을 돌려주고 106-108행이 그대로 화면에 올립니다), `run_mcp_agent`의 `except`(117-118행)입니다. 아래에서 만드는 서버 연결 실패와 모델 오류는 `mcp-agent` 안에서 잡혀 로그로만 가고, `generate_str`는 예외가 아니라 빈 글을 돌려주므로 이 길에 닿지 않습니다.
 
 ![실패가 가는 길](diagrams/extra-silent.svg)
 
-넷을 차례로 만들어 봅니다. 가짜 서버(58231)는 계속 떠 있어야 합니다. 첫째는 키가 없는 경우입니다. 비밀 파일이 없는 폴더에서 `OPENAI_API_KEY`도 없이 돌립니다.
+넷을 차례로 만들어 봅니다. 가짜 서버(58231)는 계속 떠 있어야 합니다. 첫째는 키가 없는 경우입니다. 비밀 파일이 없는 폴더에서 `OPENAI_API_KEY`도 없이 돌립니다. 셸에 키가 걸려 있어도 없는 상태가 되도록 두 환경변수를 지우고 돌립니다.
 
 ```bash
 cd ..
 mkdir case-nokey
 cd case-nokey
 cp ../browser-work/main.py ../browser-work/check_app.py ../browser-work/mcp_agent.config.yaml ../browser-work/fake_playwright.py .
-../browser-work/.venv/Scripts/python check_app.py "hello" > run.out 2>&1
+env -u OPENAI_API_KEY -u OPENAI_BASE_URL ../browser-work/.venv/Scripts/python check_app.py "hello" > run.out 2>&1
 grep "^##" run.out
 ```
+
+(PowerShell은 `Remove-Item Env:OPENAI_API_KEY, Env:OPENAI_BASE_URL -ErrorAction SilentlyContinue`로 두 변수를 지운 셸에서 `../browser-work/.venv/Scripts/python check_app.py "hello"`를 돌립니다. 이 셸의 변수는 이후 단계에도 지워진 채로 남습니다.)
 
 ```text
 ## 첫 화면 예외: [] | 도움말 박스: True
@@ -744,14 +768,14 @@ grep "^##" run.out
 
 이 경우만 화면에 문장이 나옵니다. 서버도 로그 폴더도 만들어지지 않았고(`파일: []`) 가짜 OpenAI 서버에도 요청이 가지 않았습니다. 앱이 `setup_agent` 앞에서 돌려보낸 것입니다.
 
-둘째는 설정을 못 찾는 경우입니다. `check_app.py`는 `browser-work/main.py`를 쓰되 실행 폴더만 설정이 없는 곳으로 합니다. 키 확인은 `main.py` 폴더의 비밀 파일을 보므로 통과합니다.
+둘째는 설정을 못 찾는 경우입니다. **`env -u`를 빼면 안 됩니다.** 셸에 진짜 `OPENAI_API_KEY`가 있으면 서버 없이(`not found in registry`) 모델 호출이 그대로 나가고, `base_url`이 없으므로 진짜 `https://api.openai.com/v1`로 갑니다(이 문서의 확인에서는 차단한 프록시 뒤에서 `Connection error`로 끝났고, `env -u`를 주면 요청이 0건이었습니다. 직접 확인). `check_app.py`는 `browser-work/main.py`를 쓰되 실행 폴더만 설정이 없는 곳으로 합니다. 키 확인은 `main.py` 폴더의 비밀 파일을 보므로 통과합니다.
 
 ```bash
 cd ..
 mkdir -p elsewhere
 cd elsewhere
 : > ../browser-work/openai.log
-../browser-work/.venv/Scripts/python ../browser-work/check_app.py "hello" > run.out 2>&1
+env -u OPENAI_API_KEY -u OPENAI_BASE_URL ../browser-work/.venv/Scripts/python ../browser-work/check_app.py "hello" > run.out 2>&1
 grep "^##" run.out
 grep -n -o "Server 'playwright' not found in registry\|Missing credentials" run.out
 wc -l < ../browser-work/openai.log
@@ -765,7 +789,7 @@ wc -l < ../browser-work/openai.log
 0
 ```
 
-화면 응답은 빈 문자열이고 오류 문장이 없습니다. 터미널 오류는 두 줄뿐입니다. 서버 이름을 설정에서 못 찾았다는 줄(뒤에 `Attempting to continue`가 붙습니다)과 `Missing credentials`(뒤 문장은 `Please pass an api_key, ...`)입니다. 설정을 못 찾았으니 비밀 파일은 찾아보지도 않았고(Step 2), `openai` 칸이 비어 `OPENAI_API_KEY` 환경변수도 없어서 키가 없습니다. 가짜 서버에는 요청이 하나도 오지 않았고(`0`), 로거 설정도 없어 `logs/`가 생기지 않았습니다. 같은 폴더에서 `streamlit run`을 해도 이렇게 됩니다. 앱 폴더로 가서 실행해야 합니다.
+화면 응답은 빈 문자열이고 오류 문장이 없습니다. 터미널 오류는 두 줄뿐입니다. 서버 이름을 설정에서 못 찾았다는 줄(뒤에 `Attempting to continue`가 붙습니다)과 `Missing credentials`(뒤 문장은 `Please pass an api_key, ...`)입니다. 설정을 못 찾았으니 비밀 파일은 찾아보지도 않았고(Step 2), `openai` 칸이 비어 `OPENAI_API_KEY` 환경변수도 없어서 키가 없습니다. 가짜 서버에는 요청이 하나도 오지 않았고(`0`), 로거 설정도 없어 `logs/`가 생기지 않았습니다. 같은 폴더에서 `streamlit run`을 해도 이렇게 됩니다. 앱 폴더로 가서 실행해야 합니다. 셸에 `OPENAI_API_KEY`가 있으면 이 경우는 위와 달리 서버 없이 실제 OpenAI로 요청이 나가 도구 없는 답이 옵니다.
 
 셋째는 비밀 파일 예시를 고치지 않고 복사한 경우입니다. 가짜 서버는 `YOUR_OPENAI_API_KEY`가 오면 401을 돌려줍니다.
 
@@ -790,7 +814,7 @@ grep -n -o "^##.*\|Error: Error code: 401" run.out | cut -c1-170
 651:## 이 명령 뒤 | 파일: ['logs/mcp-agent-20261014_223423.jsonl', 'mcp.log']
 ```
 
-요청은 `YOUR_OPENAI_API_KEY`를 `Bearer`로 달고 갔고(`browser-work/openai.log`에 `auth='Bearer YOUR_OPENAI_A'`가 찍힘, 직접 확인), 화면은 빈 채입니다. 오류 줄은 터미널에 나오는데 `hello`가 끝난 직후가 아니라 **다음 명령이 돌 때** 나옵니다. 540행과 649행 둘 다 `## 'hello'` 줄(522행) 뒤, `## 'second'` 줄(650행) 앞입니다(두 번 찍히는 까닭은 확인하지 못했습니다). `mcp-agent`의 로거가 이벤트 루프 위에서 줄을 모아 내보내고, 앱은 명령이 끝나면 루프를 세워 두기 때문으로 보입니다(원인은 소스로 읽지 않았고 순서만 직접 확인했습니다). 이 확인은 `AppTest`로 한 것이라 진짜 브라우저로 열었을 때 줄이 찍히는 시각은 확인하지 못했습니다.
+요청은 `YOUR_OPENAI_API_KEY`를 `Bearer`로 달고 갔고(`browser-work/openai.log`에 `auth='Bearer YOUR_OPENAI_A'`가 찍힘, 직접 확인), 화면은 빈 채입니다. 오류 줄은 터미널에 나오는데 `hello`가 끝난 직후가 아니라 **다음 명령이 돌 때** 나옵니다. 540행과 649행 둘 다 `## 'hello'` 줄(522행) 뒤, `## 'second'` 줄(650행) 앞입니다(두 번 찍히는 까닭은 확인하지 못했습니다. 행 번호는 실행마다 조금 달라지고 순서가 요점입니다). `mcp-agent`의 로거가 이벤트 루프 위에서 줄을 모아 내보내고, 앱은 명령이 끝나면 루프를 세워 두기 때문으로 보입니다(원인은 소스로 읽지 않았고 순서만 직접 확인했습니다). 이 확인은 `AppTest`로 한 것이라 진짜 브라우저로 열었을 때 줄이 찍히는 시각은 확인하지 못했습니다.
 
 넷째는 `npx`가 없는 경우입니다. 이 PC에서는 PATH에서 Node를 뺀 셸이라 원본 설정의 `command: "npx"`가 그대로 실패합니다(`which npx`가 찾지 못함). 독자의 PC에서 같은 상태를 만들려면 `command`를 없는 이름으로 바꾸면 됩니다.
 
@@ -896,6 +920,7 @@ ok
 
 ## 실행 체크리스트
 
+- [ ] `PYTHONIOENCODING=utf-8`을 걸었고 `grep`이 한글 줄을 읽는다
 - [ ] `uv pip install -r requirements.txt` 뒤 `mcp`를 `<2`로 고정하고 `imports ok`가 나왔다
 - [ ] `show_settings.py`가 설정 파일을 위쪽 폴더에서 찾고, 설정 없는 폴더에서는 `서버: {}`를 낸다
 - [ ] `fake_openai.py`가 `listening 58231`로 떠 있고 `prepare_lab.py`가 세 줄만 바꿨다
@@ -904,14 +929,16 @@ ok
 - [ ] `openai.log`에서 `max_tokens=10000`, `tools=3`이 보이고 둘째 명령의 `roles`가 첫 명령 것을 포함한다
 - [ ] `LOOP` 명령이 요청 10번과 빈 응답으로 끝난다
 - [ ] 키 없음은 화면에 `Error:`가, 설정 못 찾음·401은 빈 응답이, `npx` 없음은 `tools=0` 답이 나온다
+- [ ] Step 7의 첫째·둘째 명령에 `env -u OPENAI_API_KEY -u OPENAI_BASE_URL`을 붙였다
 - [ ] 가짜 서버를 끄고 `netstat -ano | grep :58231`이 비었다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
+| `grep`이 아무것도 안 내거나 `Binary file run.out matches`만 나온다 | 한국어 Windows에서 Python의 출력 인코딩이 `cp949`라 UTF-8 `grep`이 한글 줄을 못 읽는다(직접 확인) | `export PYTHONIOENCODING=utf-8`을 걸고 다시 돌린다(사전 준비) |
 | `ModuleNotFoundError: No module named 'mcp.server.fastmcp'. This is mcp 2.x ...` | `requirements.txt`가 `mcp`를 고정하지 않아 2.3.0이 깔리고, `mcp-agent` 0.2.6은 1.x의 `FastMCP`를 부른다 | `uv pip install "mcp<2"` |
-| 화면에 아무것도 안 나오고 터미널에 `Server 'playwright' not found in registry`와 `Missing credentials` | 앱을 실행한 폴더에서 위로 `mcp_agent.config.yaml`을 못 찾아 빈 설정으로 돌았다. 키 확인은 `main.py` 폴더를 봐서 통과한다 | 설정 파일이 있는 폴더(위쪽 포함)에서 실행한다. `show_settings.py`로 `설정 파일:` 줄을 본다 |
+| 화면에 아무것도 안 나오고 터미널에 `Server 'playwright' not found in registry`와 `Missing credentials` | 앱을 실행한 폴더에서 위로 `mcp_agent.config.yaml`을 못 찾아 빈 설정으로 돌았다. 키 확인은 `main.py` 폴더를 봐서 통과한다 | 설정 파일이 있는 폴더(위쪽 포함)에서 실행한다. `show_settings.py`로 `설정 파일:` 줄을 본다. 셸에 `OPENAI_API_KEY`가 있으면 이 경우는 서버 없이 실제 OpenAI(`gpt-5-mini-2025-08-07`)로 요청이 나가 도구 없는 답이 온다 |
 | 응답은 오는데 브라우저를 안 쓰고, 터미널에 `[WinError 2]`와 `Attempting to continue` | MCP 서버 명령(`npx`)을 PATH에서 못 찾아 서버 없이 모델에게만 물었다 | Node.js를 설치하고 PATH에 `npx`가 있는지 본다 |
 | 화면 응답이 비어 있고 터미널에 `Error: Error code: 401` (다음 명령 때 나올 수 있다) | 비밀 파일이 예제의 `YOUR_OPENAI_API_KEY` 그대로이거나 키가 틀렸다 | `mcp_agent.secrets.yaml`의 `openai.api_key`를 진짜 키로 고친다 |
 | `Error: no LLM credentials found. Either set OPENAI_API_KEY ...` | 환경변수도 `main.py` 폴더의 비밀 파일도 없다. 이것만 화면에 나온다 | 키를 환경변수로 주거나 `main.py` 폴더에 비밀 파일을 만든다 |

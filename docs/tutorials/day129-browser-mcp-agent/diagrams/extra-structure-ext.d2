@@ -1,6 +1,7 @@
 ...@../../_tools/theme
 direction: down
 
+ui: "Streamlit 화면 (main.py)" { class: ours }
 mcpapp: "MCPApp" { class: ours }
 llm: "OpenAIAugmentedLLM" { class: ours }
 agent: "Agent browser" { class: ours }
@@ -10,6 +11,7 @@ logs: "logs/*.jsonl" { class: file }
 mcp: "Playwright MCP 서버\n(npx, 자식 프로세스)" { class: ext }
 openai: "OpenAI (gpt-4o-mini)" { class: ext }
 
+ui -> mcpapp: "MCPApp(name=...)"
 mcpapp -> cfg: "설정 읽기"
 mcpapp -> sec: "비밀 읽기"
 mcpapp -> logs: "로그 줄 쓰기"
@@ -19,3 +21,4 @@ agent -> mcp: "서버 실행 ·\ntools/call"
 mcp -> agent: "도구 목록 ·\n결과"
 llm -> openai: "messages · tools"
 openai -> llm: "답 · 도구 호출"
+agent -> llm: "llm_factory로 만듦"

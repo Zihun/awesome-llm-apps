@@ -1,15 +1,17 @@
 ...@../../_tools/theme
 direction: down
 
-gate: "키 확인\n(run_mcp_agent)" { class: ours }
-aggr: "서버 연결\n(Agent.initialize)" { class: ours }
-call: "모델 호출\n(generate_str)" { class: ours }
-screen: "화면의 Response 자리" { class: ours }
-logs: "터미널 · logs/*.jsonl" { class: file }
+gate: "키 확인 (run_mcp_agent)" { class: ours }
+aggr: "서버 연결 (initialize)" { class: ours }
+call: "모델 호출 (generate_str)" { class: ours }
+screen: "화면의 Response" { class: ours }
+logs: "터미널 · logs/" { class: file }
 
-gate -> screen: "키 없음: Error 문장\n(화면에 보임)"
+gate -> screen: "키 없음: Error 문장"
 gate -> aggr: "키 있음"
-aggr -> call: "서버를 못 띄워도 계속\n(도구 없이)"
-aggr -> logs: "연결 실패 오류 줄"
-call -> logs: "모델 오류 줄 (401 등)"
-call -> screen: "빈 글 (아무것도 안 보임)"
+aggr -> call: "실패해도 계속"
+aggr -> logs: "연결 실패 줄"
+aggr -> screen: "초기화 예외"
+call -> logs: "모델 오류 줄"
+call -> screen: "빈 글 (안 보임)"
+call -> screen: "그 밖의 예외"
