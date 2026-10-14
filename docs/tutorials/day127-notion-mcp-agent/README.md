@@ -488,10 +488,10 @@ uv run --no-project python -c "import json; [print(d['path'], 'stream=%s' % d['s
 
 **목적.** 키가 없을 때, 서버가 느릴 때, 앱을 다시 켰을 때, 통계가 나갈 때 무엇이 일어나는지 봅니다.
 
-**할 일.** 먼저 OpenAI 키가 없는 경우입니다. 같은 서버와 주소에서 키만 뺍니다. 키 검사는 첫 모델 호출 때 일어나고, 그 전에 서버는 이미 떠 있습니다.
+**할 일.** 먼저 OpenAI 키가 없는 경우입니다. 같은 서버와 주소에서 키만 뺍니다. `unset`이 아니라 빈 값으로 덮어쓰는 이유는 `load_dotenv()`가 셸에 없는 변수를 상위 폴더 `.env`의 진짜 키로 채울 수 있기 때문입니다(Step 5). 셸에 이미 있는 변수는 덮어쓰지 않으므로 빈 값은 그대로 남습니다(직접 확인: 가짜 키가 든 `.env`를 실습 폴더에 두면 `unset`한 실행은 그 키로 모델에 연결을 시도했고, 빈 값 실행은 `OPENAI_API_KEY not set`으로 끝났습니다). 키 검사는 첫 모델 호출 때 일어나고, 그 전에 서버는 이미 떠 있습니다.
 
 ```bash
-(unset OPENAI_API_KEY; printf '안녕\nexit\n' | uv run --no-project python notion_mcp_agent.py abc123pageid)
+(export OPENAI_API_KEY=""; printf '안녕\nexit\n' | uv run --no-project python notion_mcp_agent.py abc123pageid)
 ```
 
 ```text
