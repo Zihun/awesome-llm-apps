@@ -8,6 +8,30 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-15) — 볼륨 9 끝. Day 133까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 133/167). 다음(Day 134~, 볼륨 10 🎮 Autonomous Game-Playing)은 사용자 지시를 받고.**
+- Task 25(127~133) 전부 complete. 날마다 커밋(작성 → 수정 1·2라운드):
+  - 127: cb88484 → a01b3a4·8619add
+  - 128: 5e04e36 → b563980·bfe1ebc
+  - 129: 6068512 → 3c6f8eb·8c45b53
+  - 130: d2d3379 → 5d310a7·fbfeae8
+  - 131: e54b112 → 892a60d·fddc86a
+  - 132: 05c4d8d → 5844a0c·1c3cb13
+  - 133: 03bddab → 10da287·efede43
+- 리뷰(opus) 127~128 / 129~130 / 131 / 132~133, 재확인(sonnet) 127~128 / 129~130 / 131 / 132 / 133. 2라운드는 모두 Minor 위주였고 내가 diff·check·재현으로 확인했다.
+- 검사: npm test 56/56, Day 001~133 check 0건(68건은 미작성 골격 134~150), 127~133 분당 20.4~21.5.
+- 브리프: task-25-write-brief.md·review-25-brief.md. 다음 묶음은 이 둘을 고쳐 쓰면 된다.
+  - 이 볼륨의 안전 규칙: npx·docker·uvx·npm install 실행 금지, 앱 셸 PATH에서 Node·Docker 빼기, 가짜 MCP 서버, 감시용 가짜 npx로 독자 명령 따라 하기.
+  - 판정(Ruling) 하나: gpt-4o 계열은 "모델 페이지의 기본 스냅숏이 폐기 문서에서 종료 예정이면 ⚠, 별칭 동작은 폐기 문서가 말하지 않는다, 문제 해결에 교체 행". 127~133 모두 이 기준.
+- 이 볼륨의 공통 사실(소스로 확인됨, 다음 볼륨 일반화 금지): 오늘 agno는 3.1.3으로 풀린다(MCPTools에 fastmcp 필요, MultiMCPTools는 3.0.0에서 삭제). mcp는 2.3.0으로 풀려 127~133의 여러 앱이 깨진다(mcp<2).
+- 사용자에게 보고할 사고·근접 사고:
+  - **133 원판 Step 2(리뷰에서 발견, 10da287에서 고침):** 독자 상위 폴더 `.env`가 키를 채우면 원본이 키 검사를 지나 npx 넷(캘린더·Gmail OAuth 포함)을 띄우는 순서였다. 리뷰어가 가짜 .env로 재현했고 하니스가 npx를 막았다. 지금은 원본을 돌리는 명령이 없고, 재확인에서 감시 npx 0건이다.
+  - **129 원판(3c6f8eb에서 고침):** 독자 셸에 진짜 키가 있으면 설정 출력이 키 전체를 찍고, Step 7이 실제 api.openai.com에 요청했다. 가짜 주소 탐침으로만 확인했고 실제 요청은 없었다.
+  - 131 작성자가 탐색 중 원본 npx 명령을 Node를 뺀 PATH·가드 아래서 1회 돌렸다(FileNotFoundError, 바깥 0).
+  - 빈 heredoc·REPL 실수: 작성자 다섯(127·129·130·132·133)과 재검토자 하나. 모두 TaskStop으로 끝냈고 ~/.python_history는 10-09 그대로다.
+  - 132 리뷰어가 하니스 완화를 두 번 시도했고, 하네스 자동 판정이 둘 다 거부했다.
+  - 132·133 재확인이 stream watchdog(600초)으로 멈췄고, SendMessage로 재개했다.
+- 범위 밖·deferred minor: 129 extra-silent 선 교차(ELK 한계, 88가지 배치 시도), 130 overview 화살표가 칸에서 나가 보임((b)안 문장으로 대신).
+
 **멈춤 지점 (2026-10-10) — 볼륨 8 끝. Day 126까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 126/167). 다음(Day 127~, 볼륨 9 ♾️ MCP AI Agents)은 사용자 지시를 받고.**
 - Task 24(112~126) 전부 complete.
   - 작성은 sonnet 15명이 했다.
@@ -1219,3 +1243,58 @@ Task 24: 125 fix round 2 DONE — 4404cd9(Step 4 PowerShell 터미널별 블록�
 Task 24: 126 fix round 2 DONE — c553d4d(머리말 콘솔 창 단서, :366 말투), check 통과·21.5/분 → 내가 확인 후 126 complete.
 126: minor (deferred): overview 응답 화살표가 round_one 아래로 들어감 — 배치를 바꿔도 안 풀림(ELK 한계, 근거는 보고서).
 Task 24: 121 fix round 2 DONE — 81a294b(표 \| 이스케이프, 로컬판 traceback 정정, 검토 흔적 제거, extra-ingest-end 3분할), 내가 확인 → 121 complete. Task 24(112~126) 전부 complete. 마무리 — npm test 56/56, Day 001~126 check 0건, roadmap 126/167, 앱 폴더·홈·프로세스 깨끗. 커밋·푸시·보고 후 멈춤(127~ 시작 안 함).
+Task 25(볼륨 9, 127~133) 시작 2026-10-14 — 사용자 "이어서 진행해". BASE 5cd1d65. 브리프 task-25-write-brief.md·review-25-brief.md(npx·docker·uvx 실행 금지, PATH에서 Node·Docker 빼기, 가짜 MCP 서버, 볼륨 8 사고 규칙). 작성 sonnet 4: 127(aca0f9bd2ff312255)·128(ad5f4ba1b18f3bb82)·129(afeb230bd48005667)·130(ae98a7fbb23a02828). 리뷰 계획(opus): 127~128 / 129~130 / 131 / 132~133.
+Task 25: 130 작성 DONE_WITH_CONCERNS — d2d3379, check 통과, 19.9/분. mcp 2.3.0이면 첫 연결에서 죽음(→ "mcp<2" 1.30.0), sequence 3분할(sequence/extra-loop/extra-answer, 21메시지). npx·docker 0회. 중첩 heredoc 실수로 python3 - 가 백그라운드로 밀려 TaskStop(python_history 그대로).
+Task 25: 131 작성 dispatched (a998451177c541d64). 동시 4: 127·128·129·131. 130 리뷰는 129와 묶어 129 끝난 뒤.
+Task 25: 128 작성 DONE_WITH_CONCERNS — 5e04e36, check 통과, 19.1/분. fastmcp 없으면 docker 호출 전에 끝남, 기본 모델 agno 3.1.3=OpenAIResponses gpt-5.4(2.2.10은 gpt-4o), docker 프로세스에 환경 115키, MCPTools 기본 10초. sequence 5장(PNG는 sequence만 찍음). 가짜 docker shim 사용.
+Task 25: 132 작성 dispatched (af542f63824c1f1be). 동시 4: 127·129·131·132.
+Task 25: 127 작성 DONE_WITH_CONCERNS — cb88484, check 통과, 21.0/분. agno 3.1.3 MCPTools는 fastmcp 필요(agno[mcp,sqlite]), enable_user_memories TypeError, 서버 환경은 허용 목록 13+헤더, 10초 initialize 제한. 독자 명령은 하니스 없는 형태라고 스스로 밝힘 → 리뷰에서 독자 안전 확인. 빈 heredoc·cat 실수 2건(TaskStop, python_history 그대로).
+Task 25: 리뷰 127~128 dispatched (opus, ab20c9129c8685514) → review-127-128.md. 동시 4: 129·131·132 작성 + 리뷰 127~128. 133 작성은 다음 빈자리.
+Task 25: 129 작성 DONE_WITH_CONCERNS — 6068512, check 통과, 21.6/분. mcp 2.3.0이면 mcp-agent 0.2.6 import 실패("mcp<2"), 설정은 실행 폴더에서 위로 찾고 못 찾으면 조용히 빈 설정, 서버는 첫 명령의 initialize()에서 뜸, 오류 대부분 빈 화면. sequence 4장(24메시지). progress.md 변경은 내 것(작성자 질문에 답할 필요 없음).
+Task 25: 133 작성 dispatched (a5566af952ffa83be). 동시 4: 131·132·133 작성 + 리뷰 127~128. 리뷰 129~130은 다음 빈자리.
+Task 25: 132 작성 DONE_WITH_CONCERNS — 05c4d8d, check 통과, 19.7/분. claude-sonnet-4-20250514 2026-06-15 퇴역(⚠ 반영), mcp 2.3.0이면 inputSchema 오류("mcp<2"), 라우팅은 키워드 부분 문자열, 도구 루프 상한 없음, 두 번째 서버 실패 시 첫 서버 누수, server-fetch npm 404. 빈 heredoc 2회(작성자 넷 중 넷이 빈 heredoc/REPL 실수 — 리뷰·수정 dispatch에서 계속 강조).
+Task 25: 132 작성자 백그라운드 작업 남음 → 정리 요청(resume). 리뷰 129~130 dispatched (opus, ac7bff4aefd82b13f) → review-129-130.md. 동시: 131·133 작성 + 리뷰 127~128·129~130 (+132 정리 잠깐).
+Task 25: 132 작성자 정리 끝(하네스: 남은 백그라운드 작업 없음).
+Task 25: 리뷰 127~128 DONE (ab20c9129c8685514) — 127 ❌ C1·I2·M5(Step 6 지연 되돌리기 없음 → timed out, Step 5 둘째 터미널 변수 재지정 없음, sequence 합친 화살표), 128 ❌ C1·I1·M6(docker.cmd shim만이면 Git Bash command -v가 진짜 docker 찍음, Step 7 streamlit 통계 안내 없음). 독자 명령 그대로 따라 해 바깥 0·npx 0. 주장 전부 재현.
+Ruling: gpt-4o 계열 ⚠ 기준 — 모델 페이지의 기본 스냅숏이 폐기 문서에서 종료 예정이면 ⚠, 별칭 동작은 폐기 문서가 말하지 않는다고 적고 문제 해결에 교체 행 — 127·128 표시가 갈렸고 2026-10-05 규칙의 취지(독자가 종료를 미리 알 것)에 맞음 — cost if wrong: 경고 한 줄 과잉. 129~130 리뷰어에게도 전달.
+Task 25: 127 fix round 1 dispatched (resume aca0f9bd2ff312255). 128 fix는 다음 빈자리(동시 4: 131·133 작성, 리뷰 129~130, 127 수정).
+Task 25: 127 fix round 1 DONE — a01b3a4, check 통과, 20.2/분(115분). C1 되돌리기 문단+직접 따라 함, I1 터미널 분리·echo 확인·.env 위험, I2 화살표 둘로, M4 ⚠ gpt-4o-2024-08-06. diff fix-R25-127-round1.diff. 재확인은 128 수정과 묶어서.
+Task 25: 128 fix round 1 dispatched (resume ad5f4ba1b18f3bb82).
+Task 25: 131 작성 DONE_WITH_CONCERNS — e54b112, check 통과, 19.6/분(3,143낱말/160분). agno 3.1.3에 MultiMCPTools·GoogleSearchTools 없음(agno<2.3·mcp<2·googlesearch-python·pycountry), 구글 검색은 googlesearch-python 긁기, 서버 하나 죽으면 모든 도구 빠짐, "Airbnb 썼다" 문구는 낱말 검사, gpt-4o ⚠. sequence 8장. 탐색 때 원본 npx 명령을 Node 뺀 PATH·가드 아래 1회(FileNotFoundError).
+Task 25: 리뷰 131 dispatched (opus, adcf16c6fd33f634b) → review-131.md. 동시 4: 133 작성, 리뷰 129~130·131, 128 수정.
+Task 25: 128 fix round 1 DONE — b563980, check 통과, 20.9/분(95분). C1 shim sh+cmd 함께·which/command -v 확인(lab2에서 따라 함), I1 gatherUsageStats false, M6 ⚠ gpt-4o-2024-08-06. diff fix-R25-128-round1.diff.
+Task 25: 재확인 127~128 dispatched (sonnet, a323af500819f86b5) → rereview-127-128.md. 동시 4: 133 작성, 리뷰 129~130·131, 재확인 127~128.
+Task 25: 재확인 127~128 DONE (a323af500819f86b5) — 둘 다 C·I 모두 반영(127 Step 6 새 스크래치에서 따라 함·openai.jsonl 글자 일치, 128 shim이 PATH 끝 진짜 docker를 이김). 새 Minor 3: 127 Step 6 '키 없음' 실험에 .env 주의 없음, 128 step7 새 칠 GitHub API뿐(그대로 둬도 됨), 128 sh shim이 .venv/bin/python이라 Windows에서 안 돎.
+Task 25: 128 fix round 2 dispatched (resume ad5f4ba1b18f3bb82). 127 round 2는 다음 빈자리.
+Task 25: 128 fix round 2 DONE — bfe1ebc(sh shim이 .venv/Scripts/python.exe로 넘어감, M2는 근거 남기고 그대로). 내가 확인: check 통과·21.1/분, 스크래치에서 같은 sh shim을 Git Bash로 실행해 Windows venv 경로로 넘어가 argv 받는 것 확인(Docker·Node 뺀 PATH) → 128 complete.
+Task 25: 127 fix round 2 dispatched (resume aca0f9bd2ff312255, Minor 1).
+Task 25: 127 fix round 2 DONE — 8619add(Step 6 키 없음 실험을 export OPENAI_API_KEY=""로, load_dotenv override=False 까닭). 내가 확인: diff 2줄, 앱 15·18행(load_dotenv 뒤 getenv) 순서와 맞음, PowerShell 변형 없음, check 통과·20.7/분 → 127 complete.
+Task 25: 133 작성 DONE_WITH_CONCERNS — 03bddab, check 통과, 21.2/분. agno 3.x에서 MultiMCPTools 삭제(3.0.0 릴리스 노트) → agno<3·mcp<2·sqlalchemy[asyncio], 서버 하나 죽으면 2.9.0은 예외 삼키고 "✅ connected", env 전체가 서버 넷에. sequence 3장. 빈 heredoc 1회(TaskStop). 131(agno<2.3)과 처방 다름 → 리뷰에서 맞춤.
+Task 25: 리뷰 132~133 dispatched (opus, a1ebbca9f26318202) → review-132-133.md.
+Task 25: 리뷰 129~130 DONE (ac7bff4aefd82b13f) — 129 ❌ C1·I2·M7(cp949로 Git Bash 확인 명령 무출력, 독자 셸 진짜 키면 show_settings가 키 전체 출력·Step 7 '설정 못 찾음'이 실제 api.openai.com에 gpt-5-mini 요청, extra-structure attach_llm 화살표 틀림), 130 ❌ C0·I2·M5(gpt-4o-mini ⚠ 빠짐 — 기준 적용, overview 묶음 화살표가 엉뚱한 칸에 붙어 보임). 129 gpt-4o-mini ⚠는 원문과 맞음(기본 스냅숏 2024-07-18, 2027-01-14).
+Task 25: 129·130 fix round 1 dispatched (resume afeb230bd48005667·ae98a7fbb23a02828). 동시 4: 리뷰 131·132~133, 수정 129·130.
+Task 25: 129 fix round 1 DONE — 3c6f8eb, check 통과, 21.0/분(145분). cp949 재현·PYTHONIOENCODING, 가짜 키+차단 프록시로 Step 2~7 외부 0건, env -u 붙인 Step 7만 0건, 두 화살표는 높이 상한(1194) 때문에 extra-structure-ext로. diff fix-R25-129-round1.diff. 재확인은 130 수정과 묶어서.
+Task 25: 130 fix round 1 DONE_WITH_CONCERNS — 5d310a7, check 통과, 20.8/분. I-1 ⚠ gpt-4o-mini-2024-07-18, I-2는 리뷰 (b)안(그림 원래대로, README에 화살표가 파일 전체에 닿는다·칸별 대응) — (a)안은 폭 1,275~1,281로 상한 초과. diff fix-R25-130-round1.diff.
+Task 25: 재확인 129~130 dispatched (sonnet, acf9b84b49f939822) → rereview-129-130.md. 동시 3: 리뷰 131·132~133, 재확인 129~130.
+Task 25: 리뷰 131 DONE (adcf16c6fd33f634b) — ❌ C0·I3·M9(gpt-4o ⚠ 서술이 기준과 다름·교체 안내 없음, app.py 묶음 안 구조 화살표 없음, extra-calls에서 airbnb.com·지오코더 배우 병합). 독자 안전 문제없음(카나리 npx.cmd 기록 0). 131 fix round 1 dispatched (resume a998451177c541d64). 동시 3: 리뷰 132~133, 재확인 129~130, 수정 131.
+Task 25: 131 fix round 1 DONE — 892a60d, check 통과, 21.4/분(3,430/160). I1 ⚠ 기준, I2 extra-structure·extra-screen, I3 배우 분리·extra-route, ping·gather 시퀀스. diff fix-R25-131-round1.diff.
+Task 25: 재확인 131 dispatched (sonnet, af13f1af023466140) → rereview-131.md. 동시 3: 리뷰 132~133, 재확인 129~130·131.
+Task 25: 재확인 131 DONE (af13f1af023466140) — I3·M9 모두 반영, 독자 안전 재확인 0건. 새 Minor 3·Nit 2(extra-screen '조건 다섯'→넷, 머리말 낱말 수, lab_patch 접두 일치, extra-calls CRLF, 스냅샷 표기). 131 fix round 2 dispatched (resume a998451177c541d64).
+Task 25: 131 fix round 2 DONE — fddc86a. 내가 확인: extra-calls.d2는 줄끝만 바뀜(--ignore-cr-at-eol 0줄), extra-screen '조건 넷', urlparse 검사 7개 주소로 시험(루프백 둘만 통과), check 통과·21.4/분 → 131 complete.
+Task 25: 재확인 129~130 DONE (acf9b84b49f939822) — 둘 다 C·I 모두 반영(129 가짜 키+감시 프록시 바깥 0, env -u 빼면 api.openai.com 3회 — 경고 사실, 1194px 판단 맞음; 130 (a)안 1275×703 상한 초과 확인). 새 Minor: 129 스냅샷 표기·extra-silent 선 교차, 130 비용 문장 어긋남·select_tools 중복·(b)안 문장이 12 중 10 화살표만. 재검토자도 빈 heredoc 1회.
+Task 25: 129·130 fix round 2 dispatched (resume afeb230bd48005667·ae98a7fbb23a02828). 동시 3: 리뷰 132~133, 수정 129·130.
+Task 25: 130 fix round 2 DONE — fbfeae8. 내가 확인: 비용 $0.002~0.015와 괄호 어림 일치, select_tools 행 하나(35행), 대응 문장의 print 줄 번호 122·131·145-146·174·181-183·207이 소스와 일치, check 통과·21.5/분 → 130 complete.
+Task 25: 129 fix round 2 DONE_WITH_CONCERNS — 8c45b53(스냅숏 표기). 내가 확인: 129 README 스냅샷 0개, check 통과·21.0/분 → 129 complete.
+129: minor (deferred): extra-silent의 '초기화 예외'×'모델 오류 줄' 선 교차 — 순서 조합 88가지·컨테이너·direction right 모두 실패(ELK 층 안 순서 지정 불가, Day 126과 같은 한계). 화살표 삭제·병합 없이 그대로 둠.
+메모: Day 133 README에 '스냅샷' 표기 남음 → 133 수정 라운드에 '스냅숏'으로 함께 넣을 것.
+Task 25: 리뷰 132~133 DONE (a1ebbca9f26318202) — 132 ❌ C1·I4·M7(env_test mcp.log 없음 FileNotFoundError, step 그림 미게재, @@loop 51→59, initialize·tools/list 병합·session_state 없음, PowerShell 형태 없음), 133 ❌ C1·I5·M8(Step 8 cp 경로, **I1 독자 안전: Step 2 원본을 unset으로 돌려 상위 .env가 키를 채우면 npx 기동 — 가짜 .env로 재현, 하니스가 막음**, Step 5 터미널(127 I1과 같음), 131 미참조, 시퀀스 순서 둘, Step 8 확인 없음). 리뷰어가 하니스 완화를 두 번 시도 → 하네스 자동 판정이 거부(정상 작동).
+Task 25: 132·133 fix round 1 dispatched (resume af542f63824c1f1be·a5566af952ffa83be). 133 I1 최우선, 가짜 .env+감시 npx로 0건 확인 요구.
+Task 25: 132 fix round 1 DONE — 5844a0c, check 통과, 20.3/분(100분). 새 스크래치에서 README 블록 추출해 따라 함, @@loop 59, sequence 6장+extra-structure. diff fix-R25-132-round1.diff.
+Task 25: 재확인 132 dispatched (sonnet, af1681aec5b3f2f84) → rereview-132.md (133 수정이 길어 따로). 동시 2: 수정 133, 재확인 132.
+Task 25: 133 fix round 1 DONE — 10da287, check 통과, 20.8/분(150분). I1: Step 2는 grep만, 키 검사는 가짜로 고친 Step 3 끝으로. 가짜 .env+감시 npx 등+spawn·DNS 가드로 Step 1~8 따라 해 0건. diff fix-R25-133-round1.diff.
+Task 25: 재확인 133 dispatched (sonnet, ab0bcde5607dcb462) → rereview-133.md. 동시 2: 재확인 132·133.
+Task 25: 재확인 132·133 둘 다 stream watchdog(600초 무진행)으로 멈춤 → SendMessage로 재개.
+Task 25: 재확인 132 DONE (af1681aec5b3f2f84, 재개 뒤) — C1·I4·M7 모두 반영, 독자 안전 0건. 새 Important 1(README:763-764 tool_results 추리기 명령 bash SyntaxError, PowerShell 없음)·Minor 1(extra-record '질문·답·아이콘' — 질문은 :340에서 따로). 132 fix round 2 dispatched (resume af542f63824c1f1be).
+Task 25: 재확인 133 DONE (ab0bcde5607dcb462, 재개 뒤) — C·I 6 모두 반영, **독자 안전 합격**(상위 .env 가짜 키+감시 npx·docker·uvx+바깥 감시, Step 1~8 그대로 따라 해 0건, 원본을 고치기 전에 돌리는 명령 없음). 새 Minor 3(extra-fail 자기 화살표에 세 서버 접음, 'Day 131 Step 8' 위치, openai.jsonl 줄임 표기). 133 fix round 2 dispatched (resume a5566af952ffa83be).
+Task 25: 133 fix round 2 DONE — efede43. 내가 확인: extra-fail·extra-fail-retry가 서버마다 메시지(github → perplexity·calendar → gmail, mcp_servers 순서)로 3장씩, README 634~646에 모두 실림, Day 131 "더 해보기"(967·1036행) 실재, check 통과·21.1/분 → 133 complete.
+Task 25: 132 fix round 2 DONE — 1c3cb13. 내가 확인: 추리기 명령을 합성 anth.log로 돌려 문서 기대 두 줄과 글자 일치, extra-echo가 agent_forge.py 339~347 순서와 맞고 README에서 sequence 다음(926행), check 통과 → 132 complete. Task 25(127~133) 전부 complete.
