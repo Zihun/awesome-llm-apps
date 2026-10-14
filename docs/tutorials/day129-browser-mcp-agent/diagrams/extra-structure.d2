@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+ui: "Streamlit 화면\n(입력창 · 버튼 · 응답)" { class: ours }
+flow: "setup_agent ·\nrun_mcp_agent" { class: ours }
+mcpapp: "MCPApp\n(mcp-agent)" { class: ours }
+agent: "Agent browser\n(mcp-agent)" { class: ours }
+llm: "OpenAIAugmentedLLM\n(mcp-agent)" { class: ours }
+
+user -> ui: "명령 글 · 클릭"
+ui -> user: "Response"
+ui -> flow: "run_until_complete(명령)"
+flow -> ui: "응답 글 (last_result)"
+flow -> mcpapp: "mcp_app.run()"
+flow -> agent: "initialize() ·\nlist_tools()"
+flow -> llm: "attach_llm ·\ngenerate_str(명령)"

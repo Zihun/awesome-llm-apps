@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+mcpapp: "MCPApp" { class: ours }
+llm: "OpenAIAugmentedLLM" { class: ours }
+agent: "Agent browser" { class: ours }
+cfg: "mcp_agent.config.yaml" { class: file }
+sec: "mcp_agent.secrets.yaml" { class: file }
+logs: "logs/*.jsonl" { class: file }
+mcp: "Playwright MCP 서버\n(npx, 자식 프로세스)" { class: ext }
+openai: "OpenAI (gpt-4o-mini)" { class: ext }
+
+mcpapp -> cfg: "설정 읽기"
+mcpapp -> sec: "비밀 읽기"
+mcpapp -> logs: "로그 줄 쓰기"
+llm -> agent: "list_tools ·\n도구 호출"
+agent -> llm: "도구 목록 ·\n결과"
+agent -> mcp: "서버 실행 ·\ntools/call"
+mcp -> agent: "도구 목록 ·\n결과"
+llm -> openai: "messages · tools"
+openai -> llm: "답 · 도구 호출"

@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "main.py 화면" { class: ours }
+agent: "Agent browser" { class: ours }
+llm: OpenAIAugmentedLLM { class: ours }
+
+ui -> agent: "attach_llm(OpenAIAugmentedLLM)"
+agent -> llm: "llm_factory(agent=self)로 만듦"
+agent -> ui: "llm 객체"
+ui -> agent: "list_tools() (로그용)"
+agent -> ui: "도구 목록"

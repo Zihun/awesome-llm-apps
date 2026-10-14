@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "main.py 화면" { class: ours }
+mcpapp: MCPApp { class: ours }
+agent: "Agent browser" { class: ours }
+mcp: "Playwright MCP 서버" { class: ext }
+
+user -> ui: "명령 + Run Command 클릭"
+ui -> mcpapp: "mcp_app.run() 진입 (첫 명령)"
+mcpapp -> ui: "컨텍스트 (설정 · 로거 준비됨)"
+ui -> agent: "Agent(...).initialize()"
+agent -> mcp: "서버 실행 + tools/list (첫 명령)"
+mcp -> agent: "도구 목록 (browser_*)"

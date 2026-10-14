@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "main.py 화면" { class: ours }
+llm: OpenAIAugmentedLLM { class: ours }
+openai: OpenAI { class: ext }
+
+openai -> llm: "최종 답 (stop)"
+llm -> ui: "응답 글"
+ui -> user: "Response (마크다운)"

@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "main.py 화면" { class: ours }
+agent: "Agent browser" { class: ours }
+llm: OpenAIAugmentedLLM { class: ours }
+web: 웹사이트 { class: ext }
+mcp: "Playwright MCP 서버" { class: ext }
+openai: OpenAI { class: ext }
+
+ui -> llm: "generate_str(명령)"
+llm -> agent: "list_tools()"
+agent -> llm: "도구 목록 (이름 앞에 playwright_)"
+llm -> openai: "chat/completions (messages, tools)"
+openai -> llm: "도구 호출 요청 (tool_calls)"
+llm -> agent: "도구 호출"
+agent -> mcp: "tools/call"
+mcp -> web: "브라우저 조작"
+web -> mcp: "페이지 내용"
+mcp -> agent: "도구 결과"
+agent -> llm: "도구 결과 (messages에 추가)"
+llm -> openai: "chat/completions (도구 결과 포함)"
