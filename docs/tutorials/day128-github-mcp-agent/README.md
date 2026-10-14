@@ -253,7 +253,7 @@ time.sleep(float(env.get("FAKE_START_DELAY", "0")))   # 연습용: 이미지를 
 runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fake_github_mcp.py"), run_name="__main__")
 ```
 
-앱은 `docker`라는 이름을 PATH에서 찾으므로, 같은 폴더에 실행 파일을 만듭니다. 파일은 둘 다 만듭니다. Windows에서 앱(파이썬)은 `shim/docker.cmd`를 집고, Git Bash의 `command -v`는 `.cmd`를 찾지 못해 확장자 없는 `shim/docker`(sh 파일)를 집습니다. macOS·Linux는 `shim/docker`만 쓰이고 `chmod +x shim/docker`가 필요합니다. 둘 다 `github-lab/.venv`의 파이썬으로 위 파일을 돌립니다. Windows에서 두 파일을 함께 둔 것만 직접 돌려 봤고, POSIX 쪽은 실행해 보지 못했습니다.
+앱은 `docker`라는 이름을 PATH에서 찾으므로, 같은 폴더에 실행 파일을 만듭니다. 파일은 둘 다 만듭니다. Windows에서 앱(파이썬)은 `shim/docker.cmd`를 집고, Git Bash의 `command -v`는 `.cmd`를 찾지 못해 확장자 없는 `shim/docker`(sh 파일)를 집습니다. macOS·Linux는 `shim/docker`만 쓰이고 `chmod +x shim/docker`가 필요합니다. 둘 다 `github-lab/.venv`의 파이썬으로 위 파일을 돌립니다. sh 파일은 `.venv/bin/python`(POSIX)이 없으면 `.venv/Scripts/python.exe`(Windows)를 씁니다. Git Bash에서 이 파일을 직접 실행해 `docker_shim.py`로 넘어가 `fake.log`에 `argv`가 찍히는 것을 확인했습니다. Windows에서 두 파일을 함께 둔 것만 직접 돌려 봤고, POSIX 쪽은 실행해 보지 못했습니다.
 
 ```bat
 @"%~dp0..\.venv\Scripts\python.exe" "%~dp0docker_shim.py" %*
@@ -261,7 +261,10 @@ runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fake_gi
 
 ```sh
 #!/bin/sh
-exec "$(dirname "$0")/../.venv/bin/python" "$(dirname "$0")/docker_shim.py" "$@"
+here="$(dirname "$0")"
+py="$here/../.venv/bin/python"
+[ -x "$py" ] || py="$here/../.venv/Scripts/python.exe"
+exec "$py" "$here/docker_shim.py" "$@"
 ```
 
 셋째는 가짜 OpenAI 서버입니다. Responses API 한 곳(`/v1/responses`)에 첫 호출에는 `list_issues`를 부르라고, 도구 결과가 돌아온 둘째 호출에는 글을 답합니다. `fake_openai.py`:
