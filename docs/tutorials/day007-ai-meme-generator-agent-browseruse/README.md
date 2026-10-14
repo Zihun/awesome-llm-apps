@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-지금까지 6일은 모두 agno의 `Agent`였습니다. 오늘은 완전히 다른 프레임워크인 **browser-use**의 `Agent`를 씁니다 — 도구 목록을 선언하는 대신, "imgflip.com에 가서 검색하고, 템플릿을 고르고, 텍스트를 넣고, 생성 버튼을 눌러라"는 자연어 지시문 하나를 주면 에이전트가 실제 브라우저 화면을 스크린샷으로 보며 클릭·타이핑을 스스로 결정합니다. 이 앱은 Claude, GPT-4o, Deepseek, Gemini 네 모델 중 하나를 골라 쓸 수 있고, 이 문서에서 가장 중요하게 다루는 사실은 따로 있습니다: 앱 자체 `README.md`는 `playwright install`로 브라우저를 설치하라고 안내하지만, `pyproject.toml`이 고정한 **browser-use 0.13.8은 Playwright에 전혀 의존하지 않습니다**(직접 확인: `uv.lock`에 `playwright` 패키지가 아예 없음) — 대신 `BrowserSession`이 컴퓨터에 설치된 Chromium 계열 브라우저를 새 프로세스로 띄워 CDP(Chrome DevTools Protocol)로 조종합니다(소스로 확인, 아래 Step 1). 브라우저가 하나도 없을 때만 `uvx playwright install chromium`을 실행해 내려받으려 합니다. 이 문서의 확인 명령들은 이 사실 때문에 한 가지를 의도적으로 하지 않습니다 — 실제 `agent.run()` 호출입니다. 유효하지 않은 키로도 이 호출은 실제로 새 Chrome 창을 띄워 imgflip.com으로 이동시키므로, 이 문서에서는 그 앞뒤 구성 요소(모델 생성, 에이전트 생성, 결과 파싱, 화면 흐름)만 직접 실행해 확인하고 전체 실행은 코드와 `--doctor` 진단 결과로 설명합니다. 아래는 완성된 아키텍처입니다.
+지금까지 6일은 모두 agno의 `Agent`였습니다. 오늘은 완전히 다른 프레임워크인 **browser-use**의 `Agent`를 씁니다 — 도구 목록을 선언하는 대신, "imgflip.com에 가서 검색하고, 템플릿을 고르고, 텍스트를 넣고, 생성 버튼을 눌러라"는 자연어 지시문 하나를 주면 에이전트가 실제 브라우저 화면을 스크린샷으로 보며 클릭·타이핑을 스스로 결정합니다. 이 앱은 Claude, GPT-4o, Deepseek, Gemini 네 모델 중 하나를 골라 쓸 수 있고, 이 문서에서 가장 중요하게 다루는 사실은 따로 있습니다: 앱 자체 `README.md`는 `playwright install`로 브라우저를 설치하라고 안내하지만, `pyproject.toml`이 고정한 **browser-use 0.13.8은 Playwright에 전혀 의존하지 않습니다**(직접 확인: `uv.lock`에 `playwright` 패키지가 아예 없음) — 대신 `BrowserSession`이 컴퓨터에 설치된 Chromium 계열 브라우저를 새 프로세스로 띄워 CDP(Chrome DevTools Protocol)로 조종합니다(소스로 확인, 아래 Step 1). 브라우저가 하나도 없을 때만 `uvx playwright install chromium`을 실행해 내려받으려 합니다. 이 문서의 확인 명령들은 이 사실 때문에 한 가지를 의도적으로 하지 않습니다 — 실제 `agent.run()` 호출입니다. 유효하지 않은 키로도 이 호출은 실제로 새 Chrome 창을 띄워 imgflip.com으로 이동시키므로, 이 문서에서는 그 앞뒤 구성 요소(모델 생성, 에이전트 생성, 결과 파싱, 화면 흐름)만 직접 실행해 확인하고 전체 실행은 코드와 소스로 설명합니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -390,12 +390,12 @@ ST.ERROR: Error: expected string or bytes-like object, got 'NoneType'
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 모델·키·아이디어를 입력하고 "Generate Meme"을 누르면 `asyncio.run(generate_meme(...))`이 호출됩니다. `generate_meme`은 먼저 고른 모델의 클라이언트를 만들고, `task_description`과 함께 browser-use `Agent`를 만들어 `await agent.run()`을 호출합니다. 이 호출이 Day 1~6의 도구 호출 루프와 결정적으로 다른 지점입니다 — 설치된 소스(`browser_use/agent/service.py`, `browser-harness`의 `SKILL.md`)를 읽어 확인한 것이지 실제로 실행해서 본 것은 아니지만, 에이전트는 REST API 하나를 부르는 대신 CDP로 연결된 실제 Chrome에서 imgflip.com의 스크린샷과 DOM 상태를 얻어 LLM에 보내고, LLM은 한 단계당 최대 `max_actions_per_step=5`개까지 묶어 "검색창 클릭", "템플릿 선택", "텍스트 입력" 같은 다음 행동들을 돌려줍니다. 이 왕복이 과제 설명의 8단계를 따라 여러 차례 반복된 뒤(최대 `max_failures=25`회까지 재시도), 에이전트는 마지막으로 이미지 링크가 담긴 텍스트를 답으로 냅니다. `generate_meme`은 이 텍스트에서 정규식으로 URL을 뽑아 Streamlit에 돌려주고, UI는 이를 `st.image()`로 미리보기합니다. 이 스크린샷↔행동 왕복의 내부 동작 방식, 실제 왕복 횟수, 클릭 좌표는 모두 키와 실제 브라우저 세션이 있어야 직접 실행해 확인할 수 있어, 이 문서에서는 실행 대신 위 소스 파일과 `--doctor` 진단 도구로만 흐름을 확인했습니다.
+사용자가 모델·키·아이디어를 입력하고 "Generate Meme"을 누르면 `asyncio.run(generate_meme(...))`이 호출됩니다. `generate_meme`은 먼저 고른 모델의 클라이언트를 만들고, `task_description`과 함께 browser-use `Agent`를 만들어 `await agent.run()`을 호출합니다. 이 호출이 Day 1~6의 도구 호출 루프와 결정적으로 다른 지점입니다 — 설치된 소스(`browser_use/agent/service.py`, 브라우저를 띄우는 `local_browser_watchdog.py`)를 읽어 확인한 것이지 실제로 실행해서 본 것은 아니지만, 에이전트는 REST API 하나를 부르는 대신 CDP로 연결된 실제 Chrome에서 imgflip.com의 스크린샷과 DOM 상태를 얻어 LLM에 보내고, LLM은 한 단계당 최대 `max_actions_per_step=5`개까지 묶어 "검색창 클릭", "템플릿 선택", "텍스트 입력" 같은 다음 행동들을 돌려줍니다. 이 왕복이 과제 설명의 8단계를 따라 여러 차례 반복된 뒤(최대 `max_failures=25`회까지 재시도), 에이전트는 마지막으로 이미지 링크가 담긴 텍스트를 답으로 냅니다. `generate_meme`은 이 텍스트에서 정규식으로 URL을 뽑아 Streamlit에 돌려주고, UI는 이를 `st.image()`로 미리보기합니다. 이 스크린샷↔행동 왕복의 내부 동작 방식, 실제 왕복 횟수, 클릭 좌표는 모두 키와 실제 브라우저 세션이 있어야 직접 실행해 확인할 수 있어, 이 문서에서는 실행 대신 위 소스 파일로만 흐름을 확인했습니다.
 
 ## 실행 체크리스트
 
 - [ ] Claude/Deepseek/OpenAI/Gemini 중 하나의 API 키를 발급받아 두었다
-- [ ] Google Chrome이 설치돼 있는지 확인했다
+- [ ] Chromium 계열 브라우저(Chrome 등)가 하나 이상 설치돼 있는지 확인했다
 - [ ] `uv sync`로 Python 3.11 환경을 만들었다 (`playwright install`은 필요 없음을 확인했다)
 - [ ] `uv run streamlit run ai_meme_generator_agent.py`로 서버를 띄우고 `http://localhost:8501`에서 화면을 확인했다
 - [ ] 사이드바에서 모델을 바꿔가며 키 입력창 라벨이 바뀌는 것을 확인했다
