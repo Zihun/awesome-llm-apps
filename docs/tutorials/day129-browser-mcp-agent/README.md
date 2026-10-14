@@ -1,6 +1,6 @@
 # Day 129 · ♾️ Browser MCP Agent
 
-> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않습니다(`mcp` 2.x가 깔림, Step 1) · 앱의 `gpt-4o-mini`는 스냅샷이 2027-01-14 종료 예정입니다 · 예상 소요 145분(앱은 `main.py` 180줄 하나지만, 저장할 파일 다섯 개를 만들고 폴더·키·`npx` 상태를 바꿔 가며 같은 명령을 여러 번 돌려 보는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 재지 못함(이 문서는 키 없이 가짜 서버로만 돌렸습니다. 실제로는 명령 하나에 모델 요청이 최대 10번이고 도구 결과와 대화가 매번 다시 실립니다. Step 6) · 원본 앱: `mcp_ai_agents/browser_mcp_agent`
+> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않습니다(`mcp` 2.x가 깔림, Step 1) · 앱의 `gpt-4o-mini`는 스냅숏이 2027-01-14 종료 예정입니다 · 예상 소요 145분(앱은 `main.py` 180줄 하나지만, 저장할 파일 다섯 개를 만들고 폴더·키·`npx` 상태를 바꿔 가며 같은 명령을 여러 번 돌려 보는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 재지 못함(이 문서는 키 없이 가짜 서버로만 돌렸습니다. 실제로는 명령 하나에 모델 요청이 최대 10번이고 도구 결과와 대화가 매번 다시 실립니다. Step 6) · 원본 앱: `mcp_ai_agents/browser_mcp_agent`
 
 ## 오늘 만들 것
 
@@ -37,7 +37,7 @@ $env:PYTHONIOENCODING = "utf-8"
 
 또 하나, 이 시리즈를 따라온 셸에는 진짜 `OPENAI_API_KEY`가 걸려 있을 수 있습니다. `mcp-agent`는 이 환경변수를 `openai.api_key`로 읽고, 설정 파일에 `base_url`이 없으면 `OPENAI_BASE_URL`과 기본 주소 `https://api.openai.com/v1`로 갑니다. 이 문서는 키가 새어 나가지 않도록 `show_settings.py`가 키의 앞 일곱 글자만 찍게 했고, 설정 파일을 일부러 못 찾게 하는 Step 7의 두 경우는 `env -u OPENAI_API_KEY -u OPENAI_BASE_URL`로 두 변수를 지우고 돌립니다. 나머지 단계는 설정 복사본의 `base_url`이 가짜 서버를 가리키고 비밀 파일의 가짜 키가 셸의 키를 이깁니다(직접 확인).
 
-앱의 모델 `gpt-4o-mini`(`mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml:20`)를 2026-10-14에 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations)에서 찾았습니다. 별칭 `gpt-4o-mini`는 표에 올라 있지 않고, 스냅샷 `gpt-4o-mini-2024-07-18`이 2027-01-14 종료(대체 `gpt-6-luna`)로 올라 있습니다. 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o-mini, 같은 날 확인)는 기본 스냅샷을 `gpt-4o-mini-2024-07-18`로 적고, 폐기 문서는 별칭이 종료 뒤 어떻게 되는지 말하지 않습니다. 모델 이름은 설정 파일 한 줄이라 바꾸기 쉽습니다. 설정 파일의 주석은 `http://localhost:11434/v1`의 Ollama를 권하지만 이 문서는 11434에 묻지 않았습니다. 같은 `base_url` 칸에 가짜 서버 주소를 넣어 같은 경로를 확인합니다.
+앱의 모델 `gpt-4o-mini`(`mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml:20`)를 2026-10-14에 OpenAI 폐기 표(https://developers.openai.com/api/docs/deprecations)에서 찾았습니다. 별칭 `gpt-4o-mini`는 표에 올라 있지 않고, 스냅숏 `gpt-4o-mini-2024-07-18`이 2027-01-14 종료(대체 `gpt-6-luna`)로 올라 있습니다. 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o-mini, 같은 날 확인)는 기본 스냅숏을 `gpt-4o-mini-2024-07-18`로 적고, 폐기 문서는 별칭이 종료 뒤 어떻게 되는지 말하지 않습니다. 모델 이름은 설정 파일 한 줄이라 바꾸기 쉽습니다. 설정 파일의 주석은 `http://localhost:11434/v1`의 Ollama를 권하지만 이 문서는 11434에 묻지 않았습니다. 같은 `base_url` 칸에 가짜 서버 주소를 넣어 같은 경로를 확인합니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -712,7 +712,7 @@ model=gpt-4o-mini max_tokens=10000 tools=3 도구결과=2 roles=system,user,assi
 
 마지막 `grep -c`는 `1`을 찍습니다. 일곱째부터 아홉째 줄은 셋째 명령의 요청이고 같은 모양으로 `roles`가 더 길어집니다.
 
-여기서 다섯 가지를 읽습니다. 요청이 가짜 서버(58231)에 도착했으니 설정 파일의 `base_url`이 실제로 이겼습니다. 모델은 `gpt-4o-mini`, `max_tokens`는 앱이 준 10000, 도구는 셋입니다. 도구 이름은 서버 이름이 앞에 붙은 `playwright_browser_navigate`·`playwright_browser_snapshot`·`playwright_browser_click`로 나갑니다(`mcp-agent`의 이름 구분자는 `_`, 소스로 확인). 서버는 세 명령에 한 번만 시작했습니다(`grep -c "시작"`이 1). 둘째 명령의 첫 요청은 첫 명령의 메시지 전부에 새 `user`를 붙인 모양이라, 도구 결과(페이지 스냅샷)는 한 번 받으면 이후 모든 요청에 다시 실립니다. 비어 있는 명령도 앱이 거르지 않고 비어 있는 `user` 메시지로 모델까지 갔습니다(셋째 명령의 요청들). 진짜 OpenAI가 빈 메시지를 어떻게 받는지는 확인하지 못했습니다.
+여기서 다섯 가지를 읽습니다. 요청이 가짜 서버(58231)에 도착했으니 설정 파일의 `base_url`이 실제로 이겼습니다. 모델은 `gpt-4o-mini`, `max_tokens`는 앱이 준 10000, 도구는 셋입니다. 도구 이름은 서버 이름이 앞에 붙은 `playwright_browser_navigate`·`playwright_browser_snapshot`·`playwright_browser_click`로 나갑니다(`mcp-agent`의 이름 구분자는 `_`, 소스로 확인). 서버는 세 명령에 한 번만 시작했습니다(`grep -c "시작"`이 1). 둘째 명령의 첫 요청은 첫 명령의 메시지 전부에 새 `user`를 붙인 모양이라, 도구 결과(페이지 스냅숏)는 한 번 받으면 이후 모든 요청에 다시 실립니다. 비어 있는 명령도 앱이 거르지 않고 비어 있는 `user` 메시지로 모델까지 갔습니다(셋째 명령의 요청들). 진짜 OpenAI가 빈 메시지를 어떻게 받는지는 확인하지 못했습니다.
 
 반복 한도는 `LOOP`로 봅니다. 가짜 모델이 도구만 끝없이 부르는 상황입니다.
 
@@ -946,7 +946,7 @@ ok
 | 응답 뒤에도 "How to use this app" 박스가 남는다 | `if 'result' not in locals():`가 `st.rerun()` 뒤에는 항상 참이다(`main.py:157`) | 동작에는 영향이 없다. 조건을 고치거나 박스를 지운다 |
 | 끝낼 때 `Failed to detach context`와 `ValueError: ... was created in a different Context`가 터미널에 나온다 | `main.py:57-58`이 `__aenter__`만 부르고 `__aexit__`를 부르지 않아, 프로세스가 끝날 때 컨텍스트 매니저가 한쪽에서 닫히며 OpenTelemetry 컨텍스트를 풀지 못하는 것으로 보인다(원인은 추정이고 `check_app.py` 끝에서만 직접 봤다) | 동작에는 영향이 없다 |
 | `OSError: [WinError 10048]` | 가짜 OpenAI 서버의 포트를 다른 프로그램이 이미 쓴다. `allow_reuse_address = False`이니 겹쳐 뜨지 않고 오류로 끝나는 것이 정상이다(직접 확인) | 49152~65535에서 다른 포트를 고르고 `prepare_lab.py`에도 같은 번호를 준다 |
-| 2027-01-14 이후 요청이 모델 오류로 끝날 수 있다(이 문서는 종료 뒤를 확인할 수 없다) | `gpt-4o-mini`의 스냅샷 `gpt-4o-mini-2024-07-18`이 OpenAI 폐기 표에서 2027-01-14 종료로 올라 있다(2026-10-14 확인) | 설정 파일 20행의 `default_model`을 표의 대체 모델로 바꾼다. 도구 호출을 잘하는 모델인지 먼저 확인한다 |
+| 2027-01-14 이후 요청이 모델 오류로 끝날 수 있다(이 문서는 종료 뒤를 확인할 수 없다) | `gpt-4o-mini`의 스냅숏 `gpt-4o-mini-2024-07-18`이 OpenAI 폐기 표에서 2027-01-14 종료로 올라 있다(2026-10-14 확인) | 설정 파일 20행의 `default_model`을 표의 대체 모델로 바꾼다. 도구 호출을 잘하는 모델인지 먼저 확인한다 |
 
 ## 더 해보기
 
