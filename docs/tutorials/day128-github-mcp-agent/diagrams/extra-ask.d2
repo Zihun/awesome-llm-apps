@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "github_agent.py\n(화면 · 실행 함수)" { class: ours }
+agent: "Agent" { class: ours }
+openai: "OpenAI 모델\n(기본값)" { class: ext }
+
+ui -> agent: "Agent(tools=[mcp_tools], instructions) 만들기 (90-101행)"
+ui -> agent: "wait_for(agent.arun(질문), 120초) (103행)"
+agent -> openai: "지시문 · 질문 · 도구 선언"
+openai -> agent: "함수 호출 요청 (예: list_issues)"

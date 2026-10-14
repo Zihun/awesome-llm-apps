@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "Agent" { class: ours }
+tools: "MCPTools" { class: ours }
+docker: "docker CLI" { class: ext }
+srv: "GitHub MCP 서버\n(컨테이너)" { class: ext }
+github: "GitHub API" { class: ext }
+
+agent -> tools: "도구 호출 (이름 · 인자)"
+tools -> docker: "tools/call (stdin)"
+docker -> srv: "stdin 전달"
+srv -> github: "API 호출 (토큰)"
+github -> srv: "이슈 · PR 데이터"
+srv -> docker: "도구 결과 (stdout)"
+docker -> tools: "stdout 전달"
+tools -> agent: "결과 글"

@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+env: "환경 변수 (os.environ)" { class: store }
+ui: "화면 위젯\n(사이드바·버튼)" { class: ours }
+run: "실행 함수\n(run_github_agent)" { class: ours }
+tools: "MCP 도구 묶음\n(MCPTools)" { class: ours }
+agent: "에이전트\n(Agent)" { class: ours }
+
+ui -> env: "키 두 개 저장 (21·26행)"
+ui -> run: "asyncio.run(질문) (125행)"
+run -> env: "키 확인 · 환경 복사 (67·83행)"
+run -> tools: "async with (89행)"
+run -> agent: "Agent(...) · arun (90·103행)"
+agent -> tools: "도구 호출"

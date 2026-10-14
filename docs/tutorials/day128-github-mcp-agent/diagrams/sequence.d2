@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "github_agent.py\n(화면 · 실행 함수)" { class: ours }
+tools: "MCPTools" { class: ours }
+docker: "docker CLI" { class: ext }
+srv: "GitHub MCP 서버\n(컨테이너)" { class: ext }
+
+user -> ui: "저장소 · 질문 · 키 입력, Run Query"
+ui -> ui: "키 두 개를 os.environ에 저장 (21·26행)"
+ui -> ui: "빈 칸 검사 · 질문 만들기 (112-123행)"
+ui -> ui: "asyncio.run · 키 확인 (67·70행)"
+ui -> tools: "MCPTools 만들기 (74-89행)"
+tools -> docker: "async with: 프로세스 시작 (환경 통째로)"
+docker -> srv: "컨테이너 시작 (-e 둘만 전달)"
+tools -> docker: "initialize · tools/list (stdin)"
+docker -> srv: "stdin 전달"
+srv -> docker: "도구 목록 (stdout)"
+docker -> tools: "stdout 전달"

@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+tools: "MCP 도구 묶음\n(MCPTools)" { class: ours }
+docker: "docker CLI\n(docker run -i --rm)" { class: ext }
+srv: "GitHub MCP 서버\n(컨테이너)" { class: ext }
+github: "GitHub API" { class: ext }
+
+tools -> docker: "프로세스 시작 (환경 통째로) · stdin 요청"
+docker -> tools: "stdout 응답 (도구 목록 · 결과)"
+docker -> srv: "컨테이너 시작 (-e 둘만) · stdin 전달"
+srv -> docker: "stdout 응답"
+srv -> github: "API 호출 (토큰)"
+github -> srv: "이슈 · PR 데이터"

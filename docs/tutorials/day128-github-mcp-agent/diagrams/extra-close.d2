@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+agent: "Agent" { class: ours }
+ui: "github_agent.py\n(화면 · 실행 함수)" { class: ours }
+tools: "MCPTools" { class: ours }
+docker: "docker CLI" { class: ext }
+
+agent -> ui: "response.content (104행) · 모델이 쓴 최종 글을 반환"
+ui -> tools: "async with 나감 → 연결 닫기"
+tools -> docker: "프로세스 끝냄"
+ui -> user: "결과 표시 (127-128행)"

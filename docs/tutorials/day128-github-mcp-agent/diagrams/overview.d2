@@ -1,0 +1,38 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 (브라우저) { class: person }
+
+app: "앱 코드 (github_agent.py)" {
+  class: group
+  grid-columns: 4
+  grid-gap: 2
+  ui: "화면 위젯\n(사이드바·버튼)" { class: ours }
+  run: "실행 함수\n(run_github_agent)" { class: ours }
+  tools: "MCP 도구 묶음\n(MCPTools)" { class: ours }
+  agent: "에이전트\n(Agent)" { class: ours }
+}
+
+env: "환경 변수 (os.environ)" { class: store }
+
+route: "GitHub로 가는 길" {
+  class: group
+  grid-columns: 1
+  grid-gap: 2
+  docker: "docker CLI (이 PC)" { class: ext }
+  srv: "GitHub MCP 서버 (컨테이너)" { class: ext }
+  github: "GitHub API" { class: ext }
+}
+
+openai: "OpenAI 모델 (기본값)" { class: ext }
+agno: "agno 통계 수신" { class: ext }
+
+user -> app: "질문 · 키"
+app -> user: "결과"
+app -> env: "키 저장"
+env -> app: "키 읽기 · 복사"
+app -> route: "서버 시작 · 호출"
+route -> app: "목록 · 결과"
+app -> openai: "지시문 · 질문"
+openai -> app: "호출 요청 · 답"
+app -> agno: "실행 통계"

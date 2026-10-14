@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+openai: "OpenAI 모델\n(기본값)" { class: ext }
+agent: "Agent" { class: ours }
+agno: "agno 통계 수신" { class: ext }
+
+agent -> openai: "함수 호출 결과 (앞 응답을 이어서)"
+openai -> agent: "최종 글"
+agent -> agno: "실행 통계 (백그라운드)"
