@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 126 / 167일 완료
+진도: 133 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -227,13 +227,13 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 127](day127-notion-mcp-agent/README.md) | 📑 Notion MCP Agent | [mcp_ai_agents/notion_mcp_agent](../../mcp_ai_agents/notion_mcp_agent/) |
-| ⬜ | [Day 128](day128-github-mcp-agent/README.md) | 🐙 GitHub MCP Agent | [mcp_ai_agents/github_mcp_agent](../../mcp_ai_agents/github_mcp_agent/) |
-| ⬜ | [Day 129](day129-browser-mcp-agent/README.md) | ♾️ Browser MCP Agent | [mcp_ai_agents/browser_mcp_agent](../../mcp_ai_agents/browser_mcp_agent/) |
-| ⬜ | [Day 130](day130-openai-remote-mcp-bridge/README.md) | 🔌 OpenAI Remote MCP Tool Bridge | [mcp_ai_agents/openai_remote_mcp_bridge](../../mcp_ai_agents/openai_remote_mcp_bridge/) |
-| ⬜ | [Day 131](day131-ai-travel-planner-mcp-agent-team/README.md) | 🌍 AI Travel Planner MCP Agent | [mcp_ai_agents/ai_travel_planner_mcp_agent_team](../../mcp_ai_agents/ai_travel_planner_mcp_agent_team/) |
-| ⬜ | [Day 132](day132-multi-mcp-agent-router/README.md) | 🔀 Multi-MCP Agent Router | [mcp_ai_agents/multi_mcp_agent_router](../../mcp_ai_agents/multi_mcp_agent_router/) |
-| ⬜ | [Day 133](day133-multi-mcp-agent/README.md) | 🚀 Multi-MCP Intelligent Assistant | [mcp_ai_agents/multi_mcp_agent](../../mcp_ai_agents/multi_mcp_agent/) |
+| ✅ | [Day 127](day127-notion-mcp-agent/README.md) | 📑 Notion MCP Agent | [mcp_ai_agents/notion_mcp_agent](../../mcp_ai_agents/notion_mcp_agent/) |
+| ✅ | [Day 128](day128-github-mcp-agent/README.md) | 🐙 GitHub MCP Agent | [mcp_ai_agents/github_mcp_agent](../../mcp_ai_agents/github_mcp_agent/) |
+| ✅ | [Day 129](day129-browser-mcp-agent/README.md) | ♾️ Browser MCP Agent | [mcp_ai_agents/browser_mcp_agent](../../mcp_ai_agents/browser_mcp_agent/) |
+| ✅ | [Day 130](day130-openai-remote-mcp-bridge/README.md) | 🔌 OpenAI Remote MCP Tool Bridge | [mcp_ai_agents/openai_remote_mcp_bridge](../../mcp_ai_agents/openai_remote_mcp_bridge/) |
+| ✅ | [Day 131](day131-ai-travel-planner-mcp-agent-team/README.md) | 🌍 AI Travel Planner MCP Agent | [mcp_ai_agents/ai_travel_planner_mcp_agent_team](../../mcp_ai_agents/ai_travel_planner_mcp_agent_team/) |
+| ✅ | [Day 132](day132-multi-mcp-agent-router/README.md) | 🔀 Multi-MCP Agent Router | [mcp_ai_agents/multi_mcp_agent_router](../../mcp_ai_agents/multi_mcp_agent_router/) |
+| ✅ | [Day 133](day133-multi-mcp-agent/README.md) | 🚀 Multi-MCP Intelligent Assistant | [mcp_ai_agents/multi_mcp_agent](../../mcp_ai_agents/multi_mcp_agent/) |
 
 ### 볼륨 10. 🎮 Autonomous Game-Playing (Day 134–136, 3일)
 
