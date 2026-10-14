@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 (터미널) { class: person }
+openai: "OpenAI" { class: ext }
+bridge: "run_bridge" { class: ours }
+mcp: "원격 MCP 서버" { class: ext }
+
+bridge -> openai: "POST chat/completions (messages ·\ntools · tool_choice auto ·\nparallel_tool_calls false)"
+openai -> bridge: "tool_calls (이름 · arguments)"
+bridge -> user: "[openai -> mcp]\n이름 · 인자\n(500자까지)"
+bridge -> mcp: "POST tools/call (이름 · arguments)"
+mcp -> bridge: "CallToolResult"
+bridge -> user: "[mcp -> openai]\n결과 (500자까지)"

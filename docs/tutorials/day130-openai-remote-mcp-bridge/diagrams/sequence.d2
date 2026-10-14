@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 (터미널) { class: person }
+main: "main" { class: ours }
+bridge: "run_bridge" { class: ours }
+mcp: "원격 MCP 서버" { class: ext }
+
+user -> main: "task"
+main -> bridge: "run_bridge(task, api_key, model,\nserver_url, selected_names,\nmax_tool_calls)"
+bridge -> user: "[connect]"
+bridge -> mcp: "POST initialize"
+mcp -> bridge: "서버 정보 · 세션 ID"
+bridge -> mcp: "POST notifications/initialized"
+bridge -> mcp: "GET (서버 쪽 스트림)"
+bridge -> mcp: "POST tools/list (cursor)"
+mcp -> bridge: "도구 한 쪽 · nextCursor"
+bridge -> user: "[discover]\nN tool(s)"
+bridge -> user: "[tools] 이름\n목록 · [convert]\n변환 안내"

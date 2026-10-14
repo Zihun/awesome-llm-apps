@@ -1,0 +1,34 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+env: "환경변수" { class: file }
+
+app: "openai_remote_mcp_bridge.py" {
+  class: group
+  grid-columns: 1
+  grid-gap: 6
+  main: "1. 인자와 키 확인\n(main)" { class: ours }
+  session: "2. 연결과 초기화\n(run_bridge)" { class: ours }
+  discover: "3. 도구 발견\n(list_all_tools)" { class: ours }
+  convert: "4. 도구 변환\n(mcp_tool_to_openai)" { class: ours }
+  loop: "5. OpenAI 호출 루프\n(run_bridge)" { class: ours }
+  dispatch: "6. 도구 호출 분배\n(session.call_tool)" { class: ours }
+  result: "7. 결과 텍스트 만들기\n(tool_result_text)" { class: ours }
+}
+
+mcp: "원격 MCP 서버\n(Streamable\nHTTP)" { class: ext; height: 200 }
+openai: "OpenAI\n(chat.\ncompletions)" { class: ext }
+
+user -> app: "task · --flags"
+env -> app: "OPENAI_API_KEY\nMCP_SERVER_URL\nOPENAI_MODEL"
+env -> app: "OPENAI_BASE_URL\n(SDK가 읽음)"
+app -> mcp: "initialize"
+mcp -> app: "서버 정보"
+app -> mcp: "tools/list\n(cursor)"
+mcp -> app: "도구 쪽 ·\nnextCursor"
+app -> mcp: "tools/call\n(이름 · 인자)"
+mcp -> app: "CallToolResult"
+app -> openai: "messages · tools"
+openai -> app: "tool_calls 또는 답"
+app -> user: "[connect] ~\n[final] 출력"

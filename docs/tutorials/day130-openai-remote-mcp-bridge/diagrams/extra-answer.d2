@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 (터미널) { class: person }
+openai: "OpenAI" { class: ext }
+bridge: "run_bridge" { class: ours }
+mcp: "원격 MCP 서버" { class: ext }
+
+bridge -> openai: "POST chat/completions\n(tool 메시지, 12,000자까지)"
+openai -> bridge: "답 (tool_calls 없음)"
+bridge -> user: "[final] 답"
+bridge -> mcp: "DELETE (세션 종료)"
