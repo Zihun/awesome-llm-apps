@@ -1,10 +1,10 @@
 # Day 128 · 🐙 GitHub MCP Agent
 
-> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ · 예상 소요 90분(앱은 150줄이지만 가짜 docker·MCP 서버·OpenAI 서버를 직접 저장하고, 서버를 늦게 띄우거나 docker를 실패시켜 가며 같은 호출을 여러 번 돌려 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 질문 한 건에 $0.05~0.15(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았고 GitHub MCP 서버의 실제 도구 선언 크기도 재지 못했습니다. 기본 모델 `gpt-5.4`의 요금 입력 $2.5·출력 $15/백만 토큰(OpenAI 모델 페이지, 2026-10-14)에 도구 선언 1만 토큰 안팎으로 2~4번 부른다고 어림했습니다) · 원본 앱: `mcp_ai_agents/github_mcp_agent`
+> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 `fastmcp`가 없어 서버에 연결하지 못합니다(Step 1·4). 하한 버전 agno의 기본 모델 `gpt-4o`는 기본 스냅숏이 2027-01-14에 종료됩니다(사전 준비) · 예상 소요 95분(앱은 150줄이지만 가짜 docker·MCP 서버·OpenAI 서버를 직접 저장하고, 서버를 늦게 띄우거나 docker를 실패시켜 가며 같은 호출을 여러 번 돌려 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 질문 한 건에 $0.05~0.15(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았고 GitHub MCP 서버의 실제 도구 선언 크기도 재지 못했습니다. 기본 모델 `gpt-5.4`의 요금 입력 $2.5·출력 $15/백만 토큰(OpenAI 모델 페이지, 2026-10-14)에 도구 선언 1만 토큰 안팎으로 2~4번 부른다고 어림했습니다) · 원본 앱: `mcp_ai_agents/github_mcp_agent`
 
 ## 오늘 만들 것
 
-Streamlit 화면에 저장소(`owner/repo`)와 질문을 적으면, agno `Agent`가 GitHub 공식 MCP 서버를 도구로 삼아 이슈·PR·저장소 정보를 가져와 마크다운으로 답하는 앱입니다. 볼륨 9 "♾️ MCP AI Agents"의 둘째 날입니다. MCP 서버를 별도 프로세스로 띄워 붙이는 모양은 앞에서 나왔습니다. Day 125는 Google ADK의 `MCPToolset`으로 `npx -y firecrawl-mcp`를 붙였고, 그 서버가 에이전트를 만들 때가 아니라 첫 요청에서 모델 호출을 만드는 순간에 뜬다는 것을 확인했습니다. 바로 앞 날 Day 127의 원본 앱(`notion_mcp_agent.py`)은 오늘과 같은 agno `MCPTools`와 `StdioServerParameters`를 쓰고 서버를 `npx`로 띄웁니다(원본 소스로 확인). 오늘 새로운 것은 서버를 `npx`가 아니라 `docker run`으로 띄운다는 점입니다.
+Streamlit 화면에 저장소(`owner/repo`)와 질문을 적으면, agno `Agent`가 GitHub 공식 MCP 서버를 도구로 삼아 이슈·PR·저장소 정보를 가져와 마크다운으로 답하는 앱입니다. 볼륨 9 "♾️ MCP AI Agents"의 둘째 날입니다. MCP 서버를 별도 프로세스로 띄워 붙이는 모양은 앞에서 나왔습니다. Day 125는 Google ADK의 `MCPToolset`으로 `npx -y firecrawl-mcp`를 붙였고, 그 서버가 에이전트를 만들 때가 아니라 첫 요청에서 모델 호출을 만드는 순간에 뜬다는 것을 확인했습니다. 바로 앞 날 Day 127의 원본 앱(`notion_mcp_agent.py`)은 오늘과 같은 agno `MCPTools`와 `StdioServerParameters`를 쓰고 서버를 `npx`로 띄웁니다(원본 소스로 확인). 오늘 새로운 것은 서버를 `npx`가 아니라 `docker run`으로 띄운다는 점입니다. `fastmcp` 누락과 10초 연결 제한은 Day 127이 같은 agno 3.1.3으로 이미 확인했으므로 오늘은 그 날을 가리키고, 이 앱에서 달라지는 부분(docker 인자, 환경, 기본 모델)에 시간을 씁니다.
 
 직접 돌려 알게 된 것이 다섯입니다.
 
@@ -14,7 +14,7 @@ Streamlit 화면에 저장소(`owner/repo`)와 질문을 적으면, agno `Agent`
 4. 120초 제한은 에이전트 실행만 감쌉니다. 서버가 10초 안에 답하지 않으면 120초를 기다리지 않고 `initialize` 시간 초과로 끝납니다. 진짜 docker라면 첫 실행의 이미지 내려받기가 여기에 걸릴 수 있습니다(Step 4·6).
 5. 키는 `os.environ`에 쓰여 서버 프로세스에 남고, 결과는 화면의 다른 위젯을 건드리면 사라집니다(Step 2·7).
 
-이 문서는 docker와 GitHub, OpenAI, agno의 통계 서버 어디에도 요청을 보내지 않습니다. docker 자리에는 파이썬으로 쓴 가짜 `docker`를, GitHub MCP 서버 자리에는 가짜 MCP 서버를, OpenAI 자리에는 `127.0.0.1`의 가짜 서버를 두었으므로 아래 답은 모두 내가 쓴 대본입니다. 진짜 모델이 도구를 어떻게 고르는지, 진짜 서버가 무엇을 돌려주는지, 이미지를 내려받는 데 얼마나 걸리는지는 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
+이 문서의 실습은 docker와 GitHub, OpenAI, agno의 통계 서버 어디에도 요청을 보내지 않습니다(Step 7에서 브라우저를 열면 Streamlit 통계는 따로 끕니다). docker 자리에는 파이썬으로 쓴 가짜 `docker`를, GitHub MCP 서버 자리에는 가짜 MCP 서버를, OpenAI 자리에는 `127.0.0.1`의 가짜 서버를 두었으므로 아래 답은 모두 내가 쓴 대본입니다. 진짜 모델이 도구를 어떻게 고르는지, 진짜 서버가 무엇을 돌려주는지, 이미지를 내려받는 데 얼마나 걸리는지는 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -27,9 +27,12 @@ Streamlit 화면에 저장소(`owner/repo`)와 질문을 적으면, agno `Agent`
 | Docker | 진짜로 쓸 때 GitHub MCP 서버 이미지(`ghcr.io/github/github-mcp-server`)를 내려받아 컨테이너로 띄운다. 이 문서의 실습은 쓰지 않는다 | https://www.docker.com/get-started |
 | OpenAI API 키 | 진짜로 쓸 때만 필요하다. 이 문서는 가짜 값 `sk-fake`로 진행한다 | https://platform.openai.com/api-keys |
 | GitHub 토큰 | 진짜로 쓸 때만 필요하다. 앱 안내는 `repo` 범위이고, GitHub의 MCP 서버 README는 최소 범위로 `repo`·`read:packages`·`read:org`를 적는다(2026-10-14에 읽음). 이 문서는 가짜 값 `ghp_FAKE1234`로 진행한다 | https://github.com/settings/tokens |
+| 인터넷 연결 | PyPI 설치. 실제로 쓸 때는 OpenAI, `ghcr.io`(이미지), GitHub, agno 사용 통계 서버(`os-api.agno.com`)에 접속한다. 브라우저로 Streamlit을 열면 Streamlit 사용 통계도 나간다(Day 054가 확인했고 `--browser.gatherUsageStats false`로 끈다) | 별도 설치 없음 |
 | 터미널 둘 | 하나는 가짜 OpenAI 서버, 하나는 앱 | 별도 설치 없음 |
 
-기본 모델이 설치 버전에 달린 만큼 종료 예정도 둘로 봅니다. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-14 확인)에는 `gpt-5.4`가 없습니다(`gpt-5.4-nano`와 `gpt-5.4-cyber`만 있습니다). 하한 버전의 `gpt-4o`도 그 이름으로는 없고, 날짜가 붙은 스냅숏 `gpt-4o-2024-08-06`·`gpt-4o-2024-11-20`이 2027-01-14 종료로 올라 있습니다. 그래서 ⚠ 경고는 달지 않습니다.
+기본 모델이 설치 버전에 달린 만큼 종료 예정도 둘로 봅니다. 오늘 설치되는 agno 3.1.3의 기본 `gpt-5.4`는 OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-14 확인)에 없습니다(`gpt-5.4-nano`와 `gpt-5.4-cyber`만 있습니다). 그래서 오늘의 설치에는 경고를 달지 않습니다.
+
+⚠ **모델(하한 버전).** `agno==2.2.10` 같은 낮은 버전을 설치하면 기본 모델이 `gpt-4o`입니다(Step 5). OpenAI 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o, 2026-10-14 확인)는 이 모델의 "Default snapshot"을 `gpt-4o-2024-08-06`이라고 적습니다. 폐기 문서(같은 날)에는 `gpt-4o`라는 id 자체의 종료 행은 없지만, 그 기본 스냅숏 `gpt-4o-2024-08-06`(과 `gpt-4o-2024-11-20`)이 2027-01-14에 종료된다는 행이 있습니다. 별칭 `gpt-4o`가 그 뒤 어떻게 되는지는 두 문서 어디에도 적혀 있지 않아 확인하지 못했습니다. 그날 이후 호출이 실패하면 `Agent`에 `model=`로 새 모델을 넘겨야 할 수 있습니다(문제 해결).
 
 ## 아키텍처 한눈에 보기
 
@@ -45,7 +48,7 @@ Streamlit 화면에 저장소(`owner/repo`)와 질문을 적으면, agno `Agent`
 | 안내 상자 | 결과가 없을 때 쓰는 법을 보여 줌 | `mcp_ai_agents/github_mcp_agent/github_agent.py:130-150` |
 | docker CLI와 GitHub MCP 서버 | 앱 밖 프로세스. 서버가 GitHub API를 부름 | 코드 없음 (외부 이미지) |
 
-앱 코드의 연결은 두 곳입니다. 서버 쪽은 `docker` 프로세스의 표준 입출력이고, 모델 쪽은 `Agent`가 기본 모델을 부르는 것입니다. 앱에 `requests`·`httpx` 같은 직접 호출은 없습니다. 아래 두 그림은 앱 안의 호출과 서버 쪽 사슬입니다. docker 데몬은 그리지 않았고, 서버가 GitHub를 부르는 화살표는 GitHub의 README를 읽은 것이지 실행해 본 것이 아닙니다.
+앱 코드의 연결은 두 곳입니다. 서버 쪽은 `docker` 프로세스의 표준 입출력이고, 모델 쪽은 `Agent`가 기본 모델을 부르는 것입니다. 앱에 `requests`·`httpx` 같은 직접 호출은 없습니다. 위 그림에서 앱 묶음에 단 화살표는 묶음 전체에 단 것입니다. 예컨대 `지시문 · 질문`이 MCP 도구 묶음 상자 아래에서 OpenAI로 나가 보여도 모델을 부르는 것은 `Agent`이고, `키 읽기 · 복사`가 화면 위젯 쪽으로 들어가 보여도 환경을 복사하는 것은 실행 함수(83행)입니다. 아래 두 그림은 앱 안의 호출과 서버 쪽 사슬입니다. docker 데몬은 그리지 않았고, 서버가 GitHub를 부르는 화살표는 GitHub의 README를 읽은 것이지 실행해 본 것이 아닙니다.
 
 ![앱 안의 호출](diagrams/extra-structure.svg)
 
@@ -62,6 +65,7 @@ Streamlit 화면에 저장소(`owner/repo`)와 질문을 적으면, agno `Agent`
 ```bash
 mkdir github-lab
 cd github-lab
+mkdir shim
 cp <저장소>/mcp_ai_agents/github_mcp_agent/github_agent.py .
 cp <저장소>/mcp_ai_agents/github_mcp_agent/requirements.txt .
 uv venv
@@ -73,6 +77,7 @@ uv pip install -r requirements.txt
 ```powershell
 mkdir github-lab
 cd github-lab
+New-Item -ItemType Directory shim
 Copy-Item <저장소>\mcp_ai_agents\github_mcp_agent\github_agent.py .
 Copy-Item <저장소>\mcp_ai_agents\github_mcp_agent\requirements.txt .
 uv venv
@@ -108,7 +113,7 @@ agno.tools.mcp ok
 ModuleNotFoundError: No module named 'fastmcp'
 ```
 
-agno 3.1.3의 `MCPTools`는 연결을 `fastmcp`로 만듭니다. 설치된 agno의 메타데이터에서 `fastmcp<5,>=4.0.0`은 `mcp` 추가 항목(`agno[mcp]`) 뒤에만 있고, 앱의 `agno>=2.2.10`에는 그 항목이 없으므로 `fastmcp`는 들어오지 않습니다. `agno.tools.mcp`를 불러오는 것은 `mcp`만 있으면 되기 때문에 두 번째 줄은 통과하고, 빠진 것은 서버에 연결하는 순간에야 드러납니다(Step 4).
+이것은 Day 127 Step 1이 본 것과 같은 `fastmcp` 누락입니다(원인은 거기에 있습니다). 처방만 다릅니다. Day 127은 `sqlalchemy`의 `greenlet`도 필요해서 `agno[mcp,sqlite]`를 설치했고, 오늘 앱은 데이터베이스를 쓰지 않으므로 `fastmcp>=4.0.0,<5`만 더합니다. 둘 다 같은 `fastmcp`를 깝니다. `agno.tools.mcp`를 불러오는 데는 `mcp`만 있으면 되어 두 번째 줄은 통과하고, 빠진 것은 서버에 연결하는 순간에야 드러납니다(Step 4).
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -248,7 +253,7 @@ time.sleep(float(env.get("FAKE_START_DELAY", "0")))   # 연습용: 이미지를 
 runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fake_github_mcp.py"), run_name="__main__")
 ```
 
-앱은 `docker`라는 이름을 PATH에서 찾으므로, 같은 폴더에 실행 파일 이름 `docker`를 만듭니다. Windows는 `shim/docker.cmd`, macOS·Linux는 `shim/docker`(`chmod +x shim/docker`)입니다. 둘 다 `github-lab/.venv`의 파이썬으로 위 파일을 돌립니다. POSIX 쪽은 실행해 보지 못했습니다.
+앱은 `docker`라는 이름을 PATH에서 찾으므로, 같은 폴더에 실행 파일을 만듭니다. 파일은 둘 다 만듭니다. Windows에서 앱(파이썬)은 `shim/docker.cmd`를 집고, Git Bash의 `command -v`는 `.cmd`를 찾지 못해 확장자 없는 `shim/docker`(sh 파일)를 집습니다. macOS·Linux는 `shim/docker`만 쓰이고 `chmod +x shim/docker`가 필요합니다. 둘 다 `github-lab/.venv`의 파이썬으로 위 파일을 돌립니다. Windows에서 두 파일을 함께 둔 것만 직접 돌려 봤고, POSIX 쪽은 실행해 보지 못했습니다.
 
 ```bat
 @"%~dp0..\.venv\Scripts\python.exe" "%~dp0docker_shim.py" %*
@@ -375,15 +380,16 @@ $env:FAKE_LOG = "$PWD\fake.log"
 
 PowerShell 줄은 실행해 보지 못했습니다. `AGNO_TELEMETRY=false`는 Step 6에서 다룰 agno의 익명 통계를 막습니다.
 
-**확인.** 앱을 돌리기 전에 이 셋이 맞는지 봅니다.
+**확인.** 앱을 돌리기 전에 이 셋이 맞는지 봅니다. 앱(파이썬)이 `docker`를 어디서 찾는지는 `command -v`가 아니라 파이썬이 알려 줘야 합니다.
 
 ```bash
+uv run --no-project python -c "import shutil; print(shutil.which('docker'))"
 command -v docker
 echo "$OPENAI_BASE_URL"
 cat fake_openai.log
 ```
 
-`docker`가 `shim` 안의 파일을 가리키고, 주소가 `127.0.0.1`이고, 로그에 `listening 127.0.0.1:54321`이 있어야 합니다. 하나라도 어긋나면 멈춥니다. PowerShell에서는 `Get-Command docker`, `$env:OPENAI_BASE_URL`, `Get-Content fake_openai.log`입니다(실행해 보지 못했습니다). 직접 확인한 결과는 이 순서로 `.../shim/docker`, `http://127.0.0.1:54321/v1`, `listening 127.0.0.1:54321`이었습니다.
+첫 줄이 `shim` 안의 파일(Windows는 `docker.CMD`)을 가리키고, 주소가 `127.0.0.1`이고, 로그에 `listening 127.0.0.1:54321`이 있어야 합니다. 하나라도 어긋나면 멈춥니다. PowerShell에서는 첫 줄 뒤에 `Get-Command docker`(`shim` 안의 `docker.cmd`가 나와야 합니다), `$env:OPENAI_BASE_URL`, `Get-Content fake_openai.log`입니다(PowerShell 줄은 실행해 보지 못했습니다). Windows Git Bash에서 직접 확인한 결과는 이 순서로 `...\shim\docker.CMD`, `.../shim/docker`, `http://127.0.0.1:54321/v1`, `listening 127.0.0.1:54321`이었습니다. 진짜 Docker가 PATH 뒤쪽에 있어도 `shim`이 앞이면 같은 결과입니다. 첫 줄이 진짜 `docker` 경로를 가리키면 멈춥니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -422,7 +428,7 @@ async def run_github_agent(message):
 
 `-e GITHUB_PERSONAL_ACCESS_TOKEN`처럼 값 없이 이름만 주면, Docker 문서(`docker container run` 참고서, 2026-10-14)는 "the Docker CLI client checks the value the variable has in your local environment"라고 합니다. 값이 명령줄에 실리지 않고 docker 프로세스의 환경에서 컨테이너로 건너갑니다. 그런데 `env=`는 `os.environ` 전체에 토큰과 툴셋 둘을 얹은 것이라 docker 프로세스는 셸의 모든 변수를 받습니다. `OPENAI_API_KEY`도 그 안에 있습니다. `mcp`는 `env=`를 따로 주면 `PATH` 같은 안전한 몇 개만 물려주도록 되어 있어서(`mcp` 2.3.0의 `get_default_environment`를 소스로 확인) 전부 넘기는 것은 앱이 `**os.environ`을 직접 넣었기 때문입니다. 컨테이너에는 `-e`로 이름을 준 둘만 들어가는 것이 `docker run`의 정의지만, 이 문서는 진짜 docker를 실행하지 않아 컨테이너 안의 환경은 보지 못했습니다. `GITHUB_TOOLSETS`는 GitHub README가 `--toolsets`의 환경 변수판이라고 적는 값이고, 기본값(`context`·`repos`·`issues`·`pull_requests`·`users`)에서 `context`와 `users`가 빠집니다.
 
-서버는 89행의 `async with MCPTools(server_params=server_params) as mcp_tools:`에서 뜹니다. `MCPTools(...)`를 만드는 것으로는 아무것도 실행되지 않고, `async with`에 들어가면서 연결이 만들어집니다(agno 3.1.3의 `MCPTools._connect`를 소스로 확인).
+서버는 89행의 `async with MCPTools(server_params=server_params) as mcp_tools:`에서 뜹니다. Day 127 Step 4가 본 대로 `MCPTools(...)`를 만드는 것으로는 아무것도 실행되지 않고 `async with`에 들어가면서 연결이 만들어집니다.
 
 **확인.** 먼저 `fastmcp`가 없는 상태로 한 번 돌립니다.
 
@@ -530,7 +536,7 @@ cat fake_openai.log
         return f"Error: {str(e)}"
 ```
 
-`asyncio.wait_for(..., timeout=120.0)`는 103행에서 `agent.arun`만 감쌉니다. 서버 연결(89행)은 그 바깥이고, 연결에는 `MCPTools`의 `timeout_seconds` 기본값 10초가 `fastmcp` 클라이언트의 요청 제한이 됩니다(소스로 확인). 가짜 `docker`가 늦게 뜨거나 실패하게 해 봅니다.
+`asyncio.wait_for(..., timeout=120.0)`는 103행에서 `agent.arun`만 감쌉니다. 서버 연결(89행)은 그 바깥이고, 연결에는 Day 127 Step 6이 본 `MCPTools`의 `timeout_seconds` 기본값 10초가 걸립니다. 오늘도 같은 하네스로 재 봅니다. 가짜 `docker`가 늦게 뜨거나 실패하게 해 봅니다.
 
 **확인.** 앞의 셋은 앱 터미널에서 돌립니다. PowerShell에서는 `$env:FAKE_START_DELAY = "12"`처럼 먼저 설정하고 명령을 돌린 뒤 `Remove-Item Env:FAKE_START_DELAY`로 지웁니다(아래 `FAKE_DOCKER_FAIL`·`FAKE_DELAY`·`FAKE_STATUS`도 같고, 실행해 보지 못했습니다).
 
@@ -638,10 +644,10 @@ if st.button("🚀 Run Query", type="primary", use_container_width=True):
 검사는 위젯의 값으로 합니다(`os.environ`이 아닙니다). 질문에 저장소 이름이 없으면 ` in <저장소>`를 덧붙입니다. 실행 중에는 스피너가 돌고, `result`는 이 한 번의 실행 안에서만 정해지는 변수라 다음 실행(위젯을 건드릴 때마다)에는 없습니다. 브라우저로 직접 보려면 가짜 서버와 같은 환경에서 띄웁니다.
 
 ```bash
-uv run --no-project streamlit run github_agent.py --server.headless true --server.address localhost --server.port 54322
+uv run --no-project streamlit run github_agent.py --server.headless true --server.address localhost --server.port 54322 --browser.gatherUsageStats false
 ```
 
-브라우저에서 `http://localhost:54322`를 열고 사이드바에 가짜 키 둘을 넣어 **Run Query**를 누르면 됩니다. 이 문서는 브라우저를 열지 않고, 같은 클릭을 Streamlit의 `AppTest`로 대신했습니다. 템플릿 질문에는 저장소 이름이 이미 들어 있어 덧붙지 않습니다. `Custom`에서 "What PRs need review?"만 적으면 모델에는 `What PRs need review? in Shubhamsaboo/awesome-llm-apps`가 갑니다(`AppTest`로 돌린 실행에서 가짜 서버의 기록으로 확인). 아래 `ui_check.py`는 시나리오마다 새 앱을 만들어 키 칸을 채우고 버튼을 누릅니다.
+`--browser.gatherUsageStats false`는 Streamlit의 사용 통계를 끕니다. 이 통계는 브라우저가 화면을 열 때 나가는 것으로 Day 054가 확인했고(오늘 설치되는 streamlit 1.65.0의 번들에도 전송 주소 `data.streamlit.io/metrics.json`이 있음을 `grep`으로 확인), 끄지 않으면 앱 코드와 상관없이 독자 PC에서 Streamlit으로 나갑니다. 브라우저에서 `http://localhost:54322`를 열고 사이드바에 가짜 키 둘을 넣어 **Run Query**를 누르면 됩니다. 이 문서는 브라우저를 열지 않고, 같은 클릭을 Streamlit의 `AppTest`로 대신했습니다. 템플릿 질문에는 저장소 이름이 이미 들어 있어 덧붙지 않습니다. `Custom`에서 "What PRs need review?"만 적으면 모델에는 `What PRs need review? in Shubhamsaboo/awesome-llm-apps`가 갑니다(`AppTest`로 돌린 실행에서 가짜 서버의 기록으로 확인). 아래 `ui_check.py`는 시나리오마다 새 앱을 만들어 키 칸을 채우고 버튼을 누릅니다.
 
 ```python
 """브라우저 대신 Streamlit의 AppTest로 같은 클릭을 한다. 시나리오마다 새 앱 인스턴스를 만든다."""
@@ -686,6 +692,8 @@ at.selectbox[0].select("Pull Requests").run()
 print("4) 선택 상자만 바꿈 | Results:", has_results(at), "| 질문 칸:", at.text_area[0].value)
 ```
 
+오늘 실습이 한 번도 거치지 않은 것이 하나 남았습니다. GitHub API입니다. 가짜 서버가 대본만 돌려주므로 다이어그램은 이 클라우드를 마지막 단계에서야 드러냅니다.
+
 **확인.**
 
 ```bash
@@ -696,7 +704,6 @@ uv run --no-project python ui_check.py
 1) 키 둘 다 비움 -> ['Please enter your OpenAI API key in the sidebar'] | Results: False
 2) OpenAI 키만   -> ['Please enter your GitHub token in the sidebar'] | Results: False
    os.environ에 남은 것: True False
-INFO    Setting default model to OpenAI Responses
 3) 키 둘 다      -> [] | Results: True
 4) 선택 상자만 바꿈 | Results: False | 질문 칸: Show me recent merged PRs in Shubhamsaboo/awesome-llm-apps
 ```
@@ -731,7 +738,7 @@ INFO    Setting default model to OpenAI Responses
 
 - [ ] `uv pip install -r requirements.txt`에 이어 `fastmcp>=4.0.0,<5`를 설치했다 (`import fastmcp`가 됨)
 - [ ] 가짜 OpenAI 서버가 `listening 127.0.0.1:<포트>`를 찍었다
-- [ ] 앱 터미널에서 `command -v docker`가 `shim` 안을 가리키고, `OPENAI_BASE_URL`이 `127.0.0.1`이다
+- [ ] 앱 터미널에서 `shutil.which('docker')`가 `shim` 안을 가리키고, `OPENAI_BASE_URL`이 `127.0.0.1`이다
 - [ ] `AGNO_TELEMETRY=false`와 가짜 키만 설정했다
 - [ ] `drive.py`가 `FAKE ANSWER ...`를 찍고 `fake.log`에 `argv=['run', '-i', '--rm', ...]`가 남았다
 - [ ] `fake_openai.log`에 `model=gpt-5.4`(또는 설치한 agno의 기본 모델)와 `store=True`가 보인다
@@ -750,6 +757,7 @@ INFO    Setting default model to OpenAI Responses
 | `Error: Request timed out after 120 seconds` | `agent.arun`이 120초 안에 끝나지 않았다 (103행) | 질문을 좁힌다. 연결 단계의 시간 초과와는 다른 글이다 |
 | Results 자리에 `fake error` 같은 문구가 나오거나 빈 글이다 | 모델 API의 오류는 예외가 아니라 `response.content`가 된다. 가짜 서버의 401은 오류 문구가, 본문 없는 404는 빈 글이 되었고 터미널에는 `ERROR` 줄이 찍혔다 (Step 6). 진짜 OpenAI의 문구는 보지 못했다 | 앱을 띄운 터미널의 `ERROR` 줄을 읽는다. 키와 모델 이름을 본다 |
 | 결과가 갑자기 사라지고 질문 칸이 바뀐다 | `result`가 한 번의 실행 안에서만 있는 변수이고, 질문 종류를 바꾸면 칸의 기본값이 바뀐다 (Step 7) | 결과를 따로 복사해 둔다 |
+| 2027-01-14 이후 낮은 agno 버전의 기본 `gpt-4o` 호출이 실패한다 | 기본 스냅숏 `gpt-4o-2024-08-06`이 그날 종료 예정이다(폐기 문서). 별칭의 동작은 문서에 없다 | `Agent(...)`에 `model=`로 새 모델을 넘겨 시험한다(이 문서는 시험하지 못했다) |
 | 이미지를 내려받다 인증 오류 | 만료된 토큰이 남은 `ghcr.io` 로그인. GitHub README가 `docker logout ghcr.io`를 권한다(읽기만 했고 재현하지 못했다) | `docker logout ghcr.io` 후 다시 시도 |
 
 ## 더 해보기
