@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+ui: "Streamlit 화면\n(Start · Reset 버튼)" { class: ours }
+tools: "도구 함수\n(available_moves · execute_move)" { class: ours }
+board: "판 상태\n(st.session_state)" { class: store }
+
+ui -> board: "reset() · made_move=False ·\nmove_history 비움"
+board -> ui: "초기 판 · move_history의\nSVG 그림"
+tools -> board: "push(move) · SVG 저장 ·\nmade_move=True"
+board -> tools: "legal_moves · piece_at ·\n체크 여부"

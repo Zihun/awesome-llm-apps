@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+black: "흑 (Agent_Black)" { class: ours }
+white: "백 (Agent_White)" { class: ours }
+gm: "진행자 (Game_Master)" { class: ours }
+gpt: "GPT-4o mini" { class: ext }
+
+black -> white: "바깥 대화: 시작 문장 ·\n흑의 수에 대한 요약"
+white -> black: "바깥 대화: 백의 수에\n대한 요약"
+gm -> white: "백의 중첩 대화: 상대 요약 ·\n도구 결과"
+white -> gm: "백의 중첩 대화: 도구 호출 ·\n마지막 글"
+gm -> black: "흑의 중첩 대화: 상대 요약 ·\n도구 결과"
+black -> gm: "흑의 중첩 대화: 도구 호출 ·\n마지막 글"
+white -> gpt: "대화 + 도구 스키마"
+gpt -> white: "도구 호출 · 글"
+black -> gpt: "대화 + 도구 스키마 ·\n요약 요청"
+gpt -> black: "도구 호출 · 글 · 요약"

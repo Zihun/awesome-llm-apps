@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+white: "백 (Agent_White)" { class: ours }
+black: "흑 (Agent_Black)" { class: ours }
+gpt: "GPT-4o mini" { class: ext }
+
+white -> black: "중첩 대화의 마지막 글\n(summary_method=last_msg)"
+black -> gpt: "바깥 대화 전체 +\n요약 요청 + 도구 스키마"
+gpt -> black: "요약 글"

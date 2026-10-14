@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gpt: "GPT-4o mini" { class: ext }
+white: "백 (Agent_White)" { class: ours }
+gm: "진행자 (Game_Master)" { class: ours }
+
+white -> gpt: "대화 + 이동 결과"
+gpt -> white: "글: I have made\nmy move."
+white -> gm: "글 메시지\n(check_made_move → 종료)"

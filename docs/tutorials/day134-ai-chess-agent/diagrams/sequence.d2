@@ -1,0 +1,25 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+white: "백 (Agent_White)" { class: ours }
+board: "판 상태" { class: store }
+tools: "도구 함수" { class: ours }
+black: "흑 (Agent_Black)" { class: ours }
+ui: "Streamlit 화면" { class: ours }
+gm: "진행자 (Game_Master)" { class: ours }
+gpt: "GPT-4o mini" { class: ext }
+
+user -> ui: "Start Game 클릭\n(max_turns=1)"
+ui -> board: "reset() ·\nmade_move=False"
+ui -> black: "initiate_chat(white,\nmax_turns=1)"
+black -> white: "Let's play chess!\nYou go first"
+gm -> white: "같은 문장으로\n중첩 대화 시작"
+white -> gpt: "system + 문장 +\n도구 스키마 둘"
+gpt -> white: "tool_calls:\navailable_moves"
+white -> gm: "tool_calls 메시지"
+gm -> tools: "available_moves()"
+tools -> board: "legal_moves"
+board -> tools: "합법 수 20개"
+tools -> gm: "Available moves are:\ng1h3,g1f3,..."
+gm -> white: "tool_responses"

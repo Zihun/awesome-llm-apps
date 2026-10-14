@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+gm: "진행자 (Game_Master)\nis_termination_msg=check_made_move" { class: ours }
+tools: "도구 함수\n(available_moves · execute_move)" { class: ours }
+board: "판 상태\n(st.session_state)" { class: store }
+
+gm -> tools: "함수 실행:\navailable_moves() · execute_move(move)"
+tools -> gm: "문자열 결과:\nAvailable moves are: ... · Moved ..."
+gm -> board: "made_move 읽고\nFalse로 되돌림"
+board -> gm: "made_move 값"

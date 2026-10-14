@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+board: "판 상태" { class: store }
+white: "백 (Agent_White)" { class: ours }
+gm: "진행자 (Game_Master)" { class: ours }
+tools: "도구 함수" { class: ours }
+gpt: "GPT-4o mini" { class: ext }
+
+white -> gpt: "대화 + 합법 수 목록"
+gpt -> white: "tool_calls:\nexecute_move(f2f4)"
+white -> gm: "tool_calls 메시지"
+gm -> tools: "execute_move('f2f4')"
+tools -> board: "push(f2f4) · SVG를\nmove_history에 추가 ·\nmade_move=True"
+board -> tools: "말 · 체크 여부"
+tools -> gm: "Moved pawn from f2\nto f4. (말 기호 생략)"
+gm -> white: "tool_responses"

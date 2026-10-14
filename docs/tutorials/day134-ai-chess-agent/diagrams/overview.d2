@@ -1,0 +1,35 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+
+app: "ai_chess_agent.py" {
+  class: group
+  grid-columns: 2
+  grid-gap: 8
+  ui: "Streamlit 화면\n(사이드바 · 버튼)" { class: ours }
+  tools: "도구 함수\n(available_moves ·\nexecute_move)" { class: ours }
+}
+
+agents: "AG2 에이전트 셋" {
+  class: group
+  grid-columns: 3
+  grid-gap: 8
+  white: "백\n(Agent_White)" { class: ours }
+  black: "흑\n(Agent_Black)" { class: ours }
+  gm: "진행자\n(Game_Master)" { class: ours }
+}
+
+board: "판 상태\n(st.session_state)" { class: store }
+
+gpt: "GPT-4o mini\n(OpenAI)" { class: ext }
+
+user -> app: "키 · max_turns · Start Game"
+app -> user: "수마다 판 그림"
+app -> agents: "initiate_chat(\nmax_turns)"
+agents -> app: "함수 실행\n요청"
+app -> agents: "함수 결과\n문자열"
+agents -> gpt: "대화 · 도구 스키마 · 요약 요청"
+gpt -> agents: "도구 호출 · 글"
+app -> board: "reset() · 수 두기 · SVG 저장"
+board -> app: "합법 수 · 수 기록 (SVG)"
