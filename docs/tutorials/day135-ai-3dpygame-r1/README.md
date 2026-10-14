@@ -610,7 +610,7 @@ generated_code: 8 줄 | 첫 줄: import pygame | 끝 줄: pygame.quit()
 
 읽을 것이 셋입니다. 만들기는 `Agent()` 넷이 `run()`보다 먼저이고, `run()`은 길 찾기·코드 입력·실행·보기 순서입니다. 코드 입력 에이전트의 과제 글이 388자로 다른 셋(62·91·66자)보다 길고, 그 차이가 코드 8줄 분입니다. 마지막으로 모델 `gpt-4o`와 사이드바의 OpenAI 키(앞 4글자 `sk-f`)가 `ChatOpenAI`로 에이전트 넷에 한 번에 건네집니다. 한 가지 더, 시각화를 누르면 앱이 다시 그려지면서 코드 표시가 사라집니다. 코드를 보여 주는 `st.code`가 코드 생성 분기 안에 있어서입니다(113~114행). 같은 `AppTest`로 코드 생성 뒤에는 코드 블록이 1개, 시각화 뒤에는 0개인 것을 확인했습니다. 코드 자체는 `session_state`에 남아 있습니다.
 
-이 자리표시자 아래에서만 화면을 직접 눌러 보고 싶다면 터미널 B에서 아래를 돌리고 주소를 엽니다. 사이드바에는 가짜 키만 넣으세요. 자리표시자 파일이 `pygame-lab`에 있는 동안에만 안전합니다. 여기서 시각화를 눌러도 성공 문구가 뜨지만 브라우저는 뜨지 않고 `visualize_calls.jsonl`에 줄이 쌓일 뿐입니다.
+이 자리표시자 아래에서만 화면을 직접 눌러 보고 싶다면 터미널 B에서 아래를 돌리고 주소를 엽니다. 사이드바에는 가짜 키만 넣으세요. 자리표시자 파일이 `pygame-lab`에 있는 동안에만 안전합니다. 여기서 시각화를 눌러도 성공 문구가 뜨지만 브라우저는 뜨지 않고 `visualize_calls.jsonl`에 줄이 쌓일 뿐입니다. 실행 블록의 `--browser.gatherUsageStats false`는 화면을 연 브라우저가 Streamlit 사용 통계를 보내지 않게 합니다(Day 054).
 
 먼저 Step 2의 확인 두 줄을 이 터미널에서 다시 돌립니다. 첫 줄이 `pygame-lab`의 `browser_use.py`가 아니거나 둘째 줄이 가짜 서버 주소가 아니면 다음 블록을 돌리지 마세요.
 
@@ -622,7 +622,7 @@ echo "$OPENAI_BASE_URL"
 아래 블록은 스스로 검사합니다. 파이썬 한 줄이 `browser_use`가 자리표시자이고 `OPENAI_BASE_URL`이 루프백일 때만 종료 코드 0으로 끝나고, 아니면 1로 끝나 서버를 띄우지 않습니다. 그래도 블록을 붙여 넣기 전에 위 확인을 한 번 읽으세요.
 
 ```bash
-uv run --no-project python -c "import os, sys, browser_use; sys.exit(int(hasattr(browser_use, '__path__') or not os.environ.get('OPENAI_BASE_URL', '').startswith('http://127.0.0.1:')))" && uv run --no-project streamlit run ai_3dpygame_r1.py --server.headless true --server.address localhost --server.port 54124
+uv run --no-project python -c "import os, sys, browser_use; sys.exit(int(hasattr(browser_use, '__path__') or not os.environ.get('OPENAI_BASE_URL', '').startswith('http://127.0.0.1:')))" && uv run --no-project streamlit run ai_3dpygame_r1.py --server.headless true --server.address localhost --server.port 54124 --browser.gatherUsageStats false
 ```
 
 ```powershell
@@ -632,7 +632,7 @@ $env:OPENAI_BASE_URL
 
 ```powershell
 uv run --no-project python -c "import os, sys, browser_use; sys.exit(int(hasattr(browser_use, '__path__') or not os.environ.get('OPENAI_BASE_URL', '').startswith('http://127.0.0.1:')))"
-if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run ai_3dpygame_r1.py --server.headless true --server.address localhost --server.port 54124 }
+if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run ai_3dpygame_r1.py --server.headless true --server.address localhost --server.port 54124 --browser.gatherUsageStats false }
 ```
 
 (PowerShell 줄은 실행해 보지 못했습니다.)
