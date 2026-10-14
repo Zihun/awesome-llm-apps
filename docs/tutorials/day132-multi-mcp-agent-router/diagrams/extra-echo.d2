@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면 (main)" { class: ours }
+store: "대화 기록 (session_state)" { class: store }
+
+ui -> store: "messages에 질문 추가"
+ui -> user: "질문 다시 표시\n(st.markdown(prompt))"
+ui -> user: "Routed to ... ·\nMCP servers: ..."

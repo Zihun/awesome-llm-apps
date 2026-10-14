@@ -760,9 +760,14 @@ unknown tool test (review) @@tool:nope {}
 `anth.log`에서 도구 결과가 실린 요청만 뽑아 마지막 둘을 봅니다.
 
 ```bash
-uv run --no-project python -c "import json; rs = [r['tool_results'] for r in map(json.loads, open('anth.log', encoding='utf-8')) if r['tool_results']]; print(*rs[-2:], sep='
-')"
+uv run --no-project python -c "import json; rs = [r['tool_results'] for r in map(json.loads, open('anth.log', encoding='utf-8')) if r['tool_results']]; print(*rs[-2:], sep=chr(10))"
 ```
+
+```powershell
+uv run --no-project python -c "import json; rs = [r['tool_results'] for r in map(json.loads, open('anth.log', encoding='utf-8')) if r['tool_results']]; print(*rs[-2:], sep=chr(10))"
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다.)
 
 ```text
 [{'is_error': None, 'head': 'Error executing tool boom: boom: x'}]
@@ -912,9 +917,13 @@ n_messages 3 → 5     (두 번째 질문: 첫 요청이 이미 3)
 
 ## 요청 한 건이 흐르는 과정
 
-질문 하나는 라우팅, 기록 읽기, 서버 연결, 모델과 도구의 반복, 정리, 화면과 기록 갱신의 순서로 지납니다. 먼저 질문이 들어와 에이전트가 정해지고 안내 줄이 찍힙니다.
+질문 하나는 라우팅, 기록 읽기, 서버 연결, 모델과 도구의 반복, 정리, 화면과 기록 갱신의 순서로 지납니다. 먼저 질문이 들어와 에이전트가 정해집니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
+
+화면은 질문을 기록(`messages`)에 더하고 다시 표시한 뒤 안내 줄을 찍습니다(`agent_forge.py:339-347`).
+
+![질문 표시와 안내](diagrams/extra-echo.svg)
 
 이어서 화면이 에이전트의 기록을 읽어 도구 루프에 넘깁니다.
 
