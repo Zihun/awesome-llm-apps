@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 136 / 167일 완료
+진도: 140 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -247,10 +247,10 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 137](day137-customer-support-voice-agent/README.md) | 📞 Customer Support Voice Agent | [voice_ai_agents/customer_support_voice_agent](../../voice_ai_agents/customer_support_voice_agent/) |
-| ⬜ | [Day 138](day138-voice-rag-openaisdk/README.md) | 🔊 Voice RAG Agent (OpenAI SDK) | [voice_ai_agents/voice_rag_openaisdk](../../voice_ai_agents/voice_rag_openaisdk/) |
-| ⬜ | [Day 139](day139-ai-audio-tour-agent/README.md) | 🗣️ AI Audio Tour Agent | [voice_ai_agents/ai_audio_tour_agent](../../voice_ai_agents/ai_audio_tour_agent/) |
-| ⬜ | [Day 140](day140-insurance-claim-live-agent-team/README.md) | 🛡️ Insurance Claim Live Agent Team | [voice_ai_agents/insurance_claim_live_agent_team](../../voice_ai_agents/insurance_claim_live_agent_team/) |
+| ✅ | [Day 137](day137-customer-support-voice-agent/README.md) | 📞 Customer Support Voice Agent | [voice_ai_agents/customer_support_voice_agent](../../voice_ai_agents/customer_support_voice_agent/) |
+| ✅ | [Day 138](day138-voice-rag-openaisdk/README.md) | 🔊 Voice RAG Agent (OpenAI SDK) | [voice_ai_agents/voice_rag_openaisdk](../../voice_ai_agents/voice_rag_openaisdk/) |
+| ✅ | [Day 139](day139-ai-audio-tour-agent/README.md) | 🗣️ AI Audio Tour Agent | [voice_ai_agents/ai_audio_tour_agent](../../voice_ai_agents/ai_audio_tour_agent/) |
+| ✅ | [Day 140](day140-insurance-claim-live-agent-team/README.md) | 🛡️ Insurance Claim Live Agent Team | [voice_ai_agents/insurance_claim_live_agent_team](../../voice_ai_agents/insurance_claim_live_agent_team/) |
 
 ### 볼륨 12. 🖼️ Generative UI (Day 141–147, 7일)
 
