@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+flash: "Gemini Flash (가짜)" { class: ext }
+graph: "청구 그래프 (agent.py)" { class: ours }
+rules: "규칙 (policies.py)" { class: ours }
+
+graph -> flash: "정리 요청 (ClaimNarrative)"
+flash -> graph: "claim JSON (사진 관찰 포함)"
+graph -> rules: "prepare_claim · validate_required_claim_fields"
+rules -> graph: "field_validation"
+graph -> flash: "분류 요청 (ClaimClassification)"
+flash -> graph: "classification JSON"

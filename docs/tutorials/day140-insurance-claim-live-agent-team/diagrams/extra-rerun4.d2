@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "화면 (app.js)" { class: ours }
+tool: "서버 (execute_tool · update)" { class: ours }
+dir: "모의 정책 (policy_directory.py)" { class: ours }
+rules: "규칙 (policies.py)" { class: ours }
+graph: "청구 그래프 (agent.py)" { class: ours }
+
+graph -> rules: "fraud_signal_and_safety_gate"
+rules -> graph: "fraud_safety_gate (최종 route)"
+graph -> rules: "build_claim_intake_packet"
+rules -> graph: "claim_intake_packet"
+graph -> tool: "일곱 단계 결과 dict"
+tool -> dir: "lookup_policy (_attach_policy_from_claim)"
+dir -> tool: "정책 레코드"
+tool -> app: "state (update)"
+tool -> app: "processing {active: false}"

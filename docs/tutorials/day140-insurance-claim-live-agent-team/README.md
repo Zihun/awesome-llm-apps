@@ -1,6 +1,6 @@
 # Day 140 · 🛡️ Insurance Claim Live Agent Team
 
-> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★★ · 예상 소요 235분(원본은 약 6,100줄이고, Google 쪽 서버를 흉내 내는 가짜 서버를 포함해 파일 아홉을 직접 저장하고, 터미널 셋을 오가며 돌리고, 시퀀스 그림 열세 장·구조 그림 셋과 소스 여러 파일을 대조하는 손 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부르고 실제 Google은 한 번도 부르지 않았습니다. 진짜 키로 음성 통화를 하면 요금이 붙습니다. 가격표를 2026-10-15에 읽은 값은 `gemini-3.8-live`의 음성 입력 분당 $0.005·음성 출력 분당 $0.018이고, 호출해 확인한 것은 아닙니다. 사전 준비의 표) · 원본 앱: `voice_ai_agents/insurance_claim_live_agent_team`
+> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★★ · 예상 소요 240분(원본은 약 6,100줄이고, Google 쪽 서버를 흉내 내는 가짜 서버를 포함해 파일 열을 직접 저장하고, 터미널 셋을 오가며 돌리고, 시퀀스 그림 열여섯 장·구조 그림 셋과 소스 여러 파일을 대조하는 손 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부르고 실제 Google은 한 번도 부르지 않았습니다. 진짜 키로 음성 통화를 하면 요금이 붙습니다. 가격표를 2026-10-15에 읽은 값은 `gemini-3.8-live`의 음성 입력 분당 $0.005·음성 출력 분당 $0.018이고, 호출해 확인한 것은 아닙니다. 사전 준비의 표) · 원본 앱: `voice_ai_agents/insurance_claim_live_agent_team`
 
 ## 오늘 만들 것
 
@@ -537,11 +537,70 @@ $env:SSL_CERT_FILE = (Resolve-Path fake\fake-cert.pem).Path
 $env:GOOGLE_API_KEY = "fake-google-key"
 $env:GEMINI_API_KEY = ""
 $env:GOOGLE_GENAI_USE_VERTEXAI = "False"
-Remove-Item Env:FNOL_GEMINI_LIVE_MODEL, Env:FNOL_SKETCH_MODEL -ErrorAction SilentlyContinue
-Test-Path .env
+Remove-Item Env:GOOGLE_VERTEX_BASE_URL, Env:GOOGLE_CLOUD_PROJECT, Env:GOOGLE_CLOUD_LOCATION, Env:FNOL_AVATAR_NAME, Env:FNOL_AVATAR_PROJECT, Env:FNOL_AVATAR_IMAGE, Env:FNOL_GEMINI_LIVE_MODEL, Env:FNOL_SKETCH_MODEL -ErrorAction SilentlyContinue
 ```
 
-PowerShell에서는 `$env:이름 = ""`가 변수를 지우는 것으로 알려져 있어 빈 값으로 덮는 줄(`GOOGLE_VERTEX_BASE_URL`·`GOOGLE_CLOUD_PROJECT`·`GOOGLE_CLOUD_LOCATION`·`FNOL_AVATAR_*`)은 넣지 않았고, 이 동작은 확인하지 못했습니다. 대신 마지막 `Test-Path .env`가 `False`인지 봅니다. `claim-work`에 `.env`가 없으면 `setdefault`가 채울 것이 없습니다. 셸에 아바타·Vertex 변수가 이미 있는 PowerShell 사용자는 `Remove-Item Env:FNOL_AVATAR_NAME, Env:FNOL_AVATAR_PROJECT, Env:FNOL_AVATAR_IMAGE, Env:GOOGLE_VERTEX_BASE_URL, Env:GOOGLE_CLOUD_PROJECT, Env:GOOGLE_CLOUD_LOCATION`로 지웁니다(`.env`가 없을 때만 안전합니다).
+PowerShell에서는 `$env:이름 = ""`가 변수를 지우는 것으로 알려져 있어(확인하지 못했습니다) 위 줄은 `bash` 판처럼 빈 값으로 덮지 못하고 지웁니다. 그러면 `claim-work/.env`에 아바타·Vertex 줄이 있을 때 `setdefault`가 그 줄로 채웁니다. 그래서 두 셸 모두에서 같은 방식으로 막는 검사 스크립트 `check_env.py`를 둡니다. 아래에서 저장하고, 앱 서버를 띄우는 줄과 `cache_probe.py`는 이 검사를 통과해야만 시작합니다.
+
+이 터미널이 정말 가짜 서버로만 향하는지 검사하는 `check_env.py`를 저장합니다. 앱의 `_load_dotenv`와 같은 규칙으로 `claim-work/.env`를 읽어(셸에 없는 변수만 채움) 앱이 실제로 보게 될 값을 만든 뒤, `GOOGLE_GEMINI_BASE_URL`의 호스트가 `urlparse`로 `127.0.0.1`·`localhost`인지, `GOOGLE_API_KEY`가 `fake-`로 시작하는지, Vertex가 꺼져 있는지, `GEMINI_API_KEY`와 Vertex·아바타 변수가 비어 있는지 봅니다. 하나라도 어긋나면 이유를 찍고 종료 코드 1로 끝납니다. 문자열 접두가 아니라 호스트로 비교하므로 `https://127.0.0.1@example.invalid` 같은 주소는 통과하지 못합니다.
+
+```bash
+cat > check_env.py <<'PY'
+"""앱 코드를 돌리기 전에 이 터미널이 가짜 서버로만 향하는지 검사한다. 통과하지 못하면 종료 코드 1.
+쓰는 법: python check_env.py && python -m uvicorn ...   (스크립트는 `from check_env import check`)
+앱의 _load_dotenv와 같은 규칙으로 이 폴더의 .env를 읽어(셸에 없는 변수만 채움) 실제로 앱이 보게 될 값을 검사한다."""
+import os
+import sys
+from pathlib import Path
+from urllib.parse import urlparse
+
+MUST_BE_EMPTY = ("GEMINI_API_KEY", "GOOGLE_VERTEX_BASE_URL", "GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION",
+                 "FNOL_AVATAR_NAME", "FNOL_AVATAR_PROJECT", "FNOL_AVATAR_IMAGE")
+
+
+def effective_env():
+    env = dict(os.environ)
+    path = Path(__file__).resolve().parent / ".env"
+    if path.exists():
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            env.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+    return env
+
+
+def problems():
+    env = effective_env()
+    out = []
+    host = urlparse(env.get("GOOGLE_GEMINI_BASE_URL", "")).hostname
+    if host not in ("127.0.0.1", "localhost"):
+        out.append(f"GOOGLE_GEMINI_BASE_URL의 호스트가 루프백이 아님: {host!r}")
+    if not env.get("GOOGLE_API_KEY", "").startswith("fake-"):
+        out.append("GOOGLE_API_KEY가 가짜 값(fake-...)이 아님")
+    if env.get("GOOGLE_GENAI_USE_VERTEXAI", "").strip().lower() in ("1", "true", "yes"):
+        out.append("GOOGLE_GENAI_USE_VERTEXAI가 켜져 있음")
+    for name in MUST_BE_EMPTY:
+        if env.get(name, "").strip():
+            out.append(f"{name}에 값이 있음 (셸 또는 claim-work/.env)")
+    return out
+
+
+def check(quiet=False):
+    found = problems()
+    for line in found:
+        print("check_env 실패:", line, file=sys.stderr)
+    if not found and not quiet:
+        print("check_env 통과: 가짜 서버로만 향함")
+    if found:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    check()
+PY
+```
 
 인증서를 만들고 터미널 A에서 가짜 서버를 띄웁니다. 포트 53417은 임의로 고른 높은 번호입니다. 다른 프로그램이 쓰고 있지 않은지 먼저 봅니다. 쓰고 있다면(`netstat` 결과가 비어 있지 않다면) 이 문서의 53417을 모두(`envfake.sh`, 아래 `uvicorn` 명령, Step 2 확인의 `curl`, Step 8의 `netstat`) 같은 다른 번호로 바꿉니다. 앱 서버의 58231도 같습니다(Step 5의 서버 명령, 구동기 줄 셋, Step 8의 `curl` 넷과 `netstat`). Windows에서는 이미 쓰는 포트에 오류 없이 겹쳐 뜰 수 있습니다(Day 110). `netstat -ano`는 Windows의 Git Bash에서 확인한 명령이고, macOS·Linux에서는 `lsof -i :53417`이 같은 일을 하지만 이 문서는 돌려 보지 못했습니다.
 
@@ -914,7 +973,7 @@ avatar 설정 시 response_modalities: [<Modality.VIDEO: 'VIDEO'>]
         await live_session.send_tool_response(function_responses=[types.FunctionResponse(id=call_id, name=name, response=result, scheduling=scheduling)])
 ```
 
-읽을 곳이 넷입니다. 시작할 때 `running` 항목을 화면에 먼저 보냅니다(`publish_tool`). `lookup_policy`는 번호가 없거나 정책이 활성이 아니면 `urgent`를 켭니다. `sync_claim_packet`은 먼저 `finalize("Claimant")`로 말하던 청구인 턴을 확정하고 `request_update()`가 돌려주는 그래프 태스크를 `asyncio.shield`로 기다립니다. 끝나면 항목을 `done`으로 바꾸어 다시 보내고, 최신 상태(`state`)를 보내고, 마지막으로 결과를 `scheduling`과 함께 Live에 돌려줍니다. 그래프가 두 곳(글 턴을 받을 때와 `sync_claim_packet`)에서 불리지만 이 실행에서는 한 번만 돌았습니다. 까닭이 둘입니다. 첫째, `request_update()`는 앞 태스크가 아직 끝나지 않았으면 새로 만들지 않고 그 태스크를 그대로 돌려줍니다(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:895-899`). 가짜 서버 기록에서 `toolCall`(16ms)이 첫 정리 요청(28ms)보다 앞이라 `sync_claim_packet`이 부를 때 그래프는 아직 도는 중이었습니다. 둘째, 앞 실행이 이미 끝난 뒤라면 리비전 캐시가 듣습니다.
+읽을 곳이 넷입니다. 시작할 때 `running` 항목을 화면에 먼저 보냅니다(`publish_tool`). `lookup_policy`는 번호가 없거나 정책이 활성이 아니면 `urgent`를 켭니다. `sync_claim_packet`은 먼저 `finalize("Claimant")`로 말하던 청구인 턴을 확정하고 `request_update()`가 돌려주는 그래프 태스크를 `asyncio.shield`로 기다립니다. 끝나면 항목을 `done`으로 바꾸어 다시 보내고, 최신 상태(`state`)를 보내고, 마지막으로 결과를 `scheduling`과 함께 Live에 돌려줍니다. 그래프가 두 곳(글 턴을 받을 때와 `sync_claim_packet`)에서 불리지만 이 실행에서는 한 번만 돌았습니다. 까닭이 둘입니다. 첫째, `request_update()`는 앞 태스크가 아직 끝나지 않았으면 새로 만들지 않고 그 태스크를 그대로 돌려줍니다(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:895-899`). 아래 출력의 가짜 서버 기록에서 `toolCall`이 첫 정리 요청(`normalize`)보다 먼저 기록되어, `sync_claim_packet`이 부를 때 그래프는 아직 도는 중이었습니다(밀리초 값은 실행마다 다릅니다). 둘째, 앞 실행이 이미 끝난 뒤라면 리비전 캐시가 듣습니다.
 
 `voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:552-570`
 
@@ -945,10 +1004,17 @@ async def _run_workflow_cached(session: IntakeSession) -> dict[str, Any]:
 ```bash
 . ./envfake.sh
 netstat -ano | grep ":58231 "
-uv run --no-project python -m uvicorn live_demo.server:app --host 127.0.0.1 --port 58231
+uv run --no-project python check_env.py && uv run --no-project python -m uvicorn live_demo.server:app --host 127.0.0.1 --port 58231
 ```
 
-(PowerShell은 위 Step 2의 환경변수 줄을 먼저 붙여 넣고 같은 `uv run` 줄을 씁니다. 실행해 보지 못했습니다.) `netstat` 줄은 아무것도 내지 않아야 합니다. 서버가 뜬 뒤 구동기 세션이 끝날 때마다 터미널 B에 `Background intake task failed: APIError` 한 줄이 찍힙니다. 이 문서의 실행에서는 세션마다 찍혔고 결과에는 영향이 없었습니다(직접 확인). 원인은 소스로 추정한 것입니다. google-genai의 Live 수신이 소켓이 닫힐 때 `ConnectionClosed`를 `APIError`로 바꾸고, 서버의 `track`이 실패한 태스크를 기록합니다(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:866-876`). 서버가 아바타를 켜지 않았는지도 한 줄로 봅니다. `curl -s http://127.0.0.1:58231/api/health`가 `"avatar":{"enabled":false,"name":""}`를 담아야 합니다. 터미널 C에서 브라우저 대신 쓰는 구동기를 저장합니다. 이 스크립트는 `POST /api/sessions`로 세션을 만들고, 쿠키와 `Origin`을 직접 붙여 `/ws/live`에 연결하고, 글 한 턴을 보낸 뒤 서버가 보내는 메시지를 찍습니다. 마이크·카메라·스피커는 열지 않습니다. 서버가 돌려준 오디오 바이트는 개수만 셉니다.
+`check_env.py`가 통과해야만 서버가 뜹니다. 실패하면 이유를 찍고 종료 코드 1로 끝나 서버를 띄우지 않습니다. PowerShell은 위 Step 2의 환경변수 줄을 먼저 붙여 넣고 아래처럼 `$LASTEXITCODE`로 같은 일을 합니다(실행해 보지 못했습니다).
+
+```powershell
+uv run --no-project python check_env.py
+if ($LASTEXITCODE -eq 0) { uv run --no-project python -m uvicorn live_demo.server:app --host 127.0.0.1 --port 58231 }
+```
+
+ `netstat` 줄은 아무것도 내지 않아야 합니다. 서버가 뜬 뒤 구동기 세션이 끝날 때마다 터미널 B에 `Background intake task failed: APIError` 한 줄이 찍힙니다. 이 문서의 실행에서는 세션마다 찍혔고 결과에는 영향이 없었습니다(직접 확인). 원인은 소스로 추정한 것입니다. google-genai의 Live 수신이 소켓이 닫힐 때 `ConnectionClosed`를 `APIError`로 바꾸고, 서버의 `track`이 실패한 태스크를 기록합니다(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:866-876`). 서버가 아바타를 켜지 않았는지도 한 줄로 봅니다. `curl -s http://127.0.0.1:58231/api/health`가 `"avatar":{"enabled":false,"name":""}`를 담아야 합니다. 터미널 C에서 브라우저 대신 쓰는 구동기를 저장합니다. 이 스크립트는 `POST /api/sessions`로 세션을 만들고, 쿠키와 `Origin`을 직접 붙여 `/ws/live`에 연결하고, 글 한 턴을 보낸 뒤 서버가 보내는 메시지를 찍습니다. 마이크·카메라·스피커는 열지 않습니다. 서버가 돌려준 오디오 바이트는 개수만 셉니다.
 
 ```bash
 cat > drive.py <<'PY'
@@ -1063,12 +1129,12 @@ uv run --no-project python show_log.py
 {"src": "live", "ev": "client", "kind": "clientContent", "summary": {"turnComplete": true, "roles": ["model"], "text": "I can start the claim while we talk. First, are you and everyone else in a safe 
 {"src": "live", "ev": "client", "kind": "clientContent", "summary": {"turnComplete": true, "roles": ["user"], "text": "I'm Maya Singh, policy H0-44721, maya@example.com. Our basement in Denver floode"
 {"src": "live", "ev": "toolCall", "names": ["lookup_policy", "sync_claim_packet", "draw_incident_sketch"], "ms": 8}
-{"src": "live", "ev": "client", "kind": "toolResponse", "summary": [["lookup_policy", "WHEN_IDLE"]], "ms": 446}
-{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "normalize", "bytes": 8297, "key": "fake-g", "ms": 453}
-{"src": "rest", "model": "gemini-3.1-flash-image", "action": "generateContent", "kind": "sketch", "bytes": 680, "key": "fake-g", "ms": 453}
-{"src": "live", "ev": "client", "kind": "toolResponse", "summary": [["draw_incident_sketch", "WHEN_IDLE"]], "ms": 472}
-{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "classify", "bytes": 5440, "key": "fake-g", "ms": 475}
-{"src": "live", "ev": "client", "kind": "toolResponse", "summary": [["sync_claim_packet", "WHEN_IDLE"]], "ms": 480}
+{"src": "live", "ev": "client", "kind": "toolResponse", "summary": [["lookup_policy", "WHEN_IDLE"]], "ms": 511}
+{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "normalize", "bytes": 8297, "key": "fake-g", "ms": 519}
+{"src": "rest", "model": "gemini-3.1-flash-image", "action": "generateContent", "kind": "sketch", "bytes": 680, "key": "fake-g", "ms": 519}
+{"src": "live", "ev": "client", "kind": "toolResponse", "summary": [["draw_incident_sketch", "WHEN_IDLE"]], "ms": 537}
+{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "classify", "bytes": 5440, "key": "fake-g", "ms": 541}
+{"src": "live", "ev": "client", "kind": "toolResponse", "summary": [["sync_claim_packet", "WHEN_IDLE"]], "ms": 541}
 개수: {'setup': 1, 'clientContent': 2, 'toolCall': 1, 'toolResponse': 3, 'normalize': 1, 'sketch': 1, 'classify': 1}
 ```
 
@@ -1077,6 +1143,8 @@ REST 요청은 정리·스케치·분류 세 건입니다. 그래프는 한 번(
 ```bash
 cat > cache_probe.py <<'PY'
 import asyncio, json
+from check_env import check
+check(quiet=True)
 from live_demo import server as s
 
 async def main():
@@ -1113,9 +1181,9 @@ after claimant turn: revision 2
 
 ```text
 {"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "normalize", "bytes": 8186, "key": "fake-g", "ms": 0}
-{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "classify", "bytes": 5137, "key": "fake-g", "ms": 18}
-{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "normalize", "bytes": 8313, "key": "fake-g", "ms": 24}
-{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "classify", "bytes": 5246, "key": "fake-g", "ms": 30}
+{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "classify", "bytes": 5137, "key": "fake-g", "ms": 19}
+{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "normalize", "bytes": 8313, "key": "fake-g", "ms": 33}
+{"src": "rest", "model": "gemini-3.8-flash", "action": "generateContent", "kind": "classify", "bytes": 5246, "key": "fake-g", "ms": 39}
 개수: {'normalize': 2, 'classify': 2}
 ```
 
@@ -1164,7 +1232,7 @@ tool  sync_claim_packet done | needs docs: no open items | WHEN_IDLE
 FINAL route needs_docs | progress 70 | severity medium | type home water damage
    photos 1 sketch False audio_bytes_from_server 480
    documents [('Photos or video of damag', 'received'), ('Mitigation or drying inv', 'unknown'), ('Repair estimate or contr', 'unknown'), ('Receipts for damaged per', 'unknown')]
-   packet zip: ['claim.md', 'evidence.json', 'evidence/6f1f037f95c141db89623d95295faa68.jpg']
+   packet zip: ['claim.md', 'evidence.json', 'evidence/d9096e18afb5486c8192728d584fc2cb.jpg']
 ```
 
 세 가지가 읽힙니다. 첫째, 응급이면 `sync_claim_packet`의 스케줄링이 `INTERRUPT`입니다. 그래프가 `emergency_escalation`을 내면 `safety_escalation`이 켜져 `urgent`가 되고(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/live_tools.py:337`의 요약과 `voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:933`) 모델이 말을 끊고 알리게 됩니다. 만료된 정책은 `lookup_policy`가 `INTERRUPT`입니다. 활성이 아니라서 `urgent`입니다(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:928`). 서버는 `INTERRUPT`라는 값을 Live에 돌려줄 뿐이고, 그 값이 실제 음성에서 어떤 소리로 들리는지는 모델 쪽 일이라 이 문서가 확인하지 못했습니다. 둘째, 오디오 한 조각이 들어오면 서버는 `realtime_input`으로 그대로 넘기고, 가짜 서버가 전사 한 줄을 돌려주자 서버가 그 전사를 청구인 턴으로 확정해 같은 도구 길로 들어갑니다. 셋째, 카메라는 두 가지를 더 합니다.
@@ -1209,7 +1277,7 @@ async def _pin_evidence_photo(session: IntakeSession, args: dict[str, Any]) -> d
 
 선언된 인자 가운데 `claimant_description`만 쓰이고, 모델이 채운 `observation`·`confirmed`·`evidence_type`은 읽히지 않습니다(`grep`으로 확인). 사진의 `confirmed`는 청구인의 설명이 있고 Flash가 그것을 뒷받침한다고 답했을 때만 참입니다. 모델이 "보인다"고 말해도 서버는 믿지 않는 구조입니다. 사진이 고정되면 `revision`이 오르고(`session.revision += 1`) `request_update()`가 불려 그래프가 다시 돕니다. 그래서 `camera` 시나리오는 정리·분류 쌍이 둘입니다(`fake/fake.jsonl`을 지우고 네 시나리오를 이어서 돌린 뒤 `show_log.py`의 `개수`가 `normalize: 5, classify: 5`이면 1+1+1+2입니다. 직접 확인). 가짜 서버가 캡션에서 `damage_photo`를 가리키므로 서류 목록의 첫 항목이 `received`가 되고(구동기의 `documents` 줄), 진행률이 `flood`의 60에서 70이 됩니다(서류 넷 가운데 하나가 받음, (6+1)/10). 카메라를 끄면 마지막 프레임을 지웁니다(`set_camera_mode`). 한 청구에 사진은 스무 장까지입니다(`MAX_PHOTOS`).
 
-카메라 시나리오의 메시지는 코드 순서로 네 그림에 있습니다. 먼저 카메라를 켜고 프레임이 가서 모델이 도구를 부릅니다.
+카메라 시나리오의 메시지는 코드 순서로 아래 여섯 장과 도구 응답 그림(아래 "요청 한 건이 흐르는 과정" 절의 `extra-respond`)에 있습니다. 먼저 카메라를 켜고 프레임이 가서 모델이 도구를 부릅니다.
 
 ![카메라 켜기와 프레임](diagrams/extra-camera.svg)
 
@@ -1217,9 +1285,21 @@ async def _pin_evidence_photo(session: IntakeSession, args: dict[str, Any]) -> d
 
 ![사진 고정: 프레임 설명](diagrams/extra-photo.svg)
 
-사진이 고정되면 서버가 `request_update()`를 부르고 그래프가 한 번 더 돕니다. 재실행의 호출은 Step 5의 아래 그림들(정리·검증·분류, 규칙, 결과)과 같은 메시지이고, 다시 그리지 않았습니다. 그 앞뒤의 `processing`·`state`·도구 `done`만 그렸습니다. 도구 `done`과 재실행 완료의 순서는 실행마다 다릅니다.
+사진이 고정되면 서버가 `request_update()`를 부르고 그래프가 한 번 더 돕니다. 이 재실행의 메시지도 모두 그렸습니다(앞의 글 턴과 요청 본문이 다릅니다. 정리 요청에 사진 관찰 한 줄이 더 들어갑니다). 먼저 요청과 화면 알림입니다. 도구 `done`과 재실행 완료의 순서는 실행마다 다릅니다.
 
-![사진 고정 뒤의 재실행](diagrams/extra-rerun.svg)
+![사진 고정 뒤의 재실행 1: 요청](diagrams/extra-rerun.svg)
+
+정리·검증·분류입니다.
+
+![재실행 2: 정리·검증·분류](diagrams/extra-rerun2.svg)
+
+규칙 단계 둘입니다.
+
+![재실행 3: 정책 검토와 서류 목록](diagrams/extra-rerun3.svg)
+
+마지막 단계와 결과입니다.
+
+![재실행 4: 게이트·패킷·결과와 상태](diagrams/extra-rerun4.svg)
 
 카메라가 꺼져 있을 때의 스케치는 반대로 가볍습니다. 이미지 모델에 한 번 묻고, 받은 PNG를 세션에 둡니다. 카메라가 켜져 있으면 자동 스케치는 모델을 부르지 않고 돌아갑니다(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:768-769`). 같은 설명으로 다시 그리지 않고(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:770-771`), 요청 도중 더 새 요청이 오거나 카메라 상태가 바뀌면 결과를 버립니다. 스케치는 사진이 아니라 "삽화"로만 다뤄져서 패킷 글에도 "illustration, not a captured photograph"로 적힙니다(`voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:444`).
 
@@ -1362,7 +1442,7 @@ uv run --no-project python -m unittest discover -s tests -p 'test_*.py'
   from starlette.testclient import TestClient as TestClient  # noqa
 .......................................................
 ----------------------------------------------------------------------
-Ran 55 tests in 0.299s
+Ran 55 tests in 0.385s
 
 OK
 ```
@@ -1393,7 +1473,24 @@ uv run --no-project python -c "import live_demo.server as s; d = s.avatar_descri
 rm .env
 ```
 
-기대 출력은 `{'enabled': False, 'name': ''} https://127.0.0.1:53417 False`입니다(직접 확인). 아바타 변수를 빈 값 대신 `unset`으로 지웠던 판에서는 같은 `.env`가 변수를 채워 `{'enabled': True, 'name': 'Kira'} https://us-central1-aiplatform.googleapis.com/ True`가 되었습니다(직접 확인, 생성자만). 그 상태로 Live에 연결하면 루프백이 아니라 Google Cloud의 Vertex로 가므로, `envfake.sh`는 빈 값으로 덮습니다.
+기대 출력은 `{'enabled': False, 'name': ''} https://127.0.0.1:53417 False`입니다(직접 확인). 같은 `.env`를 두고 `check_env.py`도 시험합니다. 첫 줄은 `envfake.sh`를 읽은 터미널이고, 둘째 줄은 아바타 변수가 셸에 없는 상태(PowerShell이 처한 상태)를 흉내 냅니다. 이 시험은 연결하지 않고 검사만 돕니다.
+
+```bash
+printf 'FNOL_AVATAR_NAME=Kira\nFNOL_AVATAR_PROJECT=some-proj\n' > .env
+uv run --no-project python check_env.py; echo "exit=$?"
+(unset FNOL_AVATAR_NAME FNOL_AVATAR_PROJECT; uv run --no-project python check_env.py; echo "exit=$?")
+rm .env
+```
+
+```text
+check_env 통과: 가짜 서버로만 향함
+exit=0
+check_env 실패: FNOL_AVATAR_NAME에 값이 있음 (셸 또는 claim-work/.env)
+check_env 실패: FNOL_AVATAR_PROJECT에 값이 있음 (셸 또는 claim-work/.env)
+exit=1
+```
+
+(직접 확인) 앞 줄은 통과하고 뒤 줄은 `.env`의 아바타 줄을 잡아 멈춥니다. 정상일 때만 통과하는 것도 확인했습니다. 진짜 주소(`GOOGLE_GEMINI_BASE_URL=https://generativelanguage.googleapis.com`)나 `envfake.sh`를 읽지 않은 터미널(주소 없음, 진짜 키)에서는 `호스트가 루프백이 아님`과 `GOOGLE_API_KEY가 가짜 값이 아님`으로 종료 코드 1입니다. 아바타 변수를 빈 값 대신 `unset`으로 지웠던 판에서는 같은 `.env`가 변수를 채워 `{'enabled': True, 'name': 'Kira'} https://us-central1-aiplatform.googleapis.com/ True`가 되었습니다(직접 확인, 생성자만). 그 상태로 Live에 연결하면 루프백이 아니라 Google Cloud의 Vertex로 가므로, `envfake.sh`는 빈 값으로 덮습니다.
 
 `voice_ai_agents/insurance_claim_live_agent_team/live_demo/server.py:41-50`
 
@@ -1448,7 +1545,7 @@ Remove-Item Env:SSL_CERT_FILE, Env:GOOGLE_GEMINI_BASE_URL, Env:GOOGLE_API_KEY, E
 
 ## 요청 한 건이 흐르는 과정
 
-글 한 턴 "I'm Maya Singh, policy H0-44721, maya@example.com. Our basement in Denver flooded on 2026-03-18 when the sump pump failed. Nobody is hurt."를 보냈을 때의 길입니다. 순서는 이 문서의 가짜 서버로 관찰한 한 번의 실행이고, 도구가 동시에 돌므로 실제 순서는 달라질 수 있습니다. 한 그림에 다 못 담아 그림 열세 장으로 나눴습니다. 각 메시지는 처음 일어나는 곳의 한 그림에 코드 순서대로 하나씩 있고, 같은 호출이 되풀이될 때(사진 뒤 그래프 재실행)만 다시 그리지 않고 앞 그림을 가리킵니다. 글 턴 하나에 도구 셋(정책 조회·청구 정리·스케치)이 동시에 도는데, 정책 조회와 청구 정리를 주 경로로 그렸고 스케치와 사진 도구는 Step 6에 있습니다.
+글 한 턴 "I'm Maya Singh, policy H0-44721, maya@example.com. Our basement in Denver flooded on 2026-03-18 when the sump pump failed. Nobody is hurt."를 보냈을 때의 길입니다. 순서는 이 문서의 가짜 서버로 관찰한 한 번의 실행이고, 도구가 동시에 돌므로 실제 순서는 달라질 수 있습니다. 한 그림에 다 못 담아 이 절의 그림 아홉 장과 Step 6의 그림 일곱 장(스케치 하나, 카메라 여섯)으로 나눴습니다. 각 메시지는 한 그림에 코드 순서대로 하나씩 있습니다. 사진 뒤 그래프 재실행은 앞 그래프 실행과 같은 호출이 한 번 더 일어나는 것이라 Step 6에서 한 번 더 그렸습니다. 글 턴 하나에 도구 셋(정책 조회·청구 정리·스케치)이 동시에 도는데, 정책 조회와 청구 정리를 주 경로로 그렸고 스케치와 사진 도구는 Step 6에 있습니다.
 
 먼저 세션과 연결입니다. 화면이 `POST /api/sessions`로 세션을 만들면 서버가 쿠키와 첫 상태를 돌려줍니다(첫 상태의 route가 `policy_review`인 까닭은 Step 5). 화면은 `/api/health`로 모델 이름과 아바타 설정을 받고, 글이나 음성을 보낼 때 소켓을 엽니다. 서버는 설정과 도구 선언을 담아 Live 세션을 열고 첫 인사를 복원한 뒤 `session`·`state`·`ready`를 하나씩 보냅니다. (이미 세션이 있으면 화면은 `GET /api/sessions/<번호>`로 이어 가는데 이 그림에는 새로 시작하는 길만 그렸습니다.)
 
@@ -1499,7 +1596,7 @@ Remove-Item Env:SSL_CERT_FILE, Env:GOOGLE_GEMINI_BASE_URL, Env:GOOGLE_API_KEY, E
 - [ ] 시나리오 넷이 모두 `FINAL`까지 갑니다(Step 6).
 - [ ] Node 시험 25개와 파이썬 시험 55개가 통과합니다(Step 7·8).
 - [ ] `curl` 넷이 `403`·`403`·JSON·`404`입니다(Step 8).
-- [ ] `.env`에 아바타 줄을 넣어도 `{'enabled': False, ...} https://127.0.0.1:53417 False`입니다(Step 8).
+- [ ] `.env`에 아바타 줄을 넣고 `check_env.py`를 돌리면, `envfake.sh`를 읽은 bash는 통과하고 아바타 변수가 셸에 없는 상태는 종료 코드 1입니다. 서버 줄은 이 검사 뒤에만 뜹니다(Step 8, PowerShell은 `$LASTEXITCODE`).
 - [ ] 서버 둘을 멈췄고 포트가 비었고, 실습 터미널의 변수를 풀거나 터미널을 닫았습니다(Step 8).
 
 ## 문제 해결
@@ -1518,6 +1615,7 @@ Remove-Item Env:SSL_CERT_FILE, Env:GOOGLE_GEMINI_BASE_URL, Env:GOOGLE_API_KEY, E
 | 진짜 키로 쓰는데 모델이 없다는 오류 | 모델 ID가 바뀌거나 종료됨. Live·이미지 모델은 환경변수, Flash는 코드 상수 | Live는 `FNOL_GEMINI_LIVE_MODEL`, 스케치는 `FNOL_SKETCH_MODEL`을 바꿉니다. Flash는 `voice_ai_agents/insurance_claim_live_agent_team/agent.py:57`의 `MODEL`을 바꿉니다 |
 | 진짜 키 환경에서 `GOOGLE_GENAI_USE_VERTEXAI=True`에 `GOOGLE_CLOUD_PROJECT`가 함께 있음(실제로 본 증상이 아니라 생성자로만 확인한 예방 안내) | 주소는 `GOOGLE_GEMINI_BASE_URL` 그대로지만 SDK가 API 키를 버리고 Vertex 인증(ADC)을 찾게 됨(Step 2의 두 확인 줄) | 이 문서의 따라 하기에서는 `envfake.sh`가 `False`와 빈 프로젝트로 덮습니다. 진짜로 쓸 때도 아바타를 쓰지 않으면 `False`로 둡니다 |
 | `envfake.sh`를 읽은 터미널에서 `uv pip install`이 `invalid peer certificate: UnknownIssuer`로 실패 | `SSL_CERT_FILE`이 가짜 서버의 자체 서명 인증서 하나로 바뀌어 PyPI의 공인 인증서를 믿지 못함 | 설치는 `envfake.sh`를 읽기 전에 하거나, 읽은 터미널을 닫고 새 터미널에서 합니다(직접 확인) |
+| `check_env 실패: ...`로 서버가 뜨지 않음 | 이 터미널이 가짜 서버로만 향하지 않음(주소·키·Vertex·아바타 변수나 `claim-work/.env`의 아바타 줄) | 찍힌 이유대로 `envfake.sh`를 다시 읽거나 `.env`의 해당 줄을 지웁니다. 검사를 건너뛰고 서버를 띄우지 않습니다 |
 | 서버 터미널에 `Background intake task failed: APIError` | 구동기 세션이 끝날 때 Live 소켓이 닫히며 SDK가 `ConnectionClosed`를 `APIError`로 바꾸는 것으로 보임(소스로 추정) | 결과에는 영향이 없었습니다(직접 확인) |
 | `claim-work/.env`에 아바타 줄을 넣었더니 `avatar_description()`이 `enabled: True` | `envfake.sh`가 아바타 변수를 `unset`으로 지웠던 판. 셸에 없는 변수는 `.env`가 채움 | `export FNOL_AVATAR_PROJECT=`처럼 빈 값으로 덮습니다. 이 문서의 `envfake.sh`가 그렇게 합니다(직접 확인) |
 
