@@ -1,6 +1,6 @@
 # Day 137 · 📞 Customer Support Voice Agent
 
-> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★☆ ⚠ 오늘 풀리는 `firecrawl-py` 4.50.0에서는 "Initialize System"이 크롤링 단계에서 `FirecrawlClient.crawl() got an unexpected keyword argument 'params'`로 멈춰 질문까지 가지 못하고(Step 4), 앱이 쓰는 `gpt-4o`와 `gpt-4o-mini-tts`는 기본 스냅숏이 OpenAI 폐기 문서에서 2027년 1월 종료 예정입니다(사전 준비) · 예상 소요 150분(앱은 392줄 한 파일이지만 가짜 서버 하나와 확인 스크립트 넷(`run_app.py`·`sig_check.py`·`embed_check.py`·`guard.py`)을 직접 저장하고, 같은 앱을 시나리오를 바꿔 여러 번 돌려 서버 기록과 맞대어 보며, 그림 열아홉 장 가운데 시퀀스 일곱 장을 따라가는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다). 진짜 키로 질문 한 건에 `gpt-4o` 두 번 약 $0.02에 음성 합성 요금이 더 붙습니다(⚠ 추정이며 Step 6에 계산을 적었습니다. 음성 합성의 분당 요금은 확인하지 못했습니다) · 원본 앱: `voice_ai_agents/customer_support_voice_agent`
+> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★☆ ⚠ 오늘 풀리는 `firecrawl-py` 4.50.0에서는 "Initialize System"이 크롤링 단계에서 `FirecrawlClient.crawl() got an unexpected keyword argument 'params'`로 멈춰 질문까지 가지 못하고(Step 4), 앱이 쓰는 `gpt-4o`와 `gpt-4o-mini-tts`는 기본 스냅숏이 OpenAI 폐기 문서에서 2027년 1월 종료 예정입니다(사전 준비) · 예상 소요 160분(앱은 392줄 한 파일이지만 가짜 서버 하나와 확인 스크립트 일곱(`patches.py`·`run_app.py`·`screen_app.py`·`screen_check.py`·`sig_check.py`·`embed_check.py`·`guard.py`)을 직접 저장하고, 같은 앱을 시나리오를 바꿔 여러 번 돌려 서버 기록과 맞대어 보며, 그림 열아홉 장 가운데 시퀀스 일곱 장을 따라가는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다). 진짜 키로 질문 한 건에 `gpt-4o` 두 번 약 $0.02에 음성 합성 요금이 더 붙습니다(⚠ 추정이며 Step 6에 계산을 적었습니다. 음성 합성의 분당 요금은 확인하지 못했습니다) · 원본 앱: `voice_ai_agents/customer_support_voice_agent`
 
 ## 오늘 만들 것
 
@@ -166,63 +166,80 @@ IMPORT_OK
             ]):
 ```
 
-다섯 칸이 모두 차야 합니다. 아래 `run_app.py`는 Streamlit의 `AppTest`로 앱을 내 프로세스 안에서 돌리고(브라우저를 열지 않습니다), 외부로 나갈 다섯 곳을 스크립트 안에서 바꿉니다. `OPENAI_BASE_URL`을 가짜 서버로 걸고, `QdrantClient`는 사이드바 주소와 상관없이 메모리 저장소 하나를 돌려주며, `TextEmbedding`은 단어를 해시한 384차원 벡터를 만드는 가짜로(모델을 내려받지 않습니다), `FirecrawlApp`은 가짜 서버 주소(`api_url`)를 달아서 만들고, 트레이스 업로드 주소(`default_exporter().endpoint`)도 가짜 서버로 돌립니다. 그래서 이 스크립트는 명령 앞의 환경변수를 하나 빠뜨려도 바깥으로 나가지 않습니다. 아래 명령에 `OPENAI_AGENTS_DISABLE_TRACING=1`을 붙이는 것은 트레이스 업로드를 끄려는 것이고, 바깥을 막는 장치가 아닙니다. 가짜 벡터는 의미를 모르기 때문에 아래의 검색 순위는 뜻이 없습니다. 파일 이름은 `run_app.py`입니다.
+다섯 칸이 모두 차야 합니다. 이 문서의 모든 실행은 외부로 나갈 다섯 곳을 먼저 바꿔 놓은 채로 앱을 돌립니다. 바꾸는 코드는 `patches.py` 하나에 있습니다. `OPENAI_BASE_URL`을 가짜 서버로 걸고, `QdrantClient`는 사이드바 주소와 상관없이 메모리 저장소 하나를 돌려주며, `TextEmbedding`은 단어를 해시한 384차원 벡터를 만드는 가짜로(모델을 내려받지 않습니다), `FirecrawlApp`은 가짜 서버 주소(`api_url`)를 달아서 만들고, 트레이스 업로드 주소(`default_exporter().endpoint`)도 가짜 서버로 돌립니다. 바꾼 줄마다 바로 뒤에 `assert`가 있어서 한 줄이라도 빠지면 앱이 뜨기 전에 멈춥니다. 또 셸에 `HTTP_PROXY`가 있는 독자의 루프백 요청이 프록시로 새지 않도록 `NO_PROXY`에 `127.0.0.1,localhost`를 더합니다(`HTTP_PROXY`만 걸고 `NO_PROXY`는 비운 셸에서 돌려도 프록시에 요청이 0건인 것을 직접 확인했습니다). 가짜 벡터는 의미를 모르기 때문에 아래의 검색 순위는 뜻이 없습니다.
 
 ```python
-"""Run the app under AppTest. Qdrant, fastembed and Firecrawl's address are replaced.
+"""Replace everything the app could reach outside, then assert that each replacement is in place.
+install(base) must run before the app file is executed. It is safe to call again on a rerun."""
+import hashlib
+import os
+import re
+
+import numpy as np
+
+
+def install(base):  # base: the fake server, e.g. http://127.0.0.1:53217
+    assert base.startswith("http://127.0.0.1:"), base
+    # a shell with HTTP_PROXY must not send loopback requests to the proxy
+    no_proxy = ",".join(filter(None, [os.environ.get("NO_PROXY"), "127.0.0.1,localhost"]))
+    os.environ["NO_PROXY"] = os.environ["no_proxy"] = no_proxy
+    os.environ["OPENAI_BASE_URL"] = base + "/v1"
+
+    import fastembed, firecrawl, qdrant_client
+    from agents.tracing.processors import default_exporter
+
+    class FakeEmbedding(fastembed.TextEmbedding):  # no model download: hashed words, 384 dims like bge-small
+        def __init__(self, *a, **k):
+            pass
+
+        def embed(self, docs, *a, **k):
+            for d in docs:
+                v = np.zeros(384, dtype=np.float32)
+                for w in re.findall(r"[a-z0-9\-]+", d.lower()):
+                    v[int(hashlib.md5(w.encode()).hexdigest(), 16) % 384] += 1
+                yield v / (np.linalg.norm(v) or 1.0)
+
+    orig_q = getattr(qdrant_client, "_orig_QdrantClient", qdrant_client.QdrantClient)
+    qdrant_client._orig_QdrantClient = orig_q
+    shared = getattr(qdrant_client, "_shared_store", None) or orig_q(":memory:")
+    qdrant_client._shared_store = shared  # one store for the whole run, like a server that outlives a click
+
+    def MemQdrant(url=None, api_key=None, **k):  # whatever the sidebar holds, use the in-memory store
+        print("QdrantClient asked for url=%r api_key=%s..." % (url, (api_key or "")[:4]))
+        return shared
+
+    class LocalFirecrawl(getattr(firecrawl, "_orig_FirecrawlApp", firecrawl.FirecrawlApp)):
+        def __init__(self, api_key=None, **k):
+            super().__init__(api_key=api_key, api_url=base)
+
+    if not hasattr(firecrawl, "_orig_FirecrawlApp"):
+        firecrawl._orig_FirecrawlApp = firecrawl.FirecrawlApp
+    fastembed.TextEmbedding = FakeEmbedding
+    qdrant_client.QdrantClient = MemQdrant
+    firecrawl.FirecrawlApp = LocalFirecrawl
+    default_exporter().endpoint = base + "/v1/traces/ingest"  # the SDK uploads traces to api.openai.com otherwise
+
+    assert fastembed.TextEmbedding is FakeEmbedding, "fastembed would download a model"
+    assert qdrant_client.QdrantClient is MemQdrant, "the sidebar Qdrant address would be used"
+    assert firecrawl.FirecrawlApp is LocalFirecrawl, "Firecrawl would use its real address"
+    assert default_exporter().endpoint.startswith("http://127.0.0.1:"), "traces would go to api.openai.com"
+    assert os.environ["OPENAI_BASE_URL"].startswith("http://127.0.0.1:"), "OpenAI would be the real one"
+    assert "127.0.0.1" in os.environ["NO_PROXY"], "loopback requests could go through a proxy"
+```
+
+`run_app.py`는 Streamlit의 `AppTest`로 앱을 내 프로세스 안에서 돌리고(브라우저를 열지 않습니다) 시작할 때 `patches.install`을 부릅니다. 그래서 이 스크립트는 명령 앞의 환경변수를 하나 빠뜨려도 바깥으로 나가지 않습니다. 아래 명령에 `OPENAI_AGENTS_DISABLE_TRACING=1`을 붙이는 것은 트레이스 업로드를 끄려는 것이고, 바깥을 막는 장치가 아닙니다. 파일 이름은 `run_app.py`입니다.
+
+```python
+"""Run the app under AppTest with patches.install() applied.
 Usage: run_app.py PORT SCENARIO   (SCENARIO: empty | init | ask | rerun | twice)"""
-import os, sys, hashlib, re, glob, tempfile
+import os, sys, glob, tempfile
 
 port, scenario = sys.argv[1], sys.argv[2]
 base = f"http://127.0.0.1:{port}"
-os.environ["OPENAI_BASE_URL"] = base + "/v1"
 
-import numpy as np
-import fastembed, qdrant_client, firecrawl
+import patches
 
-
-class FakeEmbedding(fastembed.TextEmbedding):  # no model download: hashed bag of words, 384 dims like bge-small
-    def __init__(self, *a, **k):
-        pass
-
-    def embed(self, docs, *a, **k):
-        for d in docs:
-            v = np.zeros(384, dtype=np.float32)
-            for w in re.findall(r"[a-z0-9\-]+", d.lower()):
-                v[int(hashlib.md5(w.encode()).hexdigest(), 16) % 384] += 1
-            n = np.linalg.norm(v) or 1.0
-            yield v / n
-
-
-fastembed.TextEmbedding = FakeEmbedding
-
-_Q = qdrant_client.QdrantClient
-
-
-_SHARED = _Q(":memory:")  # one store for the whole run, like a real server that outlives a click
-
-
-def MemQdrant(url=None, api_key=None, **k):  # whatever the sidebar holds, use the in-memory store
-    print("QdrantClient asked for url=%r api_key=%s..." % (url, (api_key or "")[:4]))
-    return _SHARED
-
-
-qdrant_client.QdrantClient = MemQdrant
-
-_F = firecrawl.FirecrawlApp
-
-
-class LocalFirecrawl(_F):
-    def __init__(self, api_key=None, **k):
-        super().__init__(api_key=api_key, api_url=base)
-
-
-firecrawl.FirecrawlApp = LocalFirecrawl
-
-# The SDK uploads traces to api.openai.com unless this is changed, so it is always changed here.
-from agents.tracing.processors import default_exporter
-default_exporter().endpoint = base + "/v1/traces/ingest"
-assert default_exporter().endpoint.startswith("http://127.0.0.1:") and os.environ["OPENAI_BASE_URL"].startswith("http://127.0.0.1:")
+patches.install(base)  # replaces fastembed, Qdrant, Firecrawl's address, OpenAI's address and the trace address, with asserts
 
 from streamlit.testing.v1 import AppTest
 
@@ -326,7 +343,7 @@ def setup_qdrant_collection(qdrant_url: str, qdrant_api_key: str, collection_nam
 
 ![버튼 클릭부터 클라이언트 생성까지](diagrams/extra-init.svg)
 
-`QdrantClient(url=…, api_key=…)`는 만들 때 연결하지 않았습니다. 닫힌 포트(`http://127.0.0.1:9`)로 만들어도 오류 없이 만들어졌고 `http` 주소에 키를 주면 `UserWarning: Api key is used with an insecure connection.`만 떴습니다. 오류는 컬렉션을 만드는 139~142행에서 났습니다. 같은 닫힌 포트에서 `create_collection`을 직접 불렀더니 `ResponseHandlingException [WinError 10061] …`(한국어 Windows의 "연결을 거부했으므로 연결하지 못했습니다")였고, 앱에서는 사이드바에 `Error during setup: …`로 나옵니다. 이미 있는 컬렉션은 오류 문구에 `already exists`가 있으면 넘어갑니다(143~145행). 메모리 저장소는 `ValueError: Collection docs_embeddings already exists`로 이 문구를 냈고(직접 확인), 진짜 서버가 같은 문구를 내는지는 확인하지 못했습니다. 컬렉션 이름은 `docs_embeddings`로 고정이라 앱은 하나의 문서 사이트만 한 컬렉션에 쌓습니다.
+`QdrantClient(url=…, api_key=…)`는 오류 없이 돌아오지만 연결을 하지 않는 것은 아닙니다. 루프백 가짜 서버 주소로 만들었더니 만든 직후에는 서버가 받은 요청이 0건이고 2초 뒤에 `GET /` 한 건이 와 있었습니다(직접 확인). 만든 뒤 백그라운드 스레드가 서버 호환성을 확인하는 요청으로 읽었습니다. 그래서 사이드바에 적은 주소로는 버튼을 누르는 순간에 이미 요청이 나갑니다. 닫힌 포트(`http://127.0.0.1:9`)로 만들어도 오류는 나지 않았고 `http` 주소에 키를 주면 `UserWarning: Api key is used with an insecure connection.`만 떴습니다. 오류는 컬렉션을 만드는 139~142행에서 났습니다. 같은 닫힌 포트에서 `create_collection`을 직접 불렀더니 `ResponseHandlingException [WinError 10061] …`(한국어 Windows의 "연결을 거부했으므로 연결하지 못했습니다")였고, 앱에서는 사이드바에 `Error during setup: …`로 나옵니다. 이미 있는 컬렉션은 오류 문구에 `already exists`가 있으면 넘어갑니다(143~145행). 메모리 저장소는 `ValueError: Collection docs_embeddings already exists`로 이 문구를 냈고(직접 확인), 진짜 서버가 같은 문구를 내는지는 확인하지 못했습니다. 컬렉션 이름은 `docs_embeddings`로 고정이라 앱은 하나의 문서 사이트만 한 컬렉션에 쌓습니다.
 
 134행의 `TextEmbedding()`은 모델 이름을 주지 않으므로 fastembed의 기본값 `BAAI/bge-small-en-v1.5`가 됩니다(소스로 확인, `fastembed/text/text_embedding.py` 89행). fastembed 0.9.0의 모델 목록에서 이 모델은 384차원, 크기 0.067GB이고 출처가 Hugging Face의 `Qdrant/bge-small-en-v1.5-onnx-Q`이며 설명이 "English, 512 input tokens truncation"입니다(직접 확인). 내려받기는 생성자 안에서 늘 일어나고(소스로 확인, `onnx_embedding.py` 310행의 `download_model`), `lazy_load` 기본값 `False`는 내려받은 모델을 메모리에 올리는 일(317행의 `load_onnx_model`)만 생성자 안으로 가져옵니다. 캐시 폴더는 `FASTEMBED_CACHE_PATH`가 없으면 `tempfile.gettempdir()` 아래의 `fastembed_cache`입니다(소스로 확인, `common/utils.py` 76~87행). 이 문서는 내려받지 않았습니다. 생성자만 불러 무슨 일이 나는지 보는 `embed_check.py`를 저장합니다. 이 스크립트는 `import` 앞에서 `HF_HUB_OFFLINE=1`을 스스로 걸고 `local_files_only=True`도 주기 때문에, 명령 앞에 아무것도 붙이지 않아도 Hugging Face에 접속하지 않습니다.
 
@@ -911,9 +928,9 @@ grep -c ingest server.log
 0
 ```
 
-(PowerShell은 변수를 `$env:`로 걸고 같은 명령을 돌린 뒤 지웁니다. 실행해 보지 못했습니다. 출력은 마지막 줄만 옮겼습니다.) 트레이스 주소를 바꾸지 않은 채 환경변수 `0`으로 돌렸을 때는, 내가 바깥으로 나가려는 요청을 기록만 하는 프록시를 걸어 두었습니다(독자 PC에는 없는 안전망입니다). 그 프록시가 `CONNECT api.openai.com:443`을 세 번 받았고 앱 출력에는 `[non-fatal] Tracing request failed`가 세 줄, `max retries reached`가 한 줄 나왔습니다. 인터넷에 붙은 독자가 진짜 키로 `run_app.py` 없이 앱을 돌리면 이 요청이 실제 OpenAI로 갑니다. 그래서 실제 앱을 띄우는 터미널에는 `OPENAI_AGENTS_DISABLE_TRACING=1`을 겁니다.
+(PowerShell은 변수를 `$env:`로 걸고 같은 명령을 돌린 뒤 지웁니다. 실행해 보지 못했습니다. 출력은 마지막 줄만 옮겼습니다.) 트레이스 주소를 바꾸지 않은 채 환경변수 `0`으로 돌렸을 때는, 내가 바깥으로 나가려는 요청을 기록만 하는 프록시를 걸어 두었습니다(독자 PC에는 없는 안전망입니다). 그 프록시가 `CONNECT api.openai.com:443`을 세 번 받았고 앱 출력에는 `[non-fatal] Tracing request failed`가 세 줄, `max retries reached`가 한 줄 나왔습니다. 이 실험은 독자가 따라 할 명령이 아닙니다. 지금의 `patches.py`에서는 트레이스 주소 줄을 빼면 `AssertionError`로 먼저 멈추기 때문에 이 줄을 지운 사본으로만 재현했습니다. 인터넷에 붙은 독자가 진짜 키로 패치 없이 원본 앱을 돌리면 이 요청이 실제 OpenAI로 갑니다. 그래서 앱을 띄우는 터미널에는 `OPENAI_AGENTS_DISABLE_TRACING=1`을 겁니다.
 
-실제 앱을 띄우는 명령은 이렇습니다. `fake_server.py`와 `run_app.py`는 쓰지 않으므로, 실수로 바깥에 닿지 않도록 환경변수를 검사하는 `guard.py`를 저장하고 `guard.py`가 통과할 때만 앱을 띄웁니다. 이 스크립트는 `OPENAI_BASE_URL`과 `FIRECRAWL_API_URL`의 호스트(`urlparse`)가 `127.0.0.1`·`localhost`인지, 트레이싱이 꺼져 있는지, `firecrawl-py`가 1.x인지(4.x는 `FIRECRAWL_API_URL`을 무시합니다)를 보고 하나라도 어긋나면 종료 코드 1로 끝납니다.
+화면을 직접 띄우는 길도 같은 원칙으로 만듭니다. 원본 파일을 그대로 `streamlit run` 하면 "Initialize System"을 누르는 순간 fastembed가 Hugging Face로 접속해 모델을 내려받고(Step 3) 사이드바의 Qdrant 주소로 요청이 나가는데, 초기화가 끝나야 질문 칸이 열리므로 그 버튼은 반드시 눌러야 합니다. 그래서 띄우는 대상을 `screen_app.py`로 바꿉니다. 이 파일은 `patches.install`을 먼저 부른 뒤 원본 앱 파일을 그대로(`runpy`) 실행합니다. 앞에는 환경변수를 검사하는 `guard.py`를 둡니다. 이 스크립트는 `OPENAI_BASE_URL`과 `FIRECRAWL_API_URL`의 호스트(`urlparse`)가 `127.0.0.1`·`localhost`인지, 트레이싱이 꺼져 있는지, `firecrawl-py`가 1.x인지(4.x는 `FIRECRAWL_API_URL`을 무시합니다)를 보고 하나라도 어긋나면 종료 코드 1로 끝납니다.
 
 ```python
 """Run this before starting the real app: python guard.py && streamlit run ...
@@ -946,13 +963,24 @@ if __name__ == "__main__":
     check()
 ```
 
+```python
+"""streamlit run target: the patches first, then the unchanged app file."""
+import os
+import runpy
+
+import patches
+
+patches.install(os.environ["FIRECRAWL_API_URL"])  # guard.py has already checked that this is a loopback address
+runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "customer_support_voice_agent.py"), run_name="__main__")
+```
+
 터미널 A에서 `fake_server.py 53217 server.log`가 떠 있는 채로, 새 터미널에서 변수를 걸고 띄웁니다.
 
 ```bash
 export OPENAI_BASE_URL=http://127.0.0.1:53217/v1
 export FIRECRAWL_API_URL=http://127.0.0.1:53217
 export OPENAI_AGENTS_DISABLE_TRACING=1
-uv run --no-project python guard.py && uv run --no-project streamlit run customer_support_voice_agent.py --server.headless true --server.address localhost --server.port 53301 --browser.gatherUsageStats false
+uv run --no-project python guard.py && uv run --no-project streamlit run screen_app.py --server.headless true --server.address localhost --server.port 53301 --browser.gatherUsageStats false
 ```
 
 ```powershell
@@ -960,10 +988,52 @@ $env:OPENAI_BASE_URL = "http://127.0.0.1:53217/v1"
 $env:FIRECRAWL_API_URL = "http://127.0.0.1:53217"
 $env:OPENAI_AGENTS_DISABLE_TRACING = "1"
 uv run --no-project python guard.py
-if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run customer_support_voice_agent.py --server.headless true --server.address localhost --server.port 53301 --browser.gatherUsageStats false }
+if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run screen_app.py --server.headless true --server.address localhost --server.port 53301 --browser.gatherUsageStats false }
 ```
 
-(PowerShell 형태는 실행해 보지 못했습니다. 이 변수들은 그 터미널에 남으므로 끝나면 닫거나 지웁니다.) 이 문서는 이 명령으로 띄워 `/_stcore/health`가 200을 주는 것까지만 확인했고(직접 확인) 화면을 열지 않았습니다. 앱 폴더에는 새 파일이 생기지 않았습니다. 화면을 직접 열어 본다면 사이드바에는 가짜 값만 넣고 "Initialize System"은 누르지 마세요. `guard.py`가 막지 못하는 길이 두 개 있기 때문입니다. 첫 초기화에서 fastembed가 Hugging Face로 접속해 모델을 내려받고(Step 3), 사이드바의 Qdrant 주소가 그대로 쓰입니다(133행). 진짜 키와 진짜 주소를 넣으면 위의 모든 요금이 나가고, 질문 칸에 글이 남은 채 만지는 모든 위젯이 요금을 냅니다. 소리는 서버가 아니라 브라우저의 `st.audio`가 재생합니다(367행). 서버 쪽 코드에는 스피커를 여는 부분이 없습니다.
+(PowerShell 형태는 실행해 보지 못했습니다. 이 변수들은 그 터미널에 남으므로 끝나면 닫거나 지웁니다.) 이 명령으로 띄워 `/_stcore/health`가 200을 주는 것까지 직접 확인했습니다. 브라우저는 열지 않았으므로 화면 조작은 `screen_check.py`가 `AppTest`로 대신합니다. 이 스크립트는 `screen_app.py`를 대상으로 하고 패치를 따로 걸지 않으며, 첫머리에서 `guard.py`와 같은 검사를 합니다. 사이드바에 가짜 값을 넣고 "Initialize System"을 누르고, 질문하고, 목소리를 바꿉니다. 위와 같이 변수를 건 터미널에서 돌립니다.
+
+```python
+"""Drive the screen the way a person would, through screen_app.py (no patches are applied here):
+fill the sidebar with fake values, press Initialize System, ask a question, change the voice."""
+import sys
+
+from guard import check
+
+check()  # the same environment check as before streamlit run
+from streamlit.testing.v1 import AppTest
+
+at = AppTest.from_file("screen_app.py", default_timeout=120).run()
+if at.exception:  # a missing patch stops the screen here, before anything can be pressed
+    sys.exit("screen stopped: " + str(at.exception[0].value)[:120])
+for box, value in zip(at.sidebar.text_input, ["https://qdrant.invalid:6333", "qd-fake-sidebar", "fc-fake-sidebar", "sk-fake-sidebar", "https://docs.example.test"]):
+    box.set_value(value)
+at.run()
+next(b for b in at.sidebar.button if b.label == "Initialize System").click()
+at.run()
+print("initialize ->", [e.value for e in at.error] or "no error", "|", [s.value for s in at.success])
+next(t for t in at.text_input if t.label.startswith("What would you like")).set_value("How do I authenticate API requests?").run()
+print("question ->", [e.value for e in at.error] or "no error", "|", [m.value[:40] for m in at.markdown if m.value.startswith("FAKE")])
+at.sidebar.selectbox[0].select("nova").run()
+print("voice ->", [e.value for e in at.error] or "no error", "|", at.session_state.selected_voice)
+sys.exit(0)
+```
+
+```bash
+: > server.log
+uv run --no-project python -B -W ignore screen_check.py
+echo "crawl: $(grep -c '/v1/crawl"' server.log), responses: $(grep -c '/v1/responses' server.log), speech: $(grep -c 'audio/speech' server.log)"
+```
+
+```text
+QdrantClient asked for url='https://qdrant.invalid:6333' api_key=qd-f...
+initialize -> no error | ['System initialized successfully!']
+question -> no error | ['FAKE ANSWER: send the key in the X-Acme-']
+voice -> no error | nova
+crawl: 1, responses: 4, speech: 2
+```
+
+직접 확인한 출력입니다(`ScriptRunContext` 경고는 뺐습니다). 사이드바의 Qdrant 주소는 `https://qdrant.invalid:6333`이었는데 `QdrantClient`가 메모리 저장소로 바뀌어 있어 그 주소로는 요청이 나가지 않았고, fastembed도 모델을 받지 않았습니다. 바깥 접속을 기록하는 장치(내 쪽 안전망)는 이 실행 내내 0건이었습니다. 목소리를 바꾼 재실행이 모델 요청 둘과 음성 요청 하나를 더 만든 것도 보입니다(질문 한 번에 셋, 합쳐 4와 2). 일부러 `patches.py`의 패치 줄 하나(`fastembed.TextEmbedding = …` 줄, 또는 트레이스 주소 줄)를 지운 사본으로 같은 명령을 돌리면 `screen stopped: fastembed would download a model`처럼 화면이 뜨기 전에 멈춥니다(직접 확인, 바깥 접속 0). 진짜 키와 진짜 주소를 쓰려면 이 문서의 방식을 떠나 원본 앱을 직접 띄워야 하고 그때는 위의 모든 요금과 접속이 나갑니다. 이 문서는 그 길을 안내하지 않습니다. 소리는 서버가 아니라 브라우저의 `st.audio`가 재생합니다(367행). 서버 쪽 코드에는 스피커를 여는 부분이 없습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -995,7 +1065,7 @@ TTS 에이전트의 호출은 모델 요청 한 번이고 그 글은 말투 지�
 - [ ] `rerun`에서 질문 한 건에 요청이 `responses: 6, speech: 3`이 되는 것을 봤다
 - [ ] `OPENAI_AGENTS_DISABLE_TRACING`을 `0`과 `1`로 바꿔 `ingest` 요청 수를 비교하고 업로드에 본문이 없는 것을 봤다
 - [ ] `rerun`에서 둘째 목소리 변경이 선택칸에서 무시되는 것(`voice`가 `coral, nova, nova`)을 봤다
-- [ ] `guard.py`가 변수 없이 종료 코드 1을 내는 것을 확인하고, 변수를 건 터미널에서 `guard.py && streamlit run …`으로 앱의 `/_stcore/health`가 200인 것을 봤다
+- [ ] `guard.py`가 변수 없이 종료 코드 1을 내는 것을 확인하고, 변수를 건 터미널에서 `guard.py && streamlit run screen_app.py …`의 `/_stcore/health`가 200인 것과 `screen_check.py`의 출력(초기화 → 질문 → 목소리)을 봤다
 - [ ] 띄운 서버(53217·53218)를 모두 끄고 해당 포트가 비었다
 
 ## 문제 해결
@@ -1011,7 +1081,7 @@ TTS 에이전트의 호출은 모델 요청 한 번이고 그 글은 말투 지�
 | 목소리를 바꿨는데 이전 목소리로 나옴. 선택칸이 되돌아가 있음(`rerun`으로 직접 확인: 서버가 받은 `voice`가 `coral`, `nova`, `nova`) | 77~82행이 키 없는 `selectbox`에 매번 바뀌는 `index`를 줘서 두 번째 변경이 기본값으로 되돌려진다고 읽었다(Step 7) | 한 번 더 고른다. 사본을 고치려면 `key=`를 주는 식으로 고친다(고쳐 보지는 않았다) |
 | 초기화를 두 번 눌렀더니 출처에 같은 주소가 겹침(`twice`로 직접 확인) | 점 `id`가 `uuid4()`라 같은 페이지가 다시 들어간다(205행). 컬렉션을 지우는 코드가 없다 | Qdrant에서 `docs_embeddings` 컬렉션을 지우고 다시 초기화한다 |
 | 앱을 띄운 터미널에 `[non-fatal] Tracing request failed`(바깥을 막은 환경에서만 나오는 줄이고, 내 프록시 아래에서 직접 확인) | 환경변수 없이 키를 넣고 질문을 처리하면 `openai-agents`가 트레이스를 OpenAI로 올리려 한다. 바깥이 막혀 있으면 이 줄이 찍히고, 인터넷에 붙은 PC에서 진짜 키면 아무 말 없이 올라간다 | `OPENAI_AGENTS_DISABLE_TRACING=1`을 건다(Step 7). 올라가는 것은 이름·응답 아이디·토큰 수이고 본문은 아니다 |
-| 가짜 키로 인터넷에 붙은 채 질문을 처리하면 `Tracing client error 401` 같은 줄이 한 번 찍힌다고 소스에서 읽음(`processors.py`의 4xx 처리. 실행해 보지는 않았다) | 틀린 키로 트레이스 업로드가 거절된 것이고 4xx는 재시도하지 않는다 | 같은 변수로 끈다 |
+| 가짜 키로 인터넷에 붙은 채 질문을 처리하면 `Tracing client error 401` 같은 줄이 한 번 찍힌다고 소스에서 읽음(`processors.py`의 4xx 처리. 실행해 보지는 않았다) | 틀린 키로 트레이스 업로드가 거절된 것이다. 401 같은 4xx는 재시도하지 않고 408·409·429만 다시 시도한다(소스로 확인) | 같은 변수로 끈다 |
 | 임시 폴더에 `response_*.mp3`가 계속 쌓임(직접 확인) | 질문마다(위젯 재실행마다) 파일 하나를 쓰고 지우지 않는다(295~299행) | 임시 폴더를 가끔 비운다 |
 | 모델이 곧 종료된다는 ⚠ | `gpt-4o`와 `gpt-4o-mini-tts`의 기본 스냅숏이 2027-01에 종료 예정이다(사전 준비) | `gpt-4o`는 사본의 228·240행 `model=` 값을 바꾼다. 288행의 음성 합성은 권하는 대체 `gpt-realtime-2.1-mini`가 음성 API 목록에 없어 이름 교체가 안 되고 Realtime API로 옮기라는 안내다(요청을 보내 보지는 않았다) |
 
