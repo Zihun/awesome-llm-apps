@@ -5,7 +5,9 @@ user: 사용자 { class: person }
 ui: "화면 (ai_audio_tour_agent.py)" { class: ours }
 file: "speech_tour.mp3 (앱 폴더)" { class: file }
 
+ui -> file: "stream_to_file()"
 ui -> user: "진행 막대 100"
+ui -> user: "Listen to Your Tour 제목"
 ui -> user: "st.audio 재생기"
 ui -> file: "open(speech_tour.mp3, rb)"
 file -> ui: "mp3 바이트"

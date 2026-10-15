@@ -1,12 +1,8 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자 { class: person }
-speech: "OpenAI 음성 API" { class: ext }
 ui: "화면 (ai_audio_tour_agent.py)" { class: ours }
-file: "speech_tour.mp3 (앱 폴더)" { class: file }
+speech: "OpenAI 음성 API" { class: ext }
 
-ui -> user: "스피너 · 진행 막대 0"
-ui -> speech: "audio.speech.create(gpt-4o-mini-tts, nova,\n투어 글, instructions) · 환경변수 키"
-speech -> ui: "mp3 바이트 (입력 4096자 초과면 오류)"
-ui -> file: "stream_to_file()"
+ui -> speech: "audio.speech.create(\ngpt-4o-mini-tts, nova, 투어 글,\ninstructions) · 환경변수 키"
+speech -> ui: "mp3 바이트\n(입력 4096자 초과면 오류)"

@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+ui: "화면 (ai_audio_tour_agent.py)" { class: ours }
+manager: "투어 매니저 (manager.py)" { class: ours }
+agents: "에이전트 여섯 (agent.py)" { class: ours }
+sdk: "에이전트 실행 (Runner · openai-agents)" { class: ours }
+
+ui -> manager: "run(장소, 관심사, 길이)"
+manager -> ui: "투어 글"
+agents -> manager: "에이전트 정의 (import)"
+manager -> sdk: "Runner.run(에이전트, 질문)"
+sdk -> manager: "구조화 출력"
+ui -> sdk: "set_default_openai_key(사이드바 키)"

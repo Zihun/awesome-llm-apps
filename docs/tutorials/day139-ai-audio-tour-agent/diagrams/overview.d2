@@ -6,9 +6,10 @@ env: "환경변수 OPENAI_API_KEY" { class: file }
 ui: "화면 · 음성 변환 (ai_audio_tour_agent.py)" { class: ours }
 manager: "투어 매니저 (manager.py)" { class: ours }
 agents: "에이전트 여섯 (agent.py)" { class: ours }
+sdk: "에이전트 실행 (Runner · openai-agents)" { class: ours }
 printer: "진행 표시 (printer.py)" { class: ours }
 mp3: "speech_tour.mp3 (앱 폴더)" { class: file }
-responses: "OpenAI 응답 API" { class: ext }
+responses: "OpenAI 응답 API\n(모델 · 호스팅 웹 검색)" { class: ext }
 speech: "OpenAI 음성 API" { class: ext }
 traces: "OpenAI 트레이스" { class: ext }
 
@@ -16,10 +17,10 @@ user -> ui: "입력 · 키"
 ui -> user: "글 · 재생기"
 ui -> manager: "run()"
 manager -> ui: "투어 글"
-agents -> manager: "에이전트 정의"
-manager -> responses: "Runner.run: 질문 · 키"
-responses -> manager: "JSON 답"
-manager -> traces: "트레이스 · 키"
+agents -> sdk: "모델 · 지시문 · WebSearchTool"
+sdk -> responses: "질문 · web_search_preview · 키"
+responses -> sdk: "검색 항목 + JSON"
+sdk -> traces: "스팬 묶음 · 키"
 manager -> printer: "진행 문구"
 env -> ui: "API 키"
 ui -> speech: "투어 글"

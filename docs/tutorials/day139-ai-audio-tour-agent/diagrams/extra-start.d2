@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "화면 (ai_audio_tour_agent.py)" { class: ours }
+mgr: "투어 매니저 (manager.py)" { class: ours }
+sdk: "에이전트 실행 (Runner)" { class: ours }
+
+ui -> mgr: "run_async(mgr.run,\n장소, 관심사, 길이)"
+mgr -> sdk: "gen_trace_id(),\ntrace() 블록 열기"
