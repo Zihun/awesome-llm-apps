@@ -1,6 +1,6 @@
 # Day 138 · 🔊 Voice RAG Agent (OpenAI SDK)
 
-> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★☆ ⚠ 처리·음성 지시 에이전트의 `gpt-4o`와 음성 모델 `gpt-4o-mini-tts`가 모두 OpenAI 폐기 문서에 올라 있고(음성 모델은 2027-01-06 종료 예정이며 권장 대체는 이름만 바꿔 쓸 수 있는 모델이 아닌 것으로 보입니다), `requirements.txt`는 설치는 되지만 `pypdf`와 `sounddevice`가 빠져 있어 그대로는 PDF를 읽지도 소리를 내지도 못합니다(사전 준비, Step 1, Step 7) · 예상 소요 165분(앱은 한 파일 401줄이지만 가짜 서버와 소리 없는 복사본을 직접 저장해 만들고, 확인 스크립트를 돌려 서버 쪽 기록과 앱의 동작을 맞대어 보고, 그림 스물일곱 장을 훑는 데 드는 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI·Qdrant는 한 번도 부르지 않았습니다). 진짜 키로 돌리면 질문 하나에 gpt-4o 두 번과 음성 합성 두 번이 나가고, 어림으로 gpt-4o 쪽이 $0.01 아래입니다(⚠ 추정, Step 6). 음성 값은 어림하지 못했습니다 · 원본 앱: `voice_ai_agents/voice_rag_openaisdk`
+> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★☆ ⚠ 처리·음성 지시 에이전트의 `gpt-4o`와 음성 모델 `gpt-4o-mini-tts`가 모두 OpenAI 폐기 문서에 올라 있고(음성 모델은 2027-01-06 종료 예정이며 권장 대체는 이름만 바꿔 쓸 수 있는 모델이 아닌 것으로 보입니다), `requirements.txt`는 설치는 되지만 `pypdf`와 `sounddevice`가 빠져 있어 그대로는 PDF를 읽지도 소리를 내지도 못합니다(사전 준비, Step 1, Step 7) · 예상 소요 170분(앱은 한 파일 401줄이지만 가짜 서버와 소리 없는 복사본을 직접 저장해 만들고, 확인 스크립트를 돌려 서버 쪽 기록과 앱의 동작을 맞대어 보고, 그림 스물여덟 장을 훑는 데 드는 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI·Qdrant는 한 번도 부르지 않았습니다). 진짜 키로 돌리면 질문 하나에 gpt-4o 두 번과 음성 합성 두 번이 나가고, 어림으로 gpt-4o 쪽이 $0.01 아래입니다(⚠ 추정, Step 6). 음성 값은 어림하지 못했습니다 · 원본 앱: `voice_ai_agents/voice_rag_openaisdk`
 
 ## 오늘 만들 것
 
@@ -12,7 +12,7 @@ PDF를 올려 두고 질문하면 글 답과 함께 읽어 주는 목소리가 �
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림에서 앱 코드(`rag_voice.py`)는 한 묶음이고 그 묶음에 달린 화살표는 묶음 전체의 것입니다. 묶음 안에서 어느 함수가 무엇을 부르는지는 보조 구조 그림 다섯이 화살표로 보여 줍니다. 앞의 둘은 Step 4(PDF)와 Step 5(임베딩), 나머지 셋은 Step 6~7(질문·에이전트·소리)에 있습니다. 이 PC 안의 `fastembed`는 로컬에서 도는 모델이라 구름으로 그렸습니다.
+그림에서 앱 코드(`rag_voice.py`)는 한 묶음이고 그 묶음에 달린 화살표는 묶음 전체의 것입니다. 묶음 안에서 어느 함수가 무엇을 부르는지는 보조 구조 그림 다섯이 화살표로 보여 줍니다. 앞의 둘은 Step 4(PDF)와 Step 5(임베딩), 나머지 셋은 Step 6~7(질문·에이전트·소리)에 있습니다. 이 PC 안의 `fastembed`는 로컬에서 도는 모델이라 구름으로 그렸습니다. 다만 그 모델 파일은 처음에 Hugging Face에서 받고 그 뒤에도 매번 저장소 버전을 묻습니다. 개요에 Hugging Face를 더해 그려 보니 1,238×987(너비 상한 1,200 초과)이거나 1,160×1,030(높이 상한 1,000 초과)이어서 한 장에 담지 못했고, 그 노드와 화살표 둘은 Step 5의 구조 그림(`extra-structure-embed`)과 PDF 올리기 시퀀스에 있습니다.
 
 직접 돌려 알게 된 것이 여덟입니다. 첫째, `requirements.txt`는 오늘 그대로 설치됩니다(Python 3.13에서 123개 패키지, 충돌 없음). 그러나 `pypdf`와 `sounddevice`가 목록에 없어 PDF 읽기와 소리 재생이 모두 첫 시도에서 실패합니다(Step 1). 둘째, README가 말하는 `.env`의 값은 환경에는 들어오지만 상자를 채우지 않고, 사이드바의 OpenAI 키가 비어 있으면 앱이 환경의 키를 빈 문자열로 덮습니다(Step 3). 셋째, 8,192바이트보다 작은 PDF는 "빈 파일"이라며 실패하고, 올린 PDF마다 임시 파일이 지워지지 않고 남습니다(Step 4). 넷째, 청크마다 임베딩 호출 한 번과 Qdrant 쓰기 한 번이 따로 나가고, 점마다 조각 원문과 이 PC의 임시 파일 경로가 Qdrant로 올라갑니다(Step 5). 다섯째, 질문 하나에 gpt-4o 두 번이 나가고, `OPENAI_AGENTS_DISABLE_TRACING`을 켜지 않으면 트레이스가 `api.openai.com`으로 나가려 합니다. 0.4.2에서 트레이스에 실리는 것은 에이전트 이름과 응답 아이디뿐이었습니다(Step 6). 여섯째, 같은 답에 음성 합성 요청이 두 번 나가고 `sounddevice`가 없으면 한 번은 요금만 나간 채 실패하며 글 답도 화면에 나오지 않습니다(Step 7). 일곱째, 질문 상자에 글이 남아 있는 한 목소리를 바꾸거나 내려받기 버튼을 누를 때마다 같은 네 번의 호출이 되풀이됩니다(Step 7). 여덟째, 목소리 선택칸은 두 번 바꾸면 둘째 변경이 무시됩니다(Step 7).
 
@@ -220,7 +220,7 @@ EOF
 uv run --no-project python fake_server.py 52871 fake.log
 ```
 
-터미널 B에서 환경변수 파일을 저장하고 걸어 둡니다. 바깥으로 나가는 길을 막는 줄이 셋입니다. `OPENAI_BASE_URL`이 모든 OpenAI 요청을 가짜 서버로 돌리고, `OPENAI_API_KEY`의 가짜 값이 셸에 있을지 모르는 진짜 키를 덮고, `OPENAI_AGENTS_DISABLE_TRACING=1`이 트레이스 전송을 끕니다(Step 6). `NO_PROXY`는 루프백 요청이 회사 프록시로 새지 않게 합니다. 나머지는 임시 파일과 모델 캐시를 이 폴더 안으로 모읍니다. 파이썬의 임시 폴더는 `TMPDIR`을 가장 먼저 봅니다.
+터미널 B에서 환경변수 파일을 저장하고 걸어 둡니다. 바깥으로 나가는 길을 막는 줄이 셋입니다. `OPENAI_BASE_URL`이 모든 OpenAI 요청을 가짜 서버로 돌리고, `OPENAI_API_KEY`의 가짜 값이 셸에 있을지 모르는 진짜 키를 덮고, `OPENAI_AGENTS_DISABLE_TRACING=1`이 트레이스 전송을 끕니다(Step 6). `NO_PROXY`는 루프백 요청이 회사 프록시로 가지 않게 합니다(`HTTP_PROXY`가 걸린 셸에서 이 줄을 빠뜨리면 가짜 서버로 가야 할 요청이 프록시로 갔습니다. 그래서 `guard.py`도 `NO_PROXY`에 루프백을 더합니다). 나머지는 임시 파일과 모델 캐시를 이 폴더 안으로 모읍니다. 파이썬의 임시 폴더는 `TMPDIR`을 가장 먼저 봅니다.
 
 ```bash
 cat > envfake.sh <<'EOF'
@@ -262,6 +262,9 @@ from urllib.parse import urlparse
 
 
 def check(allow_tracing=False):
+    for name in ("NO_PROXY", "no_proxy"):          # loopback must never go through a proxy
+        have = [h for h in os.environ.get(name, "").split(",") if h]
+        os.environ[name] = ",".join(have + [h for h in ("127.0.0.1", "localhost") if h not in have])
     base = os.environ.get("OPENAI_BASE_URL", "")
     u = urlparse(base)
     if u.scheme != "http" or u.hostname not in ("127.0.0.1", "localhost"):
@@ -358,7 +361,7 @@ for old, new in patches:
 open(sys.argv[2], "w", encoding="utf-8", newline="\n").write(out)
 sys.stdout.writelines(difflib.unified_diff(src.splitlines(True), out.splitlines(True), "rag_voice.py", sys.argv[2], n=0))
 EOF
-curl -s -o /dev/null -w "%{http_code} %{size_download} bytes\n" -X POST -H 'Content-Type: application/json' -d '{"response_format":"pcm","input":"hi"}' $OPENAI_BASE_URL/audio/speech
+uv run --no-project python guard.py && curl -s -o /dev/null -w "%{http_code} %{size_download} bytes\n" -X POST -H 'Content-Type: application/json' -d '{"response_format":"pcm","input":"hi"}' $OPENAI_BASE_URL/audio/speech
 : > fake.log
 uv run --no-project python make_scratch.py rag_voice.py rag_voice_scratch.py
 uv run --no-project python -c "import harness; print('harness ok')"
@@ -369,7 +372,7 @@ OPENAI_AGENTS_DISABLE_TRACING=0 uv run --no-project python guard.py; echo "exit 
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-**확인.** 가짜 서버가 음성 요청에 답했고(첫 출력), 복사본의 차이가 정확히 네 곳이며, `guard.py`가 맞는 환경에서는 통과하고 진짜 주소나 켜진 트레이싱에서는 종료 코드 1로 멈춥니다. 마지막 두 줄은 명령 앞에 변수를 붙여 그 한 줄에서만 환경을 바꾼 것입니다.
+**확인.** 가짜 서버가 음성 요청에 답했고(첫 출력, `curl`은 가드가 통과한 뒤에만 돕니다), 복사본의 차이가 정확히 네 곳이며, `guard.py`가 맞는 환경에서는 통과하고 진짜 주소나 켜진 트레이싱에서는 종료 코드 1로 멈춥니다. 마지막 두 줄은 명령 앞에 변수를 붙여 그 한 줄에서만 환경을 바꾼 것입니다.
 
 ```text
 200 4800 bytes
@@ -779,17 +782,17 @@ uv run --no-project python payload.py
 ```
 
 ```text
-content: 'Zephyr Guide, page 17\nRate limits: each token may '
+content: 'Zephyr Guide, page 28\nWebhooks: register an HTTPS '
 producer: 'PyPDF'
 creator: 'PyPDF'
 creationdate: ''
 source: <a file name in the temp folder> | folder is the temp folder: True
 total_pages: '30'
-page: '16'
-page_label: '17'
+page: '27'
+page_label: '28'
 source_type: 'pdf'
 file_name: 'guide.pdf'
-timestamp: '2026-10-15T16:06:14.401540'
+timestamp: '2026-10-15T17:06:22.059646'
 vector length: 384
 ```
 
@@ -855,7 +858,7 @@ grep -n 'set_trace_provider(DefaultTraceProvider())' "$AG/tracing/__init__.py"
 111:set_trace_provider(DefaultTraceProvider())
 ```
 
-트레이싱을 켠 채 한 질문을 돌려 무엇이 실리는지 봅니다. 아래 `tracecheck.py`는 트레이스 업로드 주소만 같은 프로세스 안의 로컬 기록기(`127.0.0.1`의 임의 포트)로 돌리고 트레이싱을 켭니다. 그 전에 `guard.py`가 `OPENAI_BASE_URL`이 루프백인지 확인하므로 `envfake.sh`를 빠뜨린 셸에서는 멈추고, 업로드 주소를 바꾸는 줄이 `agents`가 무엇이든 보내기 전에 실행됩니다.
+트레이싱을 켠 채 한 질문을 돌려 무엇이 실리는지 봅니다. 아래 `tracecheck.py`는 트레이스 업로드 주소만 같은 프로세스 안의 로컬 기록기(`127.0.0.1`의 임의 포트)로 돌리고 트레이싱을 켭니다. 그 전에 `guard.py`가 `OPENAI_BASE_URL`이 루프백인지 확인하므로 `envfake.sh`를 빠뜨린 셸에서는 멈추고, 업로드 주소를 바꾼 바로 다음 줄의 `assert`가 그 주소가 루프백이 아니면 에이전트를 돌리기 전에 멈춥니다. 주소를 바꾸는 줄만 빼고 돌려 보면 `AssertionError`로 멈추고 바깥 접속은 0건이었습니다(직접 확인).
 
 ```bash
 cat > tracecheck.py <<'EOF'
@@ -891,6 +894,7 @@ threading.Thread(target=server.serve_forever, daemon=True).start()
 from agents.tracing.processors import default_exporter, default_processor
 
 default_exporter().endpoint = f"http://127.0.0.1:{server.server_port}/v1/traces/ingest"
+assert default_exporter().endpoint.startswith("http://127.0.0.1:"), "trace upload address is not the local recorder"   # stop before any agent runs
 
 from streamlit.testing.v1 import AppTest
 import harness
@@ -919,10 +923,10 @@ uv run --no-project python tracecheck.py
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 질문 하나에서 업로드가 둘(처리 에이전트와 음성 지시 에이전트의 워크플로 하나씩), 항목이 여섯(트레이스 하나와 응답·에이전트 스팬 하나씩, 둘씩)입니다. 실린 것은 워크플로 이름, 응답 아이디(`response_id`), 에이전트 이름·도구 목록(비어 있음)·출력 형식이고, 문서 조각·질문·답은 하나도 없습니다(직접 확인). `openai-agents` 0.4.2의 응답 스팬은 `export()`가 응답 아이디만 내기 때문입니다(소스로 확인: `agents/tracing/span_data.py`의 `ResponseSpanData.export`, 입력은 "OpenAI trace processors가 쓰지 않는다"는 주석이 달려 있습니다). 따라서 [Day 033 Step 3](../day033-openai-sdk-10-tracing-observability/README.md)의 "프롬프트 전문과 응답 전문이 실린다"는 이 앱의 0.4.2에서는 맞지 않았습니다. 그 글은 모델 호출로 이미 OpenAI에 가므로 트레이스까지 막을 이유는 줄어도, 끄지 않으면 가짜 키나 진짜 키로 `api.openai.com`에 연결하려 하는 것은 그대로입니다. 이 PC의 측정으로, 변수를 끄지 않고 주소도 돌리지 않은 같은 실행은 기록용 프록시에 `CONNECT api.openai.com:443` 세 줄을 남겼습니다(독자가 따라 할 명령이 아닙니다). 트레이스 전송은 질문의 응답을 기다리지 않는 배경 스레드의 일이라 요청 시퀀스 그림에는 그리지 않았고, 개요와 구조 그림의 화살표로 그렸습니다.
+**확인.** 질문 하나에서 항목이 여섯(워크플로마다 트레이스 하나와 응답·에이전트 스팬 하나씩, 워크플로는 처리 에이전트와 음성 지시 에이전트 둘)입니다. 이 항목이 한 번에 올라가는지 두 번에 나뉘어 올라가는지는 배경 배치 타이밍이라 실행마다 업로드가 1~2건으로 달랐습니다(여러 번 돌려 확인, 항목은 늘 여섯). 실린 것은 워크플로 이름, 응답 아이디(`response_id`), 에이전트 이름·도구 목록(비어 있음)·출력 형식이고, 문서 조각·질문·답은 하나도 없습니다(직접 확인). `openai-agents` 0.4.2의 응답 스팬은 `export()`가 응답 아이디만 내기 때문입니다(소스로 확인: `agents/tracing/span_data.py`의 `ResponseSpanData.export`, 입력은 "OpenAI trace processors가 쓰지 않는다"는 주석이 달려 있습니다). 따라서 [Day 033 Step 3](../day033-openai-sdk-10-tracing-observability/README.md)의 "프롬프트 전문과 응답 전문이 실린다"는 이 앱의 0.4.2에서는 맞지 않았습니다. 그 글은 모델 호출로 이미 OpenAI에 가므로 트레이스까지 막을 이유는 줄어도, 끄지 않으면 가짜 키나 진짜 키로 `api.openai.com`에 연결하려 하는 것은 그대로입니다. 이 PC의 측정으로, 변수를 끄지 않고 주소도 돌리지 않은 같은 실행은 기록용 프록시에 `CONNECT api.openai.com:443` 세 줄을 남겼습니다(독자가 따라 할 명령이 아닙니다). 트레이스 전송은 질문의 응답을 기다리지 않는 배경 스레드의 일이라 요청 시퀀스 그림에는 그리지 않았고, 개요와 구조 그림의 화살표로 그렸습니다.
 
 ```text
-uploads: 2  items: 6
+uploads: 1  items: 6
   {"object": "trace", "workflow_name": "Agent workflow"}
   {"type": "response", "response_id": "resp_fake5"}
   {"type": "agent", "name": "Documentation Processor", "handoffs": [], "tools": [], "output_type": "str"}
@@ -1103,7 +1107,7 @@ export FAKE_UPLOAD=guide.pdf
 uv run --no-project python guard.py && uv run --no-project streamlit run rag_voice_scratch.py --server.headless true --server.address localhost --server.port 58741 --browser.gatherUsageStats false
 ```
 
-(PowerShell은 실행해 보지 못했습니다. 위 `envfake.sh` 대신 Step 2의 PowerShell 줄을 붙여 넣고 `$env:FAKE_UPLOAD = "guide.pdf"`와 `uv run --no-project python guard.py`를 실행한 뒤 `if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run rag_voice_scratch.py --server.headless true --server.address localhost --server.port 58741 --browser.gatherUsageStats false }`로 띄웁니다.) 띄운 뒤 다른 터미널에서 `curl -s http://localhost:58741/_stcore/health`가 `ok`를 답했고(직접 확인), 브라우저로 열어 보지는 않았습니다. `envfake.sh`를 빠뜨린 터미널이면 `guard.py`가 멈추므로 서버가 뜨지 않습니다. 진짜 키로 진짜 앱을 쓰고 싶다면 앱 README의 `streamlit run rag_voice.py`에 변수만 더해 `OPENAI_AGENTS_DISABLE_TRACING=1 uv run --no-project streamlit run rag_voice.py --server.headless true --server.address localhost --browser.gatherUsageStats false`로 띄우고, 위의 움직임을 각오한 뒤 진짜 소리를 내려면 `uv pip install "openai[voice_helpers]"`가 필요합니다(이 명령은 실행해 보지 못했습니다).
+(PowerShell은 실행해 보지 못했습니다. 위 `envfake.sh` 대신 Step 2의 PowerShell 줄을 붙여 넣고 `$env:FAKE_UPLOAD = "guide.pdf"`와 `uv run --no-project python guard.py`를 실행한 뒤 `if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run rag_voice_scratch.py --server.headless true --server.address localhost --server.port 58741 --browser.gatherUsageStats false }`로 띄웁니다.) 띄운 뒤 다른 터미널에서 `curl -s http://localhost:58741/_stcore/health`가 `ok`를 답했고(직접 확인), 브라우저로 열어 보지는 않았습니다. `envfake.sh`를 빠뜨린 터미널이면 `guard.py`가 멈추므로 서버가 뜨지 않습니다. 원본 `rag_voice.py`를 그대로 띄우는 명령은 이 문서가 권하지 않으므로 적지 않습니다. 진짜 OpenAI와 진짜 Qdrant로 쓰고 싶다면 앱 README의 안내를 따르되, 위에 적은 움직임을 받아들이고 앱을 띄우는 터미널마다 `OPENAI_AGENTS_DISABLE_TRACING=1`을 직접 거는 것이 독자 몫입니다. 진짜 소리를 내려면 `uv pip install "openai[voice_helpers]"`가 필요합니다(이 명령은 실행해 보지 못했습니다).
 
 ```text
 ok
@@ -1111,13 +1115,17 @@ ok
 
 ## 요청 한 건이 흐르는 과정
 
-앱이 하는 일은 PDF 올리기(문서마다 한 번)와 질문(질문마다 한 번)의 두 흐름입니다. 한 장에 다 넣으면 세로가 상한을 넘으므로 시간 경계에서 나눠 그림 열네 장으로 그렸고, 메시지는 모두 정확히 한 그림에 코드 순서대로 있습니다. 화면에 뜨는 `st.info`·`st.write` 같은 진행 문구도 메시지로 그렸습니다.
+앱이 하는 일은 PDF 올리기(문서마다 한 번)와 질문(질문마다 한 번)의 두 흐름입니다. 한 장에 다 넣으면 세로가 상한을 넘으므로 시간 경계에서 나눠 그림 열다섯 장으로 그렸고, 메시지는 모두 정확히 한 그림에 코드 순서대로 있습니다. 화면에 뜨는 `st.info`·`st.write` 같은 진행 문구도 메시지로 그렸습니다.
 
-PDF를 올리면 먼저 처음 한 번만 도는 준비가 있습니다. 임베딩 모델을 만들고(`TextEmbedding()`, 이때 Hugging Face에 저장소 버전을 묻고 받은 적이 없을 때만 모델 파일을 받습니다) 차원을 재서(`embed(["test"])`) Qdrant에 컬렉션을 만듭니다.
+PDF를 올리면 먼저 처음 한 번만 도는 준비가 있습니다. 화면이 스피너를 띄우고 Qdrant 주소·키를 검사한 뒤 `QdrantClient`를 만듭니다.
 
 ![PDF 올리기 — 준비](diagrams/extra-upload.svg)
 
-이어서 올린 바이트를 임시 파일에 쓰고 `PyPDFLoader`가 읽어 쪽마다 문서 하나를 만든 뒤 앱이 출처 메타데이터를 보탭니다.
+이어서 `TextEmbedding()`이 Hugging Face와 오가고 `embed(["test"])`로 차원을 재서 컬렉션을 만듭니다.
+
+![PDF 올리기 — 모델과 컬렉션](diagrams/extra-model.svg)
+
+그다음 올린 바이트를 임시 파일에 쓰고 `PyPDFLoader`가 읽어 쪽마다 문서 하나를 만든 뒤 앱이 출처 메타데이터를 보탭니다.
 
 ![PDF 올리기 — 읽기](diagrams/extra-read.svg)
 
@@ -1178,7 +1186,7 @@ PDF를 올리면 먼저 처음 한 번만 도는 준비가 있습니다. 임베�
 - [ ] 8,191바이트까지는 디스크에 0바이트, 8,192바이트부터 내려간다는 것과, `tiny.pdf`가 `Cannot read an empty file`로 실패하고 임시 PDF가 1, 2, 3으로 쌓이는 것을 봤다
 - [ ] `guide.pdf`가 점 30개, 임베딩 호출 31번으로 올라갔고 점 하나의 `source`가 임시 폴더의 파일 경로이다
 - [ ] 질문 한 번에 서버가 `processor`·`tts-agent`·`tts-pcm`·`tts-mp3` 넷을 받았고, 사이드바 키가 `Authorization`에 실렸다
-- [ ] `tracecheck.py`가 업로드 둘, 항목 여섯을 받았고 문서 조각·질문·답이 하나도 들어 있지 않았다
+- [ ] `tracecheck.py`가 항목 여섯(업로드는 1~2건)을 받았고 문서 조각·질문·답이 하나도 들어 있지 않았다
 - [ ] 목소리를 `nova`로 바꾸기만 해도 요청 넷이 다시 나갔고, 둘째 변경(`onyx`)은 무시되었다
 - [ ] `HARNESS_PLAYER=nosd`로는 `mp3` 없이 셋만 나가고 오류 글만 보였다
 - [ ] 복사본을 `guard.py`와 함께 띄우고 `/_stcore/health`가 `ok`를 답했다. 원본은 띄우지 않았다
@@ -1195,7 +1203,9 @@ PDF를 올리면 먼저 처음 한 번만 도는 준비가 있습니다. 임베�
 | OpenAI 상자를 비우고 질문하면 요청이 키 없이 나간다(진짜 OpenAI라면 인증 오류로 끝날 것으로 보이나 보내 보지는 않았습니다) | `voice_ai_agents/voice_rag_openaisdk/rag_voice.py:155`가 환경의 키를 상자의 빈 값으로 덮습니다(직접 확인, 가짜 서버가 받은 `Authorization`이 비었음) | 사이드바에 키를 넣습니다. `.env`만으로는 안 됩니다 |
 | 목소리만 바꿨는데 요금이 또 나간다 | 질문 상자에 글이 남아 있어 스크립트가 다시 돌며 같은 질문을 처음부터 처리합니다(직접 확인). 내려받기 버튼도 같은 효과(소스로 확인) | 답을 들은 뒤에는 질문 상자를 비우거나, 앱 코드를 고친다면 결과를 `session_state`에 저장합니다 |
 | 목소리를 두 번 바꿨는데 둘째 선택이 적용되지 않는다 | 선택칸의 `index` 계산과 맞물려 둘째 변경이 한 번 무시됩니다(직접 확인: nova는 반영, onyx는 무시, fable은 반영) | 한 번 더 고릅니다 |
-| `OPENAI_AGENTS_DISABLE_TRACING`을 안 걸었더니 트레이스가 바깥으로 나가려 함, 연결이 안 되는 PC에서는 `Tracing: request failed`류의 경고가 쌓일 수 있음 | 목적지가 `api.openai.com`으로 고정되어 `OPENAI_BASE_URL`을 따르지 않습니다(소스와 프록시 기록으로 확인). 0.4.2에서 실리는 것은 에이전트 이름과 응답 아이디뿐이었습니다(직접 확인) | 앱을 띄우는 터미널마다 `OPENAI_AGENTS_DISABLE_TRACING=1` |
+| `OPENAI_AGENTS_DISABLE_TRACING`을 안 걸었더니 트레이스가 바깥으로 나가려 함 | 목적지가 `api.openai.com`으로 고정되어 `OPENAI_BASE_URL`을 따르지 않습니다(소스와 프록시 기록으로 확인). 0.4.2에서 실리는 것은 에이전트 이름과 응답 아이디뿐이었습니다(직접 확인) | 앱을 띄우는 터미널마다 `OPENAI_AGENTS_DISABLE_TRACING=1` |
+| 바깥이 막힌 환경에서 `[non-fatal] Tracing: request failed` 줄이 찍히고 재시도한다 | 트레이스 업로드가 연결 오류로 실패하면 재시도하는 것으로 소스(`agents/tracing/processors.py`)에서 읽었고, 막힌 환경에서 이 줄이 나오는 것은 기록용 프록시 아래에서 확인했습니다 | 변수를 거는 것이 근본 해결입니다 |
+| 가짜 키로 인터넷에 붙은 채 `Tracing client error 401`이 한 번 찍힌다 | 틀린 키로 업로드가 거절되면 4xx는 재시도하지 않고 한 줄만 남기는 것으로 소스에서 읽었습니다(실행해 보지는 않았습니다) | 변수를 거는 것이 근본 해결입니다 |
 | 임시 폴더에 `tmp*.pdf`와 `response_*.mp3`가 계속 쌓임 | 지우는 코드가 없습니다(`grep`으로 확인). 올린 PDF 바이트와 음성이 그대로 남습니다 | 직접 지웁니다. 이 문서는 `TMPDIR`을 작업 폴더 안으로 옮겨 그 폴더에만 쌓였습니다 |
 | Qdrant 컬렉션에 이 PC의 임시 경로가 들어 있다 | 점마다 `payload`에 `source`(임시 파일 경로)와 PDF 메타데이터가 들어갑니다(직접 확인) | 앱 코드를 고칠 때 `doc.metadata`에서 `source`를 빼고 올립니다 |
 | 모델 종료 뒤 요청이 실패하면 | `gpt-4o`와 `gpt-4o-mini-tts`가 폐기 문서에 올라 있습니다(사전 준비) | `gpt-4o`는 `voice_ai_agents/voice_rag_openaisdk/rag_voice.py:166`과 `voice_ai_agents/voice_rag_openaisdk/rag_voice.py:178`의 `model="gpt-4o"`를 폐기 문서가 권하는 모델로 바꿉니다. 음성은 `voice_ai_agents/voice_rag_openaisdk/rag_voice.py:254`와 `voice_ai_agents/voice_rag_openaisdk/rag_voice.py:268`의 `gpt-4o-mini-tts`를 바꾸는 것만으로는 안 되는 것으로 보입니다. 권장 대체가 Realtime API용 모델이라 `audio.speech.create` 호출을 Realtime 방식으로 옮겨야 할 수 있습니다(보내 보지 않았습니다) |

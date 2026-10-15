@@ -3,15 +3,9 @@ shape: sequence_diagram
 
 user: 사용자 { class: person }
 ui: "화면\n(main)" { class: ours }
-embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
-hf: "Hugging Face Hub" { class: ext }
 qdrant: "Qdrant" { class: store }
 
 user -> ui: "PDF 선택, 재실행 (314행)"
 ui -> user: "st.spinner Processing PDF (319행)"
-ui -> embed: "TextEmbedding() (87행)"
-embed -> hf: "model_info로 저장소 버전 묻기 (매번)"
-hf -> embed: "모델 파일 (받은 적 없을 때만)"
-ui -> embed: "embed([\"test\"]) (88행)"
-embed -> ui: "차원 384 (89행)"
-ui -> qdrant: "create_collection(size=384, COSINE) (91-98행)"
+ui -> ui: "Qdrant 주소·키 검사 (79-80행)"
+ui -> qdrant: "QdrantClient(url, api_key) (82-85행)"
