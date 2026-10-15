@@ -3,7 +3,9 @@ direction: right
 
 ui: "화면\n(Streamlit)" { class: ours }
 kb: "지식 베이스\n만들기" { class: ours }
+agents: "에이전트 둘\n(Agents SDK)" { class: ours }
 firecrawl: "Firecrawl" { class: ext }
+hf: "Hugging Face Hub\n(처음 한 번)" { class: ext }
 embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
 qdrant: "Qdrant" { class: store }
 
@@ -11,4 +13,7 @@ ui -> kb: Initialize System
 kb -> firecrawl: 사이트 주소
 firecrawl -> kb: 페이지 글
 kb -> embed: 페이지 본문
+embed -> hf: 모델 요청
+hf -> embed: 모델 파일
 kb -> qdrant: 벡터+본문
+kb -> agents: Agent 둘 만들기\nOPENAI_API_KEY 설정

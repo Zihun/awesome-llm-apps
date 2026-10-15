@@ -6,16 +6,13 @@ qa: "질문 처리\n(process_query)" { class: ours }
 agents: "에이전트 둘\n(Agents SDK)" { class: ours }
 embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
 qdrant: "Qdrant" { class: store }
-openai: "OpenAI\n(gpt-4o ×2, TTS)" { class: ext }
+openai: "OpenAI\n(gpt-4o)" { class: ext }
 traces: "OpenAI 트레이스" { class: ext }
-mp3: "임시 폴더 mp3" { class: file }
 
 ui -> qa: 질문 글
 qa -> embed: 질문 글
 qa -> qdrant: 질의 벡터
-qa -> agents: 문서 3건+질문
+qa -> agents: 문서 3건\n+ 질문
+agents -> qa: 답 글 · 말투 글
 agents -> openai: 요청 둘
 agents -> traces: 트레이스
-qa -> openai: 음성 합성
-qa -> mp3: mp3 바이트
-mp3 -> ui: st.audio

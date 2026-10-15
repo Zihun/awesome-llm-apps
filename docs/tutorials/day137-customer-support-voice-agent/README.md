@@ -1,6 +1,6 @@
 # Day 137 · 📞 Customer Support Voice Agent
 
-> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★☆ ⚠ 오늘 풀리는 `firecrawl-py` 4.50.0에서는 "Initialize System"이 크롤링 단계에서 `FirecrawlClient.crawl() got an unexpected keyword argument 'params'`로 멈춰 질문까지 가지 못하고(Step 4), 앱이 쓰는 `gpt-4o`와 `gpt-4o-mini-tts`는 기본 스냅숏이 OpenAI 폐기 문서에서 2027년 1월 종료 예정입니다(사전 준비) · 예상 소요 125분(앱은 392줄 한 파일이지만 가짜 서버 하나와 확인 스크립트를 직접 저장하고, 같은 앱을 시나리오를 바꿔 여러 번 돌려 서버 기록과 맞대어 보며, 그림 열일곱 장 가운데 시퀀스 일곱 장을 따라가는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다). 진짜 키로 질문 한 건에 `gpt-4o` 두 번 약 $0.02에 음성 합성 요금이 더 붙습니다(⚠ 추정이며 Step 6에 계산을 적었습니다. 음성 합성의 분당 요금은 확인하지 못했습니다) · 원본 앱: `voice_ai_agents/customer_support_voice_agent`
+> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★☆ ⚠ 오늘 풀리는 `firecrawl-py` 4.50.0에서는 "Initialize System"이 크롤링 단계에서 `FirecrawlClient.crawl() got an unexpected keyword argument 'params'`로 멈춰 질문까지 가지 못하고(Step 4), 앱이 쓰는 `gpt-4o`와 `gpt-4o-mini-tts`는 기본 스냅숏이 OpenAI 폐기 문서에서 2027년 1월 종료 예정입니다(사전 준비) · 예상 소요 150분(앱은 392줄 한 파일이지만 가짜 서버 하나와 확인 스크립트 넷(`run_app.py`·`sig_check.py`·`embed_check.py`·`guard.py`)을 직접 저장하고, 같은 앱을 시나리오를 바꿔 여러 번 돌려 서버 기록과 맞대어 보며, 그림 열아홉 장 가운데 시퀀스 일곱 장을 따라가는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다). 진짜 키로 질문 한 건에 `gpt-4o` 두 번 약 $0.02에 음성 합성 요금이 더 붙습니다(⚠ 추정이며 Step 6에 계산을 적었습니다. 음성 합성의 분당 요금은 확인하지 못했습니다) · 원본 앱: `voice_ai_agents/customer_support_voice_agent`
 
 ## 오늘 만들 것
 
@@ -12,20 +12,24 @@
 
 1. 오늘 설치하면 크롤링이 `params` 인자 오류로 멈춥니다. 요청은 한 건도 나가지 않습니다(Step 4).
 2. "TTS 에이전트"는 소리를 만들지 않습니다. 그 에이전트가 쓴 글은 음성 합성 호출의 `instructions`(말투 지시)로 들어가고, 읽히는 글은 첫 에이전트의 답입니다(Step 6).
-3. 목소리를 바꾸거나 파일을 내려받는 등 화면을 한 번 건드릴 때마다, 질문 칸에 글이 남아 있으면 같은 질문이 처음부터 다시 처리됩니다. 모델 호출 셋과 mp3 하나가 매번 더 생깁니다(Step 7).
+3. 목소리를 바꾸거나 파일을 내려받는 등 화면을 한 번 건드릴 때마다, 질문 칸에 글이 남아 있으면 같은 질문이 처음부터 다시 처리됩니다. 모델 호출 셋과 mp3 하나가 매번 더 생깁니다. 게다가 목소리를 고른 두 번째 변경은 선택칸에서 무시되는데 요금은 나갑니다(Step 7).
 4. "Initialize System"을 두 번 누르면 같은 페이지가 두 번 저장되고 검색 결과에 같은 페이지가 겹쳐 나옵니다(Step 5).
 
 이 문서는 OpenAI·Firecrawl·Qdrant 어디에도 요청을 보내지 않았고 마이크·스피커·카메라를 열지 않았으며 mp3를 재생하지 않았습니다. OpenAI와 Firecrawl 자리에는 `127.0.0.1`의 가짜 서버를, Qdrant 자리에는 파이썬 프로세스 안의 메모리 저장소를, `fastembed` 모델 자리에는 단어를 해시해 만든 가짜 벡터를 두었습니다. 그래서 아래의 답·음성 바이트·검색 순위는 모두 내가 정한 값이고, 진짜 `gpt-4o`가 어떤 답을 쓰는지, 진짜 임베딩이 어떤 페이지를 고르는지, 소리가 어떻게 들리는지는 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림의 앱 묶음에서 나가는 화살표는 묶음 안의 어느 부분이 보내는지 가렸습니다. 부분별 화살표는 아래 그림 둘에 따로 그렸습니다. 먼저 지식 베이스를 만드는 쪽입니다.
+그림의 앱 묶음에서 나가는 화살표는 묶음 안의 어느 부분이 보내는지 가렸습니다. 부분별 화살표는 아래 그림 셋에 따로 그렸습니다. Hugging Face Hub도 그렸습니다. fastembed는 모델을 내 PC에서 돌리지만 처음 한 번은 바깥에서 받아 오기 때문이고(Step 3), 화살표가 묶음에서 나가는 것은 fastembed가 앱 프로세스 안에서 돌기 때문입니다. 먼저 지식 베이스를 만드는 쪽입니다.
 
 ![지식 베이스 만들기의 구조](diagrams/extra-ingest.svg)
 
-다음은 질문을 처리하는 쪽입니다. 임시 폴더의 mp3를 화면이 읽는 화살표도 여기에 있습니다.
+다음은 질문을 검색하고 에이전트 둘을 부르는 쪽입니다. 답 글과 말투 글이 `process_query`로 돌아오는 화살표도 여기에 있습니다.
 
 ![질문 처리의 구조](diagrams/extra-ask.svg)
+
+마지막은 음성을 만들어 파일로 쓰고 화면이 그 파일을 읽는 쪽입니다.
+
+![음성과 mp3의 구조](diagrams/extra-voice.svg)
 
 ## 사전 준비
 
@@ -40,7 +44,7 @@
 | 새 작업 폴더 `support-voice-lab` | 앱 파일을 복사해 와서 이 폴더 안에서만 돌립니다 | Step 1에서 만듭니다 |
 | `PYTHONIOENCODING=utf-8` | 한국어 Windows 콘솔(cp949)에서 출력이 깨지지 않게 합니다 | bash: `export PYTHONIOENCODING=utf-8`, PowerShell: `$env:PYTHONIOENCODING = "utf-8"`(실행해 보지 못했습니다) |
 
-⚠ 모델. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-15 확인)의 "2026-10-14: GPT-4 series model deprecations" 표에 `gpt-4o-2024-08-06`과 `gpt-4o-2024-11-20`이 "January 14, 2027" 종료로 올라 있고 권하는 대체는 `gpt-6-luna`입니다. 모델 페이지의 기본 스냅숏이 `gpt-4o-2024-08-06`입니다(https://developers.openai.com/api/docs/models/gpt-4o). 음성 모델은 별칭 `gpt-4o-mini-tts` 자체의 항목이 없고, "2026-10-01: Text-to-speech models" 표에 `gpt-4o-mini-tts-2025-03-20`과 `gpt-4o-mini-tts-2025-12-15`가 "Jan 6, 2027" 종료로 올라 있으며 권하는 대체는 `gpt-realtime-2.1-mini`입니다. 모델 페이지의 기본 스냅숏은 `gpt-4o-mini-tts-2025-12-15`입니다. 종료일 뒤에 별칭이 어떻게 움직이는지는 폐기 문서가 말하지 않습니다. 그리고 `gpt-realtime-2.1-mini`를 `audio.speech.create`에 그대로 넣을 수 있는지는 확인하지 못했습니다. 교체할 때는 원본을 고치지 말고 복사본의 228·240행(`model="gpt-4o"`)과 288행(`model="gpt-4o-mini-tts"`)을 바꿉니다.
+⚠ 모델. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-15 확인)의 "2026-10-14: GPT-4 series model deprecations" 표에 `gpt-4o-2024-08-06`과 `gpt-4o-2024-11-20`이 "January 14, 2027" 종료로 올라 있고 권하는 대체는 `gpt-6-luna`입니다. 모델 페이지의 기본 스냅숏이 `gpt-4o-2024-08-06`입니다(https://developers.openai.com/api/docs/models/gpt-4o). 음성 모델은 별칭 `gpt-4o-mini-tts` 자체의 항목이 없고, "2026-10-01: Text-to-speech models" 표에 `gpt-4o-mini-tts-2025-03-20`과 `gpt-4o-mini-tts-2025-12-15`가 "Jan 6, 2027" 종료로 올라 있으며 권하는 대체는 `gpt-realtime-2.1-mini`입니다. 모델 페이지의 기본 스냅숏은 `gpt-4o-mini-tts-2025-12-15`입니다. 종료일 뒤에 별칭이 어떻게 움직이는지는 폐기 문서가 말하지 않습니다. 그런데 `gpt-realtime-2.1-mini`는 이름만 바꿔 `audio.speech.create`에 넣을 수 있는 모델로 보이지 않습니다. 음성 API 레퍼런스(https://developers.openai.com/api/reference/resources/audio/subresources/speech/methods/create)의 `model` 목록은 `tts-1`·`tts-1-hd`·`gpt-4o-mini-tts`·`gpt-4o-mini-tts-2025-12-15`이고 `gpt-realtime`이 없습니다. 폐기 문서의 안내는 "Migrate to gpt-realtime-2.1-mini … See the Realtime API guide"이며, `gpt-realtime-2.1-mini` 모델 페이지는 지원 엔드포인트로 `v1/realtime`만 표시하고 `v1/audio/speech`는 지원하지 않는 것으로 표시합니다(2026-10-15 확인. 요청을 보내 보지는 않았습니다). 그래서 교체는 둘로 나뉩니다. `gpt-4o`는 복사본의 228·240행(`model="gpt-4o"`)을 바꾸면 되고, 288행의 음성 합성은 이름 교체가 아니라 Realtime API로 옮기는 일이 되는 것으로 보입니다. 원본은 고치지 마세요.
 
 ## 아키텍처 한눈에 보기
 
@@ -89,7 +93,7 @@ python-dotenv
 openai-agents
 ```
 
-버전을 정한 것은 `openai>=1.0.0` 하나뿐입니다(`python-dotenv` 줄 끝에 공백이 하나 있고 마지막 줄 뒤에 개행이 없습니다). 이 문서를 쓰며 설치했을 때(2026-10-15) 패키지 89개가 깔렸고 `firecrawl-py` 4.50.0, `qdrant-client` 1.19.1, `streamlit` 1.66.0, `fastembed` 0.9.0, `openai` 3.31.0, `openai-agents` 0.24.0, `python-dotenv` 1.2.4가 포함됩니다(직접 확인). Day 118은 `openai-agents` 0.6.4와 `openai` 2.54.0이 서로 맞지 않아 첫 호출에서 멈췄는데, 오늘의 `openai-agents` 0.24.0과 `openai` 3.31.0 조합은 아래 Step 6에서 호출 셋이 끝까지 돌았습니다.
+버전을 정한 것은 `openai>=1.0.0` 하나뿐입니다(`python-dotenv` 줄 끝에 공백이 하나 있습니다). 이 문서를 쓰며 설치했을 때(2026-10-15) 패키지 89개가 깔렸고 `firecrawl-py` 4.50.0, `qdrant-client` 1.19.1, `streamlit` 1.66.0, `fastembed` 0.9.0, `openai` 3.31.0, `openai-agents` 0.24.0, `python-dotenv` 1.2.4가 포함됩니다(직접 확인). Day 118은 `openai-agents` 0.6.4와 `openai` 2.54.0이 서로 맞지 않아 첫 호출에서 멈췄는데, 오늘의 `openai-agents` 0.24.0과 `openai` 3.31.0 조합은 아래 Step 6에서 호출 셋이 끝까지 돌았습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -162,7 +166,7 @@ IMPORT_OK
             ]):
 ```
 
-다섯 칸이 모두 차야 합니다. 아래 `run_app.py`는 Streamlit의 `AppTest`로 앱을 내 프로세스 안에서 돌리고(브라우저를 열지 않습니다), 외부로 나갈 네 곳을 바꿉니다. `OPENAI_BASE_URL`을 가짜 서버로 걸고, `QdrantClient`는 사이드바 주소와 상관없이 메모리 저장소 하나를 돌려주며, `TextEmbedding`은 단어를 해시한 384차원 벡터를 만드는 가짜로, `FirecrawlApp`은 가짜 서버 주소(`api_url`)를 달아서 만듭니다. 가짜 벡터는 의미를 모르기 때문에 아래의 검색 순위는 뜻이 없습니다. 파일 이름은 `run_app.py`입니다. `TRACE_LOCAL=1`은 Step 7에서 씁니다.
+다섯 칸이 모두 차야 합니다. 아래 `run_app.py`는 Streamlit의 `AppTest`로 앱을 내 프로세스 안에서 돌리고(브라우저를 열지 않습니다), 외부로 나갈 다섯 곳을 스크립트 안에서 바꿉니다. `OPENAI_BASE_URL`을 가짜 서버로 걸고, `QdrantClient`는 사이드바 주소와 상관없이 메모리 저장소 하나를 돌려주며, `TextEmbedding`은 단어를 해시한 384차원 벡터를 만드는 가짜로(모델을 내려받지 않습니다), `FirecrawlApp`은 가짜 서버 주소(`api_url`)를 달아서 만들고, 트레이스 업로드 주소(`default_exporter().endpoint`)도 가짜 서버로 돌립니다. 그래서 이 스크립트는 명령 앞의 환경변수를 하나 빠뜨려도 바깥으로 나가지 않습니다. 아래 명령에 `OPENAI_AGENTS_DISABLE_TRACING=1`을 붙이는 것은 트레이스 업로드를 끄려는 것이고, 바깥을 막는 장치가 아닙니다. 가짜 벡터는 의미를 모르기 때문에 아래의 검색 순위는 뜻이 없습니다. 파일 이름은 `run_app.py`입니다.
 
 ```python
 """Run the app under AppTest. Qdrant, fastembed and Firecrawl's address are replaced.
@@ -215,9 +219,10 @@ class LocalFirecrawl(_F):
 
 firecrawl.FirecrawlApp = LocalFirecrawl
 
-if os.environ.get("TRACE_LOCAL"):  # send the SDK's trace uploads to the fake server too
-    from agents.tracing.processors import default_exporter
-    default_exporter().endpoint = base + "/v1/traces/ingest"
+# The SDK uploads traces to api.openai.com unless this is changed, so it is always changed here.
+from agents.tracing.processors import default_exporter
+default_exporter().endpoint = base + "/v1/traces/ingest"
+assert default_exporter().endpoint.startswith("http://127.0.0.1:") and os.environ["OPENAI_BASE_URL"].startswith("http://127.0.0.1:")
 
 from streamlit.testing.v1 import AppTest
 
@@ -255,7 +260,7 @@ print("mp3 files in temp:", len(glob.glob(os.path.join(tempfile.gettempdir(), "r
 if scenario == "rerun":
     for v in ("nova", "onyx"):
         at.sidebar.selectbox[0].select(v).run()
-        print("voice ->", v, "| errors:", [e.value for e in at.error])
+        print("picked", v, "| box shows:", at.sidebar.selectbox[0].value, "| session:", at.session_state.selected_voice, "| errors:", [e.value for e in at.error])
     print("mp3 files in temp:", len(glob.glob(os.path.join(tempfile.gettempdir(), "response_*.mp3"))))
 if scenario == "twice":
     init()
@@ -263,9 +268,8 @@ if scenario == "twice":
     print("points in collection after 2nd init:", c.count("docs_embeddings", exact=True).count)
     print("sources on screen:", [m.value for m in at.markdown if m.value.startswith("- https")])
 
-if os.environ.get("TRACE_LOCAL"):
-    import agents.tracing as tr
-    tr.get_trace_provider()._multi_processor.force_flush()
+import agents.tracing as tr
+tr.get_trace_provider()._multi_processor.force_flush()  # send any pending trace batch to the fake server now
 ```
 
 **확인.** 칸을 모두 비운 채 버튼을 누르는 시나리오입니다. 이 명령은 서버가 없어도 됩니다.
@@ -324,26 +328,31 @@ def setup_qdrant_collection(qdrant_url: str, qdrant_api_key: str, collection_nam
 
 `QdrantClient(url=…, api_key=…)`는 만들 때 연결하지 않았습니다. 닫힌 포트(`http://127.0.0.1:9`)로 만들어도 오류 없이 만들어졌고 `http` 주소에 키를 주면 `UserWarning: Api key is used with an insecure connection.`만 떴습니다. 오류는 컬렉션을 만드는 139~142행에서 났습니다. 같은 닫힌 포트에서 `create_collection`을 직접 불렀더니 `ResponseHandlingException [WinError 10061] …`(한국어 Windows의 "연결을 거부했으므로 연결하지 못했습니다")였고, 앱에서는 사이드바에 `Error during setup: …`로 나옵니다. 이미 있는 컬렉션은 오류 문구에 `already exists`가 있으면 넘어갑니다(143~145행). 메모리 저장소는 `ValueError: Collection docs_embeddings already exists`로 이 문구를 냈고(직접 확인), 진짜 서버가 같은 문구를 내는지는 확인하지 못했습니다. 컬렉션 이름은 `docs_embeddings`로 고정이라 앱은 하나의 문서 사이트만 한 컬렉션에 쌓습니다.
 
-134행의 `TextEmbedding()`은 모델 이름을 주지 않으므로 fastembed의 기본값 `BAAI/bge-small-en-v1.5`가 됩니다(소스로 확인, `fastembed/text/text_embedding.py` 89행). fastembed 0.9.0의 모델 목록에서 이 모델은 384차원, 크기 0.067GB이고 출처가 Hugging Face의 `Qdrant/bge-small-en-v1.5-onnx-Q`이며 설명이 "English, 512 input tokens truncation"입니다(직접 확인). 내려받기는 `lazy_load` 기본값 `False` 때문에 생성자 안에서 일어납니다(소스로 확인, `onnx_embedding.py` 310·317행). 캐시 폴더는 `FASTEMBED_CACHE_PATH`가 없으면 `tempfile.gettempdir()` 아래의 `fastembed_cache`입니다(소스로 확인, `common/utils.py` 76~87행). 이 문서는 내려받지 않았습니다. 내려받기를 막는 `HF_HUB_OFFLINE=1`과 빈 캐시 폴더에서 생성자만 불러 무슨 일이 나는지 봤습니다.
+134행의 `TextEmbedding()`은 모델 이름을 주지 않으므로 fastembed의 기본값 `BAAI/bge-small-en-v1.5`가 됩니다(소스로 확인, `fastembed/text/text_embedding.py` 89행). fastembed 0.9.0의 모델 목록에서 이 모델은 384차원, 크기 0.067GB이고 출처가 Hugging Face의 `Qdrant/bge-small-en-v1.5-onnx-Q`이며 설명이 "English, 512 input tokens truncation"입니다(직접 확인). 내려받기는 생성자 안에서 늘 일어나고(소스로 확인, `onnx_embedding.py` 310행의 `download_model`), `lazy_load` 기본값 `False`는 내려받은 모델을 메모리에 올리는 일(317행의 `load_onnx_model`)만 생성자 안으로 가져옵니다. 캐시 폴더는 `FASTEMBED_CACHE_PATH`가 없으면 `tempfile.gettempdir()` 아래의 `fastembed_cache`입니다(소스로 확인, `common/utils.py` 76~87행). 이 문서는 내려받지 않았습니다. 생성자만 불러 무슨 일이 나는지 보는 `embed_check.py`를 저장합니다. 이 스크립트는 `import` 앞에서 `HF_HUB_OFFLINE=1`을 스스로 걸고 `local_files_only=True`도 주기 때문에, 명령 앞에 아무것도 붙이지 않아도 Hugging Face에 접속하지 않습니다.
+
+```python
+import os
+os.environ["HF_HUB_OFFLINE"] = "1"  # set before the import: this check must never download
+from fastembed import TextEmbedding
+
+try:
+    TextEmbedding(local_files_only=True, cache_dir="fastembed-cache")
+except Exception as e:
+    print(type(e).__name__, str(e)[:80])
+```
 
 ```bash
 mkdir fastembed-cache
-HF_HUB_OFFLINE=1 FASTEMBED_CACHE_PATH=$PWD/fastembed-cache uv run --no-project python -B -W ignore -c "
-from fastembed import TextEmbedding
-try:
-    TextEmbedding()
-except Exception as e:
-    print(type(e).__name__, str(e)[:80])
-"
+uv run --no-project python -B -W ignore embed_check.py
 ```
 
-PowerShell은 `$env:HF_HUB_OFFLINE = "1"`과 `$env:FASTEMBED_CACHE_PATH = "$PWD\fastembed-cache"`를 먼저 걸고 `Remove-Item Env:…`로 지웁니다(실행해 보지 못했습니다). 직접 확인한 출력입니다. 앞에 모델 파일이 없다는 `ERROR` 로그 두 줄이 먼저 나옵니다.
+(PowerShell은 `mkdir fastembed-cache`를 만든 뒤 같은 `uv run` 줄을 씁니다. 실행해 보지 못했습니다.) 직접 확인한 출력입니다. 앞에 모델 파일이 없다는 `ERROR` 로그 두 줄이 먼저 나옵니다.
 
 ```text
 ValueError Could not load model BAAI/bge-small-en-v1.5 from any source.
 ```
 
-네트워크 없이도 생성자가 모델을 찾으려 했고 못 찾아서 멈춘다는 뜻입니다. 인터넷이 되는 독자 PC에서는 이 자리에서 약 67MB를 받고, 처음 한 번만 걸립니다. 영어 모델이라 한국어 문서의 검색 품질은 이 문서가 확인하지 못했습니다. 아래는 임베딩 두 단계(134~136행)입니다.
+생성자가 캐시에서 모델을 찾으려 했고 못 찾아서 멈춘다는 뜻입니다. 이 확인에서 스크립트의 위 두 줄을 지우고 돌리면 인터넷이 되는 PC에서는 이 자리에서 Hugging Face로 접속해 약 67MB를 받습니다(내가 바깥을 막은 환경에서 지우고 돌렸을 때 `huggingface.co:443` 접속 시도가 찍힌다는 것을 확인했습니다). 앱에서는 "Initialize System"을 처음 누를 때 이 일이 일어납니다. 영어 모델이라 한국어 문서의 검색 품질은 이 문서가 확인하지 못했습니다. 아래는 임베딩 두 단계(134~136행)입니다.
 
 ![임베딩 모델 생성과 차원 재기](diagrams/extra-embed.svg)
 
@@ -513,10 +522,15 @@ class H(BaseHTTPRequestHandler):
             record({"path": self.path, "body": body, "auth": auth})
             return self.send(200, {"success": True, "id": "crawl-1", "url": f"http://127.0.0.1:{PORT}/v1/crawl/crawl-1"})
         if self.path.endswith("/traces/ingest"):
-            kinds = {}
+            kinds, spans = {}, {}
             for it in body.get("data", []):
                 kinds[it.get("object")] = kinds.get(it.get("object"), 0) + 1
-            record({"path": self.path, "auth": auth, "items": kinds})
+                t = (it.get("span_data") or {}).get("type")
+                if t:
+                    spans[t] = spans.get(t, 0) + 1
+            leaked = [w for w in ("X-Acme-Key", "How do I authenticate", "FAKE ANSWER", "FAKE STYLE", "documentation assistant")
+                      if w in raw.decode("utf-8", "replace")]
+            record({"path": self.path, "auth": auth, "items": kinds, "span_types": spans, "text_found_in_upload": leaked})
             return self.send(200, {"ok": True})
         record({"path": self.path, "note": "unhandled POST"})
         self.send(404, {"error": "not found"})
@@ -752,7 +766,7 @@ def setup_agents(openai_api_key: str):
 : > server.log
 rm -rf tmp-out && mkdir tmp-out
 TMPDIR=$PWD/tmp-out TMP=$PWD/tmp-out TEMP=$PWD/tmp-out OPENAI_AGENTS_DISABLE_TRACING=1 uv run --no-project python -B -W ignore run_app.py 53217 ask
-cut -c1-230 server.log
+cut -c1-290 server.log
 ```
 
 (위 줄의 `rm -rf tmp-out`은 이 폴더 안의 `tmp-out` 하나만 지웁니다. PowerShell은 `Remove-Item -Recurse -Force tmp-out`과 `mkdir tmp-out`입니다. 실행해 보지 못했습니다.) 직접 확인한 출력입니다(`sidebar inputs`·`QdrantClient asked`·`progress lines` 줄은 뺐습니다. 서버 기록의 앞 두 줄은 초기화의 크롤링 요청입니다).
@@ -789,7 +803,10 @@ errors: [] | success: ['System initialized successfully!']
 errors: ["Error: Error code: 400 - {'error': {'message': 'FAKE: speech request rejected', 'type': 'invalid_request_error'}}"]
 answer on screen: []
 sources on screen: []
+mp3 files in temp: 0
 ```
+
+(`sidebar inputs`·`QdrantClient asked`·`progress lines` 줄은 뺐습니다. `mp3 files in temp`는 이 명령의 임시 폴더가 비어 있어 0입니다.)
 
 `fail.log`에는 `/v1/responses` 둘과 `/v1/audio/speech` 하나가 있었습니다(직접 확인). 처리 에이전트의 답은 이미 만들어졌고 요금도 나갔는데, 314~319행이 모든 예외를 오류 딕셔너리 하나로 바꿔서 화면에는 오류 문구만 있고 답과 출처가 없습니다. 이 서버를 확인한 뒤 터미널 C의 서버는 끕니다.
 
@@ -799,7 +816,7 @@ sources on screen: []
 
 ### Step 7. 화면, 재실행, 트레이스 — 앱을 띄우기 전에
 
-**목적.** 화면이 한 번 건드려질 때마다 무엇이 다시 도는지, 키를 넣는 순간 따라붙는 트레이스 전송을 확인하고, 앱을 띄우는 명령을 정리합니다.
+**목적.** 화면이 한 번 건드려질 때마다 무엇이 다시 도는지, 질문을 처리할 때 따라붙는 트레이스 전송이 무엇을 싣는지 확인하고, 앱을 띄우는 명령을 정리합니다.
 
 **할 일.**
 
@@ -840,13 +857,14 @@ sources on screen: []
                             )
 ```
 
-Streamlit은 위젯이 바뀔 때마다 스크립트를 처음부터 다시 실행합니다. 이 앱의 화면 쪽은 `query`(질문 칸의 글)가 비어 있지 않고 `setup_complete`이면 매번 `process_query`를 부릅니다(345~357행). 결과를 `session_state`에 담아 두지 않으므로 질문 칸 말고 다른 위젯을 건드려도 같은 질문이 다시 처리됩니다. 목소리 선택칸(`selectbox`)이 대표입니다. 시나리오 `rerun`은 질문 한 건 뒤에 목소리를 `nova`, `onyx`로 바꿉니다. 임시 폴더를 비운 뒤 돌립니다.
+Streamlit은 위젯이 바뀔 때마다 스크립트를 처음부터 다시 실행합니다. 이 앱의 화면 쪽은 `query`(질문 칸의 글)가 비어 있지 않고 `setup_complete`이면 매번 `process_query`를 부릅니다(345~357행). 결과를 `session_state`에 담아 두지 않으므로 질문 칸 말고 다른 위젯을 건드려도 같은 질문이 다시 처리됩니다. 목소리 선택칸(`selectbox`)이 대표입니다. 시나리오 `rerun`은 질문 한 건 뒤에 목소리를 `nova`, `onyx`로 차례로 바꾸고, 서버가 받은 음성 요청의 `voice`를 함께 봅니다. 임시 폴더를 비운 뒤 돌립니다.
 
 ```bash
 rm -rf tmp-out && mkdir tmp-out
 : > server.log
 TMPDIR=$PWD/tmp-out TMP=$PWD/tmp-out TEMP=$PWD/tmp-out OPENAI_AGENTS_DISABLE_TRACING=1 uv run --no-project python -B -W ignore run_app.py 53217 rerun
 echo "responses: $(grep -c '/v1/responses' server.log), speech: $(grep -c 'audio/speech' server.log)"
+grep -o '"voice": "[a-z]*"' server.log | tr '\n' ' '
 ```
 
 ```text
@@ -855,55 +873,97 @@ errors: []
 answer on screen: ['FAKE ANSWER: send the key in the X-Acme-Key header. Source https://doc']
 sources on screen: ['- https://docs.example.test/limits', '- https://docs.example.test/auth', '- https://docs.example.test/webhooks']
 mp3 files in temp: 1
-voice -> nova | errors: []
-voice -> onyx | errors: []
+picked nova | box shows: nova | session: nova | errors: []
+picked onyx | box shows: nova | session: nova | errors: []
 mp3 files in temp: 3
 responses: 6, speech: 3
+"voice": "coral" "voice": "nova" "voice": "nova"
 ```
 
-질문은 한 번이었는데 모델 요청이 여섯, 음성 요청이 셋, mp3가 셋입니다(직접 확인). 진짜 키라면 목소리를 두 번 바꿀 때마다 `gpt-4o` 두 번과 음성 합성 한 번의 요금이 다시 나갑니다. 내려받기 버튼(`st.download_button`, 371~376행)도 같습니다. 설치된 Streamlit 1.66.0의 `download_button`은 `on_click` 기본값이 `"rerun"`이어서 눌러도 스크립트가 다시 돈다고 소스(`streamlit/elements/widgets/button.py`)에서 읽었고, 브라우저에서 눌러 보지는 않았습니다. 같은 `asyncio.run`이 세 번 이어서 돌았는데 오류가 없었다는 점도 같은 출력에서 보입니다.
+(`sidebar inputs`·`QdrantClient asked`·`progress lines` 줄은 뺐습니다.) 질문은 한 번이었는데 모델 요청이 여섯, 음성 요청이 셋, mp3가 셋입니다(직접 확인). 진짜 키라면 목소리를 바꿀 때마다 `gpt-4o` 두 번과 음성 합성 한 번의 요금이 다시 나갑니다. 그런데 `onyx`로 바꾼 두 번째 변경은 선택칸에 반영되지 않았습니다. 선택칸이 `nova`로 되돌아가 있고 서버가 받은 `voice`도 `nova`가 두 번입니다. 요금은 나가는데 고른 목소리는 나오지 않는 것입니다. 원인은 77~82행의 `st.selectbox(…, index=voices.index(st.session_state.selected_voice))`로 읽었습니다. 키가 없는 위젯에 실행마다 바뀌는 `index`를 주면 Streamlit이 인자가 바뀐 위젯을 새 위젯으로 보고 기본값으로 되돌립니다(소스로 읽었고 이 동작은 위 출력으로 확인했습니다). 그래서 목소리는 한 번 더 골라야 바뀝니다. 내려받기 버튼(`st.download_button`, 371~376행)도 눌러 재실행되는 것은 같습니다. 설치된 Streamlit 1.66.0의 `download_button`은 `on_click` 기본값이 `"rerun"`이라고 소스(`streamlit/elements/widgets/button.py`)에서 읽었고, 브라우저에서 눌러 보지는 않았습니다. 같은 `asyncio.run`이 세 번 이어서 돌았는데 오류가 없었다는 점도 같은 출력에서 보입니다.
 
-트레이스는 Day 033 Step 3과 Day 118 Step 6이 다룬 그대로입니다. 키를 넣는 순간(`setup_agents`의 217행이 `OPENAI_API_KEY`를 환경에 씁니다) `openai-agents`는 실행 기록을 OpenAI의 트레이스 서버로 올립니다. 이 앱에서 직접 확인합니다. `run_app.py`는 `TRACE_LOCAL=1`을 주면 트레이스 업로드 주소만 가짜 서버로 돌립니다. 환경변수를 걸지 않은 실행입니다.
+트레이스는 목적지와 끄는 법이 Day 033 Step 3·4, Day 118 Step 6과 같습니다. 담기는 내용은 `openai-agents`의 판과 경로에 따라 다릅니다. `setup_agents`의 217행이 `OPENAI_API_KEY`를 환경에 쓰고, 질문을 처리할 때(`Runner.run`) 실행 기록이 OpenAI의 트레이스 서버로 올라갑니다. 키를 넣고 초기화만 한 `init` 시나리오에서는 업로드가 0건이었습니다(직접 확인). `run_app.py`는 이 업로드 주소를 늘 가짜 서버로 돌려 두었으므로 환경변수 없이도 바깥으로 나가지 않습니다. 그 서버가 무엇을 받는지 봅니다. 환경변수 값이 `0`이면 트레이싱이 켜집니다.
 
 ```bash
 : > server.log
-TRACE_LOCAL=1 uv run --no-project python -B -W ignore run_app.py 53217 ask
+OPENAI_AGENTS_DISABLE_TRACING=0 uv run --no-project python -B -W ignore run_app.py 53217 ask
 grep ingest server.log
 ```
 
 ```text
+errors: [] | success: ['System initialized successfully!']
 errors: []
-{"path": "/v1/traces/ingest", "auth": "sidebar", "items": {"trace": 2, "trace.span": 8}}
+answer on screen: ['FAKE ANSWER: send the key in the X-Acme-Key header. Source https://doc']
+sources on screen: ['- https://docs.example.test/limits', '- https://docs.example.test/auth', '- https://docs.example.test/webhooks']
+mp3 files in temp: 1
+{"path": "/v1/traces/ingest", "auth": "sidebar", "items": {"trace": 2, "trace.span": 8}, "span_types": {"response": 2, "custom": 4, "agent": 2}, "text_found_in_upload": []}
 ```
 
-가짜 서버가 받은 업로드는 트레이스 2건과 스팬 8건이었고 인증에는 사이드바의 키가 쓰였습니다(`Runner.run`이 둘이어서 트레이스가 둘입니다). 환경변수를 걸면 같은 실행에서 이 요청이 0건입니다.
+(앞의 `sidebar inputs` 등 세 줄은 뺐고, `mp3 files in temp`는 이 폴더의 임시 파일 수라 다를 수 있습니다.) 업로드는 한 건이고 항목은 트레이스 2건(`Runner.run`이 둘)과 스팬 8건(응답 2, 에이전트 2, 사용자 정의 4)이며 인증에는 사이드바의 키가 쓰였습니다. 가짜 서버가 업로드 본문에서 `X-Acme-Key`·`How do I authenticate`·`FAKE ANSWER`·`FAKE STYLE`·지시문 문구를 찾았지만 하나도 없었습니다(`text_found_in_upload`가 빈 목록. 직접 확인). 이유는 소스에 있습니다. 이 앱의 두 에이전트는 Responses API를 쓰고, `openai-agents` 0.24.0의 응답 스팬은 `type`·`response_id`·`usage`만 내보냅니다(`agents/tracing/span_data.py` 237~242행). 입력 글은 "OpenAI trace processors가 쓰지 않는다"는 주석과 함께 스팬에 담기기만 합니다(같은 파일 227~228행). Day 033 Step 3이 본 `input`·`output` 전문은 `GenerationSpanData`(같은 파일 201~209행)의 내보내기이고, 이 앱의 경로가 아닙니다. 그래서 업로드되는 것은 워크플로와 에이전트 이름, 응답 아이디, 토큰 수이고, 크롤링한 문서 본문·질문·답은 트레이스가 아니라 모델 호출 자체로 OpenAI에 갑니다. 다른 판의 `openai-agents`나 Chat Completions 경로에서 무엇이 실리는지는 이 문서가 확인하지 못했습니다. 끄면 이 요청이 없어집니다.
 
 ```bash
 : > server.log
-OPENAI_AGENTS_DISABLE_TRACING=1 TRACE_LOCAL=1 uv run --no-project python -B -W ignore run_app.py 53217 ask
+OPENAI_AGENTS_DISABLE_TRACING=1 uv run --no-project python -B -W ignore run_app.py 53217 ask
 grep -c ingest server.log
 ```
 
 ```text
-errors: []
 0
 ```
 
-(PowerShell은 변수를 `$env:`로 걸고 같은 명령을 돌린 뒤 지웁니다. 실행해 보지 못했습니다. 두 출력 모두 `errors:` 줄은 질문 처리 뒤의 것이고 앞의 초기화 출력은 뺐습니다.) 트레이스 주소를 바꾸지 않고 환경변수도 없이 돌렸을 때는, 내가 외부로 나가려는 요청을 기록만 하는 프록시를 걸어 두었습니다. 그 프록시가 `CONNECT api.openai.com:443`을 세 번 받았고 앱 출력에는 `[non-fatal] Tracing request failed`가 세 줄, `max retries reached`가 한 줄 나왔습니다. 키를 넣은 독자 PC에서는 이 요청이 실제 OpenAI로 가며, Day 033 Step 3이 확인한 대로 기본 설정에서는 프롬프트와 응답 전문이 실립니다. 이 앱에서는 크롤링한 문서 본문과 질문이 그 안에 있습니다. 그래서 앱을 띄우는 모든 터미널에 `OPENAI_AGENTS_DISABLE_TRACING=1`을 겁니다.
+(PowerShell은 변수를 `$env:`로 걸고 같은 명령을 돌린 뒤 지웁니다. 실행해 보지 못했습니다. 출력은 마지막 줄만 옮겼습니다.) 트레이스 주소를 바꾸지 않은 채 환경변수 `0`으로 돌렸을 때는, 내가 바깥으로 나가려는 요청을 기록만 하는 프록시를 걸어 두었습니다(독자 PC에는 없는 안전망입니다). 그 프록시가 `CONNECT api.openai.com:443`을 세 번 받았고 앱 출력에는 `[non-fatal] Tracing request failed`가 세 줄, `max retries reached`가 한 줄 나왔습니다. 인터넷에 붙은 독자가 진짜 키로 `run_app.py` 없이 앱을 돌리면 이 요청이 실제 OpenAI로 갑니다. 그래서 실제 앱을 띄우는 터미널에는 `OPENAI_AGENTS_DISABLE_TRACING=1`을 겁니다.
 
-실제 앱을 띄우는 명령은 이렇습니다. `fake_server.py`와 `run_app.py`는 쓰지 않습니다.
+실제 앱을 띄우는 명령은 이렇습니다. `fake_server.py`와 `run_app.py`는 쓰지 않으므로, 실수로 바깥에 닿지 않도록 환경변수를 검사하는 `guard.py`를 저장하고 `guard.py`가 통과할 때만 앱을 띄웁니다. 이 스크립트는 `OPENAI_BASE_URL`과 `FIRECRAWL_API_URL`의 호스트(`urlparse`)가 `127.0.0.1`·`localhost`인지, 트레이싱이 꺼져 있는지, `firecrawl-py`가 1.x인지(4.x는 `FIRECRAWL_API_URL`을 무시합니다)를 보고 하나라도 어긋나면 종료 코드 1로 끝납니다.
+
+```python
+"""Run this before starting the real app: python guard.py && streamlit run ...
+Exits with code 1 unless every address the app can read from the environment is a loopback fake,
+tracing is off, and firecrawl-py is a 1.x version (4.x ignores FIRECRAWL_API_URL).
+The sidebar boxes are not covered: type only fake values there, and do not press Initialize System
+(the first press downloads the fastembed model)."""
+import os
+import sys
+from importlib.metadata import version
+from urllib.parse import urlparse
+
+
+def loopback(url):
+    u = urlparse(url)
+    return u.scheme == "http" and u.hostname in ("127.0.0.1", "localhost")
+
+
+def check():
+    for name in ("OPENAI_BASE_URL", "FIRECRAWL_API_URL"):
+        if not loopback(os.environ.get(name, "")):
+            sys.exit(f"{name} is not a loopback http address: {os.environ.get(name)!r}")
+    if os.environ.get("OPENAI_AGENTS_DISABLE_TRACING", "").lower() not in ("1", "true"):
+        sys.exit("OPENAI_AGENTS_DISABLE_TRACING is not 1: traces would go to api.openai.com")
+    if not version("firecrawl-py").startswith("1."):
+        sys.exit("firecrawl-py is not 1.x: it would ignore FIRECRAWL_API_URL (Step 4)")
+
+
+if __name__ == "__main__":
+    check()
+```
+
+터미널 A에서 `fake_server.py 53217 server.log`가 떠 있는 채로, 새 터미널에서 변수를 걸고 띄웁니다.
 
 ```bash
-OPENAI_AGENTS_DISABLE_TRACING=1 uv run --no-project streamlit run customer_support_voice_agent.py --server.headless true --server.address localhost --server.port 53301 --browser.gatherUsageStats false
+export OPENAI_BASE_URL=http://127.0.0.1:53217/v1
+export FIRECRAWL_API_URL=http://127.0.0.1:53217
+export OPENAI_AGENTS_DISABLE_TRACING=1
+uv run --no-project python guard.py && uv run --no-project streamlit run customer_support_voice_agent.py --server.headless true --server.address localhost --server.port 53301 --browser.gatherUsageStats false
 ```
 
 ```powershell
+$env:OPENAI_BASE_URL = "http://127.0.0.1:53217/v1"
+$env:FIRECRAWL_API_URL = "http://127.0.0.1:53217"
 $env:OPENAI_AGENTS_DISABLE_TRACING = "1"
-uv run --no-project streamlit run customer_support_voice_agent.py --server.headless true --server.address localhost --server.port 53301 --browser.gatherUsageStats false
-Remove-Item Env:OPENAI_AGENTS_DISABLE_TRACING
+uv run --no-project python guard.py
+if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run customer_support_voice_agent.py --server.headless true --server.address localhost --server.port 53301 --browser.gatherUsageStats false }
 ```
 
-(PowerShell 형태는 실행해 보지 못했습니다.) 이 문서는 이 명령으로 띄워 `/_stcore/health`가 200을 주는 것까지만 확인했고(직접 확인) 화면을 열지 않았습니다. 앱 폴더에는 새 파일이 생기지 않았습니다. 진짜 키를 넣으면 위의 모든 요금과 트레이스 전송이 나가고, 질문 칸을 건 채로 만지는 모든 위젯이 요금을 냅니다. 소리는 서버가 아니라 브라우저의 `st.audio`가 재생합니다(367행). 서버 쪽 코드에는 스피커를 여는 부분이 없습니다.
+(PowerShell 형태는 실행해 보지 못했습니다. 이 변수들은 그 터미널에 남으므로 끝나면 닫거나 지웁니다.) 이 문서는 이 명령으로 띄워 `/_stcore/health`가 200을 주는 것까지만 확인했고(직접 확인) 화면을 열지 않았습니다. 앱 폴더에는 새 파일이 생기지 않았습니다. 화면을 직접 열어 본다면 사이드바에는 가짜 값만 넣고 "Initialize System"은 누르지 마세요. `guard.py`가 막지 못하는 길이 두 개 있기 때문입니다. 첫 초기화에서 fastembed가 Hugging Face로 접속해 모델을 내려받고(Step 3), 사이드바의 Qdrant 주소가 그대로 쓰입니다(133행). 진짜 키와 진짜 주소를 넣으면 위의 모든 요금이 나가고, 질문 칸에 글이 남은 채 만지는 모든 위젯이 요금을 냅니다. 소리는 서버가 아니라 브라우저의 `st.audio`가 재생합니다(367행). 서버 쪽 코드에는 스피커를 여는 부분이 없습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -913,11 +973,11 @@ Remove-Item Env:OPENAI_AGENTS_DISABLE_TRACING
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-질문 글은 로컬 임베딩 모델을 거쳐 벡터가 되고, Qdrant에서 가장 가까운 점 셋을 받아 문맥 글이 됩니다. `Runner.run`은 이 문맥으로 `gpt-4o`를 한 번 부르고 답을 돌려줍니다. 다음 그림의 첫 줄이 이어받습니다.
+화면은 상태 표시(`st.status`와 "Searching documentation…" 글)를 사용자에게 먼저 보여 줍니다. 질문 글은 로컬 임베딩 모델을 거쳐 벡터가 되고, Qdrant에서 가장 가까운 점 셋을 받아 문맥 글이 됩니다. `Runner.run`은 이 문맥으로 `gpt-4o`를 한 번 부르고 답을 돌려줍니다. 다음 그림의 첫 줄이 이어받습니다.
 
 ![TTS 에이전트와 음성 합성](diagrams/extra-tts.svg)
 
-TTS 에이전트의 호출은 모델 요청 한 번이고 그 글은 말투 지시가 됩니다. 마지막 줄의 트레이스는 `Runner.run`이 도는 동안 배경에서 묶음으로 나가는 것이라 시각의 순서가 아니고 정리를 위한 배치입니다. 환경변수를 걸면 이 줄이 없습니다. 마지막은 파일을 쓰고 화면에 보이는 단계입니다.
+TTS 에이전트의 호출은 모델 요청 한 번이고 그 글은 말투 지시가 됩니다. 마지막 줄의 트레이스는 `Runner.run`이 도는 동안 배경에서 묶음으로 나가는 것이라 시각의 순서가 아니고 정리를 위한 배치입니다. 환경변수를 걸면 이 줄이 없습니다. 마지막은 파일을 쓰고 화면이 하나씩 그리는 단계입니다. 답 글, 오디오 플레이어(mp3를 파일에서 읽음), 내려받기 버튼(같은 파일을 다시 읽음), 출처 목록이 각자 한 줄입니다.
 
 ![mp3 쓰기와 화면](diagrams/extra-end.svg)
 
@@ -926,14 +986,16 @@ TTS 에이전트의 호출은 모델 요청 한 번이고 그 글은 말투 지�
 - [ ] `uv venv`와 `uv pip install -r requirements.txt`로 환경을 만들고 `firecrawl-py`가 4.x로 풀리는 것을 확인했다
 - [ ] `COMPILE_OK`와 `IMPORT_OK`를 봤다
 - [ ] `run_app.py ... empty`에서 `Please fill in all the required fields!`를 봤다
-- [ ] `TextEmbedding()`이 모델 이름 없이 만들어지고 캐시 폴더가 `FASTEMBED_CACHE_PATH`나 `%TEMP%\fastembed_cache`라는 것을 읽었다
+- [ ] `embed_check.py`로 `TextEmbedding()`이 모델 이름 없이 만들어지고 캐시 폴더가 `FASTEMBED_CACHE_PATH`나 `%TEMP%\fastembed_cache`라는 것을 읽었다
 - [ ] 4.50.0에서 `init`이 `unexpected keyword argument 'params'`로 멈추는 것을 봤다
 - [ ] `firecrawl-py==1.17.0`으로 고정하고 `Crawled 3 documentation pages!`를 봤다
 - [ ] `twice`에서 점이 6개가 되고 검색 결과에 같은 페이지가 겹치는 것을 봤다
 - [ ] `ask`의 서버 기록에서 `/v1/responses` 둘과 `/v1/audio/speech` 하나를 확인하고 `instructions`가 TTS 에이전트의 글인 것을 봤다
 - [ ] `speech-fail` 서버에서 오류 문구만 뜨고 답이 사라지는 것을 봤다
 - [ ] `rerun`에서 질문 한 건에 요청이 `responses: 6, speech: 3`이 되는 것을 봤다
-- [ ] 트레이스를 켠 실행과 끈 실행의 `ingest` 요청 수를 비교했다
+- [ ] `OPENAI_AGENTS_DISABLE_TRACING`을 `0`과 `1`로 바꿔 `ingest` 요청 수를 비교하고 업로드에 본문이 없는 것을 봤다
+- [ ] `rerun`에서 둘째 목소리 변경이 선택칸에서 무시되는 것(`voice`가 `coral, nova, nova`)을 봤다
+- [ ] `guard.py`가 변수 없이 종료 코드 1을 내는 것을 확인하고, 변수를 건 터미널에서 `guard.py && streamlit run …`으로 앱의 `/_stcore/health`가 200인 것을 봤다
 - [ ] 띄운 서버(53217·53218)를 모두 끄고 해당 포트가 비었다
 
 ## 문제 해결
@@ -943,13 +1005,15 @@ TTS 에이전트의 호출은 모델 요청 한 번이고 그 글은 말투 지�
 | 초기화에서 `Error during setup: FirecrawlClient.crawl() got an unexpected keyword argument 'params'`(직접 확인) | 오늘 풀리는 `firecrawl-py` 4.50.0의 `crawl_url`은 `params=`를 받지 않는다. 앱의 156~164행은 1.x 모양이다(Step 4) | 앱 환경에서 `uv pip install "firecrawl-py==1.17.0"`(호출 모양은 가짜 서버로 확인함. 진짜 서버가 1.x 요청을 받는지는 확인하지 못함) |
 | 초기화에서 `Please fill in all the required fields!`(직접 확인) | 다섯 칸 가운데 하나라도 비었다(85~91행). 앱은 환경변수나 `.env`로 칸을 채우지 않는다 | 다섯 칸을 모두 채운다 |
 | 초기화에서 `Error during setup: …`에 연결 거부나 이름 조회 실패가 있음(닫힌 포트에서 `create_collection`을 직접 불러 확인) | Qdrant 주소가 틀렸거나 서버가 없다. 클라이언트는 만들 때가 아니라 139~142행의 컬렉션 만들기에서 처음 연결한다 | 주소와 키를 확인한다. `http` 주소에 키를 주면 `UserWarning`이 뜨는 것은 정상이다 |
-| 처음 초기화가 오래 걸리거나 모델 오류가 남 | 134행의 `TextEmbedding()`이 모델 약 67MB를 내려받는다(소스로 확인) | 인터넷이 되는 곳에서 한 번 기다린다. 캐시는 `FASTEMBED_CACHE_PATH`로 옮긴다 |
+| 처음 초기화가 오래 걸리거나 모델 오류가 남 | 134행의 `TextEmbedding()`이 Hugging Face에서 모델 약 67MB를 내려받는다(소스로 확인. 바깥을 막은 환경에서는 `huggingface.co:443` 접속 시도가 찍히고 3초·9초·27초 간격으로 다시 시도한다는 것을 내 프록시 아래에서 확인) | 인터넷이 되는 곳에서 한 번 기다린다. 캐시는 `FASTEMBED_CACHE_PATH`로 옮긴다 |
 | 질문하자 답 없이 `Error: Error code: 400 …`만 뜸(가짜 서버로 확인) | 음성 합성이 실패하면 314~319행이 모든 예외를 오류 하나로 바꿔 답을 버린다. `input`이 4096자를 넘으면 합성이 거절될 수 있다(문서에서 읽음) | 오류 문구를 읽는다. 답 글을 보려면 사본의 `process_query`에서 합성 앞에서 답을 먼저 돌려주게 고친다(더 해보기) |
 | 목소리를 바꾸거나 내려받기를 눌렀더니 답이 다시 만들어지고 요금이 나감(`rerun`으로 직접 확인) | 질문 칸에 글이 남아 있으면 위젯 변경마다 `process_query`가 다시 돈다(345~357행) | 목소리는 질문을 지운 뒤에 고른다. 사본을 고치려면 더 해보기 |
+| 목소리를 바꿨는데 이전 목소리로 나옴. 선택칸이 되돌아가 있음(`rerun`으로 직접 확인: 서버가 받은 `voice`가 `coral`, `nova`, `nova`) | 77~82행이 키 없는 `selectbox`에 매번 바뀌는 `index`를 줘서 두 번째 변경이 기본값으로 되돌려진다고 읽었다(Step 7) | 한 번 더 고른다. 사본을 고치려면 `key=`를 주는 식으로 고친다(고쳐 보지는 않았다) |
 | 초기화를 두 번 눌렀더니 출처에 같은 주소가 겹침(`twice`로 직접 확인) | 점 `id`가 `uuid4()`라 같은 페이지가 다시 들어간다(205행). 컬렉션을 지우는 코드가 없다 | Qdrant에서 `docs_embeddings` 컬렉션을 지우고 다시 초기화한다 |
-| 앱을 띄운 터미널에 `[non-fatal] Tracing request failed`(내 프록시 아래에서 직접 확인) | 환경변수 없이 키를 넣으면 `openai-agents`가 트레이스를 OpenAI로 올리려 한다 | `OPENAI_AGENTS_DISABLE_TRACING=1`을 건다(Step 7) |
+| 앱을 띄운 터미널에 `[non-fatal] Tracing request failed`(바깥을 막은 환경에서만 나오는 줄이고, 내 프록시 아래에서 직접 확인) | 환경변수 없이 키를 넣고 질문을 처리하면 `openai-agents`가 트레이스를 OpenAI로 올리려 한다. 바깥이 막혀 있으면 이 줄이 찍히고, 인터넷에 붙은 PC에서 진짜 키면 아무 말 없이 올라간다 | `OPENAI_AGENTS_DISABLE_TRACING=1`을 건다(Step 7). 올라가는 것은 이름·응답 아이디·토큰 수이고 본문은 아니다 |
+| 가짜 키로 인터넷에 붙은 채 질문을 처리하면 `Tracing client error 401` 같은 줄이 한 번 찍힌다고 소스에서 읽음(`processors.py`의 4xx 처리. 실행해 보지는 않았다) | 틀린 키로 트레이스 업로드가 거절된 것이고 4xx는 재시도하지 않는다 | 같은 변수로 끈다 |
 | 임시 폴더에 `response_*.mp3`가 계속 쌓임(직접 확인) | 질문마다(위젯 재실행마다) 파일 하나를 쓰고 지우지 않는다(295~299행) | 임시 폴더를 가끔 비운다 |
-| 모델이 곧 종료된다는 ⚠ | `gpt-4o`와 `gpt-4o-mini-tts`의 기본 스냅숏이 2027-01에 종료 예정이다(사전 준비) | 사본의 228·240행과 288행의 `model=` 값을 바꾼다 |
+| 모델이 곧 종료된다는 ⚠ | `gpt-4o`와 `gpt-4o-mini-tts`의 기본 스냅숏이 2027-01에 종료 예정이다(사전 준비) | `gpt-4o`는 사본의 228·240행 `model=` 값을 바꾼다. 288행의 음성 합성은 권하는 대체 `gpt-realtime-2.1-mini`가 음성 API 목록에 없어 이름 교체가 안 되고 Realtime API로 옮기라는 안내다(요청을 보내 보지는 않았다) |
 
 ## 더 해보기
 

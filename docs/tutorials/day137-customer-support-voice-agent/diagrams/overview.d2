@@ -12,18 +12,21 @@ app: customer_support_voice_agent.py {
 }
 
 firecrawl: "Firecrawl" { class: ext }
+hf: "Hugging Face Hub\n(모델 내려받기)" { class: ext }
 embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
 qdrant: "Qdrant" { class: store }
 mp3: "임시 폴더 mp3" { class: file }
 openai: "OpenAI\n(gpt-4o ×2, TTS)" { class: ext }
 traces: "OpenAI 트레이스" { class: ext }
 
-user -> app: 키·주소·질문
+user -> app: 키·주소\n질문
 app -> firecrawl: 사이트 주소
 firecrawl -> app: 페이지 글
 app -> embed: 페이지 본문
 app -> qdrant: 벡터+본문
 app -> embed: 질문 글
+app -> hf: 모델 요청
+hf -> app: 모델 파일
 app -> qdrant: 질의 벡터
 app -> mp3: mp3 바이트
 app -> openai: 음성 합성

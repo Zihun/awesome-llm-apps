@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: right
+
+ui: "화면\n(Streamlit)" { class: ours }
+qa: "질문 처리\n(process_query)" { class: ours }
+openai: "OpenAI\n(gpt-4o-mini-tts)" { class: ext }
+mp3: "임시 폴더 mp3" { class: file }
+
+qa -> openai: 음성 합성
+qa -> mp3: mp3 바이트
+mp3 -> ui: st.audio

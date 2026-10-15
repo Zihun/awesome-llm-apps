@@ -6,4 +6,10 @@ ui: "화면 (process_query)" { class: ours }
 tmp: "임시 폴더" { class: file }
 
 ui -> tmp: response_uuid.mp3 쓰기
-ui -> user: 답변 글 · 오디오 · 내려받기 · 출처
+ui -> user: "✅ Query processed!"
+ui -> user: 답 글 (st.write)
+ui -> tmp: st.audio(경로)\nmp3 읽기
+ui -> user: 오디오 플레이어
+ui -> tmp: open(rb).read()\nmp3 읽기
+ui -> user: 내려받기 버튼
+ui -> user: 출처 목록

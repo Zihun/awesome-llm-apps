@@ -9,6 +9,8 @@ agents: "에이전트 (Runner)" { class: ours }
 qdrant: "Qdrant" { class: store }
 
 user -> ui: 질문 입력
+ui -> user: st.status(\n"Processing your query...")
+ui -> user: "🔄 Searching documentation\nand generating response..."
 ui -> embed: embed(질문 글)
 embed -> ui: 질문 벡터 (384차원)
 ui -> qdrant: query_points(limit=3)

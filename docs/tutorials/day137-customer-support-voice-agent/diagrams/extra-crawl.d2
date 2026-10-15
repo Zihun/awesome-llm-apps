@@ -1,10 +1,14 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
+user: "사용자" { class: person }
 ui: "화면 (사이드바)" { class: ours }
 qdrant: "Qdrant" { class: store }
 firecrawl: "Firecrawl" { class: ext }
 
 ui -> qdrant: create_collection(docs_embeddings,\n384, COSINE)
+ui -> user: "✅ Qdrant setup complete!"
+ui -> user: "🔄 Crawling\ndocumentation pages..."
 ui -> firecrawl: crawl_url(주소,\nlimit 5, markdown\n+ html)
 firecrawl -> ui: 페이지 목록 (data)
+ui -> user: "✅ Crawled N\ndocumentation pages!"
