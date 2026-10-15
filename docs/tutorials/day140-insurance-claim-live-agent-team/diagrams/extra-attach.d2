@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "화면 (app.js)" { class: ours }
+tool: "서버 (execute_tool · update)" { class: ours }
+dir: "모의 정책 (policy_directory.py)" { class: ours }
+
+tool -> dir: "lookup_policy (_attach_policy_from_claim)"
+dir -> tool: "정책 레코드"
+tool -> app: "state (update)"
+tool -> app: "processing {active: false}"
+tool -> app: "tool 메시지: sync_claim_packet, done"
+tool -> app: "state"

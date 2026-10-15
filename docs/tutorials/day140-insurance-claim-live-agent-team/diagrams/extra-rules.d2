@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+graph: "청구 그래프 (agent.py)" { class: ours }
+rules: "규칙 (policies.py)" { class: ours }
+dir: "모의 정책 (policy_directory.py)" { class: ours }
+
+graph -> rules: "apply_coverage_and_evidence_rules"
+rules -> dir: "policy_review(claim)"
+dir -> rules: "검토 사유 목록"
+rules -> graph: "coverage 결정 (1차 route)"
+graph -> rules: "generate_document_checklist"
+rules -> graph: "document_checklist"

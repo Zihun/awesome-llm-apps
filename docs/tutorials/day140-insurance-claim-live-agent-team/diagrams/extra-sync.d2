@@ -1,15 +1,12 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-app: "화면 (app.js)" { class: ours }
-flash: "Gemini Flash (가짜)" { class: ext }
+tool: "서버 (execute_tool · update)" { class: ours }
 graph: "청구 그래프 (agent.py)" { class: ours }
-tool: "도구 (execute_tool)" { class: ours }
+rules: "규칙 (policies.py)" { class: ours }
 
-tool -> app: "tool 메시지: sync_claim_packet, running"
-graph -> flash: "정리 요청 (ClaimNarrative 스키마)"
-flash -> graph: "claim JSON"
-graph -> flash: "분류 요청 (ClaimClassification)"
-flash -> graph: "classification JSON"
+graph -> rules: "fraud_signal_and_safety_gate"
+rules -> graph: "fraud_safety_gate (최종 route)"
+graph -> rules: "build_claim_intake_packet"
+rules -> graph: "claim_intake_packet"
 graph -> tool: "일곱 단계 결과 dict"
-tool -> app: "tool: done · state (route, progress)"

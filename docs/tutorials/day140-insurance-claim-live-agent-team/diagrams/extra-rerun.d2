@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "화면 (app.js)" { class: ours }
+tool: "서버 (execute_tool · update)" { class: ours }
+graph: "청구 그래프 (agent.py)" { class: ours }
+
+tool -> graph: "request_update (revision + 1)"
+tool -> app: "processing {active: true}"
+tool -> app: "tool 메시지: pin_evidence_photo, done"
+tool -> app: "state"
+graph -> tool: "일곱 단계 결과 dict (재실행)"
+tool -> app: "state (update)"
+tool -> app: "processing {active: false}"

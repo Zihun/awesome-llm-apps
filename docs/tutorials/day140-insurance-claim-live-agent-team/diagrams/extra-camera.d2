@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "화면 (app.js)" { class: ours }
+ws: "서버 (live_voice)" { class: ours }
+live: "Gemini Live (가짜)" { class: ext }
+
+app -> ws: "camera_state: enabled"
+ws -> live: "client_content(APP CAMERA STATE: ON)"
+app -> ws: "video: JPEG 프레임 (1초마다)"
+ws -> live: "realtime_input(video, image/jpeg)"
+live -> ws: "tool_call: pin_evidence_photo"

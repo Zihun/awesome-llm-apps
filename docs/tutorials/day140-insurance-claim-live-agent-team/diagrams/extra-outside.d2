@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+server: "세션 · 소켓 · 도구\n(server.py)" { class: ours }
+agent: "그래프 7단계\n(agent.py)" { class: ours }
+live: "Gemini Live" { class: ext }
+flash: "Gemini Flash" { class: ext }
+image: "이미지 모델" { class: ext }
+vertex: "Live Avatar (선택)" { class: ext }
+
+server -> live: "Live 소켓"
+live -> server: "도구 호출 · 말"
+server -> flash: "사진 설명"
+agent -> flash: "정리 · 분류"
+server -> image: "스케치"
+server -> vertex: "아바타 연결"

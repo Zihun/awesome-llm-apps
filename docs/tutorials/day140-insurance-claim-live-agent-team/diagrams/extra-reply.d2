@@ -6,8 +6,10 @@ app: "화면 (app.js)" { class: ours }
 ws: "서버 (live_voice)" { class: ours }
 live: "Gemini Live (가짜)" { class: ext }
 
-live -> ws: "output_transcription + 소리(PCM 24kHz)"
-ws -> app: "transcript · audio"
-app -> user: "소리 재생 · 자막"
-live -> ws: "turn_complete"
+live -> ws: "server_content: 자막 + 소리(PCM 24kHz)"
+ws -> app: "transcript (Agent, 미완)"
+ws -> app: "audio"
+app -> user: "소리 재생"
+live -> ws: "server_content: 자막 끝 · turn_complete"
+ws -> app: "transcript (Agent, final)"
 ws -> app: "turn_complete"

@@ -10,6 +10,7 @@ graph: "청구 그래프 (agent.py)" { class: ours }
 user -> app: "글 입력 · 전송"
 app -> ws: "{type: text, text, id}"
 ws -> app: "transcript (Claimant)"
+ws -> app: "processing {active: true}"
 ws -> graph: "run_claim_workflow(대화)"
 ws -> live: "client_content(user 턴)"
 live -> ws: "tool_call: lookup_policy · sync_claim_packet · draw_incident_sketch"

@@ -2,10 +2,11 @@
 shape: sequence_diagram
 
 app: "화면 (app.js)" { class: ours }
-tool: "도구 (execute_tool)" { class: ours }
+tool: "서버 (execute_tool)" { class: ours }
 img: "이미지 모델 (가짜)" { class: ext }
 
 tool -> app: "tool 메시지: draw_incident_sketch, running"
 tool -> img: "generate_content(sketch_prompt, IMAGE)"
 img -> tool: "PNG 바이트 (inline_data)"
-tool -> app: "tool: done · state (sketch)"
+tool -> app: "tool 메시지: draw_incident_sketch, done"
+tool -> app: "state"

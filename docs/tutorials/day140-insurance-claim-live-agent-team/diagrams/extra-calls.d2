@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+server: "세션 · 소켓 · 도구\n(server.py)" { class: ours }
+agent: "그래프 7단계\n(agent.py)" { class: ours }
+rules: "규칙\n(policies.py)" { class: ours }
+dir: "모의 정책\n(policy_directory.py)" { class: ours }
+
+server -> agent: "run_claim_workflow"
+agent -> server: "청구 상태"
+agent -> rules: "함수 노드 호출"
+rules -> agent: "결정 dict"
+rules -> dir: "policy_review"
+dir -> rules: "검토 사유"
