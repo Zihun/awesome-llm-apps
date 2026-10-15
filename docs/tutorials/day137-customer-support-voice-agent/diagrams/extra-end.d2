@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+ui: "화면 (process_query)" { class: ours }
+tmp: "임시 폴더" { class: file }
+
+ui -> tmp: response_uuid.mp3 쓰기
+ui -> user: 답변 글 · 오디오 · 내려받기 · 출처

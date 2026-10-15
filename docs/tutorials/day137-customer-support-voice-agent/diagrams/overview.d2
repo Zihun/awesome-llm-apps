@@ -1,0 +1,31 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+
+app: customer_support_voice_agent.py {
+  class: group
+  ui: "화면\n(Streamlit)" { class: ours }
+  kb: "지식 베이스\n만들기" { class: ours }
+  qa: "질문 처리\n(process_query)" { class: ours }
+  agents: "에이전트 둘\n(Agents SDK)" { class: ours }
+}
+
+firecrawl: "Firecrawl" { class: ext }
+embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
+qdrant: "Qdrant" { class: store }
+mp3: "임시 폴더 mp3" { class: file }
+openai: "OpenAI\n(gpt-4o ×2, TTS)" { class: ext }
+traces: "OpenAI 트레이스" { class: ext }
+
+user -> app: 키·주소·질문
+app -> firecrawl: 사이트 주소
+firecrawl -> app: 페이지 글
+app -> embed: 페이지 본문
+app -> qdrant: 벡터+본문
+app -> embed: 질문 글
+app -> qdrant: 질의 벡터
+app -> mp3: mp3 바이트
+app -> openai: 음성 합성
+app -> openai: 요청 둘
+app -> traces: 트레이스

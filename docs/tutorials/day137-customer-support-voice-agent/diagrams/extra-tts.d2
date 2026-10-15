@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "화면 (process_query)" { class: ours }
+agents: "에이전트 (Runner)" { class: ours }
+traces: "OpenAI 트레이스" { class: ext }
+openai: "OpenAI" { class: ext }
+
+ui -> agents: Runner.run(TTS 에이전트,\n답변 글)
+agents -> openai: POST /v1/responses\n(gpt-4o, 답변 글)
+openai -> agents: 말투 글
+agents -> ui: tts_response
+ui -> openai: audio.speech.create(gpt-4o-mini-tts,\ninput=답변 글, instructions=말투 글)
+openai -> ui: mp3 바이트
+agents -> traces: 트레이스 (끄지 않으면 배경에서 묶음 전송)

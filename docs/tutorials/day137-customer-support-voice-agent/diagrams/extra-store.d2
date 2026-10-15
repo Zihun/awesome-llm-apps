@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+ui: "화면 (사이드바)" { class: ours }
+embed: "임베딩 모델 (fastembed)" { class: ext }
+agents: "에이전트 (Agent 둘 만들기, 네트워크 없음)" { class: ours }
+qdrant: "Qdrant" { class: store }
+
+ui -> embed: embed(페이지 본문)\n(페이지마다 한 번)
+embed -> ui: 페이지 벡터
+ui -> qdrant: upsert(uuid, 벡터,\n본문 · 주소 · 제목)
+ui -> agents: setup_agents()
+ui -> user: System initialized successfully!

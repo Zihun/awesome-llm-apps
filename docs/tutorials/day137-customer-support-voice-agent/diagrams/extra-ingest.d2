@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: right
+
+ui: "화면\n(Streamlit)" { class: ours }
+kb: "지식 베이스\n만들기" { class: ours }
+firecrawl: "Firecrawl" { class: ext }
+embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
+qdrant: "Qdrant" { class: store }
+
+ui -> kb: Initialize System
+kb -> firecrawl: 사이트 주소
+firecrawl -> kb: 페이지 글
+kb -> embed: 페이지 본문
+kb -> qdrant: 벡터+본문

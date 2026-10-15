@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+ui: "화면 (process_query)" { class: ours }
+embed: "임베딩 모델 (fastembed, 로컬)" { class: ext }
+openai: "OpenAI gpt-4o" { class: ext }
+agents: "에이전트 (Runner)" { class: ours }
+qdrant: "Qdrant" { class: store }
+
+user -> ui: 질문 입력
+ui -> embed: embed(질문 글)
+embed -> ui: 질문 벡터 (384차원)
+ui -> qdrant: query_points(limit=3)
+qdrant -> ui: 점 3건 (본문 · 주소)
+ui -> agents: Runner.run(처리 에이전트,\n문서 3건 + 질문)
+agents -> openai: POST /v1/responses\n(gpt-4o, 지시문 + 문서 3건)
+openai -> agents: 답변 글
+agents -> ui: processor_response

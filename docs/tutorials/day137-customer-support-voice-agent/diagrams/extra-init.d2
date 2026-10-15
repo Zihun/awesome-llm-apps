@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+ui: "화면 (사이드바)" { class: ours }
+qdrant: "Qdrant" { class: store }
+
+user -> ui: Initialize System 클릭\n(칸 5개 모두 채움)
+ui -> qdrant: QdrantClient(url=사이드바 주소,\napi_key=사이드바 키)
