@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+app: "화면 (app.js)" { class: ours }
+ws: "서버 (live_voice)" { class: ours }
+live: "Gemini Live (가짜)" { class: ext }
+
+live -> ws: "output_transcription + 소리(PCM 24kHz)"
+ws -> app: "transcript · audio"
+app -> user: "소리 재생 · 자막"
+live -> ws: "turn_complete"
+ws -> app: "turn_complete"

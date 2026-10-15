@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "화면 (app.js)" { class: ours }
+ws: "서버 (live_voice)" { class: ours }
+live: "Gemini Live (가짜)" { class: ext }
+
+app -> ws: "WebSocket 연결 (session_id, 쿠키, Origin)"
+ws -> live: "live.connect(setup: 모델, 도구 넷, 지시문)"
+live -> ws: "setup_complete"
+ws -> live: "client_content(model 턴: 첫 인사, 기록 복원)"
+ws -> app: "session · state · ready"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "화면 (app.js)" { class: ours }
+tool: "도구 (execute_tool)" { class: ours }
+dir: "모의 정책 (policy_directory.py)" { class: ours }
+
+tool -> app: "tool 메시지: lookup_policy, running"
+tool -> dir: "lookup_policy(policy_number)"
+dir -> tool: "정책 레코드 (found, status, deductibles)"
+tool -> app: "tool: done · state"

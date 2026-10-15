@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+tool: "도구 (execute_tool)" { class: ours }
+live: "Gemini Live (가짜)" { class: ext }
+
+tool -> live: "tool_response(lookup_policy, WHEN_IDLE)"
+tool -> live: "tool_response(draw_incident_sketch, WHEN_IDLE)"
+tool -> live: "tool_response(sync_claim_packet, scheduling)"

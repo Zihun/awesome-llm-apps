@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "화면 (app.js)" { class: ours }
+flash: "Gemini Flash (가짜)" { class: ext }
+graph: "청구 그래프 (agent.py)" { class: ours }
+tool: "도구 (execute_tool)" { class: ours }
+
+tool -> app: "tool 메시지: sync_claim_packet, running"
+graph -> flash: "정리 요청 (ClaimNarrative 스키마)"
+flash -> graph: "claim JSON"
+graph -> flash: "분류 요청 (ClaimClassification)"
+flash -> graph: "classification JSON"
+graph -> tool: "일곱 단계 결과 dict"
+tool -> app: "tool: done · state (route, progress)"

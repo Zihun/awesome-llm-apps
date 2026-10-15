@@ -1,0 +1,43 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+env: "환경변수 · .env\n(GOOGLE_API_KEY)" { class: file }
+
+browser: "브라우저 화면 (live_demo/)" {
+  class: group
+  grid-columns: 2
+  grid-gap: 6
+  app: "대화 · 마이크 · 카메라\n(app.js)" { class: ours }
+  avatar: "아바타 재생 · 선택\n(avatar.js)" { class: ours }
+}
+
+server: "서버 프로세스 (uvicorn live_demo.server:app)" {
+  class: group
+  grid-columns: 6
+  grid-gap: 6
+  main: "세션 · 소켓 · 도구\n(server.py)" { class: ours }
+  tools: "Live 설정 · 선언\n(live_tools.py)" { class: ours }
+  sessions: "세션 (메모리)" { class: store }
+  agent: "그래프 7단계\n(agent.py)" { class: ours }
+  rules: "규칙\n(policies.py)" { class: ours }
+  dir: "모의 정책\n(policy_directory.py)" { class: ours }
+}
+
+models: "Google 모델 (이 문서는 가짜 서버 · 아바타는 부르지 않음)" {
+  class: group
+  grid-columns: 4
+  grid-gap: 6
+  live: "Gemini 3.8 Live" { class: ext }
+  flash: "Gemini 3.8 Flash" { class: ext }
+  image: "이미지 모델" { class: ext }
+  cloudavatar: "Live Avatar (선택)" { class: ext }
+}
+
+user -> browser: "말 · 카메라 · 글"
+browser -> user: "소리 · 영상 · 노트"
+env -> server: "API 키 · 설정"
+browser -> server: "WebSocket JSON"
+server -> browser: "자막 · 소리 · 상태"
+server -> models: "Live 소켓 · 정리 · 사진 · 스케치"
+models -> server: "도구 호출 · 말 · 이미지"
