@@ -8,6 +8,27 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-15 저녁) — 볼륨 11 끝. Day 140까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 140/167). 다음(Day 141~, 볼륨 12 🖼️ Generative UI)은 사용자 지시를 받고.**
+- Task 27(137~140) 전부 complete. 날마다 커밋(작성 → 수정 1·2라운드):
+  - 137: bd96b62 → da003d0·643801d
+  - 138: b01b21f → 627cf16·546f4e4
+  - 139: c954f49 → 4197bf6·c328510
+  - 140: cf23f4f → ee7048f·3b28495
+- 리뷰(opus) 137~138 / 139 / 140, 재확인(sonnet) 137~138 / 139 / 140. 2라운드는 내가 diff·스크립트 시험(139 guard 주소 6개, 140 check_env 7경우)·check로 확인.
+- 검사: npm test 56/56, Day 001~140 check 0건(40건은 미작성 골격 141~150), 137~140 분당 20.3~20.9.
+- 브리프: task-27-write-brief.md·review-27-brief.md. 다음 묶음은 이 둘을 고쳐 쓰면 된다.
+- Ruling 둘(2026-10-15):
+  - 독자 명령에는 줄 하나를 빠뜨려도 바깥에 닿는 경로가 없어야 한다(시연용이라도). 확인 스크립트·`streamlit run`·서버 실행 줄 앞에 `urlparse` 호스트 비교 가드(`guard.py`·`check_env.py`)를 두고, 앞붙임 하나에 기대는 차단은 스크립트 안으로 옮긴다.
+  - 앱 화면을 띄우는 독자 명령은 패치된 래퍼(가짜 임베딩·`:memory:` Qdrant·트레이스 루프백·재생 대역, 패치마다 assert)로 띄운다. "누르지 마세요" 문장은 차단이 아니다.
+- 이 볼륨에서 확인된 공통 사실(일반화 금지, 날마다 다시 확인): OpenAI Agents SDK 트레이스는 응답 아이디·에이전트·도구 이름만 싣는다(본문 없음, 0.0.6·0.4.2·0.24.0), `OPENAI_AGENTS_DISABLE_TRACING`은 세 판 모두 듣는다. `gpt-realtime-2.1-mini`는 음성 API(`audio.speech`)의 대체가 아니다. fastembed는 생성자에서 Hugging Face 모델(약 67MB)을 받는다.
+- 사용자에게 보고할 사고·근접 사고:
+  - 리뷰·재확인의 "앞붙임 빼기" 실험에서 api.openai.com·huggingface.co·Qdrant 주소로 가려는 요청이 여러 번 나왔으나 모두 감시 프록시가 받았다(바깥 0). 문서의 그 경로들은 모두 고쳤다.
+  - 139 작성자가 스크래치에서 와일드카드 삭제(`rm -f $S/run/*`)를 시도해 하네스가 막았다.
+  - 140 작성자 빈 stdin python 3회, 139 작성자 없음(~/.python_history는 10-15 03:44 그대로).
+  - 140 재검토자가 저장소 루트에서 npm run을 돌려 ENOENT(npm 캐시 로그 한 줄, 저장소 무변경). 재검토자 하나가 백그라운드 작업을 남겨 정리 요청.
+  - 사용자가 `.venv\Scripts\activate.bat`를 세 번 입력 — 터미널용으로 보고 실행하지 않음(사용자에게 뜻을 물어 둠).
+- 범위 밖·deferred minor: 137 M5 overview 화살표 위치(ELK), 138 M6 수명선 가림 일부.
+
 **멈춤 지점 (2026-10-15 낮) — 볼륨 10 끝. Day 136까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 136/167). 다음(Day 137~, 볼륨 11 🗣️ Voice AI Agents)은 사용자 지시를 받고.**
 - Task 26(134~136) 전부 complete. 날마다 커밋(작성 → 수정):
   - 134: 4de924f → 6786e24·0629ffa
@@ -1344,3 +1365,38 @@ Task 26: 134 fix round 2 DONE — 0629ffa(37−8=29 산수, ChatResult 화살촉
 Task 26: 재확인 135+007 DONE (a43e09bb3f6824441) — 135 I4·M8 모두 반영(assert 둘이 브라우저 전에 멈춤, 감시 0), 새 Minor 4(N-1 overview 축약으로 식별자·데이터 6개 사라짐 — §5라 반드시 고침, N-2 확인과 streamlit run 한 블록, N-3 .config/browseruse 근거 없음, N-4 done 가정). 007 정정 맞음, 남은 어긋남 Minor 2(7행 --doctor, 393행 SKILL.md, 398행 Chrome). 135+007 fix round 2 dispatched (resume a1cfc0a8ce33ae92d).
 Task 26: 135+007 fix round 2 DONE — febaba8(overview 라벨 모두 되살림, stats·pypi 화살표는 extra-agents-out으로, Step 6 확인이 실패하면 서버 안 뜸, .config/browseruse 사실, done 가정 표시), 3caf04e(Day 007 7·393·398행). 내가 확인: overview 라벨 6개 복원(키·generate_content·코드 전문 포함·접속·실행·이 PC·파일명), extra-agents-out에 stats·pypi·trinket 화살표, check 둘 통과.
 Task 26: 내가 고침 a33ed5d2 — Day 135 Step 6 streamlit에 --browser.gatherUsageStats false(독자에게 브라우저를 열게 하는데 134·136과 달리 빠짐, Day 128 Important와 같은 종류)와 Day 054 한 줄. check 통과·21.6/분 → 135 complete. Task 26(134~136) + Day 007 정정 전부 complete.
+Task 27(볼륨 11, 137~140) 시작 2026-10-15 — 사용자 "오케이 이어서 진행해". BASE 86e2a14. 브리프 task-27-write-brief.md·review-27-brief.md(실제 마이크·스피커·카메라 → 장치 여는 코드 실행 금지, fastembed 모델 내려받지 않음(가짜 임베딩), Qdrant :memory:, OPENAI_AGENTS_DISABLE_TRACING=1, 139 speech_tour.mp3·140 .env는 복사본에서, 140 Live API·브라우저·ADC 금지, tests는 복사본·node 절대 경로). 작성 sonnet 4: 137(a886bab8d022773a6)·138(a61162909be0b2329)·139(a93e6c3ad71fc9447)·140(a3b926e8617ab86f5). 리뷰 계획(opus): 137~138 / 139 / 140.
+메모: 사용자가 `d:\ws-llm\awesome-llm-apps\.venv\Scripts\activate.bat`를 두 번 입력 — 터미널용으로 보고 실행하지 않음.
+Task 27: 139 작성 DONE_WITH_CONCERNS — c954f49, check 통과, 19.7/분(150분). 기본 10분 투어가 TTS 입력 4096자 한도를 넘어 실패 가능(가짜 실측 9,402자), tts()의 OpenAI()는 사이드바 키 못 봄, 기본 트레이싱이 사이드바 키로 api.openai.com(블랙홀 프록시로 CONNECT 3건 — Step 5에 의도적 시연), DISABLE_TRACING은 0.0.6에서도 들음, 계획 답 미사용. **규칙 위반 시도:** 스크래치에서 `rm -f $S/run/*` 와일드카드 삭제를 시도해 하네스가 막음.
+Task 27: 리뷰 139 dispatched (opus, af2de1d34a18ba1ca) → review-139.md(트레이싱 시연이 프록시 없이 돌 수 있는지 판정 포함). 동시 4: 137·138·140 작성 + 리뷰 139.
+Task 27: 137 작성 DONE_WITH_CONCERNS — bd96b62, check 통과, 20.5/분(125분). firecrawl-py 4.50.0이면 crawl()이 params 인자로 멈춤(1.17.0 고정), "TTS 에이전트"는 소리 아님(gpt-4o 둘째 호출, instructions로 감), 질문 칸에 글이 남으면 목소리 바꿀 때마다 호출 3건, gpt-4o 2027-01-14·gpt-4o-mini-tts 스냅숏 2027-01-06 ⚠. 진짜 키 독자 재현 바깥 0. 난이도 ★★☆로 바꿈(days.json에는 난이도 없음 — 조치 불필요).
+Task 27: 140 작성 DONE_WITH_CONCERNS — cf23f4f, check 통과, 20.6/분(3,909/190분). 요청 경로 "글 한 턴 → Live 도구 호출 → ADK 그래프 → 상태 갱신", 127.0.0.1 TLS 가짜 서버(REST+Live WS, GOOGLE_GEMINI_BASE_URL + 자체 서명 인증서 SSL_CERT_FILE), 소켓 감시 0, 가짜 키만 도달. 죽은 코드 policies.py:441 siu_review. 빈 stdin python 3회(python_history 그대로). overview 999px.
+Task 27: 리뷰 140 dispatched (opus, aa7c1dd57b9a880b5) → review-140.md(SSL_CERT_FILE 부작용·해제 안내 판정 포함). 동시 3: 138 작성, 리뷰 139·140.
+Task 27: 리뷰 139 DONE (af2de1d34a18ba1ca) — ❌ C0·I4·M13(I1 Step 5 트레이싱 시연: HTTPS_PROXY 앞붙임 하나가 빠지면 api.openai.com:443 3건 — 가짜 사이드바 키·스팬 2.3KB, 시연 불필요; I2 트레이스에 입력·출력 없음(0.0.6 Responses 경로); I3 overview Runner를 매니저에 합침; I4 시퀀스 메시지 셋 빠짐). 401 서술은 소스로 판단(실제 전송 없음 — 결과 파일 59행 확인).
+Ruling: 독자 명령에는 줄 하나를 빠뜨려도 바깥에 닿는 경로가 없어야 한다(시연용이라도) — 139 Step 5는 루프백 수집 서버로 바꾸거나 시연을 뺀다 — cost if wrong: 시연 하나가 덜 생생함.
+Task 27: 139 fix round 1 dispatched (resume a93e6c3ad71fc9447).
+Task 27: 138 작성 DONE_WITH_CONCERNS — b01b21f, check 통과, 20.5/분(120분). pypdf·sounddevice 빠짐, 사이드바 키가 비면 환경 키를 ''로 덮음, 8,192바이트 미만 PDF 실패, 임시 PDF·mp3 안 지워짐, 질문당 gpt-4o 2·TTS 2(pcm+mp3), DISABLE_TRACING 빼면 api.openai.com 3줄(프록시 기록 — 시연 여부는 리뷰에서 139 판정 적용).
+Task 27: 리뷰 137~138 dispatched (opus, add830ed69b6f1777) → review-137-138.md(139 판정 적용, gpt-realtime-2.1-mini 대체 근거 두 날 맞춤). 동시 3: 리뷰 140·137~138, 수정 139.
+Task 27: 139 fix round 1 DONE — 4197bf6, check 통과, 20.2/분(170분). 블랙홀 시연 제거, 확인 스크립트마다 루프백 가드, 트레이스 주소를 가짜 서버로, 줄 하나씩 빼고 바깥 0. 시퀀스 50메시지 11장, overview에 Runner·extra-runner. diff fix-R27-139-round1.diff.
+Task 27: 재확인 139 dispatched (sonnet, aad1a8f808d3e394a) → rereview-139.md(줄 하나씩 빼고 바깥 0 확인, 가드 호스트 비교, <-> 표기). 동시 3: 리뷰 137~138·140, 재확인 139.
+Task 27: 리뷰 140 DONE (aa7c1dd57b9a880b5) — ❌ C1·I5·M10(C1 show_log.py 만드는 블록 없음 → Step 3·5·6 확인 실패; I1 SSL_CERT_FILE로 같은 셸 uv pip install UnknownIssuer·해제 안내 없음; I2 envfake가 아바타·Vertex 변수를 unset → 복사본 .env의 아바타 줄이 setdefault로 다시 채워져 Live 클라이언트가 aiplatform ADC 주소를 가리킴(생성자만, 연결 0); I3 VERTEXAI 서술 틀림; I4 시퀀스 빠짐·병합·접힘; I5 서버 묶음 안 호출 관계 없음). 진짜 키 독자 재현 바깥 0, 시험 55·Node 25 통과.
+Task 27: 140 fix round 1 dispatched (resume a3b926e8617ab86f5).
+Task 27: 재확인 139 DONE (aad1a8f808d3e394a) — I4·M13 모두 반영, 줄 하나씩 빼도 바깥 0. 새 Minor 4: N1 가드 없는 streamlit run 블록에서 envfake 빼고 화면 클릭 → api.openai.com 6건(감시 프록시 기록, 바깥 0) — 판정 기준상 Important로 다룸, N2 checkip.amazonaws.com(문서가 밝힘, 그대로), N3 접두 일치(127.0.0.1:80@example.invalid 통과), N4 재시도 문구. 139 fix round 2 dispatched (resume a93e6c3ad71fc9447).
+Task 27: 140 fix round 1 DONE_WITH_CONCERNS — ee7048f, check 통과, 20.5/분(4,828/235분). 새 스크래치에서 heredoc 9개로 따라 해 출력 일치·소켓 0, 아바타 변수 빈 값으로(생성자: enabled False·루프백). 우려: PowerShell은 $env:X=""가 변수를 지워 Test-Path .env로 대신, 사진 뒤 그래프 재실행을 '앞 그림과 같은 호출'이라며 다시 그리지 않음(브리프 금지 사항 — 재확인에서 판정). M6 미반영(검사 19). diff fix-R27-140-round1.diff.
+Task 27: 재확인 140 dispatched (sonnet, abd4cb3d982e9391e) → rereview-140.md(PowerShell 아바타 경우, '같은 호출이라 다시 그리지 않음' 판정 포함). 동시 3: 리뷰 137~138, 수정 139 r2, 재확인 140.
+Task 27: 139 fix round 2 DONE — c328510(guard.py urlparse 호스트+트레이싱 검사, streamlit run은 guard && …, 재시도 문구). 내가 확인: guard 판단을 주소 6개로 시험(루프백 둘만 PASS, @·.example.invalid·https 진짜·빈 값 STOP), Step 2 실행 줄이 guard.py &&, LF, check 통과·20.6/분 → 139 complete. 체크리스트의 진짜 키 실행 줄은 의도된 실제 실행이라 가드 없음(동의).
+Task 27: 재확인 140 DONE (abd4cb3d982e9391e) — C1·I1·I3·I5 반영, bash I2 안전. 남은 Important 2: I2 PowerShell 판(Test-Path는 막지 못함, Remove-Item도 빠짐 → .env 아바타 줄이면 Vertex로), I4 extra-rerun "같은 호출이라 다시 그리지 않음"(§5 삭제). 새 Minor 2(ms 수치 어긋남, 그림 참조). 재검토자가 저장소 루트에서 npm run을 돌려 ENOENT(npm 캐시 로그 한 줄, 저장소 무변경).
+Ruling: 140 I2는 두 셸 공통 파이썬 검사 스크립트(GOOGLE_GEMINI_BASE_URL 루프백 + 환경·.env에 아바타·Vertex 값 없음)를 서버 실행 줄의 관문으로 둔다 — PowerShell은 빈 값으로 변수를 남길 수 없어 셸별 방식이 갈리므로 — cost if wrong: 스크립트 하나 추가.
+Task 27: 140 fix round 2 dispatched (resume a3b926e8617ab86f5).
+Task 27: 140 재검토자 정리 끝(하네스: 남은 백그라운드 작업 없음).
+Task 27: 리뷰 137~138 DONE (add830ed69b6f1777) — 137 ❌ C0·I3·M6(트레이싱 시연·fastembed 확인이 앞붙임 하나에 기댐 — 빼면 api.openai.com 3줄·huggingface.co 4줄(감시 프록시 기록, 바깥 0), 트레이스 내용 주장 틀림, 그림 삭제·병합), 138 ❌ C0·I6·M8(envfake 한 줄에 기댐 — 빼면 api.openai.com 3번(기록), 트레이스 내용, 앱 띄우는 명령·안내 없음, overview 접기, 시퀀스 빠짐, 137 미참조). gpt-realtime-2.1-mini는 음성 API 목록에 없음(139와 같은 결론).
+Task 27: 137·138 fix round 1 dispatched (resume a886bab8d022773a6·a61162909be0b2329), 139 guard.py 방식 적용 지시.
+Task 27: 140 fix round 2 DONE — 3b28495(check_env.py 관문, extra-rerun~4로 재실행 전부, N2·N3). 내가 확인: README에서 check_env.py를 뽑아 스크래치에서 7경우 시험 — 정상·.env로 주소 채움은 rc 0, .env 아바타 줄·진짜 주소·진짜 키·@ 속임·Vertex는 rc 1; 앱의 avatar 활성 조건(project+name|image)을 MUST_BE_EMPTY가 덮음; PowerShell은 $LASTEXITCODE 관문; LF; check 통과·20.9/분(5,005/240) → 140 complete.
+Task 27: 137 fix round 1 DONE — da003d0, check 통과, 20.4/분(150분). run_app.py가 트레이스를 항상 가짜 서버로, embed_check.py가 import 앞에서 오프라인 강제, 앱 기동은 guard.py && streamlit run. guard가 못 막는 길 둘(화면 Initialize의 fastembed 다운로드, 사이드바 Qdrant 주소)은 '누르지 마세요' 문장 — 재확인에서 앱 기동을 패치된 래퍼로 바꿀지 판정. M5 미반영(ELK). diff fix-R27-137-round1.diff.
+Task 27: 138 fix round 1 DONE_WITH_CONCERNS — 627cf16, check 통과, 20.2/분(165분). guard.py·harness.py, envfake 없이 즉시 rc 1, 트레이스는 응답 아이디·에이전트 이름만, Step 7에 복사본을 가드로 띄우는 명령, overview 다시·구조 그림 5장·시퀀스 14장, Day 137 가리킴. diff fix-R27-138-round1.diff.
+Task 27: 재확인 137~138 dispatched (sonnet, ad68c9409de8805c0) → rereview-137-138.md(화면 버튼 쟁점 판정 포함). 동시 1.
+Task 27: 재확인 137~138 DONE (ad68c9409de8805c0) — 137 I3 반영(줄 빼도 감시 0, 호스트 비교), 새 Important 1(원본 앱 화면 Initialize → huggingface.co 4건·사이드바 Qdrant GET(감시 기록, 바깥 0) — "누르지 마세요"로 부족), 새 Minor 4. 138 I6 반영(화면은 복사본+harness라 버튼도 감시 0), 새 Important 2(overview에서 HF 노드 사라짐, tracecheck endpoint 줄 하나 빼면 api.openai.com 3건), Minor 6.
+Ruling: 앱 화면을 띄우는 독자 명령은 패치된 래퍼(가짜 임베딩·:memory: Qdrant·트레이스 루프백·재생 대역)로 띄우고 패치마다 assert — 화면이 쓸 만하려면 그 버튼을 눌러야 하므로 "누르지 마세요" 문장은 차단이 아니다 — cost if wrong: 래퍼 파일 하나.
+Task 27: 137·138 fix round 2 dispatched (resume a886bab8d022773a6·a61162909be0b2329).
+Task 27: 137 fix round 2 DONE — 643801d(patches.py 패치 다섯+assert 여섯, screen_app.py가 패치 후 원본을 runpy, streamlit run 대상 screen_app.py·guard 앞, Qdrant GET 정정, 4xx 재시도 408·409·429, NO_PROXY). 내가 확인: patches.install의 교체 넷+NO_PROXY와 assert 여섯을 README에서 읽음, run 줄 둘(bash·PowerShell)이 guard → screen_app.py, LF, check 통과·20.6/분 → 137 complete.
+Task 27: 138 fix round 2 DONE — 546f4e4(tracecheck assert, 업로드 1~2건, 401 분리, 원본 앱 명령 삭제, curl 가드 뒤, extra-model, NO_PROXY). HF는 overview 대신 extra-structure-embed·extra-model에 화살표(되살리면 1,160×1,030 또는 1,238×987 — 승인된 보조 구조 그림 방식). 내가 확인: 두 그림에 hf 노드·화살표 둘씩, README 716·1126행 게재, tracecheck 896~897행 assert, streamlit run은 guard → rag_voice_scratch.py, LF, check 통과·20.3/분 → 138 complete. Task 27(137~140) 전부 complete.
