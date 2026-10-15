@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면 (ai_audio_tour_agent.py)" { class: ours }
+mgr: "투어 매니저 (manager.py)" { class: ours }
+
+mgr -> ui: "구역 글만 이어 붙인 문자열\n(소개 · 맺음 빠짐)"
+ui -> user: "Tour Content 펼침 영역에\n투어 글"

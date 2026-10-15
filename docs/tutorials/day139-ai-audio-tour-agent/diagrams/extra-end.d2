@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+mgr: "투어 매니저 (manager.py)" { class: ours }
+printer: "진행 표시 (printer.py)" { class: ours }
+traces: "OpenAI 트레이스" { class: ext }
+sdk: "에이전트 실행 (Runner)" { class: ours }
+
+mgr -> printer: "final_report 빈 줄\n완료 표시"
+mgr -> printer: "end(), Live 멈춤"
+mgr -> sdk: "trace() 블록 닫기"
+sdk -> traces: "스팬 묶음 POST (추적이 켜져\n있을 때, 백그라운드)"
