@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+ui: "화면\n(main)" { class: ours }
+query: "질문 처리\n(process_query)" { class: ours }
+embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
+qdrant: "Qdrant" { class: store }
+
+ui -> query: "process_query (358행)"
+query -> embed: "질문 글 (195행)"
+embed -> query: "벡터"
+query -> qdrant: "query_points (198행)"
+qdrant -> query: "점 3개"

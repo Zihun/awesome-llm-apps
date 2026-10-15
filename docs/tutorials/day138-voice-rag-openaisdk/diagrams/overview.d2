@@ -4,52 +4,36 @@ direction: right
 user: 사용자 { class: person }
 env: ".env\n(load_dotenv)" { class: file }
 
-app: "앱 코드 (rag_voice.py)" {
+app: "rag_voice.py" {
   class: group
-  grid-columns: 1
-  grid-gap: 6
-  ui: "화면 · 사이드바\n(main)" { class: ours }
+  ui: "화면 ·\n사이드바\n(main)" { class: ours }
   state: "session_state" { class: store }
-  pdf: "PDF 읽기 · 자르기\n(process_pdf)" { class: ours }
+  pdf: "PDF 읽기 ·\n자르기\n(process_pdf)" { class: ours }
   store: "임베딩 저장\n(store_\nembeddings)" { class: ours }
-  query: "질문 처리\n(process_query)" { class: ours }
-  agents: "에이전트 둘\n(setup_agents)" { class: ours }
+  query: "질문 처리\n(process_\nquery)" { class: ours }
+  agents: "에이전트 둘\n(setup_\nagents)" { class: ours }
 }
 
-openai: "OpenAI" {
-  class: group
-  grid-columns: 1
-  grid-gap: 4
-  chat: "Responses API\n(gpt-4o)" { class: ext }
-  tts: "음성 합성\n(gpt-4o-\nmini-tts)" { class: ext }
-  traces: "트레이스\n(traces/ingest)" { class: ext }
-}
-
-pc: "이 PC 안" {
-  class: group
-  grid-columns: 1
-  grid-gap: 4
-  tmp: "임시 파일\n(tmp*.pdf ·\n*.mp3)" { class: file }
-  embed: "임베딩 모델\n(fastembed\n· 로컬)" { class: ext }
-  speaker: "스피커\n(Local\nAudioPlayer)" { class: ext }
-}
-
+chat: "Responses API\n(gpt-4o)" { class: ext }
+tts: "음성 합성\n(gpt-4o-mini-tts)" { class: ext }
+traces: "트레이스\n(traces/ingest)" { class: ext }
+tmp: "임시 파일\n(tmp*.pdf · *.mp3)" { class: file }
+embed: "임베딩 모델\n(fastembed·로컬)" { class: ext }
+speaker: "스피커\n(sounddevice)" { class: ext }
 qdrant: "Qdrant\n(벡터 저장소)" { class: store }
-hf: "Hugging Face Hub\n(모델 내려받기)" { class: ext }
 
-user <- app: "글 답·mp3\n출처" { style.font-size: 12 }
-user -> app: "PDF·키·질문\n목소리"
-env -> app: "API 키"
-app -> openai: "Runner.run ×2\n(응답)"
-openai -> app: "final_output"
-app -> openai: "speech.create\n×2 (음성)"
-openai -> app: "pcm 스트림\n· mp3"
-app -> openai: "run 기록\n(트레이스)"
-app -> pc: "PDF · mp3\n바이트"
-pc -> app: "PDF 쪽 ·\nmp3 경로"
-app -> pc: "청크 · 질문\n(임베딩)"
-pc -> app: "벡터"
-app -> pc: "pcm 재생\n(스피커)"
-hf -> pc: "모델 파일\n(처음)"
+user <- app: "글 답·\nmp3·출처" { style.font-size: 12 }
+user -> app: "PDF·키·\n질문·\n목소리"
+app <- env: "환경변수\n(155행이\n덮음)" { style.font-size: 12 }
+app -> chat: "Runner.run\n×2"
+chat -> app: "final_output"
+app -> tts: "speech.create\n×2"
+tts -> app: "pcm 스트림\n· mp3"
+app -> traces: "run 기록\n(끄지 않으면)"
+app -> tmp: "PDF·mp3\n바이트"
+tmp -> app: "PDF 쪽 ·\nmp3 경로"
+app -> embed: "청크 ·\n질문 글"
+embed -> app: "벡터"
+app -> speaker: "pcm 재생"
 app -> qdrant: "벡터 + 글"
 qdrant -> app: "가까운 3개"

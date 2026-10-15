@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(process_query)" { class: ours }
+qdrant: "Qdrant" { class: store }
+
+ui -> qdrant: "query_points(limit=3) (198-203행)"
+qdrant -> ui: "가까운 점 3개 + payload"
+ui -> user: "st.write Found N documents (206행)"
+ui -> user: "st.info Step 2 (211행)"
+ui -> ui: "컨텍스트 글 쌓기 (213-220행)"
+ui -> user: "st.write Document i from (221행, 조각마다)"
+ui -> ui: "질문과 안내 문구 붙임 (223-224행)"

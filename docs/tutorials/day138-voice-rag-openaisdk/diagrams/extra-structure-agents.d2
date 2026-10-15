@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: right
+
+query: "질문 처리\n(process_query)" { class: ours }
+state: "session_state" { class: store }
+agents: "에이전트 둘\n(setup_agents)" { class: ours }
+env: "환경변수" { class: file }
+
+query -> state: "에이전트 있나\n읽기 (228행)"
+query -> state: "Agent 둘 저장\n(230-231행)"
+query -> agents: "setup_agents(키)\n(229행)"
+agents -> query: "Agent 둘\n(반환)"
+agents -> env: "OPENAI_API_KEY\n덮어씀 (155행)"

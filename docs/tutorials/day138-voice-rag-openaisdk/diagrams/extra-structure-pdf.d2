@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: right
+
+ui: "화면\n(main)" { class: ours }
+state: "session_state" { class: store }
+pdf: "PDF 읽기 · 자르기\n(process_pdf)" { class: ours }
+store: "임베딩 저장\n(setup_qdrant ·\nstore_embeddings)" { class: ours }
+tmp: "임시 파일\n(tmp*.pdf)" { class: file }
+
+ui -> state: "client · 모델 ·\n파일 목록\n(324-338행)"
+ui -> pdf: "process_pdf(file)\n(328행)"
+pdf -> ui: "조각 목록"
+pdf -> tmp: "PDF 바이트\n(108-109행)"
+tmp -> pdf: "쪽 글\n(PyPDFLoader)"
+ui -> store: "setup_qdrant ·\nstore_embeddings\n(323·330행)"

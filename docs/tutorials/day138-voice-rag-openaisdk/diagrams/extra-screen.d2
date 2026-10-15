@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(main)" { class: ours }
+mp3: "임시 파일\n(response_*.mp3)" { class: file }
+
+ui -> user: "Response 제목과 st.write 답 글 (370-371행)"
+ui -> user: "Audio Response 제목 (374행)"
+ui -> user: "st.audio(mp3 경로) (375행)"
+ui -> mp3: "파일 열어 바이트 읽기 (377-378행)"
+mp3 -> ui: "mp3 바이트"
+ui -> user: "st.download_button (379-384행)"
+ui -> user: "Sources 제목과 출처 목록 (386-388행)"

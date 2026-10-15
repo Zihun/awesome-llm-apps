@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: right
+
+store: "임베딩 저장\n(setup_qdrant ·\nstore_embeddings)" { class: ours }
+embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
+hf: "Hugging Face Hub\n(모델 내려받기)" { class: ext }
+qdrant: "Qdrant" { class: store }
+
+store -> embed: "TextEmbedding() ·\nembed (87·138행)"
+embed -> store: "벡터"
+embed -> hf: "저장소 버전\n(매번)"
+hf -> embed: "모델 파일\n(처음)"
+store -> qdrant: "create_collection ·\nupsert (92·139행)"

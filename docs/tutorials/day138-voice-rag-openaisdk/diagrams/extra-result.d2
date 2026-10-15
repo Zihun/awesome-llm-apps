@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(process_query)" { class: ours }
+
+ui -> user: "st.write Saved MP3 file to 경로 (280행)"
+ui -> user: "st.success Query processing complete (282행)"
+ui -> ui: "결과 dict 반환 (283-289행)"
+ui -> ui: "status.update complete (368행)"

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(process_query)" { class: ours }
+setup: "setup_agents" { class: ours }
+
+ui -> user: "st.info Step 3 (226행)"
+ui -> setup: "setup_agents(사이드바 키) (229행, 에이전트가 없을 때만)"
+setup -> setup: "os.environ[OPENAI_API_KEY] = 키 (155행)"
+setup -> ui: "Agent 둘 (157·169행)"
+ui -> user: "st.write Initialized new agents (232행)"
+ui -> user: "st.info Step 4 (236행)"

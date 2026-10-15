@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(process_query)" { class: ours }
+tts: "OpenAI\n음성 합성" { class: ext }
+
+ui -> user: "st.info Step 6 (248행)"
+ui -> ui: "AsyncOpenAI(api_key) (250행)"
+ui -> tts: "create(pcm) (253행)"
+tts -> ui: "스트림 열림"
+ui -> user: "st.write Starting audio playback (260행)"

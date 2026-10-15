@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(process_query)" { class: ours }
+runner: "Runner\n(agents SDK)" { class: ours }
+chat: "OpenAI\nResponses (gpt-4o)" { class: ext }
+
+ui -> user: "st.info Step 5 (242행)"
+ui -> runner: "Runner.run(tts_agent, text_response) (244행)"
+runner -> chat: "POST /v1/responses (gpt-4o)"
+chat -> runner: "voice_instructions 글"
+runner -> ui: "final_output = voice_instructions (245행)"
+ui -> user: "st.write 지시 길이 (246행)"

@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: right
+
+ui: "화면\n(main)" { class: ours }
+query: "질문 처리\n(process_query)" { class: ours }
+chat: "Responses API\n(gpt-4o)" { class: ext }
+traces: "트레이스\n(traces/ingest)" { class: ext }
+tts: "음성 합성\n(gpt-4o-mini-tts)" { class: ext }
+speaker: "스피커\n(LocalAudioPlayer)" { class: ext }
+tmp: "임시 파일\n(response_*.mp3)" { class: file }
+
+query -> chat: "Runner.run ×2\n(238·244행)"
+chat -> query: "final_output ×2"
+query -> traces: "run 기록\n(끄지 않으면)"
+query -> tts: "speech.create ×2\n(253·267행)"
+tts -> query: "pcm 스트림 · mp3"
+query -> speaker: "pcm 재생\n(262행)"
+query -> tmp: "mp3 바이트\n(275-279행)"
+tmp -> ui: "mp3 읽기\n(375-378행)"
