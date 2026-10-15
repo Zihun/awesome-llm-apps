@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+run: "스크립트 다시 실행 (main)" { class: ours }
+pq: "if query and setup_complete (355행)\nasyncio.run(process_query) (358행)" { class: ours }
+chat: "gpt-4o (Runner.run ×2)" { class: ext }
+tts: "gpt-4o-mini-tts (speech.create ×2)" { class: ext }
+
+user -> run: "Enter · 목소리 · 내려받기 · 다른 위젯"
+run -> pq: "질문 상자 값이 그대로 남음"
+pq -> chat: "processor · tts 에이전트"
+pq -> tts: "pcm · mp3"

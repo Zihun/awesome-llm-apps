@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+qdrant: "Qdrant" { class: store }
+ui: "화면\n(main)" { class: ours }
+embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
+
+user -> ui: "PDF 선택, 재실행 (314-319행)"
+ui -> embed: "TextEmbedding() + embed([\"test\"]) (87-88행)"
+embed -> ui: "차원 384 (89행)"
+ui -> qdrant: "create_collection(size=384, COSINE) (91-98행)"

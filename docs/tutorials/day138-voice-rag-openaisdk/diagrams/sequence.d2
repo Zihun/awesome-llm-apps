@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+qdrant: "Qdrant" { class: store }
+ui: "화면\n(process_query)" { class: ours }
+embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
+
+user -> ui: "질문 입력 (349행)"
+ui -> embed: "embed([query]) (195행)"
+embed -> ui: "384차원 벡터 (196행)"
+ui -> qdrant: "query_points(limit=3) (198-203행)"
+qdrant -> ui: "가까운 점 3개 + payload"
+ui -> ui: "컨텍스트 글 만들기 (213-224행)"

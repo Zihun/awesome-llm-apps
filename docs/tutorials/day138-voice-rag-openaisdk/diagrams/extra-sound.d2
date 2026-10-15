@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "화면\n(process_query)" { class: ours }
+tts: "OpenAI\n음성 합성" { class: ext }
+player: "LocalAudioPlayer\n(openai.helpers)" { class: ours }
+speaker: "스피커\n(sounddevice)" { class: ext }
+
+ui -> tts: "create(pcm)"
+tts -> ui: "스트림 열림"
+ui -> player: "play(...) (262행)"
+player -> tts: "본문을 끝까지 읽기 (iter_bytes)"
+tts -> player: "pcm 바이트"
+player -> speaker: "OutputStream으로 재생"
+player -> ui: "재생 끝 (263행)"

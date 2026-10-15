@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면\n(process_query · main)" { class: ours }
+tts: "OpenAI\n음성 합성" { class: ext }
+mp3: "임시 파일\n(response_*.mp3)" { class: file }
+
+ui -> tts: "speech.create(mp3) 같은 text · voice · instructions (267-273행)"
+tts -> ui: "mp3 바이트 (audio_response.content)"
+ui -> mp3: "response_<uuid>.mp3 쓰기 (275-279행)"
+ui -> user: "답 글 · st.audio · 다운로드 · 출처 (370-388행)"

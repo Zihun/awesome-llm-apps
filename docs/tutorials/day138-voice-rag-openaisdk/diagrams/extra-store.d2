@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+splitter: "텍스트 자르개\n(langchain)" { class: ours }
+ui: "화면\n(main)" { class: ours }
+embed: "임베딩 모델\n(fastembed, 로컬)" { class: ext }
+qdrant: "Qdrant" { class: store }
+
+ui -> splitter: "split_documents (chunk 1000 · 겹침 200) (121-125행)"
+splitter -> ui: "청크 목록"
+ui -> embed: "embed([청크 글]) 청크마다 한 번 (138행)"
+embed -> ui: "384차원 벡터"
+ui -> qdrant: "upsert ×N (139-151행)"
+ui -> ui: "목록에 추가 (336행)"
+ui -> user: "✅ Added PDF (337행)"

@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "화면\n(process_query)" { class: ours }
+agents: "Runner\n(agents SDK)" { class: ours }
+chat: "OpenAI\nResponses (gpt-4o)" { class: ext }
+
+ui -> agents: "Runner.run(processor_agent, context) (238행)"
+agents -> chat: "POST /v1/responses (gpt-4o)"
+chat -> agents: "답 글"
+agents -> ui: "final_output = text_response (239행)"
+ui -> agents: "Runner.run(tts_agent, text_response) (244행)"
+agents -> chat: "POST /v1/responses (gpt-4o)"
+chat -> agents: "voice_instructions 글"
+agents -> ui: "final_output (245행)"
