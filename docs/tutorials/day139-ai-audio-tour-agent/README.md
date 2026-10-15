@@ -1,6 +1,6 @@
 # Day 139 · 🗣️ AI Audio Tour Agent
 
-> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★☆ ⚠ 이 앱이 쓰는 모델 셋은 OpenAI 폐기 문서에서 날짜 붙은 스냅숏이 2027년 1월에 종료될 예정이고(사전 준비), 화면의 기본값(10분)으로 만든 투어는 연구 호출을 모두 쓴 뒤 음성 단계에서 입력 4096자 한도를 넘어 실패할 수 있으며(Step 6), 사이드바에 넣은 키는 음성 호출에 쓰이지 않고(Step 2·6), 기본 트레이싱이 사이드바 키로 OpenAI에 트레이스를 올립니다(Step 5) · 예상 소요 170분(앱은 파일 넷 695줄이지만 가짜 서버를 직접 저장해 띄우고, 저장해 쓰는 스크립트 여덟을 돌리고, 서버 기록과 앱 출력을 맞대어 보고, 시퀀스 그림 열한 장을 훑는 손 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI는 한 번도 부르지 않았습니다). 진짜 키로 5분·관심사 넷 투어 한 번은 웹 검색 호출 요금만 약 $0.10입니다(⚠ 추정, 사전 준비) · 원본 앱: `voice_ai_agents/ai_audio_tour_agent`
+> 볼륨 11 🗣️ Voice AI Agents · 난이도 ★★☆ ⚠ 이 앱이 쓰는 모델 셋은 OpenAI 폐기 문서에서 날짜 붙은 스냅숏이 2027년 1월에 종료될 예정이고(사전 준비), 화면의 기본값(10분)으로 만든 투어는 연구 호출을 모두 쓴 뒤 음성 단계에서 입력 4096자 한도를 넘어 실패할 수 있으며(Step 6), 사이드바에 넣은 키는 음성 호출에 쓰이지 않고(Step 2·6), 기본 트레이싱이 사이드바 키로 OpenAI에 트레이스를 올립니다(Step 5) · 예상 소요 170분(앱은 파일 넷 695줄이지만 가짜 서버를 직접 저장해 띄우고, 저장해 쓰는 스크립트 아홉을 돌리고, 서버 기록과 앱 출력을 맞대어 보고, 시퀀스 그림 열한 장을 훑는 손 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI는 한 번도 부르지 않았습니다). 진짜 키로 5분·관심사 넷 투어 한 번은 웹 검색 호출 요금만 약 $0.10입니다(⚠ 추정, 사전 준비) · 원본 앱: `voice_ai_agents/ai_audio_tour_agent`
 
 ## 오늘 만들 것
 
@@ -20,7 +20,7 @@
 | uv와 Python 3.13 | 가상환경과 설치. 고정된 `pydantic_core==2.27.2`는 Python 3.14에서 설치되지 않았습니다(Step 1) | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고. `uv venv --python 3.13` |
 | 새 작업 폴더 `audio-tour-lab` | 앱 파일 넷을 복사해 와서 이 폴더 안에서만 돌립니다. 앱이 `speech_tour.mp3`를 앱 파일 옆에 쓰기 때문입니다(Step 6) | Step 1에서 만듭니다 |
 | 가짜 OpenAI 서버 `fake_openai.py` | `/v1/responses`와 `/v1/audio/speech`만 흉내 냅니다. 이 문서가 재현용으로 만든 것이라 저장소에 없습니다 | Step 3에서 저장합니다 |
-| 환경변수 파일 `envfake.sh` | 가짜 서버 주소(`OPENAI_BASE_URL`), 가짜 키, 트레이싱 끄기(`OPENAI_AGENTS_DISABLE_TRACING=1`)를 한꺼번에 겁니다. 이 문서의 확인 스크립트는 `OPENAI_BASE_URL`이 루프백이 아니면 시작하자마자 멈춥니다 | Step 1에서 저장합니다 |
+| 환경변수 파일 `envfake.sh` | 가짜 서버 주소(`OPENAI_BASE_URL`), 가짜 키, 트레이싱 끄기(`OPENAI_AGENTS_DISABLE_TRACING=1`)를 한꺼번에 겁니다. 이 문서의 확인 스크립트와 `streamlit run`은 `OPENAI_BASE_URL`이 가짜 서버 주소가 아니면 시작하지 않습니다(`guard.py`) | Step 1에서 저장합니다 |
 | `PYTHONIOENCODING=utf-8` | 한국어 Windows 콘솔(cp949)에서 출력이 깨지지 않게 합니다 | bash: `export PYTHONIOENCODING=utf-8`, PowerShell: `$env:PYTHONIOENCODING = "utf-8"`(실행해 보지 못했습니다). `envfake.sh`가 bash 쪽을 겁니다 |
 
 앱이 닿는 외부 서비스는 OpenAI 하나이고 호출 종류가 셋입니다. 응답 API(`/v1/responses`, 모델 호출과 호스팅 웹 검색), 음성 API(`/v1/audio/speech`), 트레이스 올리기(`https://api.openai.com/v1/traces/ingest`)입니다. 이 앱은 agno를 쓰지 않으므로 앞 날들의 agno 통계 전송은 없습니다(서드파티 `import`가 `streamlit`·`agents`·`openai`·`rich`·`pydantic`뿐 — 소스로 확인). `requirements.txt`에 `python-dotenv`가 있지만 앱 코드는 `dotenv`도 `os.environ`도 쓰지 않아서 `.env` 파일을 읽지 않습니다(`grep -n "dotenv\|environ\|getenv"`가 네 파일에서 아무것도 찾지 못함).
@@ -78,6 +78,30 @@ export OPENAI_API_KEY="sk-fake-env-key"
 export OPENAI_AGENTS_DISABLE_TRACING=1
 export PYTHONIOENCODING=utf-8
 export NO_PROXY=127.0.0.1,localhost
+```
+
+그리고 이 터미널이 정말 가짜 서버로 향하는지 검사하는 `guard.py`를 저장합니다. 이 문서의 확인 스크립트는 첫머리에서 이것을 부르고, 앱을 띄우는 `streamlit run` 줄은 `python guard.py &&` 뒤에 둡니다. 검사가 실패하면 종료 코드 1로 끝나서 스크립트도 서버도 시작하지 않습니다. 주소는 문자열 접두가 아니라 `urlparse`의 호스트가 `127.0.0.1`·`localhost`인지로 비교하므로 `http://127.0.0.1:80@example.invalid/v1`이나 `http://127.0.0.1.example.invalid/v1` 같은 주소는 통과하지 못합니다. 트레이싱이 켜져 있어도 멈춥니다(Step 5의 `tracecheck.py`만 켜는 것을 허용합니다).
+
+```python
+"""가짜 서버 주소가 걸린 터미널인지 검사한다. 아니면 종료 코드 1로 끝난다.
+쓰는 법: python guard.py && streamlit run ... (스크립트는 `from guard import check`)"""
+import os
+import sys
+from urllib.parse import urlparse
+
+
+def check(allow_tracing=False):
+    base = os.environ.get("OPENAI_BASE_URL", "")
+    u = urlparse(base)
+    if u.scheme != "http" or u.hostname not in ("127.0.0.1", "localhost"):
+        sys.exit(". ./envfake.sh <포트> 를 먼저 거세요. OPENAI_BASE_URL이 루프백이 아닙니다: " + repr(base))
+    if not allow_tracing and os.environ.get("OPENAI_AGENTS_DISABLE_TRACING", "").lower() not in ("1", "true"):
+        sys.exit(". ./envfake.sh <포트> 를 다시 거세요. 트레이싱이 켜져 있으면 api.openai.com으로 나갈 수 있습니다")
+    return base
+
+
+if __name__ == "__main__":
+    check()
 ```
 
 `voice_ai_agents/ai_audio_tour_agent/requirements.txt:1-7`
@@ -243,13 +267,9 @@ if st.button("🎧 Generate Tour", type="primary"):
 **확인.** 가짜 서버가 필요 없는 확인입니다. 요청을 보내는 곳(버튼 통과 뒤)까지 가지 않게 오류 세 가지에서 멈춥니다. 아래를 `uicheck.py`로 저장합니다.
 
 ```python
-import os
-import sys
+from guard import check
 
-if not os.environ.get("OPENAI_BASE_URL", "").startswith("http://127.0.0.1:"):
-    sys.exit(". ./envfake.sh <포트> 를 먼저 거세요. OPENAI_BASE_URL이 루프백이 아닙니다")
-if os.environ.get("OPENAI_AGENTS_DISABLE_TRACING", "").lower() not in ("1", "true"):
-    sys.exit(". ./envfake.sh <포트> 를 다시 거세요. 트레이싱이 켜져 있으면 api.openai.com으로 나갈 수 있습니다")
+check()
 
 from streamlit.testing.v1 import AppTest
 
@@ -294,10 +314,10 @@ uv run --no-project python -X utf8 uicheck.py
 ```bash
 . ./envfake.sh 58731
 echo $OPENAI_BASE_URL
-uv run --no-project streamlit run ai_audio_tour_agent.py --server.headless true --server.address localhost --server.port 58751 --browser.gatherUsageStats false
+uv run --no-project python guard.py && uv run --no-project streamlit run ai_audio_tour_agent.py --server.headless true --server.address localhost --server.port 58751 --browser.gatherUsageStats false
 ```
 
-(PowerShell: `$env:OPENAI_BASE_URL = "http://127.0.0.1:58731/v1"`, `$env:OPENAI_API_KEY = "sk-fake-env-key"`, `$env:OPENAI_AGENTS_DISABLE_TRACING = "1"`, `$env:NO_PROXY = "127.0.0.1,localhost"`을 차례로 실행한 뒤 같은 `uv run` 줄. 실행해 보지 못했습니다.) `--server.headless true`를 주면서 `--server.address`를 주지 않으면 Streamlit이 시작하며 외부 주소를 알아내려고 `checkip.amazonaws.com`에 요청합니다(Day 060에서 확인, streamlit 1.43.2 `web/bootstrap.py`를 소스로 확인). headless가 아니면 브라우저를 엽니다. 그래서 두 옵션을 함께 줍니다. 이 문서는 브라우저로 화면을 열어 보지 않았고 `curl http://localhost:58751/_stcore/health`가 `ok`를 돌려주는 것까지만 확인했습니다. 화면의 동작은 `AppTest`로 대신 확인했습니다. 화면을 닫을 때는 앱을 띄운 터미널에서 Ctrl+C를 누릅니다.
+(PowerShell: `$env:OPENAI_BASE_URL = "http://127.0.0.1:58731/v1"`, `$env:OPENAI_API_KEY = "sk-fake-env-key"`, `$env:OPENAI_AGENTS_DISABLE_TRACING = "1"`, `$env:NO_PROXY = "127.0.0.1,localhost"`을 차례로 실행한 뒤, 검사는 `uv run --no-project python guard.py`로 따로 돌리고 `if ($LASTEXITCODE -eq 0) { uv run --no-project streamlit run ai_audio_tour_agent.py --server.headless true --server.address localhost --server.port 58751 --browser.gatherUsageStats false }`로 띄웁니다. 실행해 보지 못했습니다.) `envfake.sh` 줄을 빠뜨린 터미널이면 `guard.py`가 멈추므로 서버가 뜨지 않습니다. `--server.headless true`를 주면서 `--server.address`를 주지 않으면 Streamlit이 시작하며 외부 주소를 알아내려고 `checkip.amazonaws.com`에 요청합니다(Day 060에서 확인, streamlit 1.43.2 `web/bootstrap.py`를 소스로 확인). headless가 아니면 브라우저를 엽니다. 그래서 두 옵션을 함께 줍니다. 이 문서는 브라우저로 화면을 열어 보지 않았고 `curl http://localhost:58751/_stcore/health`가 `ok`를 돌려주는 것까지만 확인했습니다. 화면의 동작은 `AppTest`로 대신 확인했습니다. 화면을 닫을 때는 앱을 띄운 터미널에서 Ctrl+C를 누릅니다.
 
 ### Step 3. 에이전트 여섯 — 호스팅 웹 검색이 요청에 실리는 모양
 
@@ -516,19 +536,14 @@ uv run --no-project python fake_openai.py 58731 serverA.jsonl 1.0 1.0
 그리고 이 Step의 확인 스크립트 `agentcheck.py`와, 기록을 한 줄로 줄여 보여 주는 `summ.py`를 저장합니다.
 
 ```python
-import os
-import sys
-
-if not os.environ.get("OPENAI_BASE_URL", "").startswith("http://127.0.0.1:"):
-    sys.exit(". ./envfake.sh <포트> 를 먼저 거세요. OPENAI_BASE_URL이 루프백이 아닙니다")
-if os.environ.get("OPENAI_AGENTS_DISABLE_TRACING", "").lower() not in ("1", "true"):
-    sys.exit(". ./envfake.sh <포트> 를 다시 거세요. 트레이싱이 켜져 있으면 api.openai.com으로 나갈 수 있습니다")
-
 import asyncio
 
 from agents import Runner
 from agent import (architecture_agent, culinary_agent, culture_agent,
                    historical_agent, orchestrator_agent, planner_agent)
+from guard import check
+
+check()
 
 for a in (planner_agent, architecture_agent, historical_agent, culinary_agent, culture_agent, orchestrator_agent):
     print(f"{a.name:<18} {a.model:<12} 도구={[type(t).__name__ for t in a.tools]} "
@@ -696,18 +711,15 @@ SDK 0.0.6은 `WebSearchTool`을 `web_search_preview`라는 이름으로 보냅�
 **확인.** 아래 `tourcheck.py`를 저장합니다. Streamlit 없이 `TourManager.run`을 직접 돌립니다. 가짜 서버가 호출마다 1초 기다리게 했으니(`serverA.jsonl`) 순차인지 한눈에 보입니다.
 
 ```python
-import os
-import sys
-
-if not os.environ.get("OPENAI_BASE_URL", "").startswith("http://127.0.0.1:"):
-    sys.exit(". ./envfake.sh <포트> 를 먼저 거세요. OPENAI_BASE_URL이 루프백이 아닙니다")
-if os.environ.get("OPENAI_AGENTS_DISABLE_TRACING", "").lower() not in ("1", "true"):
-    sys.exit(". ./envfake.sh <포트> 를 다시 거세요. 트레이싱이 켜져 있으면 api.openai.com으로 나갈 수 있습니다")
-
 import asyncio
+import sys
 import time
 
+from guard import check
+
 from manager import TourManager
+
+check()
 
 interests = sys.argv[1].split(",")
 minutes = sys.argv[2]
@@ -766,7 +778,7 @@ uv run --no-project python summ.py serverA.jsonl
 2. 쓰는 키는 `set_default_openai_key`가 `use_for_tracing=True`로 넘긴 키입니다(`agents/_config.py`).
 3. 끄는 환경변수는 `TraceProvider`가 만들어질 때, 곧 `agents`를 import할 때 한 번 읽고(`agents/tracing/setup.py`), `true` 또는 `1`일 때만 끕니다. Day 033 Step 4는 0.22.3에서 이 값이 첫 트레이스를 만들 때 한 번 읽혀 캐시된다고 적었는데, 0.0.6에서는 읽는 때가 더 이르지만 프로세스가 시작된 뒤에 바꿔도 소용없다는 점은 같습니다.
 4. 이 앱의 에이전트는 모두 Responses API 모델이라서, 응답 스팬은 `ResponseSpanData.export()`가 응답 아이디만 내보냅니다(`agents/tracing/span_data.py`). `RunConfig.trace_include_sensitive_data`의 기본값은 `True`지만(`agents/run.py`) 그 값이 바꾸는 입력·응답 필드는 메모리의 스팬에만 남고 묶음에는 실리지 않습니다(`agents/models/openai_responses.py`). 입력·출력을 싣는 함수 도구 스팬은 이 앱에 없습니다. 웹 검색이 호스팅 도구라 SDK가 함수를 부르지 않기 때문입니다.
-5. 전송은 `httpx.Client`로 하고, 4xx 응답이면 재시도 없이 오류를 한 줄 남기고, 네트워크 오류면 최대 3번 시도합니다.
+5. 전송은 `httpx.Client`로 하고, 4xx 응답이면 재시도 없이 오류를 한 줄 남기고, 네트워크 오류와 5xx 응답이면 최대 3번 시도합니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -774,12 +786,10 @@ uv run --no-project python summ.py serverA.jsonl
 
 ```python
 import asyncio
-import os
-import sys
 
-base = os.environ.get("OPENAI_BASE_URL", "")
-if not base.startswith("http://127.0.0.1:"):
-    sys.exit(". ./envfake.sh <포트> 를 먼저 거세요. OPENAI_BASE_URL이 루프백이 아닙니다: " + repr(base))
+from guard import check
+
+base = check(allow_tracing=True)  # 가짜 서버가 아니면 여기서 멈춘다
 
 from agents import set_default_openai_key
 from agents.tracing.processors import default_exporter, default_processor
@@ -812,7 +822,7 @@ uv run --no-project python summ.py serverA.jsonl
 기본 전송 대상: https://api.openai.com/v1/traces/ingest | 쓰는 키 앞 12자: sk-fake-side
 이 실행의 전송 대상: http://127.0.0.1:58731/v1/traces/ingest
 View trace: 
-https://platform.openai.com/traces/trace_d8ee71af684a4ca7aa32550b19cb3550
+https://platform.openai.com/traces/trace_96d1f13a6587451bbcd08c2b48136a49
 1 +  0.0s planner      gpt-4o      tools=[] tool_choice=None format=final_output 입력 47자 지시문 2657자
 2 +  1.0s history      gpt-4o-mini tools=['web_search_preview'] tool_choice=required format=final_output 입력 416자 지시문 1349자
 3 +  2.0s orchestrator gpt-4o-mini tools=[] tool_choice=None format=final_output 입력 5629자 지시문 2272자
@@ -824,11 +834,11 @@ https://platform.openai.com/traces/trace_d8ee71af684a4ca7aa32550b19cb3550
 기본 전송 대상: https://api.openai.com/v1/traces/ingest | 쓰는 키 앞 12자: sk-fake-side
 이 실행의 전송 대상: http://127.0.0.1:58731/v1/traces/ingest
 View trace: 
-https://platform.openai.com/traces/trace_3eb4971bf77f4ca5840d54069fbe4507
+https://platform.openai.com/traces/trace_a122b8671a494796ae6849726e5be2be
 1 +  0.0s planner      gpt-4o      tools=[] tool_choice=None format=final_output 입력 47자 지시문 2657자
 2 +  1.0s history      gpt-4o-mini tools=['web_search_preview'] tool_choice=required format=final_output 입력 416자 지시문 1349자
 3 +  2.0s orchestrator gpt-4o-mini tools=[] tool_choice=None format=final_output 입력 5629자 지시문 2272자
-4 +  3.1s traces       Bearer sk-fake-sideb 항목 7개 2152B 장소 글자 있음=False 모델 글 있음=False
+4 +  3.0s traces       Bearer sk-fake-sideb 항목 7개 2152B 장소 글자 있음=False 모델 글 있음=False
     - trace Tour Research trace
     - response resp_fake
     - agent PlannerAgent tools=[] output_type=Planner
@@ -908,16 +918,13 @@ def tts(text):
 **확인.** 아래 `apptest.py`를 저장합니다. `AppTest`로 화면을 직접 돌려 키·장소·관심사를 넣고 버튼을 누르고, 오류와 오디오를 셉니다.
 
 ```python
-import os
 import sys
 
-if not os.environ.get("OPENAI_BASE_URL", "").startswith("http://127.0.0.1:"):
-    sys.exit(". ./envfake.sh <포트> 를 먼저 거세요. OPENAI_BASE_URL이 루프백이 아닙니다")
-if os.environ.get("OPENAI_AGENTS_DISABLE_TRACING", "").lower() not in ("1", "true"):
-    sys.exit(". ./envfake.sh <포트> 를 다시 거세요. 트레이싱이 켜져 있으면 api.openai.com으로 나갈 수 있습니다")
-
-
 from streamlit.testing.v1 import AppTest
+
+from guard import check
+
+check()
 
 interests = [x for x in sys.argv[1].split(",") if x]
 minutes = int(sys.argv[2])
@@ -1085,7 +1092,7 @@ OPENAI_AGENTS_DISABLE_TRACING=1 uv run --no-project streamlit run ai_audio_tour_
 | `` `label` got an empty value `` 경고가 화면을 그릴 때마다 찍힘(직접 확인) | 장소 입력과 관심사 선택의 라벨이 빈 문자열(64·68행) | 무시해도 됩니다 |
 | `View trace: https://platform.openai.com/traces/...` 줄이 나오는데 트레이스 화면에는 없음 | 트레이싱을 끄면 트레이스가 만들어지지 않지만 `gen_trace_id()`로 만든 아이디의 링크는 그대로 찍힘(직접 확인) | 무시해도 됩니다. 트레이스를 보려면 환경변수 `OPENAI_AGENTS_DISABLE_TRACING`를 걸지 않거나 `0`으로 둡니다 |
 | 터미널에 `Tracing client error 401: ...`이 한 번 찍히고 재시도가 없음(소스로 판단, 이 PC에서는 인터넷으로 보내 보지 않았습니다) | 트레이싱이 켜져 있고 인터넷에 붙은 채 가짜·잘못된 키로 돌려서 라이브러리가 `api.openai.com`으로 트레이스를 올렸고 4xx 응답을 받음(`agents/tracing/processors.py`가 4xx면 재시도하지 않음). 요청은 이미 나간 것입니다 | `OPENAI_AGENTS_DISABLE_TRACING=1`. 진짜 키라면 묶음이 그 키의 계정에 올라갑니다(워크플로·에이전트 이름, 응답 아이디. Step 5) |
-| 터미널에 `Request failed`·`Max retries reached` | 트레이싱이 켜져 있는데 `api.openai.com`에 닿지 못함(프록시나 오프라인). 소스는 네트워크 오류일 때만 이렇게 3번 시도하고 포기함 | `OPENAI_AGENTS_DISABLE_TRACING=1`. 닿는 환경이었다면 위 행의 요청이 나간 것입니다 |
+| 터미널에 `Request failed`·`Max retries reached` | 트레이싱이 켜져 있는데 `api.openai.com`에 닿지 못함(프록시나 오프라인). 소스는 네트워크 오류나 5xx 응답이면 이렇게 3번 시도하고 포기함(5xx는 `Server error ..., retrying.`) | `OPENAI_AGENTS_DISABLE_TRACING=1`. 닿는 환경이었다면 위 행의 요청이 나간 것입니다 |
 | 앱 README는 15·30·60분이라는데 슬라이더는 5~60분 | README가 오래됨. 코드(`ai_audio_tour_agent.py:76-83`)는 5분 단위 | 무시해도 됩니다. 길이를 분으로 곱한 낱말 수가 음성 한도에 걸립니다(Step 6) |
 | 모델이 종료됨 또는 응답 오류 | `gpt-4o`·`gpt-4o-mini`의 기본 스냅숏이 2027-01-14에, `gpt-4o-mini-tts`의 스냅숏이 2027-01-06에 종료 예정(OpenAI 폐기 문서). 별칭 동작은 문서가 말하지 않음 | 복사본의 `agent.py` 28·58·87·116·200·304행과 `ai_audio_tour_agent.py` 15행을 폐기 문서가 권하는 모델로 바꿈(리포 코드는 고치지 않음). 음성 쪽 권장 대체 `gpt-realtime-2.1-mini`는 음성 API 레퍼런스의 `model` 목록에 없어서 이 한 줄 교체로는 안 될 것으로 보입니다(보내 보지는 않았습니다) |
 | 목소리 스타일을 바꿔도 음성이 같음 | `voice_style`이 어디에도 쓰이지 않음(`ai_audio_tour_agent.py:86`) | 무시해도 됩니다. 말투는 18~20행의 고정 지시문입니다 |
