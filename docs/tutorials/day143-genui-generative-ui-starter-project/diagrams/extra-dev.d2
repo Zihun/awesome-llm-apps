@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+script: "run-agent.sh\n(npm run dev:agent)" { class: ours }
+cli: "npx @langchain/\nlanggraph-cli dev" { class: ext }
+gh: "GitHub 릴리스\n(uv 0.9.11)" { class: ext }
+stats: "사용 통계\n(Supabase)" { class: ext }
+dev: "langgraph dev\n:8123" { class: ext }
+graph: "에이전트 그래프\n(main.py)" { class: ours }
+
+script -> cli: "dev --port 8123\n--no-browser"
+cli -> gh: "uv 내려받기\n(처음 한 번)"
+cli -> stats: "os · 버전 ·\n명령"
+cli -> dev: "uv run\nlanggraph dev"
+dev -> stats: "os · 버전 ·\n명령"
+dev -> graph: "sample_agent"

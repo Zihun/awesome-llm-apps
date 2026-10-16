@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+
+next: "Next.js 앱" {
+  class: group
+  label.near: bottom-center
+  grid-columns: 1
+  chat: "채팅 · 칸반\n(브라우저)" { class: ours }
+  gen: "프런트 도구 ·\nA2UI 카탈로그\n(브라우저)" { class: ours }
+  runtime: "CopilotKit\n런타임\n(서버)" { class: ours }
+}
+
+agent: "파이썬 에이전트" {
+  class: group
+  grid-columns: 1
+  serve: "AG-UI\n엔드포인트\n(serve.py)" { class: ours }
+  graph: "에이전트\n그래프\n(main.py)" { class: ours }
+  tools: "백엔드\n도구\n(src/*.py)" { class: ours }
+  mem: "Memory\nSaver" { class: store }
+}
+
+llm: "gpt-5.5\n(가짜 서버)" { class: ext }
+csv: "db.csv" { class: file }
+mcp: "Excalidraw\nMCP" { class: ext }
+
+user -> next.chat: "질문"
+next -> agent: "AG-UI\n요청 ·\n이벤트"
+agent -> llm: "모델\n호출"
+agent -> csv: "읽기"
+next -> mcp: "도구\n목록"

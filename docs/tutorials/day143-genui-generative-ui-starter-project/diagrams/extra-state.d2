@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+ui: "칸반 화면\n(useAgent)" { class: ours }
+input: "RunAgentInput\n.state" { class: file }
+state: "AgentState\n.todos" { class: store }
+tool: "manage_todos ·\nget_todos" { class: ours }
+mem: "MemorySaver\n(스레드별)" { class: store }
+
+ui -> input: "setState(todos)"
+input -> state: "요청마다\n덮어씀"
+tool -> state: "Command\n(update)"
+state -> tool: "읽기"
+state -> mem: "체크포인트"
+state -> ui: "STATE_SNAPSHOT"

@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "브라우저 화면\n(소스로만)" { class: ours }
+rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
+agent: "에이전트 서버\n(serve.py·그래프)" { class: ours }
+llm: "gpt-5.5\n(가짜 서버)" { class: ext }
+
+agent -> llm: "마지막 호출"
+llm -> agent: "짧은 글"
+agent -> rt: "SSE: TEXT_MESSAGE · RUN_FINISHED"
+rt -> ui: "이벤트 전달"
+ui -> user: "채팅 글"

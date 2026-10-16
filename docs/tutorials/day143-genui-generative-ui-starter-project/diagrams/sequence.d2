@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "브라우저 화면\n(소스로만)" { class: ours }
+rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
+mcp: "Excalidraw MCP" { class: ext }
+tool: "백엔드 도구\n(src/*.py)" { class: ours }
+agent: "에이전트 서버\n(serve.py·그래프)" { class: ours }
+llm: "gpt-5.5\n(가짜 서버)" { class: ext }
+
+user -> ui: "Sales Dashboard 질문"
+ui -> rt: "RunAgentInput\n(messages·state·tools·context)"
+rt -> mcp: "tools/list (요청마다)"
+mcp -> rt: "도구 목록"
+rt -> agent: "AG-UI POST /"
+agent -> llm: "chat.completions\n(stream, 도구 10개)"
+llm -> agent: "tool_call query_data"
+agent -> tool: "query_data(query)"
+tool -> agent: "db.csv 40행"
+agent -> llm: "chat.completions\n(도구 결과 포함)"
+llm -> agent: "tool_call generate_a2ui"

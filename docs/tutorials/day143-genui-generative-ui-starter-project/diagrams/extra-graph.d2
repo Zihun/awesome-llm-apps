@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: right
+
+start: "시작" { class: ours }
+before: "before_\nagent" { class: ours }
+model: "model" { class: ours }
+after: "after_\nmodel" { class: ours }
+tools: "tools" { class: ours }
+done: "after_\nagent" { class: ours }
+end: "끝" { class: ours }
+
+start -> before
+before -> model
+model -> after
+after -> tools: "도구 호출"
+tools -> model: "결과"
+after -> done: "호출 없음"
+done -> end
