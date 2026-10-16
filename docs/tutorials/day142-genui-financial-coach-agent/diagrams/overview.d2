@@ -1,33 +1,41 @@
 ...@../../_tools/theme
 direction: down
 
-user: 사용자 { class: person; width: 56; height: 56 }
+user: 사용자 { class: person; width: 48; height: 48 }
 
 next: "Next.js 앱 (src/)" {
   class: group
   grid-columns: 2
-  grid-gap: 12
-  ui: "화면\n(page.tsx · 폼 · 카드)" { class: ours; height: 50 }
-  route: "CopilotKit 런타임 라우트\n(api/copilotkit/route.ts)" { class: ours; height: 50 }
+  grid-gap: 8
+  ui: "화면\n(page.tsx · 폼 · 카드)" { class: ours; height: 30 }
+  route: "CopilotKit 런타임 라우트\n(api/copilotkit/route.ts)" { class: ours; height: 30 }
 }
 
 py: "Python 서버 (agent/main.py)" {
   class: group
   grid-columns: 3
-  grid-gap: 12
-  api: "AG-UI 엔드포인트\n(ADKAgent)" { class: ours; height: 50 }
-  coach: "코치 에이전트\n(FinanceCoachAgent)" { class: ours; height: 50 }
-  upd: "프로필 도구\n(update_financial_data)" { class: ours; height: 50 }
-  tools: "AgentTool 넷\n(run_*)" { class: ours; height: 50 }
+  grid-gap: 8
+  api: "AG-UI 엔드포인트\n(ADKAgent)" { class: ours; height: 30 }
+  coach: "코치 에이전트\n(FinanceCoachAgent)" { class: ours; height: 30 }
+  upd: "프로필 도구\n(update_financial_data)" { class: ours; height: 30 }
+  tools: "AgentTool 넷 (main.py:424-427)" {
+    class: group
+    grid-columns: 2
+    grid-gap: 6
+    run_budget: "run_budget_analysis" { class: ours; height: 30 }
+    run_savings: "run_savings_strategy" { class: ours; height: 30 }
+    run_debt: "run_debt_reduction" { class: ours; height: 30 }
+    run_full: "run_full_analysis" { class: ours; height: 30 }
+  }
+  state: "세션 상태\n(financial_data · 분석 결과)" { class: store }
   pipeline: "FullAnalysisPipeline (SequentialAgent)" {
     class: group
     grid-columns: 3
     grid-gap: 6
-    budget: "예산\n(BudgetAnalysisAgent)" { class: ours; height: 44 }
-    savings: "저축\n(SavingsStrategyAgent)" { class: ours; height: 44 }
-    debt: "빚\n(DebtReductionAgent)" { class: ours; height: 44 }
+    budget: "예산\n(BudgetAnalysisAgent)" { class: ours; height: 38 }
+    savings: "저축\n(SavingsStrategyAgent)" { class: ours; height: 38 }
+    debt: "빚\n(DebtReductionAgent)" { class: ours; height: 38 }
   }
-  state: "세션 상태\n(financial_data · 분석 결과)" { class: store }
 }
 
 gemini: "Gemini\n(gemini-3.5-flash)" { class: ext }

@@ -72,7 +72,7 @@ $env:PYTHONIOENCODING = "utf-8"
 
 ![서버 안의 호출](diagrams/extra-calls.svg)
 
-`AgentTool`은 모두 넷입니다. 예산·저축·빚 에이전트를 각각 감싼 셋은 단독 호출용이고, 넷째는 파이프라인을 감싸 셋을 차례로 돌립니다. 모델을 부르는 것은 에이전트 셋입니다.
+`AgentTool`은 모두 넷이고 각각 노드입니다. `run_budget_analysis`·`run_savings_strategy`·`run_debt_reduction`은 에이전트를 하나씩 감싼 단독 호출용이고, `run_full_analysis`는 파이프라인을 감싸 셋을 차례로 돌립니다. 모델을 부르는 것은 에이전트 셋입니다.
 
 ![AgentTool·파이프라인·에이전트](diagrams/extra-agents.svg)
 
@@ -1305,9 +1305,12 @@ RUN_FINISHED
 
 셋째, **서버 문**입니다. 앱은 `GET /health`를 하나 더 달았습니다(`generative_ui_agents/ai-financial-coach-agent/agent/main.py:490-492`).
 
+`curl`은 셸의 `http_proxy` 같은 변수를 따라 루프백 요청도 프록시로 보내므로 `--noproxy '*'`를 붙입니다. 이 문서의 모든 `curl`이 그렇습니다.
+
 ```bash
-curl -s http://127.0.0.1:54048/health
-curl -s -o /dev/null -w "docs=%{http_code}\n" http://127.0.0.1:54048/docs
+curl --noproxy '*' -s http://127.0.0.1:54048/health; echo
+curl --noproxy '*' -s -o /dev/null -w "docs=%{http_code}\n" http://127.0.0.1:54048/docs
+curl --noproxy '*' -s -o /dev/null -w "openapi=%{http_code}\n" http://127.0.0.1:54048/openapi.json
 ```
 
 ```text
@@ -1368,7 +1371,7 @@ netstat -ano | grep LISTEN | grep -E "127.0.0.1:(51397|54048|52611) " || echo "�
 
 ## 요청 한 건이 흐르는 과정
 
-사용자가 Profile 탭에서 "Analyze My Finances"를 누르는 한 건을 따라갑니다. 22개 메시지를 시간 순서대로 여덟 그림에 나눠 그렸습니다. 첫 그림은 클릭에서 코치가 불리기까지입니다. 화면이 라우트에 `{메시지, state}`를 보내고 라우트가 `RunAgentInput`을 서버에 `POST`합니다. 서버는 먼저 `input.state`로 세션 상태를 덮어쓰고(폼에서 고친 값이 여기서 서버에 닿습니다) 코치를 실행합니다.
+사용자가 Profile 탭에서 "Analyze My Finances"를 누르는 한 건을 따라갑니다. 27개 메시지를 시간 순서대로 여덟 그림에 나눠 그렸습니다. 첫 그림은 클릭에서 코치가 불리기까지입니다. 화면이 라우트에 `{메시지, state}`를 보내고 라우트가 `RunAgentInput`을 서버에 `POST`합니다. 서버는 먼저 `input.state`로 세션 상태를 덮어쓰고(폼에서 고친 값이 여기서 서버에 닿습니다) 코치를 실행합니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 

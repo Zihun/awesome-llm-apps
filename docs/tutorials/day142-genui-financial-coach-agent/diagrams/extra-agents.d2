@@ -1,17 +1,16 @@
 ...@../../_tools/theme
 direction: down
 
-tools: "AgentTool 넷\n(run_*)" { class: ours; height: 50 }
+run_budget: "run_budget_analysis\n(AgentTool)" { class: ours; height: 50 }
+run_savings: "run_savings_strategy\n(AgentTool)" { class: ours; height: 50 }
+run_debt: "run_debt_reduction\n(AgentTool)" { class: ours; height: 50 }
+run_full: "run_full_analysis\n(AgentTool)" { class: ours; height: 50 }
 pipeline: "FullAnalysisPipeline\n(SequentialAgent)" { class: ours; height: 50 }
 budget: "예산\n(BudgetAnalysisAgent)" { class: ours; height: 50 }
 savings: "저축\n(SavingsStrategyAgent)" { class: ours; height: 50 }
 debt: "빚\n(DebtReductionAgent)" { class: ours; height: 50 }
 gemini: "Gemini\n(gemini-3.5-flash)" { class: ext }
 
-tools -> budget: "단독 호출"
-tools -> savings: "단독 호출"
-tools -> debt: "단독 호출"
-tools -> pipeline: "전체 검토"
 pipeline -> budget: "첫째"
 pipeline -> savings: "둘째"
 pipeline -> debt: "셋째"
