@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+cards: "지표 카드 버튼\n(추가 · 수정 · 삭제)" { class: ours }
+actions: "차트 화면 도구\n(add_chart 외 둘)" { class: ours }
+uistate: "화면의 state\n(useCoAgent)" { class: ours }
+session: "세션 상태\n(메모리, _ag_ui_* 포함)" { class: store }
+tools: "지표 도구\n(tools.py)" { class: ours }
+prompt: "시스템 지시문\n(instructions.py)" { class: file }
+
+cards -> uistate: "pinnedMetrics"
+actions -> uistate: "charts"
+uistate -> session: "input.state\n(요청마다)"
+session -> uistate: "STATE_DELTA\nSTATE_SNAPSHOT"
+tools -> session: "pinnedMetrics"
+session -> prompt: "{context.state}"

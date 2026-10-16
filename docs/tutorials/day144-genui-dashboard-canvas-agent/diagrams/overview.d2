@@ -1,0 +1,36 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+env: ".env\n(API 키)" { class: file }
+
+nextapp: "Next.js 앱 (src/)" {
+  class: group
+  grid-columns: 1
+  grid-gap: 6
+  chat: "채팅 사이드바\n(CopilotChat)" { class: ours }
+  dash: "지표 · 차트\n(useCoAgent)" { class: ours }
+  ftools: "화면 도구\n(charts.tsx)" { class: ours }
+  runtime: "런타임 API 경로\n(route.ts)" { class: ours }
+}
+
+agentp: "파이썬 에이전트 (agent/)" {
+  class: group
+  grid-columns: 1
+  grid-gap: 6
+  adk: "AG-UI 어댑터\n(ADKAgent)" { class: ours }
+  dagent: "DashboardAgent\n(agent.py)" { class: ours }
+  tools: "지표 도구\n(tools.py)" { class: ours }
+  search: "SearchAgent\n(google_search)" { class: ours }
+  state: "세션 상태\n(메모리)" { class: store }
+}
+
+gemini: "Gemini 3.5 Flash\n(가짜 서버)" { class: ext }
+
+user -> nextapp: "질문"
+nextapp -> user: "화면"
+nextapp -> agentp: "AG-UI 요청"
+agentp -> nextapp: "SSE"
+agentp -> gemini: "요청"
+gemini -> agentp: "응답"
+env -> agentp: "키"

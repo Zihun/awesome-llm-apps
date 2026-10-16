@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+adk: "AG-UI 어댑터 (ADKAgent)" { class: ours }
+rt: "런타임 (route.ts)" { class: ours }
+ui: "브라우저 (CopilotKit)" { class: ours }
+user: 사용자 { class: person }
+
+adk -> rt: "STATE_SNAPSHOT · RUN_FINISHED"
+rt -> ui: "SSE를 그대로 중계"
+ui -> user: "지표 카드 · 메시지"

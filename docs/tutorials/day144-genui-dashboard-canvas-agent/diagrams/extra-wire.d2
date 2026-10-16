@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: down
+
+chat: "CopilotChat\n(chat.tsx)" { class: ours }
+dash: "useCoAgent\n(dashboard.tsx)" { class: ours }
+acts: "useCopilotAction\n(charts.tsx)" { class: ours }
+layout: "CopilotKit 제공자\n(layout.tsx)" { class: ours }
+runtime: "CopilotRuntime\n(route.ts)" { class: ours }
+http: "HttpAgent\n(AGENT_URL → 파이썬)" { class: ours }
+
+chat -> layout: "메시지"
+dash -> layout: "state"
+acts -> layout: "도구 선언"
+layout -> runtime: "POST\n/api/copilotkit"
+runtime -> layout: "SSE"
+runtime -> http: "my_agent 실행"
+http -> runtime: "이벤트"

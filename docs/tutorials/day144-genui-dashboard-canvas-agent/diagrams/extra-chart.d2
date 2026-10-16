@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gem: "Gemini (가짜 서버)" { class: ext }
+dag: "DashboardAgent" { class: ours }
+adk: "ADKAgent" { class: ours }
+rt: "런타임" { class: ours }
+ui: "브라우저" { class: ours }
+
+gem -> dag: "add_pinned_metrics + add_chart 호출"
+adk -> rt: "TOOL_CALL add_chart · RUN_FINISHED"
+rt -> ui: "SSE 중계"
+ui -> ui: "ChartCard 렌더 · [Add] 대기"
