@@ -1,0 +1,41 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+
+browser: "브라우저 (apps/web)" {
+  class: group
+  grid-columns: 4
+  grid-gap: 6
+  chat: "채팅 · 사이드바\n(page.tsx)" { class: ours }
+  provider: "CopilotKit 제공자\n(CopilotKitProvider.tsx)" { class: ours }
+  actions: "화면 행동\n(BuilderAgentProvider.tsx)" { class: ours }
+  preview: "미리보기 iframe\n(McpAppPreview.tsx)" { class: ours }
+}
+
+server: "Next.js 서버 (apps/web/app/api)" {
+  class: group
+  grid-columns: 3
+  grid-gap: 6
+  agentroute: "에이전트 경로\n(mastra-agent/route.ts)" { class: ours }
+  introspect: "서버 읽기 경로\n(mcp-introspect/route.ts)" { class: ours }
+  wsapi: "작업 공간 경로\n(workspace/*, call-tool)" { class: ours }
+}
+
+openai: "OpenAI gpt-5.5" { class: ext }
+e2b: "E2B API\n(원격, 유료)" { class: ext }
+excal: "Excalidraw MCP\n(기본 서버)" { class: ext }
+vm: "E2B 샌드박스 VM (원격)" {
+  label.near: bottom-center
+  class: group
+  mcpsrv: "MCP 서버 (mcp-use-server)" { class: ours }
+}
+
+user -> browser: "글"
+browser -> user: "화면"
+browser -> server: "POST 요청"
+server -> browser: "SSE · 도구 · HTML"
+server -> openai: "모델 요청"
+server -> e2b: "샌드박스 · 파일 · 명령"
+server -> vm.mcpsrv: "MCP 호출"
+server -> excal: "MCP 호출"

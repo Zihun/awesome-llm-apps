@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 (렌더러)" { class: ours }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+sb: "샌드박스 MCP 서버" { class: ours }
+fr: "위젯 iframe (바깥 프록시 + 안쪽 위젯)" { class: ours }
+
+fr -> ui: "ui/notifications/initialized"
+ui -> fr: "tool-input (toolInput)"
+ui -> fr: "tool-result (result)"
+fr -> ui: "tools/call (위젯이 서버를 부름)"
+ui -> rt: "POST forwardedProps: tools/call"
+rt -> sb: "연결 + tools/call"
+sb -> rt: "결과"
+rt -> ui: "RUN_FINISHED {result}"
+ui -> fr: "응답"

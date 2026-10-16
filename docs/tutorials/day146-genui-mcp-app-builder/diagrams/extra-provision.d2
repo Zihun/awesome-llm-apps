@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 (CopilotKit)" { class: ours }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+e2b: "E2B API" { class: ext }
+
+rt -> e2b: "Sandbox.create (템플릿 또는 빈 샌드박스)"
+e2b -> rt: "sandboxId"
+rt -> e2b: "index.ts 읽기 · product-search 지우기 · 서버 재시작"
+e2b -> rt: "끝 (실패해도 경고만)"
+rt -> ui: "TOOL_CALL_RESULT (workspaceId · endpoint)"

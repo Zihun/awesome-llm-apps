@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 (McpAppPreview)" { class: ours }
+fr: "미리보기 iframe (위젯 HTML)" { class: ours }
+
+ui -> ui: "localStorage에 도구 설정 저장"
+ui -> fr: "srcDoc = HTML"
+fr -> ui: "ui/initialize"
+ui -> fr: "protocolVersion · hostContext"
+fr -> ui: "ui/notifications/initialized"
+ui -> fr: "tool-input (previewData)"
+ui -> fr: "tool-result (0.5초 뒤, 같은 previewData)"
+fr -> ui: "tools/call"
+ui -> fr: "Mock result (서버에 안 감)"
