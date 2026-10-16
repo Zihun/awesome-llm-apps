@@ -1,0 +1,33 @@
+...@../../_tools/theme
+direction: right
+
+nextjs: "화면 쪽 (사용자 · src/)" {
+  class: group
+  grid-columns: 1
+  user: 사용자 { class: person }
+  chat: "채팅\n(CopilotChat)" { class: ours; width: 130 }
+  runtime: "CopilotKit 런타임\n(route.ts)" { class: ours; width: 130 }
+  cards: "도구 카드\n(ToolCard)" { class: ours; width: 130 }
+  work: "작업 공간\n(Workspace)" { class: ours; width: 130 }
+}
+
+agent: "에이전트 (agent/)" {
+  class: group
+  grid-columns: 1
+  endpoint: "AG-UI 엔드포인트\n(main.py)" { class: ours; width: 130 }
+  boss: "연구 코디네이터\n(agent.py)" { class: ours; width: 130 }
+  research: "research 도구\n(tools.py)" { class: ours; width: 130 }
+  inner: "안쪽 에이전트\n(별도 스레드)" { class: ours; width: 130 }
+  vfs: "가상 파일·계획\n(그래프 상태)" { class: store; width: 130 }
+}
+
+web: "외부 서비스" {
+  class: group
+  grid-columns: 1
+  openai: "OpenAI\n(gpt-5.5)" { class: ext; width: 120 }
+  tavily: "Tavily 검색" { class: ext; width: 120 }
+}
+
+nextjs -> agent: 실행 요청
+agent -> nextjs: 이벤트
+agent -> web: 모델 · 검색

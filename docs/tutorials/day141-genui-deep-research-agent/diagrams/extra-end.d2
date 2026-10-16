@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+ui: "화면" { class: ours }
+runtime: "런타임" { class: ours }
+server: "서버" { class: ours }
+agent: "코디네이터" { class: ours }
+
+agent -> server: STATE · MESSAGES_SNAPSHOT
+server -> runtime: 스냅샷 · RUN_FINISHED
+runtime -> ui: 실행 끝
+ui -> user: 답 · 작업 공간
