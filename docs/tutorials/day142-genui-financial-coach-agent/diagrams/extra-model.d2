@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gemini: "Gemini" { class: ext }
+coach: "코치 에이전트" { class: ours }
+specs: "전체 검토 (AgentTool)" { class: ours }
+
+coach -> gemini: "코치 지시문 + 도구 5개"
+gemini -> coach: "functionCall FullAnalysisPipeline"
+coach -> specs: "AgentTool 호출 {request}"

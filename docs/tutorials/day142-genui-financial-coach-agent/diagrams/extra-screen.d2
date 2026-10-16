@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; width: 56; height: 56 }
+
+next: "Next.js 앱 (src/)" {
+  class: group
+  ui: "화면\n(page.tsx · 폼 · 카드)" { class: ours; height: 50 }
+  route: "CopilotKit 런타임 라우트\n(route.ts)" { class: ours; height: 50 }
+}
+
+api: "AG-UI 엔드포인트\n(Python 서버)" { class: ours; height: 50 }
+telem: "통계 서버\n(CopilotKit · Next.js)" { class: ext }
+
+user -> next.ui: "채팅 · 폼 입력"
+next.ui -> user: "상태 알림 · 카드"
+next.ui -> next.route: "{메시지, state}"
+next.route -> next.ui: "SSE 이벤트"
+next.route -> api: "RunAgentInput"
+api -> next.route: "AG-UI 이벤트"
+next.route -> telem: "표본 통계"

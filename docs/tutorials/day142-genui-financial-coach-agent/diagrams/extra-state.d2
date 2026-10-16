@@ -1,0 +1,12 @@
+...@../../_tools/theme
+direction: right
+
+api: "AG-UI 엔드포인트\n(ADKAgent)" { class: ours; height: 50 }
+upd: "프로필 도구\n(update_financial_data)" { class: ours; height: 50 }
+specs: "분석 도구 넷\n(AgentTool)" { class: ours; height: 50 }
+state: "세션 상태\n(financial_data · 분석 결과)" { class: store }
+
+api -> state: "input.state로 덮어쓰기"
+upd -> state: "financial_data 쓰기"
+specs -> state: "output_key 쓰기"
+state -> specs: "프롬프트에 주입"

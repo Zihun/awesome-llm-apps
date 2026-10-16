@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "화면 (page.tsx)" { class: ours }
+route: "런타임 라우트" { class: ours }
+api: "AG-UI 서버" { class: ours }
+coach: "코치 에이전트" { class: ours }
+specs: "전체 검토 도구" { class: ours }
+
+specs -> coach: "결과 (skip_summarization)"
+coach -> api: "모델 재호출 없이 종료"
+api -> route: "TOOL_CALL_* · STATE_DELTA\nSTATE_SNAPSHOT · RUN_FINISHED"
+route -> ui: "SSE 전달"
+ui -> user: "Report 탭 · 카드 세 장"

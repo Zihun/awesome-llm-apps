@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gemini: "Gemini" { class: ext }
+specs: "전체 검토 (AgentTool)" { class: ours }
+state: "세션 상태" { class: store }
+
+specs -> gemini: "부채 요청 (+ 예산 · 저축)"
+gemini -> specs: "DebtReduction JSON"
+specs -> state: "debt_reduction 저장"
