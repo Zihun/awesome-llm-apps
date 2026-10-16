@@ -6,13 +6,12 @@ py: "Python 서버 (agent/main.py)" {
   api: "AG-UI 엔드포인트\n(ADKAgent)" { class: ours; height: 50 }
   coach: "코치 에이전트\n(FinanceCoachAgent)" { class: ours; height: 50 }
   upd: "프로필 도구\n(update_financial_data)" { class: ours; height: 50 }
-  specs: "분석 도구 넷\n(AgentTool)" { class: ours; height: 50 }
+  tools: "AgentTool 넷\n(run_*)" { class: ours; height: 50 }
 }
 
 gemini: "Gemini\n(gemini-3.5-flash)" { class: ext }
 
 py.api -> py.coach: "run"
 py.coach -> py.upd: "함수 호출"
-py.coach -> py.specs: "AgentTool 호출"
+py.coach -> py.tools: "AgentTool 호출"
 py.coach -> gemini: "코치 요청"
-py.specs -> gemini: "분석 요청"

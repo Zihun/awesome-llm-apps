@@ -1,6 +1,6 @@
 # Day 142 · 🪙 AI Financial Coach Agent
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 앱과 앱 README 어디에도 "금융 조언이 아니다"라는 고지가 없고(소스 검색으로 확인, Step 7), 모델 `gemini-3.5-flash`는 Google 폐기 문서에서 종료일이 "N/A"이고 요청이 `gemini-3.6-flash`로 자동 연결된다고 적혀 있으며(사전 준비), 원본의 `npm run dev:agent`는 에이전트 서버를 모든 네트워크 인터페이스(`0.0.0.0`)에 열고(Step 2), `npm install`은 설치 통계를 보내는 스크립트를 포함해 세 개의 설치 스크립트를 실행합니다(Step 6) · 예상 소요 165분(앱은 약 2,400줄이고 Node 쪽은 소스로만 읽지만, 스크립트 여덟을 직접 저장해 돌리고 서버 기록과 화면 쪽 소스를 맞대어 보고 시퀀스 그림 다섯 장을 훑는 손 시간이 본문 읽는 시간에 더해집니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 Google API는 한 번도 부르지 않았습니다). 진짜 키로 전체 검토 한 번은 모델 호출 네 번에 요청 본문이 약 2만 2천 자였고, 어림으로 $0.05 이하입니다(⚠ 추정, 사전 준비) · 원본 앱: `generative_ui_agents/ai-financial-coach-agent`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 앱과 앱 README 어디에도 "금융 조언이 아니다"라는 고지가 없고(소스 검색으로 확인, Step 7), 원본의 `npm run dev:agent`는 에이전트 서버를 모든 네트워크 인터페이스(`0.0.0.0`)에 열고(Step 2), `npm install`은 설치 통계를 보내는 스크립트를 포함해 세 개의 설치 스크립트를 실행합니다(Step 6) · 예상 소요 185분(앱은 약 2,400줄이고 Node 쪽은 소스로만 읽지만, 스크립트 아홉을 직접 저장해 돌리고 서버 기록과 화면 쪽 소스를 맞대어 보고 시퀀스 그림 여덟 장을 훑는 손 시간이 본문 읽는 시간에 더해집니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 Google API는 한 번도 부르지 않았습니다). 진짜 키로 전체 검토 한 번은 모델 호출 네 번에 요청 본문이 약 2만 2천 자였고, 어림으로 $0.05 이하입니다(⚠ 추정, 사전 준비) · 원본 앱: `generative_ui_agents/ai-financial-coach-agent`
 
 ## 오늘 만들 것
 
@@ -8,7 +8,7 @@
 
 에이전트는 코치 하나와 전문 에이전트 셋입니다. 코치(`FinanceCoachAgent`)는 사용자의 말을 보고 도구 다섯 중 하나를 고릅니다. 프로필을 고치는 함수(`update_financial_data`), 예산·저축·빚 분석을 각각 맡는 에이전트 셋, 그 셋을 차례로 돌리는 `FullAnalysisPipeline`입니다. ADK의 `output_schema`·`output_key`는 Day 016이, `before_model_callback`과 `tool_context.state`는 Day 019가, `AgentTool`은 Day 021이, `SequentialAgent`와 세션 상태는 Day 022가 다뤘습니다. 오늘 새로 보는 것은 그 조각들이 AG-UI 위에서 화면과 상태를 나누는 방식입니다.
 
-이 문서는 파이썬 쪽만 돌렸습니다. Next.js 쪽(`src/`)은 `npm install`·`npx`·`next`를 하나도 실행하지 않고 소스로만 읽었습니다(Day 124가 `client/`를 같은 방식으로 읽었습니다). 읽은 CopilotKit·AG-UI 패키지는 npm 레지스트리의 압축 파일을 `curl`로 받아 풀기만 했고(앱 `package-lock.json`의 무결성 값과 여섯 개 모두 일치), 실행하지 않았습니다. 브라우저 화면은 한 번도 띄우지 않았으므로 카드가 실제로 어떻게 보이는지는 보여 드리지 못합니다. 화면이 보내는 요청은 `ask.py`가 대신 만들어 보냅니다. 모델 자리에는 `127.0.0.1`의 가짜 서버가 있고, 그 답은 모두 제가 쓴 대본입니다. 그래서 실제 모델이 도구를 어떻게 고르는지, 분석이 얼마나 쓸모 있는지는 확인하지 못했고 문서의 숫자는 어떤 재정 판단의 근거도 아닙니다. 이 문서를 만들며 앱 코드가 Google이나 CopilotKit·Next.js 통계 서버로 보낸 요청은 한 건도 없습니다. 파이썬의 연결과 이름 조회를 기록해 루프백이 아니면 막는 감시를 걸고 돌렸고, 기록 22건이 모두 `127.0.0.1`이었습니다.
+이 문서는 파이썬 쪽만 돌렸습니다. Next.js 쪽(`src/`)은 `npm install`·`npx`·`next`를 하나도 실행하지 않고 소스로만 읽었습니다(Day 124가 `client/`를 같은 방식으로 읽었습니다). 읽은 CopilotKit·AG-UI 패키지는 npm 레지스트리의 압축 파일을 `curl`로 받아 풀기만 했고(앱 `package-lock.json`의 무결성 값과 여섯 개 모두 일치), 실행하지 않았습니다. 브라우저 화면은 한 번도 띄우지 않았으므로 카드가 실제로 어떻게 보이는지는 보여 드리지 못합니다. 화면이 보내는 요청은 `ask.py`가 대신 만들어 보냅니다. 모델 자리에는 `127.0.0.1`의 가짜 서버가 있고, 그 답은 모두 제가 쓴 대본입니다. 그래서 실제 모델이 도구를 어떻게 고르는지, 분석이 얼마나 쓸모 있는지는 확인하지 못했고 문서의 숫자는 어떤 재정 판단의 근거도 아닙니다. 이 문서를 만들며 앱 코드가 Google이나 CopilotKit·Next.js 통계 서버로 보낸 요청은 한 건도 없습니다. 파이썬의 연결과 이름 조회를 기록해 루프백이 아니면 막는 감시를 걸고 돌렸고, 기록 26건이 모두 `127.0.0.1`이었습니다. 셸에 `HTTP_PROXY` 같은 프록시 변수를 걸고(주소는 루프백에 세운 기록용 프록시) 같은 순서로 따라 했을 때도 그 프록시로 간 요청은 0건이었습니다.
 
 직접 돌려 보고 알게 된 특이점이 여덟입니다. 첫째, 앱은 코치가 분석 뒤에 "한두 문장으로 핵심을 짚는다"고 지시하지만 분석 도구에 `skip_summarization=True`가 걸려 있어 그 문장은 나오지 않습니다(Step 5). 둘째, 코치는 사용자의 프로필을 프롬프트로 받지 않고 전문 에이전트만 받습니다(Step 4·5). 셋째, 화면의 폼에서 고친 값이 매 요청마다 서버의 세션 상태를 덮어씁니다(Step 5). 넷째, 프로필을 고쳐도 옛 분석 결과는 지워지지 않아 다음 분석의 프롬프트에 그대로 들어갑니다(Step 5). 다섯째, 화면이 보내는 도구 목록은 이 에이전트에서 무시됩니다(Step 5). 여섯째, 서버를 껐다 켠 뒤 같은 대화로 말하면 첫 요청에서 모델 호출이 세 번 일어납니다(Step 7). 일곱째, 서버는 인증이 없고 `0.0.0.0`에 열립니다(Step 2·7). 여덟째, `fixtures/`와 `docker-compose.test.yml`은 이 앱의 재정 데이터가 아니라 템플릿 저장소의 테스트 설정 조각입니다(Step 7). 아래는 완성된 아키텍처입니다.
 
@@ -20,9 +20,9 @@
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python 3.12 이상 | 앱의 `pyproject.toml`이 `requires-python = ">=3.12"`입니다. 이 문서는 3.13.3으로 확인했습니다 | 공통 사전 준비와 같음 |
-| Node.js 18 이상 | 앱 README가 요구하는 화면 쪽 실행용. **이 문서는 설치도 실행도 하지 않았습니다** | https://nodejs.org (이 문서는 실행하지 않았음) |
+| Node.js 20.9 이상 | 화면 쪽 실행용. 앱 README는 18 이상이라 하지만 잠긴 `next` 16.1.1의 `engines.node`가 `>=20.9.0`입니다(`package-lock.json`을 읽음). **이 문서는 설치도 실행도 하지 않았습니다** | https://nodejs.org (이 문서는 실행하지 않았음) |
 | Google API 키 | 진짜로 쓸 때만(`GOOGLE_API_KEY`). 이 문서는 가짜 값 `fake-key-d142`만 씁니다 | https://aistudio.google.com/apikey |
-| 터미널 셋 | 가짜 서버를 띄우는 A, 앱 서버를 띄우는 B, 나머지를 돌리는 C. 셋 다 `coach-work/agent` 폴더(Step 1에서 만듭니다)에서 엽니다 | 별도 설치 없음 |
+| 터미널 셋(Step 7에서 넷) | 가짜 서버를 띄우는 A, 앱 서버를 띄우는 B, 나머지를 돌리는 C, Step 7의 키 없는 서버를 띄우는 D. 모두 `coach-work/agent` 폴더(Step 1에서 만듭니다)에서 열고, 열 때마다 아래 `PYTHONIOENCODING` 줄을 겁니다 | 별도 설치 없음 |
 | 인터넷 연결 | PyPI에서 설치할 때만. 이 문서의 확인은 설치 뒤에 모두 `127.0.0.1`로만 갑니다 | 별도 설치 없음 |
 
 한국어 Windows의 Git Bash에서 파이썬 출력이 cp949로 깨지는 것을 막으려고, 터미널을 열 때마다 첫 명령 전에 이렇게 겁니다.
@@ -43,7 +43,7 @@ $env:PYTHONIOENCODING = "utf-8"
 | 모델 페이지 (https://ai.google.dev/gemini-api/docs/models) | 이 ID는 없습니다. `gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.8-flash`가 Stable로 있습니다 |
 | 가격표 (https://ai.google.dev/gemini-api/docs/pricing) | 이 ID의 행은 없습니다. `gemini-3.6-flash`는 2026년 12월 31일까지 입력 $0.75·출력(생각 토큰 포함) $3.75(100만 토큰당), 2027년 1월 1일부터 $1.50·$7.50이고 무료 등급이 있습니다 |
 
-종료 예정은 아니라서 막히지 않습니다. 다만 이 ID로 부르면 서버가 다른 모델로 이어 준다고 적혀 있으므로, 실제로 어느 모델이 답하는지와 어느 요금이 붙는지는 확인하지 못했습니다. 이 앱에서 고칠 곳은 위 네 줄이 전부입니다. 비용 어림은 이렇습니다. 가짜 서버가 받은 전체 검토의 요청 본문 네 건이 합쳐 22,525자(`json.dumps`한 요청 전체)였고, 4자당 1토큰으로 어림잡으면 입력 약 5,600토큰입니다. 출력은 대본의 짧은 답이라 의미가 없으므로 한 번에 JSON 셋과 도구 호출 하나가 합쳐 2,500토큰이라고 가정하면 `gemini-3.6-flash` 가격으로 약 $0.013입니다. 생각 토큰이 출력으로 붙으니 넉넉히 $0.05 이하로 잡았습니다(⚠ 추정).
+종료 예정은 아니라고 읽어 ⚠는 달지 않았습니다(같은 모델을 쓰는 Day 144도 같은 원문으로 같은 결론입니다). 다만 이 ID로 부르면 서버가 다른 모델로 이어 준다고 적혀 있으므로, 실제로 어느 모델이 답하는지와 어느 요금이 붙는지는 확인하지 못했습니다. 이 앱에서 고칠 곳은 위 네 줄이 전부입니다. 비용 어림은 이렇습니다. 가짜 서버가 받은 전체 검토의 요청 본문 네 건이 합쳐 22,525자(`json.dumps`한 요청 전체)였고, 4자당 1토큰으로 어림잡으면 입력 약 5,600토큰입니다. 출력은 대본의 짧은 답이라 의미가 없으므로 한 번에 JSON 셋과 도구 호출 하나가 합쳐 2,500토큰이라고 가정하면 `gemini-3.6-flash` 가격으로 약 $0.013입니다. 생각 토큰이 출력으로 붙으니 넉넉히 $0.05 이하로 잡았습니다(⚠ 추정).
 
 ## 아키텍처 한눈에 보기
 
@@ -64,15 +64,19 @@ $env:PYTHONIOENCODING = "utf-8"
 | 배포·시험 파일 | 합친 이미지(`Dockerfile`·`entrypoint.sh`), 앱별 이미지(`docker/`), 시험용 compose와 모의 모델 설정(`fixtures/`). 읽기만 했다 | `generative_ui_agents/ai-financial-coach-agent/Dockerfile:1-55`, `generative_ui_agents/ai-financial-coach-agent/docker-compose.test.yml:1-80`, `generative_ui_agents/ai-financial-coach-agent/fixtures/default.json:1-16` |
 | Gemini API·CopilotKit와 Next.js 통계 서버 | 모델 응답, 사용 통계 | 코드 없음 (외부 서비스) |
 
-위 그림은 화면의 두 컴포넌트와 서버의 다섯 컴포넌트를 묶음으로 그렸습니다. 묶음 안의 화살표는 세로 1,000px를 지키려고 아래 세 그림으로 나눴습니다. 화면 쪽은 사용자와 화면, 런타임 라우트, 파이썬 서버, 통계 서버 사이의 화살표입니다.
+위 그림은 화면의 두 컴포넌트와 서버의 컴포넌트를 묶음으로 그렸고, 묶음 안의 화살표는 세로 1,000px를 지키려고 아래 네 그림으로 나눴습니다. 개념 하나를 한 노드로 합치지는 않았습니다. 분석 에이전트 셋(`LlmAgent`)은 `FullAnalysisPipeline`(`SequentialAgent`) 안에 따로 있고, 도구는 그것들을 감싼 `AgentTool` 넷입니다. 화면 쪽은 사용자와 화면, 런타임 라우트, 파이썬 서버, 통계 서버 사이의 화살표입니다. 통계 서버는 Node 쪽에서만 나가므로 이 그림에만 있습니다.
 
 ![화면 쪽 화살표](diagrams/extra-screen.svg)
 
-서버 안에서는 요청이 `run`으로 코치에 닿고, 코치가 함수와 `AgentTool`을 부르고, 코치와 분석 도구가 각자 Gemini를 부릅니다.
+서버 안에서는 요청이 `run`으로 코치에 닿고, 코치가 함수와 `AgentTool`을 부르고, 코치가 Gemini를 부릅니다.
 
 ![서버 안의 호출](diagrams/extra-calls.svg)
 
-상태는 세 곳에서 쓰이고 한 곳에서 읽힙니다. 요청이 올 때 `input.state`로 덮어쓰이고, 프로필 도구가 `financial_data`를 쓰고, 분석 도구가 `output_key` 항목을 쓰고, 분석 도구가 프롬프트에 주입하려고 읽습니다.
+`AgentTool`은 모두 넷입니다. 예산·저축·빚 에이전트를 각각 감싼 셋은 단독 호출용이고, 넷째는 파이프라인을 감싸 셋을 차례로 돌립니다. 모델을 부르는 것은 에이전트 셋입니다.
+
+![AgentTool·파이프라인·에이전트](diagrams/extra-agents.svg)
+
+상태는 쓰는 곳이 여럿이고 읽는 곳은 분석 에이전트입니다. 요청이 올 때 `input.state`로 덮어쓰이고, 프로필 도구가 `financial_data`를 쓰고, 분석 에이전트가 각자 `output_key` 항목을 쓰고, 프롬프트에 주입하려고 읽습니다.
 
 ![세션 상태의 쓰기와 읽기](diagrams/extra-state.svg)
 
@@ -131,11 +135,15 @@ dependencies = [
 ```text
 Using CPython 3.13.3
 Creating virtual environment at: .venv
-Resolved 127 packages in 1ms
-Installed 125 packages in 3.01s
+Resolved 127 packages in 6ms
+Installed 125 packages in 2.36s
 ```
 
-핵심 패키지의 설치된 버전입니다(직접 확인).
+핵심 패키지의 설치된 버전을 찍습니다.
+
+```bash
+uv run --no-project python -c 'import importlib.metadata as m, sys; print("python", sys.version.split()[0]); [print(f"{p:14}", m.version(p)) for p in ("google-adk", "ag-ui-adk", "google-genai", "fastapi", "uvicorn", "pydantic", "python-dotenv")]'
+```
 
 ```text
 python 3.13.3
@@ -147,6 +155,8 @@ uvicorn        0.41.0
 pydantic       2.12.5
 python-dotenv  1.2.2
 ```
+
+(직접 확인)
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -172,7 +182,7 @@ python-dotenv  1.2.2
     depends_on:
 ```
 
-고정된 1.65.0에서는 환경변수가 통했습니다. 아래 가짜 서버가 이 변수만으로 앱의 요청을 받았습니다. 둘째, `main.py`는 첫머리에서 `load_dotenv()`를 부릅니다(`generative_ui_agents/ai-financial-coach-agent/agent/main.py:18`). python-dotenv 1.2.2의 `find_dotenv`는 그 파일(`main.py`)이 있는 폴더에서 위로 올라가며 `.env`를 찾고(소스로 확인), 이미 있는 환경변수는 덮어쓰지 않습니다. 그래서 독자 셸이나 상위 폴더 `.env`에 진짜 키·주소·Vertex 설정이 있으면 그것이 이기거나 섞입니다. 이 문서의 스크립트는 `main.py`를 import하기 **전에** 가짜 값으로 덮고, import 뒤에 한 번 더 검사하고, 어긋나면 서버를 띄우기 전에 멈춥니다.
+고정된 1.65.0에서는 환경변수가 통했습니다. 아래 가짜 서버가 이 변수만으로 앱의 요청을 받았습니다. 둘째, `main.py`는 첫머리에서 `load_dotenv()`를 부릅니다(`generative_ui_agents/ai-financial-coach-agent/agent/main.py:18`). python-dotenv 1.2.2의 `find_dotenv`는 그 파일(`main.py`)이 있는 폴더에서 위로 올라가며 `.env`를 찾고(소스로 확인), 이미 있는 환경변수는 덮어쓰지 않습니다. 그래서 독자 셸이나 상위 폴더 `.env`에 진짜 키·주소·Vertex 설정이 있으면 그것이 이기거나 섞입니다. 셋째, 프록시입니다. httpx는 기본으로 셸의 `HTTP_PROXY`·`HTTPS_PROXY`를 따르고 `NO_PROXY`가 없으면 `127.0.0.1`로 가는 요청도 프록시로 보냅니다(httpx 0.28.1의 `_utils.get_environment_proxies`, 소스로 확인). google-genai 1.65.0의 클라이언트도 환경변수를 따릅니다(`_api_client.py`의 `trust_env=True`, 소스로 확인). 회사 프록시가 있는 셸이라면 사용자의 말과 재정 정보가 담긴 요청이 프록시로 나가려 합니다. 이 문서의 스크립트는 `main.py`를 import하기 **전에** 가짜 값으로 덮고(프록시 변수는 비우고 `NO_PROXY=127.0.0.1,localhost`를 겁니다), import 뒤에 한 번 더 검사하고, 어긋나면 서버를 띄우기 전에 멈춥니다. 요청을 보내는 `ask.py`는 `trust_env=False`로 프록시 변수를 아예 읽지 않습니다.
 
 터미널 C에서 `guard.py`를 저장합니다. `loopback`은 문자열 접두가 아니라 `urlparse`의 호스트로 비교하므로 `http://127.0.0.1@example.invalid`처럼 앞만 흉내 낸 주소를 통과시키지 않습니다.
 
@@ -181,12 +191,13 @@ cat > guard.py <<'PY'
 """루프백 가드. 바깥으로 나갈 수 있는 주소가 하나라도 섞이면 이유를 찍고 멈춘다.
 
 - loopback(url): URL의 호스트(urlparse)가 127.0.0.1·localhost·::1 인지. 문자열 접두가 아니라 호스트로 비교한다.
-- problems(env): 환경이 가짜 서버로만 향하는지 검사해 어긋난 이유 목록을 돌려준다.
+- problems(env): 환경이 가짜 서버로만 향하는지(프록시 변수가 없고 NO_PROXY에 127.0.0.1이 있는지 포함) 검사해 어긋난 이유 목록을 돌려준다.
 """
 import os
 from urllib.parse import urlparse
 
 LOOP = {"127.0.0.1", "localhost", "::1"}
+PROXY_VARS = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")
 MUST_BE_EMPTY = ("GEMINI_API_KEY", "GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION", "GOOGLE_VERTEX_BASE_URL")
 
 
@@ -207,6 +218,12 @@ def problems(env) -> list:
     for name in MUST_BE_EMPTY:
         if env.get(name):
             out.append(f"{name}에 값이 있음")
+    for name in PROXY_VARS:
+        if env.get(name):
+            out.append(f"{name}에 값이 있음 (프록시를 거치면 재정 정보가 프록시로 나갑니다)")
+    for name in ("NO_PROXY", "no_proxy"):
+        if "127.0.0.1" not in env.get(name, "").split(","):
+            out.append(f"{name}에 127.0.0.1이 없음")
     return out
 
 
@@ -216,8 +233,9 @@ def apply_fake_env(base_url: str, key: str = "fake-key-d142") -> None:
     os.environ["GOOGLE_GEMINI_BASE_URL"] = base_url
     os.environ["GOOGLE_API_KEY"] = key
     os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "false"
-    for name in MUST_BE_EMPTY:
+    for name in MUST_BE_EMPTY + PROXY_VARS:
         os.environ[name] = ""
+    os.environ["NO_PROXY"] = os.environ["no_proxy"] = "127.0.0.1,localhost"
 PY
 ```
 
@@ -468,7 +486,17 @@ http://localhost.example.invalid:8080         False
 http://127.0.0.1:51397                        True
 ```
 
-앞의 셋은 `False`, 마지막만 `True`입니다(직접 확인). 이제 터미널 A에서 가짜 서버를, 터미널 B에서 앱 서버를 띄웁니다. 포트 `51397`·`54048`은 이 문서가 고른 임의의 높은 번호이니 겹치면 바꾸세요.
+앞의 셋은 `False`, 마지막만 `True`입니다(직접 확인). 프록시도 같은 방식으로 막는지 봅니다. `problems`는 환경 딕셔너리를 받는 함수라서 프록시 변수가 든 가짜 환경을 직접 넘겨 이유 목록을 찍어 봅니다(`192.0.2.10`은 문서용 예약 주소이고 연결하지 않습니다).
+
+```bash
+uv run --no-project python -c "from guard import problems; print(problems({'GOOGLE_GEMINI_BASE_URL': 'http://127.0.0.1:51397', 'HTTP_PROXY': 'http://192.0.2.10:3128'}))"
+```
+
+```text
+['HTTP_PROXY에 값이 있음 (프록시를 거치면 재정 정보가 프록시로 나갑니다)', 'NO_PROXY에 127.0.0.1이 없음', 'no_proxy에 127.0.0.1이 없음']
+```
+
+(직접 확인) 프록시 변수가 있다는 이유와, `NO_PROXY`·`no_proxy`에 `127.0.0.1`이 없다는 이유가 나옵니다. 이제 터미널 A에서 가짜 서버를, 터미널 B에서 앱 서버를 띄웁니다. 포트 `51397`·`54048`은 이 문서가 고른 임의의 높은 번호이니 겹치면 바꾸세요.
 
 ```bash
 # 터미널 A
@@ -480,7 +508,7 @@ uv run --no-project python fake_gemini.py 51397 fake.jsonl
 uv run --no-project python run_agent.py 54048 http://127.0.0.1:51397
 ```
 
-(PowerShell도 같은 줄입니다. 실행해 보지 못했습니다.) 터미널 B가 `run_agent 통과`를 찍어야 하고, 그러지 않으면 이유가 찍히며 서버가 뜨지 않습니다. 터미널 C에서 두 서버가 루프백에만 열렸는지 봅니다.
+(PowerShell도 같은 줄입니다. 실행해 보지 못했습니다.) 터미널 B가 `run_agent 통과`를 찍어야 하고, 그러지 않으면 이유가 찍히며 서버가 뜨지 않습니다. 그 앞에 `UserWarning: [EXPERIMENTAL] InMemoryCredentialService…`·`BaseCredentialService…` 경고 네 줄이 먼저 나올 수 있습니다. google-adk가 내는 무해한 경고이고, `peek.py`·`check_tools.py`를 돌릴 때도 같습니다. 터미널 C에서 두 서버가 루프백에만 열렸는지 봅니다.
 
 ```bash
 netstat -ano | grep LISTEN | grep -E ":(51397|54048) "
@@ -488,8 +516,8 @@ netstat -ano | grep LISTEN | grep -E ":(51397|54048) "
 
 ```text
 run_agent 통과: 모델 요청은 http://127.0.0.1:51397 로만, 서버는 127.0.0.1:54048 에만 열립니다
-  TCP    127.0.0.1:51397        0.0.0.0:0              LISTENING       29400
-  TCP    127.0.0.1:54048        0.0.0.0:0              LISTENING       30500
+  TCP    127.0.0.1:51397        0.0.0.0:0              LISTENING       62196
+  TCP    127.0.0.1:54048        0.0.0.0:0              LISTENING       48876
 ```
 
 이 문서의 확인은 독자가 "진짜 키가 있는" 경우를 흉내 내고 돌렸습니다. 셸에 `GOOGLE_API_KEY`·`GEMINI_API_KEY`에 진짜 모양의 가짜 값, `GOOGLE_GENAI_USE_VERTEXAI=true`, `GOOGLE_CLOUD_PROJECT`, 진짜 주소 `GOOGLE_GEMINI_BASE_URL=https://generativelanguage.googleapis.com`을 걸고, `coach-work/.env`에도 같은 줄들을 두었습니다. 그래도 `run_agent 통과`가 나왔고 이후 모델 요청은 모두 가짜 서버가 받았습니다(기록의 키 앞 여섯 자가 `fake-k`). 원본을 그대로 `uv run main.py`로 돌리면 이 보호가 없다는 점이 앱 README와의 차이입니다. 아래는 앱 README가 안내하는 실행 줄입니다. 이 문서는 실행하지 않았습니다.
@@ -585,19 +613,7 @@ def _make_state_injector(prior_keys: List[str]):
     return modifier
 ```
 
-세 에이전트를 순서대로 묶은 것이 `FullAnalysisPipeline`이고, 네 에이전트를 도구로 감싼 것이 코치가 부르는 `AgentTool`입니다. 감싼 줄 위의 주석이 `skip_summarization=True`의 의도를 말합니다.
-
-`generative_ui_agents/ai-financial-coach-agent/agent/main.py:421-427`
-
-```python
-# Wrap each phase as an AgentTool. skip_summarization=True keeps the coach from
-# re-narrating the full JSON (which already lands in shared state via output_key
-# and renders as a card in the UI).
-run_budget_analysis = AgentTool(agent=budget_agent, skip_summarization=True)
-run_savings_strategy = AgentTool(agent=savings_agent, skip_summarization=True)
-run_debt_reduction = AgentTool(agent=debt_agent, skip_summarization=True)
-run_full_analysis = AgentTool(agent=full_analysis_pipeline, skip_summarization=True)
-```
+세 에이전트를 순서대로 묶은 것이 `FullAnalysisPipeline`(`SequentialAgent`)입니다(`generative_ui_agents/ai-financial-coach-agent/agent/main.py:242-246`). 그것들을 코치의 도구로 감싸는 `AgentTool`은 Step 5에서 봅니다.
 
 `peek.py`를 저장하고 돌립니다. 모델 요청 없이 모듈을 import해 구성을 찍고, 저축 에이전트가 받을 머리를 샘플 상태로 만들어 보여 줍니다.
 
@@ -659,7 +675,7 @@ BUDGET_ANALYSIS:
 ['total_expenses', 'monthly_income', 'spending_categories', 'recommendations']
 ```
 
-(직접 확인) 코치는 도구 다섯을 갖고 출력 키가 없으며, 분석 에이전트 셋은 도구가 없고 출력 키가 하나씩입니다. 첫 줄의 모델 이름이 네 곳 모두 같습니다. 한 가지 더 소스로 확인했습니다. `AgentTool`은 부를 때마다 자식 세션을 새로 만들면서 부모 상태를 복사해 주고(`_adk`로 시작하는 내부 키만 뺌), 자식이 쓴 상태 변화를 부모 상태에 되돌려 줍니다(google-adk 1.26.0의 `google/adk/tools/agent_tool.py`, `run_async`). `skip_summarization`이 참이면 그 도구 호출 이벤트가 최종 응답으로 취급되어 흐름이 거기서 끝납니다(같은 패키지의 `events/event.py`, `is_final_response`). 이 두 사실이 다음 두 Step의 관찰을 설명합니다.
+(직접 확인) 코치는 도구 다섯을 갖고 출력 키가 없으며, 분석 에이전트 셋은 도구가 없고 출력 키가 하나씩입니다. 첫 줄의 모델 이름이 네 곳 모두 같습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -760,6 +776,7 @@ cat > ask.py <<'PY'
 """CopilotKit 화면이 하는 일을 흉내 낸다: AG-UI 요청(RunAgentInput) 한 건을 보내고 이벤트를 요약해 찍는다.
 
 사용: python ask.py <에이전트 주소> <상태 파일> "<사용자 메시지>"
+httpx의 기본값(trust_env)은 셸의 HTTP_PROXY를 따라 루프백 요청도 프록시로 보낼 수 있어서 끈다.
 상태 파일에는 화면의 useCoAgent 상태(처음엔 DEFAULT_FINANCIAL_DATA)와 대화 기록을 둔다.
 STATE_SNAPSHOT·STATE_DELTA를 받으면 화면처럼 상태를 갱신해 다시 저장한다.
 """
@@ -811,7 +828,7 @@ body = {"threadId": saved["thread"], "runId": "r-" + uuid.uuid4().hex[:8], "stat
         "context": [], "forwardedProps": {}}
 
 calls, results, said = {}, {}, ""
-with httpx.Client(timeout=60) as c, c.stream("POST", url, json=body, headers={"Accept": "text/event-stream"}) as r:
+with httpx.Client(timeout=60, trust_env=False) as c, c.stream("POST", url, json=body, headers={"Accept": "text/event-stream"}) as r:
     print("HTTP", r.status_code, r.headers.get("content-type"))
     for line in r.iter_lines():
         if not line.startswith("data:"):
@@ -876,6 +893,24 @@ RUN_FINISHED
 
 (직접 확인) 이벤트의 순서가 앱의 구조를 그대로 보여 줍니다. `TOOL_CALL_START`·`ARGS`·`END`가 코치의 함수 호출이고, `TOOL_CALL_RESULT`는 `update_financial_data`가 돌려준 딕셔너리(`changes` 포함)입니다. 화면의 알림 알약이 `result.changes`를 이어 붙여 보여 주는 바로 그 값입니다. 이어서 `STATE_DELTA`가 `/financial_data`를 더하고, 코치의 한 문장 답이 `TEXT_MESSAGE_*`로 흐르고, 마지막에 `STATE_SNAPSHOT`이 상태 전체를 보냅니다. 스냅샷에는 앱이 넣지 않은 키 셋(`_ag_ui_app_name`·`_ag_ui_thread_id`·`_ag_ui_user_id`)이 있습니다. ag-ui-adk가 세션 식별용으로 넣는 것이고, 화면은 이 상태를 그대로 다음 요청에 되돌려 보냅니다. 이 턴에서 모델은 두 번 불렸습니다. 서버 기록입니다.
 
+`summarize.py`를 저장합니다. 가짜 서버 기록(`fake.jsonl`)을 한 줄씩 요약해, 줄 번호·누가 불렀는지(`kind`)·무엇을 보냈는지(`sent`)·직전 내용·내용 수·시스템 지시문 길이·상태 주입 여부·소득·예산 합계·도구 선언 수·키 앞 여섯 자를 찍습니다. 둘째 인자는 건너뛸 줄 수입니다.
+
+```bash
+cat > summarize.py <<'PY'
+"""가짜 서버 기록(jsonl)을 한 줄씩 요약한다. 사용: python summarize.py fake.jsonl [건너뛸 줄 수]"""
+import json
+import sys
+
+skip = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+for n, line in enumerate(open(sys.argv[1], encoding="utf-8"), 1):
+    if n <= skip:
+        continue
+    r = json.loads(line)
+    print(f"{n:2} {r['kind']:7} 보냄={r['sent']:22} 직전={r['last']:16} 내용수={r['n_contents']:2} 지시문={r['system_chars']:5}자 "
+          f"상태주입={'O' if r['has_fd'] else '-'} 소득={r['income']} 예산={r['budget_total']} 도구={len(r['tools'])}개 키={r['key']}")
+PY
+```
+
 ```bash
 uv run --no-project python summarize.py fake.jsonl
 ```
@@ -889,13 +924,51 @@ uv run --no-project python summarize.py fake.jsonl
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** `HTTP 200 text/event-stream`, `TOOL_CALL_START update_financial_data`, `STATE_DELTA`, `RUN_FINISHED`가 보이고 `fake.jsonl`이 두 줄이어야 합니다. `st.json`의 `state.financial_data`에 `Housing`이 2400, `Food`가 700(`rent`·`groceries`가 바뀐 이름)이어야 합니다.
+**확인.** `HTTP 200 text/event-stream`, `TOOL_CALL_START update_financial_data`, `STATE_DELTA`, `RUN_FINISHED`가 보이고 `fake.jsonl`이 두 줄이어야 합니다. `st.json`의 `state.financial_data`에 `Housing`이 2400, `Food`가 700(`rent`·`groceries`가 바뀐 이름)이어야 합니다. 상태 파일은 `show_state.py`로 요약해 봅니다.
+
+```bash
+cat > show_state.py <<'PY'
+"""상태 파일의 화면 상태를 요약해 찍는다. 사용: python show_state.py <상태 파일>"""
+import json
+import sys
+
+s = json.load(open(sys.argv[1], encoding="utf-8"))["state"]
+print("financial_data", s["financial_data"])
+for k in ("budget_analysis", "savings_strategy", "debt_reduction"):
+    if k in s:
+        print(k, json.dumps(s[k], ensure_ascii=False)[:230])
+PY
+```
+
+```bash
+uv run --no-project python show_state.py st.json
+```
+
+```text
+financial_data {'monthly_income': 8000.0, 'dependants': 2, 'manual_expenses': {'Housing': 2400.0, 'Food': 700.0}, 'debts': []}
+```
 
 ### Step 5. 전문 에이전트와 전체 검토 — 상태가 흘러가는 길
 
 **목적.** 분석 요청 하나가 코치 → 파이프라인 → 전문 에이전트 셋을 지나며 상태를 읽고 쓰는 것을 서버 기록으로 확인하고, 앞 Step에서 예고한 특이점 다섯을 하나씩 재현합니다.
 
-**할 일.** 먼저 빚을 둘 더하고(`add_debts`는 이어 붙입니다), 전체 검토를 청합니다.
+**할 일.** 먼저 도구 쪽을 읽습니다. 예산·저축·빚 에이전트를 하나씩, 그리고 파이프라인을 하나, 모두 넷을 `AgentTool`로 감싸 코치의 도구로 씁니다. 감싼 줄 위의 주석이 `skip_summarization=True`의 의도를 말합니다.
+
+`generative_ui_agents/ai-financial-coach-agent/agent/main.py:421-427`
+
+```python
+# Wrap each phase as an AgentTool. skip_summarization=True keeps the coach from
+# re-narrating the full JSON (which already lands in shared state via output_key
+# and renders as a card in the UI).
+run_budget_analysis = AgentTool(agent=budget_agent, skip_summarization=True)
+run_savings_strategy = AgentTool(agent=savings_agent, skip_summarization=True)
+run_debt_reduction = AgentTool(agent=debt_agent, skip_summarization=True)
+run_full_analysis = AgentTool(agent=full_analysis_pipeline, skip_summarization=True)
+```
+
+소스로 확인한 것이 둘입니다. `AgentTool`은 부를 때마다 자식 세션을 새로 만들면서 부모 상태를 복사해 주고(`_adk`로 시작하는 내부 키만 뺌), 자식이 쓴 상태 변화를 부모 상태에 되돌려 줍니다(google-adk 1.26.0의 `google/adk/tools/agent_tool.py`, `run_async`). `skip_summarization`이 참이면 그 도구 호출 이벤트가 최종 응답으로 취급되어 흐름이 거기서 끝납니다(같은 패키지의 `events/event.py`, `is_final_response`). 이 두 사실이 아래 관찰을 설명합니다.
+
+이제 빚을 둘 더하고(`add_debts`는 이어 붙입니다), 전체 검토를 청합니다.
 
 ```bash
 uv run --no-project python ask.py http://127.0.0.1:54048/ st.json "Add a \$5,000 student loan at 6%."
@@ -918,6 +991,10 @@ RUN_FINISHED
 
 (직접 확인, 셋째 줄 명령의 출력) 이벤트에서 알 점이 셋입니다. 코치의 도구 호출은 하나(`FullAnalysisPipeline`)입니다. 안쪽에서 일어난 세 에이전트의 호출은 AG-UI 이벤트로 나오지 않고 `TOOL_CALL_RESULT`에 마지막 에이전트(빚)의 JSON만 실립니다. 대신 `STATE_DELTA`가 `budget_analysis`·`savings_strategy`·`debt_reduction` 셋을 한꺼번에 더합니다. 이 항목 셋이 화면의 카드를 그립니다. 그리고 `TEXT_MESSAGE_*`가 없습니다. 코치는 분석 뒤 한 문장도 말하지 않았습니다. 서버 기록이 이유를 보여 줍니다.
 
+```bash
+uv run --no-project python summarize.py fake.jsonl 6
+```
+
 ```text
  7 coach   보냄=FullAnalysisPipeline   직전=text             내용수=13 지시문= 2549자 상태주입=- 소득=None 예산=None 도구=5개 키=fake-k
  8 budget  보냄=json                   직전=text             내용수= 1 지시문= 1281자 상태주입=O 소득=8000.0 예산=None 도구=0개 키=fake-k
@@ -929,11 +1006,15 @@ RUN_FINISHED
 
 세 에이전트가 상태를 받는 것도 보입니다. 모두 `상태주입=O`이고 소득 8000.0이 들어 있습니다. 저축은 예산 결과(`예산=3100.0`)를, 빚은 예산과 저축을 받습니다(`generative_ui_agents/ai-financial-coach-agent/agent/main.py`의 187·210·238행에 적힌 키 목록 그대로). 내용 수가 1·2·3으로 늘어나는 것은 `SequentialAgent`가 한 세션 안에서 앞 에이전트의 응답을 기록으로 이어 받기 때문입니다. 코치의 내용 수는 13으로, 앞선 턴들의 도구 호출과 결과가 쌓인 값입니다. 상태에 쓰인 결과를 봅니다.
 
+```bash
+uv run --no-project python show_state.py st.json
+```
+
 ```text
+financial_data {'monthly_income': 8000.0, 'dependants': 2, 'manual_expenses': {'Housing': 2400.0, 'Food': 700.0}, 'debts': [{'name': 'Student Loan', 'amount': 5000.0, 'interest_rate': 6.0, 'min_payment': 50.0}, {'name': 'Car Loan', 'amount': 800.0, 'interest_rate': 3.0, 'min_payment': 50.0}]}
 budget_analysis {"total_expenses": 3100.0, "monthly_income": 8000.0, "spending_categories": [{"category": "Housing", "amount": 2400.0, "percentage": 77.4}, {"category": "Food", "amount": 700.0, "percentage": 22.6}], "recommendations": [{"category
 savings_strategy {"emergency_fund": {"recommended_amount": 18600.0, "current_amount": 0.0, "current_status": "Not started"}, "recommendations": [{"category": "Emergency", "amount": 800.0, "rationale": "Script: 10% of income."}, {"category": "Retir
 debt_reduction {"total_debt": 5800.0, "debts": [{"name": "Student Loan", "amount": 5000.0, "interest_rate": 6.0, "min_payment": 50.0}, {"name": "Car Loan", "amount": 800.0, "interest_rate": 3.0, "min_payment": 50.0}], "payoff_plans": {"avalanche
-financial_data {'monthly_income': 8000.0, 'dependants': 2, 'manual_expenses': {'Housing': 2400.0, 'Food': 700.0}, 'debts': [{'name': 'Student Loan', 'amount': 5000.0, 'interest_rate': 6.0, 'min_payment': 50.0}, {'name': 'Car Loan', 'amount': 800.0, 'interest_rate': 3.0, 'min_payment': 50.0}]}
 ```
 
 대본이 계산한 값입니다. 빚 상환은 눈사태(이율 높은 것 먼저)와 눈덩이(잔액 작은 것 먼저)를 나란히 냅니다. `debt-reduction-card.tsx`의 비교 탭은 `a.total_interest <= s.total_interest`로 더 나은 쪽을 고릅니다(`generative_ui_agents/ai-financial-coach-agent/src/components/debt-reduction-card.tsx:195`).
@@ -966,6 +1047,20 @@ uv run --no-project python ask.py http://127.0.0.1:54048/ st.json "Analyze my bu
 
 ```text
 고침: {'monthly_income': 9000.0, 'manual_expenses': {'Housing': 2400.0, 'Food': 700.0}}
+HTTP 200 text/event-stream; charset=utf-8
+RUN_STARTED
+TOOL_CALL_START        BudgetAnalysisAgent
+TOOL_CALL_ARGS         {"request": "Analyze my budget."}
+TOOL_CALL_END
+TOOL_CALL_RESULT       {"total_expenses": 3100.0, "monthly_income": 9000.0, "spending_categories": [{"category": 
+STATE_DELTA            [('add', '/budget_analysis')]
+STATE_SNAPSHOT         keys=['_ag_ui_app_name', '_ag_ui_thread_id', '_ag_ui_user_id', 'budget_analysis', 'debt_reduction', 'financial_data', 'savings_strategy']
+RUN_FINISHED
+상태 키: ['_ag_ui_app_name', '_ag_ui_thread_id', '_ag_ui_user_id', 'budget_analysis', 'debt_reduction', 'financial_data', 'savings_strategy']
+```
+
+```bash
+uv run --no-project python summarize.py fake.jsonl 10
 ```
 
 ```text
@@ -982,6 +1077,20 @@ uv run --no-project python ask.py http://127.0.0.1:54048/ st.json "Just plan my 
 
 ```text
 고침: {'monthly_income': 9000.0, 'manual_expenses': {'Housing': 3000.0, 'Food': 700.0}}
+HTTP 200 text/event-stream; charset=utf-8
+RUN_STARTED
+TOOL_CALL_START        DebtReductionAgent
+TOOL_CALL_ARGS         {"request": "Just plan my debt payoff strategy."}
+TOOL_CALL_END
+TOOL_CALL_RESULT       {"total_debt": 5800.0, "debts": [{"name": "Student Loan", "amount": 5000.0, "interest_rate
+STATE_DELTA            [('add', '/debt_reduction')]
+STATE_SNAPSHOT         keys=['_ag_ui_app_name', '_ag_ui_thread_id', '_ag_ui_user_id', 'budget_analysis', 'debt_reduction', 'financial_data', 'savings_strategy']
+RUN_FINISHED
+상태 키: ['_ag_ui_app_name', '_ag_ui_thread_id', '_ag_ui_user_id', 'budget_analysis', 'debt_reduction', 'financial_data', 'savings_strategy']
+```
+
+```bash
+uv run --no-project python summarize.py fake.jsonl 12
 ```
 
 ```text
@@ -1002,6 +1111,10 @@ Remove-Item Env:ASK_TOOLS
 ```
 
 (PowerShell 줄은 실행해 보지 못했습니다.)
+
+```bash
+uv run --no-project python summarize.py fake.jsonl 14
+```
 
 ```text
 15 coach   보냄=text                   직전=text             내용수=22 지시문= 2549자 상태주입=- 소득=None 예산=None 도구=5개 키=fake-k
@@ -1105,53 +1218,90 @@ npm install --ignore-scripts
 AGENT_URL=http://127.0.0.1:54048/ npm run dev:ui -- -H 127.0.0.1
 ```
 
-`--ignore-scripts`는 `sharp`의 설치 스크립트도 건너뛰므로 이미지 최적화가 필요한 화면에는 영향이 있을 수 있는데, 이 앱의 `src/`에는 이미지 컴포넌트가 없습니다(소스 검색으로 확인). 이 조합이 실제로 뜨는지는 확인하지 못했습니다. 에이전트는 `npm run dev:agent`가 아니라 Step 2의 터미널 B 줄(진짜 키를 쓰려면 가짜 서버 대신 `run_agent.py`를 쓰지 말고 `uv run uvicorn main:app --host 127.0.0.1 --port 54048`)로 띄웁니다. 진짜 키는 셸이 아니라 그 명령 앞에 `GOOGLE_API_KEY=...`로 한 번만 주세요.
+`--ignore-scripts`는 `sharp`의 설치 스크립트도 건너뛰므로 이미지 최적화가 필요한 화면에는 영향이 있을 수 있는데, 이 앱의 `src/`에는 이미지 컴포넌트가 없습니다(소스 검색으로 확인). 이 조합이 실제로 뜨는지는 확인하지 못했습니다. 에이전트는 `npm run dev:agent`가 아니라 Step 2의 터미널 B 줄(진짜 키를 쓰려면 가짜 서버 대신 `run_agent.py`를 쓰지 말고 `uv run --no-project python -m uvicorn main:app --host 127.0.0.1 --port 54048`)로 띄웁니다. 진짜 키는 셸이 아니라 그 명령 앞에 `GOOGLE_API_KEY=...`로 한 번만 주세요.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 이 Step은 소스 읽기라 실행할 것이 없습니다. 위 코드에서 같은 이름 `my_agent`가 세 곳(`layout.tsx`, `route.ts`, `page.tsx`)에 있는지, 카드가 `state` 항목으로 그려지는지 눈으로 확인하세요. 저장소 쪽은 여전히 `git status --short -- generative_ui_agents/ai-financial-coach-agent`가 비어 있어야 합니다.
+**확인.** 이 Step은 소스 읽기라 서버를 띄우지 않습니다. 같은 이름 `my_agent`가 세 곳에 있는지 찾아 봅니다(`<저장소>`로 먼저 `cd` 합니다).
+
+```bash
+cd <저장소>
+grep -rn "my_agent" generative_ui_agents/ai-financial-coach-agent/src
+git status --short -- generative_ui_agents/ai-financial-coach-agent
+```
+
+```text
+generative_ui_agents/ai-financial-coach-agent/src/app/api/copilotkit/route.ts:18:    my_agent: new HttpAgent({
+generative_ui_agents/ai-financial-coach-agent/src/app/layout.tsx:21:        <CopilotKit runtimeUrl="/api/copilotkit" agent="my_agent">
+generative_ui_agents/ai-financial-coach-agent/src/app/page.tsx:55:    name: "my_agent",
+```
+
+(직접 확인) `route.ts`·`layout.tsx`·`page.tsx`에 한 줄씩 나오고, `git status`는 아무것도 찍지 않습니다. 카드가 `state` 항목으로 그려지는지는 위 코드에서 눈으로 확인하세요. 이어지는 Step 7의 명령은 다시 `coach-work/agent`에서 실행합니다.
 
 ### Step 7. 키 없음·재시작·배포 파일 — 경계 확인
 
 **목적.** 서버가 키 없이 어떻게 실패하는지, 서버를 껐다 켰을 때 무슨 일이 일어나는지, 배포·시험 파일이 무엇인지, 앱이 재정 조언이 아님을 밝히는지 확인합니다.
 
-**할 일.** 첫째, **키가 없을 때**입니다. 터미널 B를 그대로 두고 다른 포트로 키 없는 서버를 하나 더 띄웁니다. `run_agent.py`의 `nokey` 인자가 `GOOGLE_API_KEY`를 빈 값으로 덮습니다.
+**할 일.** 첫째, **키가 없을 때**입니다. 터미널 B를 그대로 두고 새 터미널 D(`coach-work/agent`, `PYTHONIOENCODING` 줄 포함)에서 다른 포트로 키 없는 서버를 하나 더 띄웁니다. `run_agent.py`의 `nokey` 인자가 `GOOGLE_API_KEY`를 빈 값으로 덮습니다.
 
 ```bash
 uv run --no-project python run_agent.py 52611 http://127.0.0.1:51397 nokey
 ```
 
-터미널 C에서 요청합니다.
+터미널 C에서 요청합니다. 요청 앞뒤로 가짜 서버 기록의 줄 수를 셉니다.
 
 ```bash
+wc -l < fake.jsonl
 rm -f st_nokey.json
 uv run --no-project python ask.py http://127.0.0.1:52611/ st_nokey.json "Hello"
+wc -l < fake.jsonl
 ```
 
 ```text
+15
 HTTP 200 text/event-stream; charset=utf-8
 RUN_STARTED
 RUN_ERROR              BACKGROUND_EXECUTION_ERROR No API key was provided. Please pass a valid API key. Learn how to create an API key at https://ai.google.dev/gemini-api/docs/api-key.
 RUN_FINISHED
 상태 키: ['financial_data']
-모델 서버가 받은 새 요청: 0
+15
 ```
 
-(직접 확인) 서버는 죽지 않고 `RUN_ERROR`를 이벤트로 돌려준 뒤 `RUN_FINISHED`까지 보냅니다. google-genai가 모델을 부르기 전에 키가 없다고 거절하므로 가짜 서버에는 요청이 가지 않았습니다. 화면에는 오류 알림이 올 텐데 어떻게 그려지는지는 확인하지 못했습니다. `main.py`가 키가 없다고 경고하는 문구(`generative_ui_agents/ai-financial-coach-agent/agent/main.py:500-504`)는 `__main__`에서만 돌기 때문에 `uvicorn main:app`으로 띄우면 나오지 않습니다. 터미널 B2는 `Ctrl+C`로 끕니다.
+(직접 확인) 서버는 죽지 않고 `RUN_ERROR`를 이벤트로 돌려준 뒤 `RUN_FINISHED`까지 보냅니다. google-genai가 모델을 부르기 전에 키가 없다고 거절하므로 가짜 서버에는 요청이 가지 않았습니다(앞뒤 줄 수가 같음). 화면에는 오류 알림이 올 텐데 어떻게 그려지는지는 확인하지 못했습니다. 다만 `@ag-ui/client` 0.0.52의 이벤트 검증기는 `RUN_ERROR` 뒤에 오는 이벤트를 "The run has already errored with 'RUN_ERROR'. No further events can be sent."로 거부합니다(`verify`, 소스로 확인). 서버가 `RUN_ERROR` 뒤에 `RUN_FINISHED`를 보내는 이 순서가 실제 화면에서는 오류로 처리될 수 있는데, 어떻게 보이는지는 확인하지 못했습니다. `main.py`가 키가 없다고 경고하는 문구(`generative_ui_agents/ai-financial-coach-agent/agent/main.py:500-504`)는 `__main__`에서만 돌기 때문에 `uvicorn main:app`으로 띄우면 나오지 않습니다. 터미널 D는 `Ctrl+C`로 끕니다.
 
-둘째, **서버를 껐다 켠 뒤**입니다. 터미널 B에서 `Ctrl+C`로 끄고 같은 줄로 다시 띄운 뒤, 앞 Step의 대화(`st.json`)에 이어 말합니다. 브라우저를 새로 고치지 않으면 화면이 하는 일과 같습니다. 화면은 대화 기록 전부를 보냅니다.
+둘째, **서버를 껐다 켠 뒤**입니다. 터미널 B에서 `Ctrl+C`로 끄고 같은 줄로 다시 띄운 뒤, 앞 Step의 대화(`st.json`)에 이어 말합니다. 브라우저를 새로 고치지 않은 채 서버만 다시 띄운 상황입니다. 화면(CopilotKit)이 대화 기록을 싣는다고 보고 `ask.py`도 그렇게 합니다.
 
 ```bash
 uv run --no-project python ask.py http://127.0.0.1:54048/ st.json "Hello again"
+uv run --no-project python summarize.py fake.jsonl 15
 ```
 
 ```text
+HTTP 200 text/event-stream; charset=utf-8
+RUN_STARTED
+TOOL_CALL_START        update_financial_data
+TOOL_CALL_ARGS         {"monthly_income": 8000.0, "dependants": 2, "expenses_patch": {"rent": 2400.0, "groceries"
+TOOL_CALL_END
+TOOL_CALL_RESULT       {"status": "updated", "changes": ["income → $8,000", "dependants → 2", "expenses {Housing=
+STATE_DELTA            [('add', '/financial_data')]
+TEXT_MESSAGE_START
+TEXT_MESSAGE_CONTENT   Done. Your profile is updated, so you can ask for a review next.
+TEXT_MESSAGE_END
+STATE_SNAPSHOT         keys=['_ag_ui_app_name', '_ag_ui_thread_id', '_ag_ui_user_id', 'budget_analysis', 'debt_reduction', 'financial_data', 'savings_strategy']
+RUN_FINISHED
+RUN_STARTED
+TEXT_MESSAGE_START
+TEXT_MESSAGE_CONTENT   Happy to help. Tell me your income, expenses or debts, or ask for a review.
+TEXT_MESSAGE_END
+STATE_SNAPSHOT         keys=['_ag_ui_app_name', '_ag_ui_thread_id', '_ag_ui_user_id', 'budget_analysis', 'debt_reduction', 'financial_data', 'savings_strategy']
+RUN_FINISHED
+상태 키: ['_ag_ui_app_name', '_ag_ui_thread_id', '_ag_ui_user_id', 'budget_analysis', 'debt_reduction', 'financial_data', 'savings_strategy']
 16 coach   보냄=update_financial_data  직전=text             내용수= 1 지시문= 2549자 상태주입=- 소득=None 예산=None 도구=5개 키=fake-k
 17 coach   보냄=text                   직전=functionResponse 내용수= 3 지시문= 2549자 상태주입=- 소득=None 예산=None 도구=5개 키=fake-k
 18 coach   보냄=text                   직전=text             내용수= 5 지시문= 2549자 상태주입=- 소득=None 예산=None 도구=5개 키=fake-k
 ```
 
-(직접 확인) 한 문장 인사에 모델 호출이 세 번(16~18행) 일어났습니다. 서버의 세션이 메모리뿐(`use_in_memory_services=True`, `generative_ui_agents/ai-financial-coach-agent/agent/main.py:479-484`)이라 껐다 켜면 처리한 메시지 기록이 사라지고, ag-ui-adk가 화면이 보낸 기록 가운데 처리 안 된 사용자 메시지를 다시 처리합니다. 16행이 첫 요청의 낡은 재생이고(`내용수=1`, 프로필 도구를 다시 부름), 마지막 줄이 이번 인사입니다. 이 대화에서는 상태가 망가지지 않았습니다. 매 처리 직전에 화면의 `state`로 세션 상태를 다시 덮기 때문입니다(`st.json`의 소득은 9000 그대로). 그래도 도구 알림 알약이 한 번 더 뜨고 모델 호출은 그만큼 돈이 듭니다. 분석 요청이 기록 앞쪽에 있었다면 어땠는지는 시험하지 못했습니다. 왜 첫 메시지만 재생됐는지도 ag-ui-adk가 도구 결과가 이어지는 옛 요청을 건너뛰는 규칙(`adk_agent.py`의 `run`)을 읽고 짐작할 뿐 확인하지 못했으니 일반 규칙으로 받아들이지 마세요. 화면(CopilotKit)이 매 요청에 대화 기록을 싣는지도 브라우저에서 확인하지 못했고, `ask.py`가 AG-UI 규약대로 싣는 것을 따랐습니다.
+(직접 확인) 한 문장 인사에 모델 호출이 세 번(16~18행) 일어났습니다. 서버의 세션이 메모리뿐(`use_in_memory_services=True`, `generative_ui_agents/ai-financial-coach-agent/agent/main.py:479-484`)이라 껐다 켜면 처리한 메시지 기록이 사라지고, ag-ui-adk가 화면이 보낸 기록 가운데 처리 안 된 사용자 메시지를 다시 처리합니다. 16행이 첫 요청의 낡은 재생이고(`내용수=1`, 프로필 도구를 다시 부름), 마지막 줄이 이번 인사입니다. 이벤트도 그렇게 나옵니다. 스트림에 `RUN_STARTED`부터 `RUN_FINISHED`까지가 두 번 있고, 첫 실행의 `STATE_DELTA`가 재생된 옛 값(소득 8000·Housing 2400)으로 `financial_data`를 잠깐 되돌렸다가 둘째 실행이 화면의 상태로 다시 덮습니다. 이 대화에서는 상태가 망가지지 않았습니다. 매 처리 직전에 화면의 `state`로 세션 상태를 다시 덮기 때문입니다(`st.json`의 소득은 9000 그대로). 그래도 도구 알림 알약이 한 번 더 뜨고 모델 호출은 그만큼 돈이 듭니다. 분석 요청이 기록 앞쪽에 있었다면 어땠는지는 시험하지 못했습니다. 왜 첫 메시지만 재생됐는지도 ag-ui-adk가 도구 결과가 이어지는 옛 요청을 건너뛰는 규칙(`adk_agent.py`의 `run`)을 읽고 짐작할 뿐 확인하지 못했으니 일반 규칙으로 받아들이지 마세요. 화면(CopilotKit)이 매 요청에 대화 기록을 싣는지도 브라우저에서 확인하지 못했고, `ask.py`가 AG-UI 규약대로 싣는 것을 따랐습니다.
 
 셋째, **서버 문**입니다. 앱은 `GET /health`를 하나 더 달았습니다(`generative_ui_agents/ai-financial-coach-agent/agent/main.py:490-492`).
 
@@ -1162,7 +1312,8 @@ curl -s -o /dev/null -w "docs=%{http_code}\n" http://127.0.0.1:54048/docs
 
 ```text
 {"status":"ok"}
-docs=200 openapi=200
+docs=200
+openapi=200
 ```
 
 앱은 CORS 설정과 인증이 없고 FastAPI의 `/docs`가 열려 있습니다. 화면의 런타임 라우트가 서버에서 서버로 부르므로 브라우저가 직접 파이썬 서버를 부르지 않아 CORS가 필요 없는 구조입니다. 그래서 더더욱 `0.0.0.0`에 열 이유가 없습니다.
@@ -1213,34 +1364,46 @@ netstat -ano | grep LISTEN | grep -E "127.0.0.1:(51397|54048|52611) " || echo "�
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** `run_agent.py ... nokey`의 요청이 `RUN_ERROR`를 돌려주고 가짜 서버 기록이 늘지 않아야 합니다(`s7_nokey` 마지막 줄 0). 재시작 뒤 같은 대화의 첫 요청이 모델 호출을 여러 번 일으킨다는 것과, 위 `grep`이 아무것도 찾지 못한다는 것을 확인하면 됩니다. 마지막 `netstat`은 `포트 비었음`이어야 합니다.
+**확인.** `run_agent.py ... nokey`의 요청이 `RUN_ERROR`를 돌려주고 가짜 서버 기록이 늘지 않아야 합니다(`wc -l` 앞뒤 값이 같음). 재시작 뒤 같은 대화의 첫 요청이 모델 호출을 여러 번 일으킨다는 것과, 위 `grep`이 아무것도 찾지 못한다는 것을 확인하면 됩니다. 마지막 `netstat`은 `포트 비었음`이어야 합니다.
 
 ## 요청 한 건이 흐르는 과정
 
-사용자가 Profile 탭에서 "Analyze My Finances"를 누르는 한 건을 따라갑니다. 22개 메시지를 시간 경계에서 다섯 그림으로 나눠 그렸습니다. 첫 그림은 클릭에서 코치가 불리기까지입니다. 화면이 라우트에 `{메시지, state}`를 보내고 라우트가 `RunAgentInput`을 서버에 `POST`합니다. 서버는 먼저 `input.state`로 세션 상태를 덮어쓰고(폼에서 고친 값이 여기서 서버에 닿습니다) 코치를 실행합니다.
+사용자가 Profile 탭에서 "Analyze My Finances"를 누르는 한 건을 따라갑니다. 22개 메시지를 시간 순서대로 여덟 그림에 나눠 그렸습니다. 첫 그림은 클릭에서 코치가 불리기까지입니다. 화면이 라우트에 `{메시지, state}`를 보내고 라우트가 `RunAgentInput`을 서버에 `POST`합니다. 서버는 먼저 `input.state`로 세션 상태를 덮어쓰고(폼에서 고친 값이 여기서 서버에 닿습니다) 코치를 실행합니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-코치는 지시문과 도구 다섯 선언을 담아 Gemini를 부르고, 모델은 `FullAnalysisPipeline` 함수 호출을 돌려줍니다. 코치가 `AgentTool`을 부릅니다.
+코치는 지시문과 도구 다섯 선언을 담아 Gemini를 부르고, 모델은 `FullAnalysisPipeline` 함수 호출을 돌려줍니다.
 
 ![코치의 모델 호출](diagrams/extra-model.svg)
 
-파이프라인이 예산 에이전트를 부릅니다. 지시문 머리에 `FINANCIAL DATA`가 주입되고 모델은 `BudgetAnalysis` JSON을 돌려주며 `budget_analysis`가 상태에 쓰입니다. 저축 에이전트는 예산 결과까지 받아 같은 일을 합니다.
+이 함수 호출 이벤트는 분석이 시작되기도 전에 화면으로 흐릅니다. 서버가 `TOOL_CALL_START`·`ARGS`·`END`를 라우트에 보내면 라우트가 같은 SSE를 화면에 전달하고, 화면은 "진행 중" 알약을 띄웁니다. 이 시각을 직접 쟀습니다. 이 문서의 `fake_gemini.py`에서 전문 에이전트에 답하기 전에 `await asyncio.sleep(2)` 한 줄을 더한 복사본과, 이벤트마다 경과 시간을 앞에 찍는 `ask.py` 복사본으로 전체 검토 한 건을 보냈습니다(문서의 스크립트에는 넣지 않았습니다). 이 요청의 `RUN_STARTED` 기준으로 `TOOL_CALL_START`가 약 0.6초, `TOOL_CALL_ARGS`·`END`가 약 1.4초에 왔고, 그 뒤 7초 넘게 이벤트가 없다가 `TOOL_CALL_RESULT`·`STATE_DELTA`·`STATE_SNAPSHOT`·`RUN_FINISHED`가 8.9초에 한꺼번에 왔습니다(새 서버라 앞에 프로필 재생 실행이 하나 붙은 상태였습니다. Step 7의 재시작과 같은 현상입니다). 진행 중 알약은 분석이 끝나기 한참 전에 뜨고, 카드 셋은 끝에 한꺼번에 뜹니다.
 
-![예산·저축](diagrams/extra-pipeline.svg)
+![진행 중 알약](diagrams/extra-pill.svg)
 
-빚 에이전트는 예산과 저축을 모두 받아 `DebtReduction` JSON을 돌려주고, `debt_reduction`이 상태에 쓰입니다.
+그 뒤에 코치가 `AgentTool`을 부르고, 파이프라인이 첫째로 예산 에이전트를 실행합니다.
+
+![AgentTool 호출](diagrams/extra-agentcall.svg)
+
+예산 에이전트는 지시문 머리에 `FINANCIAL DATA`가 주입된 요청을 보내 `BudgetAnalysis` JSON을 받고 `budget_analysis`를 상태에 씁니다. 이어 파이프라인이 둘째로 저축 에이전트를 실행합니다.
+
+![예산](diagrams/extra-budget.svg)
+
+저축 에이전트는 예산 결과까지 받아 같은 일을 하고 `savings_strategy`를 씁니다. 이어 파이프라인이 셋째로 빚 에이전트를 실행합니다.
+
+![저축](diagrams/extra-savings.svg)
+
+빚 에이전트는 예산과 저축을 모두 받아 `DebtReduction` JSON을 돌려주고 `debt_reduction`을 씁니다.
 
 ![빚](diagrams/extra-debt.svg)
 
-마지막 그림은 돌아오는 길입니다. 파이프라인의 결과(빚 JSON)가 코치에 도구 결과로 돌아가지만 `skip_summarization` 때문에 코치는 모델을 다시 부르지 않고 끝납니다. 서버가 `TOOL_CALL_*`·`STATE_DELTA`·`STATE_SNAPSHOT`·`RUN_FINISHED`를 라우트에 흘리고, 라우트가 같은 SSE를 화면에 전달하면, 화면은 알약을 "Full review complete"로 바꾸고 상태에 보고서가 생겼으므로 Report 탭으로 넘어가 카드 세 장을 그립니다.
+마지막 그림은 돌아오는 길입니다. 파이프라인의 결과(빚 JSON)가 코치에 도구 결과로 돌아가지만 `skip_summarization` 때문에 코치는 모델을 다시 부르지 않고 끝납니다. 서버가 `TOOL_CALL_RESULT`·`STATE_DELTA`·`STATE_SNAPSHOT`·`RUN_FINISHED`를 한꺼번에 라우트에 흘리고, 라우트가 같은 SSE를 화면에 전달하면, 화면은 알약을 "Full review complete"로 바꾸고 상태에 보고서가 생겼으므로 Report 탭으로 넘어가 카드 세 장을 그립니다. 카드 셋이 한꺼번에 나타나는 까닭입니다.
 
 ![돌아오는 길](diagrams/extra-return.svg)
 
 ## 실행 체크리스트
 
 - [ ] `uv sync`가 125개를 설치했고 `google-adk 1.26.0`·`ag-ui-adk 0.5.0`·`google-genai 1.65.0`이 보입니다(Step 1).
-- [ ] `guard.py`의 `loopback`이 진짜 주소와 흉내 낸 주소 셋을 막고 `http://127.0.0.1:51397`만 통과시킵니다(Step 2).
+- [ ] `guard.py`의 `loopback`이 진짜 주소와 흉내 낸 주소 셋을 막고 `http://127.0.0.1:51397`만 통과시키며, `problems`가 프록시 변수를 이유로 잡습니다(Step 2).
 - [ ] `run_agent.py`가 `run_agent 통과`를 찍고, `netstat`에서 두 포트가 `127.0.0.1`에만 열려 있습니다(Step 2).
 - [ ] `peek.py`가 도구 다섯과 `output_key` 셋을 보여 줍니다(Step 3).
 - [ ] `check_tools.py`가 별칭 합치기·범주 바뀜·중복 빚·이름 삭제를 보여 줍니다(Step 4).
@@ -1248,7 +1411,7 @@ netstat -ano | grep LISTEN | grep -E "127.0.0.1:(51397|54048|52611) " || echo "�
 - [ ] 전체 검토에서 코치 호출이 하나이고 `TEXT_MESSAGE_*`가 없으며 상태에 분석 항목 셋이 생깁니다(Step 5).
 - [ ] 폼에서 고친 소득 9000이 예산 에이전트의 프롬프트에 닿고, 집세를 고친 뒤에도 빚 에이전트의 `예산`이 3100.0으로 남습니다(Step 5).
 - [ ] `tools`로 보낸 도구 둘이 있어도 코치의 선언은 다섯입니다(Step 5).
-- [ ] 키 없는 서버가 `RUN_ERROR`를 돌려주고 가짜 서버 기록이 늘지 않습니다(Step 7).
+- [ ] 키 없는 서버가 `RUN_ERROR`를 돌려주고 가짜 서버 기록의 줄 수가 요청 앞뒤로 같습니다(Step 7).
 - [ ] 재시작 뒤 같은 대화의 첫 요청에 모델 호출이 세 번 일어납니다(Step 7).
 - [ ] `grep`이 재정 조언 고지를 찾지 못합니다(Step 7).
 - [ ] 서버를 모두 끄고 `netstat`에 포트가 없고, `git status --short -- generative_ui_agents/ai-financial-coach-agent`가 비어 있습니다.
@@ -1262,7 +1425,7 @@ netstat -ano | grep LISTEN | grep -E "127.0.0.1:(51397|54048|52611) " || echo "�
 | 분석을 청했는데 채팅에 문장이 없고 알약만 뜸 | `AgentTool(skip_summarization=True)`가 도구 결과를 최종 응답으로 끝냄(Step 5) | 정상 동작입니다. 코치의 요약 문장을 원하면 `generative_ui_agents/ai-financial-coach-agent/agent/main.py:424-427`의 인자를 바꿔야 합니다(이 문서는 시험하지 못했습니다) |
 | 프로필·지출을 고쳤는데 카드와 다음 분석이 옛 값을 씀 | 옛 `budget_analysis` 등이 상태에 남아 다음 프롬프트에 주입됨(Step 5) | 고친 뒤 전체 검토를 다시 청합니다. 앱에는 낡은 결과를 지우는 길이 없습니다 |
 | 서버를 껐다 켠 뒤 첫 말에 알약이 다시 뜨고 호출이 늘어남 | 세션이 메모리뿐이라 ag-ui-adk가 화면이 보낸 기록을 다시 처리함(Step 7) | 서버를 껐다 켠 뒤에는 브라우저를 새로 고쳐 대화를 비웁니다(화면에서 시험하지 못했습니다) |
-| `npm run dev:agent`가 `0.0.0.0`으로 뜸 | `scripts/run-agent.sh`가 `uv run main.py`를 부르고 `main.py:507`이 `0.0.0.0`을 줌 | 에이전트는 `uv run uvicorn main:app --host 127.0.0.1 --port <포트>`로 띄우고, 화면은 `AGENT_URL`을 그 주소로 줍니다 |
+| `npm run dev:agent`가 `0.0.0.0`으로 뜸 | `scripts/run-agent.sh`가 `uv run main.py`를 부르고 `main.py:507`이 `0.0.0.0`을 줌 | 에이전트는 `uv run --no-project python -m uvicorn main:app --host 127.0.0.1 --port <포트>`로 띄우고, 화면은 `AGENT_URL`을 그 주소로 줍니다 |
 | `npm install` 뒤 저장소에 `agent/.venv`가 생김 | 루트 `postinstall`이 `uv sync`를 부름(Step 1) | 의도된 동작입니다. 파이썬을 따로 두려면 `--ignore-scripts`를 쓰고 이 문서처럼 복사본에서 `uv sync`합니다 |
 | `docker compose -f docker-compose.test.yml up`이 시험 컨테이너에서 실패할 것으로 보임 | 마운트하는 `../../../showcase/tests`와 안내하는 CI 설정이 이 저장소에 없음(Step 7) | 이 파일은 이 앱의 실행 경로가 아닙니다. 이 문서는 실행하지 않았습니다 |
 | 한국어 Windows에서 출력이 깨짐 | 파이프·파일로 받을 때 기본 인코딩 `cp949` | 터미널마다 `PYTHONIOENCODING=utf-8`을 겁니다(사전 준비) |

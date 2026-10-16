@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+coach: "코치 에이전트" { class: ours }
+pipeline: "FullAnalysisPipeline (SequentialAgent)" { class: ours }
+budget: "예산 에이전트" { class: ours }
+
+coach -> pipeline: "AgentTool 호출 {request}"
+pipeline -> budget: "실행 (첫째)"

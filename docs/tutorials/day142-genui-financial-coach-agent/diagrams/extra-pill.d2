@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+api: "AG-UI 서버" { class: ours }
+route: "런타임 라우트" { class: ours }
+ui: "화면 (page.tsx)" { class: ours }
+
+api -> route: "TOOL_CALL_START · ARGS · END"
+route -> ui: "SSE 전달"

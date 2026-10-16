@@ -18,16 +18,22 @@ py: "Python 서버 (agent/main.py)" {
   api: "AG-UI 엔드포인트\n(ADKAgent)" { class: ours; height: 50 }
   coach: "코치 에이전트\n(FinanceCoachAgent)" { class: ours; height: 50 }
   upd: "프로필 도구\n(update_financial_data)" { class: ours; height: 50 }
-  specs: "분석 도구 넷\n(AgentTool)" { class: ours; height: 50 }
+  tools: "AgentTool 넷\n(run_*)" { class: ours; height: 50 }
+  pipeline: "FullAnalysisPipeline (SequentialAgent)" {
+    class: group
+    grid-columns: 3
+    grid-gap: 6
+    budget: "예산\n(BudgetAnalysisAgent)" { class: ours; height: 44 }
+    savings: "저축\n(SavingsStrategyAgent)" { class: ours; height: 44 }
+    debt: "빚\n(DebtReductionAgent)" { class: ours; height: 44 }
+  }
   state: "세션 상태\n(financial_data · 분석 결과)" { class: store }
 }
 
 gemini: "Gemini\n(gemini-3.5-flash)" { class: ext }
-telem: "통계 서버\n(CopilotKit · Next.js)" { class: ext }
 
 user -> next: "채팅 · 폼 입력"
 next -> user: "상태 알림 · 카드"
 next -> py: "POST /"
 py -> next: "SSE"
-next -> telem: "표본 통계"
 py -> gemini: "모델 요청"

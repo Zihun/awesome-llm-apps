@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gemini: "Gemini" { class: ext }
+budget: "예산 에이전트" { class: ours }
+state: "세션 상태" { class: store }
+pipeline: "FullAnalysisPipeline (SequentialAgent)" { class: ours }
+savings: "저축 에이전트" { class: ours }
+
+budget -> gemini: "예산 요청 (FINANCIAL DATA 주입)"
+gemini -> budget: "BudgetAnalysis JSON"
+budget -> state: "budget_analysis 저장"
+pipeline -> savings: "실행 (둘째)"
