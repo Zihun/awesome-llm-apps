@@ -1,0 +1,29 @@
+...@../../_tools/theme
+direction: right
+
+web: "Next.js 앱 (:3000)" {
+  class: group
+  label.near: bottom-center
+  chat: "채팅 사이드바\n(page.tsx)" { class: ours }
+  host: "iframe 호스트\n(CopilotKit\n렌더러)" { class: ours }
+  rt: "런타임 +\n미들웨어\n(route.ts)" { class: ours }
+}
+
+app: "항공권 앱\n(샌드박스\niframe)" { class: ours }
+
+mcp: "MCP 서버 (:3001)" {
+  class: group
+  label.near: bottom-center
+  srv: "도구 16개 ·\nUI 자원 4개\n(server.ts)" { class: ours }
+  data: "가짜 데이터\n(src/flights.ts)" { class: ours }
+  mem: "서버 메모리\n(Map)" { class: store }
+}
+
+llm: "gpt-5.5\n(OpenAI)" { class: ext }
+
+web.chat -> web.rt: "run 요청"
+web.host -> web.rt: "자원 읽기\n도구 호출"
+web.host -> app: "HTML ·\n알림"
+app -> web.host: "tools/call ·\nui/message"
+web.rt -> llm: "모델 호출"
+web.rt -> mcp: "MCP 요청"

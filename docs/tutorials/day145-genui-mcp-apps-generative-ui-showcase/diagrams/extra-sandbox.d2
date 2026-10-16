@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: down
+
+page: "Next.js 페이지\n(호스트 스크립트\nMCPAppsActivity\nRenderer)" { class: ours }
+outer: "바깥 iframe (프록시)\nsrcdoc = 프록시 HTML\nsandbox=allow-scripts\nallow-same-origin\nallow-forms" { class: ours }
+inner: "안쪽 iframe (앱)\nsrcdoc = 앱 HTML\n같은 sandbox 값\n(flights-app.html)" { class: ours }
+
+page -> outer: "sandbox-resource-ready{html} ·\n응답 · 알림 (postMessage, '*')"
+outer -> inner: "그대로 전달\n(postMessage, '*')"
+inner -> outer: "tools/call · ui/message ·\nui/initialize · size-change"
+outer -> page: "그대로 전달\n(postMessage, '*')"

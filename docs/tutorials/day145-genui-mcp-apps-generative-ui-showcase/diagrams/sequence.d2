@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "브라우저 화면\n(CopilotKit)" { class: ours }
+rt: "런타임 +\n미들웨어" { class: ours }
+llm: "gpt-5.5\n(OpenAI)" { class: ext }
+mcp: "MCP 서버\n(:3001)" { class: ours }
+
+user -> ui: "예시 문구 클릭\n(JFK→LAX, 2명)"
+ui -> rt: "POST /agent/default/run\n(messages)"
+rt -> mcp: "tools/list"
+mcp -> rt: "도구 16개"
+rt -> llm: "시스템 프롬프트 + 대화 내용 +\n도구 4개(이름·설명·스키마)"
+llm -> rt: "tool_call search-flights\n(JFK, LAX, 날짜, 2명)"
+rt -> mcp: "tools/call\nsearch-flights"
+mcp -> rt: "structuredContent\n(항공편 5~8개)"
+rt -> ui: "TOOL_CALL_RESULT ·\nACTIVITY_SNAPSHOT"

@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+llm: "gpt-5.5\n(OpenAI)" { class: ext }
+rt: "런타임 + 미들웨어\n(route.ts)" { class: ours }
+host: "iframe 호스트\n(CopilotKit)" { class: ours }
+app: "항공권 앱\n(iframe)" { class: ours }
+
+mcp: "MCP 서버 도구 16개" {
+  class: group
+  label.near: bottom-center
+  ui: "UI 도구 4개\nsearch-flights\nsearch-hotels\ncreate-portfolio\ncreate-board" { class: ours }
+  helper: "도우미 12개\nselect-flight ·\nbook-flight ·\nexecute-trade ·\nmove-card 등" { class: ours }
+}
+
+llm -> rt: "tool_call\n(4개 중 하나)"
+app -> host: "tools/call\n(이름 아무거나)"
+host -> rt: "__proxiedMCP\nRequest"
+rt -> mcp: "tools/call"

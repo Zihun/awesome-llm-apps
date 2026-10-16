@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+app: "항공권 앱\n(iframe)" { class: ours }
+ui: "브라우저 화면\n(CopilotKit)" { class: ours }
+rt: "런타임 +\n미들웨어" { class: ours }
+mcp: "MCP 서버\n(:3001)" { class: ours }
+
+user -> app: "좌석 고르고\n[확인]"
+app -> ui: "tools/call\nselect-seats"
+ui -> rt: "run + forwardedProps\n(__proxiedMCPRequest)"
+rt -> mcp: "tools/call\nselect-seats"
+mcp -> rt: "selectedSeats ·\ntotalSeatFee"
+rt -> ui: "RUN_FINISHED\n(result)"
+ui -> app: "JSON-RPC 응답"
