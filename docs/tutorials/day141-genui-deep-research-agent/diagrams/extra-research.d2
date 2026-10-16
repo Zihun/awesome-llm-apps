@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+boss: "연구 코디네이터\n(agent.py)" { class: ours }
+research: "research 도구\n(tools.py)" { class: ours }
+inner: "안쪽 에이전트\n(별도 스레드)" { class: ours }
+openai: "OpenAI\n(gpt-5.5)" { class: ext }
+tavily: "Tavily 검색" { class: ext }
+
+boss -> research: "research(query)"
+research -> boss: "{summary, sources}"
+research -> inner: 스레드 풀로 실행
+inner -> research: 마지막 글
+inner -> openai: 모델 호출
+inner -> tavily: 검색 질의

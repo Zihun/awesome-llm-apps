@@ -5,12 +5,10 @@ ui: "화면" { class: ours }
 runtime: "런타임" { class: ours }
 server: "서버" { class: ours }
 agent: "코디네이터" { class: ours }
-inner: "안쪽 에이전트" { class: ours }
 openai: "OpenAI gpt-5.5" { class: ext }
 
-inner -> openai: 모델 호출 (결과 담음)
-openai -> inner: 요약 글
-inner -> agent: "{summary, sources}"
-agent -> server: TOOL_CALL_RESULT
+agent -> openai: 모델 호출 (앞 결과 담음)
+openai -> agent: research("...") 호출
+agent -> server: TOOL_CALL (research)
 server -> runtime: SSE 이벤트
-runtime -> ui: 카드 완료 · 출처 목록
+runtime -> ui: 카드 (진행 중)

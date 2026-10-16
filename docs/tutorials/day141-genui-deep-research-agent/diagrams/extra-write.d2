@@ -11,5 +11,7 @@ agent -> openai: 모델 호출 (요약 담음)
 openai -> agent: write_file 호출
 agent -> server: TOOL_CALL (write_file)
 server -> runtime: SSE 이벤트
-runtime -> ui: 카드 · 파일 목록
+runtime -> ui: 카드 (진행 중)
 agent -> server: TOOL_CALL_RESULT
+server -> runtime: SSE 이벤트
+runtime -> ui: 카드 완료 · 파일 목록

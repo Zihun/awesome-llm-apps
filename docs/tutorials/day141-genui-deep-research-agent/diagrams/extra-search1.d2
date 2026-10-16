@@ -2,11 +2,13 @@
 shape: sequence_diagram
 
 agent: "코디네이터" { class: ours }
+tool: "research 도구" { class: ours }
 inner: "안쪽 에이전트" { class: ours }
 openai: "OpenAI gpt-5.5" { class: ext }
 tavily: "Tavily 검색" { class: ext }
 
-agent -> inner: research(query)
+agent -> tool: research(query)
+tool -> inner: 스레드 풀에서 invoke
 inner -> openai: 모델 호출 (스트리밍 없음, 도구 아홉)
 openai -> inner: "internet_search_tracked(query, max_results) 호출"
 inner -> tavily: POST /search

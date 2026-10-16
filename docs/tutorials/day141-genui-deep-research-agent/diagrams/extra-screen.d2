@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person; height: 56 }
+chat: "채팅\n(CopilotChat)" { class: ours; height: 56 }
+runtime: "CopilotKit 런타임\n(route.ts)" { class: ours; height: 56 }
+agent: "파이썬 에이전트\n(127.0.0.1)" { class: ours; height: 56 }
+cards: "도구 카드\n(ToolCard)" { class: ours; height: 56 }
+work: "작업 공간\n(Workspace)" { class: ours; height: 56 }
+
+user -> chat: 질문
+chat -> runtime: "POST /api/copilotkit"
+runtime -> agent: "RunAgentInput"
+agent -> runtime: "AG-UI 이벤트"
+runtime -> cards: "도구 호출 · 결과"
+cards -> work: "계획 · 파일 · 출처"

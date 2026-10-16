@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+runtime: "CopilotKit 런타임\n(route.ts)" { class: ours }
+endpoint: "AG-UI 엔드포인트\n(main.py)" { class: ours }
+boss: "연구 코디네이터\n(agent.py)" { class: ours }
+vfs: "가상 파일·계획\n(그래프 상태)" { class: store }
+research: "research 도구\n(tools.py)" { class: ours }
+openai: "OpenAI\n(gpt-5.5)" { class: ext }
+
+runtime -> endpoint: "POST /\n(RunAgentInput)"
+endpoint -> runtime: "AG-UI 이벤트\n(SSE)"
+endpoint -> boss: 그래프 실행
+boss -> vfs: "write_todos\nwrite_file"
+boss -> openai: 모델 호출
+boss -> research: "research(query)"

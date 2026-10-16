@@ -1,12 +1,12 @@
 # Day 141 · 🔍 AI Deep Research Agent
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 앱 README의 설치·실행 순서는 잠금 파일의 옛 버전(deepagents 0.3.8)으로 돌고, 잠금 없이 오늘 풀면 deepagents 0.7.26에서 계획 도구 `write_todos`가 사라지며(Step 1·2), 서버 기본값은 모든 네트워크 인터페이스(`0.0.0.0`)입니다(Step 4) · 예상 소요 150분(파이썬 에이전트를 가짜 서버와 터미널 셋으로 직접 돌려 이벤트를 읽고, Next.js 화면 소스 일곱 파일을 읽는 일이 겹쳐 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다). 진짜 키로 한 번에 $0.5 안팎(⚠ 추정이며 Step 3에 계산을 적었습니다) · 원본 앱: `generative_ui_agents/ai-deep-research-agent`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 앱 README의 설치·실행 순서는 잠금 파일의 옛 버전(deepagents 0.3.8)으로 돌고, 잠금 없이 오늘 풀면 deepagents 0.7.26에서 계획 도구 `write_todos`가 사라지며(Step 1·2), 서버 기본값은 모든 네트워크 인터페이스(`0.0.0.0`)입니다(Step 4) · 예상 소요 160분(파이썬 에이전트를 가짜 서버와 터미널 셋으로 직접 돌려 이벤트를 읽고, Next.js 화면 소스 일곱 파일을 읽고, 그림 스물한 장 가운데 시퀀스 열 장을 따라가는 일이 겹쳐 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다). 진짜 키로 한 번에 $0.5 안팎(⚠ 추정이며 Step 3에 계산을 적었습니다) · 원본 앱: `generative_ui_agents/ai-deep-research-agent`
 
 ## 오늘 만들 것
 
 질문 하나를 주면 계획을 세우고, 웹을 검색하고, 보고서 파일을 쓰는 연구 도우미를 따라 봅니다. 볼륨 이름의 Generative UI를 `generative_ui_agents/README.md`는 이렇게 설명합니다. LLM이 글만 내놓는 대신 풍부한 프런트엔드 컴포넌트를 내놓고, 무엇을 보일지는 모델이 정하고, 프런트엔드가 실제 컴포넌트를 그리고, 사용자가 누르고 고치고 답하는 고리입니다. 앱 README는 이 앱의 방식을 "tool-rendered components with a sidecar workspace"(도구가 그리는 컴포넌트와 곁에 붙은 작업 공간)라고 부릅니다. 에이전트가 도구를 부를 때마다 채팅에 상태 카드가 한 장씩 그려지고, 오른쪽 작업 공간에 계획·파일·출처가 쌓입니다. 프런트엔드는 Next.js와 CopilotKit이고, 에이전트는 LangGraph 위의 deepagents(계획·가상 파일·하위 에이전트 도구를 한 번에 얹어 주는 라이브러리)이며, 둘 사이는 AG-UI라는 이벤트 스트림으로 이어집니다. 원본 폴더의 추적 파일은 29개이고 잠금 파일 둘과 이미지 하나를 빼면 26개, 2,587줄입니다(`git ls-files`와 `wc -l`로 직접 셈).
 
-오늘이 볼륨 12의 첫날입니다. 앞 볼륨 11(Day 137~140)은 음성을 다뤘고 앱이 한 프로세스 안의 파이썬이었습니다. 오늘부터는 파이썬 에이전트와 Node.js 화면, 프로세스가 둘입니다. LangGraph의 상태 그래프는 Day 059·061이, 사람이 계획을 승인하는 LangGraph 앱은 Day 106이 다뤘습니다. Next.js 화면을 설치하지 않고 소스로만 읽는 방식은 Day 124가 `client/`에서 썼고 오늘도 같습니다. 새로운 것은 AG-UI입니다. 앞 날 어디서도 가르치지 않았습니다(Day 119는 그 앱의 README가 AG-UI를 소개하지만 코드에는 없다고 적었고, Day 140은 오늘 앱을 소개하며 이름만 불렀습니다). Day 140의 "다음 날 예고"가 말한 줄 수(`agent.py` 96·`main.py` 99·`tools.py` 179, 화면 파일 넷)와 기본 모델 `gpt-5.5`(`generative_ui_agents/ai-deep-research-agent/agent/agent.py:69`)는 소스와 같았습니다. 다만 예고가 옮긴 "Node.js 18 이상"은 잠금 파일의 `next` 16.1.1이 요구하는 20.9 이상과 다릅니다(Step 6).
+오늘이 볼륨 12의 첫날입니다. 앞 볼륨 11(Day 137~140)은 음성을 다뤘고 앱이 한 프로세스 안의 파이썬이었습니다. 오늘부터는 파이썬 에이전트와 Node.js 화면, 프로세스가 둘입니다. LangGraph의 상태 그래프는 Day 059·061이, 사람이 계획을 승인하는 LangGraph 앱은 Day 106이 다뤘습니다. Next.js 화면을 설치하지 않고 소스로만 읽는 방식은 Day 124가 `client/`에서 썼고 오늘도 같습니다. 새로운 것은 AG-UI입니다. 앞 날 어디서도 가르치지 않았습니다(Day 119는 그 앱의 README가 AG-UI를 소개하지만 코드에는 없다고 적었고, Day 140은 오늘 앱을 소개하며 이름만 불렀습니다). Day 140의 "다음 날 예고"가 말한 줄 수(`agent.py` 96·`main.py` 99·`tools.py` 179, 화면 파일 넷)와 기본 모델 `gpt-5.5`(`generative_ui_agents/ai-deep-research-agent/agent/agent.py:69`)는 소스와 같았습니다. Node.js 요구는 앱 README의 18 이상이 아니라 잠금 파일의 `next` 16.1.1이 요구하는 20.9 이상이고, Day 140의 예고도 이미 그렇게 바로잡혀 있습니다(Step 6).
 
 직접 돌려 보고 소스를 읽어 알게 된 것이 여덟 있습니다.
 
@@ -23,7 +23,17 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림의 왼쪽 묶음은 브라우저에서 도는 화면 부품과 Next.js 서버에서 도는 `route.ts`를 한데 묶었습니다. 폭 때문에 묶음끼리만 이었고, 에이전트 묶음 안의 관계는 Step 3~5에서 따로 그립니다.
+그림의 왼쪽 묶음은 브라우저에서 도는 화면 부품과 Next.js 서버에서 도는 `route.ts`를 한데 묶었습니다. 폭 때문에 묶음끼리만 이었고, 묶음 안의 관계는 아래 그림 셋에 화살표로 따로 그렸습니다. 먼저 에이전트 쪽입니다. 런타임에서 들어온 요청이 엔드포인트와 코디네이터를 거쳐 가상 파일·OpenAI·`research` 도구로 갑니다.
+
+![에이전트 묶음 안의 관계](diagrams/extra-agent.svg)
+
+`research` 도구가 안쪽 에이전트를 돌리고 안쪽 에이전트가 OpenAI와 Tavily를 부르는 쪽은 따로 그렸습니다.
+
+![research 도구 안의 관계](diagrams/extra-research.svg)
+
+화면 쪽에서는 런타임이 받은 이벤트가 채팅 글과 도구 카드가 되고, 카드가 그리는 호출이 작업 공간의 상태가 됩니다(Step 6·7).
+
+![화면 묶음 안의 관계](diagrams/extra-screen.svg)
 
 ## 사전 준비
 
@@ -199,6 +209,9 @@ import sys
 from urllib.parse import urlparse
 
 LOOPBACK = {"127.0.0.1", "::1", "localhost"}
+PROXY_VARS = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy",
+              "TAVILY_HTTP_PROXY", "TAVILY_HTTPS_PROXY")
+TRACING_VARS = ("LANGSMITH_TRACING", "LANGSMITH_TRACING_V2", "LANGCHAIN_TRACING", "LANGCHAIN_TRACING_V2")
 
 
 def must_be_loopback(name, url):
@@ -212,9 +225,29 @@ must_be_loopback("FAKE_BASE", FAKE)
 # Every variable that a .env file could otherwise fill in (load_dotenv never overrides existing ones).
 os.environ.update({
     "OPENAI_API_KEY": "sk-fake-not-a-real-key", "TAVILY_API_KEY": "tvly-fake-not-a-real-key",
-    "OPENAI_BASE_URL": FAKE + "/v1", "OPENAI_API_BASE": FAKE + "/v1",
-    "LANGSMITH_TRACING": "false", "LANGCHAIN_TRACING_V2": "false", "LANGSMITH_ENDPOINT": FAKE,
+    "OPENAI_BASE_URL": FAKE + "/v1", "OPENAI_API_BASE": FAKE + "/v1", "LANGSMITH_ENDPOINT": FAKE,
+    "NO_PROXY": "127.0.0.1,localhost,::1", "no_proxy": "127.0.0.1,localhost,::1",
 })
+for name in TRACING_VARS:  # langsmith reads all four (LANGSMITH_* first, then LANGCHAIN_*; V2 before plain)
+    os.environ[name] = "false"
+for name in PROXY_VARS:  # a proxy in the reader's shell must not carry the fake keys anywhere
+    os.environ.pop(name, None)
+
+
+def verify_env():
+    """Call again after the app has run load_dotenv(): the .env file must not have changed any of this."""
+    for name in ("OPENAI_BASE_URL", "OPENAI_API_BASE", "LANGSMITH_ENDPOINT"):
+        must_be_loopback(name, os.environ[name])
+    for name in TRACING_VARS:
+        if os.environ.get(name) != "false":
+            sys.exit("refuse: %s=%r" % (name, os.environ.get(name)))
+    for name in PROXY_VARS:
+        if os.environ.get(name):
+            sys.exit("refuse: %s is set" % name)
+    for name in ("NO_PROXY", "no_proxy"):
+        if "127.0.0.1" not in os.environ.get(name, "").split(","):
+            sys.exit("refuse: %s lacks 127.0.0.1" % name)
+
 
 # Fail closed: a connection to anything but loopback is refused and noted in blocked.log.
 _connect, _connect_ex, _gai = socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo
@@ -231,11 +264,17 @@ def _check(addr):
 socket.socket.connect = lambda s, a: (_check(a), _connect(s, a))[1]
 socket.socket.connect_ex = lambda s, a: (_check(a), _connect_ex(s, a))[1]
 socket.getaddrinfo = lambda h, *a, **k: (_check((h,)), _gai(h, *a, **k))[1]
+
+if sys.platform == "win32":  # asyncio's default loop connects with ConnectEx and skips both patches above
+    import asyncio.windows_events as _we
+    _iocp = _we.IocpProactor.connect
+    _we.IocpProactor.connect = lambda self, conn, addr: (_check(addr), _iocp(self, conn, addr))[1]
 ```
 
-`FAKE_BASE`가 루프백 주소가 아니거나 비어 있으면 스크립트는 시작하지 않고 멈춥니다. `LANGSMITH_TRACING`을 `false`로 덮는 것은 독자 셸이나 `.env`에 켜져 있을 수 있는 LangSmith 추적이 대화 내용을 바깥으로 보내지 않게 하려는 것입니다. 그다음 도구 목록을 보는 스크립트입니다.
+`FAKE_BASE`가 루프백 주소가 아니거나 비어 있으면 스크립트는 시작하지 않고 멈춥니다. 추적 변수 넷을 모두 `false`로 덮는 것은 독자 셸이나 `.env`에 켜져 있을 수 있는 LangSmith 추적이 대화 내용을 바깥으로 보내지 않게 하려는 것입니다. langsmith는 `LANGSMITH_` 접두사와 `LANGCHAIN_` 접두사를 모두 보고 `TRACING_V2`를 일반 `TRACING`보다 먼저 보므로(`langsmith/utils.py`의 `tracing_is_enabled`, 소스로 확인) 하나만 끄면 다른 하나가 이깁니다. 프록시 변수는 지우고 `NO_PROXY`를 걸어 둡니다. 셸에 프록시(예: 회사 프록시)가 있으면 모델 클라이언트가 가짜 키와 질문을 그리로 보내려 하기 때문입니다. 소켓 차단은 `connect`·`getaddrinfo`에 더해 Windows의 asyncio가 IP 주소로 곧장 연결할 때 쓰는 `IocpProactor.connect`도 감쌉니다. `verify_env()`는 앱이 `load_dotenv()`를 부른 뒤 이 값들이 그대로인지 다시 봅니다. 그다음 도구 목록을 보는 스크립트입니다.
 
 ```python
+"""show_tools.py - print the tools build_agent() gives the model, and whether temperature survives."""
 import guard
 import sys
 
@@ -246,6 +285,7 @@ print("temperature kept:", ChatOpenAI(model="gpt-5.5", temperature=0.7, api_key=
 
 from agent import build_agent
 
+guard.verify_env()
 graph = build_agent()
 print(sorted(graph.nodes["tools"].bound.tools_by_name))
 ```
@@ -282,7 +322,7 @@ cd deep-research-lab
 FAKE_BASE=http://127.0.0.1:58317 ../latest-venv/Scripts/python.exe -B show_tools.py
 ```
 
-(macOS·Linux는 `latest-venv/bin/python`. 설치 줄은 이 문서의 가짜 서버나 프록시 변수가 없는 셸에서 실행하세요.) 이 문서를 쓰며 패키지 75개가 깔렸고 deepagents 0.7.26, copilotkit 0.1.96, langchain-openai 1.7.2, openai 3.31.0이었습니다. 출력의 마지막 줄은 다음과 같았습니다.
+(PowerShell은 `cd ..`, `uv venv latest-venv`, `uv pip install --python latest-venv\Scripts\python.exe ...`(같은 패키지 목록)를 줄마다 쓰고 마지막은 `$env:FAKE_BASE = "http://127.0.0.1:58317"` 다음 줄에 `..\latest-venv\Scripts\python.exe -B show_tools.py`입니다. 실행해 보지 못했습니다. macOS·Linux는 `latest-venv/bin/python`. 설치 줄은 이 문서의 가짜 서버나 프록시 변수가 없는 셸에서 실행하세요.) 이 문서를 쓰며 패키지 75개가 깔렸고 deepagents 0.7.26, copilotkit 0.1.96, langchain-openai 1.7.2, openai 3.31.0이었습니다. 출력의 마지막 줄은 다음과 같았습니다.
 
 ```text
 ['delete', 'edit_file', 'execute', 'glob', 'grep', 'ls', 'read_file', 'research', 'task', 'write_file']
@@ -345,13 +385,13 @@ FAKE_BASE=http://127.0.0.1:58317 ../latest-venv/Scripts/python.exe -B show_tools
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 키가 없을 때의 동작을 봅니다. 아래 스크립트는 가드가 심은 가짜 키 하나를 지우고 에이전트를 만듭니다.
+**확인.** 키가 없을 때의 동작을 봅니다. 아래 스크립트는 가드가 심은 가짜 키 하나를 **빈 값으로 덮어쓰고** 에이전트를 만듭니다. `os.environ.pop`(지우기)이면 `agent.py`의 `load_dotenv()`가 상위 폴더 `.env`의 키로 다시 채워 이 확인이 오류 없이 지나가고, `.env`의 진짜 키가 프로세스에 들어옵니다. 빈 값이면 `load_dotenv()`는 이미 있는 변수로 보고 건드리지 않으며, `build_agent`는 `if not api_key`로 검사하므로 같은 오류가 납니다.
 
 ```bash
 export FAKE_BASE=http://127.0.0.1:58317
 uv run --no-project python -B -c "
 import guard, os
-os.environ.pop('TAVILY_API_KEY')
+os.environ['TAVILY_API_KEY'] = ''
 import agent
 agent.build_agent()
 " 2>&1 | tail -1
@@ -607,9 +647,7 @@ assert tavily.TavilyClient(api_key="x").base_url == guard.FAKE
 sys.path.insert(0, os.getcwd())
 import main  # runs the app's own load_dotenv()
 
-for name in ("OPENAI_BASE_URL", "OPENAI_API_BASE"):
-    guard.must_be_loopback(name, os.environ[name])  # check again after .env was read
-assert os.environ["LANGSMITH_TRACING"] == "false"
+guard.verify_env()  # check again after .env was read
 
 import uvicorn
 uvicorn.run(main.app, host="127.0.0.1", port=port, log_level="info")
@@ -632,7 +670,7 @@ export FAKE_BASE=http://127.0.0.1:58317
 uv run --no-project python -B run_local.py 58318
 ```
 
-(PowerShell은 `export` 대신 `$env:FAKE_BASE = "http://127.0.0.1:58317"`. 실행해 보지 못했습니다.)
+(PowerShell은 `export` 대신 `$env:FAKE_BASE = "http://127.0.0.1:58317"`와 `$env:PYTHONIOENCODING = "utf-8"`. 실행해 보지 못했습니다.)
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -643,7 +681,7 @@ fake server on 127.0.0.1:58317
 [AGENT] Deep Research Agent created with model=gpt-5.5
 [AGENT] Main tools: ['research']
 [SERVER] Deep Research Agent registered at /
-INFO:     Started server process [55016]
+INFO:     Started server process [25552]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:58318 (Press CTRL+C to quit)
@@ -656,24 +694,29 @@ netstat -ano | grep LISTENING | grep ":5831[78] "
 ```
 
 ```text
-  TCP    127.0.0.1:58317        0.0.0.0:0              LISTENING       50788
-  TCP    127.0.0.1:58318        0.0.0.0:0              LISTENING       9656
+  TCP    127.0.0.1:58317        0.0.0.0:0              LISTENING       57048
+  TCP    127.0.0.1:58318        0.0.0.0:0              LISTENING       25552
 ```
 
-둘 다 `127.0.0.1`이고 `0.0.0.0`이 아닙니다. 가드가 실제로 막는지도 봅니다. 아래 줄은 가짜 주소 두 곳(`example.com`과 문서용 주소 `192.0.2.1`)으로 나가 보는 시험이고, 주소를 풀기 전에 막혀 요청은 나가지 않습니다.
+둘 다 `127.0.0.1`이고 `0.0.0.0`이 아닙니다. 가드가 실제로 막는지도 봅니다. 아래 줄은 이름 조회(`example.com`)와 문서용 주소 `192.0.2.1`로의 asyncio 연결(IP 주소라 이름 조회를 건너뛰는 길)을 시험하고, 프록시 변수를 건 셸에서 가드가 그것을 어떻게 다루는지도 찍습니다. 두 시도 모두 막혀 요청은 나가지 않습니다.
 
 ```bash
-uv run --no-project python -B -c "
-import guard, socket
-for host in ('example.com', '192.0.2.1'):
-    try:
-        socket.getaddrinfo(host, 80)
-    except OSError as e:
-        print('blocked:', e)
+HTTPS_PROXY=http://192.0.2.10:3128 uv run --no-project python -B -c "
+import guard, os, socket, asyncio
+print('proxy:', os.environ.get('HTTPS_PROXY'), '| NO_PROXY:', os.environ['NO_PROXY'])
+try:
+    socket.getaddrinfo('example.com', 80)
+except OSError as e:
+    print('blocked:', e)
+try:
+    asyncio.run(asyncio.open_connection('192.0.2.1', 80))
+except OSError as e:
+    print('blocked:', e)
 "
 ```
 
 ```text
+proxy: None | NO_PROXY: 127.0.0.1,localhost,::1
 blocked: blocked non-loopback connection to 'example.com'
 blocked: blocked non-loopback connection to '192.0.2.1'
 ```
@@ -697,7 +740,7 @@ import urllib.request
 
 url, text = sys.argv[1], sys.argv[2]
 guard.must_be_loopback("url", url)
-n = int(time.time())  # a new thread id per run: the server keeps each thread in memory
+n = time.time_ns()  # a new thread id per run: the server keeps each thread in memory
 body = {"threadId": "t%d" % n, "runId": "r%d" % n, "state": {}, "tools": [], "context": [], "forwardedProps": {},
         "messages": [{"id": "m%d" % n, "role": "user", "content": text}]}
 req = urllib.request.Request(url, json.dumps(body).encode(),
@@ -753,39 +796,39 @@ uv run --no-project python -B ask.py http://127.0.0.1:58318/ "Research solid-sta
 HTTP 200 text/event-stream; charset=utf-8
 RUN_STARTED
 STATE_SNAPSHOT {'messages': 1, 'tools': 0, 'copilotkit': 2}
-TOOL_CALL_START write_todos 704953
-TOOL_CALL_ARGS 704953 {"todos": [{"content": "Look up basics", "status": "in_progress"}, {"c
-TOOL_CALL_ARGS 704953 en problems", "status": "pending"}, {"content": "Write the report", "s
+TOOL_CALL_START write_todos 244387
+TOOL_CALL_ARGS 244387 {"todos": [{"content": "Look up basics", "status": "in_progress"}, {"c
+TOOL_CALL_ARGS 244387 en problems", "status": "pending"}, {"content": "Write the report", "s
 TOOL_CALL_END
 STATE_SNAPSHOT {'messages': 1, 'tools': 0, 'copilotkit': 2}
-TOOL_CALL_RESULT 704953 "Updated todo list to [{'content': 'Look up basics', 'status': 'in_progress'}, {'content': "
-TOOL_CALL_START research 704986
-TOOL_CALL_ARGS 704986 {"query": "solid-st
-TOOL_CALL_ARGS 704986 ate battery basics"}
+TOOL_CALL_RESULT 244387 "Updated todo list to [{'content': 'Look up basics', 'status': 'in_progress'}, {'content': "
+TOOL_CALL_START research 244426
+TOOL_CALL_ARGS 244426 {"query": "solid-st
+TOOL_CALL_ARGS 244426 ate battery basics"}
 TOOL_CALL_END
 STATE_SNAPSHOT {'messages': 1, 'tools': 0, 'copilotkit': 2}
-TOOL_CALL_RESULT 704986 '{"summary": "FAKE summary: three fake sources were read for this query.", "sources": [{"ur'
+TOOL_CALL_RESULT 244426 '{"summary": "FAKE summary: three fake sources were read for this query.", "sources": [{"ur'
 STATE_SNAPSHOT {'messages': 1, 'tools': 0, 'copilotkit': 2}
-TOOL_CALL_START research 705164
-TOOL_CALL_ARGS 705164 {"query": "solid-state 
-TOOL_CALL_ARGS 705164 battery open problems"}
+TOOL_CALL_START research 244633
+TOOL_CALL_ARGS 244633 {"query": "solid-state 
+TOOL_CALL_ARGS 244633 battery open problems"}
 TOOL_CALL_END
 STATE_SNAPSHOT {'messages': 1, 'tools': 0, 'copilotkit': 2}
-TOOL_CALL_RESULT 705164 '{"summary": "FAKE summary: three fake sources were read for this query.", "sources": [{"ur'
+TOOL_CALL_RESULT 244633 '{"summary": "FAKE summary: three fake sources were read for this query.", "sources": [{"ur'
 STATE_SNAPSHOT {'messages': 1, 'tools': 0, 'copilotkit': 2}
-TOOL_CALL_START write_file 705343
-TOOL_CALL_ARGS 705343 {"file_path": "/reports/final_report.md", "content": "# FAKE report\
-TOOL_CALL_ARGS 705343 n\nThis file text was written by the fake model, not a real one.\n"}
+TOOL_CALL_START write_file 244819
+TOOL_CALL_ARGS 244819 {"file_path": "/reports/final_report.md", "content": "# FAKE report\
+TOOL_CALL_ARGS 244819 n\nThis file text was written by the fake model, not a real one.\n"}
 TOOL_CALL_END
 STATE_SNAPSHOT {'messages': 1, 'tools': 0, 'copilotkit': 2}
-TOOL_CALL_RESULT 705343 'Updated file /reports/final_report.md'
+TOOL_CALL_RESULT 244819 'Updated file /reports/final_report.md'
 TEXT_MESSAGE_START
 TEXT_MESSAGE_CONTENT 'FAKE answer: the '
 TEXT_MESSAGE_CONTENT 'report is saved '
 TEXT_MESSAGE_CONTENT 'at /reports/final_report.md.'
 TEXT_MESSAGE_END
 STATE_SNAPSHOT {'messages': 1, 'tools': 0, 'copilotkit': 2}
-STATE_SNAPSHOT {'messages': 10, 'todos': 3, 'files': 1, 'copilotkit': 2}
+STATE_SNAPSHOT {'messages': 10, 'files': 1, 'todos': 3, 'copilotkit': 2}
 MESSAGES_SNAPSHOT ['user', 'assistant', 'tool', 'assistant', 'tool', 'assistant', 'tool', 'assistant', 'tool', 'assistant']
 RUN_FINISHED
 {'RUN_STARTED': 1, 'RAW': 154, 'STEP_STARTED': 26, 'STATE_SNAPSHOT': 9, 'STEP_FINISHED': 26, 'TOOL_CALL_START': 4, 'TOOL_CALL_ARGS': 8, 'TOOL_CALL_END': 4, 'TOOL_CALL_RESULT': 4, 'TEXT_MESSAGE_START': 1, 'TEXT_MESSAGE_CONTENT': 3, 'TEXT_MESSAGE_END': 1, 'MESSAGES_SNAPSHOT': 1, 'RUN_FINISHED': 1}
@@ -797,7 +840,25 @@ RUN_FINISHED
 - 이벤트 스트림에는 안쪽 에이전트의 글이나 `internet_search_tracked` 호출이 없습니다. 도구 호출 넷은 모두 코디네이터의 것입니다. 코드 주석은 스레드 분리가 그렇게 막는다고 하고, 이 실행에서 확인한 것은 안쪽 호출이 스트림에 없다는 데까지입니다.
 - 끝에서 `STATE_SNAPSHOT`이 `todos`와 `files`를 담아 오지만 앱 코드는 그것을 읽지 않습니다(Step 7).
 
-모델 호출 아홉 번의 모양은 `show_log.py`로 봅니다.
+모델 호출 아홉 번의 모양은 `show_log.py`로 봅니다. 가짜 서버가 적은 `fake.jsonl`을 한 줄씩 읽어 요약하는 스크립트입니다.
+
+```python
+"""show_log.py - summarize what the fake server received."""
+import json
+import sys
+
+total = 0
+for line in open(sys.argv[1], encoding="utf-8"):
+    d = json.loads(line)
+    if d["kind"] == "openai":
+        total += d["chars"]
+        print("openai", d["who"], "stream=%s" % d["stream"], "model=%s" % d["model"],
+              "temperature=%s" % d["has_temperature"], "tools=%d" % len(d["tools"]),
+              "messages=%d" % d["n_messages"], "system=%d" % d["system_len"], "->", d["step"])
+    else:
+        print(d["kind"], d.get("query"), d.get("max_results"))
+print("model requests: %d chars in total" % total)
+```
 
 ```bash
 uv run --no-project python -B show_log.py fake.jsonl
@@ -827,8 +888,8 @@ uv run --no-project python -B ask.py http://127.0.0.1:58318/ "Research solid-sta
 ```
 
 ```text
-TOOL_CALL_START ls 714830
-TOOL_CALL_RESULT 714830 "['/reports/']"
+TOOL_CALL_START ls 245749
+TOOL_CALL_RESULT 245749 "['/reports/']"
 ```
 
 `ls`의 호출과 결과가 그대로 스트림에 나옵니다. 설정 목록(`research`·`write_todos`·`write_file`·`read_file`·`edit_file`)은 걸러 내지 않습니다. copilotkit 0.1.76과 ag-ui-langgraph 0.0.23의 소스를 보면 걸러 내는 곳은 값이 `False`일 때뿐이고(`copilotkit/langgraph_agui_agent.py`의 `is False` 검사), 목록은 그 검사에 걸리지 않습니다. 소스로 확인한 풀이이며, 이 문서의 실험은 `ls`가 새는 것까지입니다.
@@ -901,30 +962,38 @@ npm install
 npm run dev
 ```
 
+다만 이 줄을 그대로 쓰지 마세요. 앱의 `dev` 스크립트는 `next dev`이고 `next dev`의 `--hostname` 기본값은 `0.0.0.0`입니다(next 16.1.1의 `dev` 도움말, 소스로 확인). 화면은 `/api/copilotkit`으로 받은 요청을 그대로 파이썬 에이전트에 넘기므로(`route.ts`), 같은 네트워크의 누구나 3000번 포트에 POST해 내 키로 연구를 돌릴 수 있습니다. Step 4에서 파이썬 서버를 루프백으로 막은 것과 같은 까닭으로 아래 예에서는 `npm run dev -- -H 127.0.0.1`을 씁니다.
+
 바깥으로 나가는 길이 몇 있어서, 실행하는 독자는 아래를 먼저 설정하세요. 모두 소스로 읽은 것입니다.
 
 | 어디서 | 무엇을 보내는가 | 끄는 법 |
 |---|---|---|
-| `npm install` 때 `@scarf/scarf` 1.4.0의 `postinstall`(`package-lock.json`이 설치 스크립트가 있다고 표시) | 설치 통계를 `scarf.sh`로. `report.js`가 옵트아웃 변수를 보며 의존하는 쪽의 기본 설정은 "보냄"(`defaultOptIn: true`) | `SCARF_ANALYTICS=false`(또는 `DO_NOT_TRACK=1`) |
+| `npm install`의 설치 스크립트 셋(`package-lock.json`이 `hasInstallScript`로 표시한 것 전부) | `@scarf/scarf` 1.4.0은 아래 둘째 줄. `sharp` 0.34.5(선택 의존성)는 `install`이 `node install/check.js \|\| npm run build`이고 `check.js`가 0이 아니게 끝날 때(전역 libvips를 쓰거나 `npm_config_build_from_source`가 있을 때)에만 네이티브 빌드를 돌립니다. `unrs-resolver` 1.11.1(개발 의존성)은 `postinstall`이 `napi-postinstall unrs-resolver 1.11.1 check`입니다. 이 마지막 것이 무엇을 내려받는지는 읽지 못했습니다 | 스크립트를 모두 막으려면 `npm install --ignore-scripts`(그러면 `sharp`·`unrs-resolver`의 네이티브 바인딩 확인이 빠지고, 그 영향은 이 문서가 확인하지 못했습니다) |
+| `@scarf/scarf` 1.4.0의 `postinstall`(`node ./report.js`) | 설치 통계를 `scarf.sh`로. `report.js`가 옵트아웃 변수를 보며 의존하는 쪽의 기본 설정은 "보냄"(`defaultOptIn: true`) | `SCARF_ANALYTICS=false`(또는 `DO_NOT_TRACK=1`) |
 | 런타임(`@copilotkit/shared` 1.51.2의 `telemetry-client.ts`) | Segment와 `copilotkit.gateway.scarf.sh`로 이벤트 이름·패키지 버전. 표본 비율 기본 0.05. 요청 때마다 `copilotRuntimeNextJSAppRouterEndpoint`가 불려 이벤트가 만들어집니다(`app-router.ts`) | `COPILOTKIT_TELEMETRY_DISABLED=true` 또는 `DO_NOT_TRACK=true`(`1`도 됨) |
 | `next dev`·`next build` | 익명 사용 통계(https://nextjs.org/telemetry, 2026-10-16 확인) | `NEXT_TELEMETRY_DISABLED=1` |
 | 브라우저의 `globals.css:2` | `@import url("https://fonts.googleapis.com/css2?family=Inter...")`로 Google Fonts 요청 | 이 줄을 복사본에서 지우거나 그대로 감수 |
 
-예를 들어 이렇게 설정하고 띄웁니다. 화면과 파이썬 서버는 서로 다른 터미널입니다.
+예를 들어 이렇게 설정하고 띄웁니다. 화면과 파이썬 서버는 서로 다른 터미널입니다. 스크립트를 막고 싶으면 `npm install --ignore-scripts`로 바꿉니다. 실행해 보지 못했습니다.
 
 ```bash
 export SCARF_ANALYTICS=false DO_NOT_TRACK=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_TELEMETRY_DISABLED=1
+export LANGGRAPH_DEPLOYMENT_URL=http://127.0.0.1:8123
 npm install
-npm run dev
+npm run dev -- -H 127.0.0.1
 ```
+
+(PowerShell은 `$env:SCARF_ANALYTICS = "false"`처럼 변수마다 한 줄입니다. 실행해 보지 못했습니다.)
 
 진짜 키로 파이썬 서버를 띄우는 명령은 원본의 `uv run python main.py` 대신 이것입니다. `deep-research-lab/.env`에 `OPENAI_API_KEY`·`TAVILY_API_KEY`만 넣고(`SERVER_HOST`·`OPENAI_MODEL`은 넣지 않습니다. 상위 폴더에 다른 `.env`가 없는지도 보세요), `--host 127.0.0.1`을 명시하며 `reload`가 없는 `uvicorn`을 직접 부릅니다.
 
 ```bash
 cd deep-research-lab
-export LANGSMITH_TRACING=false
-uv run --no-project python -m uvicorn main:app --host 127.0.0.1 --port 8123
+export LANGSMITH_TRACING=false LANGSMITH_TRACING_V2=false LANGCHAIN_TRACING=false LANGCHAIN_TRACING_V2=false
+uv run --no-project python -B -c "import os; assert all(os.environ[k] == 'false' for k in ('LANGSMITH_TRACING', 'LANGSMITH_TRACING_V2', 'LANGCHAIN_TRACING', 'LANGCHAIN_TRACING_V2'))" && uv run --no-project python -m uvicorn main:app --host 127.0.0.1 --port 8123
 ```
+
+추적 변수를 넷 다 끄는 까닭은 Step 2에 있습니다. 하나만 끄면 셸에 `LANGCHAIN_TRACING_V2=true`가 있는 독자의 대화가 `api.smith.langchain.com`으로 나갑니다(소스로 확인한 것이고, 이 문서는 진짜 키 줄을 실행하지 않았습니다). 셸에 프록시가 걸려 있으면 키가 든 요청이 그 프록시로 나가니 그것이 의도한 것인지 보세요.
 
 이 명령은 진짜 키를 쓰는 요청을 바깥으로 보내므로 이 문서는 실행하지 않았습니다. 가짜 키와 가짜 `OPENAI_BASE_URL`로 같은 줄을 띄워 `127.0.0.1:58320`에만 열리고 `/health`가 `{"status":"ok","service":"deep-research-agent","version":"1.0.0"}`를 돌려주는 것까지는 직접 확인했습니다. 그때 쓴 변수는 `OPENAI_API_KEY=sk-fake TAVILY_API_KEY=tvly-fake OPENAI_BASE_URL=http://127.0.0.1:58317/v1`이었습니다.
 
@@ -1006,26 +1075,38 @@ grep -c "scraped\|failed" src/components/Workspace.tsx
 
 ```text
 164:                "status": "found",
-8
+7
 ```
 
-(직접 확인한 출력입니다.) 서버가 만드는 `status`는 `found` 하나이고, 화면은 `scraped`·`failed`를 여덟 줄에서 다룹니다.
+(직접 확인한 출력입니다.) 서버가 만드는 `status`는 `found` 하나이고, 화면은 `scraped`·`failed`를 일곱 줄에서 다룹니다.
 
 ## 요청 한 건이 흐르는 과정
 
-질문 하나가 지나는 길을 시간 순서로 그렸습니다. 긴 길이라 다섯 장으로 나눴고 경계는 코드의 실제 순서에서 잘랐습니다. 첫 장은 질문이 서버에 닿아 모델이 계획과 검색을 정하기까지입니다. 도구 호출 이벤트(`TOOL_CALL_START·ARGS·END`)는 모델이 호출을 만드는 동안 먼저 스트림에 실려 나가고, 결과(`TOOL_CALL_RESULT`)는 도구가 끝난 뒤에 나갑니다.
+질문 하나가 지나는 길을 시간 순서로 그렸습니다. Step 5에서 실제로 돈 한 건은 모델 호출 아홉, `research` 둘, 검색 둘이라 그림이 길어져 열 장으로 나눴고 경계는 코드의 실제 순서에서 잘랐습니다. 첫 장은 질문이 서버에 닿아 모델이 계획을 세우기까지입니다. 도구 호출 이벤트(`TOOL_CALL_START·ARGS·END`)는 모델이 호출을 만드는 동안 먼저 스트림에 실려 나가 화면에 진행 중 카드를 그리고, 결과(`TOOL_CALL_RESULT`)는 도구가 끝난 뒤에 나가 카드를 완료로 바꾸며 계획·파일·출처 목록을 갱신합니다(`page.tsx`는 `status === "complete"`일 때만 상태를 바꿉니다).
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-그림의 "서버"는 `main.py`의 AG-UI 엔드포인트이고 "코디네이터"는 `agent.py`가 만든 그래프입니다. 서버→런타임→화면의 전달은 이벤트마다 되풀이되며, 처음 한 번(`write_todos`)만 세 화살표로 그렸습니다. 이어서 `research`가 안쪽 에이전트를 부르는 부분입니다. 안쪽 에이전트의 모델 요청은 스트리밍이 아니고, 검색 도구의 이름은 `internet_search_tracked`입니다.
+그림의 "서버"는 `main.py`의 AG-UI 엔드포인트이고 "코디네이터"는 `agent.py`가 만든 그래프입니다. 서버→런타임→화면의 전달은 이벤트마다 되풀이되며 이후 그림에도 호출과 결과마다 그렸습니다. 다음은 첫째 `research` 바퀴입니다. 모델이 `research`를 부르면 호출 이벤트가 먼저 나가고 화면에 진행 중 카드가 뜹니다.
 
-![안쪽 에이전트가 검색하기까지](diagrams/extra-search.svg)
+![첫째 research 호출](diagrams/extra-call1.svg)
 
-검색 결과가 모델에 들어가 요약 글이 되고, 그것이 `{summary, sources}`로 코디네이터에게 돌아가 카드와 출처 목록이 됩니다.
+코디네이터가 `research` 도구를 부르면 도구가 안쪽 에이전트를 스레드 풀에서 `invoke`합니다. 안쪽 에이전트의 모델 요청은 스트리밍이 아니고 검색 도구의 이름은 `internet_search_tracked`입니다.
 
-![요약과 결과 돌려주기](diagrams/extra-summary.svg)
+![첫째 검색](diagrams/extra-search1.svg)
 
-검색을 마친 코디네이터는 요약을 담아 모델을 다시 부르고, 모델이 `write_file`을 부릅니다.
+검색 결과가 모델에 들어가 요약 글이 되고, 안쪽 에이전트의 마지막 글이 `research` 도구를 거쳐 `{summary, sources}`로 코디네이터에게 돌아가 카드가 완료되고 출처 목록이 생깁니다.
+
+![첫째 요약과 결과](diagrams/extra-summary1.svg)
+
+둘째 바퀴는 같은 모양이고 질의만 다릅니다(`solid-state battery open problems`). Step 5의 한 건이 실제로 두 바퀴를 돌아서 둘 다 그렸습니다.
+
+![둘째 research 호출](diagrams/extra-call2.svg)
+
+![둘째 검색](diagrams/extra-search2.svg)
+
+![둘째 요약과 결과](diagrams/extra-summary2.svg)
+
+검색을 마친 코디네이터는 요약을 담아 모델을 다시 부르고, 모델이 `write_file`을 부릅니다. 파일 목록은 결과가 온 뒤에야 바뀝니다.
 
 ![보고서 파일 쓰기](diagrams/extra-write.svg)
 
@@ -1044,6 +1125,7 @@ grep -c "scraped\|failed" src/components/Workspace.tsx
 - [ ] 키 하나를 지우면 `build_agent`가 `RuntimeError: Missing ... API_KEY`로 멈춘다(Step 3)
 - [ ] `netstat`에 `127.0.0.1:58317`과 `127.0.0.1:58318`만 보이고 `0.0.0.0`은 없다(Step 4)
 - [ ] `ask.py`가 `TOOL_CALL_*` 넷과 `RUN_FINISHED`로 끝나고 `blocked.log`는 생기지 않는다(Step 5)
+- [ ] 프록시 변수를 건 셸에서 가드 시험이 `proxy: None`과 `blocked:` 둘을 찍는다(Step 4)
 - [ ] `show_log.py`가 모델 호출 아홉(코디네이터 다섯·안쪽 넷)과 검색 둘을 센다(Step 5)
 - [ ] `"with ls"` 질문에서 목록에 없는 `ls` 호출이 스트림에 나온다(Step 5)
 - [ ] `research_assistant`가 `route.ts`·`layout.tsx`·`main.py`에서 같다(Step 6)
@@ -1059,6 +1141,7 @@ grep -c "scraped\|failed" src/components/Workspace.tsx
 | `.env.example`을 복사했더니 서버가 `0.0.0.0`으로 뜨고 모델이 `gpt-5.2`다 | 그 파일의 `SERVER_HOST=0.0.0.0`·`OPENAI_MODEL=gpt-5.2`(`generative_ui_agents/ai-deep-research-agent/.env.example:4`, `generative_ui_agents/ai-deep-research-agent/.env.example:12`)가 `os.getenv`에 들어온다 | 복사한 `.env`에서 두 줄을 지우고 `--host 127.0.0.1`로 직접 띄웁니다 |
 | 서버 로그에 `openai.APIConnectionError: Connection error.`가 나오고 `ask.py`가 `RUN_FINISHED` 없이 끝난다 | 모델 서버(이 문서에서는 가짜 서버)에 닿지 못했는데 스트림에는 오류 이벤트가 없다(Step 5) | 터미널 1의 가짜 서버가 떠 있는지, `FAKE_BASE`의 포트가 맞는지 확인합니다 |
 | `refuse: FAKE_BASE='' is not loopback`으로 스크립트가 멈춘다 | 터미널에 `FAKE_BASE`가 없다. 터미널마다 다시 줘야 한다 | `export FAKE_BASE=http://127.0.0.1:58317` |
+| 가짜 서버 없이 `refuse: HTTPS_PROXY is set`으로 `run_local.py`가 멈춘다 | 앱의 `load_dotenv()`가 `.env`에 적힌 프록시 변수를 다시 채웠고 가드의 `verify_env()`가 막았다 | `.env`에서 프록시 줄을 지웁니다 |
 | 같은 질문을 두 번 보냈더니 두 번째에는 계획·검색 없이 마지막 글만 나온다 | 같은 `threadId`의 상태가 `MemorySaver`에 남아 대화가 이어진다 | `ask.py`처럼 요청마다 새 `threadId`를 씁니다 |
 | `emit_tool_calls`에 없는 도구(`ls`·`task`)의 호출이 스트림에 나온다(화면에서는 기본 JSON 카드가 될 것으로 읽힙니다) | 그 설정은 목록으로는 걸러 내지 않는다(Step 5, 소스로 확인) | 걸러야 한다면 `emit_tool_calls=False`를 쓰는 식으로 설계가 달라야 하며 이 문서는 시험하지 않았습니다 |
 | 화면의 파일 카드 제목이 "Writing: file"이다 | 카드가 읽는 `args.path`와 deepagents의 `file_path`가 다르다(Step 7, 소스로 확인) | 복사본의 `ToolCard.tsx:91`을 `args.file_path`로 바꾸는 것이 한 방법입니다(시험하지 못했습니다) |
@@ -1085,17 +1168,17 @@ uv run --no-project python -B ask.py http://127.0.0.1:58319/ "Research solid-sta
 ```text
 HTTP 200 text/event-stream; charset=utf-8
 RUN_STARTED
-TOOL_CALL_START write_todos 759387
+TOOL_CALL_START write_todos 304056
 TOOL_CALL_END
-TOOL_CALL_START research 759410
+TOOL_CALL_START research 304078
 TOOL_CALL_END
-TOOL_CALL_RESULT 759410 '{"summary": "FAKE summary: three fake sources were read for this query.", "sources": [{"ur'
-TOOL_CALL_START research 759510
+TOOL_CALL_RESULT 304078 '{"summary": "FAKE summary: three fake sources were read for this query.", "sources": [{"ur'
+TOOL_CALL_START research 304154
 TOOL_CALL_END
-TOOL_CALL_RESULT 759510 '{"summary": "FAKE summary: three fake sources were read for this query.", "sources": [{"ur'
-TOOL_CALL_START write_file 759579
+TOOL_CALL_RESULT 304154 '{"summary": "FAKE summary: three fake sources were read for this query.", "sources": [{"ur'
+TOOL_CALL_START write_file 304234
 TOOL_CALL_END
-TOOL_CALL_RESULT 759579 'Updated file /reports/final_report.md'
+TOOL_CALL_RESULT 304234 'Updated file /reports/final_report.md'
 TEXT_MESSAGE_START
 TEXT_MESSAGE_CONTENT 'FAKE answer: the '
 TEXT_MESSAGE_CONTENT 'report is saved '
@@ -1106,6 +1189,8 @@ MESSAGES_SNAPSHOT ['user', 'assistant', 'tool', 'assistant', 'tool', 'assistant'
 RUN_FINISHED
 {'RUN_STARTED': 1, 'RAW': 116, 'STEP_STARTED': 17, 'STEP_FINISHED': 17, 'TOOL_CALL_START': 4, 'TOOL_CALL_ARGS': 8, 'TOOL_CALL_END': 4, 'STATE_SNAPSHOT': 5, 'TOOL_CALL_RESULT': 3, 'TEXT_MESSAGE_START': 1, 'TEXT_MESSAGE_CONTENT': 3, 'TEXT_MESSAGE_END': 1, 'MESSAGES_SNAPSHOT': 1, 'RUN_FINISHED': 1}
 ```
+
+(PowerShell은 두 터미널 모두 `$env:PYTHONIOENCODING = "utf-8"`와 `$env:FAKE_BASE = "http://127.0.0.1:58317"`을 따로 줄에 둡니다. 두 번째의 `| grep -v`는 `Select-String -NotMatch`로 바꿉니다. 실행해 보지 못했습니다.)
 
 (직접 확인한 출력입니다.) 가짜 모델은 대본대로 `write_todos`를 불렀지만 이 판에는 그 도구가 없어서 `TOOL_CALL_START`는 있고 `TOOL_CALL_RESULT`는 없습니다. 결과 넷 가운데 셋만 나오고, 오류는 `MESSAGES_SNAPSHOT` 안의 도구 메시지로만 남으며, 끝의 상태에도 `todos`가 없습니다. 화면의 계획 구역은 이 호출의 인자로 채워지는데(Step 7) 호출 자체가 실패한 것입니다. 진짜 모델이 이 판에서도 같은 호출을 만들지는 확인하지 못했습니다. 지시문이 계속 `write_todos`를 쓰라고 하므로 만들 수 있다는 것까지가 이 실험의 한계입니다.
 
