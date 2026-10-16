@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 화면\n(소스로만)" { class: ours }
+rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
+agent: "에이전트 서버\n(serve.py·그래프)" { class: ours }
+llm: "gpt-5.5\n(가짜 서버)" { class: ext }
+
+agent -> rt: "SSE: TOOL_CALL_RESULT\nquery_data"
+rt -> ui: "이벤트 전달\n(도구 카드)"
+agent -> llm: "chat.completions\n(도구 결과 포함)"
+llm -> agent: "tool_call generate_a2ui"
+agent -> rt: "SSE: TOOL_CALL_START\ngenerate_a2ui"
+rt -> ui: "이벤트 전달"

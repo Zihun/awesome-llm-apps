@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+gen: "프런트 도구 ·\nA2UI 카탈로그" { class: ours }
+chat: "채팅 · 칸반\n(CopilotChat)" { class: ours }
+runtime: "CopilotKit 런타임\n(Docker route)" { class: ours }
+serve: "AG-UI 엔드포인트\n(serve.py)" { class: ours }
+mcp: "Excalidraw MCP" { class: ext }
+
+gen -> chat: "tools · context 등록"
+chat -> runtime: "RunAgentInput"
+runtime -> serve: "AG-UI POST /"
+serve -> runtime: "SSE 이벤트"
+runtime -> chat: "이벤트 · A2UI 활동"
+chat -> gen: "핸들러 실행 ·\n카탈로그 렌더"
+runtime -> mcp: "tools/list"

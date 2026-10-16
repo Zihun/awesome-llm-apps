@@ -26,7 +26,7 @@ csv: "db.csv" { class: file }
 mcp: "Excalidraw\nMCP" { class: ext }
 
 user -> next.chat: "질문"
-next -> agent: "AG-UI\n요청 ·\n이벤트"
+next -> agent: "AG-UI\n(Docker\nroute)"
 agent -> llm: "모델\n호출"
 agent -> csv: "읽기"
 next -> mcp: "도구\n목록"

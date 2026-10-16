@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+serve: "AG-UI 엔드포인트\n(serve.py)" { class: ours }
+graph: "에이전트 그래프\n(main.py)" { class: ours }
+tools: "백엔드 도구\n(src/*.py)" { class: ours }
+mem: "MemorySaver" { class: store }
+llm: "gpt-5.5\n(가짜 서버)" { class: ext }
+csv: "db.csv" { class: file }
+
+serve -> graph: "입력 · state"
+graph -> serve: "이벤트"
+graph -> llm: "메인 호출"
+graph -> tools: "도구 호출"
+tools -> graph: "결과"
+tools -> llm: "보조 호출"
+tools -> csv: "읽기"
+graph -> mem: "체크포인트"

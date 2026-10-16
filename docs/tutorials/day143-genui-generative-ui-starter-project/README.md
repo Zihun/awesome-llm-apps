@@ -1,6 +1,6 @@
 # Day 143 · 🗂️ Generative UI Starter Project
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 원본의 `npm run dev`는 `npx`로 도구를 내려받고 사용 통계를 보내는 경로라 실행하지 않았고, 이 문서가 돌린 `serve.py` 경로에서는 `generate_a2ui`의 보조 모델이 빈 시스템 글을 받습니다(Step 7) · 예상 소요 165분(앱의 화면 쪽은 소스로만 읽었지만, 가짜 서버·가드·요청 보내는 스크립트를 직접 저장해 돌리고, 같은 요청을 여러 장면으로 나눠 보내 보고, 읽어야 할 CopilotKit 소스가 여러 패키지에 걸쳐 있어서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI는 한 번도 부르지 않았습니다). 진짜 키로 "대시보드" 장면 하나를 돌리면 모델 호출이 여섯 번 나가고, 어림으로 $0.1~0.3입니다(⚠ 추정, 아래 사전 준비) · 원본 앱: `generative_ui_agents/generative-ui-starter-project`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 원본의 `npm run dev`는 `npx`로 도구를 내려받고 사용 통계를 보내는 경로라 실행하지 않았고, 이 문서가 돌린 `serve.py` 경로에서는 `generate_a2ui`의 보조 모델이 첫 시스템 글을 0자로 받습니다(Step 7) · 예상 소요 175분(앱의 화면 쪽은 소스로만 읽었지만, 가짜 서버·가드·요청 보내는 스크립트를 직접 저장해 돌리고, 같은 요청을 여러 장면으로 나눠 보내 보고, 읽어야 할 CopilotKit 소스가 여러 패키지에 걸쳐 있어서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI는 한 번도 부르지 않았습니다). 진짜 키로 "대시보드" 장면 하나를 돌리면 모델 호출이 네 번 나가고, 어림으로 $0.1 안팎입니다(⚠ 추정, 아래 사전 준비) · 원본 앱: `generative_ui_agents/generative-ui-starter-project`
 
 ## 오늘 만들 것
 
@@ -10,9 +10,9 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림의 묶음 안 화살표는 묶음 전체의 것입니다. 묶음 안에서 무엇이 무엇을 부르는지는 보조 구조 그림이 보여 줍니다. 그래프의 노드 이어짐은 Step 3(`extra-graph`), 공유 상태의 오가는 길은 Step 5(`extra-state`), 원본의 에이전트 실행 스크립트가 하는 일은 Step 8(`extra-dev`)에 있습니다. 앞 날과 이어지는 곳은 이렇습니다. LangGraph의 상태·체크포인트·`interrupt`는 [Day 106](../day106-ai-codebase-migration-agent/README.md)이, Node 화면을 소스로만 읽는 방식은 [Day 124](../day124-ai-travel-planner-agent-team/README.md)가 다뤘습니다. AG-UI는 앞 날에 코드로 다룬 적이 없습니다(Day 119에는 앱 README가 소개한 이름으로만 나옵니다). 오늘 새로 나오는 것은 `create_agent`와 미들웨어로 짠 그래프, AG-UI 이벤트, 그리고 A2UI의 연산 세 가지입니다.
+그림의 묶음 안 화살표는 묶음 전체의 것입니다. 묶음 안에서 무엇이 무엇을 부르는지는 보조 구조 그림이 보여 줍니다. 화면 쪽 연결은 Step 4(`extra-wire`), 에이전트 서버 안의 연결은 Step 3(`extra-agent`)과 그래프의 노드 이어짐(`extra-graph`), 공유 상태의 오가는 길은 Step 5(`extra-state`), 원본의 에이전트 실행 스크립트가 하는 일은 Step 8(`extra-dev`)에 있습니다. 앞 날과 이어지는 곳은 이렇습니다. LangGraph의 상태·체크포인트·`interrupt`는 [Day 106](../day106-ai-codebase-migration-agent/README.md)이, Node 화면을 소스로만 읽는 방식은 [Day 124](../day124-ai-travel-planner-agent-team/README.md)가 다뤘습니다. AG-UI 이벤트와 `LangGraphAGUIAgent`·`CopilotKitMiddleware`, 서버를 루프백으로 여는 이유, 런타임의 텔레메트리는 [Day 141](../day141-genui-deep-research-agent/README.md)이 먼저 가르쳤고, 같은 화면이 ADK 에이전트와 붙는 모양은 [Day 142](../day142-genui-financial-coach-agent/README.md)가 다뤘습니다. 오늘 문서는 그 설명을 되풀이하지 않고 가리키며, 판이 다른 곳(Day 141은 `copilotkit` 0.1.76·`ag-ui-langgraph` 0.0.23, 오늘은 0.1.87·0.0.33)과 이 앱에만 있는 것에 집중합니다. 새로 나오는 것은 `create_agent`와 미들웨어로 짠 그래프의 모양, 화면이 등록하는 도구와 공유 상태, 그리고 A2UI의 연산과 카탈로그입니다.
 
-직접 돌려 알게 된 것이 여덟입니다. 첫째, `uv sync --locked`로 89개 패키지가 설치되고, 열쇠가 없으면 `main.py:19`에서 가져오는 순간 멈춥니다(Step 1). 둘째, 서버를 `python serve.py`로 띄우면 `0.0.0.0`에 열리므로 이 문서는 `uvicorn.run`을 호스트를 박은 스크립트로 부릅니다(Step 2). 셋째, 프런트엔드 도구(`enableAppMode`)는 서버가 실행하지 않고, 한 번의 질문이 요청 두 번으로 나뉩니다(Step 4). 넷째, `manage_todos`가 모델에게 보여 주는 스키마는 `id`를 필수로 요구해서, 코드의 "id가 없으면 채운다"는 줄은 모델이 `id`를 빈 문자열로 줄 때만 일합니다(Step 5). 다섯째, 화면에서 고친 카드는 다음 요청의 `state`에 실려 가며, 서버의 `MemorySaver`는 같은 스레드의 기억일 뿐입니다(Step 5). 여섯째, 고정 스키마 A2UI의 도구는 JSON 연산 세 개를 글자로 돌려주는 것이 전부입니다(Step 6). 일곱째, 이 문서의 경로에서는 `generate_a2ui`가 보조 모델에게 빈 시스템 글을 줍니다(Step 7). 여덟째, 원본의 `npm run dev` 경로는 통계 전송 둘, `uv` 내려받기, 제3자 MCP 서버 접속을 거칩니다(Step 8).
+직접 돌려 알게 된 것이 여덟입니다. 첫째, `uv sync --locked`로 89개 패키지가 설치되고, 열쇠가 없으면 `main.py:19`에서 가져오는 순간 멈춥니다(Step 1). 둘째, 서버를 `python serve.py`로 띄우면 `0.0.0.0`에 열리므로 이 문서는 `uvicorn.run`을 호스트를 박은 스크립트로 부릅니다(Step 2). 셋째, 프런트엔드 도구(`enableAppMode`)는 서버가 실행하지 않고, 한 번의 질문이 요청 두 번으로 나뉩니다(Step 4). 넷째, `manage_todos`가 모델에게 보여 주는 스키마는 `id`를 필수로 요구해서, 코드의 "id가 없으면 채운다"는 줄은 모델이 `id`를 빈 문자열로 줄 때만 일합니다(Step 5). 다섯째, 화면에서 고친 카드는 다음 요청의 `state`에 실려 가며, 서버의 `MemorySaver`는 같은 스레드의 기억일 뿐입니다(Step 5). 여섯째, 고정 스키마 A2UI의 도구는 JSON 연산 세 개를 글자로 돌려주는 것이 전부입니다(Step 6). 일곱째, `generate_a2ui`가 보조 모델에게 주는 첫 시스템 글은 0자입니다. 지침과 컴포넌트 스키마는 대화에 끼어든 `App Context` 메시지로 가므로 모델이 아무것도 모르는 것은 아니지만, 앱이 의도한 자리는 비어 있습니다(Step 7). 여덟째, 원본의 `npm run dev` 경로는 설치 통계(Scarf), 통계 전송 셋 이상, `uv`와 PyPI 내려받기, 제3자 MCP 서버 접속을 거치고 Next.js 개발 서버는 `0.0.0.0`에 열립니다(Step 8).
 
 ## 사전 준비
 
@@ -26,7 +26,7 @@
 
 명령은 Git Bash 기준입니다. 한국어 Windows에서 파이썬 출력이 cp949로 깨지지 않도록 아래 환경변수에 `PYTHONIOENCODING=utf-8`을 둡니다. PowerShell 줄은 실행해 보지 못했습니다(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다).
 
-**이 앱의 모델이 아직 살아 있는지.** 앱이 쓰는 모델은 `gpt-5.5` 하나입니다(`generative_ui_agents/generative-ui-starter-project/agent/main.py:19`와 `generative_ui_agents/generative-ui-starter-project/agent/src/a2ui_dynamic_schema.py:68`). OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations)와 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5.5)를 2026-10-16에 원문으로 읽었습니다. 폐기 문서에 `gpt-5.5`와 그 스냅숏은 올라 있지 않고, 모델 페이지는 기본 스냅숏을 `gpt-5.5-2026-04-23`, `v1/chat/completions`를 Supported로 적습니다. 이 앱은 `ChatOpenAI`를 쓰고, 이 문서가 설치한 `langchain-openai` 1.1.9는 `gpt-5.5`를 `v1/chat/completions`로 보냅니다(가짜 서버가 받은 경로로 확인, Step 2). 가격은 모델 페이지 기준 입력 $5, 캐시 입력 $0.5, 출력 $30(100만 토큰당)입니다. 비용 어림(⚠ 추정)은 이렇습니다. "대시보드" 장면 하나에서 가짜 서버가 받은 모델 요청 여섯 건의 본문이 합쳐 약 5.9만 자(4자에 1토큰으로 어림하면 입력 약 1.5만 토큰)였고, 진짜 화면은 여기에 A2UI 컴포넌트 스키마와 지침 글을 더 실어 보내므로 입력이 2~3만 토큰이라 치면 $0.15 안팎, 출력은 알 수 없어 $0.05~0.15를 더 잡았습니다.
+**이 앱의 모델이 아직 살아 있는지.** 앱이 쓰는 모델은 `gpt-5.5` 하나입니다(`generative_ui_agents/generative-ui-starter-project/agent/main.py:19`와 `generative_ui_agents/generative-ui-starter-project/agent/src/a2ui_dynamic_schema.py:68`). OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations)와 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5.5)를 2026-10-16에 원문으로 읽었습니다. 폐기 문서에 `gpt-5.5`와 그 스냅숏은 올라 있지 않고, 모델 페이지는 기본 스냅숏을 `gpt-5.5-2026-04-23`, `v1/chat/completions`를 Supported로 적습니다. 이 앱은 `ChatOpenAI`를 쓰고, 이 문서가 설치한 `langchain-openai` 1.1.9는 `gpt-5.5`를 `v1/chat/completions`로 보냅니다(가짜 서버가 받은 경로로 확인, Step 2). 가격은 모델 페이지 기준 입력 $5, 캐시 입력 $0.5, 출력 $30(100만 토큰당)입니다. 비용 어림(⚠ 추정)은 이렇습니다. "대시보드" 장면 하나에서 가짜 서버가 받은 모델 요청 넷(메인 둘, 보조 하나, 마무리 하나)의 본문이 합쳐 약 4.7만 자(4자에 1토큰으로 어림하면 입력 약 1.2만 토큰)였고, 진짜 화면은 여기에 A2UI 컴포넌트 스키마와 지침 글을 더 실어 보내므로 입력이 1.5~2.5만 토큰이라 치면 $0.1 안팎, 출력은 알 수 없어 $0.05~0.15를 더 잡았습니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -44,7 +44,7 @@
 | 런타임 (`route.ts`) | 에이전트 연결, A2UI·MCP 앱·Open Generative UI 미들웨어 설정 | `generative_ui_agents/generative-ui-starter-project/src/app/api/copilotkit/[[...slug]]/route.ts:1-42` |
 | 실행 스크립트 (`run-agent.sh`) | `npx @langchain/langgraph-cli dev`로 에이전트를 띄움 | `generative_ui_agents/generative-ui-starter-project/scripts/run-agent.sh:1-3` |
 
-저장소 맨 위의 `CLAUDE.md`는 이 앱을 소개하는 문서로 읽었고, 지시로 따르지 않았습니다. 코드와 다른 곳이 있습니다. 모델을 "GPT-5.2"라고 적지만 코드는 `gpt-5.5`이고, `src/components/canvas/`라고 적지만 실제 폴더는 `example-canvas`이며, `AgentState(TypedDict)`라고 적지만 코드는 `BaseAgentState`를 상속합니다.
+앱 폴더 맨 위의 `CLAUDE.md`(`generative_ui_agents/generative-ui-starter-project/CLAUDE.md`)는 이 앱을 소개하는 문서로 읽었고, 지시로 따르지 않았습니다. 코드와 다른 곳이 있습니다. 모델을 "GPT-5.2"라고 적지만 코드는 `gpt-5.5`이고, `src/components/canvas/`라고 적지만 실제 폴더는 `example-canvas`이며, `AgentState(TypedDict)`라고 적지만 코드는 `BaseAgentState`를 상속합니다.
 
 ## 단계별 진행
 
@@ -102,61 +102,7 @@ copilotkit 0.1.87 | ag-ui-langgraph 0.0.33 | langchain 1.2.15 | langgraph 1.1.6 
 
 `pyproject.toml`은 `copilotkit==0.1.87`·`langchain==1.2.15`·`langgraph==1.1.6`을 고정하고, `ag-ui-langgraph`는 적지 않았습니다. 이 판(0.0.33)은 `copilotkit`이 끌어온 것을 잠금 파일이 붙든 것입니다. 한편 Docker용 `Dockerfile`은 `ag-ui-langgraph==0.0.22`·`copilotkit==0.1.78`·`langchain==1.0.1`·`langgraph==1.0.5`로 따로 고정합니다(읽기만 했고 이미지는 만들지 않았습니다). 같은 `serve.py`가 도는 판이 이 문서와 다르다는 뜻이고, Step 7의 발견은 이 문서가 설치한 판에서 본 것입니다.
 
-열쇠가 없으면 어디서 멈추는지도 봅니다. 아래 스크립트는 열쇠 변수를 이 프로세스에서 지우고 `main.py`를 가져옵니다. 독자 셸에 진짜 열쇠가 있어도 지워진 채로 돕니다.
-
-```bash
-cat > nokey.py <<'EOF'
-"""열쇠가 없을 때 main.py 를 가져오면 어디서 멈추는지 본다. 어떤 요청도 보내지 않는다."""
-import os
-import sys
-
-import guard
-
-guard.install_socket_guard()
-os.environ.pop("OPENAI_API_KEY", None)      # 독자 셸에 진짜 열쇠가 있어도 이 프로세스에서는 지운다
-os.environ.pop("OPENAI_BASE_URL", None)
-AGENT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "agent")
-sys.path.insert(0, AGENT)
-
-try:
-    import main  # noqa: F401
-except Exception as e:  # noqa: BLE001
-    print(f"{type(e).__name__}: {str(e)[:70]}...")
-    frames = []
-    t = e.__traceback__
-    while t:
-        frames.append((os.path.dirname(os.path.abspath(t.tb_frame.f_code.co_filename)), t.tb_lineno))
-        t = t.tb_next
-    print("멈춘 곳(agent/main.py 줄):", [l for d, l in frames if d == AGENT])
-guard.report()
-EOF
-```
-
-`nokey.py`는 첫머리에서 `guard.py`를 불러오니 먼저 Step 2에서 `guard.py`를 저장한 뒤 돌립니다.
-
-![Step 1까지의 구성](diagrams/step1.svg)
-
-**확인.** Step 2에서 `guard.py`를 저장한 뒤 `$PY nokey.py`가 이렇게 답해야 합니다. `main.py:19`가 `ChatOpenAI(...)`를 만드는 줄이고, 가져오기만으로 클라이언트를 만들기 때문에 `serve.py`도 열쇠 없이는 뜨지 못합니다.
-
-```text
-OpenAIError: The api_key client option must be set either by passing api_key to the...
-멈춘 곳(agent/main.py 줄): [19]
-가드: 루프백 밖으로 나가려던 시도 0건 []
-```
-
-### Step 2. 루프백 가드와 가짜 서버로 에이전트 서버 띄우기
-
-**목적.** 에이전트가 바깥으로 나갈 수 있는 길을 막고, 모델 자리에 가짜 서버를 세우고, 원본 `serve.py`를 `127.0.0.1`에만 열어 띄웁니다.
-
-**할 일.** 먼저 원본이 어떻게 뜨는지 봅니다. `serve.py:56-58`은 이렇습니다.
-
-```python
-if __name__ == "__main__":
-    port = int(os.getenv("AGENT_PORT", "8123"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
-```
-
-`python serve.py`로 띄우면 모든 네트워크 인터페이스(`0.0.0.0`)에 열리고, 앞쪽 `CORSMiddleware`가 모든 출처를 허용하므로(`serve.py:33-38`) 같은 네트워크의 누구나 열쇠로 모델을 부를 수 있는 입구가 열립니다. 그래서 이 문서는 `serve.py`를 건드리지 않고, `uvicorn.run("serve:app", host="127.0.0.1")`로 부르는 `run_serve.py`를 씁니다. 그 앞에 `guard.py`가 있습니다. 가드는 세 가지를 합니다. 환경변수를 **스크립트 안에서 직접** 덮어써서(모델 주소는 `http://127.0.0.1:<가짜 포트>/v1`, 열쇠는 `sk-fake-genui`, LangSmith 트레이싱과 `langgraph` 통계는 끔, 상위 폴더 `.env`나 셸에 진짜 열쇠가 있어도 무시), `urlparse`로 호스트가 루프백인지 확인하고, 소켓 연결·이름 조회·asyncio 연결 함수를 루프백 밖으로는 못 나가게 막습니다. 마지막 막기는 이차 방어선입니다. 일차는 앞의 둘입니다.
+열쇠가 없으면 어디서 멈추는지도 봅니다. 먼저 이 문서의 모든 스크립트가 첫머리에서 불러오는 가드 파일을 저장합니다. 무엇을 막는지는 Step 2에서 설명합니다.
 
 ```bash
 cat > guard.py <<'EOF'
@@ -183,6 +129,23 @@ def is_loopback_host(host: str) -> bool:
         return False
 
 
+NOPROXY = "127.0.0.1,localhost,::1"
+
+
+def loopback_noproxy() -> None:
+    """프록시 변수가 걸려 있어도 루프백은 프록시를 거치지 않게 한다."""
+    for name in ("NO_PROXY", "no_proxy"):
+        have = [x for x in os.environ.get(name, "").split(",") if x]
+        os.environ[name] = ",".join(dict.fromkeys(have + NOPROXY.split(",")))
+
+
+def check_noproxy() -> None:
+    for name in ("NO_PROXY", "no_proxy"):
+        have = set(os.environ.get(name, "").split(","))
+        if not {"127.0.0.1", "localhost"} <= have:
+            sys.exit(f"가드: {name}에 루프백이 없습니다. 중단합니다.")
+
+
 def point_at_fake(port: int) -> str:
     """OpenAI 클라이언트가 가짜 서버만 보도록 환경을 직접 정한다."""
     base = f"http://127.0.0.1:{port}/v1"
@@ -196,6 +159,7 @@ def point_at_fake(port: int) -> str:
         os.environ[name] = "false"
     os.environ["LANGSMITH_API_KEY"] = ""
     os.environ["LANGCHAIN_API_KEY"] = ""
+    loopback_noproxy()
     os.environ["LANGGRAPH_CLI_NO_ANALYTICS"] = "1"
     os.environ["COPILOTKIT_TELEMETRY_DISABLED"] = "true"
     os.environ["DO_NOT_TRACK"] = "1"
@@ -203,6 +167,7 @@ def point_at_fake(port: int) -> str:
 
 
 def check_env() -> None:
+    check_noproxy()
     base = os.environ.get("OPENAI_BASE_URL", "")
     host = urlparse(base).hostname or ""
     if not is_loopback_host(host):
@@ -261,6 +226,64 @@ def report() -> None:
     print(f"가드: 루프백 밖으로 나가려던 시도 {len(BLOCKED)}건 {BLOCKED[:5]}")
 EOF
 ```
+
+아래 스크립트는 열쇠 변수를 이 프로세스에서 지우고 `main.py`를 가져옵니다. 독자 셸에 진짜 열쇠가 있어도 지워진 채로 돕니다.
+
+```bash
+cat > nokey.py <<'EOF'
+"""열쇠가 없을 때 main.py 를 가져오면 어디서 멈추는지 본다. 어떤 요청도 보내지 않는다."""
+import os
+import sys
+
+import guard
+
+guard.install_socket_guard()
+os.environ.pop("OPENAI_API_KEY", None)      # 독자 셸에 진짜 열쇠가 있어도 이 프로세스에서는 지운다
+os.environ.pop("OPENAI_BASE_URL", None)
+AGENT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "agent")
+sys.path.insert(0, AGENT)
+
+try:
+    import main  # noqa: F401
+except Exception as e:  # noqa: BLE001
+    print(f"{type(e).__name__}: {str(e)[:70]}...")
+    frames = []
+    t = e.__traceback__
+    while t:
+        frames.append((os.path.dirname(os.path.abspath(t.tb_frame.f_code.co_filename)), t.tb_lineno))
+        t = t.tb_next
+    print("멈춘 곳(agent/main.py 줄):", [l for d, l in frames if d == AGENT])
+guard.report()
+EOF
+```
+
+![Step 1까지의 구성](diagrams/step1.svg)
+
+```bash
+$PY nokey.py
+```
+
+**확인.** 이렇게 답해야 합니다. `main.py:19`가 `ChatOpenAI(...)`를 만드는 줄이고, 가져오기만으로 클라이언트를 만들기 때문에 `serve.py`도 열쇠 없이는 뜨지 못합니다.
+
+```text
+OpenAIError: The api_key client option must be set either by passing api_key to the...
+멈춘 곳(agent/main.py 줄): [19]
+가드: 루프백 밖으로 나가려던 시도 0건 []
+```
+
+### Step 2. 루프백 가드와 가짜 서버로 에이전트 서버 띄우기
+
+**목적.** 에이전트가 바깥으로 나갈 수 있는 길을 막고, 모델 자리에 가짜 서버를 세우고, 원본 `serve.py`를 `127.0.0.1`에만 열어 띄웁니다.
+
+**할 일.** 먼저 원본이 어떻게 뜨는지 봅니다. `serve.py:56-58`은 이렇습니다.
+
+```python
+if __name__ == "__main__":
+    port = int(os.getenv("AGENT_PORT", "8123"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
+```
+
+`python serve.py`로 띄우면 모든 네트워크 인터페이스(`0.0.0.0`)에 열리고, 같은 네트워크의 누구나 이 서버로 열쇠를 써서 모델을 부를 수 있습니다. 거기에 `CORSMiddleware`가 모든 출처를 허용해서(`serve.py:33-38`) 루프백으로 열었을 때조차 이 PC의 브라우저에서 연 아무 웹페이지가 이 서버를 부르고 응답을 읽을 수 있습니다. 앞의 위험은 `0.0.0.0` 때문이고 뒤의 것은 CORS 때문이라 둘을 따로 막아야 합니다. 그래서 이 문서는 `serve.py`를 건드리지 않고, `uvicorn.run("serve:app", host="127.0.0.1")`로 부르는 `run_serve.py`를 씁니다. 그 앞에 `guard.py`가 있습니다. 가드는 네 가지를 합니다. 환경변수를 **스크립트 안에서 직접** 덮어써서(모델 주소는 `http://127.0.0.1:<가짜 포트>/v1`, 열쇠는 `sk-fake-genui`, LangSmith 트레이싱과 `langgraph` 통계는 끔, 상위 폴더 `.env`나 셸에 진짜 열쇠가 있어도 무시), `NO_PROXY`·`no_proxy`에 루프백을 넣고 없으면 멈추며(셸에 프록시 변수가 있어도 가짜 서버 요청이 프록시로 새지 않게 합니다. `drive.py`의 HTTP 클라이언트는 환경 프록시를 아예 읽지 않습니다), `urlparse`로 호스트가 루프백인지 확인하고, 소켓 연결·이름 조회·asyncio 연결 함수를 루프백 밖으로는 못 나가게 막습니다. 마지막 막기는 이차 방어선입니다. 일차는 앞의 셋입니다. 서버를 루프백으로만 여는 이유는 Day 141 Step 4가 먼저 설명했습니다.
 
 가짜 모델 서버입니다. 에이전트가 보내는 `/v1/chat/completions`만 받고, 대화 내용을 보고 정해진 대본대로 답합니다. 글 답이든 도구 호출이든 스트리밍(`stream: true`)으로 보냅니다. 받은 요청은 모두 기록 파일에 한 줄씩 남습니다. 이 대본은 제가 쓴 것이며 실제 모델의 판단과 다릅니다.
 
@@ -520,8 +543,8 @@ netstat -ano | grep -E "5387[12]"
 ```
 
 ```text
-  TCP    127.0.0.1:53871        0.0.0.0:0              LISTENING       58432
-  TCP    127.0.0.1:53872        0.0.0.0:0              LISTENING       50960
+  TCP    127.0.0.1:53871        0.0.0.0:0              LISTENING       48004
+  TCP    127.0.0.1:53872        0.0.0.0:0              LISTENING       15404
 ```
 
 `0.0.0.0`이 아니라 `127.0.0.1`이어야 합니다. 이 문서는 "진짜 키가 있는 독자"로도 따라 해 보았습니다. 위 터미널 B를 이렇게 띄운 것이 그것입니다. 셸에 열쇠와 트레이싱 변수를 건 채로 띄웠고(`sk-pretend-real-key`라는 가짜 값을 썼습니다), 이어지는 Step의 요청을 모두 보낸 뒤 가짜 서버 쪽 기록(`fake.jsonl`)의 `Authorization` 앞머리는 `Bearer sk-fake`뿐이었습니다(Step 7). 셸의 열쇠는 어느 요청에도 실리지 않았고, 가드는 루프백 밖으로 나가려던 시도를 0건으로 셌습니다. 진짜 열쇠가 있는 셸이라면 터미널 B 줄 앞에 이 변수 둘을 붙이지 않아도 같습니다. 파이썬 쪽은 `.env`를 읽지 않습니다. `serve.py`·`guard.py`·`copilotkit`·`ag_ui_langgraph` 어디에도 `load_dotenv`가 없는 것을 소스로 확인했습니다. `.env`를 읽는 쪽은 Next.js와 `langgraph dev`(`agent/langgraph.json`의 `"env": "../.env"`)입니다.
@@ -600,9 +623,13 @@ manage_todos 의 Todo 필수 항목: ['id', 'title', 'description', 'emoji', 'st
 가드: 루프백 밖으로 나가려던 시도 0건 []
 ```
 
-노드는 `model`, `tools`, 그리고 `CopilotKitMiddleware`의 세 훅(`before_agent`·`after_model`·`after_agent`)입니다. 그림이 그 이어짐입니다. `after_model`에서 갈라지는 세 갈래가 핵심입니다. 도구 호출이 있으면 `tools`로, 없으면 `after_agent`로 끝내고, 프런트엔드 도구만 있었다면 그 호출을 떼어 낸 채 끝으로 갑니다. `체크포인터: None`이라는 것에 주목하세요. 이 그래프는 기억 장치 없이 만들어지고, 서버 쪽 `serve.py:22-25`가 `graph.copy()`로 복제해 `MemorySaver`를 붙입니다. `serve.py:20-21`의 주석은 체크포인터가 보통 LangGraph 플랫폼 서버에서 제공된다고 적습니다.
+노드는 `model`, `tools`, 그리고 `CopilotKitMiddleware`의 세 훅(`before_agent`·`after_model`·`after_agent`)입니다. 그림이 그 이어짐입니다. `after_model`에서 갈라지는 세 갈래가 핵심입니다. 처리할 백엔드 도구 호출이 있으면 `tools`로, 호출이 없으면 `after_agent`로 가서 끝나고(프런트엔드 도구만 있었다면 그 호출을 떼어 낸 뒤라 이 갈래에 속합니다), 도구 호출은 있는데 이미 결과 메시지가 달려 있어 처리할 것이 없으면 `model`로 되돌아갑니다(`langchain` 1.2.15 `agents/factory.py`의 `_make_model_to_tools_edge`에서 읽었습니다). `체크포인터: None`이라는 것에 주목하세요. 이 그래프는 기억 장치 없이 만들어지고, 서버 쪽 `serve.py:22-25`가 `graph.copy()`로 복제해 `MemorySaver`를 붙입니다. `serve.py:20-21`의 주석은 체크포인터가 보통 LangGraph 플랫폼 서버에서 제공된다고 적습니다.
 
 ![그래프의 노드 이어짐](diagrams/extra-graph.svg)
+
+서버 안에서 무엇이 무엇을 부르는지도 화살표로 그렸습니다. `serve.py`가 입력과 `state`를 그래프에 넘기고 이벤트를 돌려받습니다. 그래프는 메인 모델 호출·도구 호출·체크포인트를 하고, 도구(`generate_a2ui`)는 보조 모델을 직접 부르고 `query_data`는 `db.csv`를 읽습니다.
+
+![에이전트 서버 안의 연결](diagrams/extra-agent.svg)
 
 ### Step 4. 프런트엔드 도구와 사람 승인 — 한 질문이 요청 두 번이 됩니다
 
@@ -641,7 +668,11 @@ manage_todos 의 Todo 필수 항목: ['id', 'title', 'description', 'emoji', 'st
   });
 ```
 
-이 등록들이 모델에게 도구 목록으로 전달됩니다. `drive.py`가 `tools`에 넣는 것이 이 목록입니다(제가 손으로 옮겨 적음). 에이전트 쪽에서는 `CopilotKitMiddleware`가 이 도구들을 모델 요청에 합칩니다. 가짜 서버 기록의 `tools=10`이 그 증거입니다(백엔드 다섯, 프런트엔드 다섯). 이제 화면 대신 요청을 보내는 스크립트입니다. 장면 일곱(`health` 포함)을 한 파일에 담았고, Step 4~7이 장면을 나눠 씁니다. `converse()`가 프런트엔드가 하는 반복을 흉내 냅니다. 실행이 끝났는데 프런트엔드 도구 호출이 남았으면 `role: "tool"` 메시지를 붙여 다시 보냅니다. 그 규칙은 `@copilotkit/core` 1.56.2의 `executeToolHandler`·`executeSpecificTool`에서 읽었습니다. 핸들러가 값을 돌려주지 않으면 결과는 빈 글(`""`)이고, `followUp`이 `false`가 아니면 에이전트를 다시 실행합니다.
+이 등록들이 모델에게 도구 목록으로 전달됩니다. `drive.py`가 `tools`에 넣는 것이 이 목록입니다(제가 손으로 옮겨 적음). 에이전트 쪽에서는 `CopilotKitMiddleware`가 이 도구들을 모델 요청에 합칩니다. 가짜 서버 기록의 `tools=11`이 그 증거입니다(백엔드 다섯, `drive.py`가 넣은 프런트엔드 여섯). 실제 화면은 `generateSandboxedUi`(Open Generative UI가 더하는 도구)와 그 설명 항목도 보내므로 더 많을 것이고, 이 문서의 `drive.py`는 그것을 넣지 않았습니다. 화면 쪽 연결은 그림과 같습니다. 도구와 카탈로그가 `tools`·`context`로 등록되고, 요청이 런타임을 거쳐 서버로 가고, 이벤트가 돌아와 핸들러 실행과 카탈로그 렌더로 이어집니다.
+
+![화면과 런타임과 서버의 연결](diagrams/extra-wire.svg)
+
+이제 화면 대신 요청을 보내는 스크립트입니다. 이벤트를 접어 읽는 방식(RAW·STEP 이벤트 접기, `TOOL_CALL_ARGS` 이어 붙이기)은 Day 141 Step 5와 같습니다. 장면 일곱(`health` 포함)을 한 파일에 담았고, Step 4~7이 장면을 나눠 씁니다. `converse()`가 프런트엔드가 하는 반복을 흉내 냅니다. 실행이 끝났는데 프런트엔드 도구 호출이 남았으면 `role: "tool"` 메시지를 붙여 다시 보냅니다. 그 규칙은 `@copilotkit/core` 1.56.2의 `executeToolHandler`·`executeSpecificTool`에서 읽었습니다. 핸들러가 값을 돌려주지 않으면 결과는 빈 글(`""`)이고, `followUp`이 `false`가 아니면 에이전트를 다시 실행합니다.
 
 ```bash
 cat > drive.py <<'EOF'
@@ -663,6 +694,8 @@ scene = sys.argv[2]
 url = f"http://127.0.0.1:{port}/"
 if not guard.is_loopback_host(urlparse(url).hostname or ""):
     sys.exit("가드: 루프백이 아닌 주소입니다.")
+guard.loopback_noproxy()
+guard.check_noproxy()
 guard.install_socket_guard()
 
 import httpx  # noqa: E402
@@ -680,10 +713,13 @@ TOOLS = [
     {"name": "pieChart", "description": "Controlled Generative UI that displays data as a pie chart.",
      "parameters": {"type": "object", "properties": {"title": {"type": "string"}, "description": {"type": "string"},
          "data": {"type": "array", "items": {"type": "object", "properties": {"label": {"type": "string"}, "value": {"type": "number"}}}}}}},
+    {"name": "barChart", "description": "Controlled Generative UI that displays data as a bar chart.",
+     "parameters": {"type": "object", "properties": {"title": {"type": "string"}, "description": {"type": "string"},
+         "data": {"type": "array", "items": {"type": "object", "properties": {"label": {"type": "string"}, "value": {"type": "number"}}}}}}},
 ]
 FRONTEND = {t["name"] for t in TOOLS}
 SCHEMA_DESC = ("A2UI Component Schema — available components for generating UI surfaces. "
-               "Use these component names and props when creating A2UI operations.")
+               "Use these component names and properties when creating A2UI operations.")
 CONTEXT = [
     {"description": "A2UI catalog capabilities: available catalog IDs and custom component definitions the client can render.",
      "value": json.dumps({"catalogIds": ["copilotkit://app-dashboard-catalog"]})},
@@ -706,7 +742,7 @@ def run(thread, messages, state=None):
     body = {"threadId": f"{thread}-{RUN}", "runId": str(uuid.uuid4()), "state": state or {}, "messages": messages,
             "tools": TOOLS, "context": CONTEXT, "forwardedProps": {}}
     events = []
-    with httpx.Client(timeout=60) as c, c.stream("POST", url, json=body, headers={"accept": "text/event-stream"}) as r:
+    with httpx.Client(timeout=60, trust_env=False) as c, c.stream("POST", url, json=body, headers={"accept": "text/event-stream"}) as r:
         events.append({"type": "HTTP", "status": r.status_code, "ctype": r.headers.get("content-type")})
         for line in r.iter_lines():
             if line.startswith("data: "):
@@ -795,7 +831,7 @@ def converse(thread, text, state=None, respond=None):
 
 
 if scene == "health":
-    r = httpx.get(url + "health", timeout=10)
+    r = httpx.get(url + "health", timeout=10, trust_env=False)
     print(r.status_code, r.json())
 elif scene == "todos":
     ev, state = converse("t-todos", "Enable app mode and add three todos about learning CopilotKit")
@@ -870,10 +906,10 @@ $PY drive.py 53872 todos
   TEXT_MESSAGE_CONTENT: 'manage_todos '
   TEXT_MESSAGE_CONTENT: 'finished.'
   TEXT_MESSAGE_END
-  STATE_SNAPSHOT: keys=['messages', 'copilotkit', 'todos'] todos=3
+  STATE_SNAPSHOT: keys=['messages', 'todos', 'copilotkit'] todos=3
   MESSAGES_SNAPSHOT
   RUN_FINISHED
-todos: [('Read the docs', '6213bd36'), ('Build a prototype', '9a0ce9c9'), ('Explore agent state', '97c5a4a9')]
+todos: [('Read the docs', '4b84f0c1'), ('Build a prototype', 'ed931cc4'), ('Explore agent state', '734f7774')]
 가드: 루프백 밖으로 나가려던 시도 0건 []
 ```
 
@@ -1022,6 +1058,9 @@ for i, r in enumerate(rows):
         for m in b["messages"]:
             text = m["content"] if isinstance(m["content"], str) else (json.dumps(m["content"]) if m["content"] else "")
             print(f"      {m['role']:9s} {len(text or ''):5d}자 {(text or '')[:50]!r}")
+            if (text or "").startswith("App Context:"):
+                items = json.loads(text[len("App Context:"):])
+                print("                항목:", [i["description"][:28] for i in items])
 EOF
 ```
 
@@ -1031,7 +1070,7 @@ $PY show_log.py fake.jsonl | grep -B1 "오류"
 ```
 
 ```text
-17 /v1/chat/completions model=gpt-5.5 stream=True tools=10 tool_choice=None 마지막 role=tool
+17 /v1/chat/completions model=gpt-5.5 stream=True tools=11 tool_choice=None 마지막 role=tool
       도구 오류 메시지(모델이 받은 글): Error invoking tool 'manage_todos' with kwargs {'todos': [{'title': 'No id', 'description': 'x', 'emoji': 'x', 'status': 'pending'}]} with error: |  todos.0.id: Field required |  Please fix the error 
 ```
 
@@ -1135,7 +1174,7 @@ $PY drive.py 53872 flights
     result = a2ui.render(operations=ops)
 ```
 
-이 글에는 화면이 `context`로 보낸 카탈로그 설명과 컴포넌트 스키마, 생성 지침이 들어가야 보조 모델이 열한 개 컴포넌트를 알아봅니다. React 쪽 `A2UICatalogContext`가 `context`에 네 항목을 올립니다. 카탈로그 정보, 컴포넌트 스키마(`A2UI_SCHEMA_CONTEXT_DESCRIPTION`이라는 설명 글을 가진 항목), 생성 지침, 디자인 지침입니다(`@copilotkit/react-core` 소스). "대시보드" 장면을 보냅니다. `drive.py`의 `CONTEXT`가 이 네 항목을 흉내 냅니다(내용은 제가 쓴 짧은 글입니다).
+이 글에는 화면이 `context`로 보낸 카탈로그 설명과 컴포넌트 스키마, 생성 지침이 들어가야 보조 모델이 열한 개 컴포넌트를 알아봅니다. React 쪽 `A2UICatalogContext`가 `context`에 네 항목을 올립니다. 카탈로그 정보, 컴포넌트 스키마(`@copilotkit/a2ui-renderer`의 `A2UI_SCHEMA_CONTEXT_DESCRIPTION`이라는 설명 글을 가진 항목), 생성 지침, 디자인 지침입니다(`@copilotkit/react-core` 소스). "대시보드" 장면을 보냅니다. `drive.py`의 `CONTEXT`가 이 네 항목을 흉내 냅니다. 설명 글은 화면의 상수와 같은 글자를 쓰고, 내용은 제가 쓴 짧은 글입니다.
 
 ```bash
 $PY drive.py 53872 dashboard
@@ -1173,13 +1212,13 @@ $PY drive.py 53872 dashboard
 가드: 루프백 밖으로 나가려던 시도 0건 []
 ```
 
-서버를 띄운 터미널 B에는 앱 자신의 디버그 출력이 찍힙니다(`[A2UI-RESPONSE]` 줄은 길어서 앞부분만 보입니다).
+서버를 띄운 터미널 B에는 앱 자신의 디버그 출력이 찍힙니다(실제 터미널에는 `Deserializing unregistered type ag_ui.core.types.Context …` 경고 줄이 수십 개 섞여 나옵니다. 아래는 그 줄을 빼고, 긴 `[A2UI-RESPONSE]` 줄은 앞부분만 남긴 것입니다).
 
 ```text
-[A2UI-DEBUG] query_data called: query='financial sales data' at 15:51:42
+[A2UI-DEBUG] query_data called: query='financial sales data' at 20:22:06
 [A2UI-DEBUG] generate_a2ui STARTED at t=0
 [A2UI-DEBUG]   messages count: 4
-[A2UI-DEBUG]   context entries: 3, context_text_len: 0
+[A2UI-DEBUG]   context entries: 4, context_text_len: 0
 [A2UI-DEBUG]   calling secondary LLM at t=0.0s
 [A2UI-RESPONSE] content='' additional_kwargs={} response_metadata={'finish_reason': 'tool_calls', 'model_name': 'gpt-5.5', 'model_provider': 'openai'}
 [A2UI-DEBUG]   secondary LLM responded at t=0.0s
@@ -1187,27 +1226,34 @@ $PY drive.py 53872 dashboard
 [A2UI-DEBUG] generate_a2ui DONE at t=0.0s result_len=818
 ```
 
-`context entries: 3, context_text_len: 0`입니다. 항목은 세 개인데 글이 0자입니다. 가짜 서버가 받은 기록으로도 확인합니다.
+`context entries: 4, context_text_len: 0`입니다. 항목은 네 개인데 글이 0자입니다. 가짜 서버가 받은 기록으로도 확인합니다.
 
 ```bash
 $PY show_log.py fake.jsonl | head -1
-$PY show_log.py fake.jsonl | tail -9
+$PY show_log.py fake.jsonl | tail -10
 ```
 
 ```text
 요청 24건, Authorization 앞머리: ['Bearer sk-fake']
-20 /v1/chat/completions model=gpt-5.5 stream=True tools=10 tool_choice=None 마지막 role=system
-21 /v1/chat/completions model=gpt-5.5 stream=True tools=10 tool_choice=None 마지막 role=tool
+20 /v1/chat/completions model=gpt-5.5 stream=True tools=11 tool_choice=None 마지막 role=system
+21 /v1/chat/completions model=gpt-5.5 stream=True tools=11 tool_choice=None 마지막 role=tool
 22 /v1/chat/completions model=gpt-5.5 stream=True tools=1 tool_choice=render_a2ui 마지막 role=tool
       system        0자 ''
       user         36자 'Using A2UI show me a sales dashboard'
-      system      417자 'App Context:\n[\n  {\n    "description": "A2UI catalo'
+      system      757자 'App Context:\n[\n  {\n    "description": "A2UI catalo'
+                항목: ['A2UI catalog capabilities: a', 'A2UI Component Schema — avai', 'A2UI generation guidelines', 'A2UI design guidelines']
       assistant     0자 ''
       tool       6753자 '[{"date": "2026-01-05", "category": "Revenue", "su'
-23 /v1/chat/completions model=gpt-5.5 stream=True tools=10 tool_choice=None 마지막 role=tool
+23 /v1/chat/completions model=gpt-5.5 stream=True tools=11 tool_choice=None 마지막 role=tool
 ```
 
-보조 호출(`tool_choice=render_a2ui`)의 첫 시스템 메시지가 0자입니다. 앞 줄은 이 문서 내내 모델 요청에 실린 `Authorization`이 가짜 값뿐이었다는 증거입니다. 원인은 이 문서가 설치한 판의 두 가지 동작이 겹친 것입니다. 하나, `ag-ui-langgraph` 0.0.33은 `context` 가운데 컴포넌트 스키마 항목을 따로 빼서 `state["ag-ui"]["a2ui_schema"]`에 넣고 나머지만 `copilotkit.context`로 넘깁니다(`ag_ui_langgraph/agent.py`의 `langgraph_default_merge_state`). 둘, 남은 항목들은 `dict`가 아니라 `ag_ui.core.types.Context` 객체인데, `generate_a2ui`의 `isinstance(entry, dict)` 조건(`a2ui_dynamic_schema.py:60-63`)이 그것을 모두 걸러 냅니다. 그래서 AG-UI 경로(이 문서의 `serve.py`, 그리고 Docker 경로)에서는 보조 모델이 시스템 글 없이, 컴포넌트 목록도 생성 지침도 모른 채 대화만 보고 UI를 짓게 됩니다. 실제 모델이 그래도 쓸 만한 컴포넌트를 지을지는 이 문서가 확인하지 못했습니다. `copilotkit`이 이 용도로 준비해 둔 `a2ui_prompt()`(`copilotkit` 패키지 `a2ui.py`의 `a2ui_prompt` 함수)와 `state["ag-ui"]["a2ui_schema"]`를 앱이 쓰지 않는다는 것은 소스로 확인했습니다. 한편 원본의 `npm run dev` 경로(LangGraph 서버)에서는 JS 쪽 `@copilotkit/runtime`이 `copilotkit.context`에 전체 `context`를 그대로 담아 보내므로(`langGraphDefaultMergeState`, 소스 읽음) 이 글이 채워질 것으로 읽히지만, 그 경로는 실행하지 못했습니다.
+첫 줄은 이 문서 내내 모델 요청에 실린 `Authorization`이 가짜 값뿐이었다는 증거입니다. 보조 호출(`tool_choice=render_a2ui`)은 메시지 다섯을 받았고, 첫 시스템 메시지(`SystemMessage(content=prompt)`)가 0자입니다. 원인은 하나입니다. `copilotkit.context`의 항목은 `dict`가 아니라 `ag_ui.core.types.Context` 객체인데, `generate_a2ui`의 `isinstance(entry, dict)` 조건(`generative_ui_agents/generative-ui-starter-project/agent/src/a2ui_dynamic_schema.py:60-63`)이 그것을 모두 걸러 냅니다.
+
+그렇다고 보조 모델이 아무것도 모르는 것은 아닙니다. 위 출력의 둘째 시스템 메시지(757자)가 `App Context:`로 시작하는 글입니다. `CopilotKitMiddleware.before_agent`가 `copilotkit.context`를 이 글로 만들어 대화에 끼워 넣고(`copilotkit` 패키지의 `copilotkit_lg_middleware.py`, `Context` 객체는 `model_dump`로 풉니다), `generate_a2ui`는 대화(`messages[:-1]`)를 통째로 넘기기 때문입니다. `항목:` 줄이 보여 주듯 네 항목, 곧 카탈로그 정보·컴포넌트 스키마·생성 지침·디자인 지침이 모두 그 안에 있습니다. 다만 이 글은 시스템 지시 자리가 아니라 사용자 질문 뒤에 놓이고, 앱이 쓰려던 자리(`prompt`)는 비어 있습니다.
+
+`ag-ui-langgraph` 0.0.33에는 스키마 항목을 `context`에서 빼서 `state["ag-ui"]["a2ui_schema"]`로 옮기는 코드가 있습니다(`ag_ui_langgraph/agent.py`의 `langgraph_default_merge_state`). 이 코드는 설명 글이 정확히 `…use these component names and props when creating A2UI operations.`인 항목만 고르는데, 이 앱의 화면이 보내는 글(`@copilotkit/a2ui-renderer` 1.56.2의 상수)은 `props`가 아니라 `properties`입니다. 한 낱말이 달라서 이 앱의 실제 화면으로는 분리가 일어나지 않는다는 것이 소스로 읽은 결론입니다. `a2ui_schema` 상태는 비어 있고 `copilotkit.context`에 네 항목이 모두 남습니다. 이 문서의 첫 시도는 `drive.py`에 파이썬 쪽 글자(`props`)를 베껴 넣어 분리가 일어난다고 잘못 읽었고, 화면의 글자로 고쳐 다시 돌려 위 출력을 얻었습니다. Docker가 고정한 `ag-ui-langgraph` 0.0.22는 이 문서가 설치하지 않아 확인하지 못했습니다.
+
+원본의 `npm run dev` 경로(LangGraph 서버)에서는 JS 쪽 `@copilotkit/runtime`이 `copilotkit.context`에 전체 `context`를 그대로 담아 보내고(`langGraphDefaultMergeState`, 소스 읽음) 그쪽 파이썬은 JSON에서 온 `dict`를 받으므로 `prompt`가 채워질 것으로 읽히지만, 그 경로는 실행하지 못했습니다. 실제 모델이 그래도 쓸 만한 컴포넌트를 지을지도 확인하지 못했습니다.
 
 ### Step 8. 화면 쪽과 원본 실행 경로 — 읽기만 했습니다
 
@@ -1272,12 +1318,14 @@ const runtime = new CopilotRuntime({
 
 에이전트는 `LangGraphAgent`로 `AGENT_URL`(없으면 `http://localhost:8123`)의 LangGraph 서버에 붙습니다. 이것은 AG-UI가 아니라 LangGraph 플랫폼 API라서, 오늘의 `serve.py`(AG-UI `POST /`)와는 말이 다릅니다. 저장소가 이 차이를 알고 있어서, Docker 쪽은 `Dockerfile`이 이 경로 파일을 지우고 `docker-route-override.ts`(`HttpAgent`)로 바꿔 넣습니다. 그러니 오늘 확인한 것은 같은 그래프의 AG-UI 입구이고, 원본 `npm run dev`의 선(그림 `extra-dev`의 `langgraph dev`)이 아닙니다. 이 파일에는 바깥으로 나가는 설정이 둘 더 있습니다. `mcpApps.servers`의 기본 주소는 `https://mcp.excalidraw.com`이고(29행), `@ag-ui/mcp-apps-middleware` 0.0.3은 에이전트를 한 번 실행할 때마다 설정된 MCP 서버에 연결해 도구 목록을 받아 에이전트의 도구에 더합니다(실패하면 오류를 찍고 넘어갑니다). `@copilotkit/runtime` 1.56.2는 요청을 받을 때 Segment와 Scarf로 익명 사용 정보를 보내는 코드가 있고, 5%만 표본으로 보내며, `COPILOTKIT_TELEMETRY_DISABLED=true`나 `DO_NOT_TRACK=1`이면 끕니다(`telemetry-client.ts`). 브라우저 쪽으로는 `globals.css:2`가 Google Fonts(`fonts.googleapis.com`)를 가져옵니다. `layout.tsx:28`의 `inspectorDefaultAnchor`는 개발 검사창의 자리만 정하고, 검사창은 `showDevConsole`가 꺼져 있으면(기본값, 이 앱은 켜지 않음) 그려지지 않으며 `cdn.copilotkit.ai/announcements.json`을 가져오는 코드도 그 안에 있습니다(소스로 확인).
 
-그러니 이 앱을 진짜로 띄우려는 독자는 최소한 아래를 걸고 시작하는 것이 좋습니다. **이 줄도 실행해 보지 못했습니다.** `MCP_SERVER_URL`은 쓰지 않는 루프백 주소로 두면 연결 실패를 기록하고 넘어가는 것으로 읽혔습니다(`fetchUITools`의 `try/catch`).
+원본 실행 경로가 바깥으로 보내는 것을 정리하면 이렇습니다. Day 141 Step 6이 같은 항목을 먼저 표로 다뤘고, 이 앱에서 확인한 것만 적습니다. 첫째, `npm install`은 `@scarf/scarf` 1.4.0의 `postinstall`(설치 통계)을 돌립니다. 이 앱의 `package-lock.json`이 `hasInstallScript`로 표시하고, `@copilotkit/react-core`와 `@copilotkit/runtime`이 의존합니다(`SCARF_ANALYTICS=false`나 `DO_NOT_TRACK=1`로 끔). 둘째, `next dev`(`dev:ui`)는 Next.js 익명 통계(`NEXT_TELEMETRY_DISABLED=1`로 끔)를 보내고 기본으로 `0.0.0.0`에 열립니다(`-H 127.0.0.1`로 좁힘). 셋째, 앞에서 본 `npx`는 CLI를 npm에서, `uv`를 GitHub에서, `uv run --with langgraph-cli[inmem]`이 PyPI에서 패키지를 내려받습니다. 넷째, 통계는 `langgraph-cli`의 JS판과 파이썬판, CopilotKit 런타임으로 셋입니다. 그러니 이 앱을 진짜로 띄우려는 독자는 최소한 아래를 **`npm install` 앞에** 걸고 시작하는 것이 좋습니다. **이 줄도 실행해 보지 못했습니다.** `MCP_SERVER_URL`은 쓰지 않는 루프백 주소로 두면 연결 실패를 기록하고 넘어가는 것으로 읽혔습니다(`fetchUITools`의 `try/catch`).
 
 ```bash
-export LANGGRAPH_CLI_NO_ANALYTICS=1 COPILOTKIT_TELEMETRY_DISABLED=true DO_NOT_TRACK=1
+export SCARF_ANALYTICS=false DO_NOT_TRACK=1 NEXT_TELEMETRY_DISABLED=1
+export COPILOTKIT_TELEMETRY_DISABLED=true LANGGRAPH_CLI_NO_ANALYTICS=1
 export MCP_SERVER_URL=http://127.0.0.1:59999/mcp
-npm run dev          # 이 문서는 실행하지 않았습니다
+npm install          # 이 문서는 실행하지 않았습니다
+npm run dev          # 이 문서는 실행하지 않았습니다. 화면은 0.0.0.0에 열립니다(dev:ui)
 ```
 
 화면 쪽에서 오늘 다룬 세 곳을 한 줄씩만 더 짚습니다. `layout.tsx:26-32`가 `<CopilotKit runtimeUrl="/api/copilotkit" a2ui={{ catalog: demonstrationCatalog }} openGenerativeUI={{}}>`로 카탈로그를 등록하고, `renderers.tsx:599-605`의 `createCatalog`가 정의 열한 개와 렌더러를 묶습니다. 이 호출은 `includeBasicCatalog`를 주지 않아(`create-catalog.mjs`에서 기본값이 꺼짐 확인) 기본 카탈로그의 `Text`·`Image`·`List`가 빠지는데, `Button`의 설명은 `Text` 컴포넌트를 `child`로 쓰라고 합니다. 동적 장면에서 버튼 글자가 어떻게 되는지는 화면을 띄우지 못해 확인하지 못했습니다.
@@ -1287,6 +1335,7 @@ npm run dev          # 이 문서는 실행하지 않았습니다
 **확인.** 이 Step은 읽기 확인입니다. 아래 두 명령은 이 문서가 내려받은 압축 파일을 읽은 것이 아니라 독자가 앱 폴더에서 바로 확인할 수 있는 것입니다.
 
 ```bash
+APP=<저장소>/generative_ui_agents/generative-ui-starter-project
 grep -n "postinstall\|dev:agent" $APP/package.json
 cat $APP/scripts/run-agent.sh
 ```
@@ -1295,11 +1344,15 @@ cat $APP/scripts/run-agent.sh
 
 ## 요청 한 건이 흐르는 과정
 
-"대시보드" 질문 하나가 지나가는 길입니다. 한 그림에 다 담으면 세로 상한(1,500px)을 넘어 셋으로 나눴고, 경계는 코드의 실제 순서에서 잘랐습니다. 첫 그림은 질문이 모델을 두 번 거치고 `generate_a2ui` 호출까지 가는 앞부분입니다.
+"대시보드" 질문 하나가 지나가는 길입니다. 한 그림에 다 담으면 세로 상한(1,500px)을 넘어 넷으로 나눴고, 경계는 코드의 실제 순서에서 잘랐습니다. "에이전트 서버" 배우 하나는 `serve.py`와 그래프를 합친 것이고, 둘 사이의 연결은 Step 3의 `extra-agent`에 있습니다. 첫 그림은 질문이 런타임을 거쳐 첫 모델 호출과 `query_data` 실행까지 가는 앞부분입니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-런타임이 매 요청마다 MCP 서버(Excalidraw)에 도구 목록을 묻는 것(`rt -> mcp`)은 `route.ts`의 설정과 미들웨어 소스에서 읽은 것이고, 이 문서에서 실행한 것이 아닙니다. 모델을 두 번 부르는 동안 `query_data`가 40행 CSV를 돌려주는 것은 오늘 돌려 본 것입니다. 이어서 보조 모델 호출과 화면에 그려지는 부분입니다.
+런타임이 매 요청마다 MCP 서버(Excalidraw)에 도구 목록을 묻는 것(`rt -> mcp`)은 `route.ts`의 설정과 미들웨어 소스에서 읽은 것이고, 이 문서에서 실행한 것이 아닙니다. `query_data`가 40행 CSV를 돌려주는 것은 오늘 돌려 본 것입니다. 모델 호출은 이 장면에서 모두 넷입니다(메인 둘, 보조 하나, 마무리 하나). 다음은 `query_data`의 결과가 화면에 전해지고 두 번째 모델 호출이 `generate_a2ui`를 고르는 부분입니다.
+
+![도구 결과와 두 번째 호출](diagrams/extra-query.svg)
+
+이어서 보조 모델 호출과 화면에 그려지는 부분입니다.
 
 ![보조 호출과 화면](diagrams/extra-secondary.svg)
 
@@ -1320,7 +1373,7 @@ cat $APP/scripts/run-agent.sh
 - [ ] `drive.py ... todos`가 요청 둘로 나뉘고 둘째에서 `todos=3`이 됐다
 - [ ] `board` 장면에서 화면 편집이 `get_todos`에 보였다
 - [ ] `flights` 장면에서 연산 세 개가 `createSurface`·`updateComponents`·`updateDataModel` 순으로 나왔다
-- [ ] 서버 터미널에 `context_text_len: 0`이 찍혔다
+- [ ] 서버 터미널에 `context entries: 4, context_text_len: 0`이 찍히고, `show_log.py`의 보조 호출에 `App Context` 항목 네 개가 보였다
 - [ ] `show_log.py`의 `Authorization` 앞머리가 `Bearer sk-fake`뿐이다
 - [ ] 두 서버를 Ctrl+C로 끄고 `netstat`에 5387x가 남지 않았다
 
@@ -1329,20 +1382,20 @@ cat $APP/scripts/run-agent.sh
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `main.py` 19행에서 `OpenAIError: The api_key client option must be set` | `ChatOpenAI(...)`가 가져오기 때 열쇠를 요구함 | 진짜 쓸 때는 `OPENAI_API_KEY`를 환경에 둔다. 이 문서는 `guard.py`가 가짜 값을 넣는다 |
-| `python serve.py`로 띄웠더니 같은 네트워크에서 접속됨 | `serve.py:58`이 `host="0.0.0.0"`, CORS는 모든 출처 허용 | 이 문서의 `run_serve.py`처럼 `host="127.0.0.1"`로 `uvicorn.run`을 부른다 |
+| (이 문서는 본 적 없음) `python serve.py`로 띄웠더니 같은 네트워크에서 접속됨 | `serve.py:58`이 `host="0.0.0.0"`, CORS는 모든 출처 허용 | 이 문서의 `run_serve.py`처럼 `host="127.0.0.1"`로 `uvicorn.run`을 부른다 |
 | `manage_todos` 호출이 `todos.0.id: Field required`로 떨어짐 | 모델에게 보이는 스키마는 `id` 필수, 코드의 "없으면 채움"은 닿지 못함 | 모델이 `id`를 빈 문자열로 주게 하거나 `todos.py`의 `Todo`에서 `id`를 선택으로 바꾼다(원본을 고치려면 복사본에서) |
 | 서버 로그에 `Deserializing unregistered type ag_ui.core.types.Context from checkpoint ... will be blocked in a future version` | 체크포인터가 `Context` 객체를 직렬화·역직렬화함 | 지금은 경고만이다. 판이 올라가 막히면 `allowed_msgpack_modules`에 `('ag_ui.core.types', 'Context')`를 더한다(경고 문구가 안내) |
-| `generate_a2ui`가 만든 UI가 이상함 | AG-UI 경로에서 보조 모델이 시스템 글(0자)을 받음(Step 7) | `copilotkit.a2ui.a2ui_prompt()`와 `state["ag-ui"]["a2ui_schema"]`로 시스템 글을 만들도록 복사본의 `generate_a2ui`를 고친다(이 문서는 시험하지 못했다) |
+| (이 문서는 본 적 없음) `generate_a2ui`가 만든 UI가 이상함 | 보조 모델의 첫 시스템 글(`prompt`)이 0자임(Step 7). 지침과 스키마는 `App Context` 메시지로만 간다 | 복사본의 `generate_a2ui`에서 `isinstance(entry, dict)` 대신 `getattr(entry, "value", "")`로 `Context` 객체도 읽게 한다(이 문서는 시험하지 못했다) |
 | `query_data`의 첫 행에 `null` 키가 보임 | `db.csv` 2행의 `notes`에 따옴표 없는 쉼표가 있어 `csv.DictReader`가 남는 칸을 `None` 키로 모음(직접 확인) | 해당 칸을 따옴표로 감싼다 |
-| 앱 README대로 Node 18로 설치하려는데 막힘 | `next@16.1.6`이 Node `>=20.9.0` 요구 | Node 20.9 이상을 쓴다 |
-| `npm run dev` 첫 실행에서 느리거나 바깥 접속 | `npx`가 CLI와 `uv`를 내려받고 통계 전송(Step 8) | 통계 끄는 변수 셋을 걸고, 처음부터 목적을 알고 실행한다 |
+| (이 문서는 본 적 없음) 앱 README대로 Node 18로 설치하려는데 막힘 | `next@16.1.6`이 Node `>=20.9.0` 요구 | Node 20.9 이상을 쓴다 |
+| (이 문서는 본 적 없음) `npm run dev` 첫 실행에서 느리거나 바깥 접속 | `npx`가 CLI와 `uv`를 내려받고 통계를 보내며 `npm install`·`next dev`도 통계를 보냄(Step 8) | Step 8의 변수를 `npm install` 앞에 건다 |
 
 ## 더 해보기
 
 - `drive.py`의 대본을 바꿔 보세요. `fake_openai.py`의 `decide()`에서 `generate_a2ui`의 `SURFACE`에 카탈로그에 없는 컴포넌트 이름을 넣고, 화면이 그것을 어떻게 다룰지 `renderers.tsx`를 읽어 예측해 보세요(화면을 띄우지 않고도 소스로 가능합니다).
-- 복사본의 `generate_a2ui`가 `state["ag-ui"]["a2ui_schema"]`를 읽도록 고친 뒤, Step 7의 `context_text_len`과 보조 호출의 시스템 글 길이가 달라지는지 `show_log.py`로 확인해 보세요.
+- 복사본의 `generate_a2ui`가 `Context` 객체도 읽도록(`getattr(entry, "value", "")`) 고친 뒤, Step 7의 `context_text_len`과 보조 호출의 첫 시스템 글 길이가 0에서 달라지는지 `show_log.py`로 확인해 보세요. 그때 `App Context` 메시지와 내용이 겹치는 것이 모델에게 도움이 될지 해가 될지도 생각해 보세요.
 - `manage_todos`가 목록을 통째로 덮어쓴다는 점은 사람이 편집하는 동안 에이전트가 끼어들면 충돌할 수 있다는 뜻입니다. `board` 장면에서 `state`와 도구 인자가 다를 때 누구의 값이 이기는지 직접 실험해 보세요.
 
 ## 다음 날 예고
 
-[Day 144 · 📊 AI Dashboard Canvas Agent](../day144-genui-dashboard-canvas-agent/README.md) — 같은 CopilotKit·AG-UI 위에서 에이전트 쪽이 Google ADK(`gemini-3.5-flash`)로 바뀌는 앱입니다. `agent/` 아래 `agent.py`(53줄)·`instructions.py`(30줄)·`modifiers.py`(52줄)·`server.py`(28줄)·`state.py`(38줄)·`tools.py`(38줄)로 이루어지고, 대시보드 "캔버스"의 공유 상태를 에이전트와 화면이 주고받습니다. `server.py:28`이 `0.0.0.0`에 `reload`를 켠 채 뜨는 점도 오늘의 `serve.py`와 같은 주의가 필요합니다.
+[Day 144 · 📊 AI Dashboard Canvas Agent](../day144-genui-dashboard-canvas-agent/README.md) — 같은 CopilotKit·AG-UI 위에서 에이전트 쪽이 Google ADK(`gemini-3.5-flash`)로 바뀌는 앱입니다. `agent/` 아래 `agent.py`(53줄)·`instructions.py`(31줄)·`modifiers.py`(52줄)·`server.py`(28줄)·`state.py`(38줄)·`tools.py`(38줄)로 이루어지고, 대시보드 "캔버스"의 공유 상태를 에이전트와 화면이 주고받습니다. `server.py:28`이 `0.0.0.0`에 `reload`를 켠 채 뜨는 점도 오늘의 `serve.py`와 같은 주의가 필요합니다.

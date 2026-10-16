@@ -6,7 +6,7 @@ ui: "브라우저\n(drive.py가 대신)" { class: ours }
 agent: "에이전트 서버" { class: ours }
 
 user -> ui: "Task Manager 질문"
-ui -> agent: "요청 1 (tools: 프런트 도구 5개)"
+ui -> agent: "요청 1 (tools: 프런트 도구 6개)"
 agent -> ui: "TOOL_CALL enableAppMode ·\nRUN_FINISHED"
 ui -> ui: "핸들러 실행 (앱 모드로 전환)"
 ui -> agent: "요청 2 (+ tool 메시지, content 빈 글)"
