@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+dev: "pnpm dev\n(루트 package.json)" { class: ours }
+ui: "ui: vite\n(5173)" { class: ours }
+rt: "runtime: tsx watch\n(4000)" { class: ours }
+ag: "agent: uv sync &&\nuv run python main.py\n(8123, 0.0.0.0, reload)" { class: ours }
+
+dev -> ui: "concurrently"
+dev -> rt: "concurrently"
+dev -> ag: "concurrently"
+ui -> rt: "/api/copilotkit\n프록시"
+rt -> ag: "LANGGRAPH_\nDEPLOYMENT_URL"

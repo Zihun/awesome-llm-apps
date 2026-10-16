@@ -1,0 +1,34 @@
+...@../../_tools/theme
+direction: right
+
+user: 사용자 { class: person }
+
+ui: "화면" {
+  class: group
+  label.near: bottom-center
+  grid-columns: 1
+  chat: "채팅" { class: ours }
+  kit: "UI 키트" { class: ours }
+  render: "렌더러" { class: ours }
+}
+
+rt: "런타임" { class: ours }
+
+agent: "에이전트" {
+  class: group
+  grid-columns: 1
+  endpoint: "엔드포인트\n(main.py)" { class: ours }
+  graph: "그래프\n(main.py)" { class: ours }
+  tools: "도구\n(search.py)" { class: ours }
+  patch: "패치\n(patches)" { class: ours }
+  mem: "Bounded\nSaver" { class: store }
+}
+
+llm: "gpt-5.5\n(가짜)" { class: ext }
+tavily: "Tavily\n(가짜)" { class: ext }
+
+user -> ui.chat: "질문"
+ui -> rt: "입력"
+rt -> agent: "AG-UI"
+agent -> llm: "LLM"
+agent -> tavily: "검색"

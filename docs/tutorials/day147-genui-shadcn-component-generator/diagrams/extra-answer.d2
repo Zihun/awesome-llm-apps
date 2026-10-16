@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: "브라우저 화면\n(소스로만)" { class: ours }
+rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
+agent: "에이전트 서버\n(main.py·그래프)" { class: ours }
+llm: "gpt-5.5\n(가짜)" { class: ext }
+
+agent -> llm: "chat.completions\n(도구 결과 포함)"
+llm -> agent: "ui 트리 JSON 글\n(24자 조각)"
+agent -> rt: "TEXT_MESSAGE_CONTENT 등\nMESSAGES_SNAPSHOT"
+rt -> ui: "이벤트 그대로"
+ui -> ui: "반쯤 온 JSON 파싱 ·\nkit.render"
+ui -> user: "카드·차트, Export Code"

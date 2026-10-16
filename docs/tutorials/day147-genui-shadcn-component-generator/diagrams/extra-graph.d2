@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: right
+
+start: "시작" { class: ours }
+norm: "normalize_\ncontext" { class: ours }
+before: "CK\nbefore_\nagent" { class: ours }
+model: "model" { class: ours }
+after: "CK\nafter_\nmodel" { class: ours }
+tools: "tools" { class: ours }
+done: "CK\nafter_\nagent" { class: ours }
+end: "끝" { class: ours }
+
+start -> norm
+norm -> before
+before -> model
+model -> after
+after -> tools: "호출"
+tools -> model: "결과"
+after -> done: "없음"
+done -> end
