@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 140 / 167일 완료
+진도: 147 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -256,13 +256,13 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 141](day141-genui-deep-research-agent/README.md) | 🔍 AI Deep Research Agent | [generative_ui_agents/ai-deep-research-agent](../../generative_ui_agents/ai-deep-research-agent/) |
-| ⬜ | [Day 142](day142-genui-financial-coach-agent/README.md) | 🪙 AI Financial Coach Agent | [generative_ui_agents/ai-financial-coach-agent](../../generative_ui_agents/ai-financial-coach-agent/) |
-| ⬜ | [Day 143](day143-genui-generative-ui-starter-project/README.md) | 🗂️ Generative UI Starter Project | [generative_ui_agents/generative-ui-starter-project](../../generative_ui_agents/generative-ui-starter-project/) |
-| ⬜ | [Day 144](day144-genui-dashboard-canvas-agent/README.md) | 📊 AI Dashboard Canvas Agent | [generative_ui_agents/ai-dashboard-canvas-agent](../../generative_ui_agents/ai-dashboard-canvas-agent/) |
-| ⬜ | [Day 145](day145-genui-mcp-apps-generative-ui-showcase/README.md) | ✈️ MCP Apps Generative UI Showcase | [generative_ui_agents/mcp-apps-generative-ui-showcase](../../generative_ui_agents/mcp-apps-generative-ui-showcase/) |
-| ⬜ | [Day 146](day146-genui-mcp-app-builder/README.md) | 🛠️ AI MCP App Builder | [generative_ui_agents/ai-mcp-app-builder](../../generative_ui_agents/ai-mcp-app-builder/) |
-| ⬜ | [Day 147](day147-genui-shadcn-component-generator/README.md) | 🎛️ AI Shadcn Component Generator | [generative_ui_agents/ai-shadcn-component-generator](../../generative_ui_agents/ai-shadcn-component-generator/) |
+| ✅ | [Day 141](day141-genui-deep-research-agent/README.md) | 🔍 AI Deep Research Agent | [generative_ui_agents/ai-deep-research-agent](../../generative_ui_agents/ai-deep-research-agent/) |
+| ✅ | [Day 142](day142-genui-financial-coach-agent/README.md) | 🪙 AI Financial Coach Agent | [generative_ui_agents/ai-financial-coach-agent](../../generative_ui_agents/ai-financial-coach-agent/) |
+| ✅ | [Day 143](day143-genui-generative-ui-starter-project/README.md) | 🗂️ Generative UI Starter Project | [generative_ui_agents/generative-ui-starter-project](../../generative_ui_agents/generative-ui-starter-project/) |
+| ✅ | [Day 144](day144-genui-dashboard-canvas-agent/README.md) | 📊 AI Dashboard Canvas Agent | [generative_ui_agents/ai-dashboard-canvas-agent](../../generative_ui_agents/ai-dashboard-canvas-agent/) |
+| ✅ | [Day 145](day145-genui-mcp-apps-generative-ui-showcase/README.md) | ✈️ MCP Apps Generative UI Showcase | [generative_ui_agents/mcp-apps-generative-ui-showcase](../../generative_ui_agents/mcp-apps-generative-ui-showcase/) |
+| ✅ | [Day 146](day146-genui-mcp-app-builder/README.md) | 🛠️ AI MCP App Builder | [generative_ui_agents/ai-mcp-app-builder](../../generative_ui_agents/ai-mcp-app-builder/) |
+| ✅ | [Day 147](day147-genui-shadcn-component-generator/README.md) | 🎛️ AI Shadcn Component Generator | [generative_ui_agents/ai-shadcn-component-generator](../../generative_ui_agents/ai-shadcn-component-generator/) |
 
 ### 볼륨 13. 🛰️ Always-on Agents (Day 148–149, 2일)
 
