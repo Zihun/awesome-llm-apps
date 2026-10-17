@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+excal: "Excalidraw MCP (기본 서버)" { class: ext }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+sb: "샌드박스 MCP 서버 (add_mcp_server로 더함)" { class: ours }
+
+rt -> excal: "initialize (UI 도구 찾기용) — 서버 목록: Excalidraw + 샌드박스(새 도구 있음)"
+excal -> rt: "initialize 응답"
+rt -> excal: "notifications/initialized"
+rt -> excal: "tools/list"
+excal -> rt: "도구 + _meta (Excalidraw 도구)"
+rt -> excal: "연결 닫기 (client.close)"
+rt -> sb: "initialize (UI 도구 찾기용)"
+sb -> rt: "initialize 응답"
+rt -> sb: "notifications/initialized"

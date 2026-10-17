@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+excal: "Excalidraw MCP (기본 서버)" { class: ext }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+sb: "샌드박스 MCP 서버 (add_mcp_server로 더함)" { class: ours }
+
+rt -> sb: "initialize (모델용 MCPClient 연결)"
+sb -> rt: "initialize 응답"
+rt -> sb: "notifications/initialized"
+rt -> sb: "tools/list"
+sb -> rt: "도구 (서버ID_이름)"
+rt -> rt: "Agent·MastraAgent·CopilotRuntime 만들기"
+rt -> excal: "return 직후 finally: 연결 닫기"
+rt -> sb: "return 직후 finally: 연결 닫기"

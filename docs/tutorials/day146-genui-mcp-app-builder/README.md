@@ -1,6 +1,6 @@
 # Day 146 · 🛠️ AI MCP App Builder
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ · 예상 소요 240분(원본은 추적 파일 21,782줄이지만 코드는 7,275줄이고 이 문서는 요청 경로 하나만 따라갑니다. 그래도 서드파티 패키지 열한 개를 받아 해시를 맞추고 읽고, 내가 쓴 Node 스크립트 셋을 저장해 돌려 보고, 그림 마흔한 장을 오가며 소스와 맞대 읽는 시간이 본문 낱말 수보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(OpenAI·E2B·Excalidraw 어디에도 요청을 보내지 않았고, 바깥 접속은 npm 레지스트리에서 공개 압축 파일을 받는 것뿐입니다. 진짜 키로 원본을 쓸 때의 어림은 사전 준비의 표) · 원본 앱: `generative_ui_agents/ai-mcp-app-builder`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ · 예상 소요 250분(원본은 추적 파일 21,782줄이지만 코드는 7,275줄이고 이 문서는 요청 경로 하나만 따라갑니다. 그래도 서드파티 패키지 열한 개를 받아 해시를 맞추고 읽고, 내가 쓴 Node 스크립트 셋을 저장해 돌려 보고, 그림 쉰세 장을 오가며 소스와 맞대 읽는 시간이 본문 낱말 수보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(OpenAI·E2B·Excalidraw 어디에도 요청을 보내지 않았고, 바깥 접속은 npm 레지스트리에서 공개 압축 파일을 받는 것뿐입니다. 진짜 키로 원본을 쓸 때의 어림은 사전 준비의 표) · 원본 앱: `generative_ui_agents/ai-mcp-app-builder`
 
 ## 오늘 만들 것
 
@@ -1555,14 +1555,14 @@ grep -n 'telemetryClient.capture' pkgs/runtime-1.54.1/package/dist/lib/integrati
 11:* - DO_NOT_TRACK=true or DO_NOT_TRACK=1
 14:	return process.env.COPILOTKIT_TELEMETRY_DISABLED === "true" || process.env.COPILOTKIT_TELEMETRY_DISABLED === "1" || process.env.DO_NOT_TRACK === "true" || process.env.DO_NOT_TRACK === "1";
 21:		this.sampleRate = .05;
-28:		this.segment = new Analytics({ writeKey: process.env.COPILOTKIT_SEGMENT_WRITE_KEY || "n7XAZtQCGS2v1vvBy3LgBCv2h3Y8whja" });
+28:		this.segment = new Analytics({ writeKey: process.env.COPILOTKIT_SEGMENT_WRITE_KEY || "<패키지에 박힌 공개 쓰기 키, 문서에서는 생략>" });
 71:		_sampleRate = sampleRate ?? .05;
 72:		if (process.env.COPILOTKIT_TELEMETRY_SAMPLE_RATE) _sampleRate = parseFloat(process.env.COPILOTKIT_TELEMETRY_SAMPLE_RATE);
 74:		this.sampleRate = _sampleRate;
 12:	telemetryClient.capture("oss.runtime.instance_created", getRuntimeInstanceTelemetryInfo(options));
 ```
 
-(직접 확인한 출력입니다.) 앱은 요청마다 `copilotRuntimeNextJSAppRouterEndpoint`를 새로 부르므로 이 `capture`도 요청마다 시도됩니다. Next.js의 변수는 Next.js 문서(https://nextjs.org/telemetry)에서 읽었습니다.
+(직접 확인한 출력입니다. 28행의 쓰기 키 값만 문서에 옮길 필요가 없어 자리표시로 바꿨고, 나머지는 실제 출력 그대로입니다.) 앱은 요청마다 `copilotRuntimeNextJSAppRouterEndpoint`를 새로 부르므로 이 `capture`도 요청마다 시도됩니다. Next.js의 변수는 Next.js 문서(https://nextjs.org/telemetry)에서 읽었습니다.
 
 끝으로 독자용 명령입니다. 앱 README의 시작 명령은 이렇고, **이 문서는 이 명령을 실행하지 않았습니다**. PowerShell 줄은 앱 README에서 옮긴 것입니다.
 
@@ -1591,7 +1591,7 @@ NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_PUBLIC_DEFAULT
 
 "팁 계산기 위젯 만들어 줘" 한 줄이 위젯이 되어 뜨기까지를 시간 순서로 그렸습니다. 길이 길어서 서른 장으로 나눴고, 경계는 배우가 바뀌는 곳입니다. 에이전트 경로가 서로 말하는 상대가 한 그림에 둘을 넘으면 선이 다른 상대의 수명선과 라벨을 지나는 것을 피할 수 없어서(순서를 모두 시험했습니다) 한 장에는 에이전트 경로의 상대가 둘까지만 두었습니다.
 
-먼저 밝힙니다. 모델이 도구를 부르는 순서는 앱 지침이 권하는 순서(Workflow A)입니다. 모델이 그대로 따랐다는 관찰이 아닙니다. 그리고 그림에 없는 것이 하나 있습니다. 화면 행동이 끼면 에이전트 경로로 요청이 한 번 더 가고(Step 3), 그 후속 요청마다 첫 장의 `rt`↔MCP 열두 메시지(서버 두 번 접속과 닫기)와 에이전트 만들기가 처음부터 되풀이됩니다. 코드의 `POST`는 `/api/mastra-agent`로 오는 모든 요청에서 이 준비를 먼저 합니다. 채팅 안 위젯 쪽의 세 요청(사용자의 새 메시지, 위젯 HTML 가져오기, 위젯의 도구 호출)은 이 준비를 요청마다 그렸습니다. 화면 행동 뒤의 후속 요청 네 번(`add_mcp_server`·`set_active_workspace`·`refresh_mcp_tools`·`show_mcp_test_prompts` 뒤)은 그리지 않고 여기에 이름으로 적습니다. 그 요청들의 준비도 같은 열두 메시지이지만 서버 목록이 `add_mcp_server` 뒤에는 달라서 `tools/list`가 새 서버에도 갑니다. 그림은 모델 호출부터 시작합니다. 모델이 화면 행동 둘을 한 단계에 묶어 부르면 요청이 그만큼 줄어듭니다. 어느 쪽인지는 모델이 정합니다. 지침의 열 단계 가운데 10번(사용자에게 알리는 마지막 답)까지 그렸습니다.
+먼저 밝힙니다. 모델이 도구를 부르는 순서는 앱 지침이 권하는 순서(Workflow A)입니다. 모델이 그대로 따랐다는 관찰이 아닙니다. 그리고 그림에 없는 것이 하나 있습니다. 화면 행동이 끼면 에이전트 경로로 요청이 한 번 더 가고(Step 3), 그 후속 요청마다 첫 장의 `rt`↔MCP 열두 메시지(서버 두 번 접속과 닫기)와 에이전트 만들기가 처음부터 되풀이됩니다. 코드의 `POST`는 `/api/mastra-agent`로 오는 모든 요청에서 이 준비를 먼저 합니다. 채팅 안 위젯 쪽의 세 요청(사용자의 새 메시지, 위젯 HTML 가져오기, 위젯의 도구 호출)은 이 준비를 요청마다 그렸습니다. 화면 행동 뒤의 후속 요청 네 번(`add_mcp_server`·`set_active_workspace`·`refresh_mcp_tools`·`show_mcp_test_prompts` 뒤)의 준비도 모두 그렸습니다. 이때는 서버 목록이 달라서 서버가 둘(기본 Excalidraw와 `add_mcp_server`로 더한 샌드박스)이고, 서버마다 연결이 되풀이되므로 준비가 첫 장보다 깁니다(셋씩 나눠 그렸습니다). 샌드박스의 `tools/list`는 `restart_server` 전의 요청에서는 비었거나 재시작 중일 수 있고(기본 도구를 지운 뒤), 뒤의 요청에서는 새 도구를 줍니다. 이 차이는 지침 순서에서 읽은 것이고 실제로 그런지는 실행하지 못했습니다. 모델이 화면 행동 둘을 한 단계에 묶어 부르면 요청이 그만큼 줄어듭니다. 어느 쪽인지는 모델이 정합니다. 지침의 열 단계 가운데 10번(사용자에게 알리는 마지막 답)까지 그렸습니다.
 
 첫 장은 서버가 요청 하나를 받아 모델을 부르기 전까지입니다. 같은 서버에 두 번 붙고(첫 연결은 UI 도구를 찾고 곧 닫고, 둘째는 모델에게 줄 도구를 얻음), 둘째 연결은 `return` 직후 `finally`가 닫습니다. 닫는 때는 모델 호출과 겹칠 수 있어서 이 메시지를 이 자리에 둔 것은 코드 위치(응답 객체를 만든 직후)를 따른 것입니다.
 
@@ -1613,9 +1613,25 @@ NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_PUBLIC_DEFAULT
 
 ![화면 행동과 후속 요청](diagrams/extra-addserver.svg)
 
+이 후속 요청의 서버 준비입니다. 서버 목록은 이제 둘입니다.
+
+![add_mcp_server 뒤 준비 1](diagrams/extra-prep-add-1.svg)
+
+![add_mcp_server 뒤 준비 2](diagrams/extra-prep-add-2.svg)
+
+![add_mcp_server 뒤 준비 3](diagrams/extra-prep-add-3.svg)
+
 여섯째 장이 지침의 3단계 `set_active_workspace`입니다. 작업 공간 상태를 고치고 `localStorage`에 저장한 뒤 또 후속 요청을 보냅니다.
 
 ![작업 공간 등록](diagrams/extra-active.svg)
+
+다음 후속 요청의 준비입니다. 목록은 그대로 둘이고 샌드박스는 아직 새 도구가 없습니다.
+
+![set_active_workspace 뒤 준비 1](diagrams/extra-prep-active-1.svg)
+
+![set_active_workspace 뒤 준비 2](diagrams/extra-prep-active-2.svg)
+
+![set_active_workspace 뒤 준비 3](diagrams/extra-prep-active-3.svg)
 
 일곱째·여덟째·아홉째 장은 파일 쓰기입니다(4~6단계). `write_file`은 샌드박스에 붙어 `mkdir -p`와 `files.write`를 하고, `edit_file`은 파일을 읽어 문자열이 있으면 바꿔 다시 씁니다. 못 찾은 편집은 `SKIP`으로 표시하고 계속 가며 그 표시가 모델에게 가는 결과 문자열에 들어갑니다.
 
@@ -1633,6 +1649,14 @@ NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_PUBLIC_DEFAULT
 
 ![목록 새로 고침](diagrams/extra-refresh.svg)
 
+후속 요청의 준비입니다. 서버를 다시 시작한 뒤라 샌드박스의 `tools/list`가 새 도구를 줍니다.
+
+![refresh_mcp_tools 뒤 준비 1](diagrams/extra-prep-refresh-1.svg)
+
+![refresh_mcp_tools 뒤 준비 2](diagrams/extra-prep-refresh-2.svg)
+
+![refresh_mcp_tools 뒤 준비 3](diagrams/extra-prep-refresh-3.svg)
+
 열둘째·열셋째 장은 사이드바가 서버를 읽는 길입니다. Step 5의 가짜 서버로 보인 바로 그 순서이고, 연결 악수와 닫기까지 그렸습니다.
 
 ![서버 읽기 앞부분](diagrams/extra-introspect.svg)
@@ -1646,6 +1670,14 @@ NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_PUBLIC_DEFAULT
 열다섯째 장이 9단계 `show_mcp_test_prompts`, 열여섯째 장이 10단계의 마지막 답입니다.
 
 ![테스트 칩](diagrams/extra-chips.svg)
+
+마지막 후속 요청의 준비입니다.
+
+![show_mcp_test_prompts 뒤 준비 1](diagrams/extra-prep-chips-1.svg)
+
+![show_mcp_test_prompts 뒤 준비 2](diagrams/extra-prep-chips-2.svg)
+
+![show_mcp_test_prompts 뒤 준비 3](diagrams/extra-prep-chips-3.svg)
 
 ![마지막 답](diagrams/extra-answer.svg)
 
