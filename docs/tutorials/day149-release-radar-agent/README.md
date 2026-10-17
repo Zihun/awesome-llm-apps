@@ -1,6 +1,6 @@
 # Day 149 · 📡 Release Radar Agent
 
-> 볼륨 13 🛰️ Always-on Agents · 난이도 ★★☆ ⚠ 앱이 고정한 `google-adk==1.9.0`에서는 앱 README의 `adk web .`가 `release_radar_agent`를 목록에 올리지 못하고(Step 7), 모델에게 선언되는 도구 인자 둘이 모두 필수로 바뀌며, `adk web`이 읽는 `.env`가 셸 환경을 덮어씁니다. README의 실행 예는 스케줄러 API를 `--host 0.0.0.0`에 여는데 엔드포인트에 인증 코드가 없습니다(Step 6) · 예상 소요 240분(앱은 파이썬 여섯 파일 1,014줄과 시험 셋이지만, 대역 서버와 래퍼·가드를 직접 저장하고 터미널 둘 이상을 오가며 요청 기록과 두 판의 ADK를 맞대 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(GitHub·Gmail·Gemini 어디에도 요청을 보내지 않았습니다). 스케줄러 경로는 모델을 부르지 않아 모델 비용이 0이고, 진짜 키로 ADK에게 브리프를 한 번 물으면 모델 호출이 두 번 나가 0.005달러 안팎입니다(⚠ 추정, Step 7) · 원본 앱: `always_on_agents/release_radar_agent`
+> 볼륨 13 🛰️ Always-on Agents · 난이도 ★★☆ ⚠ 앱이 고정한 `google-adk==1.9.0`에서는 앱 README의 `adk web .`가 `release_radar_agent`를 목록에 올리지 못하고(Step 7), 모델에게 선언되는 도구 인자 둘이 모두 필수로 바뀌며, `adk web`이 읽는 `.env`가 셸 환경을 덮어씁니다. README의 실행 예는 스케줄러 API를 `--host 0.0.0.0`에 여는데 엔드포인트에 인증 코드가 없습니다(Step 6) · 예상 소요 250분(앱은 파이썬 여섯 파일 1,014줄과 시험 셋이지만, 대역 서버와 래퍼·가드를 직접 저장하고 터미널 둘 이상을 오가며 요청 기록과 두 판의 ADK를 맞대 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(GitHub·Gmail·Gemini 어디에도 요청을 보내지 않았습니다). 스케줄러 경로는 모델을 부르지 않아 모델 비용이 0이고, 진짜 키로 ADK에게 브리프를 한 번 물으면 모델 호출이 두 번 나가 0.005달러 안팎입니다(⚠ 추정, Step 7) · 원본 앱: `always_on_agents/release_radar_agent`
 
 ## 오늘 만들 것
 
@@ -126,7 +126,7 @@ google-adk 1.9.0 | google-genai 2.31.0 | fastapi 0.115.12 | uvicorn 0.34.2 | sta
 
 세 줄이 그대로 설치됩니다(Python 3.12.10, uv 0.7.2 (481d05d8d 2025-04-30)). `google-adk` 1.9.0은 2025-07-31에 공개됐고(PyPI), 최신은 2.12.0(2026-10-13)입니다. 1.9.0의 메타데이터는 `google-genai>=1.21.1`만 요구해서(PyPI 메타데이터) 오늘 최신 2.31.0이 깔리고, 이 조합으로 앱이 도는 것은 Step 7에서 직접 봅니다. `fastapi==0.115.12`와 `uvicorn==0.34.2`도 오늘 최신(0.141.1, 0.54.0)보다 한참 낡은 판인데 문제 없이 돕니다. 최신 ADK와의 차이는 Step 7에서 두 번째 가상환경으로 맞대어 봅니다.
 
-이제 가드입니다. 가드는 네 가지를 합니다. 환경변수를 **스크립트 안에서 직접** 덮어써서(모델 주소는 `http://127.0.0.1:<포트>/gemini`, 키는 가짜 값, Vertex·전송 설정·매니페스트·라이브 스위치는 빈 값) 셸이나 `.env`에 진짜 값이 있어도 무시하고, `urllib`의 기본 opener를 프록시 없는 것으로 바꾸면서 `api.github.com` 요청은 대역 서버로 돌리고 루프백도 GitHub도 아닌 주소는 요청을 만들기 전에 거절하고, `urllib.request.getproxies()`를 비워 `httpx`·`aiohttp`(Gemini 클라이언트가 씁니다)가 프록시를 찾지 못하게 하고, 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로는 못 나가게 막습니다. 셸에 프록시가 있었다면 그 포트로의 연결은 루프백이어도 막습니다(이유는 Step 7의 `.env` 시험). 셸의 `HTTP(S)_PROXY`·`ALL_PROXY`는 빈 값으로 덮고(`unset`이 아니라 빈 값이어야 나중에 다른 코드가 다시 채우지 못합니다) `NO_PROXY`·`no_proxy`에 루프백을 겁니다. `check_env`는 이 모두와 웹훅 주소 호스트, Gmail 변수가 비어 있는지를 확인하고 하나라도 어긋나면 멈춥니다. 가드 줄을 빠뜨려도 바깥에 닿지 않게 두 가지를 더했습니다. `point_at_fakes`가 끝에서 소켓·`urlopen` 가드(`install`)를 스스로 설치하고, `check_env`는 `urlopen`·`getaddrinfo`·asyncio 연결 함수가 정말 가드의 것인지를 확인합니다. 그래서 래퍼에서 `guard.install()` 한 줄을 지워도 설치되어 있고, `point_at_fakes`를 지우면 `check_env`가 "가드가 설치되어 있지 않습니다"로 멈춥니다. `report()`도 설치되지 않았으면 "0건" 대신 설치되지 않았다고 찍습니다(0건이라는 말이 가드가 없을 때도 나오지 않도록). 래퍼의 가드 줄을 하나씩 지운 판을 돌린 결과는 Step 8 끝에 있습니다.
+이제 가드입니다. 가드는 네 가지를 합니다. 환경변수를 **스크립트 안에서 직접** 덮어써서(모델 주소는 `http://127.0.0.1:<포트>/gemini`, 키는 가짜 값, Vertex·전송 설정·매니페스트·라이브 스위치는 빈 값) 셸이나 `.env`에 진짜 값이 있어도 무시하고, `urllib`의 기본 opener를 프록시 없는 것으로 바꾸면서 `api.github.com` 요청은 대역 서버로 돌리고 루프백도 GitHub도 아닌 주소는 요청을 만들기 전에 거절하고, `urllib.request.getproxies()`를 비워 `httpx`·`aiohttp`(Gemini 클라이언트가 씁니다)가 프록시를 찾지 못하게 하고, 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로는 못 나가게 막습니다. 셸에 프록시가 있었다면 그 포트로의 연결은 루프백이어도 막습니다(이유는 Step 7의 `.env` 시험). 셸의 `HTTP(S)_PROXY`·`ALL_PROXY`는 빈 값으로 덮고(`unset`이 아니라 빈 값이어야 나중에 다른 코드가 다시 채우지 못합니다) `NO_PROXY`·`no_proxy`에 루프백을 겁니다. `check_env`는 이 모두와 웹훅 주소 호스트, Gmail 변수가 비어 있는지를 확인하고 하나라도 어긋나면 멈춥니다. 가드 줄을 빠뜨려도 바깥에 닿지 않게 두 가지를 더했습니다. `point_at_fakes`가 끝에서 소켓·`urlopen` 가드(`install`)를 스스로 설치하고, `check_env`는 `urlopen`·`getaddrinfo`·asyncio 연결 함수(그리고 `subprocess.Popen`, 이유는 Step 7의 텔레메트리)가 정말 가드의 것인지를 확인합니다. 그래서 래퍼에서 `guard.install()` 한 줄을 지워도 설치되어 있고, `point_at_fakes`를 지우면 `check_env`가 "가드가 설치되어 있지 않습니다"로 멈춥니다. `report()`도 설치되지 않았으면 "0건" 대신 설치되지 않았다고 찍습니다(0건이라는 말이 가드가 없을 때도 나오지 않도록). 래퍼의 가드 줄을 하나씩 지운 판을 돌린 결과는 Step 8 끝에 있습니다.
 
 ```bash
 cat > guard.py <<'EOF'
@@ -141,6 +141,7 @@ import asyncio.base_events as be
 import ipaddress
 import os
 import socket
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -206,6 +207,7 @@ def check_env() -> None:
         and urllib.request.urlopen.__name__ == "guarded_urlopen"
         and socket.getaddrinfo.__name__ == "guarded_getaddrinfo"
         and be.BaseEventLoop.create_connection.__name__ == "guarded_create_connection"
+        and subprocess.Popen.__name__ == "GuardedPopen"
     ):
         sys.exit("가드: 소켓·urlopen 가드가 설치되어 있지 않습니다. 중단합니다.")
     host = urlparse(os.environ.get("GOOGLE_GEMINI_BASE_URL", "")).hostname or ""
@@ -303,6 +305,20 @@ def install() -> None:
     socket.socket.connect = guarded_connect
     socket.getaddrinfo = guarded_getaddrinfo
     be.BaseEventLoop.create_connection = guarded_create_connection
+
+    real_popen = subprocess.Popen
+
+    class GuardedPopen(real_popen):
+        """하위 프로세스는 이 가드를 물려받지 않는다. ADK 2.x의 텔레메트리 전송 프로세스는 띄우지 못하게 한다."""
+
+        def __init__(self, args, *a, **kw):
+            text = " ".join(map(str, args)) if isinstance(args, (list, tuple)) else str(args)
+            if "_metrics_reporter" in text:
+                _note("subprocess", "adk metrics reporter")
+                raise OSError("가드: ADK 텔레메트리 전송 프로세스를 막았습니다")
+            super().__init__(args, *a, **kw)
+
+    subprocess.Popen = GuardedPopen
     INSTALLED = True
 
 
@@ -1299,6 +1315,8 @@ FileNotFoundError: Dependency manifest not found: \workspace\package.json
 
 이제 `adk web`입니다. 앱 README는 앱 폴더 안에서 `adk web .`를 쓰고 ADK Web에서 `release_radar_agent`를 고르라고 합니다. 이 문서는 `adk` 명령을 래퍼가 가드를 건 뒤 부릅니다. 래퍼는 `--no-reload`(`--reload`는 서버를 새 프로세스로 다시 띄워 가드가 따라가지 못합니다)와 `--host 127.0.0.1`이 없으면 멈추고, `adk web`이 앱을 처음 부를 때 읽는 `.env`를 건너뛰게 합니다. 까닭은 아래 시험입니다.
 
+**텔레메트리(2.x만).** 최신 ADK의 `adk` 명령은 stdin이 터미널이고 동의 기록이 없으면 "Enable telemetry? [Y/n]"을 묻고, **그냥 Enter를 누르면 켜집니다**(설치된 2.12.0의 `google/adk/cli/cli_tools_click.py` 403~427행, 소스로 확인). 동의는 `~/.adk/config.json`의 `telemetry`에 적히고(`google/adk/utils/_telemetry_config.py`의 `get_user_config_path`), 켜져 있으면 명령이 끝날 때(같은 파일 375행) `MetricsCollector`가 하위 프로세스를 띄워(`google/adk/cli/_telemetry/_metrics_collector.py` 274행, `[sys.executable, "_metrics_reporter.py"]`) `https://play.googleapis.com/log`(`_metrics_reporter.py` 43행)로 사용 기록을 보냅니다. 이미 동의가 적힌 독자의 진짜 홈이면 질문 없이 보냅니다. 1.9.0에는 이 기능이 없습니다(설치된 1.9.0 폴더에서 `play.googleapis`·`read_telemetry_consent`를 `grep`해 직접 확인). 이 보내기는 **하위 프로세스**라 래퍼가 건 가드(소켓·`urlopen` 막기)를 물려받지 않습니다. 직접 재현했습니다. 스크래치 홈에 `{"telemetry": true}`를 미리 적어 둔 독자를 흉내 내고, 가드 없이 2.12.0의 `adk web ./없는폴더`(곧바로 오류로 끝나는 명령)를 돌렸더니 하위 프로세스가 `play.googleapis.com` 이름 조회를 시도했습니다(소켓 감시가 막았고 실제 전송은 0). 그래서 래퍼는 서로 독립된 다섯 겹으로 막습니다. (1) `HOME`·`USERPROFILE`을 이 파일 옆의 새 폴더 `adk-home`으로 바꿔 진짜 홈의 동의 기록을 읽지도 쓰지도 않고, (2) 그 새 홈에 `{"telemetry": false}`를 미리 적고, (3) stdin을 닫아 질문이 뜨지 않게 하고, (4) 동의를 읽는 `read_telemetry_consent`가 늘 `False`를 돌려주게 하고, (5) 가드가 `_metrics_reporter` 하위 프로세스를 띄우는 `subprocess.Popen` 호출을 거절합니다. 이 문서의 명령은 진짜 홈의 설정을 바꾸지 않습니다. 줄을 하나씩 뺀 판(가드·래퍼 줄 열 판과 세 겹을 한꺼번에 뺀 한 판, 모두 진짜 홈에 동의가 적힌 상태)에서 `play.googleapis.com` 시도는 0이었고, 세 겹을 뺀 판에서는 (5)가 하위 프로세스를 막았다고 `blocked.log`에 남았습니다. 래퍼 없이 맨 `adk`를 쓰는 독자는, 첫 질문에서 `n`을 입력하거나 `adk telemetry disable`(진짜 홈의 설정을 바꿉니다)을 먼저 하세요.
+
 ```bash
 cat > serve_adk.py <<'EOF'
 """adk 명령을 가드 아래에서 실행한다. 모델은 가짜 서버가 대신한다.
@@ -1319,6 +1337,22 @@ if "--no-reload" not in args:
 if "--host" not in args or args[args.index("--host") + 1] != "127.0.0.1":
     sys.exit("가드: --host 127.0.0.1이 없습니다. 중단합니다.")
 guard.point_at_fakes(port)
+
+# ADK 2.x는 첫 실행에 "텔레메트리를 켤까요?"를 묻고(Enter는 켬), 동의가 ~/.adk/config.json에 있으면 사용 기록을
+# 하위 프로세스가 https://play.googleapis.com/log 로 보낸다(1.9.0에는 이 기능이 없다). 서로 독립된 네 겹으로 막는다.
+adk_home = os.path.join(os.path.dirname(os.path.abspath(__file__)), "adk-home")  # 이 파일 옆의 새 폴더
+os.makedirs(os.path.join(adk_home, ".adk"), exist_ok=True)
+os.environ["HOME"] = os.environ["USERPROFILE"] = adk_home  # 1) 진짜 홈의 동의 기록을 읽지도 쓰지도 않는다
+open(os.path.join(adk_home, ".adk", "config.json"), "w", encoding="utf-8", newline="\n").write('{"telemetry": false}\n')  # 2) 새 홈에는 거절을 미리 적는다
+sys.stdin = open(os.devnull)  # 3) 질문이 뜨지 않게 stdin을 닫는다(질문은 stdin이 터미널일 때만 뜬다)
+try:
+    from google.adk.utils import _telemetry_config
+
+    _telemetry_config.read_telemetry_consent = lambda: False  # 4) 동의를 읽는 함수가 늘 거절을 돌려준다
+except ImportError:  # 1.9.0에는 이 모듈이 없다
+    pass
+# 5) guard.install()이 텔레메트리 전송 하위 프로세스의 실행도 막는다(guard.py의 GuardedPopen)
+
 os.environ["ADK_DISABLE_LOAD_DOTENV"] = "1"  # 2.x에만 있는 스위치. 1.9.0에는 없으므로 아래 대체도 한다
 guard.check_env()
 guard.install()
@@ -1346,6 +1380,7 @@ cat > client.py <<'EOF'
 """
 import json
 import sys
+import time
 import urllib.request
 from urllib.parse import urlparse
 
@@ -1365,9 +1400,10 @@ def post(path: str, body: dict):
         return e.code, e.read().decode()[:200]
 
 
-status, session = post("/apps/release_radar_agent/users/me/sessions/s1", {})
-print("세션", status, session["id"])
-status, events = post("/run", {"app_name": "release_radar_agent", "user_id": "me", "session_id": "s1",
+SID = f"s{int(time.time())}"  # 같은 세션 이름을 다시 쓰면 2.x는 409(이미 있음)를 돌려준다(세션이 .adk/session.db에 남는다)
+status, session = post(f"/apps/release_radar_agent/users/me/sessions/{SID}", {})
+print("세션", status)
+status, events = post("/run", {"app_name": "release_radar_agent", "user_id": "me", "session_id": SID,
                                "new_message": {"role": "user", "parts": [{"text": question}]}})
 print("/run", status)
 if status == 200:
@@ -1417,7 +1453,7 @@ $PY showlog.py gemini
 
 ```text
 ["release_radar_agent"]
-세션 200 s1
+세션 200
 /run 200
 [release_radar] 도구 호출 preview_dependency_brief {'top_n': 5}
 [release_radar] 도구 결과 항목 4개 / watch_mode sample
@@ -1444,7 +1480,7 @@ ls -a always_on_agents/release_radar_agent | tr '\n' ' '
 
 ```text
 ["release_radar_agent"]
-세션 200 s1
+세션 200
 /run 200
 [release_radar] 도구 호출 preview_dependency_brief {'top_n': 5}
 [release_radar] 도구 결과 항목 4개 / watch_mode sample
