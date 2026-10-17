@@ -540,7 +540,7 @@ $env:GOOGLE_GENAI_USE_VERTEXAI = "False"
 Remove-Item Env:GOOGLE_VERTEX_BASE_URL, Env:GOOGLE_CLOUD_PROJECT, Env:GOOGLE_CLOUD_LOCATION, Env:FNOL_AVATAR_NAME, Env:FNOL_AVATAR_PROJECT, Env:FNOL_AVATAR_IMAGE, Env:FNOL_GEMINI_LIVE_MODEL, Env:FNOL_SKETCH_MODEL -ErrorAction SilentlyContinue
 ```
 
-PowerShell에서는 `$env:이름 = ""`가 변수를 지우는 것으로 알려져 있어(확인하지 못했습니다) 위 줄은 `bash` 판처럼 빈 값으로 덮지 못하고 지웁니다. 그러면 `claim-work/.env`에 아바타·Vertex 줄이 있을 때 `setdefault`가 그 줄로 채웁니다. 그래서 두 셸 모두에서 같은 방식으로 막는 검사 스크립트 `check_env.py`를 둡니다. 아래에서 저장하고, 앱 서버를 띄우는 줄과 `cache_probe.py`는 이 검사를 통과해야만 시작합니다.
+PowerShell에서는 `$env:이름 = ""`가 변수를 지웁니다. Microsoft 문서(about_Environment_Variables)에 "In PowerShell, an environment variable can't be set to an empty string. Setting an environment variable to `$null` or an empty string removes it from the current session."라고 적혀 있습니다. 그래서 위 줄은 `bash` 판처럼 빈 값으로 덮지 못하고 지웁니다. 그러면 `claim-work/.env`에 아바타·Vertex 줄이 있을 때 `setdefault`가 그 줄로 채웁니다. 그래서 두 셸 모두에서 같은 방식으로 막는 검사 스크립트 `check_env.py`를 둡니다. 아래에서 저장하고, 앱 서버를 띄우는 줄과 `cache_probe.py`는 이 검사를 통과해야만 시작합니다.
 
 이 터미널이 정말 가짜 서버로만 향하는지 검사하는 `check_env.py`를 저장합니다. 앱의 `_load_dotenv`와 같은 규칙으로 `claim-work/.env`를 읽어(셸에 없는 변수만 채움) 앱이 실제로 보게 될 값을 만든 뒤, `GOOGLE_GEMINI_BASE_URL`의 호스트가 `urlparse`로 `127.0.0.1`·`localhost`인지, `GOOGLE_API_KEY`가 `fake-`로 시작하는지, Vertex가 꺼져 있는지, `GEMINI_API_KEY`와 Vertex·아바타 변수가 비어 있는지 봅니다. 하나라도 어긋나면 이유를 찍고 종료 코드 1로 끝납니다. 문자열 접두가 아니라 호스트로 비교하므로 `https://127.0.0.1@example.invalid` 같은 주소는 통과하지 못합니다.
 
