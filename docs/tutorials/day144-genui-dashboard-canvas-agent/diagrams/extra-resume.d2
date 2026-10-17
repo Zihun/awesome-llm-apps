@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+dagent: "DashboardAgent" { class: ours }
+tools: "지표 도구" { class: ours }
+adk: "ADKAgent" { class: ours }
+rt: "런타임" { class: ours }
+ui: "브라우저" { class: ours }
+
+dagent -> tools: "미뤄진 add_pinned_metrics 실행"
+tools -> adk: "state['pinnedMetrics'] 씀"
+adk -> rt: "TOOL_CALL_RESULT · STATE_DELTA"
+rt -> ui: "RESULT · DELTA 중계"

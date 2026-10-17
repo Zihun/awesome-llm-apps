@@ -43,7 +43,7 @@
 
 한국어 Windows의 Git Bash에서 파이썬 출력이 cp949로 깨지는 것을 막으려고 `envfake.sh`가 `PYTHONIOENCODING=utf-8`을 겁니다. 이 문서의 파일 저장(`cat > … <<`)은 bash 문법이어서 Windows에서는 Git Bash로 따라 합니다. PowerShell 줄은 실행해 보지 못했고(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다) 그렇게 표시했습니다.
 
-**앱이 쓰는 모델(2026-10-16).** 앱은 `gemini-3.5-flash`를 두 곳에 씁니다(`generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:24`, `generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:34`). Google의 폐기 표(https://ai.google.dev/gemini-api/docs/deprecations, "Last updated 2026-10-12 UTC")를 `curl`로 받은 HTML에서 읽은 행은 이렇습니다. `gemini-3.5-flash` | May 19, 2026 | N/A | `gemini-3.6-flash` (not available to select in Google AI Studio; the endpoint is not shutting down and automatically routes API requests to `gemini-3.6-flash`). 종료일이 "N/A"이고 엔드포인트가 닫히지 않으므로 종료 예정이 아니라고 읽어 종료 ⚠는 달지 않았습니다. 다만 요청이 3.6으로 처리되므로 응답이 3.5와 같다고 가정하지 않는 편이 낫습니다(머리말에 한 줄 둔 까닭입니다). 모델 목록 페이지(https://ai.google.dev/gemini-api/docs/models)와 가격표(https://ai.google.dev/gemini-api/docs/pricing)에는 `gemini-3.5-flash`가 나오지 않아 가격은 `gemini-3.6-flash` 행으로 어림했습니다(이 둘은 WebFetch로 읽은 요약이라 원문 대조는 못 했습니다). 가격표의 `gemini-3.6-flash`는 입력 100만 토큰당 $0.75, 출력 $3.75(2026-12-31까지)이고 Google 검색 근거(grounding)는 달마다 5,000건까지 무료이며 그 뒤 1,000건에 $14입니다(검색 근거는 무료 등급에서 쓸 수 없다고 적혀 있습니다). 이 앱의 "다시 만들기" 한 번은 지침과 상태가 담긴 모델 호출이 셋 이상이고 검색 하나가 붙으니(Step 5), 호출당 입력 수천 토큰으로 어림하면 몇 센트입니다. 호출해 확인한 값이 아닙니다.
+**앱이 쓰는 모델(2026-10-16).** 앱은 `gemini-3.5-flash`를 두 곳에 씁니다(`generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:24`, `generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:34`). Google의 폐기 표(https://ai.google.dev/gemini-api/docs/deprecations, "Last updated 2026-10-12 UTC")를 `curl`로 받은 HTML에서 읽은 행은 이렇습니다. `gemini-3.5-flash` | May 19, 2026 | N/A | `gemini-3.6-flash` (not available to select in Google AI Studio; the endpoint is not shutting down and automatically routes API requests to `gemini-3.6-flash`). 종료일이 "N/A"이고 엔드포인트가 닫히지 않으므로 종료 예정이 아니라고 읽어 종료 ⚠는 달지 않았습니다. 다만 요청이 3.6으로 처리되므로 응답이 3.5와 같다고 가정하지 않는 편이 낫습니다(머리말에 한 줄 둔 까닭입니다). 모델 목록 페이지(https://ai.google.dev/gemini-api/docs/models)와 가격표(https://ai.google.dev/gemini-api/docs/pricing)에는 `gemini-3.5-flash`가 나오지 않아 가격은 `gemini-3.6-flash` 행으로 어림했습니다(두 페이지를 `curl`로 받은 HTML에서 `gemini-3.5-flash`는 왼쪽 메뉴의 링크 `/gemini-api/docs/models/gemini-3.5-flash`로만 나오고 표·가격 행에는 없습니다. 최종 갱신은 모델 목록 2026-10-13, 가격표 2026-10-16 UTC). 가격표의 `gemini-3.6-flash`는 입력 100만 토큰당 $0.75, 출력 $3.75(2026-12-31까지, 이 숫자들은 WebFetch 요약으로 읽었고 원문 표와 대조하지 못했습니다)이고 Google 검색 근거(grounding)는 달마다 5,000건까지 무료이며 그 뒤 1,000건에 $14입니다(검색 근거는 무료 등급에서 쓸 수 없다고 적혀 있습니다). 이 앱의 "다시 만들기" 한 번은 지침과 상태가 담긴 모델 호출이 셋 이상이고 검색 하나가 붙으니(Step 5), 호출당 입력 수천 토큰으로 어림하면 몇 센트입니다. 호출해 확인한 값이 아닙니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -446,7 +446,7 @@ PowerShell에서 빈 값 대입(`$env:X = ""`)은 변수를 지우는 것으로 
 **확인.** 터미널 C에서(`. ./envfake.sh`를 읽고) 서버가 사는지 봅니다. 모르는 경로는 404이고, 서버는 그 요청을 `unexpected`로 기록합니다.
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:56217/nothing
+curl --noproxy '*' -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:56217/nothing
 uv run --no-project python show_log.py
 ```
 
@@ -454,6 +454,8 @@ uv run --no-project python show_log.py
 404
 1 예상 밖 요청: GET /nothing
 ```
+
+`curl`에 `--noproxy '*'`를 붙인 것은 셸에 프록시 변수가 남아 있어도 루프백 요청이 프록시로 가지 않게 하려는 것입니다. 이 문서의 `curl`은 모두 그렇게 씁니다.
 
 ### Step 2. 상태와 도구
 
@@ -773,12 +775,12 @@ PowerShell은 Step 1의 환경 줄을 먼저 붙여 넣은 뒤 `uv run --no-proj
 
 ```bash
 netstat -ano | grep ":56218 " | grep LISTENING
-curl -s http://127.0.0.1:56218/capabilities; echo
-curl -s -X POST http://127.0.0.1:56218/ -H "Content-Type: application/json" -d '{}' | cut -c1-160; echo
+curl --noproxy '*' -s http://127.0.0.1:56218/capabilities; echo
+curl --noproxy '*' -s -X POST http://127.0.0.1:56218/ -H "Content-Type: application/json" -d '{}' | cut -c1-160; echo
 ```
 
 ```text
-  TCP    127.0.0.1:56218        0.0.0.0:0              LISTENING       27556
+  TCP    127.0.0.1:56218        0.0.0.0:0              LISTENING       10944
 {}
 {"detail":[{"type":"missing","loc":["body","threadId"],"msg":"Field required","input":{}},{"type":"missing","loc":["body","runId"],"msg":"Field required","input
 ```
@@ -1134,15 +1136,15 @@ uv run --no-project python show_log.py fake/fake.jsonl --system 1 | sed -n 2,13p
 ```text
 You manage a dashboard for a user. 
 
-Current dashboard: <google.adk.sessions.state.State object at 0x000001F7FC4D9670>
+Current dashboard: <google.adk.sessions.state.State object at 0x0000022AE053CE60>
 
 When asked for the current dashboard, pinned metrics or chart please reference the current dashboard and respond.
 
     You are an intelligent dashboard agent designed to assist users in building and managing interactive dashboards.
 
-    Current dashboard state: {'_ag_ui_thread_id': 'thread-0a121b', '_ag_ui_app_name': 'dashboard_app', '_ag_ui_user_id': 'demo_user', '_ag_ui_processed_message:u-7bba3c':
+    Current dashboard state: {'_ag_ui_thread_id': 'thread-0f429c', '_ag_ui_app_name': 'dashboard_app', '_ag_ui_user_id': 'demo_user', '_ag_ui_processed_message:u-09ed3f':
 
-    The current date is 2026-10-16.
+    The current date is 2026-10-17.
 ```
 
 맨 위 "Current dashboard:" 줄이 `before_model`의 접두이고 값이 `<google.adk.sessions.state.State object at 0x…>`입니다. `callback_context.state`는 `State` 객체이고 f-string은 그 이름만 찍습니다. 상태의 내용은 모델에게 가지 않습니다. 모델이 상태를 보는 것은 아래 `instruction_provider`가 끼운 "Current dashboard state: {…}" 한 번뿐이고(이쪽은 `context.state`가 읽기 전용 매핑이라 딕셔너리처럼 찍힙니다), 거기에 `_ag_ui_*` 내부 키와 `_ag_ui_processed_message:…`가 함께 보입니다. 4번 요청에서는 같은 자리에 `pinnedMetrics`가 `Metric(id='m1', …)`로 찍힙니다. 화면이 보낸 상태는 딕셔너리로 찍히는 차이입니다. 모델은 이 문자열을 읽고 판단하므로, 지침에 찍히는 모양은 곧 모델의 입력입니다.
@@ -1373,7 +1375,11 @@ run 2 뒤 charts: ['Sales by region (fake)'] pinnedMetrics: 3
 
 ![사용자의 답을 받아 이어지는 실행](diagrams/extra-chart2.svg)
 
-둘째 실행은 `add_pinned_metrics`의 `TOOL_CALL_RESULT`·`STATE_DELTA`부터 시작하고(앞 실행이 미룬 것), 그 뒤에 넷째 요청과 글이 옵니다.
+둘째 실행은 `add_pinned_metrics`의 `TOOL_CALL_RESULT`·`STATE_DELTA`부터 시작하고(앞 실행이 미룬 것, 그림은 미뤄진 도구 실행도 그렸고 실행 시점은 이벤트 순서로 읽은 것입니다), 그 뒤에 넷째 요청과 글이 옵니다.
+
+![재개된 도구 실행](diagrams/extra-resume.svg)
+
+앞 실행이 미룬 `add_pinned_metrics`가 이어서 실행되고 그 결과가 화면에 갑니다. 이 순서는 둘째 실행의 이벤트 출력에서 읽은 것입니다.
 
 ![둘째 실행의 마무리](diagrams/extra-chart3.svg)
 
@@ -1504,12 +1510,12 @@ cp .env.example .env
 pnpm run dev
 ```
 
-`pnpm run dev`는 `next dev --turbopack`(포트 3000)과 앞서 본 `server.py`를 함께 띄웁니다. 그러니 이 명령을 그대로 쓰면 에이전트가 `0.0.0.0`에 열리고(Step 4) 진짜 키로 Google에 요청이 갑니다. 화면을 직접 띄워 보려면 `dev`가 아니라 `dev:ui`만 쓰고, 설치 스크립트와 통계를 끄고, 호스트를 막습니다(`--` 뒤 인자는 `next`로 갑니다). 에이전트는 이 문서의 `serve_local.py`로 루프백에 띄우고 `AGENT_URL`이 그곳을 가리키게 합니다.
+`pnpm run dev`는 `next dev --turbopack`(포트 3000)과 앞서 본 `server.py`를 함께 띄웁니다. 그러니 이 명령을 그대로 쓰면 에이전트가 `0.0.0.0`에 열리고(Step 4) 진짜 키로 Google에 요청이 갑니다. 화면을 직접 띄워 보려면 `dev`가 아니라 `dev:ui`만 쓰고, 설치 스크립트와 통계를 끄고, 호스트를 막습니다. pnpm 문서(https://pnpm.io/cli/run)는 "Options listed after the script's name are passed to the executed script"라고 적고 있어 `--` 없이 `-H`를 뒤에 붙입니다(문서로 읽은 것이고 실행하지 않았습니다). 에이전트는 이 문서의 `serve_local.py`로 루프백에 띄우고 `AGENT_URL`이 그곳을 가리키게 합니다.
 
 ```bash
 export NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true SCARF_ANALYTICS=false DO_NOT_TRACK=1
 pnpm install --ignore-scripts
-AGENT_URL=http://127.0.0.1:56219/ pnpm run dev:ui -- -H 127.0.0.1
+AGENT_URL=http://127.0.0.1:56219/ pnpm run dev:ui -H 127.0.0.1
 ```
 
 `--ignore-scripts`는 루트의 `postinstall`(파이썬 의존성 설치)과 `@scarf/scarf`의 설치 스크립트를 함께 건너뜁니다. 검사창은 위처럼 코드를 고치지 않으면 `localhost`에서 켜집니다. 화면을 가짜 서버로 돌리면 모델 대본이 이 문서의 것이어서 화면이 실제 모델처럼 움직이지는 않습니다. 이 조합도 시험하지 않았습니다.
