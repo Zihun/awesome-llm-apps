@@ -1,15 +1,9 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-sb: "샌드박스 MCP 서버" { class: ours }
-rt: "에이전트 경로 (mastra-agent)" { class: ours }
 ui: "브라우저 (렌더러)" { class: ours }
 fr: "위젯 iframe (바깥 프록시 + 안쪽 위젯)" { class: ours }
 
-ui -> rt: "POST forwardedProps: resources/read"
-rt -> sb: "연결 + resources/read"
-sb -> rt: "위젯 HTML"
-rt -> ui: "RUN_FINISHED {result} (<base> 정리)"
 ui -> fr: "바깥 iframe 만들기 (srcdoc: 샌드박스 HTML)"
 fr -> ui: "sandbox-proxy-ready"
 ui -> fr: "sandbox-resource-ready {html}"

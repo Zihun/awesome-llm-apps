@@ -1,0 +1,12 @@
+...@../../_tools/theme
+direction: right
+
+agentroute: "에이전트 경로\n(CopilotKit 런타임)" { class: ours }
+sandbox: "샌드박스 안 MCP 서버\n(mcp-use, 원격)" { class: ours }
+local: "pnpm dev의 로컬 MCP 서버\n(mcp-use, 독자 PC)" { class: ours }
+segment: "Segment · Scarf" { class: ext }
+posthog: "PostHog · Scarf" { class: ext }
+
+agentroute -> segment: "인스턴스 정보 (5% 표본)"
+sandbox -> posthog: "server_run · 도구 호출"
+local -> posthog: "server_run · 도구 호출"

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 (사이드바)" { class: ours }
+ix: "서버 읽기 경로 (mcp-introspect)" { class: ours }
+sb: "샌드박스 MCP 서버" { class: ours }
+
+ix -> sb: "resources/read ui://..."
+sb -> ix: "위젯 HTML"
+ix -> sb: "resources/list"
+sb -> ix: "자원 목록"
+ix -> sb: "연결 닫기 (client.close)"
+ix -> ui: "tools · HTML(<base> 정리) · resources"

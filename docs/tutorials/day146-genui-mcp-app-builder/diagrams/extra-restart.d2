@@ -1,16 +1,16 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-ui: "브라우저 (CopilotKit)" { class: ours }
-e2b: "E2B API" { class: ext }
-rt: "에이전트 경로 (mastra-agent)" { class: ours }
 llm: "OpenAI gpt-5.5" { class: ext }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+e2b: "E2B API" { class: ext }
 
 llm -> rt: "restart_server(workspaceId)"
-rt -> e2b: ":3109 프로세스 끄고 npm run dev를 배경으로"
-rt -> e2b: "5초마다 curl tools/list (최대 6번)"
-e2b -> rt: "tools가 보이는 응답 또는 빌드 로그"
+rt -> e2b: "Sandbox.connect"
+rt -> e2b: "kill :3109 프로세스"
+rt -> e2b: "npm run dev 배경"
+rt -> e2b: "5초 뒤 curl tools/list (최대 6번)"
+e2b -> rt: "tools가 보이면 성공 응답"
+rt -> e2b: "실패 갈래: cat /tmp/dev.log | tail -40"
+e2b -> rt: "빌드 로그"
 rt -> llm: "Server restarted... 또는 실패 로그"
-llm -> rt: "refresh_mcp_tools()"
-rt -> ui: "TOOL_CALL (화면 행동)"
-rt -> ui: "RUN_FINISHED"

@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 (CopilotKit)" { class: ours }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+llm: "OpenAI gpt-5.5" { class: ext }
+
+llm -> rt: "refresh_mcp_tools()"
+rt -> ui: "TOOL_CALL (화면 행동)"
+rt -> ui: "RUN_FINISHED"
+ui -> ui: "처리: 서버 읽기 다시 시작 (onRefreshServers)"
+ui -> rt: "후속 POST"

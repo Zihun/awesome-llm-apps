@@ -1,0 +1,24 @@
+...@../../_tools/theme
+direction: right
+
+agentroute: "에이전트 경로\n(mastra-agent)" { class: ours }
+cpk: "/api/copilotkit\n(화면이 부르지 않음)" { class: ours }
+wsapi: "작업 공간 경로\n(workspace/*)" { class: ours }
+introspect: "서버 읽기 경로\n(mcp-introspect)" { class: ours }
+openai: "OpenAI gpt-5.5" { class: ext }
+e2b: "E2B API" { class: ext }
+excal: "Excalidraw MCP" { class: ext }
+vm: "E2B 샌드박스 VM (원격)" {
+  class: group
+  label.near: bottom-center
+  mcpsrv: "MCP 서버 (mcp-use)" { class: ours }
+}
+
+agentroute -> openai: "모델 요청"
+cpk -> openai: "같은 도구"
+agentroute -> e2b: "파일 · 명령"
+wsapi -> e2b: "같은 일"
+e2b -> vm.mcpsrv: "VM 생성"
+agentroute -> vm.mcpsrv: "MCP 호출"
+introspect -> vm.mcpsrv: "도구 읽기"
+introspect -> excal: "도구 읽기"

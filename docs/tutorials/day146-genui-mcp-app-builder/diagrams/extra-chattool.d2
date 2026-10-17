@@ -4,10 +4,8 @@ shape: sequence_diagram
 sb: "샌드박스 MCP 서버" { class: ours }
 rt: "에이전트 경로 (mastra-agent)" { class: ours }
 ui: "브라우저 (CopilotKit)" { class: ours }
-llm: "OpenAI gpt-5.5" { class: ext }
 
 rt -> sb: "tools/call"
 sb -> rt: "structuredContent (props)"
-rt -> ui: "TOOL_CALL_START · ARGS · END · RESULT"
+rt -> ui: "TOOL_CALL_RESULT"
 rt -> ui: "ACTIVITY_SNAPSHOT (mcp-apps)"
-rt -> llm: "도구 결과"

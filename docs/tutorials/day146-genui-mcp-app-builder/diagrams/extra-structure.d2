@@ -1,0 +1,21 @@
+...@../../_tools/theme
+direction: down
+
+page: "채팅 · 사이드바\n(page.tsx, useMcpIntrospect)" { class: ours }
+provider: "CopilotKit 제공자\n(서버 목록 상태)" { class: ours }
+actions: "화면 행동\n(BuilderAgentProvider)" { class: ours }
+store: "도구 설정 저장소\n(localStorage)" { class: store }
+preview: "미리보기 iframe\n(McpAppPreview)" { class: ours }
+agentroute: "에이전트 경로\n(mastra-agent)" { class: ours }
+introspect: "서버 읽기 경로\n(mcp-introspect)" { class: ours }
+wsapi: "작업 공간 경로\n(workspace/*, call-tool)" { class: ours }
+cpk: "/api/copilotkit\n(화면이 부르지 않음)" { class: ours }
+
+provider -> agentroute: "POST + x-mcp-servers"
+agentroute -> provider: "SSE 이벤트"
+actions -> provider: "서버 목록 고침"
+page -> introspect: "도구 읽기"
+introspect -> page: "도구 · HTML"
+page -> wsapi: "info · download"
+page -> store: "도구 설정 저장"
+store -> preview: "HTML · previewData"

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 (CopilotKit)" { class: ours }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+llm: "OpenAI gpt-5.5" { class: ext }
+
+rt -> llm: "지침 + 도구 + 메시지 (add_mcp_server 결과 포함)"
+llm -> rt: "set_active_workspace(id, endpoint)"
+rt -> ui: "TOOL_CALL (화면 행동)"
+rt -> ui: "RUN_FINISHED"
+ui -> ui: "처리: 작업 공간 상태와 localStorage에 저장"
+ui -> rt: "후속 POST"

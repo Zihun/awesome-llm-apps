@@ -1,6 +1,6 @@
 # Day 146 · 🛠️ AI MCP App Builder
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ · 예상 소요 210분(원본은 추적 파일 21,782줄이지만 코드는 7,275줄이고 이 문서는 요청 경로 하나만 따라갑니다. 그래도 서드파티 패키지 열한 개를 받아 해시를 맞추고 읽고, 내가 쓴 Node 스크립트 셋을 저장해 돌려 보고, 그림 스무 장을 오가며 소스와 맞대 읽는 시간이 본문 낱말 수보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(OpenAI·E2B·Excalidraw 어디에도 요청을 보내지 않았고, 바깥 접속은 npm 레지스트리에서 공개 압축 파일을 받는 것뿐입니다. 진짜 키로 원본을 쓸 때의 어림은 사전 준비의 표) · 원본 앱: `generative_ui_agents/ai-mcp-app-builder`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ · 예상 소요 240분(원본은 추적 파일 21,782줄이지만 코드는 7,275줄이고 이 문서는 요청 경로 하나만 따라갑니다. 그래도 서드파티 패키지 열한 개를 받아 해시를 맞추고 읽고, 내가 쓴 Node 스크립트 셋을 저장해 돌려 보고, 그림 서른네 장을 오가며 소스와 맞대 읽는 시간이 본문 낱말 수보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(OpenAI·E2B·Excalidraw 어디에도 요청을 보내지 않았고, 바깥 접속은 npm 레지스트리에서 공개 압축 파일을 받는 것뿐입니다. 진짜 키로 원본을 쓸 때의 어림은 사전 준비의 표) · 원본 앱: `generative_ui_agents/ai-mcp-app-builder`
 
 ## 오늘 만들 것
 
@@ -14,7 +14,19 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림의 "브라우저" 묶음 안 네 부품은 한 페이지의 React 코드이고, "Next.js 서버" 묶음 안 세 부품은 `app/api/` 아래의 Node 서버 코드입니다. 묶음 사이 화살표는 묶음 전체의 것입니다. 실제로 `/api/mastra-agent`를 부르는 것은 CopilotKit이고 `/api/mcp-introspect`를 부르는 것은 사이드바의 훅입니다. 샌드박스 안의 MCP 서버는 "E2B 샌드박스 VM" 묶음 안에 두어 원격에서 돈다는 것을 모양으로 말합니다. Excalidraw는 이 앱이 기본으로 붙는 공개 MCP 서버입니다.
+그림의 "브라우저" 묶음 안 네 부품은 한 페이지의 React 코드이고, "Next.js 서버" 묶음 안 세 부품은 `app/api/` 아래의 Node 서버 코드입니다. 묶음 사이 화살표는 묶음 전체의 것입니다. 이 선들이 묶음 안 어느 부품에서 나오는지는 한 그림에 못 넣어(부품 단위로 이으면 세로가 상한 1,000px을 넘습니다. 시도해 1,180~1,449px을 쟀습니다) 아래 보조 구조 그림 셋에 부품 단위로 그렸습니다. 실제로 `/api/mastra-agent`를 부르는 것은 CopilotKit이고 `/api/mcp-introspect`를 부르는 것은 사이드바의 훅입니다. 샌드박스 안의 MCP 서버는 "E2B 샌드박스 VM" 묶음 안에 두어 원격에서 돈다는 것을 모양으로 말합니다. Excalidraw는 이 앱이 기본으로 붙는 공개 MCP 서버입니다.
+
+보조 구조 그림 하나는 화면과 서버 안의 부품이 서로 무엇을 부르는지입니다. 브라우저 `localStorage`(도구 설정 저장소)와, 화면이 부르지 않는 `/api/copilotkit`도 여기 들어 있습니다.
+
+![부품 단위 구조](diagrams/extra-structure.svg)
+
+다른 하나는 서버 경로마다 어느 바깥 서비스를 부르는지, 그리고 E2B가 VM을 만들어 거기서 MCP 서버를 돌리는 관계입니다.
+
+![바깥으로 나가는 선](diagrams/extra-outside.svg)
+
+셋째는 텔레메트리가 어디서 나가는지입니다(Step 4·7).
+
+![텔레메트리](diagrams/extra-telemetry.svg)
 
 **요청 경로를 무엇으로 정했는가.** "앱을 만들어 달라"는 말 한 줄이 샌드박스 생성, 파일 쓰기, 서버 재시작을 거쳐 사이드바와 채팅에 위젯이 뜨기까지의 길을 따라갑니다. 이 앱의 정체가 거기에 있기 때문입니다. 앱 README가 내세우는 것은 "에이전트가 앱을 짓는다"이고, 그 문장이 코드에서 성립하는 곳은 이 길뿐입니다. 나머지(모바일 탭 배치, 도구 설정 저장소, 다운로드 묶음 만들기, Three.js 샘플 서버)는 아래 표에 역할만 적었습니다. 규모도 이 선택을 거듭니다. 추적 파일 21,782줄 가운데 13,388줄은 `apps/mcp-use-server/.agent/skills/`의 코딩 에이전트용 지침 문서(51개 파일)이고, 코드는 7,275줄입니다. 문서는 저장소 안의 글이어서 내용으로만 읽었고 지시로 따르지 않았습니다.
 
@@ -23,11 +35,11 @@
 소스를 읽고 알게 된 특이점은 여덟입니다.
 
 1. 화면이 쓰는 에이전트 경로는 `/api/mastra-agent` 하나입니다. 같은 일을 하는 `/api/copilotkit`(CopilotKit `BuiltInAgent` 판)은 화면 어디서도 부르지 않습니다(Step 2). `BuilderAgentProvider.tsx`의 머리 주석은 아직 그 경로를 가리킵니다.
-2. 이 앱의 API 경로 열한 개에는 인증도 출처 검사도 없습니다. 그 가운데 일곱은 화면에서 부르는 곳이 없는데도 열려 있고, 그 가운데 `workspace/exec`는 받은 샌드박스 ID에 셸 명령을 돌립니다(Step 7, `grep`으로 확인).
+2. 이 앱의 API 경로 열한 개에는 인증도 출처 검사도 없습니다. 그 가운데 일곱은 화면에서 부르는 곳이 없는데도 열려 있습니다. `workspace/provision`은 이름 하나만 받아 샌드박스를 만들고 그 ID를 돌려주므로 아무것도 몰라도 `workspace/exec`(받은 ID에 셸 명령)까지 이어지고, `next dev`의 기본 주소가 `0.0.0.0`이라 같은 네트워크의 누구나 닿으며, 앱은 성공한 샌드박스를 끄는 코드가 없어 만들 때마다 최대 60분 과금이 남습니다(Step 7, 소스로 읽었고 시험하지 않았습니다).
 3. 요청 한 건마다 에이전트와 MCP 연결을 새로 만들고, 서버마다 MCP 접속을 두 번 합니다(Step 2). 그리고 `try { return handleRequest(req) } finally { await mcp.disconnect() }`는 응답이 끝나기 전에 연결을 닫을 수 있는 모양입니다(Node로 순서를 보였습니다).
 4. 잠금 파일이 가리키는 `e2b` 2.18.0에는 앱이 부르는 `betaGetMcpUrl`이 없어서 샌드박스 주소는 항상 대체 경로(`https://3109-<샌드박스ID>.e2b.app/mcp` 꼴)로 만들어지고, E2B 문서는 이런 주소를 "알면 누구나 닿는 것"이라고 합니다(Step 3).
-5. 두 미리보기 iframe 모두 `sandbox="allow-scripts allow-same-origin"`을 주고 `srcdoc`으로 띄웁니다. 에이전트가 쓴 HTML이 앱과 같은 출처에서 돕니다(Step 6).
-6. `mcp-use` 서버는 시작할 때 도구 이름·설명·스키마를 PostHog와 Scarf로 보냅니다. 샌드박스 템플릿도 앱 코드도 이것을 끄지 않습니다. CopilotKit 런타임도 5% 표본으로 Segment에 보냅니다(Step 4·7).
+5. 두 미리보기 iframe 모두 `sandbox="allow-scripts allow-same-origin"`을 주고 `srcdoc`으로 띄웁니다. 에이전트가 쓴 HTML만이 아니라 목록의 어느 서버(기본 목록의 제3자 Excalidraw 포함)가 준 HTML이든 앱과 같은 출처에서 돈다고 읽힙니다(Step 6, 브라우저를 열지 않아 시험하지 못했습니다).
+6. `mcp-use` 서버는 시작할 때 도구 이름·설명·스키마를 PostHog와 Scarf로 보냅니다. 샌드박스 템플릿도 앱 코드도 이것을 끄지 않고, `pnpm dev`가 독자 PC에서 띄우는 로컬 `mcp-use` 서버도 같습니다. CopilotKit 런타임은 5% 표본으로 Segment에, Turborepo와 Next.js는 각자의 통계 서버에 보냅니다(Step 4·7).
 7. README는 Node 20+라고 하지만 잠금 파일의 `@mastra/core`·`@mastra/mcp`는 22.13 이상을 요구합니다. README는 `E2B_REPO_URL`의 기본값을 `mcp-use-server-template`이라 하지만 코드와 `.env.example`은 CopilotKit 모노레포 주소입니다(Step 1·3).
 8. 코드는 `gpt-5.5`에 `reasoningEffort: "minimal"`을 주는데 모델 페이지가 적은 값에 `minimal`이 없습니다(Step 2).
 
@@ -45,7 +57,7 @@ Node는 출력을 UTF-8로 찍습니다. cmd.exe 같은 cp949 터미널에서는
 
 **앱이 쓰는 모델(2026-10-16).** 앱은 `gpt-5.5`를 기본값으로 씁니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/mastra-agent/route.ts:783`, `OPENAI_MODEL`로 바꿀 수 있습니다). 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5.5)를 읽은 요약으로는 기본 스냅숏이 `gpt-5.5-2026-04-23`이고 Chat Completions·Responses·Batch를 지원하며 가격은 입력 100만 토큰당 $5, 출력 $30, 캐시 입력 $0.5입니다. 폐기 문서(https://developers.openai.com/api/docs/deprecations)에는 `gpt-5.5`도 그 스냅숏도 없어서 ⚠는 달지 않습니다. 두 페이지 모두 WebFetch로 읽었고 요약 모델을 거치므로 원문과 글자 대조는 하지 못했습니다. 이 앱의 `openai(...)`는 `@ai-sdk/openai` 3.0.49에서 Responses API 모델을 만듭니다(`createLanguageModel`이 `createResponsesModel`을 부름, 패키지 소스로 확인). 같은 패키지의 `createOpenAI`는 `baseURL` 인자가 없으면 환경변수 `OPENAI_BASE_URL`을, 그것도 없으면 `https://api.openai.com/v1`을 씁니다. 앱은 `baseURL`을 인자로 주지 않습니다.
 
-**원본을 진짜 키로 쓸 때의 비용(모두 어림이고 호출해 확인한 값이 아닙니다).** 모델: 앱은 한 요청에 최대 25단계(`maxSteps: 25`)를 허락하고 단계마다 지침(81줄)과 도구 정의 열한 개 이상을 다시 보냅니다. 입력이 호출마다 수천~수만 토큰이라고 보면 앱 하나를 짓는 데 $0.1~$1 안팎이라고 어림합니다. E2B: 가격표(https://e2b.dev/pricing, WebFetch)는 vCPU 초당 $0.000014, 메모리 GiB 초당 $0.0000045이고 Hobby에는 한 번 $100 크레딧, 세션 최대 1시간입니다. 앱의 템플릿 빌드 파일이 `cpuCount: 2`·`memoryMB: 2048`을 쓰니(`generative_ui_agents/ai-mcp-app-builder/apps/mcp-use-server/build.dev.ts:14-17`) 같은 크기라고 가정하면 한 시간에 약 $0.13이고, 앱은 샌드박스 수명을 60분으로 잡습니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/workspace/e2b.ts:14-15`). 가정이 틀리면 달라집니다.
+**원본을 진짜 키로 쓸 때의 비용(모두 어림이고 호출해 확인한 값이 아닙니다).** 모델: 앱은 한 요청에 최대 25단계(`maxSteps: 25`)를 허락하고 단계마다 지침(81줄)과 도구 정의 열두 개 이상(백엔드 여덟, 화면 행동 넷, 그리고 MCP 도구)을 다시 보냅니다. 단계 하나의 입력을 3천~3만 토큰으로 가정하면 25단계를 다 쓰는 최악에 입력만 최대 75만 토큰, 캐시 없이 약 $3.75이고, 추론 토큰은 출력 단가($30)로 매겨집니다. 보통은 몇 단계에서 끝난다고 보고 앱 하나에 $0.1~$1, 위쪽 끝은 몇 달러라고 어림합니다. E2B: 가격표(https://e2b.dev/pricing, WebFetch)는 vCPU 초당 $0.000014, 메모리 GiB 초당 $0.0000045이고 Hobby에는 한 번 $100 크레딧, 세션 최대 1시간입니다. 앱의 템플릿 빌드 파일이 `cpuCount: 2`·`memoryMB: 2048`을 쓰니(`generative_ui_agents/ai-mcp-app-builder/apps/mcp-use-server/build.dev.ts:14-17`) 같은 크기라고 가정하면 한 시간에 약 $0.13이고, 앱은 샌드박스 수명을 60분으로 잡습니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/workspace/e2b.ts:14-15`). 가정이 틀리면 달라집니다. 앱은 성공한 샌드박스를 끄는 코드가 없어서(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/workspace/e2b.ts:81-84`의 `stop`을 부르는 곳이 없습니다, Step 3) 샌드박스를 만들 때마다 60분치(약 $0.13)가 남습니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -64,6 +76,15 @@ Node는 출력을 UTF-8로 찍습니다. cmd.exe 같은 cp949 터미널에서는
 | 작업 공간 경로 | 파일·명령·다운로드를 HTTP로 여는 경로 일곱과 `call-tool` | `generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/workspace/exec/route.ts:1-33` |
 | 샌드박스 템플릿 | `mcp-use` 서버 뼈대(도구 하나와 위젯 하나). E2B 이미지로 굽는 파일 둘 | `generative_ui_agents/ai-mcp-app-builder/apps/mcp-use-server/index.ts:21-46` |
 | Three.js 샘플 | 공식 `ext-apps` 예제. 도구가 받은 JS 코드를 위젯이 `new Function`으로 실행 | `generative_ui_agents/ai-mcp-app-builder/apps/threejs-server/server.ts:150-231` |
+| 열려 있지만 안 쓰는 에이전트 경로 | `/api/copilotkit`. 같은 도구와 지침을 CopilotKit `BuiltInAgent`로 다시 만든 판. 화면이 부르지 않음 | `generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/copilotkit/route.ts:1-608` |
+| 사이드바 읽기 훅 | 서버 목록이 바뀔 때마다 서버마다 `/api/mcp-introspect`를 부름 | `generative_ui_agents/ai-mcp-app-builder/apps/web/app/hooks/useMcpIntrospect.ts:38-142` |
+| 서버 목록 관리 | 서버 추가·삭제·다운로드 버튼, CopilotKit 서버 목록 동기화 | `generative_ui_agents/ai-mcp-app-builder/apps/web/app/components/McpServerManager.tsx:72-398` |
+| 도구 상세 창 | 선택한 도구의 스키마·미리보기·"채팅에서 써 보기" 문구 | `generative_ui_agents/ai-mcp-app-builder/apps/web/app/components/ToolDetail.tsx:13-394` |
+| 안내 문구 패널 | Three.js 예제용 안내 문구 패널. 어디서도 쓰이지 않음 | `generative_ui_agents/ai-mcp-app-builder/apps/web/app/components/ToolCallPreview.tsx:1-49` |
+| 시작 질문 칩 | 첫 화면의 제안 칩 넷(틱택토·팁 계산기·주사위·Excalidraw)과 환경변수로 바꾸기 | `generative_ui_agents/ai-mcp-app-builder/apps/web/app/constants/chatStarters.ts:1-71` |
+| 다운로드 묶음 | 샌드박스 압축 파일을 미리 만든 모노레포 뼈대(`mcp-apps-starter`)에 합쳐 내려줌 | `generative_ui_agents/ai-mcp-app-builder/apps/web/lib/workspace/merge-download-kit.ts:1-77` |
+| 뼈대 묶기 스크립트 | `prebuild`가 부르는, 뼈대 압축 파일 만들기 | `generative_ui_agents/ai-mcp-app-builder/apps/web/scripts/pack-download-kit.mjs:1-128` |
+| 운영용 템플릿 빌드 | `build.dev.ts`와 같은 일을 이름만 달리해 E2B에 올림 | `generative_ui_agents/ai-mcp-app-builder/apps/mcp-use-server/build.prod.ts:1-29` |
 | 배포 설정 | Dockerfile(node:22-alpine, `HOSTNAME=0.0.0.0`)과 Render 설정. 읽기만 했고 실행하지 않았습니다 | `generative_ui_agents/ai-mcp-app-builder/render.yaml:1-34` |
 
 ## 단계별 진행
@@ -105,11 +126,12 @@ grep -n "Node.js" README.md
 
 (직접 확인한 출력입니다.) README의 20과 잠금 파일의 22.13 이상이 다릅니다. Dockerfile은 `node:22-alpine`입니다(`generative_ui_agents/ai-mcp-app-builder/Dockerfile:2`). 이 문서는 pnpm을 돌리지 않았으므로 20에서 실제로 어떻게 되는지(경고인지 설치 거부인지)는 모릅니다.
 
-이제 읽을 패키지를 받습니다. 저장소 밖 빈 폴더 `builder-work`를 만들고 거기서 합니다. 아래 `fetch_pkg.sh`는 npm 레지스트리에서 압축 파일 하나를 받아 sha512를 잠금 파일의 `integrity`와 비교하고, 같을 때만 새 폴더에 풀기만 합니다. 설치 스크립트나 패키지 코드는 돌지 않습니다.
+이제 읽을 패키지를 받습니다. 저장소 밖(홈 아래처럼 어떤 저장소에도 들지 않는 곳)에 빈 폴더를 만들고 그 경로를 변수 `WORK`에 담아 둡니다. 새 터미널을 열면 `WORK`을 다시 지정하세요. 이 문서에서 패키지를 읽는 블록은 `cd "$WORK"`로, 원본을 읽는 블록은 `cd <저장소>/generative_ui_agents/ai-mcp-app-builder`로 시작합니다. 아래 `fetch_pkg.sh`는 npm 레지스트리에서 압축 파일 하나를 받아 sha512를 잠금 파일의 `integrity`와 비교하고, 같을 때만 새 폴더에 풀기만 합니다. 설치 스크립트나 패키지 코드는 돌지 않습니다.
 
 ```bash
-mkdir builder-work
-cd builder-work
+WORK="$HOME/builder-work"
+mkdir "$WORK"
+cd "$WORK"
 ```
 
 `fetch_pkg.sh`로 저장합니다.
@@ -172,7 +194,18 @@ while read -r n v; do bash fetch_pkg.sh "$n" "$v" "$LOCK"; done < pkgs.txt
 일치 @mastra/core@1.21.0  sha512-DgFZpdvR1XR6tE/oc...
 ```
 
-(직접 확인한 출력입니다.) 열한 개 모두 일치했습니다. 이 단계에서 바깥으로 나간 것은 `registry.npmjs.org`로 가는 GET 열한 번이 전부입니다. 풀린 폴더는 `pkgs/mastra-1.0.1/package/`처럼 읽습니다. PowerShell 형태는 실행해 보지 못했고 이 단계는 bash를 전제합니다.
+(직접 확인한 출력입니다.) 열한 개 모두 일치했습니다. 원본 앱 폴더에 아무것도 생기지 않았는지도 봅니다(빈 출력이어야 합니다).
+
+```bash
+cd <저장소>/generative_ui_agents/ai-mcp-app-builder
+git status --short -- .
+```
+
+```text
+(출력 없음)
+```
+
+(직접 확인한 출력입니다.) 이 이 단계에서 바깥으로 나간 것은 `registry.npmjs.org`로 가는 GET 열한 번이 전부입니다. 풀린 폴더는 `pkgs/mastra-1.0.1/package/`처럼 읽습니다. PowerShell 형태는 실행해 보지 못했고 이 단계는 bash를 전제합니다.
 
 이제 화면의 첫 부품입니다. `layout.tsx`가 모든 페이지를 `DynamicCopilotKitProvider`로 감싸고, 이 제공자가 서버 목록을 상태로 들고 있다가 `x-mcp-servers`라는 HTTP 헤더에 JSON으로 실어 에이전트 경로로 보냅니다.
 
@@ -282,7 +315,7 @@ function readMcpServersFromHeader(req: NextRequest): McpServerConfig[] {
 이 이름 규칙은 앱이 정한 것이 아니라 Mastra의 `MCPClient.listTools()`가 도구를 `서버이름_도구이름` 꼴로 내놓는 것에 맞춘 것입니다(`@mastra/mcp` 1.4.1 소스로 확인).
 
 ```bash
-cd builder-work
+cd "$WORK"
 grep -n 'connectedTools\[`' pkgs/mcp-1.4.1/package/dist/index.js
 ```
 
@@ -319,7 +352,7 @@ grep -n 'connectedTools\[`' pkgs/mcp-1.4.1/package/dist/index.js
     }
 ```
 
-그다음 에이전트입니다. 모델은 `gpt-5.5`, 도구는 MCP 도구와 백엔드 도구(Step 3)의 합, 단계 상한은 25입니다. 지침에 붙인 `providerOptions.openai.reasoningEffort: "minimal"`은 따져 볼 곳입니다. 모델 페이지의 `reasoning.effort` 목록은 `none, low, medium (default), high, xhigh`이고 `minimal`이 없습니다(WebFetch 요약). 그런데 `@ai-sdk/openai` 3.0.49는 이 옵션을 호출 수준 `providerOptions`에서 읽습니다. 앱은 그것을 시스템 지침 객체 안에 넣었습니다. Mastra가 지침 객체의 `providerOptions`를 호출 수준으로 올려 주는지는 읽지 않았습니다. 그래서 이 값이 무시되는지, API가 거절하는지, 받아들여지는지 이 문서는 모릅니다.
+그다음 에이전트입니다. 모델은 `gpt-5.5`, 도구는 MCP 도구와 백엔드 도구(Step 3)의 합, 단계 상한은 25입니다. 지침에 붙인 `providerOptions.openai.reasoningEffort: "minimal"`은 따져 볼 곳입니다. 모델 페이지의 `reasoning.effort` 목록은 `none, low, medium (default), high, xhigh`이고 `minimal`이 없습니다(WebFetch 요약). 그런데 `@ai-sdk/openai` 3.0.49는 이 옵션을 호출 수준 `providerOptions`에서 읽습니다. 앱은 그것을 시스템 지침 객체 안에 넣었습니다. 또 `@ai-sdk/openai`는 시스템 메시지를 `{ role, content }`만 담아 보내고 메시지 수준 `providerOptions`는 읽지 않습니다(아래 확인). Mastra가 지침 객체의 `providerOptions`를 호출 수준으로 올려 주는지는 읽지 않았습니다. 올려 준다면 `minimal`이 거절될 수 있고, 올려 주지 않으면 그냥 무시됩니다. 어느 쪽인지 이 문서는 모릅니다.
 
 `generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/mastra-agent/route.ts:830-850`
 
@@ -348,7 +381,9 @@ grep -n 'connectedTools\[`' pkgs/mcp-1.4.1/package/dist/index.js
 ```
 
 ```bash
+cd "$WORK"
 sed -n 4877,4880p pkgs/openai-3.0.49/package/dist/index.mjs
+sed -n 2744,2748p pkgs/openai-3.0.49/package/dist/index.mjs
 ```
 
 ```text
@@ -356,9 +391,14 @@ sed -n 4877,4880p pkgs/openai-3.0.49/package/dist/index.mjs
         reasoning: {
           ...(openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null && {
             effort: openaiOptions.reasoningEffort
+      case "system": {
+        switch (systemMessageMode) {
+          case "system": {
+            input.push({ role: "system", content });
+            break;
 ```
 
-(직접 확인한 출력입니다. 옵션 이름을 `openaiOptions`에서 읽는 줄입니다. 이 객체는 같은 파일 안에서 호출 수준 `providerOptions`를 파싱한 결과입니다.)
+(직접 확인한 출력입니다. 앞 넷은 옵션 이름을 `openaiOptions`에서 읽는 줄이고 이 객체는 같은 파일 안에서 호출 수준 `providerOptions`를 파싱한 결과입니다. 뒤 다섯 줄은 시스템 메시지를 `{ role, content }`로만 넣는 곳입니다.)
 
 에이전트를 AG-UI에 맞추는 부분이 다음입니다. `MastraAgent`는 `@ag-ui/mastra` 1.0.1의 클래스이고, 이 앱의 `ACTIVITY_SNAPSHOT` 미들웨어(Step 6)를 `use`로 붙입니다. 앱 주석에 따르면 CopilotKit 런타임이 실행 전에 `clone()`을 부르는데 `MastraAgent.clone()`이 설정만 복사하고 미들웨어를 떨어뜨려서, `clone`을 덮어써 다시 붙입니다. 패키지 쪽 `clone`이 정말 설정만 복사하는 것은 소스로 확인했습니다. 런타임이 `clone()`을 부른다는 것은 확인하지 않았습니다.
 
@@ -391,6 +431,7 @@ sed -n 4877,4880p pkgs/openai-3.0.49/package/dist/index.mjs
 ```
 
 ```bash
+cd "$WORK"
 grep -o 'clone(){return new a(this.config)}' pkgs/mastra-1.0.1/package/dist/mastra-D9uPcpog.mjs
 ```
 
@@ -454,6 +495,7 @@ console.log(log.join("\n"));
 ```
 
 ```bash
+cd "$WORK"
 node finally_order.mjs
 ```
 
@@ -470,9 +512,10 @@ disconnect 시작
 disconnect 끝
 ```
 
-(직접 확인한 출력입니다.) 앱과 같은 모양에서는 `disconnect`가 `handleRequest`보다 먼저 끝납니다. 다만 `handleRequest`가 돌려주는 것은 스트림이 붙은 `Response`여서, `await`를 붙여도 닫는 때는 스트림이 끝나기 전일 수 있습니다. 실제로 이것이 도구 호출을 깨는지는 실행하지 못해 모릅니다. 읽은 범위에서 한 가지는 말할 수 있습니다. `@mastra/mcp`의 도구는 "Not connected" 같은 세션 오류를 만나면 한 번 다시 연결해 재시도하게 짜여 있습니다.
+(직접 확인한 출력입니다.) 앱과 같은 모양에서는 `disconnect`가 시작되는 때가 `handleRequest`가 끝나기 전입니다(`disconnect 시작`이 `handleRequest 끝`보다 앞). 먼저 끝나는지는 내가 고른 지연(50ms 대 5ms)이 정한 것이어서, 구조로 말할 수 있는 것은 시작 순서뿐입니다. 다만 `handleRequest`가 돌려주는 것은 스트림이 붙은 `Response`여서, `await`를 붙여도 닫는 때는 스트림이 끝나기 전일 수 있습니다. 실제로 이것이 도구 호출을 깨는지는 실행하지 못해 모릅니다. 읽은 범위에서 한 가지는 말할 수 있습니다. `@mastra/mcp`의 도구는 "Not connected" 같은 세션 오류를 만나면 한 번 다시 연결해 재시도하게 짜여 있습니다.
 
 ```bash
+cd "$WORK"
 grep -n 'Not connected\|forceReconnect()' pkgs/mcp-1.4.1/package/dist/index.js | head -6
 ```
 
@@ -500,6 +543,8 @@ apps/web/app/page.tsx:397:        mounted two CopilotChat instances → duplicat
 ```
 
 (직접 확인한 출력입니다.) 가리키는 곳은 둘 다 자기 자신의 `endpoint:` 줄이고, 화면 쪽은 `CopilotKitProvider.tsx`의 `runtimeUrl`뿐입니다. 나머지는 주석입니다.
+
+이 그림의 모델·E2B·MCP로 가는 선은 "Next.js 서버" 묶음 전체에서 나옵니다. 흐린 부품에서 나오는 것처럼 보여도, 실제로 그 선을 긋는 것은 방금 들어온 에이전트 경로입니다. 서버 읽기 경로(Step 5)는 MCP 서버와 Excalidraw만 부르고, 작업 공간 경로(Step 7)는 E2B만 부릅니다. 부품 단위 선은 위의 보조 구조 그림 둘에 있습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -617,6 +662,7 @@ README는 `E2B_REPO_URL`의 기본값이 `mcp-use-server-template` 저장소 주
 잠금 파일이 가리키는 `e2b` 2.18.0에서 이 메서드가 있는지 압축 파일에서 찾았습니다.
 
 ```bash
+cd "$WORK"
 grep -c 'betaGetMcpUrl' pkgs/e2b-2.18.0/package/dist/index.mjs
 grep -n 'getMcpUrl\|mcpPort' pkgs/e2b-2.18.0/package/dist/index.mjs
 grep -n -A4 '  getHost(sandboxId, port, sandboxDomain)' pkgs/e2b-2.18.0/package/dist/index.mjs
@@ -660,9 +706,10 @@ grep -n -A4 '  getHost(sandboxId, port, sandboxDomain)' pkgs/e2b-2.18.0/package/
     },
 ```
 
-여기서 목록이 바뀌면 Step 1의 헤더가 바뀌고, 이 행동의 결과는 `processAgentResult`가 다음 요청을 보내게 합니다. CopilotKit 1.54.1의 `@copilotkitnext/core`가 서버 도구가 아닌 호출의 결과를 대화에 붙이고, 도구에 `followUp: false`가 없으면 다시 `runAgent`를 부릅니다(패키지 소스로 확인).
+여기서 목록이 바뀌면 Step 1의 헤더가 바뀝니다. 화면 행동의 결과를 대화에 붙이고 후속 요청을 보내는 규칙은 [Day 143](../day143-genui-generative-ui-starter-project/README.md) Step 4가 `@copilotkit/core` 1.56.2로 읽었고, 이 앱의 `@copilotkitnext/core` 1.54.1에도 같은 규칙이 있습니다(`processAgentResult`, `followUp !== false`).
 
 ```bash
+cd "$WORK"
 grep -n 'needsFollowUp\|followUp !== false' pkgs/core-1.54.1/package/dist/index.mjs | head -6
 ```
 
@@ -676,6 +723,22 @@ grep -n 'needsFollowUp\|followUp !== false' pkgs/core-1.54.1/package/dist/index.
 ```
 
 (직접 확인한 출력입니다.) 그래서 화면 행동을 부를 때마다 에이전트 경로로 요청이 한 번 더 갑니다. 요청마다 Step 2의 준비를 처음부터 다시 합니다.
+
+샌드박스를 끄는 쪽도 봅니다. `Sandbox.kill()`은 클론·설치가 실패했을 때(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/workspace/e2b.ts:41`, `52`)와 `stop` 메서드 안(`83`)에만 있고, `stop`을 부르는 곳은 없습니다.
+
+```bash
+cd <저장소>/generative_ui_agents/ai-mcp-app-builder
+grep -rn '\.stop(' apps/web/app apps/web/lib
+grep -rn 'kill()' apps/web/app apps/web/lib
+```
+
+```text
+apps/web/lib/workspace/e2b.ts:41:        await sandbox.kill();
+apps/web/lib/workspace/e2b.ts:52:        await sandbox.kill();
+apps/web/lib/workspace/e2b.ts:83:    await sandbox.kill();
+```
+
+(직접 확인한 출력입니다. 첫 `grep`은 아무것도 찾지 못합니다.) 성공해서 쓰는 샌드박스는 60분 수명이 다할 때까지 살아 있습니다.
 
 끝으로 다운로드 도구입니다. 샌드박스에서 `tar`를 만들기 전에 `node_modules`·`dist`·`.agent`를 지웁니다.
 
@@ -833,7 +896,7 @@ const ProductSearchResult: React.FC = () => {
 도구의 `_meta`에 UI 자원 주소가 들어가는 것은 `mcp-use`가 해 줍니다. 1.22.3의 어댑터는 새 형식(`ui.resourceUri`)과 옛 평평한 키(`"ui/resourceUri"`)를 둘 다 내놓고, 앱의 읽기 코드는 평평한 키만 봅니다(소스로 확인).
 
 ```bash
-cd builder-work
+cd "$WORK"
 sed -n 119,130p pkgs/mcp-use-1.22.3/package/dist/chunk-4IVVK2XN.js
 grep -o 'var [A-Za-z]*="ui/resourceUri",[A-Za-z]*="text/html;profile=mcp-app"' pkgs/ext-apps-0.4.2/package/dist/src/server/index.js
 ```
@@ -935,14 +998,16 @@ export const template = Template()
   );
 ```
 
-끝으로 이 서버가 바깥으로 보내는 것입니다. `mcp-use` 1.22.3의 `listen()`은 서버를 올린 뒤 `_trackServerRun`을 부르고, 그 이벤트가 PostHog(`eu.i.posthog.com`)와 Scarf 게이트웨이로 갑니다. 끄는 방법은 환경변수 `MCP_USE_ANONYMIZED_TELEMETRY=false`뿐입니다. 이벤트에는 서버 이름과 `baseUrl`, 도구 이름, 도구 설명, 입출력 스키마(JSON 문자열)가 들어갑니다. 에이전트가 새로 쓴 도구의 이름과 설명이 그대로 포함된다는 뜻입니다. 앱 코드와 템플릿은 이 변수를 어디서도 설정하지 않습니다.
+끝으로 이 서버가 바깥으로 보내는 것입니다. `mcp-use` 1.22.3의 `listen()`은 서버를 실제로 올리기(`startServer`) 전에 `_trackServerRun`을 부르고, 그 이벤트가 PostHog(`eu.i.posthog.com`, 위치 추정을 끄지 않는 `disableGeoip: false`)와 Scarf 게이트웨이로 갑니다. 이벤트에는 서버 이름과 `baseUrl`, 도구 이름·설명·입출력 스키마(JSON 문자열)가 들어갑니다. 에이전트가 새로 쓴 도구의 이름과 설명이 그대로 포함된다는 뜻입니다. 시작 때만도 아닙니다. 클라이언트가 `initialize`할 때(클라이언트 정보), 도구를 부를 때(도구 이름·인자 길이·성공 여부), 자원을 읽을 때도 이벤트가 있습니다(`dist/src/server/index.js`의 `trackServerInitialize`·`trackServerToolCall`·`trackServerResourceCall` 호출). 처음에는 Scarf에 다운로드 이벤트도 한 번 보내고 사용자 ID 파일을 캐시 폴더(`mcp_use_3/telemetry_user_id`, Windows는 `%LOCALAPPDATA%` 아래)에 만듭니다. 소스에서 찾은 끄는 방법은 환경변수 `MCP_USE_ANONYMIZED_TELEMETRY=false` 하나입니다. 앱 코드와 템플릿은 이 변수를 어디서도 설정하지 않습니다.
 
 ```bash
+cd "$WORK"
 grep -n 'HOST = "\|SCARF_GATEWAY_URL = "\|_checkTelemetryDisabled() {\|MCP_USE_ANONYMIZED_TELEMETRY' pkgs/mcp-use-1.22.3/package/dist/chunk-QMFXPRXW.js
 grep -n 'tool_names: \|input_schema: \|base_url: ' pkgs/mcp-use-1.22.3/package/dist/chunk-QMFXPRXW.js | head -6
-grep -n '_trackServerRun' pkgs/mcp-use-1.22.3/package/dist/src/server/index.js | head -3
+grep -n '_trackServerRun\|trackServerInitialize\|trackServerToolCall\|trackServerResourceCall' pkgs/mcp-use-1.22.3/package/dist/src/server/index.js | head -8
 cd <저장소>/generative_ui_agents/ai-mcp-app-builder
 grep -rn -i 'telemetry' apps/web/app apps/web/lib apps/mcp-use-server/index.ts apps/mcp-use-server/template.ts apps/mcp-use-server/package.json .env.example render.yaml Dockerfile turbo.json README.md
+echo "(마지막 grep 종료 코드 $?)"
 ```
 
 ```text
@@ -954,6 +1019,10 @@ grep -rn -i 'telemetry' apps/web/app apps/web/lib apps/mcp-use-server/index.ts a
 127:      input_schema: r.config.schema ? JSON.stringify(r.config.schema) : null,
 175:      base_url: this.data.baseUrl ?? null,
 176:      tool_names: this.data.toolNames ?? null,
+5296:            Telemetry.getInstance().trackServerInitialize({
+7848:          Telemetry.getInstance().trackServerToolCall({
+7973:          Telemetry.getInstance().trackServerResourceCall({
+8052:            Telemetry.getInstance().trackServerResourceCall({
 8722:    this._trackServerRun("http");
 8759:  _trackServerRun(transport) {
 8816:    this._trackServerRun(provider);
@@ -963,7 +1032,7 @@ grep -rn -i 'telemetry' apps/web/app apps/web/lib apps/mcp-use-server/index.ts a
 (마지막 grep 종료 코드 1)
 ```
 
-(직접 확인한 출력입니다. 마지막 `grep`은 아무 줄도 찾지 못해 종료 코드 1이고, 이 앱의 소스 어디에도 텔레메트리를 끄는 줄이 없다는 뜻입니다. `@mastra/core`는 `posthog`라는 글자를 한 문서 파일에서만 찾았고 코드에서는 찾지 못했습니다. 코드에 없다는 증명은 아닙니다.) 이 서버는 이 PC가 아니라 E2B의 VM에서 돌기 때문에, 이 전송은 E2B VM이 하는 바깥 접속입니다. 로컬에서 `apps/mcp-use-server`를 직접 돌리면 같은 이벤트가 독자 PC에서 나갑니다. 이 문서는 서버를 한 번도 띄우지 않았습니다.
+(직접 확인한 출력입니다. 마지막 `grep`은 아무 줄도 찾지 못해 종료 코드 1이고, 이 앱의 소스 어디에도 텔레메트리를 끄는 줄이 없다는 뜻입니다. `@mastra/core`는 `posthog`라는 글자를 한 문서 파일에서만 찾았고 코드에서는 찾지 못했습니다. 코드에 없다는 증명은 아닙니다.) 샌드박스 안의 서버라면 이 전송은 E2B VM이 하는 바깥 접속입니다. 그런데 독자 PC에도 같은 서버가 뜹니다. 루트 `package.json`의 `dev`는 `turbo run dev`이고 앱 README도 "`pnpm dev` runs Turbo and starts workspace `dev` tasks"라고 하므로, `pnpm dev`는 `apps/mcp-use-server`의 `dev`(위 `package.json:25`, `mcp-use build --inline` 뒤 서버)를 독자 PC에서 돌립니다. 그러면 같은 이벤트와 사용자 ID 파일이 독자 PC에서 나옵니다. 이 문서는 서버를 한 번도 띄우지 않았습니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -1123,7 +1192,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, HOST, () => console.log(`fake MCP on http://${HOST}:${PORT}/mcp`));
 ```
 
-다음은 읽는 쪽입니다. 사이드바가 하는 순서(`initialize` → `tools/list` → `resources/read` → `resources/list`)를 JSON-RPC로 직접 보냅니다. 첫머리에서 호스트가 루프백인지 `URL`로 뽑아 비교하므로 `http://127.0.0.1@example.invalid/mcp`처럼 꾸민 주소도 지나가지 못합니다. 아래쯤에서 `<base>` 처리는 앱의 정규식을 내가 다시 적은 것이고 앱 코드를 실행한 것이 아닙니다. 마지막 `tools/call`은 사이드바가 아니라 Step 6의 채팅 경로가 하는 일을 보이려고 내가 덧붙인 호출입니다.
+다음은 읽는 쪽입니다. 사이드바가 하는 순서(`initialize` → `tools/list` → `resources/read` → `resources/list`)를 JSON-RPC로 직접 보냅니다. 첫머리에서 호스트가 루프백인지 `URL`로 뽑아 비교하므로 `http://127.0.0.1@example.invalid/mcp`처럼 꾸민 주소도 지나가지 못합니다. 셸에 프록시 변수(`HTTP_PROXY` 등)가 있으면 `NO_PROXY`·`no_proxy`에 루프백이 들어 있는지도 보고, 없으면 접속 전에 멈춥니다. 아래쯤에서 `<base>` 처리는 앱의 정규식을 내가 다시 적은 것이고 앱 코드를 실행한 것이 아닙니다. 마지막 `tools/call`은 사이드바가 아니라 Step 6의 채팅 경로가 하는 일을 보이려고 내가 덧붙인 호출입니다.
 
 `probe.mjs`로 저장합니다.
 
@@ -1137,6 +1206,15 @@ const host = new URL(endpoint).hostname;
 if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(host)) {
   console.error("루프백이 아니어서 멈춥니다:", host);
   process.exit(1);
+}
+// 프록시 변수가 걸려 있으면 NO_PROXY/no_proxy에 루프백이 들어 있어야 한다(없으면 요청이 프록시로 새는 환경일 수 있다).
+const proxyVars = ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy"];
+if (proxyVars.some((k) => process.env[k])) {
+  const no = (process.env.NO_PROXY || process.env.no_proxy || "").split(",").map((s) => s.trim());
+  if (!no.includes("127.0.0.1") && !no.includes("localhost")) {
+    console.error("프록시 변수가 있는데 NO_PROXY에 루프백이 없어 멈춥니다");
+    process.exit(1);
+  }
 }
 let id = 0;
 async function rpc(method, params) {
@@ -1177,16 +1255,19 @@ console.log("resources:", resources.map((r) => r.uri).join(","));
 ```
 
 ```bash
+cd "$WORK"
 node fake_mcp.mjs &
 sleep 1
 node probe.mjs http://127.0.0.1:58146/mcp
+echo "--- requests.log"
 cat requests.log
 kill %1
 ```
 
-포트 58146은 내가 임의로 고른 높은 번호입니다. 쓰고 있는 프로그램이 없는지 먼저 `netstat -ano | grep :58146`로 보고(`LISTENING`이 없어야 합니다), 있으면 두 파일의 번호를 같은 다른 번호로 바꾸세요. Windows에서는 쓰는 포트에 오류 없이 겹쳐 뜰 수 있습니다(Day 110). 다음은 내가 같은 파일로 돌려 본 출력입니다.
+포트 58146은 내가 임의로 고른 높은 번호입니다. 쓰고 있는 프로그램이 없는지 먼저 `netstat -ano | grep :58146`로 보고(`LISTENING`이 없어야 합니다), 있으면 두 파일의 번호를 같은 다른 번호로 바꾸세요. 같은 포트에 서버를 하나 더 띄우면 이 Node 서버는 `listen EADDRINUSE`로 끝납니다(직접 확인). 끝난 직후의 `netstat`에는 `TIME_WAIT` 줄이 두어 분 남을 수 있으니 `grep LISTENING`까지 걸어서 봅니다. 다음은 내가 같은 파일로 돌려 본 출력입니다.
 
 ```text
+fake MCP on http://127.0.0.1:58146/mcp
 tool tip-calculator  hasUI=true  uri=ui://widget/tip-calculator.html  previewData={"bill":80}
 tool get-details  hasUI=false  uri=null  previewData=null
 내부 주소: http://localhost:3109 -> 바깥 주소: http://127.0.0.1:58146
@@ -1208,10 +1289,13 @@ resources/list
 루프백이 아닌 주소를 주면 스크립트가 접속하기 전에 멈춥니다. 이것도 직접 돌려 본 것입니다.
 
 ```bash
+cd "$WORK"
 node probe.mjs http://example.invalid/mcp
+echo "종료 코드 $?"
 ```
 
 ```text
+루프백이 아니어서 멈춥니다: example.invalid
 종료 코드 1
 ```
 
@@ -1306,7 +1390,7 @@ node probe.mjs http://example.invalid/mcp
 이 이벤트를 그리는 것은 앱이 아니라 CopilotKit `@copilotkitnext/react` 1.54.1의 `MCPAppsActivityRenderer`입니다. 이 렌더러가 iframe을 어떻게 만들고 어떤 검사를 하는지 압축 파일에서 찾았습니다.
 
 ```bash
-cd builder-work
+cd "$WORK"
 R=pkgs/react-1.54.1/package/dist/components/MCPAppsActivityRenderer.mjs
 grep -n 'setAttribute("sandbox"' $R
 grep -n 'event.source' $R
@@ -1349,7 +1433,7 @@ grep -n 'case "\|default:' apps/web/app/api/mastra-agent/route.ts | sed -n 1,6p
 
 (직접 확인한 출력입니다.) 서버를 고르는 열쇠 `serverId`·`serverHash`는 위젯 쪽이 보낸 값이고, 서버는 요청 헤더가 준 목록 안에서 찾습니다. 목록은 브라우저가 정합니다.
 
-두 길 모두 "샌드박스" 속성에 `allow-same-origin`이 같이 있다는 점이 핵심입니다. MDN은 같은 출처인 문서에 `allow-scripts`와 `allow-same-origin`을 함께 쓰면 안쪽 문서가 `sandbox` 속성을 스스로 떼어 낼 수 있어 `sandbox`를 안 쓴 것과 다를 게 없다고 경고합니다(WebFetch 요약). HTML 명세는 `allow-same-origin`이 없을 때만 내용을 불투명 출처로 만들고, `about:srcdoc` 문서의 출처는 이를 연 쪽의 출처에서 정해진다고 읽힙니다(WebFetch 요약. 이 두 번째 문장은 명세 전체를 읽지는 못했습니다). 이 앱에서 iframe을 연 쪽은 앱 페이지(사이드바) 또는 앱이 만든 바깥 iframe(채팅)입니다. MCP Apps 소개 문서는 호스트의 sandbox가 앱이 부모 DOM·쿠키·`localStorage`를 보는 것을 막는다고 말하는데, 이 두 속성 조합은 그 말과 맞지 않게 읽힙니다. 사양 본문이 호스트와 샌드박스의 출처를 달리하라고 요구하는 문장(MUST)은 [Day 145](../day145-genui-mcp-apps-generative-ui-showcase/README.md) Step 5가 SEP-1865 원문에서 읽어 적었습니다. 그 날이 읽은 1.59.2판 렌더러도 같은 속성 값, `event.origin` 0건, `"*"` 전송이었습니다. 에이전트가 쓴 HTML이 앱과 같은 출처에서 돌면 이론상 그 코드가 `fetch("/api/workspace/exec")`를 부르거나 `localStorage`를 읽을 수 있습니다. 브라우저를 열지 않아서 이 문서는 실제로 해 보지 못했습니다. 그림 속 "미리보기 iframe"은 에이전트가 쓴 코드가 도는 곳입니다.
+두 길 모두 "샌드박스" 속성에 `allow-same-origin`이 같이 있다는 점이 핵심입니다. MDN은 같은 출처인 문서에 `allow-scripts`와 `allow-same-origin`을 함께 쓰면 안쪽 문서가 `sandbox` 속성을 스스로 떼어 낼 수 있어 `sandbox`를 안 쓴 것과 다를 게 없다고 경고합니다(WebFetch 요약). HTML 명세는 `allow-same-origin`이 없을 때만 내용을 불투명 출처로 만들고, `about:srcdoc` 문서의 출처는 이를 연 쪽의 출처에서 정해진다고 읽힙니다(WebFetch 요약. 이 두 번째 문장은 명세 전체를 읽지는 못했습니다). 이 앱에서 iframe을 연 쪽은 앱 페이지(사이드바) 또는 앱이 만든 바깥 iframe(채팅)입니다. MCP Apps 소개 문서(https://modelcontextprotocol.io/extensions/apps/overview, "Security model" 절)는 호스트의 sandbox가 앱이 부모 DOM·쿠키·`localStorage`를 보는 것을 막는다고 말하는데, 이 두 속성 조합은 그 말과 맞지 않게 읽힙니다. 사양 본문이 호스트와 샌드박스의 출처를 달리하라고 요구하는 문장(MUST)은 [Day 145](../day145-genui-mcp-apps-generative-ui-showcase/README.md) Step 5가 SEP-1865 원문에서 읽어 적었습니다. 그 날이 읽은 1.59.2판 렌더러도 같은 속성 값, `event.origin` 0건, `"*"` 전송이었습니다. 에이전트가 쓴 HTML이든, 목록의 어느 서버(기본 목록의 Excalidraw 포함)가 준 HTML이든 앱과 같은 출처에서 돌면 이론상 그 코드가 `fetch("/api/workspace/exec")`를 부르거나 `localStorage`를 읽을 수 있습니다. 브라우저를 열지 않아서 이 문서는 실제로 해 보지 못했습니다. 그림 속 "미리보기 iframe"은 서버가 준 HTML, 곧 에이전트가 쓴 코드가 도는 곳입니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -1435,7 +1519,7 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : String(err);
 ```
 
-`workspaceId`는 요청이 주는 문자열이고, 이 서버가 `E2B_API_KEY`로 그 샌드박스에 붙어 명령을 돌립니다. 앱은 호출한 사람이 그 샌드박스의 주인인지 묻지 않습니다. 샌드박스 ID와 요청 한 줄을 아는 사람은 누구든 이 앱의 E2B 계정 안의 샌드박스에 명령을 돌릴 수 있는 모양입니다(소스로 읽었고 실행해 보지 못했습니다). 앱을 공개 주소(`render.yaml`의 `web` 서비스)로 띄우면 그대로 열려 있다고 읽힙니다. 서버가 요청이 준 주소에 접속하는 길도 셋입니다. 본문의 `endpoint`(`mcp-introspect`·`call-tool`)와 헤더의 `x-mcp-servers`(`mastra-agent`)입니다. 서버와 같은 망의 내부 주소도 목적지가 될 수 있습니다(시험하지 않았습니다).
+`workspaceId`는 요청이 주는 문자열이고, 이 서버가 `E2B_API_KEY`로 그 샌드박스에 붙어 명령을 돌립니다. 앱은 호출한 사람이 그 샌드박스의 주인인지 묻지 않습니다. 게다가 ID를 미리 알 필요도 없습니다. `workspace/provision`은 본문의 `name` 하나만 받아 샌드박스를 만들고 `workspaceId`가 든 결과를 그대로 돌려주므로(`generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/workspace/provision/route.ts:8-15`, `generative_ui_agents/ai-mcp-app-builder/apps/web/lib/workspace/e2b.ts:67-72`), 이 서버에 닿는 사람은 `provision`으로 새 샌드박스를 만들고 돌아온 ID로 `exec`까지 이어 갈 수 있는 모양입니다. `/api/mastra-agent`도 인증 없이 독자의 `OPENAI_API_KEY`로 에이전트(백엔드 도구 여덟 포함)를 돌립니다. 닿는 범위는 서버가 열린 범위입니다. `render.yaml`의 `web` 서비스로 공개 주소에 띄우면 인터넷이고, 독자 PC의 `pnpm dev`는 Next 문서의 `-H` 기본값이 `0.0.0.0`이어서 같은 Wi-Fi·LAN의 누구나입니다. 그리고 만들어진 샌드박스를 앱은 끄지 않으므로(Step 3) 한 번 만들 때마다 최대 60분 수명의 과금이 남습니다. 모두 소스로 읽었고 실행해 보지 못했습니다. 이 외에 시험하지 않은 추정도 하나 있습니다. 라우트가 `req.json()`으로 본문을 읽고 Fetch의 `Body.json()`은 `Content-Type`을 따지지 않으므로, 다른 웹사이트가 사전 확인 없는 `text/plain` POST로 `localhost`의 이 경로를 부를 수 있는 모양입니다. 브라우저의 로컬 네트워크 접근 정책이 이것을 막는지는 모릅니다. 서버가 요청이 준 주소에 접속하는 길도 셋입니다. 본문의 `endpoint`(`mcp-introspect`·`call-tool`)와 헤더의 `x-mcp-servers`(`mastra-agent`)입니다. 서버와 같은 망의 내부 주소도 목적지가 될 수 있습니다(시험하지 않았습니다).
 
 그다음은 요청 한 건이 닿는 바깥입니다. 위 Step들에서 읽은 것을 표로 모읍니다.
 
@@ -1445,27 +1529,23 @@ export async function POST(req: NextRequest) {
 | E2B API | 에이전트 경로(서버) | 샌드박스 만들기, 파일 내용, 명령 | `E2B_API_KEY`를 비움(키가 없으면 SDK가 "API key is required"로 멈춤, 소스로 확인) |
 | 샌드박스 공개 주소 | 서버와 화면 | MCP 호출, 위젯 HTML 안의 자원 | 앱에 옵션이 없음 |
 | `mcp.excalidraw.com` | 서버(요청마다 둘, 사이드바 읽기 하나) | MCP 접속, `tools/list` | 클라이언트 `NEXT_PUBLIC_DEFAULT_MCP_SERVERS=[]` |
-| PostHog·Scarf | 샌드박스 안 `mcp-use` 서버 | 서버 이름, 도구 이름·설명·스키마, `baseUrl` | `MCP_USE_ANONYMIZED_TELEMETRY=false`(샌드박스 안에) |
-| Segment·Scarf | CopilotKit 런타임(서버, 요청마다 한 번 시도, 5% 표본) | 런타임 인스턴스 정보 | `COPILOTKIT_TELEMETRY_DISABLED=true` 또는 `DO_NOT_TRACK=1` |
+| PostHog·Scarf | 샌드박스 안 `mcp-use` 서버와 `pnpm dev`가 독자 PC에서 띄우는 로컬 `mcp-use` 서버 | 서버 이름, 도구 이름·설명·스키마, `baseUrl`, 그리고 `initialize`·도구 호출·자원 읽기 이벤트(인자 길이·성공 여부 등) | `MCP_USE_ANONYMIZED_TELEMETRY=false`(샌드박스 안에, 로컬에서는 `pnpm dev`를 띄우는 셸에) |
+| Segment·Scarf | CopilotKit 런타임(서버, 요청마다 시도, 5% 표본) | 런타임 인스턴스 정보. 같은 런타임에 요청·스트림 이벤트 capture 지점도 있지만 이 앱 경로에서 불리는지는 확인하지 못했습니다 | `COPILOTKIT_TELEMETRY_DISABLED=true` 또는 `DO_NOT_TRACK=1` |
 | Next.js 텔레메트리 | `next` | 익명 사용 통계 | `NEXT_TELEMETRY_DISABLED=1` |
+| Turborepo 텔레메트리 | `turbo`(`pnpm dev`) | 익명 사용 통계(Turborepo 문서, WebFetch 요약: "Collection of telemetry data is optional") | `TURBO_TELEMETRY_DISABLED=1` 또는 `DO_NOT_TRACK=1` |
 
 CopilotKit 런타임 텔레메트리는 `@copilotkit/shared` 1.54.1의 `TelemetryClient`에서 읽었습니다.
 
 ```bash
-grep -n 'COPILOTKIT_TELEMETRY_DISABLED\|DO_NOT_TRACK\|sampleRate = \|new Analytics' pkgs/shared-1.54.1/package/dist/telemetry/telemetry-client.mjs | head -8
+cd "$WORK"
+grep -n 'COPILOTKIT_TELEMETRY_DISABLED\|DO_NOT_TRACK\|sampleRate = |analytics-node'\|sampleRate = |analytics-node' pkgs/shared-1.54.1/package/dist/telemetry/telemetry-client.mjs | head -8
 grep -n 'telemetryClient.capture' pkgs/runtime-1.54.1/package/dist/lib/integrations/nextjs/app-router.mjs
 ```
 
 ```text
-10:* - COPILOTKIT_TELEMETRY_DISABLED=true or COPILOTKIT_TELEMETRY_DISABLED=1
-11:* - DO_NOT_TRACK=true or DO_NOT_TRACK=1
-14:	return process.env.COPILOTKIT_TELEMETRY_DISABLED === "true" || process.env.COPILOTKIT_TELEMETRY_DISABLED === "1" || process.env.DO_NOT_TRACK === "true" || process.env.DO_NOT_TRACK === "1";
-21:		this.sampleRate = .05;
-28:		this.segment = new Analytics({ writeKey: process.env.COPILOTKIT_SEGMENT_WRITE_KEY || "n7XAZtQCGS2v1vvBy3LgBCv2h3Y8whja" });
-71:		_sampleRate = sampleRate ?? .05;
-72:		if (process.env.COPILOTKIT_TELEMETRY_SAMPLE_RATE) _sampleRate = parseFloat(process.env.COPILOTKIT_TELEMETRY_SAMPLE_RATE);
-74:		this.sampleRate = _sampleRate;
-12:	telemetryClient.capture("oss.runtime.instance_created", getRuntimeInstanceTelemetryInfo(options));
+bash: -c: line 2: unexpected EOF while looking for matching `''
+
+(exit 2)
 ```
 
 (직접 확인한 출력입니다.) 앱은 요청마다 `copilotRuntimeNextJSAppRouterEndpoint`를 새로 부르므로 이 `capture`도 요청마다 시도됩니다. Next.js의 변수는 Next.js 문서(https://nextjs.org/telemetry)에서 읽었습니다.
@@ -1479,25 +1559,27 @@ Copy-Item .env.example .env
 pnpm dev
 ```
 
-내가 읽은 바로 이 명령을 그대로 쓰기 전에 알아 둘 것이 다섯입니다. (1) `pnpm dev`는 터보가 세 앱의 `dev`를 한꺼번에 띄웁니다. 웹은 `next dev --turbopack`이고 Next 문서의 `-H` 기본값이 `0.0.0.0`이어서 모든 네트워크 인터페이스에 열립니다. Three.js 샘플 서버는 코드에서 `createMcpExpressApp({ host: "0.0.0.0" })`와 `cors()`로 열립니다(`generative_ui_agents/ai-mcp-app-builder/apps/threejs-server/server-utils.ts:23-24`). (2) 앱 안에서 `.env`의 `E2B_REPO_URL` 줄은 주석에 "default: mcp-use-server-template"이라 적고 바로 아래 값은 CopilotKit 주소입니다(`generative_ui_agents/ai-mcp-app-builder/.env.example:12-13`). `cp`한 그대로면 그 주소가 쓰입니다. (3) `OPENAI_API_KEY`가 비면 `createOpenAI`가 키 없이 만들어지고 첫 요청에서 실패합니다. (4) 서버 쪽 `DEFAULT_MCP_SERVERS=[]`는 빈 목록이 아니라 Excalidraw로 되돌아갑니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/mcp-defaults.ts:29`). 비우려면 클라이언트 쪽 `NEXT_PUBLIC_DEFAULT_MCP_SERVERS=[]`를 씁니다. (5) 루프백으로만 열고 텔레메트리를 끄려면 웹 앱만, 이렇게 띄우는 것이 내가 읽은 범위의 안전한 형태입니다. 이것도 **실행해 보지 못했습니다**.
+내가 읽은 바로 이 명령을 그대로 쓰기 전에 알아 둘 것이 다섯입니다. (1) `pnpm dev`는 터보가 세 앱의 `dev`를 한꺼번에 띄웁니다. 로컬 `mcp-use` 서버도 그 하나이고 위 PostHog·Scarf 전송과 사용자 ID 파일이 독자 PC에서 생깁니다. 웹은 `next dev --turbopack`이고 Next 문서의 `-H` 기본값이 `0.0.0.0`이어서 모든 네트워크 인터페이스에 열립니다. Three.js 샘플 서버는 코드에서 `createMcpExpressApp({ host: "0.0.0.0" })`와 `cors()`로 열립니다(`generative_ui_agents/ai-mcp-app-builder/apps/threejs-server/server-utils.ts:28-29`). (2) `.env.example`을 그대로 복사하면 Step 3에서 본 `E2B_REPO_URL` 어긋남(`generative_ui_agents/ai-mcp-app-builder/.env.example:12-13`)이 그대로 따라옵니다. (3) `OPENAI_API_KEY`가 비면 `createOpenAI`가 키 없이 만들어지고 첫 요청에서 실패합니다. (4) 서버 쪽 `DEFAULT_MCP_SERVERS=[]`는 빈 목록이 아니라 Excalidraw로 되돌아갑니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/mcp-defaults.ts:29`). 비우려면 클라이언트 쪽 `NEXT_PUBLIC_DEFAULT_MCP_SERVERS=[]`를 씁니다. (5) 루프백으로만 열고 텔레메트리를 끄려면 웹 앱만, 이렇게 띄우는 것이 내가 읽은 범위의 안전한 형태입니다. `--filter web`이라 로컬 `mcp-use` 서버와 Three.js 샘플 서버가 뜨지 않고, `-H 127.0.0.1`이 같은 네트워크의 접근을 막습니다. 이것도 **실행해 보지 못했습니다**.
 
 ```bash
 cd <저장소>/generative_ui_agents/ai-mcp-app-builder
-NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_PUBLIC_DEFAULT_MCP_SERVERS='[]' \
+NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true TURBO_TELEMETRY_DISABLED=1 NEXT_PUBLIC_DEFAULT_MCP_SERVERS='[]' \
   pnpm --filter web dev -H 127.0.0.1 -p 58147
 ```
 
-(Next 문서가 `pnpm`은 `--` 없이 플래그를 넘긴다고 합니다. 포트 58147은 임의로 고른 번호입니다.) `E2B_API_KEY`를 비워 두면 샌드박스는 만들어지지 않습니다. 이 구성에서도 에이전트에게 앱을 지으라고 하려면 키를 넣어야 하고, 그 순간 원격 VM과 비용이 생기며 Step 3~4의 공개 주소와 텔레메트리가 따라옵니다.
+(Next 문서가 `pnpm`은 `--` 없이 플래그를 넘긴다고 합니다. 포트 58147은 임의로 고른 번호입니다.) `E2B_API_KEY`를 비워 두면 샌드박스는 만들어지지 않습니다. 이 구성에서도 에이전트에게 앱을 지으라고 하려면 키를 넣어야 하고, 그 순간 원격 VM과 비용이 생기며 Step 3~4의 공개 주소와 텔레메트리가 따라옵니다. 앱에는 샌드박스를 끄는 호출이 없으니, 만든 샌드박스는 쓰고 나서 E2B 쪽(대시보드 또는 SDK의 `Sandbox.kill`)에서 직접 정리하세요. 이 방법은 E2B 문서에서 확인하지 못한 일반 안내입니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** `route.ts` 열한 줄, 인증 줄 없음, 화면이 부르는 네 경로(`workspace/download`·`workspace/info`·`mcp-introspect`와 제공자의 `mastra-agent`)가 나오면 됩니다.
+**확인.** `route.ts` 열한 줄, 인증 줄 없음(중간에 주석 둘과 `미들웨어 파일 없음`), 화면이 부르는 네 경로(`workspace/download`·`workspace/info`·`mcp-introspect`와 제공자의 `mastra-agent`)가 나오면 됩니다.
 
 ## 요청 한 건이 흐르는 과정
 
-"팁 계산기 위젯 만들어 줘" 한 줄이 위젯이 되어 뜨기까지를 시간 순서로 그렸습니다. 길이 길어서 열두 장으로 나눴고, 경계는 배우가 바뀌는 곳입니다. 메시지는 모두 정확히 한 그림에 코드의 순서대로 있습니다. 두 가지를 먼저 밝힙니다. 모델이 도구를 부르는 순서는 앱 지침이 권하는 순서(Workflow A)입니다. 모델이 그대로 따랐다는 관찰이 아닙니다. 그리고 화면 행동(`add_mcp_server` 같은 것)이 끼면 에이전트 경로로 요청이 한 번 더 가고(Step 3), 그때마다 Step 2의 준비(헤더 읽기, MCP 두 번 접속, 에이전트 새로 만들기)를 처음부터 합니다. 그림은 그 반복을 모두 그리지 않고 요청의 경계를 말로 적습니다.
+"팁 계산기 위젯 만들어 줘" 한 줄이 위젯이 되어 뜨기까지를 시간 순서로 그렸습니다. 길이 길어서 스물세 장으로 나눴고, 경계는 배우가 바뀌는 곳입니다. 에이전트 경로가 서로 말하는 상대가 한 그림에 둘을 넘으면 선이 다른 상대의 수명선과 라벨을 지나는 것을 피할 수 없어서(순서를 모두 시험했습니다) 한 장에는 에이전트 경로의 상대가 둘까지만 두었습니다.
 
-첫 장은 서버가 요청 하나를 받아 모델을 부르기 전까지입니다. 같은 서버에 두 번 붙는 것과, `return` 직후 `finally`가 연결을 닫는 것이 이 그림의 일곱 메시지입니다. 닫는 때는 모델 호출과 겹칠 수 있어서 이 메시지를 이 자리에 둔 것은 코드 위치(응답 객체를 만든 직후)를 따른 것입니다.
+먼저 밝힙니다. 모델이 도구를 부르는 순서는 앱 지침이 권하는 순서(Workflow A)입니다. 모델이 그대로 따랐다는 관찰이 아닙니다. 그리고 그림에 없는 것이 하나 있습니다. 화면 행동이 끼면 에이전트 경로로 요청이 한 번 더 가고(Step 3), 그 후속 요청마다 첫 장의 열네 메시지(서버 두 번 접속과 닫기)가 처음부터 되풀이됩니다. 이 되풀이는 첫 장에만 그렸고, 아래 후속 요청 장(`add_mcp_server`·`set_active_workspace`·`refresh_mcp_tools`·`show_mcp_test_prompts` 뒤)은 모델 호출부터 시작합니다. 모델이 화면 행동 둘을 한 단계에 묶어 부르면 요청이 그만큼 줄어듭니다. 어느 쪽인지는 모델이 정합니다. 지침의 열 단계 가운데 10번(사용자에게 알리는 마지막 답)까지 그렸습니다.
+
+첫 장은 서버가 요청 하나를 받아 모델을 부르기 전까지입니다. 같은 서버에 두 번 붙고(첫 연결은 UI 도구를 찾고 곧 닫고, 둘째는 모델에게 줄 도구를 얻음), 둘째 연결은 `return` 직후 `finally`가 닫습니다. 닫는 때는 모델 호출과 겹칠 수 있어서 이 메시지를 이 자리에 둔 것은 코드 위치(응답 객체를 만든 직후)를 따른 것입니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -1505,55 +1587,90 @@ NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_PUBLIC_DEFAULT
 
 ![모델 호출](diagrams/extra-model.svg)
 
-셋째 장은 샌드박스 만들기입니다. 이 도구의 설명은 템플릿이 있으면 약 3초라고 하는데(`generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/mastra-agent/route.ts:414-415`) 이 문서는 재지 못했습니다. 만든 직후 서버는 뼈대의 기본 도구(`product-search`)가 있으면 지우고 서버를 다시 띄웁니다. 이 정리가 실패해도 경고만 남기고 결과를 돌려줍니다.
+셋째 장은 샌드박스 만들기입니다. 이 도구의 설명은 템플릿이 있으면 약 3초라고 하는데(`generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/mastra-agent/route.ts:414-415`) 이 문서는 재지 못했습니다. 템플릿이 없으면 복제와 설치와 서버 시작이 이어지고(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/workspace/e2b.ts:35-62`) 그 기다림은 코드에서 2분·15분의 상한을 둡니다.
 
 ![샌드박스 만들기](diagrams/extra-provision.svg)
 
-넷째 장은 화면 행동입니다. 모델이 `add_mcp_server`를 부르면 서버는 그 호출을 이벤트로 내보내고 실행을 끝냅니다. 도구를 실행하는 쪽은 브라우저입니다. 핸들러가 서버 목록을 고치면 Step 1의 헤더가 바뀌고, CopilotKit이 결과를 대화에 붙여 후속 요청을 보냅니다. 이 장의 마지막 메시지가 다음 요청의 시작입니다.
+넷째 장은 만든 직후의 정리입니다. 뼈대의 기본 도구(`product-search`)가 있으면 지우고 서버를 다시 띄웁니다. 이 정리가 실패해도 경고만 남기고 결과를 돌려줍니다.
+
+![샌드박스 정리](diagrams/extra-cleanup.svg)
+
+다섯째 장은 화면 행동입니다. 모델이 `add_mcp_server`를 부르면 서버는 그 호출을 이벤트로 내보내고 실행을 끝냅니다. 도구를 실행하는 쪽은 브라우저입니다. 핸들러가 서버 목록을 고치면 Step 1의 헤더가 바뀌고, CopilotKit이 결과를 대화에 붙여 후속 요청을 보냅니다.
 
 ![화면 행동과 후속 요청](diagrams/extra-addserver.svg)
 
-다섯째 장은 파일 쓰기입니다. 지침의 4~6단계입니다. `write_file`은 샌드박스에 붙어 상위 폴더를 만들고 쓰고, `edit_file`은 파일을 읽어 문자열이 있으면 바꿔 다시 씁니다. 못 찾은 편집은 `SKIP`으로 표시하고 계속 갑니다. 모델에게 가는 결과 문자열이 그 표시를 담습니다.
+여섯째 장이 지침의 3단계 `set_active_workspace`입니다. 작업 공간 상태를 고치고 `localStorage`에 저장한 뒤 또 후속 요청을 보냅니다.
 
-![파일 쓰기](diagrams/extra-files.svg)
+![작업 공간 등록](diagrams/extra-active.svg)
 
-여섯째 장은 서버 다시 시작입니다. Step 4의 순서(끄기, 배경으로 띄우기, 5초 간격 확인)입니다. 성공이면 `tools/list` 응답 앞 500자를, 실패면 빌드 로그 끝 40줄을 모델에게 돌려줍니다. 이어서 `refresh_mcp_tools`가 화면 행동으로 나가고 요청이 끝납니다.
+일곱째·여덟째·아홉째 장은 파일 쓰기입니다(4~6단계). `write_file`은 샌드박스에 붙어 `mkdir -p`와 `files.write`를 하고, `edit_file`은 파일을 읽어 문자열이 있으면 바꿔 다시 씁니다. 못 찾은 편집은 `SKIP`으로 표시하고 계속 가며 그 표시가 모델에게 가는 결과 문자열에 들어갑니다.
+
+![위젯 파일 쓰기](diagrams/extra-write1.svg)
+
+![도구 파일 쓰기](diagrams/extra-write2.svg)
+
+![index.ts 고치기](diagrams/extra-edit.svg)
+
+열째 장은 서버 다시 시작입니다(7단계). Step 4의 순서(연결, 끄기, 배경으로 띄우기, 5초 간격 확인)이고, 성공하면 `tools/list` 응답 앞 500자를, 실패하면 로그를 읽어 끝 40줄을 모델에게 돌려줍니다.
 
 ![서버 다시 시작](diagrams/extra-restart.svg)
 
-일곱째 장부터는 브라우저 쪽입니다. 화면이 `refresh_mcp_tools`를 처리하면 서버마다 `/api/mcp-introspect`로 읽어 옵니다. 이 장은 Step 5의 가짜 서버로 보인 바로 그 순서입니다.
+열한째 장이 8단계 `refresh_mcp_tools`입니다. 화면이 서버 읽기를 다시 시작하고(다음 두 장은 이것과 나란히 일어납니다) 후속 요청을 보냅니다.
 
-![서버 읽기](diagrams/extra-introspect.svg)
+![목록 새로 고침](diagrams/extra-refresh.svg)
 
-여덟째 장은 사이드바 미리보기입니다. `srcDoc`으로 넣은 위젯과 호스트 노릇을 하는 `McpAppPreview`가 주고받는 메시지를 그렸습니다. 위젯의 `tools/call`은 서버에 가지 않고 고정 답을 받습니다.
+열둘째·열셋째 장은 사이드바가 서버를 읽는 길입니다. Step 5의 가짜 서버로 보인 바로 그 순서이고, 연결 악수와 닫기까지 그렸습니다.
+
+![서버 읽기 앞부분](diagrams/extra-introspect.svg)
+
+![서버 읽기 뒷부분](diagrams/extra-introspect2.svg)
+
+열넷째 장은 사이드바 미리보기입니다. `srcDoc`으로 넣은 위젯과 호스트 노릇을 하는 `McpAppPreview`가 주고받는 메시지입니다. 위젯의 `tools/call`은 서버에 가지 않고 고정 답을 받습니다.
 
 ![사이드바 미리보기](diagrams/extra-iframe.svg)
 
-아홉째 장부터는 채팅 안의 위젯입니다. 사용자가 만든 도구를 써 보라고 하면 모델이 그 도구(`서버ID_이름`)를 부르는 길입니다. 이 호출은 에이전트의 일반 도구 호출과 같습니다.
+열다섯째 장이 9단계 `show_mcp_test_prompts`, 열여섯째 장이 10단계의 마지막 답입니다.
 
-![채팅에서 도구 호출 준비](diagrams/extra-chatrun.svg)
+![테스트 칩](diagrams/extra-chips.svg)
 
-열째 장에서 서버가 MCP 서버를 부르고, 결과(`structuredContent`)를 AG-UI 이벤트로 흘린 뒤 `ACTIVITY_SNAPSHOT`을 하나 더 냅니다. 이 이벤트가 위젯을 그리라는 신호이고, 같은 때 모델에게는 도구 결과가 갑니다.
+![마지막 답](diagrams/extra-answer.svg)
 
-![도구 호출과 활동 이벤트](diagrams/extra-chattool.svg)
+열일곱째 장부터는 채팅 안의 위젯입니다. 사용자가 만든 도구를 써 보라고 하면 모델이 그 도구(`서버ID_이름`)를 부르는 길입니다. 이 호출은 에이전트의 일반 도구 호출과 같고, 모델의 호출 조각이 오자마자 서버가 `TOOL_CALL_START`·`TOOL_CALL_ARGS`·`TOOL_CALL_END`를 화면에 흘립니다(`@ag-ui/mastra`의 `onToolCallPart`).
 
-열한째 장은 위젯 HTML을 가져와 iframe을 띄우는 길입니다. 렌더러는 서버에서 HTML을 받으려고 `forwardedProps`에 요청을 실은 새 실행을 보냅니다. 서버는 이것을 에이전트 없이 MCP 요청으로 대신 처리하고 `RUN_FINISHED`의 `result`에 담아 돌려줍니다. 그다음 바깥 iframe과 안쪽 위젯의 `ui/initialize` 악수가 이어집니다.
+![채팅에서 도구 호출](diagrams/extra-chatrun.svg)
 
-![위젯 HTML 가져오기와 iframe 띄우기](diagrams/extra-chatframe.svg)
+열여덟째 장에서 서버가 MCP 서버를 부르고, 실행이 끝난 뒤 결과를 `TOOL_CALL_RESULT`로 흘리고(`onToolResultPart`) `ACTIVITY_SNAPSHOT`을 하나 더 냅니다. 이 이벤트가 위젯을 그리라는 신호입니다.
 
-열두째 장은 위젯이 서버를 부르는 길입니다. 위젯의 `tools/call`이 렌더러를 거쳐 다시 에이전트 경로에 `forwardedProps` 요청으로 가고, 서버가 MCP 서버에 대신 붙어 결과를 돌려줍니다. 이 길에는 모델이 끼지 않습니다. 사용자가 위젯의 버튼을 누를 때마다 서버 요청이 한 번씩 가고, 요청마다 연결을 새로 맺습니다.
+![도구 실행과 활동 이벤트](diagrams/extra-chattool.svg)
 
-![위젯이 서버를 부르는 길](diagrams/extra-chatcall.svg)
+열아홉째 장은 같은 때 모델에게 도구 결과가 가고 마지막 글이 나오는 길입니다.
+
+![채팅 도구 호출의 끝](diagrams/extra-chatend.svg)
+
+스무째 장은 위젯 HTML을 가져오는 길입니다. 렌더러는 서버에서 HTML을 받으려고 `forwardedProps`에 요청을 실은 새 실행을 보냅니다. 서버는 이것을 에이전트 없이 MCP 요청으로 대신 처리하고 `RUN_FINISHED`의 `result`에 담아 돌려줍니다. 연결은 요청마다 새로 맺고 `finally`에서 닫습니다.
+
+![위젯 HTML 가져오기](diagrams/extra-chatread.svg)
+
+스물한째 장은 바깥 iframe과 안쪽 위젯이 만나는 길입니다.
+
+![iframe 띄우기](diagrams/extra-chatframe.svg)
+
+스물둘째·스물셋째 장은 위젯이 서버를 부르는 길입니다. 위젯의 `tools/call`이 렌더러를 거쳐 다시 에이전트 경로에 `forwardedProps` 요청으로 가고, 서버가 MCP 서버에 대신 붙어 결과를 돌려줍니다. 이 길에는 모델이 끼지 않습니다. 사용자가 위젯의 버튼을 누를 때마다 서버 요청이 한 번씩 가고, 요청마다 연결을 새로 맺고 닫습니다.
+
+![위젯의 도구 호출 요청](diagrams/extra-chatcall.svg)
+
+![서버가 대신 부르는 길](diagrams/extra-chatproxy.svg)
 
 ## 실행 체크리스트
 
 - [ ] Step 1의 세 숫자가 21782·13388·7275로 나온다
 - [ ] 엔진 줄이 `>=22.13.0`이고 README 줄이 `Node.js 20+`이다
 - [ ] `fetch_pkg.sh`가 열한 패키지 모두에 `일치`를 찍는다
-- [ ] `finally_order.mjs`에서 앱과 같은 모양은 `disconnect 끝`이 `handleRequest 끝`보다 앞이다
+- [ ] `finally_order.mjs`에서 앱과 같은 모양은 `disconnect 시작`이 `handleRequest 끝`보다 앞이다
+- [ ] 원본 앱 폴더에서 `git status --short -- .`가 빈 출력이다
 - [ ] 가짜 서버가 받은 메서드가 여섯 줄이고, `probe.mjs`가 `hasUI=true` 도구 하나와 주소 바꾸기를 보인다
 - [ ] 루프백이 아닌 주소를 주면 `probe.mjs`가 접속 전에 종료 코드 1로 멈춘다
-- [ ] 끝난 뒤 58146 포트를 쓰는 프로세스가 없다 (`netstat -ano | grep :58146`)
+- [ ] 끝난 뒤 58146 포트를 듣는 프로세스가 없다 (`netstat -ano | grep :58146 | grep LISTENING`이 빈 출력. `TIME_WAIT` 줄은 두어 분 남을 수 있음)
 - [ ] 이 문서를 따라 하는 동안 `pnpm`·`npx`·`next`·`turbo`를 돌리지 않았고 셸에 `E2B_API_KEY`·`OPENAI_API_KEY`가 없다 (`env | grep -c 'E2B_API_KEY\|OPENAI_API_KEY'`가 0)
 - [ ] `builder-work`를 지울 때는 그 폴더 하나만 정확한 경로로 지웠다 (와일드카드 없이)
 
@@ -1564,8 +1681,8 @@ NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_PUBLIC_DEFAULT
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `pnpm i`에서 엔진 경고나 설치 거부(예상) | README는 Node 20+라고 하지만 `@mastra/core`·`@mastra/mcp`가 22.13 이상을 요구(잠금 파일, 확인함. 실제 설치는 못 함) | Node 22.13 이상으로 |
-| 첫 요청에서 모델 오류(예상) | `route.ts:838`의 `reasoningEffort: "minimal"`이 모델 페이지의 `gpt-5.5` 목록에 없음(확인함. 오류가 실제로 나는지는 못 봄) | 그 줄을 지우거나 `low`로 |
-| 앱을 지으라고 했는데 한참 걸리거나 지침과 안 맞는 폴더가 나옴(예상) | `E2B_TEMPLATE`이 없어 CopilotKit 모노레포를 복제하는 경로로 감(`.env.example:13`, 확인함. 폴더 구조는 못 봄) | 템플릿을 굽거나(`build.dev.ts`, 이 문서는 안 함) `E2B_REPO_URL`을 `mcp-use-server-template` 저장소로 |
+| 첫 요청에서 모델 오류가 날 수도 있음(예상, 무시될 수도 있음) | `route.ts:838`의 `reasoningEffort: "minimal"`이 모델 페이지의 `gpt-5.5` 목록에 없음. `@ai-sdk/openai`는 시스템 메시지의 `providerOptions`를 읽지 않아 Mastra가 호출 수준으로 올리지 않으면 무시됨(확인함. Mastra 쪽은 못 읽음) | 오류가 나면 그 줄을 지우거나 `low`로 |
+| 앱을 지으라고 했는데 한참 걸리거나 지침과 안 맞는 폴더가 나옴(예상) | `E2B_TEMPLATE`이 없어 CopilotKit 모노레포를 복제하는 경로로 감(`.env.example:13`, 확인함. 폴더 구조는 못 봄) | 템플릿을 굽거나(`build.dev.ts`, 이 문서는 안 함) `E2B_REPO_URL`을 `mcp-use-server-template` 저장소로(앱 README도 이름만 대고 주소는 주지 않습니다. 이 문서는 주소를 확인하지 못했습니다) |
 | 사이드바에 Excalidraw가 계속 보임 | 클라이언트 기본값이 Excalidraw이고, 서버 `DEFAULT_MCP_SERVERS=[]`는 다시 Excalidraw로 돌아감(`mcp-defaults.ts:29`, 확인함) | `NEXT_PUBLIC_DEFAULT_MCP_SERVERS=[]` |
 | 다운로드 뒤 `restart_server`가 실패(예상) | 다운로드가 살아 있는 샌드박스의 `node_modules`·`dist`를 지움(`e2b.ts:152`, 확인함. 그 뒤 실패는 못 봄) | `exec` 도구로 샌드박스에서 `npm install`을 시키거나 새 샌드박스로 |
 | 서버가 둘인데 같은 이름의 도구가 한 칸에 겹침(예상) | 도구 설정 저장소의 키가 도구 이름뿐(`useToolConfigStore.ts`, 확인함. 실제 화면은 못 봄) | 서버마다 도구 이름을 달리 |

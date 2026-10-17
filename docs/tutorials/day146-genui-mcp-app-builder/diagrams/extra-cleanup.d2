@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+e2b: "E2B API" { class: ext }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+ui: "브라우저 (CopilotKit)" { class: ours }
+
+rt -> e2b: "Sandbox.connect"
+rt -> e2b: "files.read index.ts"
+e2b -> rt: "index.ts 내용"
+rt -> e2b: "files.write (기본 도구가 있을 때만, import·등록 줄 지움)"
+rt -> e2b: "rm -rf product-search 파일 둘"
+rt -> e2b: "kill :3109 프로세스"
+rt -> e2b: "npm run dev 배경"
+rt -> ui: "TOOL_CALL_RESULT (workspaceId · endpoint)"
