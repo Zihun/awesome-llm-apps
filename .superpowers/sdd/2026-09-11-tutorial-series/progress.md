@@ -8,6 +8,29 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-17 밤) — 볼륨 13 끝. Day 149까지 작성·리뷰·수정·재확인 끝, 앞 볼륨 검사 23 그림 정리와 PowerShell 점검도 끝, 푸시함(진도 149/167). 다음(볼륨 14 🎯 LLM Optimization, Day 150~151)은 사용자 지시를 받고.**
+- Task 29(148~149) 전부 complete. 날마다 커밋(작성 → 수정):
+  - 148: ed4b025 → 2072aa1·2a40e1e
+  - 149: 7a1e941 → 210be9a·4c42c08(내가: 재확인 Minor 넷)·cd5907a(텔레메트리)·5138ae4(내가: 409 줄)
+- 리뷰(opus) 148 / 149, 재확인(sonnet) 148 / 149. 148 2라운드·149 2라운드는 내가 diff·check로 확인.
+- 검사 23 앞 볼륨 정리(sonnet 둘): 121 bc4b12b·126 402d013·130 78f6b84·131 5f66778·133 cc8efa0·135 7bcb272·136 74ffee0·138 4e929c9·140 47e7664. 고친 .d2마다 비어 있지 않은 줄 집합을 대조(달라진 것은 direction 한 줄이나 height 지정뿐). 121 extra-calls는 엇갈림이 남지만 에이전트 넷×목적지 둘 구조라 받아들임(변형 다섯을 직접 렌더해 봄).
+- PowerShell 점검(sonnet): `$env:X = ""`는 변수를 지운다(about_Environment_Variables 7.4 원문). 그 틈으로 .env가 진짜 키를 채워 로컬 가짜 서버에 실리던 127 db989e6·133 52e4da2를 `PYTHON_DOTENV_DISABLED=1`로 고침. 140 3233c76·144 3b70357은 "확인 못 함"을 인용으로. 바깥에 닿은 날은 없음.
+- 검사: npm test 57/57, 전체 check 4건(모두 미작성 골격 150), 148 20.6·149 20.7/분.
+- Ruling(2026-10-17):
+  - Gmail 경로는 진짜 Google에 닿지 않으면 코드 경로를 루프백 대역으로 돌려도 된다. 단 가짜 토큰, 줄 하나를 빼도 안전, 고쳐 쓰기 단언이 전송보다 먼저(review-29-brief).
+  - ADK 2.x `adk` CLI는 stdin이 TTY이고 동의 기록이 없으면 텔레메트리를 묻고 Enter=켬. 켜지면 하위 프로세스가 play.googleapis.com/log로 보낸다(가드를 물려받지 않음). 진짜 홈에 동의가 있으면 묻지도 않는다. → ADK 터미널은 HOME·USERPROFILE을 새 폴더로 바꾸고, telemetry 끄기·stdin 닫기를 서로 독립된 방어선으로 둔다. 진짜 홈에서 `adk telemetry disable`을 부르면 독자 설정을 바꾸는 부작용이 있다.
+  - ADK `adk web`·`run`·`eval`은 .env를 override=True로 읽는다. 2.x는 시작 때 셸에 있던 키를 되돌리고 `ADK_DISABLE_LOAD_DOTENV`가 있다. 1.9.0은 셸을 덮고 그 스위치가 없다.
+  - PowerShell 빈 값 대입은 지우기다. .env를 읽는 앱이면 `PYTHON_DOTENV_DISABLED=1`·`ADK_DISABLE_LOAD_DOTENV=1`처럼 읽기 자체를 끈다.
+  - `resvg-py` 같은 도구는 스크래치 venv에만 설치한다(전역 Python·루트 .venv 금지).
+- 사고·근접 사고:
+  - 검사 23 ② 작업자가 resvg-py 0.5.0을 사용자 전역 Python 3.14에 설치함(2026-10-17 20:00). 볼륨 끝에 내가 그 패키지만 지움.
+  - 149 작성 중 ADK 1.9.0 .env override로 generativelanguage.googleapis.com CONNECT 2회. 감시용 루프백 프록시가 끊어 바깥 0.
+  - 148 재확인자 빈 heredoc `python -I -` 1회(바로 죽임). 148 작성자 러너 r8·r9가 겹쳐 돎(감시 0). 149 작성자 grep -rn이 루트 .venv를 읽기만 함.
+  - 확인: ~/.python_history 10-15 그대로, 진짜 홈에 ~/.adk 없음.
+- **다음에 볼 것(내 추천, 사용자에게 보고):**
+  - 앞 ADK 날들이 위 텔레메트리 판정을 지키는지 점검. adk CLI를 쓰는 날은 014~023·088·091·092·095·122·125이고, HOME을 바꾸는 날은 088 하나뿐.
+  - 저장소에 CRLF로 들어간 파일 153개(day021·100·112~131의 15일). check는 통과.
+
 **멈춤 지점 (2026-10-17) — 볼륨 12 끝. Day 147까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 147/167). 다음 배치는 볼륨 13(Day 148~149) + 검사 23 앞 볼륨 정리(아래).**
 - Task 28(141~147) 전부 complete. 날마다 커밋(작성 → 수정):
   - 141: de66676 → 24fd354·f8b1309
@@ -1488,3 +1511,28 @@ Task 28: 재확인 147 DONE (a9d3e05d3501e0c49) — I1·I2·I3·M16·(a) 반영,
 메모: b0a414b(2026-10-17 14:46, Zihun Kim)는 progress.md만 담은 커밋 — 사용자 쪽 커밋으로 보임, 내용은 내 원장 기록.
 2026-10-17 사용자 "다음 배치 진행해" — 볼륨 12의 남은 147을 먼저 끝내고 마무리·푸시한 뒤 다음 배치로. 147 fix round 2 dispatched (resume a7dc3085795b1b81c).
 Task 28: 147 fix round 2 DONE — 782178b. 내가 확인: 그림의 mem 화살표 put 10·put_writes 9(실측과 같음), LF, check 통과·20.4/분 → 147 complete. 작성자가 스크래치에서 rm -f trace* 와일드카드 삭제 1회(자기 임시 파일만). Task 28(141~147) 전부 complete.
+Task 29 (볼륨 13, Day 148~149) + 앞 볼륨 검사 23 정리: 작성 148·149 (sonnet) + 그림 정리 ①121·126·130·131 ②133·135·136·138·140 (sonnet) 동시 4로 dispatched.
+검사 23 ② DONE — 133 cc8efa0·135 7bcb272·136 74ffee0·138 4e929c9·140 47e7664. 내가 확인: 고친 .d2 일곱 개의 비어 있지 않은 줄 집합이 그대로(136 extra-turn·138 embed는 direction 한 줄만 다름), LF, 다섯 날 check 통과, PNG 셋 눈으로 봄. 부작용: 작업자가 resvg-py 0.5.0을 사용자 전역 Python 3.14에 설치(2026-10-17 20:00) — 볼륨 끝에 그 패키지만 지울 것.
+검사 23 ① DONE — 121 bc4b12b·126 402d013·130 78f6b84·131 5f66778. 내가 확인: 줄 집합 대조(121 extra-calls 구름 둘 height: 80 추가, 126 direction 한 줄, 130 mcp height 200→160·openai height: 160 추가, 131 그대로), PNG. 121 extra-calls는 곧은 선이지만 엇갈림이 남음 — 에이전트 넷×목적지 둘 구조라 스크래치에서 변형 다섯(down·출발점별 묶음·목적지 순서·높이 없음)을 직접 렌더해 봐도 더 나은 배치 없음 → 받아들임. 별건: 저장소에 CRLF로 들어간 파일이 15일치 153개(day021·100·112~131) — check는 통과, 이번 범위 밖.
+Task 29: 148 작성 DONE_WITH_CONCERNS — ed4b025, check 통과, 20.7/분(165분). 우려: Gmail 코드 경로를 두 Google 호스트를 루프백 대역으로 고쳐 쓴 래퍼에서 돌림 → 판정(컨트롤러): 진짜 Google에 닿지 않으면 허용, 단 가짜 토큰·한 줄 빼도 안전·고쳐 쓰기 단언이 전송보다 먼저(review-29-brief에 적음). review-29-brief의 "특히 볼 것" 절이 볼륨 12 내용(Node·AG-UI) 그대로였던 것을 볼륨 13에 맞게 고침.
+Task 29: 리뷰 148 dispatched (opus, a2f8191fbf10a2c2f) → review-148.md. 동시 2: 작성 149, 리뷰 148.
+Task 29: 149 작성 DONE_WITH_CONCERNS — 7a1e941, check 통과, 20.3/분(215분). 근접 사고(바깥 0): ADK 1.9.0 `adk web`이 `.env`를 override=True로 읽어 가드 환경을 덮음 → 첫 /run에서 generativelanguage.googleapis.com:443 CONNECT가 감시용 루프백 프록시에 2회 도착·끊김. 작성자가 가드 고쳐(.env 건너뛰기·프록시 포트 차단·getproxies 비움) 재시험 0건. 리뷰 148에 같은 점 확인 요청(SendMessage).
+Task 29: 리뷰 149 dispatched (opus, ac1b214b6ef3b09e1) → review-149.md. 동시 2: 리뷰 148·149.
+Task 29: 리뷰 148 DONE (a2f8191fbf10a2c2f) — ❌ C0·I4·M10. Gmail 판정 ①②③ 통과(serve_local.py 줄 하나씩 뺀 판 40개 모두 바깥 0). bash 독자 명령 바깥 0. I1 ADK 텔레메트리 질문 Enter=켜기(play.googleapis.com/log), 문장으로만 막음·`| tail -1`이 질문을 가림. I2 PowerShell `$env:X=""`는 변수를 지움 → adk가 .env의 AGENTSCOUT_LIVE_HN=true를 채워 실제 HN으로 나감(bash 흉내 재현, ADK_DISABLE_LOAD_DOTENV=1로 막힘 확인). I3 extra-app에 에이전트→Gemini 없음(넣어도 730×885). I4 "항상 200" 틀림(웹훅 시간 초과·JSON 아닌 Gmail 응답은 500 → Pub/Sub 재전송 중복). 확인: gemini-3-flash-preview 종료일 없음(⚠ 없음 맞음). 오늘 google-adk는 3.11·3.12에서 2.12.0, 3.10에서 2.11.0.
+Task 29: 148 fix round 1 dispatched (resume a534f7a35229850d3). 판정: I1은 질문이 기본값으로 켜지지 않게(telemetry disable·stdin 닫기), I2는 ADK_DISABLE_LOAD_DOTENV.
+앞 볼륨 점검 dispatched (sonnet, ac0cbbffd1e6cd2ea) — PowerShell `$env:X=""` 꼴(Day 077 GOOGLE_API_KEY 5곳, 140 GEMINI_API_KEY, 144는 "확인 못 함"으로 적어 둠)이 .env 채움으로 바깥에 닿는지 bash unset 흉내로 재현·고침. 동시 3: 리뷰 149, 수정 148, 점검.
+Task 29: 리뷰 149 DONE (ac1b214b6ef3b09e1) — ❌ C1·I4·M11. C1 Step 7 1.9.0 `adk web .`가 cd 뒤 상대 $PY로 exit 127. I1 brief.py·serve_local.py에서 guard.install() 한 줄 빼면 라이브가 실제 api.github.com 이름 조회(6·5건, 리뷰어 감시가 막음) — 그런데 가드는 0건 보고. I2 fakes.log 누적으로 기대 건수 넷 어긋남·"모든 단계 같은 출력" 틀림. I3 웹훅 본문에 스캔 메모·매니페스트 경로·notes 실림(문서는 없다고 함). I4 인증 없는 API 응답으로 브리프 전체(비공개 저장소 노트) 읽힘 빠짐. 확인: .env 근접 사고는 지금 래퍼에서 줄 하나 빼도 바깥 0, Gmail ①②③ 통과, 1.9.0↔2.12.0 세 주장 맞음, Day 150 예고(203·174·3줄) 맞음.
+Task 29: 149 fix round 1 dispatched (resume a1bafe59a8ef08874). 판정: I1 가드 미설치면 네트워크 전에 멈추게, 줄 하나씩 뺀 판 모두 재현. PowerShell 빈 값 꼴도 확인 요청. 동시 3: 수정 148·149, 점검.
+앞 볼륨 점검 DONE (ac0cbbffd1e6cd2ea) — 바깥에 닿은 날 없음. (b) 진짜 키가 로컬 가짜 서버로 실림: Day 127(Step 6 빈 값 bash에 PowerShell 짝 없음 → .env가 OPENAI_API_KEY 채워 Authorization으로 가짜 서버), Day 133(Remove-Item Env:PERPLEXITY_API_KEY 뒤 load_dotenv가 상위 .env 키를 가짜 MCP 서버 넷 환경에 실음) → 둘 다 PYTHON_DOTENV_DISABLED=1(python-dotenv 1.2.4 확인)로 고침, db989e6·52e4da2. (c): Day 077(import 시 .env 안 읽음·adk CLI 없음), 140(check_env.py가 막음), 144(check_env가 막음) — 140 3233c76·144 3b70357은 "(확인하지 못했습니다)"를 about_Environment_Variables 7.4 원문 인용으로 교체. 내가 확인: 네 커밋 README만, LF, 네 날 check 통과. 다른 꼴: Day 136 keyprobe bash 전용(모델 안 부름, (c)).
+Task 29: 149 fix round 1 DONE — 210be9a(README만 +58 −19), check 통과, 20.2/분(240분). 주장: C1 PY 절대 경로, I1 point_at_fakes()가 install() 호출·check_env()가 urlopen·getaddrinfo·asyncio 연결이 가드 것인지 확인·report()가 미설치면 경고, 스크립트 8개 줄 하나씩 뺀 24판(7판 스스로 멈춤·16판 0건·1판 serve_adk envs.load_dotenv 뺀 판은 .env가 모델 주소 되돌려 가드 이름 조회 막기가 2건 막음), I2 블록마다 `: > fakes.log`, I3·I4 반영, M11 반영. 1.9.0 envs.py에 ADK_DISABLE_LOAD_DOTENV 없음. 고침 회차 도구 사용 24회·10분으로 짧음 → 재확인에서 I1 독립 재현 요구.
+Task 29: 재확인 149 dispatched (sonnet, a5dec24cfa8f81d46) → rereview-149.md. 동시 2: 수정 148, 재확인 149.
+Task 29: 148 fix round 1 DONE_WITH_CONCERNS — 2072aa1, check 통과, 20.6/분(190분, 3,912낱말). I1 `adk telemetry disable` 먼저 + adk web·eval 끝에 `< /dev/null`. I2 envfake.sh에 ADK_DISABLE_LOAD_DOTENV=1·check_env.py가 요구, PowerShell은 Remove-Item. I3 extra-app에 Gemini 노드·화살표 둘. I4 실패 종류별(웹훅 시간 초과 500·Gmail JSON 아님 500·연결 거부·Gmail 시간 초과 200), Pub/Sub 재전송은 시험 못 함. M6 일부 — sequence "점수 → 상위 top_n" 라벨이 되돌이 선에 살짝 닿음(check 통과). 작성자 r8·r9 러너가 겹쳐 돎(pkill 없음, 감시 0, 결과 버림).
+Task 29: 재확인 148 dispatched (sonnet, a47f9d5f87dd892ca) → rereview-148.md. 동시 2: 재확인 148·149.
+Task 29: 재확인 149 DONE (a5dec24cfa8f81d46) — ✅ 16/16 해결. I1 독립 재현: 줄 하나 뺀 54판(guard.py 안쪽 18판×4 실행 포함)+통제 11판, 소켓 감시 가로챔 0·기록 프록시 0, 가드 이름 조회 막기 2건뿐. 새 Minor 4(N1 16판 설명, N2 PowerShell 문단의 1.9.0/2.12.0 구분, N3 check_env는 함수 셋만, N4 독자에게 없는 프록시 근거) + 기존 현상(2.12.0 두 번째 따라 하기에서 세션 s1 409 → client.py TypeError).
+Task 29: 내가 고침 — Day 149 N1~N4와 409 문제 해결 줄을 README에 반영, check 통과·20.7/분(4,962낱말/240분), LF → 149 complete.
+Task 29: 재확인 148 DONE (a47f9d5f87dd892ca) — I4/4 해결, M 9 해결·1 일부(M6 라벨이 되돌이 선에 걸침 — 축약은 §5 위반이라 그대로 둠). 새 Minor 4: N1 이미 텔레메트리 동의한 독자가 `adk telemetry disable` 줄을 빼면 play.googleapis.com으로 나감(감시가 DNS에서 막음) → 내가 Important로 올림, N2 README:34 2.11.0 문장·Step 가리킴 오류, N3 disable 블록에 터미널 없음·status 확인 없음, N4 README:1276 "시간 초과 같은 500"이 Gmail 시간 초과 200과 어긋남·JSON 아닌 Gmail 응답의 중복 메일 빠짐. 재확인자 빈 heredoc `python -I -` 1회(바로 죽임, ~/.python_history 그대로).
+Task 29: 148 fix round 2 dispatched (resume a534f7a35229850d3) — N1은 ADK 터미널 HOME·USERPROFILE을 새 폴더로(브리프 원래 규칙) + disable + stdin 닫기, 줄 하나씩 뺀 판 재현.
+Task 29: 149 다시 열림 — README에 ADK 텔레메트리 언급 없음, 2.12.0 경로(serve_adk.py web .)에서 질문·하위 프로세스 전송 여부 미확인. 149 fix round 2 dispatched (resume a1bafe59a8ef08874).
+Task 29: 148 fix round 2 DONE — 2a40e1e(README만), check 통과, 20.6/분(4,216낱말/205분). N1: envfake.sh·PowerShell 블록이 HOME·USERPROFILE을 hn-lab/adkhome(PS는 %TEMP%\hn-lab-adkhome)로, UV_CACHE_DIR은 원래 자리, check_env.py가 홈 이름 adkhome 확인(가드 시험 9경우). 진짜 홈에서 disable을 부르면 ~/.adk/config.json을 false로 바꾸는 부작용을 본문에 적음. 재현(동의 true 홈 대역 8판): 셋 다 0, 하나씩 뺀 3판 0·0·0, 둘씩 뺀 3판 1·1·0, 셋 다 뺀 판 1(감시가 DNS에서 막음, 실제 전송 0) → 한 줄 규칙 충족. N2·N3·N4 반영. 내가 확인: diff(홈 바꾸기·check_env·status 확인 줄·체크리스트·문제 해결 표), LF, check → 148 complete.
+Task 29: 149 fix round 2 DONE — cd5907a(README만), 20.7/분(5,179낱말/250분). 소스: 2.12.0 adk는 stdin이 TTY이고 동의 기록이 없으면 묻고 Enter=켬(cli_tools_click.py 403~427), 켜져 있으면 끝날 때 하위 프로세스가 play.googleapis.com/log로(_metrics_collector.py:274, _metrics_reporter.py:43) — 하위 프로세스라 가드 안 물려받음. 1.9.0엔 없음. 방어 다섯 겹: 래퍼 옆 새 홈, 그 홈에 telemetry:false, stdin 닫기, read_telemetry_consent=False, guard의 GuardedPopen이 _metrics_reporter 실행 거절(check_env가 설치 확인). 줄 하나씩 뺀 11판 시도 0. client.py는 실행마다 새 세션 이름(409 해소).
+Task 29: 내가 고침 — 문제 해결 표의 409 줄을 새 client.py에 맞춤, check 통과 → 149 complete. Task 29(148~149)와 앞 볼륨 검사 23 정리·PowerShell 점검 전부 complete.
