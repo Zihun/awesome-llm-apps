@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: right
+
+api: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+agent: "ADK 에이전트\n(agent.py)" { class: ours }
+manifest: "의존성 목록" { class: file }
+radar: "목록 읽기 · 릴리스\n가져오기 (radar.py)" { class: ours }
+github: "GitHub releases API\n(가짜 서버)" { class: ext }
+ranker: "순위 매기기\n(ranker.py)" { class: ours }
+
+api -> radar: "run_release_radar\n(live, top_n)"
+agent -> radar: "run_release_radar\n(manifest_path,\nlive=None)"
+manifest -> radar: "parse_manifest"
+radar -> github: "fetch_github_\nreleases"
+github -> radar: "릴리스 JSON"
+radar -> ranker: "후보 목록"
+ranker -> radar: "점수순 목록"

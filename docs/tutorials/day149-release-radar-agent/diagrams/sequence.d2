@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+cron: "Cloud Scheduler\n(curl로 대신)" { class: ext }
+api: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+radar: "radar.py" { class: ours }
+manifest: "의존성 목록" { class: file }
+
+cron -> api: "POST /release-radar/trigger\n{dry_run: false, live: true}"
+api -> api: "payload 정리\n(_as_bool · _as_top_n)"
+api -> radar: "run_release_radar(live=True,\ntop_n=10), 매니페스트 인자 없음"
+radar -> manifest: "RELEASE_RADAR_MANIFEST\n파일 읽기"
+manifest -> radar: "의존성 목록"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "release_radar\n(LlmAgent)" { class: ours }
+tool: "preview_dependency_brief\n(agent.py)" { class: ours }
+radar: "radar.py" { class: ours }
+
+agent -> tool: "함수 호출\n(top_n=5)"
+tool -> radar: "run_release_radar\n(live=None)"
+radar -> tool: "brief 사전\n(항목 4개)"
+tool -> agent: "functionResponse\n(JSON 5,255자)"

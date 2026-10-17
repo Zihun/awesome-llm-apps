@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+cron: "Cloud Scheduler\n(curl로 대신)" { class: ext }
+api: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+delivery: "delivery.py" { class: ours }
+hook: "웹훅 수신처\n(기록 서버)" { class: ext }
+
+api -> delivery: "send_brief(brief)"
+delivery -> hook: "POST JSON\n(Bearer 선택)"
+hook -> delivery: "200"
+delivery -> api: "{sent: true, status: 200}"
+api -> cron: "200 + {dry_run, delivery, brief}"

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+api: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+radar: "radar.py" { class: ours }
+delivery: "delivery.py" { class: ours }
+
+radar -> delivery: "render_brief(상위 top_n개,\nwatch_mode, 스캔 메모)"
+delivery -> radar: "Brief (글 · HTML ·\n항목 목록 · 점검 수)"
+radar -> api: "brief 사전"

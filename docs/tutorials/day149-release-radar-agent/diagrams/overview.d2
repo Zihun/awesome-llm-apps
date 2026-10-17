@@ -1,0 +1,38 @@
+...@../../_tools/theme
+direction: right
+
+ops: 운영자 { class: person }
+manifest: "의존성 목록\n(requirements.txt ·\npackage.json)" { class: file }
+cron: "Cloud Scheduler ·\nPub/Sub (README의\n배포 예)" { class: ext }
+
+app: "릴리스 레이더 (release_radar_agent/)" {
+  class: group
+  grid-columns: 1
+  grid-gap: 6
+  api: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+  agent: "ADK 에이전트\n(agent.py)" { class: ours }
+  radar: "목록 읽기 · 릴리스 가져오기\n(radar.py)" { class: ours }
+  ranker: "순위 매기기\n(ranker.py)" { class: ours }
+  delivery: "글 만들기 · 전달\n(delivery.py)" { class: ours }
+}
+
+github: "GitHub\nreleases API\n(가짜 서버)" { class: ext }
+gemini: "Gemini\n(가짜 서버)" { class: ext }
+
+dest: "전달처" {
+  class: group
+  grid-columns: 1
+  grid-gap: 6
+  gmail: "Gmail API\n(호출하지 않음)" { class: ext }
+  hook: "웹훅 수신처\n(기록 서버)" { class: ext }
+}
+
+ops -> app: "adk web 질문\ncurl 호출"
+cron -> app: "POST /trigger\n· /pubsub"
+manifest -> app: "의존성 읽기"
+app -> github: "GET releases\n(저장소마다)"
+github -> app: "릴리스 JSON"
+app -> gemini: "대화 ·\n도구 선언"
+gemini -> app: "도구 호출\n· 글"
+app -> dest: "제목 · 글 · HTML"
+dest -> ops: "받은 브리프"

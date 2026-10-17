@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: right
+
+api: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+radar: "목록 읽기 · 릴리스\n가져오기 (radar.py)" { class: ours }
+delivery: "글 만들기 · 전달\n(delivery.py)" { class: ours }
+gmail: "Gmail API\n(호출하지 않음)" { class: ext }
+hook: "웹훅 수신처\n(기록 서버)" { class: ext }
+
+radar -> delivery: "render_brief"
+delivery -> radar: "Brief"
+api -> delivery: "send_brief\n(dry_run=false일 때만)"
+delivery -> gmail: "토큰 교환 ·\nmessages/send"
+delivery -> hook: "POST JSON"

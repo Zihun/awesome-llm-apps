@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: down
+
+cron: "Cloud Scheduler\n(README의 배포 예)" { class: ext }
+topic: "Pub/Sub 주제 ·\n푸시 구독" { class: ext }
+service: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+env: "서비스 환경변수\n(RELEASE_RADAR_*)" { class: file }
+github: "GitHub releases API" { class: ext }
+oauth: "Google OAuth\n(oauth2.googleapis.com)" { class: ext }
+gmail: "Gmail API\n(gmail.googleapis.com)" { class: ext }
+hook: "웹훅 수신처" { class: ext }
+
+cron -> service: "POST /release-radar/trigger\n(JSON 본문)"
+cron -> topic: "메시지 게시\n(base64 JSON)"
+topic -> service: "푸시 POST\n/release-radar/pubsub"
+env -> service: "설정 읽기"
+service -> github: "GET releases\n(선택 토큰)"
+service -> oauth: "refresh_token\n교환"
+service -> gmail: "messages/send\n(raw MIME)"
+service -> hook: "POST JSON\n(Bearer 선택)"

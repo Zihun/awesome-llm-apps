@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+github: "GitHub\n(가짜 서버)" { class: ext }
+radar: "radar.py" { class: ours }
+ranker: "ranker.py" { class: ours }
+
+radar -> github: "GET /repos/{repo}/releases\n?per_page=5 (저장소마다)"
+github -> radar: "릴리스 JSON"
+radar -> ranker: "rank_releases(후보)"
+ranker -> radar: "점수순 목록"

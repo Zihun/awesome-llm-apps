@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ops: 운영자 { class: person }
+web: "adk web 서버\n(가짜 키 · 루프백)" { class: ours }
+agent: "release_radar\n(LlmAgent)" { class: ours }
+gem: "Gemini\n(가짜 서버)" { class: ext }
+
+ops -> web: "질문 글\n(POST /run)"
+web -> agent: "Runner 실행"
+agent -> gem: "요청 1: 지침 +\n도구 선언 하나"
+gem -> agent: "functionCall\npreview_dependency_brief"
