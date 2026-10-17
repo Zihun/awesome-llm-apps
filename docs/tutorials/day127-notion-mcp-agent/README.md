@@ -494,6 +494,14 @@ uv run --no-project python -c "import json; [print(d['path'], 'stream=%s' % d['s
 (export OPENAI_API_KEY=""; printf '안녕\nexit\n' | uv run --no-project python notion_mcp_agent.py abc123pageid)
 ```
 
+```powershell
+$env:PYTHON_DOTENV_DISABLED = "1"; Remove-Item Env:OPENAI_API_KEY -ErrorAction SilentlyContinue
+"안녕", "exit" | uv run --no-project python notion_mcp_agent.py abc123pageid
+Remove-Item Env:PYTHON_DOTENV_DISABLED; $env:OPENAI_API_KEY = "sk-fake"
+```
+
+PowerShell에서는 `$env:OPENAI_API_KEY = ""`가 빈 값을 주지 못합니다. Microsoft 문서(about_Environment_Variables)에 "In PowerShell, an environment variable can't be set to an empty string. Setting an environment variable to `$null` or an empty string removes it from the current session."라고 적혀 있어 변수가 지워집니다. 그러면 `load_dotenv()`가 상위 폴더 `.env`의 진짜 키로 채우고, `OPENAI_BASE_URL`이 가짜 서버를 가리키므로 그 키가 `Authorization` 헤더에 실려 가짜 모델 서버로 갑니다(bash에서 지워진 변수를 흉내 내 직접 확인했습니다. 바깥 요청은 없었습니다). 그래서 `PYTHON_DOTENV_DISABLED=1`로 `.env` 읽기를 끕니다(python-dotenv 1.2.4에서 확인). 이 줄은 PowerShell에서 실행해 보지 못했습니다. 끈 상태에서는 bash와 같은 `OPENAI_API_KEY not set`이 나왔습니다.
+
 ```text
 ERROR   Model authentication error from OpenAI API: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
 WARNING Attempt 1/4 failed. Retrying in 1s...: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.
