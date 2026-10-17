@@ -439,7 +439,7 @@ uv run --no-project python check_env.py
 if ($LASTEXITCODE -eq 0) { uv run --no-project python serve_fake.py 56217 }
 ```
 
-PowerShell에서 빈 값 대입(`$env:X = ""`)은 변수를 지우는 것으로 알려져 있어(확인하지 못했습니다) 위 줄은 `envfake.sh`처럼 나머지 변수를 빈 값으로 덮지 못합니다. 그래도 안전한 것은 앱 서버(Step 4)의 `serve_local.py`가 `.env`까지 읽은 다음의 환경을 검사해 어긋나면 서버를 세우지 않기 때문입니다.
+PowerShell에서 빈 값 대입(`$env:X = ""`)은 변수를 지웁니다. Microsoft 문서(about_Environment_Variables)에 "In PowerShell, an environment variable can't be set to an empty string. Setting an environment variable to `$null` or an empty string removes it from the current session."라고 적혀 있습니다. 그래서 위 줄은 `envfake.sh`처럼 나머지 변수를 빈 값으로 덮지 못합니다. 그래도 안전한 것은 앱 서버(Step 4)의 `serve_local.py`가 `.env`까지 읽은 다음의 환경을 검사해 어긋나면 서버를 세우지 않기 때문입니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
