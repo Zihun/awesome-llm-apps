@@ -8,6 +8,23 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-17) — 볼륨 12 끝. Day 147까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 147/167). 다음 배치는 볼륨 13(Day 148~149) + 검사 23 앞 볼륨 정리(아래).**
+- Task 28(141~147) 전부 complete. 날마다 커밋(작성 → 수정):
+  - 141: de66676 → 24fd354·f8b1309
+  - 142: 04f0110 → 0b1f413·95661cb·35bbfae(검사 23)
+  - 143: ff8a542 → c57dab7·ae805e3·0df9fbe(내가: 라벨 식별자 복원)·a51ee56(검사 23)
+  - 144: 6390df3 → 64bc8f5·8c27e34(내가: CRLF→LF)·5bd30af
+  - 145: ff25b86 → b7d60a7·d39b284
+  - 146: 3bea815 → b83b53b·163c161·713ca03·092f47d(검사 23)
+  - 147: 72e6497 → 2faca0d·782178b
+  - 범위 밖 정정: Day 140 1786105(예고의 Node 버전).
+- 리뷰(opus) 141~142 / 143~144 / 145 / 146 / 147, 재확인(sonnet) 141~142 / 143~144 / 145 / 146 / 147.
+- 검사: npm test 57/57, Day 141~147 check 0건, 분당 19.5~21.5.
+- **도구 결함(내 실수) 고침 db6fbf3:** 607415a(2026-10-09)에서 `!f.startsWith("sequence")`를 `!f === "sequence.d2"`로 잘못 바꿔 검사 23(비스듬한 화살표)이 꺼져 있었다. TDD로 되살리고 시퀀스 판정은 d2의 `shape: sequence_diagram`으로. 볼륨 12의 걸린 그림(142·143·146·147)은 이 볼륨 안에서 고쳤다. **남은 것: 앞 볼륨 9일(121·126·130·131·133·135·136·138·140)의 그림 35개(overview+step 묶음 셋 포함, 실제 고칠 그림은 약 18장)** — 다음 배치에서 고친다(내 추천, 사용자에게 보고).
+- Ruling(2026-10-16): 가드는 URL 호스트와 함께 `NO_PROXY`·`no_proxy`에 루프백이 있는지도 본다(또는 `trust_env=False`·`ProxyHandler({})`), 루프백 `curl`에는 `--noproxy '*'`.
+- 사고·근접 사고: 141 작성자 PNG용 Chrome을 차단 옵션 없이 1회, 144 작성자도 같은 것으로 보임(→ 이후 PNG는 resvg-py만), 145 재검토자 `rm -rf ./*`(하네스가 막음), 147 작성자 `rm -f trace*`(스크래치 자기 파일), 146 작성자 heredoc 없는 `python3 -`, 재검토자 빈 heredoc 1회, 세션·주간 한도로 두 번 멈춤(SendMessage로 재개). 146 문서에 CopilotKit 패키지의 공개 Segment 쓰기 키가 실렸다가 713ca03에서 자리표시로 가림(로컬 커밋 이력에는 남음, 패키지에 공개된 값).
+- b0a414b(2026-10-17)는 사용자 쪽에서 progress.md만 커밋한 것.
+
 **멈춤 지점 (2026-10-15 저녁) — 볼륨 11 끝. Day 140까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 140/167). 다음(Day 141~, 볼륨 12 🖼️ Generative UI)은 사용자 지시를 받고.**
 - Task 27(137~140) 전부 complete. 날마다 커밋(작성 → 수정 1·2라운드):
   - 137: bd96b62 → da003d0·643801d
@@ -1467,3 +1484,7 @@ Task 28: 143 검사 23 수정 DONE — a51ee56(extra-graph 441×724, extra-agent
 Task 28: 146 검사 23 수정 DONE — 092f47d(extra-outside 868×896). 내가 확인: 화살표 수·라벨 해시 그대로, LF, check 통과. 남은 것: 147 수정 r1.
 Task 28: 147 fix round 1 DONE — 2faca0d, check 통과(검사 23 포함), 19.6/분(180분). 가드 프록시 넷 비움·NO_PROXY·drive.py ProxyHandler({})·curl --noproxy, 새 스크래치 프록시·상위 .env 재현 리스너 0. 그림 다수 추가. 한계: overview 라벨 줄임(파일 이름은 보조 그림·표로), 체크포인터 단계별 put은 그림에 없음 — 재확인에서 판정. diff fix-R28-147-round1.diff.
 Task 28: 재확인 147 dispatched (sonnet, a9d3e05d3501e0c49) → rereview-147.md(overview 라벨 이동·체크포인터 put 생략 판정 포함). 동시 1.
+Task 28: 재확인 147 DONE (a9d3e05d3501e0c49) — I1·I2·I3·M16·(a) 반영, 남은 Important 1(I4(b) 체크포인터 put 생략 — 실측 put 10·put_writes 9), 새 Minor 2. 재검토자 빈 heredoc 1회(부작용 없음).
+메모: b0a414b(2026-10-17 14:46, Zihun Kim)는 progress.md만 담은 커밋 — 사용자 쪽 커밋으로 보임, 내용은 내 원장 기록.
+2026-10-17 사용자 "다음 배치 진행해" — 볼륨 12의 남은 147을 먼저 끝내고 마무리·푸시한 뒤 다음 배치로. 147 fix round 2 dispatched (resume a7dc3085795b1b81c).
+Task 28: 147 fix round 2 DONE — 782178b. 내가 확인: 그림의 mem 화살표 put 10·put_writes 9(실측과 같음), LF, check 통과·20.4/분 → 147 complete. 작성자가 스크래치에서 rm -f trace* 와일드카드 삭제 1회(자기 임시 파일만). Task 28(141~147) 전부 complete.
