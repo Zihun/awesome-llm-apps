@@ -9,10 +9,10 @@ loop: "게임 루프\n(Start 이후)" { class: ours }
 view: "판 · 기록 그리기\n(display_board ·\ndisplay_move_history)" { class: ours }
 
 ui -> players: "모델 id 둘"
+ui -> view: "display_board(판)"
+state -> view: "move_history"
 players -> ui: "Agent 둘"
+board -> ui: "빈 판 · (끝났나?, 상태 글)"
 ui -> state: "플레이어 · 보드 저장"
 ui -> board: "TicTacToeBoard() ·\nget_game_state()"
-board -> ui: "빈 판 · (끝났나?, 상태 글)"
 ui -> loop: "game_started 뒤"
-state -> view: "move_history"
-ui -> view: "display_board(판)"
