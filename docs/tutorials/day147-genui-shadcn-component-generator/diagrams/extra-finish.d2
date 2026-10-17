@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 화면\n(소스로만)" { class: ours }
+rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
+agent: "에이전트 서버\n(main.py·그래프)" { class: ours }
+mem: "체크포인터\n(메모리)" { class: store }
+
+agent -> mem: "aget_state\n(최종 상태)"
+mem -> agent: "최종 메시지 목록"
+agent -> rt: "MESSAGES_SNAPSHOT\nRUN_FINISHED"
+rt -> ui: "이벤트 그대로"

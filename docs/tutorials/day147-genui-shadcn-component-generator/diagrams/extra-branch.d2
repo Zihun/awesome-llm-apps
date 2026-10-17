@@ -1,14 +1,14 @@
 ...@../../_tools/theme
 direction: right
 
-after: "CK\nafter_\nmodel" { class: ours }
+after: "CopilotKit\nafter_model" { class: ours }
 tools: "tools" { class: ours }
 model: "model" { class: ours }
-done: "CK\nafter_\nagent" { class: ours }
+done: "CopilotKit\nafter_agent" { class: ours }
 end: "끝" { class: ours }
 
-after -> tools: "처리할\n도구 호출"
-after -> model: "처리할\n호출 없음"
+after -> tools: "처리할\n도구 호출 있음"
+after -> model: "호출은 있으나\n처리할 것 없음"
 after -> done: "도구 호출\n없음"
 tools -> model: "도구 결과"
 done -> end

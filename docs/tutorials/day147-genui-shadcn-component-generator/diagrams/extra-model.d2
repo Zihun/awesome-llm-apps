@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 화면\n(소스로만)" { class: ours }
+rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
+agent: "에이전트 서버\n(main.py·그래프)" { class: ours }
+llm: "gpt-5.5\n(가짜)" { class: ext }
+mem: "체크포인터\n(메모리)" { class: store }
+
+agent -> llm: "chat.completions\n(stream, response_format, 도구 셋)"
+llm -> agent: "tool_call\nsearch_internet"
+agent -> rt: "TOOL_CALL_START\nTOOL_CALL_END"
+rt -> ui: "이벤트 그대로"
+agent -> mem: "put_writes\n(모델 결과)"
+agent -> mem: "put\n(step 3)"
+agent -> mem: "put_writes\n(__pregel_tasks)"
+agent -> mem: "put\n(step 4)"

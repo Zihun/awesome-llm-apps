@@ -3,10 +3,10 @@ direction: right
 
 req: "RunAgentInput\n.context" { class: file }
 msg: "App Context\n시스템 메시지" { class: file }
-fmt: "response_\nformat" { class: file }
+fmt: "response_format" { class: file }
 llm: "gpt-5.5\n(가짜)" { class: ext }
 
-req -> msg: "CK before_\nagent"
-req -> fmt: "apply_\nstructured"
+req -> msg: "CopilotKit\nbefore_agent"
+req -> fmt: "apply_structured_output_schema"
 msg -> llm: "약 1.2만 자"
 fmt -> llm: "약 1.1만 자"

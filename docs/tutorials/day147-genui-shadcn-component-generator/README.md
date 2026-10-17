@@ -69,8 +69,8 @@ cd ..
 ```text
 Using CPython 3.13.3
 Creating virtual environment at: .venv
-Resolved 53 packages in 1ms
-Installed 52 packages in 1.09s
+Resolved 53 packages in 15ms
+Installed 52 packages in 1.01s
 ```
 
 ```powershell
@@ -595,8 +595,8 @@ curl --noproxy '*' -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:57132/he
 ```
 
 ```text
-  TCP    127.0.0.1:57131        0.0.0.0:0              LISTENING       14552
-  TCP    127.0.0.1:57132        0.0.0.0:0              LISTENING       13540
+  TCP    127.0.0.1:57131        0.0.0.0:0              LISTENING       18708
+  TCP    127.0.0.1:57132        0.0.0.0:0              LISTENING       46508
 {"status":"ok","agent":{"name":"sample_agent"}}
 404
 ```
@@ -1494,17 +1494,102 @@ blobs 가 가리키는 스레드: ['t1', 't2', 't3', 't4', 't5', 't6']
 
 ## 요청 한 건이 흐르는 과정
 
+요청 하나가 에이전트 서버 안에서 거치는 일을 코드 순서대로 여섯 그림에 나눠 그렸습니다. 사용자가 "Research the best pizza in San Francisco..."를 보내면, 화면(`CopilotChat`)은 단일 경로 봉투 `{method: "agent/run", params, body: RunAgentInput}`을 런타임에 POST하고, 런타임은 `RunAgentInput`만 에이전트 서버 `/`에 POST합니다. 에이전트는 시작할 때 체크포인터에서 이 스레드의 기록을 읽고(`aget_state`), 그래프의 단계마다 체크포인터에 상태를 저장합니다. 저장은 두 가지입니다. `put`은 단계마다 체크포인트를 쓰고, `put_writes`는 그 단계에서 일한 노드의 결과(쓰기)를 씁니다. 첫 그림은 요청이 들어와 모델을 부르기 직전까지입니다.
+
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 "Research the best pizza in San Francisco..."를 보내면, 화면(`CopilotChat`)은 단일 경로 봉투 `{method: "agent/run", params, body: RunAgentInput}`을 런타임에 POST하고, 런타임은 `RunAgentInput`만 에이전트 서버 `/`에 POST합니다. 에이전트는 `CopilotKitMiddleware`가 `App Context`를 붙인 뒤 `response_format`을 건 모델 요청을 스트림으로 보냅니다. 모델이 `search_internet`을 부르면 에이전트는 그 호출의 시작과 끝 이벤트를 런타임을 거쳐 화면으로 내보냅니다. 에이전트는 시작할 때 체크포인터에서 이 스레드의 기록을 읽습니다(`aget_state`, 새 스레드면 빈 기록입니다). 단계마다 일어나는 저장(`put`)은 그림에 넣지 않았고 몇 번인지는 세지 않았습니다. 첫 그림은 여기까지입니다. 도구를 부르는 쪽은 둘째 그림입니다.
+둘째 그림은 첫 모델 호출입니다. 모델이 `search_internet`을 부르면 에이전트는 호출의 시작과 끝 이벤트를 런타임을 거쳐 화면으로 내보내고, 모델의 결과를 저장한 뒤 도구 호출을 예약합니다(`__pregel_tasks`).
 
-![요청 시퀀스 가운데](diagrams/extra-tool.svg)
+![요청 시퀀스: 모델 호출](diagrams/extra-model.svg)
 
-도구가 Tavily를 부르고 결과가 `ToolMessage`로 돌아오면, 에이전트는 `TOOL_CALL_RESULT`를 내보냅니다. 이어지는 답은 셋째 그림입니다.
+셋째 그림은 도구입니다. 도구가 Tavily를 부르고 결과가 `ToolMessage`로 돌아오면 에이전트는 `TOOL_CALL_RESULT`를 내보내고 결과를 저장합니다.
 
-![요청 시퀀스 뒷부분](diagrams/extra-answer.svg)
+![요청 시퀀스: 도구](diagrams/extra-tool.svg)
 
-모델의 두 번째 응답은 부품 트리 JSON의 글 조각이고, 에이전트는 이를 `TEXT_MESSAGE_*` 이벤트로, 마지막에 `MESSAGES_SNAPSHOT`과 `RUN_FINISHED`로 내려보냅니다. 런타임은 이벤트를 그대로 전달하고, 화면은 반쯤 온 JSON을 파싱해 `kit.render`로 그립니다. 앞 두 줄(런타임과 화면)은 소스를 읽은 것이고 실행하지 못했습니다. 화면에서 부품이 그려지는 모양은 보지 못했습니다.
+넷째 그림은 두 번째 모델 호출입니다. 응답은 부품 트리 JSON의 글 조각이고, 에이전트는 이를 `TEXT_MESSAGE_*` 이벤트로 내려보내며, 화면은 반쯤 온 JSON을 파싱해 `kit.render`로 그립니다. 사용자 눈에 카드가 보이는 것은 이 스트림이 도는 동안입니다. 런타임과 화면 쪽 줄은 소스를 읽은 것이고 실행하지 못했습니다. 화면에서 부품이 그려지는 모양은 보지 못했습니다.
+
+![요청 시퀀스: 답](diagrams/extra-answer.svg)
+
+다섯째 그림은 모델 응답이 끝난 뒤 그래프가 마무리하는 저장입니다. 마지막 메시지와 `structured_response`를 저장하고(`put_writes`), `after_agent`를 거쳐 끝납니다.
+
+![요청 시퀀스: 마무리 저장](diagrams/extra-put.svg)
+
+여섯째 그림은 끝입니다. 에이전트는 최종 상태를 다시 읽어(`aget_state`) `MESSAGES_SNAPSHOT`과 `RUN_FINISHED`를 내려보냅니다.
+
+![요청 시퀀스: 끝](diagrams/extra-finish.svg)
+
+이 저장 횟수를 직접 세 봅니다. 같은 그래프를 `ainvoke`로 한 번 돌리면서 체크포인터의 `put`·`put_writes`를 세는 스크립트입니다. 가짜 서버가 떠 있어야 합니다.
+
+```bash
+cat > count_put.py <<'EOF'
+"""pizza 장면 한 번(ainvoke)에서 체크포인터 put·put_writes 가 도구 호출 사이 어디에 끼는지 센다. 사용법: python count_put.py <가짜 서버 포트>"""
+import asyncio, json, os, sys
+import guard
+guard.point_at_fake(int(sys.argv[1]))
+guard.check_env()
+guard.install_socket_guard()
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "agent"))
+import main
+guard.check_env()
+import ui_schema
+saver = main.agent.checkpointer
+events = []
+real_put, real_pw = saver.put, saver.put_writes
+def put(config, checkpoint, metadata, new_versions):
+    events.append(f"put step={metadata.get('step')} source={metadata.get('source')}")
+    return real_put(config, checkpoint, metadata, new_versions)
+def put_writes(config, writes, task_id, task_path=""):
+    events.append(f"put_writes {[w[0] for w in writes][:3]}")
+    return real_pw(config, writes, task_id, task_path)
+saver.put, saver.put_writes = put, put_writes
+import src.search as s
+for t in s.search_tools:
+    orig = t.func
+    def wrap(*a, _o=orig, _n=t.name, **k):
+        events.append(f"도구 {_n}")
+        return _o(*a, **k)
+    t.func = wrap
+ctx = {"copilotkit": {"context": [{"description": "output_schema", "value": json.dumps(ui_schema.output_schema())}], "actions": []}}
+async def run():
+    await main.agent.ainvoke({"messages": [("user", "Research the best pizza in San Francisco")], **ctx}, {"configurable": {"thread_id": "cnt1"}})
+asyncio.run(run())
+for i, e in enumerate(events, 1):
+    print(i, e)
+print("put", sum(e.startswith("put ") for e in events), "put_writes", sum(e.startswith("put_writes") for e in events))
+guard.report()
+EOF
+```
+
+```bash
+$PY count_put.py 57131
+```
+
+```text
+1 put step=-1 source=input
+2 put_writes ['messages', 'copilotkit', 'branch:to:normalize_context.before_agent']
+3 put step=0 source=loop
+4 put_writes ['copilotkit', 'branch:to:CopilotKitMiddleware.before_agent']
+5 put step=1 source=loop
+6 put_writes ['messages', 'copilotkit', 'branch:to:model']
+7 put step=2 source=loop
+8 put_writes ['messages', 'branch:to:CopilotKitMiddleware.after_model']
+9 put step=3 source=loop
+10 put_writes ['__pregel_tasks']
+11 put step=4 source=loop
+12 도구 search_internet
+13 put_writes ['messages', 'branch:to:model']
+14 put step=5 source=loop
+15 put_writes ['messages', 'structured_response', 'branch:to:CopilotKitMiddleware.after_model']
+16 put step=6 source=loop
+17 put_writes ['branch:to:CopilotKitMiddleware.after_agent']
+18 put step=7 source=loop
+19 put_writes ['__no_writes__']
+20 put step=8 source=loop
+put 10 put_writes 9
+가드: 루프백 밖으로 나가려던 시도 0건 []
+```
+
+`put` 10번과 `put_writes` 9번입니다. 입력 단계(step -1)와 루프 단계 0~8에서 한 번씩 `put`이 있고, 도구 호출을 예약하는 `__pregel_tasks` 쓰기와 마지막 `__no_writes__` 쓰기도 `put_writes`에 들어 있습니다. 위 여섯 그림의 `put`·`put_writes` 화살표를 세면 이 수와 같습니다. 이 값은 pizza 장면(모델 둘, 도구 하나) 기준이고, 도구를 더 부르면 단계가 늘어납니다. 그래서 Step 7의 `BoundedMemorySaver`가 스레드 하나에 남기는 `writes`·`blobs`도 이 횟수에 비례해 쌓입니다.
 
 ## 실행 체크리스트
 

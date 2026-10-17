@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "에이전트 서버\n(main.py·그래프)" { class: ours }
+mem: "체크포인터\n(메모리)" { class: store }
+
+agent -> mem: "put_writes\n(최종 메시지)"
+agent -> mem: "put\n(step 6)"
+agent -> mem: "put_writes\n(after_agent 예약)"
+agent -> mem: "put\n(step 7)"
+agent -> mem: "put_writes\n(__no_writes__)"
+agent -> mem: "put\n(step 8)"
