@@ -5,12 +5,12 @@ user: 사용자 { class: person }
 ui: "브라우저" { class: ours }
 rt: "런타임" { class: ours }
 adk: "ADKAgent" { class: ours }
-dag: "DashboardAgent" { class: ours }
-gem: "Gemini (가짜)" { class: ext }
+dagent: "DashboardAgent" { class: ours }
 
 user -> ui: "[Add] 클릭"
+ui -> ui: "setState: charts에 더함"
 ui -> rt: "새 요청: tool 결과 + 새 state"
 rt -> adk: "POST / (tool 메시지)"
-adk -> dag: "도구 응답으로 재개"
-dag -> gem: "요청 4: 두 응답"
-adk -> rt: "RESULT · DELTA · TEXT · SNAPSHOT"
+adk -> dagent: "도구 응답으로 재개"
+adk -> rt: "TOOL_CALL_RESULT · STATE_DELTA"
+rt -> ui: "RESULT · DELTA 중계"

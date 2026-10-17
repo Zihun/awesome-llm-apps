@@ -5,7 +5,7 @@ user: 사용자 { class: person }
 ui: "브라우저 (CopilotKit)" { class: ours }
 rt: "런타임 (route.ts)" { class: ours }
 adk: "AG-UI 어댑터 (ADKAgent)" { class: ours }
-dag: "DashboardAgent · 도구" { class: ours }
+dagent: "DashboardAgent" { class: ours }
 gem: "Gemini (가짜 서버)" { class: ext }
 
 user -> ui: "질문 글"
@@ -13,10 +13,10 @@ ui -> rt: "POST /api/copilotkit"
 rt -> adk: "POST / (state · messages · tools)"
 adk -> adk: "input.state를 세션에 덮어씀"
 adk -> rt: "RUN_STARTED"
-adk -> dag: "Runner 실행"
-dag -> gem: "요청 1: 지시문 + 도구 선언 셋"
-gem -> dag: "SearchAgent 호출"
+rt -> ui: "RUN_STARTED 중계"
+adk -> dagent: "Runner 실행"
+dagent -> gem: "요청 1: 지침 + 도구 선언 셋"
+gem -> dagent: "SearchAgent 호출"
 adk -> rt: "TOOL_CALL SearchAgent"
-dag -> gem: "요청 2: googleSearch (SearchAgent 안쪽)"
-gem -> dag: "검색 요약 글"
-adk -> rt: "TOOL_CALL_RESULT"
+rt -> ui: "TOOL_CALL 중계"
+ui -> user: "검색 중 카드"

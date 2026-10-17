@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+dagent: "DashboardAgent" { class: ours }
+gem: "Gemini (가짜 서버)" { class: ext }
+adk: "ADKAgent" { class: ours }
+rt: "런타임" { class: ours }
+ui: "브라우저" { class: ours }
+
+dagent -> gem: "요청 4: 두 도구의 응답"
+gem -> dagent: "글 한 줄"
+adk -> rt: "TEXT_MESSAGE_*"
+rt -> ui: "TEXT_MESSAGE 중계"
+adk -> rt: "STATE_SNAPSHOT · RUN_FINISHED"
+rt -> ui: "SNAPSHOT · FINISHED 중계"

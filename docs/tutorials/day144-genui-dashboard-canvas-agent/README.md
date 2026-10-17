@@ -1,16 +1,20 @@
 # Day 144 · 📊 AI Dashboard Canvas Agent
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ · 예상 소요 180분(원본은 파이썬 248줄과 화면 약 3,000줄이고, 가짜 Gemini 서버를 포함한 파일 아홉을 직접 저장하고 터미널 셋을 오가며 이벤트와 요청 기록을 맞대 읽는 손 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부르고 실제 Google은 한 번도 부르지 않았습니다. 진짜 키로 "다시 만들기" 한 번은 모델 호출이 최소 넷이고, 가격표로 어림하면 $0.1 이하입니다. 추정이고 호출해 확인한 값이 아닙니다. 사전 준비의 표) · 원본 앱: `generative_ui_agents/ai-dashboard-canvas-agent`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 오늘 설치되는 `ag-ui-adk` 0.9.0에서는 이 앱의 차트 화면 도구가 모델에게 선언되지 않아 차트가 그려지지 않고(Step 6), 원본의 `dev:agent`는 에이전트 서버를 모든 네트워크 인터페이스(`0.0.0.0`)에 `reload`로 열고(Step 4), `next dev`도 기본이 `0.0.0.0`이며 통계를 보냅니다(Step 7). 또 Google 폐기 표에는 `gemini-3.5-flash` 요청이 `gemini-3.6-flash`로 처리된다고 적혀 있습니다(사전 준비) · 예상 소요 205분(원본은 파이썬 248줄과 화면 약 3,000줄이고, 가짜 Gemini 서버를 포함한 파일 아홉을 직접 저장하고 터미널 셋을 오가며 이벤트와 요청 기록을 맞대 읽는 손 시간이 본문을 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부르고 실제 Google은 한 번도 부르지 않았습니다. 진짜 키로 "다시 만들기" 한 번은 모델 호출이 최소 넷이고, 가격표로 어림하면 $0.1 이하입니다. 추정이고 호출해 확인한 값이 아닙니다. 사전 준비의 표) · 원본 앱: `generative_ui_agents/ai-dashboard-canvas-agent`
 
 ## 오늘 만들 것
 
-채팅은 얇은 사이드바이고, 진짜 화면은 에이전트가 글을 쓰는 대시보드(캔버스)인 앱입니다. 사용자가 "피자 업계 동향 대시보드를 다시 만들어 줘"라고 치면 에이전트가 Google 검색으로 자료를 모아 지표 카드(pinned metrics)를 채우고, 차트(선·막대·원)는 사용자에게 [Add] 버튼으로 승인을 받아 더합니다(앱 README 9행). 에이전트는 Google ADK(Agent Development Kit), 화면은 Next.js와 CopilotKit이고 둘 사이는 AG-UI 프로토콜로 이어집니다. AG-UI는 에이전트가 화면에 보내는 일을 글 조각만이 아니라 도구 호출·상태 갱신 같은 이벤트의 흐름(SSE)으로 정한 약속입니다. 오늘 배우는 것은 셋입니다. 에이전트와 화면이 같은 상태 하나를 주고받는 법, 에이전트의 도구가 화면의 부품을 그리게 하는 법, 그리고 그 약속이 실제 설치에서 어디서 끊기는지입니다.
+채팅은 얇은 사이드바이고, 진짜 화면은 에이전트가 글을 쓰는 대시보드(캔버스)인 앱입니다. 사용자가 "피자 업계 동향 대시보드를 다시 만들어 줘"라고 치면 에이전트가 Google 검색으로 자료를 모아 지표 카드(pinned metrics)를 채우고, 차트(선·막대·원)는 사용자에게 [Add] 버튼으로 승인을 받아 더합니다. 앱 README 9행은 얇은 사이드바와 캔버스만 말하고, 검색과 승인은 소스(`generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:23-44`, `generative_ui_agents/ai-dashboard-canvas-agent/src/components/chat/actions/charts.tsx:77-92`)에서 읽은 것입니다. 에이전트는 Google ADK(Agent Development Kit), 화면은 Next.js와 CopilotKit이고 둘 사이는 AG-UI 프로토콜로 이어집니다. AG-UI는 에이전트가 화면에 보내는 일을 글 조각만이 아니라 도구 호출·상태 갱신 같은 이벤트의 흐름(SSE)으로 정한 약속입니다. 오늘 배우는 것은 셋입니다. 에이전트와 화면이 같은 상태 하나를 주고받는 법, 에이전트의 도구가 화면의 부품을 그리게 하는 법, 그리고 그 약속이 실제 설치에서 어디서 끊기는지입니다.
 
-앞 날들과 이어지는 부분과 새로운 부분은 이렇습니다. ADK 에이전트는 Day 014~023이 다뤘습니다. Day 017은 내장 `google_search`를, Day 018은 세션 상태를, Day 019는 `before_model`·`after_model` 같은 콜백을, Day 021은 `AgentTool`로 에이전트를 도구처럼 부르는 법을 다뤘고 오늘 앱은 그 넷을 모두 씁니다. 가짜 Gemini 서버를 `GOOGLE_GEMINI_BASE_URL`로 가리키는 방법은 Day 140이 보였고, 오늘은 같은 방법을 더 단순하게(TLS 없이) 씁니다. 볼륨 12의 다른 날과도 겹칩니다. Day 142의 앱도 같은 `ADKAgent`와 `add_adk_fastapi_endpoint`를 씁니다(`generative_ui_agents/ai-financial-coach-agent/agent/main.py:8`, `generative_ui_agents/ai-financial-coach-agent/agent/main.py:487`). 새로운 것은 화면입니다. Day 124처럼 Node 쪽은 실행하지 않고 소스로만 읽습니다. 이 문서는 `pnpm install`도 `next`도 실행하지 않았고 브라우저로 화면을 열지도 않았습니다.
+앞 날들과 이어지는 부분과 새로운 부분은 이렇습니다. ADK 에이전트는 Day 014~023이 다뤘습니다. Day 017은 내장 `google_search`를, Day 018은 세션 상태를, Day 019는 `before_model`·`after_model` 같은 콜백을, Day 021은 `AgentTool`로 에이전트를 도구처럼 부르는 법을 다뤘고 오늘 앱은 그 넷을 모두 씁니다. 같은 ADK와 `ag-ui-adk` 어댑터를 쓰는 Day 142(앱 소스 `generative_ui_agents/ai-financial-coach-agent/agent/main.py:8`, `generative_ui_agents/ai-financial-coach-agent/agent/main.py:487`)가 이미 확인한 것이 많아서, 이 문서는 그것을 되풀이하지 않고 가리킵니다. 가짜 Gemini 서버를 `GOOGLE_GEMINI_BASE_URL`로 가리키는 방법은 Day 140(Live 소켓 때문에 TLS)과 Day 142(REST뿐이라 TLS 없음)가 보였고 오늘은 Day 142 쪽입니다. 요청마다 `input.state`가 세션 상태를 덮는 것과 `_ag_ui_*` 내부 키는 Day 142 Step 4·5가, `AGUIToolset`이 없으면 화면 도구가 무시되는 것은 Day 142 Step 5가, 메모리 세션과 재시작은 Step 7이, CopilotKit 통계는 Step 6이, 루프백 관문은 Step 2가 다뤘습니다. 다른 점은 판입니다. Day 142는 잠금 파일로 `ag-ui-adk` 0.5.0·`google-adk` 1.26.0·`google-genai` 1.65.0에 묶였고, 이 앱은 버전을 하나도 고정하지 않아 오늘 0.9.0·2.12.0·2.31.0이 설치됩니다. 오늘의 새것은 같은 규칙이 이 앱에서는 핵심 기능(차트)을 끊는다는 것, 0.9.0의 경고 로그와 한 줄 패치, 0.4.2와의 비교, `before_model`의 `State` 객체 출력, 지침의 없는 이름입니다. 새로운 것은 화면입니다. Day 124처럼 Node 쪽은 실행하지 않고 소스로만 읽습니다. 이 문서는 `pnpm install`도 `next`도 실행하지 않았고 브라우저로 화면을 열지도 않았습니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림의 "Next.js 앱" 묶음 안 네 부품 가운데 앞 셋은 브라우저에서, `route.ts`는 Node 서버에서 도는데 그림은 한 묶음으로 보여 줍니다. 묶음에 달린 "AG-UI 요청"은 묶음 전체의 것입니다. 실제로는 브라우저가 `/api/copilotkit`를 부르고 그 경로의 코드가 파이썬 서버를 다시 부르는 두 번의 HTTP입니다(Step 7의 구조 그림). 파이썬 묶음 안 다섯 부품은 한 프로세스입니다. "Gemini"는 이 문서에서는 제가 쓴 가짜 서버입니다.
+그림의 "Next.js 앱" 묶음 안 네 부품 가운데 앞 셋은 브라우저에서, `route.ts`는 Node 서버에서 도는데 그림은 한 묶음으로 보여 줍니다. 묶음에 달린 "AG-UI 요청"은 묶음 전체의 것입니다. 실제로는 브라우저가 `/api/copilotkit`를 부르고 그 경로의 코드가 파이썬 서버를 다시 부르는 두 번의 HTTP입니다(Step 7의 구조 그림). 파이썬 묶음 안 다섯 부품은 한 프로세스입니다. "Gemini"는 이 문서에서는 제가 쓴 가짜 서버입니다. 그림에서는 화살표가 파이썬 묶음의 한 칸에 붙어 보이지만 묶음 전체의 것입니다. Gemini를 부르는 것은 `DashboardAgent`와 `SearchAgent` 둘이고(아래 구조 그림), `.env`를 읽는 것은 `server.py`입니다.
+
+![파이썬 묶음 안의 호출 관계](diagrams/extra-agent.svg)
+
+`ADKAgent`가 `DashboardAgent`를 돌리고 세션 상태를 읽고 씁니다. `DashboardAgent`는 지표 도구를 부르고 `SearchAgent`를 `AgentTool`로 부르며, 도구는 세션 상태에 `pinnedMetrics`를 씁니다. 모델 호출은 `DashboardAgent`가 하고 `SearchAgent`도 따로 합니다.
 
 **요청 경로를 무엇으로 정했는가.** "다시 만들기" 한 번이 사용자 글에서 지표 카드가 화면에 뜨기까지 지나는 길을 중심으로 합니다. 파이썬 쪽이 248줄로 작아서 거의 전부가 이 길에 놓이고, 화면 쪽의 상태 갱신·도구 호출·승인이 같은 길 위에 있기 때문입니다. 차트를 그리는 `recharts` 부분과 shadcn 기본 부품(`src/components/ui/`, 1,233줄)은 컴포넌트 표에 역할만 적었습니다.
 
@@ -20,10 +24,10 @@
 
 직접 돌려 보고 알게 된 특이점은 다섯입니다.
 
-- 오늘 설치되는 `ag-ui-adk` 0.9.0에서는 화면의 차트 도구(`add_chart` 등)가 모델에게 선언되지 않습니다. 에이전트에 `AGUIToolset()`이 없기 때문입니다. 이 앱은 그 도구로 차트를 그리게 설계되었는데 모델이 차트 도구를 아예 보지 못합니다(Step 6).
+- 오늘 설치되는 `ag-ui-adk` 0.9.0에서는 화면의 차트 도구(`add_chart` 등)가 모델에게 선언되지 않습니다. 에이전트에 `AGUIToolset()`이 없기 때문이고, Day 142가 0.5.0에서 확인한 같은 규칙입니다. 이 앱은 그 도구로 차트를 그리게 설계되었는데 모델이 차트 도구를 아예 보지 못합니다(Step 6).
 - 지침이 없는 도구와 상태 키를 말합니다. `add_charts`·`set_chart_data`라는 도구와 `dashboard.charts`·`chartData`라는 키는 코드 어디에도 없습니다(Step 3).
 - `before_model` 콜백이 시스템 지침 앞에 붙이는 "Current dashboard"는 상태 대신 `<google.adk.sessions.state.State object at 0x…>`라는 객체 이름이 나갑니다(Step 5).
-- 화면으로 가는 상태 스냅숏과 모델 지침에 `_ag_ui_thread_id` 같은 내부 키가 섞여 나갑니다(Step 5).
+- 화면으로 가는 상태 스냅숏(Day 142 Step 4가 본 것)에 더해 모델 지침에도 `_ag_ui_thread_id` 같은 내부 키가 섞여 나갑니다(Step 5).
 - `python server.py`(앱의 `dev:agent`)는 모든 네트워크 인터페이스(`0.0.0.0`)에 열고 `reload=True`로 뜹니다(Step 4). 그리고 `requirements.txt`의 `tavily-python`은 코드 어디에서도 쓰지 않습니다(`grep`).
 
 ## 사전 준비
@@ -32,14 +36,14 @@
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 참고 |
 | Python 3.12 | 앱 README는 3.8 이상이라고 하지만 `google-adk`의 `Requires-Python`이 `>=3.11`이라 3.8은 설치되지 않습니다(직접 확인, 메타데이터). 이 문서는 3.12.10으로 돌렸습니다 | 공통 사전 준비와 같음 |
-| Node.js 18+·pnpm | 화면(`pnpm run dev`)용. **이 문서는 설치하지도 실행하지도 않았습니다.** 앱 README의 명령은 Step 7에 그대로 옮겼습니다 | https://nodejs.org (필요할 때만) |
+| Node.js 18.18+·pnpm | 화면(`pnpm run dev`)용. 앱 README는 18+라고 하지만 `next@15.3.2`의 `engines.node`는 `^18.18.0 || ^19.8.0 || >= 20.0.0`입니다(npm 레지스트리 메타데이터). **이 문서는 설치하지도 실행하지도 않았습니다.** 앱 README의 명령은 Step 7에 그대로 옮겼습니다 | https://nodejs.org (필요할 때만) |
 | Google API 키 | 진짜로 쓸 때만. 이 문서는 가짜 값 `fake-key`만 씁니다 | https://aistudio.google.com/apikey |
 | Tavily 키 | 필요 없습니다. 앱의 요구 목록에는 있지만 코드가 쓰지 않습니다 | 해당 없음 |
 | 터미널 셋 | 가짜 Gemini 서버(A), 앱 서버(B), 나머지(C). 셋 다 `canvas-work` 폴더(Step 1에서 만듭니다)에서 엽니다 | 별도 설치 없음 |
 
 한국어 Windows의 Git Bash에서 파이썬 출력이 cp949로 깨지는 것을 막으려고 `envfake.sh`가 `PYTHONIOENCODING=utf-8`을 겁니다. 이 문서의 파일 저장(`cat > … <<`)은 bash 문법이어서 Windows에서는 Git Bash로 따라 합니다. PowerShell 줄은 실행해 보지 못했고(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다) 그렇게 표시했습니다.
 
-**앱이 쓰는 모델(2026-10-16).** 앱은 `gemini-3.5-flash`를 두 곳에 씁니다(`generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:24`, `generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:34`). Google의 폐기 표(https://ai.google.dev/gemini-api/docs/deprecations, "Last updated 2026-10-12 UTC")를 WebFetch로 읽은 요약으로는, 이 모델은 표에 있고 종료일 칸이 "N/A"이고 권장 대체는 `gemini-3.6-flash`이며 이 모델로 오는 요청이 3.6으로 자동 연결된다고 적혀 있습니다. WebFetch는 페이지를 글로 바꾼 뒤 작은 모델이 답하는 도구라서 원문 문구와 대조하지는 못했습니다. 모델 목록 페이지(https://ai.google.dev/gemini-api/docs/models)와 가격표(https://ai.google.dev/gemini-api/docs/pricing)에는 `gemini-3.5-flash`가 나오지 않았습니다. 그래서 종료 예정은 아니라고 읽어 ⚠는 달지 않았지만, 가격은 같은 계열 가격표(이것도 WebFetch 요약입니다)로 어림했습니다. 가격표의 `gemini-3.6-flash`는 입력 100만 토큰당 $0.75, 출력 $3.75(2026-12-31까지)이고 Google 검색 근거(grounding)는 달마다 5,000건까지 무료이며 그 뒤 1,000건에 $14입니다(`gemini-3.6-flash`의 검색 근거는 무료 등급에서 쓸 수 없다고 적혀 있습니다). 이 앱의 "다시 만들기" 한 번은 지침과 상태가 담긴 모델 호출이 셋 이상이고 검색 하나가 붙으니(Step 5), 호출당 입력 수천 토큰으로 어림하면 몇 센트입니다. 호출해 확인한 값이 아닙니다.
+**앱이 쓰는 모델(2026-10-16).** 앱은 `gemini-3.5-flash`를 두 곳에 씁니다(`generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:24`, `generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:34`). Google의 폐기 표(https://ai.google.dev/gemini-api/docs/deprecations, "Last updated 2026-10-12 UTC")를 `curl`로 받은 HTML에서 읽은 행은 이렇습니다. `gemini-3.5-flash` | May 19, 2026 | N/A | `gemini-3.6-flash` (not available to select in Google AI Studio; the endpoint is not shutting down and automatically routes API requests to `gemini-3.6-flash`). 종료일이 "N/A"이고 엔드포인트가 닫히지 않으므로 종료 예정이 아니라고 읽어 종료 ⚠는 달지 않았습니다. 다만 요청이 3.6으로 처리되므로 응답이 3.5와 같다고 가정하지 않는 편이 낫습니다(머리말에 한 줄 둔 까닭입니다). 모델 목록 페이지(https://ai.google.dev/gemini-api/docs/models)와 가격표(https://ai.google.dev/gemini-api/docs/pricing)에는 `gemini-3.5-flash`가 나오지 않아 가격은 `gemini-3.6-flash` 행으로 어림했습니다(이 둘은 WebFetch로 읽은 요약이라 원문 대조는 못 했습니다). 가격표의 `gemini-3.6-flash`는 입력 100만 토큰당 $0.75, 출력 $3.75(2026-12-31까지)이고 Google 검색 근거(grounding)는 달마다 5,000건까지 무료이며 그 뒤 1,000건에 $14입니다(검색 근거는 무료 등급에서 쓸 수 없다고 적혀 있습니다). 이 앱의 "다시 만들기" 한 번은 지침과 상태가 담긴 모델 호출이 셋 이상이고 검색 하나가 붙으니(Step 5), 호출당 입력 수천 토큰으로 어림하면 몇 센트입니다. 호출해 확인한 값이 아닙니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -126,7 +130,7 @@ uvicorn                            0.54.0
 
 `tavily-python`은 설치되지만 `grep -rn -i tavily agent`는 `requirements.txt`의 한 줄만 찾습니다. 코드가 쓰지 않는 의존성입니다.
 
-이제 가짜 서버가 SDK에 닿는 길을 만듭니다. google-genai 2.31.0은 `Client()`에 주소를 안 주면 환경변수 `GOOGLE_GEMINI_BASE_URL`을 읽습니다(`google/genai/_base_url.py`의 `get_base_url`, 소스로 확인). 이 앱은 Gemini에 REST만 쓰므로(Live 소켓이 없습니다) Day 140처럼 TLS 인증서를 만들 필요 없이 `http://127.0.0.1:<포트>`면 됩니다. ADK의 모델 클라이언트가 같은 변수를 따르는지는 Step 5에서 가짜 서버가 실제로 요청을 받는 것으로 직접 확인합니다. 아래 `envfake.sh`는 이 터미널을 가짜 서버로 향하게 합니다. 키는 `fake-key`이고, 진짜 키·Vertex·검색 키·OpenTelemetry 주소가 셸에 있을 수 있으니 빈 값으로 덮습니다(`unset`이 아니라 빈 값으로 덮는 까닭은 Step 4).
+이제 가짜 서버가 SDK에 닿는 길을 만듭니다. google-genai 2.31.0은 `Client()`에 주소를 안 주면 환경변수 `GOOGLE_GEMINI_BASE_URL`을 읽습니다(`google/genai/_base_url.py`의 `get_base_url`, 소스로 확인). 이 앱은 Gemini에 REST만 쓰므로(Live 소켓이 없습니다) Day 140은 Live 소켓 때문에 TLS 인증서를 만들었지만 이 앱은 Day 142처럼 `http://127.0.0.1:<포트>`면 됩니다. ADK의 모델 클라이언트가 같은 변수를 따르는지는 Step 5에서 가짜 서버가 실제로 요청을 받는 것으로 직접 확인합니다. 아래 `envfake.sh`는 이 터미널을 가짜 서버로 향하게 합니다. 키는 `fake-key`이고, 진짜 키·Vertex·검색 키·OpenTelemetry 주소가 셸에 있을 수 있으니 빈 값으로 덮습니다(`unset`이 아니라 빈 값으로 덮는 까닭은 Step 4). 셸에 프록시 변수(`HTTP_PROXY` 등)가 있으면 httpx와 google-genai가 그것을 따라 루프백 요청도 프록시로 보낼 수 있으므로(Day 142 Step 2가 소스로 확인) 프록시 변수를 비우고 `NO_PROXY`에 `127.0.0.1`을 겁니다. 검사 장치도 이것을 봅니다.
 
 ```bash
 cat > envfake.sh <<'EOF'
@@ -143,6 +147,8 @@ export GOOGLE_APPLICATION_CREDENTIALS=
 export TAVILY_API_KEY=
 export OTEL_EXPORTER_OTLP_ENDPOINT=
 export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=
+export HTTP_PROXY= HTTPS_PROXY= ALL_PROXY= http_proxy= https_proxy= all_proxy= grpc_proxy=
+export NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost
 export FAKE_LOG=fake/fake.jsonl
 echo "GOOGLE_API_KEY=${GOOGLE_API_KEY:0:6}  GOOGLE_GEMINI_BASE_URL=$GOOGLE_GEMINI_BASE_URL"
 EOF
@@ -176,6 +182,7 @@ MUST_BE_EMPTY = (
     "OTEL_EXPORTER_OTLP_ENDPOINT",
     "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
 )
+PROXY_VARS = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy", "grpc_proxy")
 
 
 def problems(env=None):
@@ -191,6 +198,12 @@ def problems(env=None):
     for name in MUST_BE_EMPTY:
         if env.get(name, "").strip():
             out.append(f"{name}에 값이 있음 (셸 또는 agent 폴더 위쪽의 .env)")
+    for name in PROXY_VARS:
+        if env.get(name, "").strip():
+            out.append(f"{name}에 값이 있음 (프록시를 거치면 루프백 요청도 프록시로 나갈 수 있습니다)")
+    for name in ("NO_PROXY", "no_proxy"):
+        if "127.0.0.1" not in [x.strip() for x in env.get(name, "").split(",")]:
+            out.append(f"{name}에 127.0.0.1이 없음")
     return out
 
 
@@ -417,6 +430,9 @@ $env:PYTHONIOENCODING = "utf-8"
 $env:GOOGLE_GEMINI_BASE_URL = "http://127.0.0.1:56217"
 $env:GOOGLE_API_KEY = "fake-key"
 $env:GOOGLE_GENAI_USE_VERTEXAI = "False"
+$env:NO_PROXY = "127.0.0.1,localhost"
+$env:no_proxy = "127.0.0.1,localhost"
+Remove-Item Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:ALL_PROXY, Env:http_proxy, Env:https_proxy, Env:all_proxy, Env:grpc_proxy -ErrorAction SilentlyContinue
 $env:FAKE_LOG = "fake/fake.jsonl"
 mkdir fake -Force
 uv run --no-project python check_env.py
@@ -715,7 +731,7 @@ if __name__ == "__main__":
     uvicorn.run("server:app", host="0.0.0.0", port=port, reload=should_reload)
 ```
 
-`python server.py`는 `host="0.0.0.0"`으로 모든 네트워크 인터페이스에 열고, `AGENT_RELOAD`가 `false`가 아니면(기본) `reload=True`입니다. `AGENT_RELOAD=false`는 reload만 끌 뿐 `0.0.0.0`은 그대로입니다. 이 서버에는 인증도 CORS 설정도 없어서 같은 네트워크의 누구나 `POST /`로 에이전트(와 그 뒤의 키)를 쓸 수 있습니다. 그리고 앱의 `dev:agent` 스크립트가 바로 이 줄을 실행합니다. `package.json`의 `dev:agent`는 `./scripts/run-agent.sh || scripts/run-agent.bat`이고(`generative_ui_agents/ai-dashboard-canvas-agent/package.json:8`), 그 스크립트가 `.venv/bin/python server.py`를 부릅니다(`generative_ui_agents/ai-dashboard-canvas-agent/scripts/run-agent.sh:10`). 앱 README의 `pnpm run dev`로 띄우면 이 서버가 열립니다. 또 `postinstall`이 `npm run install:agent`를 불러(`generative_ui_agents/ai-dashboard-canvas-agent/package.json:14`) 의존성 설치가 끝나면 `agent/.venv`를 만들고 `pip install -r requirements.txt`까지 합니다. README가 `pnpm install:agent`를 따로 적은 것은 중복입니다. 원본은 고치지 않으므로, 아래 `serve_local.py`가 같은 `server.app`을 `127.0.0.1`에, `reload` 없이 띄웁니다. 이 스크립트는 앱을 가져와 `load_dotenv()`가 돈 다음의 환경을 `check_env.py`로 검사하고, 통과해야만 서버를 세웁니다. 그래서 `envfake.sh`를 빼먹거나 셸·상위 `.env`에 진짜 키가 있어도 바깥으로 나가는 길이 서지 않습니다.
+`python server.py`는 `host="0.0.0.0"`으로 모든 네트워크 인터페이스에 열고, `AGENT_RELOAD`가 `false`가 아니면(기본) `reload=True`입니다. `AGENT_RELOAD=false`는 reload만 끌 뿐 `0.0.0.0`은 그대로입니다. 이 서버에는 인증이 없어서 같은 네트워크의 누구나 `POST /`로 에이전트(와 그 뒤의 키)를 쓸 수 있습니다. 그리고 앱의 `dev:agent` 스크립트가 바로 이 줄을 실행합니다. `package.json`의 `dev:agent`는 `./scripts/run-agent.sh || scripts/run-agent.bat`이고(`generative_ui_agents/ai-dashboard-canvas-agent/package.json:8`), 그 스크립트가 `.venv/bin/python server.py`를 부릅니다(`generative_ui_agents/ai-dashboard-canvas-agent/scripts/run-agent.sh:10`). 앱 README의 `pnpm run dev`로 띄우면 이 서버가 열립니다. 또 `postinstall`이 `npm run install:agent`를 불러(`generative_ui_agents/ai-dashboard-canvas-agent/package.json:14`) 의존성 설치가 끝나면 `agent/.venv`를 만들고 `pip install -r requirements.txt`까지 합니다. README가 `pnpm install:agent`를 따로 적은 것은 중복입니다. 원본은 고치지 않으므로, 아래 `serve_local.py`가 같은 `server.app`을 `127.0.0.1`에, `reload` 없이 띄웁니다. 이 스크립트는 앱을 가져와 `load_dotenv()`가 돈 다음의 환경을 `check_env.py`로 검사하고, 통과해야만 서버를 세웁니다. 그래서 `envfake.sh`를 빼먹거나 셸·상위 `.env`에 진짜 키가 있어도 바깥으로 나가는 길이 서지 않습니다.
 
 ```bash
 cat > serve_local.py <<'PY'
@@ -762,7 +778,7 @@ curl -s -X POST http://127.0.0.1:56218/ -H "Content-Type: application/json" -d '
 ```
 
 ```text
-  TCP    127.0.0.1:56218        0.0.0.0:0              LISTENING       61536
+  TCP    127.0.0.1:56218        0.0.0.0:0              LISTENING       27556
 {}
 {"detail":[{"type":"missing","loc":["body","threadId"],"msg":"Field required","input":{}},{"type":"missing","loc":["body","runId"],"msg":"Field required","input
 ```
@@ -792,7 +808,7 @@ check_env 실패: TAVILY_API_KEY에 값이 있음 (셸 또는 agent 폴더 위�
 {'GOOGLE_API_KEY': 'fake-key', 'GOOGLE_GENAI_USE_VERTEXAI': 'False', 'GOOGLE_CLOUD_PROJECT': '', 'GOOGLE_GEMINI_BASE_URL': 'http://127', 'TAVILY_API_KEY': ''}
 ```
 
-첫 시험은 이유 다섯을 찍고 종료 코드 1로 끝납니다. 둘째 시험에서는 `.env`에 진짜처럼 보이는 값이 있어도 셸의 값이 이겨서 가짜 서버만 가리킵니다. `load_dotenv()`는 환경에 이미 있는 변수를 덮지 않으며, 빈 값도 "있는 것"으로 칩니다. `envfake.sh`가 `unset`이 아니라 빈 값(`GEMINI_API_KEY=`)으로 덮는 까닭이 이것입니다. 시험이 끝났으니 `.env`는 지웁니다(`rm canvas-work/.env`).
+첫 시험은 이유 다섯을 찍고 종료 코드 1로 끝납니다. 둘째 시험에서는 `.env`에 진짜처럼 보이는 값이 있어도 셸의 값이 이겨서 가짜 서버만 가리킵니다. `load_dotenv()`는 환경에 이미 있는 변수를 덮지 않으며, 빈 값도 "있는 것"으로 칩니다. `envfake.sh`가 `unset`이 아니라 빈 값(`GEMINI_API_KEY=`)으로 덮는 까닭이 이것입니다. 시험이 끝났으니 `.env`는 지워졌습니다(위 블록 마지막 줄).
 
 ### Step 5. 한 턴: 이벤트와 상태
 
@@ -809,7 +825,7 @@ cat > drive.py <<'PY'
   textfirst  모델이 글 한 줄과 도구 호출을 한 응답에 함께 돌려줄 때 어떻게 되는지(after_model의 end_invocation)
   hitl    화면 도구(add_chart 등)를 선언해 보낸다. 에이전트가 add_chart를 부르면 사용자가 [Add]를 눌렀다고 치고
           결과를 되돌려 보낸다(renderAndWaitForResponse의 respond).
-주소는 루프백만 받는다."""
+주소는 루프백만 받고, 셸의 프록시 변수는 읽지 않는다(trust_env=False)."""
 import json
 import sys
 import uuid
@@ -904,7 +920,7 @@ def post_run(url, body, label):
     events, calls, text = [], {}, []
     print(f"--- {label}: 화면 도구={[t['name'] for t in body['tools']]} state 키={sorted(body['state'])} 메시지={len(body['messages'])}")
     with httpx.stream(
-        "POST", url, json=body, headers={"Accept": "text/event-stream"}, timeout=60
+        "POST", url, json=body, headers={"Accept": "text/event-stream"}, timeout=60, trust_env=False
     ) as resp:
         print("HTTP", resp.status_code, resp.headers.get("content-type"))
         for line in resp.iter_lines():
@@ -1088,13 +1104,13 @@ pinnedMetrics: [{"id": "m1", "title": "Pizza market (fake)", "value": "$50B", "h
 글: Dashboard updated (fake reply).
 ```
 
-이벤트 열다섯 줄이 이 한 턴의 AG-UI 전부입니다. 아이디(`thread-…`)와 주소(`0x…`)는 실행마다 다릅니다. `RUN_STARTED`~`RUN_FINISHED`가 한 번의 실행을 감쌉니다. 도구 호출은 백엔드 도구(`SearchAgent`, `add_pinned_metrics`)도 `TOOL_CALL_START`·`ARGS`·`END`·`RESULT`로 화면에 흘러갑니다. 화면이 그것을 그리는 곳이 `search.tsx`이고, `available: "disabled"`이면 화면은 그 도구를 실행하지 않고 호출을 그리기만 합니다(`generative_ui_agents/ai-dashboard-canvas-agent/src/components/chat/actions/search.tsx:6-10`, CopilotKit `useCopilotAction`의 분기는 소스로 확인). `STATE_DELTA`는 도구가 상태를 쓴 순간 나가는 JSON Patch(`add /pinnedMetrics`)이고, 실행이 끝날 때 `STATE_SNAPSHOT`이 전체 상태를 보냅니다. 화면은 이 둘을 받는 대로 자기 상태를 바꿉니다(`@ag-ui/client`의 이벤트 처리, 소스로 확인). 스냅숏의 키에 `_ag_ui_app_name`·`_ag_ui_thread_id`·`_ag_ui_user_id`가 보입니다. ag-ui-adk가 세션에 적어 두는 내부 키가 화면의 상태에 그대로 섞여 들어갑니다(Step 6의 스냅숏에는 `pending_tool_calls`도 보입니다).
+이벤트 열다섯 줄이 이 한 턴의 AG-UI 전부입니다. 아이디(`thread-…`)와 주소(`0x…`)는 실행마다 다릅니다. `RUN_STARTED`~`RUN_FINISHED`가 한 번의 실행을 감쌉니다. 도구 호출은 백엔드 도구(`SearchAgent`, `add_pinned_metrics`)도 `TOOL_CALL_START`·`ARGS`·`END`·`RESULT`로 화면에 흘러갑니다. 화면이 그것을 그리는 곳이 `search.tsx`이고, `available: "disabled"`이면 화면은 그 도구를 실행하지 않고 호출을 그리기만 합니다(`generative_ui_agents/ai-dashboard-canvas-agent/src/components/chat/actions/search.tsx:6-10`, CopilotKit `useCopilotAction`의 분기는 소스로 확인). `STATE_DELTA`는 도구가 상태를 쓴 순간 나가는 JSON Patch(`add /pinnedMetrics`)이고, 실행이 끝날 때 `STATE_SNAPSHOT`이 전체 상태를 보냅니다. 화면은 이 둘을 받는 대로 자기 상태를 바꿉니다(`@ag-ui/client`의 이벤트 처리, 소스로 확인). 스냅숏의 키에 `_ag_ui_app_name`·`_ag_ui_thread_id`·`_ag_ui_user_id`가 보입니다. ag-ui-adk가 세션에 적어 두는 내부 키가 화면의 상태에 그대로 섞여 들어갑니다(Day 142 Step 4가 같은 키를 봤습니다. Step 6의 스냅숏에는 `pending_tool_calls`도 보입니다).
 
 상태가 오가는 길은 구조로 보면 이렇습니다.
 
 ![상태가 오가는 길](diagrams/extra-state.svg)
 
-화면의 부품(지표 카드 버튼, 차트 도구)은 화면의 상태를 고치고, 그 상태는 요청마다 `input.state`로 에이전트에게 갑니다. ag-ui-adk는 그것을 세션 상태에 덮어씁니다(`adk_agent.py`의 `_run_adk_in_background`가 `update_session_state`를 부르는 곳, 소스로 확인). 에이전트의 도구는 같은 세션 상태에 쓰고, 그것이 `STATE_DELTA`·`STATE_SNAPSHOT`으로 화면에 돌아갑니다. 지침 함수도 같은 세션 상태를 글에 끼웁니다. 화면과 에이전트 어느 쪽이 "원본"인지는 정해져 있지 않고, 마지막에 쓴 쪽이 이깁니다.
+화면의 부품(지표 카드 버튼, 차트 도구)은 화면의 상태를 고치고, 그 상태는 요청마다 `input.state`로 에이전트에게 갑니다. ag-ui-adk는 그것을 세션 상태에 덮어씁니다(Day 142 Step 5가 `_run_adk_in_background`에서 확인했고, 아래 `sync`가 0.9.0에서도 같은지 봅니다). 에이전트의 도구는 같은 세션 상태에 쓰고, 그것이 `STATE_DELTA`·`STATE_SNAPSHOT`으로 화면에 돌아갑니다. 지침 함수도 같은 세션 상태를 글에 끼웁니다. 화면과 에이전트 어느 쪽이 "원본"인지는 정해져 있지 않고, 마지막에 쓴 쪽이 이깁니다.
 
 이제 모델이 무엇을 받았는지 가짜 서버의 기록으로 봅니다.
 
@@ -1118,20 +1134,20 @@ uv run --no-project python show_log.py fake/fake.jsonl --system 1 | sed -n 2,13p
 ```text
 You manage a dashboard for a user. 
 
-Current dashboard: <google.adk.sessions.state.State object at 0x000001D2866DE1B0>
+Current dashboard: <google.adk.sessions.state.State object at 0x000001F7FC4D9670>
 
 When asked for the current dashboard, pinned metrics or chart please reference the current dashboard and respond.
 
     You are an intelligent dashboard agent designed to assist users in building and managing interactive dashboards.
 
-    Current dashboard state: {'_ag_ui_thread_id': 'thread-ed3eba', '_ag_ui_app_name': 'dashboard_app', '_ag_ui_user_id': 'demo_user', '_ag_ui_processed_message:u-10156e':
+    Current dashboard state: {'_ag_ui_thread_id': 'thread-0a121b', '_ag_ui_app_name': 'dashboard_app', '_ag_ui_user_id': 'demo_user', '_ag_ui_processed_message:u-7bba3c':
 
     The current date is 2026-10-16.
 ```
 
 맨 위 "Current dashboard:" 줄이 `before_model`의 접두이고 값이 `<google.adk.sessions.state.State object at 0x…>`입니다. `callback_context.state`는 `State` 객체이고 f-string은 그 이름만 찍습니다. 상태의 내용은 모델에게 가지 않습니다. 모델이 상태를 보는 것은 아래 `instruction_provider`가 끼운 "Current dashboard state: {…}" 한 번뿐이고(이쪽은 `context.state`가 읽기 전용 매핑이라 딕셔너리처럼 찍힙니다), 거기에 `_ag_ui_*` 내부 키와 `_ag_ui_processed_message:…`가 함께 보입니다. 4번 요청에서는 같은 자리에 `pinnedMetrics`가 `Metric(id='m1', …)`로 찍힙니다. 화면이 보낸 상태는 딕셔너리로 찍히는 차이입니다. 모델은 이 문자열을 읽고 판단하므로, 지침에 찍히는 모양은 곧 모델의 입력입니다.
 
-화면에서 사용자가 카드를 지운 뒤에 다시 물으면 어떻게 되는지 `sync`로 봅니다. 구동기는 첫 턴 뒤의 상태에서 `m2` 카드를 지운 상태를 둘째 요청에 실어 보냅니다.
+Day 142가 소스로 본 덮어쓰기가 이 판에서도 같은지만 `sync`로 한 번 봅니다. 화면에서 카드를 지운 뒤 다시 물으면 어떻게 되는지입니다. 구동기는 첫 턴 뒤의 상태에서 `m2` 카드를 지운 상태를 둘째 요청에 실어 보냅니다.
 
 ```bash
 rm -f fake/fake.jsonl
@@ -1151,7 +1167,7 @@ RUN_FINISHED
 run 2 뒤 pinnedMetrics id: ['m1', 'm3']
 ```
 
-모델은 `m1`·`m3`만 봤습니다. 화면에서 지운 것이 요청마다 세션 상태를 덮어쓰기 때문입니다. 반대로 서버가 다시 시작되면 세션이 사라지지만 화면은 자기 상태를 다음 요청에 실어 보내므로 세션이 그 상태로 다시 채워질 것입니다(소스로 읽은 것이고 서버를 다시 띄워 보지는 않았습니다).
+모델은 `m1`·`m3`만 봤습니다. 화면에서 지운 것이 요청마다 세션 상태를 덮어쓰기 때문입니다. 재시작은 Day 142 Step 7이 다뤘고 여기서는 다시 띄워 보지 않았습니다.
 
 끝으로 `after_model`을 봅니다. 모델이 글 한 줄과 도구 호출을 한 응답에 함께 주면 어떻게 되는지 `textfirst`로 봅니다.
 
@@ -1253,7 +1269,7 @@ add_chart 호출 없음 (모델이 화면 도구를 받지 못했거나 부르�
 Frontend tools ['add_chart', 'delete_chart', 'update_chart'] were sent with this run but the agent tree has no AGUIToolset, so they will not be declared to the model. Add AGUIToolset() to the agent's tools to expose them.
 ```
 
-`ag-ui-adk`는 0.5.0부터 화면 도구를 에이전트의 도구 목록에 자동으로 넣지 않고, 에이전트가 `AGUIToolset()`을 도구 목록에 직접 넣어야 모델에게 선언합니다(0.9.0의 마이그레이션 안내 "Migrating from v0.4.x", 소스로 확인). 이 앱의 `requirements.txt`는 버전을 고정하지 않아서 오늘 설치는 0.9.0(2026-10-10 공개)이 됩니다. `ag-ui-adk` 0.5.0은 2026-02-23, 앱의 의존성 목록이 들어온 커밋은 2026-04-28이어서(`git log`) 그때 설치했어도 같았을 것으로 추정하지만, 그 시점의 설치를 재현하지는 못했습니다.
+Day 142 Step 5가 0.5.0에서 확인한 규칙입니다. `ag-ui-adk`는 0.5.0부터 화면 도구를 에이전트의 도구 목록에 자동으로 넣지 않고, 에이전트가 `AGUIToolset()`을 도구 목록에 직접 넣어야 모델에게 선언합니다(0.9.0의 마이그레이션 안내 "Migrating from v0.4.x", 소스로 확인). 이 앱의 `requirements.txt`는 버전을 고정하지 않아서 오늘 설치는 0.9.0(2026-10-10 공개)이 됩니다. `ag-ui-adk` 0.5.0은 2026-02-23, 앱의 의존성 목록이 들어온 커밋은 2026-04-28이어서(`git log`) 그때 설치했어도 같았을 것으로 추정하지만, 그 시점의 설치를 재현하지는 못했습니다.
 
 앱을 고치지 않고 한 줄만 더한 복사본으로 같은 시험을 합니다. `patch_agui.py`는 `agent/`를 `agent_patched/`로 복사하면서 `AGUIToolset`을 가져오는 줄과 도구 목록의 한 줄만 바꿉니다.
 
@@ -1297,7 +1313,20 @@ agent_patched/agent.py 만듦: AGUIToolset() 한 줄 추가
 >   tools=tools + [AGUIToolset(), AgentTool(agent=search_agent)],
 ```
 
-고친 복사본을 56219에 띄우고(터미널 B 옆에 하나 더 열어도 되고, 한 서버를 끄고 띄워도 됩니다) 같은 시험을 돌립니다.
+고친 복사본을 띄웁니다. 새 터미널 D를 열고 환경 줄을 다시 읽은 뒤, `serve_local.py`에 둘째 인자로 폴더 이름을 줍니다. 앱의 방식(`cd agent_patched`로 들어가 `python server.py`)으로 띄우지 마세요. 그러면 검사 없이 `0.0.0.0`·`reload`로 뜹니다.
+
+```bash
+. ./envfake.sh
+uv run --no-project python serve_local.py 56219 agent_patched
+```
+
+PowerShell은 터미널 B와 같은 환경 줄(Step 1)을 붙여 넣은 뒤 아래 한 줄입니다(실행해 보지 못했습니다).
+
+```powershell
+uv run --no-project python serve_local.py 56219 agent_patched
+```
+
+같은 시험을 돌립니다(터미널 C).
 
 ```bash
 rm -f fake/fake.jsonl
@@ -1340,13 +1369,61 @@ run 2 뒤 charts: ['Sales by region (fake)'] pinnedMetrics: 3
 
 ![화면 도구를 부른 실행이 멈추는 곳](diagrams/extra-chart.svg)
 
-첫 실행은 `add_chart`의 `TOOL_CALL_END` 바로 뒤에 `RUN_FINISHED`로 끝납니다. 같은 응답에 있던 `add_pinned_metrics`의 결과와 상태 변경(`STATE_DELTA`)은 이 실행에서 나가지 않았습니다. 이 구동기가 한 응답에 두 호출을 함께 시켰기 때문일 수 있고, 진짜 모델이 어떻게 부를지는 확인하지 못했습니다. 화면은 승인 카드를 그리고 기다립니다. 사용자가 [Add]를 누르면 화면은 `charts`에 차트를 더한 새 상태와 도구 결과 메시지를 실어 새 요청을 보내고, 에이전트가 이어받습니다.
+첫 실행은 `add_chart`의 `TOOL_CALL_END` 바로 뒤에 `RUN_FINISHED`로 끝납니다. 같은 응답에 있던 `add_pinned_metrics`는 두 실행 어디에도 `TOOL_CALL_START`·`ARGS`·`END`가 나오지 않고, 둘째 실행에 `START` 없는 `TOOL_CALL_RESULT`(`call#3`)만 나옵니다. 결과와 상태 변경이 미뤄졌을 뿐 아니라 호출 자체가 화면에 흐르지 않았습니다. `@ag-ui/client` 0.0.53의 검증 코드는 `TOOL_CALL_START`·`ARGS`·`END`의 짝만 따지고 `RESULT`는 따지지 않는 것으로 읽혀(배포 코드를 읽음) 화면이 오류를 내지는 않을 것으로 보이지만 실행해 보지는 못했습니다. 이 구동기가 한 응답에 두 호출을 함께 시켰기 때문일 수 있고, 진짜 모델이 어떻게 부를지는 확인하지 못했습니다. 화면은 승인 카드를 그리고 기다립니다. 사용자가 [Add]를 누르면 화면은 `charts`에 차트를 더한 새 상태와 도구 결과 메시지를 실어 새 요청을 보내고, 에이전트가 이어받습니다.
 
 ![사용자의 답을 받아 이어지는 실행](diagrams/extra-chart2.svg)
 
-둘째 실행은 `add_pinned_metrics`의 `TOOL_CALL_RESULT`·`STATE_DELTA`부터 시작해(앞 실행이 미룬 것) 글과 스냅숏으로 끝나고, 스냅숏에는 화면이 더한 차트가 남았습니다. 가짜 서버가 받은 넷째 요청에는 두 도구의 응답이 함께 들어 있습니다(기록의 마지막 줄).
+둘째 실행은 `add_pinned_metrics`의 `TOOL_CALL_RESULT`·`STATE_DELTA`부터 시작하고(앞 실행이 미룬 것), 그 뒤에 넷째 요청과 글이 옵니다.
 
-예전 판은 어땠는지도 확인했습니다. `ag-ui-adk==0.4.2`를 따로 설치해(`ag-ui-protocol`을 1.0 미만으로 눌러야 가져오기가 됩니다) 같은 앱을 `AGUIToolset` 없이 띄우니 도구 선언이 여섯(`add_chart` 포함)으로 나왔습니다(직접 확인). 다만 첫 실행 뒤 도구 결과를 실어 보낸 둘째 요청은 `Function call not found for function response ids …`로 실패했습니다. 오늘의 `google-adk` 2.12.0과 0.4.2의 조합 문제로 추정하고 원인은 확인하지 못했습니다. 판을 내려서는 해결되지 않고, `AGUIToolset()`을 더하는 쪽이 이 조합에서 끝까지 도는 길이었습니다(고친 복사본의 둘째 실행).
+![둘째 실행의 마무리](diagrams/extra-chart3.svg)
+
+실행은 글과 스냅숏으로 끝나고, 스냅숏에는 화면이 더한 차트가 남았습니다. 가짜 서버가 받은 넷째 요청에는 두 도구의 응답이 함께 들어 있습니다(기록의 마지막 줄).
+
+예전 판은 어땠는지도 확인했습니다. 터미널 D의 서버를 멈추고(Ctrl+C), 판만 바꾼 가상환경을 따로 만듭니다(`ag-ui-protocol`을 1.0 미만으로 눌러야 0.4.2가 가져와집니다. macOS·Linux는 `v042/bin/python`).
+
+```bash
+uv venv --python 3.12 v042
+uv pip install --python v042/Scripts/python.exe -r agent/requirements.txt "ag-ui-adk==0.4.2" "ag-ui-protocol<1.0"
+```
+
+그 환경으로 같은 앱(`agent/`, 패치 없음)을 같은 줄 방식으로 띄우고(터미널 D에서 `. ./envfake.sh` 뒤) 시험합니다.
+
+```bash
+. ./envfake.sh
+v042/Scripts/python.exe serve_local.py 56221
+```
+
+```bash
+rm -f fake/fake.jsonl
+uv run --no-project python drive.py hitl http://127.0.0.1:56221/ | cut -c1-150 | sed -E 's/adk-[0-9a-f-]{36}/adk-X/'
+uv run --no-project python show_log.py | head -3
+```
+
+```text
+--- run 1: 화면 도구=['add_chart', 'update_chart', 'delete_chart'] state 키=[] 메시지=1
+HTTP 200 text/event-stream; charset=utf-8
+RUN_STARTED          
+TOOL_CALL_START      call#1 SearchAgent
+TOOL_CALL_ARGS       call#1 {"request": "current trends in the pizza industry"}
+TOOL_CALL_END        call#1
+TOOL_CALL_RESULT     call#1 {"result": "Fake search summary: pizza chains report stea...
+TOOL_CALL_START      call#2 add_chart
+TOOL_CALL_ARGS       call#2 {"type": "bar", "title": "Sales by region (fake)", "x": "region", "...
+TOOL_CALL_END        call#2
+RUN_FINISHED         
+사용자가 [Add]를 누름 -> charts: ['Sales by region (fake)']
+--- run 2: 화면 도구=['add_chart', 'update_chart', 'delete_chart'] state 키=['charts'] 메시지=3
+HTTP 200 text/event-stream; charset=utf-8
+RUN_STARTED          
+RUN_ERROR            Function call not found for function response ids: {'adk-X'}. Ensure each function response ID
+RUN_FINISHED         
+run 2에 STATE_SNAPSHOT 없음
+1 gemini-3.5-flash key=fake- 함수선언=['add_pinned_metrics', 'update_pinned_metrics', 'SearchAgent', 'add_chart', 'update_chart', 'delete_chart'] 내장=[] 시스템 1832자 마지막=['text']
+2 gemini-3.5-flash key=fake- 함수선언=[] 내장=['googleSearch'] 시스템 102자 마지막=['text']
+3 gemini-3.5-flash key=fake- 함수선언=['add_pinned_metrics', 'update_pinned_metrics', 'SearchAgent', 'add_chart', 'update_chart', 'delete_chart'] 내장=[] 시스템 1832자 마지막=['functionResponse:SearchAgent']
+```
+
+도구 선언이 여섯(`add_chart` 포함)으로 나왔습니다(직접 확인). 다만 첫 실행 뒤 도구 결과를 실어 보낸 둘째 요청은 `Function call not found for function response ids …`로 실패했습니다. 오늘의 `google-adk` 2.12.0과 0.4.2의 조합 문제로 추정하고 원인은 확인하지 못했습니다. 판을 내려서는 해결되지 않고, `AGUIToolset()`을 더하는 쪽이 이 조합에서 끝까지 도는 길이었습니다(고친 복사본의 둘째 실행). 시험이 끝나면 터미널 D의 서버를 멈춥니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -1413,7 +1490,9 @@ export function MainLayout({ className }: { className?: string }) {
 - 차트 수정 창의 "Steps" 입력은 어디에도 쓰이지 않는 옛 필드입니다(`generative_ui_agents/ai-dashboard-canvas-agent/src/components/dashboard/charts/chart-grid.tsx:104-106`, `generative_ui_agents/ai-dashboard-canvas-agent/src/components/dashboard/charts/chart-grid.tsx:144-153`).
 - 차트 [Add]는 `setState({...state, charts: [...]})`로 상태 전체를 새 값으로 덮습니다(`generative_ui_agents/ai-dashboard-canvas-agent/src/components/chat/actions/charts.tsx:84-87`). 승인 카드가 그려진 뒤 에이전트가 상태를 바꾸면 그 변경이 덮일 수 있습니다. 확인하지는 못했습니다.
 
-텔레메트리도 소스로 확인했습니다. `route.ts`는 요청마다 `copilotRuntimeNextJSAppRouterEndpoint(...)`를 부르는데(`generative_ui_agents/ai-dashboard-canvas-agent/src/app/api/copilotkit/route.ts:26-30`), 그 안에서 `@copilotkit/runtime` 1.59.2가 `oss.runtime.instance_created` 이벤트를 `telemetryClient.capture`로 보냅니다(`dist/lib/integrations/nextjs/app-router.mjs`). 이 클라이언트(`@copilotkit/shared`)는 기본으로 5% 표본만 `https://telemetry.copilotkit.ai/ingest`와 Segment로 보내고, 보내는 내용은 도구·에이전트 개수와 엔드포인트 종류 같은 설정 요약입니다(`getRuntimeInstanceTelemetryInfo`). `COPILOTKIT_TELEMETRY_DISABLED=true`나 `DO_NOT_TRACK=1`이면 보내지 않습니다. 런타임이 시작할 때 "anonymous telemetry enabled" 한 줄을 로그로 알리는 코드도 있습니다(`telemetry-disclosure.mjs`). 또 의존성 트리에 `@scarf/scarf` 1.4.0이 있는데(잠금 파일), 이 패키지는 `postinstall`로 `report.js`를 돌리고 설치 통계를 `scarf.sh`로 보냅니다. `SCARF_ANALYTICS=false`나 `DO_NOT_TRACK=1`로 끕니다. 의존성의 설치 스크립트를 패키지 관리자가 돌리는지는 도구와 판에 달려 있고 이 문서는 확인하지 못했습니다.
+화면 쪽 통계는 Day 142 Step 6이 자세히 다뤘으니(`copilotkit.gateway.scarf.sh` 호출 포함) 이 앱에서의 요점만 적습니다. 모두 소스로 읽은 것입니다. `route.ts`는 요청마다 `copilotRuntimeNextJSAppRouterEndpoint(...)`를 부르는데(`generative_ui_agents/ai-dashboard-canvas-agent/src/app/api/copilotkit/route.ts:26-30`), 그 안에서 `@copilotkit/runtime` 1.59.2가 `oss.runtime.instance_created` 이벤트를 `telemetryClient.capture`로 보냅니다(`dist/lib/integrations/nextjs/app-router.mjs`). 이 클라이언트(`@copilotkit/shared`)는 기본으로 5% 표본만 `https://telemetry.copilotkit.ai/ingest`와 Segment로 보내고, 보내는 내용은 도구·에이전트 개수와 엔드포인트 종류 같은 설정 요약입니다(`getRuntimeInstanceTelemetryInfo`). `COPILOTKIT_TELEMETRY_DISABLED=true`나 `DO_NOT_TRACK=1`이면 보내지 않습니다. 런타임이 시작할 때 "anonymous telemetry enabled" 한 줄을 로그로 알리는 코드도 있습니다(`telemetry-disclosure.mjs`). 또 의존성 트리에 `@scarf/scarf` 1.4.0이 있는데(잠금 파일), 이 패키지는 `postinstall`로 `report.js`를 돌리고 설치 통계를 `scarf.sh`로 보냅니다. `SCARF_ANALYTICS=false`나 `DO_NOT_TRACK=1`로 끕니다. 의존성의 설치 스크립트를 패키지 관리자가 돌리는지는 도구와 판에 달려 있고 이 문서는 확인하지 못했습니다.
+
+화면을 띄우면 더 있습니다. 모두 소스와 문서로 읽은 것이고 실행하지 않았습니다. 첫째, `next dev`는 Next.js 익명 통계를 보내고(https://nextjs.org/telemetry, `NEXT_TELEMETRY_DISABLED=1`로 끕니다) 기본 호스트가 `0.0.0.0`이라, 에이전트로 이어지는 `/api/copilotkit`이 같은 네트워크에 열립니다(`-H 127.0.0.1`로 막습니다. Day 141 Step 6과 Day 142 Step 6도 적은 점입니다). 둘째, 개발 검사창입니다. `layout.tsx`는 `showDevConsole={false}`만 주는데(`generative_ui_agents/ai-dashboard-canvas-agent/src/app/layout.tsx:28-33`), `@copilotkit/react-core` 1.59.2의 `CopilotKit`은 이 값을 오류 알림에만 쓰고 검사창은 `enableInspector`로 따로 정합니다. 그 값이 없으면 호스트 이름이 `localhost`·`127.0.0.1`·`0.0.0.0`일 때 켜집니다(`shouldShowDevConsole`·`isLocalhost`). 검사창(`@copilotkit/web-inspector` 1.59.2)은 붙을 때 `https://cdn.copilotkit.ai/announcements.json`을 `fetch`합니다. 그러니 `localhost:3000`으로 열면 `showDevConsole={false}`인데도 이 요청이 나갑니다(브라우저로 확인하지는 못했습니다). 끄려면 `layout.tsx`의 `<CopilotKit>`에 `enableInspector={false}`를 더해야 하고, 이것은 원본 코드를 고치는 일이라 이 문서는 하지 않았습니다.
 
 앱 README의 실행 명령은 아래와 같습니다. **이 문서는 이 명령을 실행하지 않았습니다.**
 
@@ -1425,7 +1504,15 @@ cp .env.example .env
 pnpm run dev
 ```
 
-`pnpm run dev`는 `next dev --turbopack`(포트 3000)과 앞서 본 `server.py`를 함께 띄웁니다. 그러니 이 명령을 그대로 쓰면 에이전트가 `0.0.0.0`에 열리고(Step 4) 진짜 키로 Google에 요청이 갑니다. 화면을 직접 띄워 보려면 `pnpm run dev:ui`만 쓰고, 에이전트는 이 문서의 `serve_local.py`(진짜 키를 쓰려면 `check_env.py`의 가짜 키 검사를 일부러 풀어야 합니다)처럼 루프백으로 띄우고 `AGENT_URL=http://127.0.0.1:<포트>`로 가리키는 것이 안전합니다. 화면을 가짜 서버로 돌리면 모델 대본이 이 문서의 것이어서 화면이 실제 모델처럼 움직이지는 않습니다. 이 조합도 시험하지 않았습니다.
+`pnpm run dev`는 `next dev --turbopack`(포트 3000)과 앞서 본 `server.py`를 함께 띄웁니다. 그러니 이 명령을 그대로 쓰면 에이전트가 `0.0.0.0`에 열리고(Step 4) 진짜 키로 Google에 요청이 갑니다. 화면을 직접 띄워 보려면 `dev`가 아니라 `dev:ui`만 쓰고, 설치 스크립트와 통계를 끄고, 호스트를 막습니다(`--` 뒤 인자는 `next`로 갑니다). 에이전트는 이 문서의 `serve_local.py`로 루프백에 띄우고 `AGENT_URL`이 그곳을 가리키게 합니다.
+
+```bash
+export NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true SCARF_ANALYTICS=false DO_NOT_TRACK=1
+pnpm install --ignore-scripts
+AGENT_URL=http://127.0.0.1:56219/ pnpm run dev:ui -- -H 127.0.0.1
+```
+
+`--ignore-scripts`는 루트의 `postinstall`(파이썬 의존성 설치)과 `@scarf/scarf`의 설치 스크립트를 함께 건너뜁니다. 검사창은 위처럼 코드를 고치지 않으면 `localhost`에서 켜집니다. 화면을 가짜 서버로 돌리면 모델 대본이 이 문서의 것이어서 화면이 실제 모델처럼 움직이지는 않습니다. 이 조합도 시험하지 않았습니다.
 
 앱 README의 "Lockfiles … are gitignored"는 사실이 아닙니다. 폴더에는 `pnpm-lock.yaml`이 올라와 있고 `.gitignore`가 막는 것은 `package-lock.json`·`yarn.lock`·`bun.lockb`뿐입니다. 앱의 `AGENTS.md`는 `eslint.config.mjs`와 `NEXT_PUBLIC_CPK_ENDPOINT`를 말하지만 이 폴더에는 그런 파일도 변수를 쓰는 코드도 없습니다(`grep`, 문서로만 읽었습니다).
 
@@ -1441,23 +1528,31 @@ netstat -ano | grep -E ":5621[789] " | grep LISTENING
 
 ## 요청 한 건이 흐르는 과정
 
-"다시 만들기" 한 번을 코드의 순서대로 따라갑니다. 브라우저와 런타임 부분(1~3번, 22~23번)은 소스에서 읽은 것이고 이 문서가 실행한 것은 어댑터 이하입니다. 같은 메시지는 처음 나오는 한 그림에만 있습니다. 각 그림이 한 구간을 맡습니다.
+"다시 만들기" 한 번을 코드의 순서대로 따라갑니다. 브라우저와 런타임 사이의 메시지는 소스에서 읽은 것이고 이 문서가 실행한 것은 어댑터 이하입니다. 같은 메시지는 처음 나오는 한 그림에만 있고, 그림 여섯 장이 이어집니다. 이벤트는 어댑터가 만드는 대로 런타임을 거쳐 화면에 흐르므로 `adk -> rt`마다 `rt -> ui` 중계를 짝으로 그렸습니다. 이벤트와 모델 호출 사이의 정확한 선후는 가짜 서버의 요청 순서와 이벤트 출력(Step 5)에서 읽을 수 있는 만큼만 따랐습니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자의 글이 `CopilotChat`을 거쳐 `POST /api/copilotkit`가 되고, 런타임이 `HttpAgent`로 파이썬 서버의 `POST /`에 실행 요청을 새로 만들어 보냅니다(소스로 읽음. 브라우저와 런타임 사이의 본문은 CopilotKit의 것이고, 이 문서가 맞춘 것은 `HttpAgent`가 파이썬 쪽으로 보내는 본문뿐입니다). 어댑터는 요청의 `state`를 세션에 덮어쓰고(Step 5) `RUN_STARTED`를 내보낸 뒤 `Runner`로 `DashboardAgent`를 돌립니다. 첫 모델 호출은 지침과 도구 선언 셋을 실어 갑니다. 모델은 `SearchAgent`를 부르고, 어댑터는 그 호출을 화면에 흘립니다. `AgentTool`이 연 안쪽 호출이 `googleSearch`로 가서 요약 글을 받아 옵니다. 이벤트는 모델의 응답이 나오는 대로 흐르므로 한 줄에 그린 `TOOL_CALL`·`RESULT`가 정확히 어느 호출 뒤에 나가는지는 이벤트 순서(Step 5의 출력)를 기준으로 했습니다.
+사용자의 글이 `CopilotChat`을 거쳐 `POST /api/copilotkit`가 되고, 런타임이 `HttpAgent`로 파이썬 서버의 `POST /`에 실행 요청을 새로 만들어 보냅니다(소스로 읽음. 브라우저와 런타임 사이의 본문은 CopilotKit의 것이고, 이 문서가 맞춘 것은 `HttpAgent`가 파이썬 쪽으로 보내는 본문뿐입니다). 어댑터는 요청의 `state`를 세션에 덮어쓰고 `RUN_STARTED`를 내보낸 뒤 `Runner`로 `DashboardAgent`를 돌립니다. 첫 모델 호출은 지침과 도구 선언 셋을 실어 가고, 모델은 `SearchAgent`를 부릅니다. 화면은 그 호출을 받는 대로 "검색 중" 카드를 그립니다(`search.tsx`).
+
+![검색 에이전트와 결과](diagrams/extra-search.svg)
+
+`AgentTool`이 새 `Runner`로 `SearchAgent`를 돌리고(Day 021), 안쪽 모델 호출(`googleSearch`)이 요약 글을 받아 옵니다. 그 글이 `DashboardAgent`에게 결과로 가고, 어댑터는 `TOOL_CALL_RESULT`를 화면에 흘립니다.
 
 ![검색 뒤의 도구 호출](diagrams/extra-run.svg)
 
-검색 결과를 받은 세 번째 요청에서 모델이 `add_pinned_metrics`를 부릅니다. 도구가 세션 상태에 `pinnedMetrics`를 쓰면 ADK가 상태 변경 이벤트를 내고, 어댑터가 `STATE_DELTA`로 바꿉니다.
+검색 결과를 받은 세 번째 요청에서 모델이 `add_pinned_metrics`를 부르고 그 호출이 화면에 흐릅니다.
+
+![지표 도구의 상태 쓰기](diagrams/extra-tool.svg)
+
+지표 도구가 세션 상태에 `pinnedMetrics`를 쓰면 ADK가 상태 변경 이벤트를 내고, 어댑터가 도구 결과와 `STATE_DELTA`로 바꿔 화면에 보냅니다.
 
 ![도구 결과 뒤의 마무리 글](diagrams/extra-reply.svg)
 
-도구 결과를 받은 네 번째 요청에서 모델이 글 한 줄을 돌려주고, `after_model`이 글 응답 뒤의 호출을 끝냅니다(`end_invocation`).
+도구 결과를 받은 네 번째 요청에서 모델이 글 한 줄을 돌려주고, `after_model`이 글 응답 뒤의 호출을 끝냅니다(`end_invocation`). 글은 `TEXT_MESSAGE_*`로 화면에 갑니다.
 
 ![스냅숏과 화면 반영](diagrams/extra-end.svg)
 
-마지막으로 어댑터가 전체 상태를 `STATE_SNAPSHOT`으로 보내고 `RUN_FINISHED`로 끝냅니다. 런타임은 이 스트림을 그대로 브라우저에 넘기고(소스로 읽음, 이 문서는 실행하지 않았음) `useCoAgent`의 상태가 바뀌면서 지표 카드가 그려집니다. 이 앱의 화면이 처음 한 번 `{}`에서 시작해 상태가 채워지는 것이 "캔버스에 쓴다"는 말의 전부입니다.
+마지막으로 어댑터가 전체 상태를 `STATE_SNAPSHOT`으로, 이어서 `RUN_FINISHED`로 보냅니다. 런타임은 둘을 그대로 브라우저에 넘기고(소스로 읽음, 이 문서는 실행하지 않았음) `useCoAgent`의 상태가 바뀌면서 지표 카드가 그려집니다. 화면이 처음 한 번 `{}`에서 시작해 상태가 채워지는 것이 "캔버스에 쓴다"는 말의 전부입니다.
 
 ## 실행 체크리스트
 
@@ -1480,9 +1575,9 @@ netstat -ano | grep -E ":5621[789] " | grep LISTENING
 | `ag-ui-adk==0.4.2`로 내리면 `ImportError: cannot import name 'ThinkingStartEvent' from 'ag_ui.core'` | 0.4.2가 `ag-ui-protocol` 1.0에 없는 이름을 가져옴 | `ag-ui-protocol<1.0`도 함께 설치합니다. 그래도 둘째 요청이 `Function call not found for function response ids`로 실패했습니다(직접 확인). 판을 내리는 길은 권하지 않습니다 |
 | 첫 요청의 시스템 지침 맨 위가 `Current dashboard: <google.adk.sessions.state.State object at 0x…>` | `before_model`이 `State` 객체를 f-string에 그대로 넣음(`generative_ui_agents/ai-dashboard-canvas-agent/agent/modifiers.py:19`) | 상태가 필요하면 `dict(callback_context.state)`나 JSON으로 바꿔 넣어야 합니다. 이 문서는 고치지 않았습니다(원본 코드) |
 | 모델이 `add_charts`·`set_chart_data`를 부르려 함(진짜 모델에서 생길 수 있는 증상, 이 문서는 본 적 없음) | 지침이 없는 도구 이름을 말함(`generative_ui_agents/ai-dashboard-canvas-agent/agent/instructions.py:26`) | 지침의 이름을 `add_chart`·`update_chart`·`delete_chart`로 맞춥니다 |
-| `python server.py`나 `pnpm run dev`로 띄운 에이전트가 같은 네트워크의 다른 기기에서 열림 | `host="0.0.0.0"`(`generative_ui_agents/ai-dashboard-canvas-agent/agent/server.py:28`) | `serve_local.py`처럼 `127.0.0.1`로 띄웁니다. 원본 줄은 고치지 않았습니다 |
-| `pip install`이 3.8·3.9·3.10에서 `google-adk`를 못 찾음 | `google-adk`의 `Requires-Python >=3.11` | 3.11 이상으로 가상환경을 만듭니다. 앱 README의 "Python 3.8+"는 맞지 않습니다 |
-| 서버를 껐다 켜자 대시보드가 비어 있음 | `use_in_memory_services=True`라 세션이 메모리에만 있음(`generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:52`) | 화면이 열려 있으면 다음 요청에 자기 상태를 다시 실어 보냅니다. 영구 저장이 필요하면 ADK의 세션 서비스를 따로 붙여야 합니다 |
+| `python server.py`나 `pnpm run dev`로 띄운 에이전트가 같은 네트워크의 다른 기기에서 열림(본 증상이 아니라 소스로 읽은 예방 안내이고 이 문서는 띄워 보지 않았습니다) | `host="0.0.0.0"`(`generative_ui_agents/ai-dashboard-canvas-agent/agent/server.py:28`) | `serve_local.py`처럼 `127.0.0.1`로 띄웁니다. 원본 줄은 고치지 않았습니다 |
+| `pip install`이 3.8·3.9·3.10에서 `google-adk`를 못 찾음(메타데이터로 읽은 것이고 그 판으로 설치해 보지는 않았습니다) | `google-adk`의 `Requires-Python >=3.11` | 3.11 이상으로 가상환경을 만듭니다. 앱 README의 "Python 3.8+"는 맞지 않습니다 |
+| 서버를 껐다 켜자 대시보드가 비어 있음(소스로 읽은 것이고 재시작해 보지는 않았습니다) | `use_in_memory_services=True`라 세션이 메모리에만 있음(`generative_ui_agents/ai-dashboard-canvas-agent/agent/agent.py:52`) | 화면이 열려 있으면 다음 요청에 자기 상태를 다시 실어 보냅니다. 영구 저장이 필요하면 ADK의 세션 서비스를 따로 붙여야 합니다 |
 
 ## 더 해보기
 
@@ -1492,4 +1587,4 @@ netstat -ano | grep -E ":5621[789] " | grep LISTENING
 
 ## 다음 날 예고
 
-[Day 145 · ✈️ MCP Apps Generative UI Showcase](../day145-genui-mcp-apps-generative-ui-showcase/README.md) — 오늘은 파이썬 에이전트가 있었지만 내일 앱 `generative_ui_agents/mcp-apps-generative-ui-showcase`는 파이썬이 없고 TypeScript만 있습니다(약 12,500줄, `wc -l`). Next.js 화면(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/page.tsx` 343줄)과 `mcp-server/`의 MCP 서버(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts` 1,136줄)로 이루어지고, 앱 README는 MCP 도구가 `_meta["ui/resourceUri"]`로 가리킨 HTML 앱을 채팅 안의 샌드박스 iframe으로 띄운다고 소개합니다. 오늘 화면 도구가 "화면의 코드가 부품을 정한다"였다면 내일은 도구를 가진 서버가 화면 조각(HTML)까지 함께 보냅니다. 모델·키는 `generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/api/copilotkit/[[...slug]]/route.ts`의 `OPENAI_API_KEY`가 있을 때 OpenAI를 고르는 것으로 보입니다(17~19행). 실행할 수 있는 것이 거의 없어 소스를 읽는 날입니다.
+[Day 145 · ✈️ MCP Apps Generative UI Showcase](../day145-genui-mcp-apps-generative-ui-showcase/README.md) — 오늘은 파이썬 에이전트가 있었지만 내일 앱 `generative_ui_agents/mcp-apps-generative-ui-showcase`는 파이썬이 없고 TypeScript만 있습니다(12,584줄, 추적 파일에서 잠금 파일과 이미지를 뺀 `wc -l` 합). Next.js 화면(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/page.tsx` 343줄)과 `mcp-server/`의 MCP 서버(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts` 1,136줄)로 이루어지고, 앱 README는 MCP 도구가 `_meta["ui/resourceUri"]`로 가리킨 HTML 앱을 채팅 안의 샌드박스 iframe으로 띄운다고 소개합니다. 오늘 화면 도구가 "화면의 코드가 부품을 정한다"였다면 내일은 도구를 가진 서버가 화면 조각(HTML)까지 함께 보냅니다. 모델·키는 `generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/api/copilotkit/[[...slug]]/route.ts`의 `OPENAI_API_KEY`가 있을 때 OpenAI를 고르는 것으로 보입니다(17~19행). 실행할 수 있는 것이 거의 없어 소스를 읽는 날입니다.

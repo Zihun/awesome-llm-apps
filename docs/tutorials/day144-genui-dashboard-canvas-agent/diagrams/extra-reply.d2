@@ -1,11 +1,13 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-dag: "DashboardAgent · 도구" { class: ours }
-gem: "Gemini (가짜 서버)" { class: ext }
-adk: "AG-UI 어댑터 (ADKAgent)" { class: ours }
-rt: "런타임 (route.ts)" { class: ours }
+dagent: "DashboardAgent" { class: ours }
+gem: "Gemini (가짜)" { class: ext }
+adk: "ADKAgent" { class: ours }
+rt: "런타임" { class: ours }
+ui: "브라우저" { class: ours }
 
-dag -> gem: "요청 4: 도구 결과"
-gem -> dag: "글 한 줄"
+dagent -> gem: "요청 4: 도구 결과"
+gem -> dagent: "글 한 줄"
 adk -> rt: "TEXT_MESSAGE_START · CONTENT · END"
+rt -> ui: "TEXT_MESSAGE 중계"

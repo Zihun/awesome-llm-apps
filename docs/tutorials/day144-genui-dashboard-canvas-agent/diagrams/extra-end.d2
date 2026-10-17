@@ -6,6 +6,9 @@ rt: "런타임 (route.ts)" { class: ours }
 ui: "브라우저 (CopilotKit)" { class: ours }
 user: 사용자 { class: person }
 
-adk -> rt: "STATE_SNAPSHOT · RUN_FINISHED"
-rt -> ui: "SSE를 그대로 중계"
+adk -> rt: "STATE_SNAPSHOT"
+rt -> ui: "STATE_SNAPSHOT 중계"
+ui -> ui: "useCoAgent 상태 갱신"
+adk -> rt: "RUN_FINISHED"
+rt -> ui: "RUN_FINISHED 중계"
 ui -> user: "지표 카드 · 메시지"

@@ -1,13 +1,13 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-dag: "DashboardAgent · 도구" { class: ours }
-gem: "Gemini (가짜 서버)" { class: ext }
-rt: "런타임 (route.ts)" { class: ours }
-adk: "AG-UI 어댑터 (ADKAgent)" { class: ours }
+dagent: "DashboardAgent" { class: ours }
+gem: "Gemini (가짜)" { class: ext }
+adk: "ADKAgent" { class: ours }
+rt: "런타임" { class: ours }
+ui: "브라우저" { class: ours }
 
-dag -> gem: "요청 3: SearchAgent 결과"
-gem -> dag: "add_pinned_metrics 호출 (지표 셋)"
+dagent -> gem: "요청 3: SearchAgent 결과"
+gem -> dagent: "add_pinned_metrics 호출 (지표 셋)"
 adk -> rt: "TOOL_CALL add_pinned_metrics"
-dag -> adk: "state['pinnedMetrics'] 씀 (state_delta)"
-adk -> rt: "TOOL_CALL_RESULT · STATE_DELTA"
+rt -> ui: "TOOL_CALL 중계"

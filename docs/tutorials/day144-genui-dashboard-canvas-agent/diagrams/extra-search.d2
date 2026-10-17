@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+dagent: "DashboardAgent" { class: ours }
+search: "SearchAgent" { class: ours }
+gem: "Gemini (가짜)" { class: ext }
+adk: "ADKAgent" { class: ours }
+rt: "런타임" { class: ours }
+ui: "브라우저" { class: ours }
+
+dagent -> search: "AgentTool로 실행 (새 Runner)"
+search -> gem: "요청 2: googleSearch"
+gem -> search: "검색 요약 글"
+search -> dagent: "마지막 글을 결과로"
+adk -> rt: "TOOL_CALL_RESULT"
+rt -> ui: "TOOL_CALL_RESULT 중계"
