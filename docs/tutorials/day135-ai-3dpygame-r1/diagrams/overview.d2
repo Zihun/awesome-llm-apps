@@ -1,7 +1,15 @@
 ...@../../_tools/theme
 direction: right
 
+app: "Streamlit 앱\n(ai_3dpygame_r1.py)" { class: ours }
+
+openai: "OpenAI\n(gpt-4o)" { class: ext }
+
+gemini: "Gemini\n(gemini-1.5-pro)" { class: ext }
+
 example: "ai_gen_game01.py\n(앱이 부르지 않는 예시)" { class: file }
+
+user: 사용자 { class: person }
 
 web: "브라우저 쪽" {
   class: group
@@ -12,14 +20,6 @@ web: "브라우저 쪽" {
 }
 
 agents: "BrowserSession +\nBrowserAgent 넷" { class: ours }
-
-gemini: "Gemini\n(gemini-1.5-pro)" { class: ext }
-
-user: 사용자 { class: person }
-
-openai: "OpenAI\n(gpt-4o)" { class: ext }
-
-app: "Streamlit 앱\n(ai_3dpygame_r1.py)" { class: ours }
 
 user -> app: "질의 · 키 · 클릭"
 app -> user: "코드 · 문구"
@@ -32,3 +32,4 @@ agents -> openai: "과제 · 화면"
 openai -> agents: "다음 행동"
 agents -> web: "CDP 조작 ·\n접속 · 실행"
 web -> agents: "화면 · 요소"
+
