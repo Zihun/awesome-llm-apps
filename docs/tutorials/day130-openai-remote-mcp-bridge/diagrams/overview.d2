@@ -17,8 +17,8 @@ app: "openai_remote_mcp_bridge.py" {
   result: "7. 결과 글 만들기\n(tool_result_text)" { class: ours }
 }
 
-mcp: "원격 MCP 서버\n(Streamable\nHTTP)" { class: ext; height: 200 }
-openai: "OpenAI\n(chat.\ncompletions)" { class: ext }
+mcp: "원격 MCP 서버\n(Streamable\nHTTP)" { class: ext; height: 160 }
+openai: "OpenAI\n(chat.\ncompletions)" { class: ext; height: 160 }
 
 user -> app: "task · --flags"
 env -> app: "OPENAI_API_KEY\nMCP_SERVER_URL\nOPENAI_MODEL"
