@@ -1,16 +1,16 @@
 ...@../../_tools/theme
 direction: right
 
-server: "세션 · 소켓 · 도구\n(server.py)" { class: ours }
-tools: "Live 설정 · 선언\n(live_tools.py)" { class: ours }
 sessions: "세션 (메모리)" { class: store }
 dir: "모의 정책\n(policy_directory.py)" { class: ours }
+server: "세션 · 소켓 · 도구\n(server.py)" { class: ours }
+tools: "Live 설정 · 선언\n(live_tools.py)" { class: ours }
 rules: "규칙\n(policies.py)" { class: ours }
 
-server -> tools: "build_live_config"
-tools -> server: "설정 · 도구 요약"
 server -> sessions: "턴 · 사진 저장"
-sessions -> server: "상태 읽기"
-server -> dir: "lookup_policy"
 dir -> server: "정책 레코드"
 server -> rules: "안전 판정 · 서류 키"
+sessions -> server: "상태 읽기"
+server -> dir: "lookup_policy"
+tools -> server: "설정 · 도구 요약"
+server -> tools: "build_live_config"
