@@ -8,11 +8,11 @@ strat: Legal Strategist (Agent) { class: ours }
 ddgt: 검색 도구 (DuckDuckGoTools) { class: ours }
 vdb: 저장소 연결 (Qdrant) { class: ours }
 
-openai: OpenAI gpt-5 { class: ext }
+openai: OpenAI gpt-5 { class: ext; height: 80 }
 emb: OpenAI text-embedding-3-small { class: ext }
 qdrant: Qdrant 클라우드 { class: store }
 ddg: DuckDuckGo { class: ext }
-agno_api: Agno 통계 API { class: ext }
+agno_api: Agno 통계 API { class: ext; height: 80 }
 
 team -> openai: 지시문 · 위임 스키마 · 검색 스키마
 res -> openai: 역할 · 도구 스키마
