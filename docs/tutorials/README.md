@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 147 / 167일 완료
+진도: 149 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -268,8 +268,8 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 148](day148-always-on-hn-briefing-agent/README.md) | 📰 Always-on Hacker News Briefing Agent | [always_on_agents/always_on_hn_briefing_agent](../../always_on_agents/always_on_hn_briefing_agent/) |
-| ⬜ | [Day 149](day149-release-radar-agent/README.md) | 📡 Release Radar Agent | [always_on_agents/release_radar_agent](../../always_on_agents/release_radar_agent/) |
+| ✅ | [Day 148](day148-always-on-hn-briefing-agent/README.md) | 📰 Always-on Hacker News Briefing Agent | [always_on_agents/always_on_hn_briefing_agent](../../always_on_agents/always_on_hn_briefing_agent/) |
+| ✅ | [Day 149](day149-release-radar-agent/README.md) | 📡 Release Radar Agent | [always_on_agents/release_radar_agent](../../always_on_agents/release_radar_agent/) |
 
 ### 볼륨 14. 🎯 LLM Optimization (Day 150–151, 2일)
 
