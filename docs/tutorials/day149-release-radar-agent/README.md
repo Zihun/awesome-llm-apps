@@ -1716,7 +1716,7 @@ ADK 1.9.0의 `EvalSet`이 요구하는 `evalId`와 `conversation`이 사례마�
 | 1.9.0에서 `adk web`이 `.env`의 값으로 모델 주소·키·프록시가 바뀐다 | `load_dotenv(…, override=True)`가 셸 값을 덮는다(Step 7) | 래퍼처럼 `.env` 읽기를 건너뛰거나 `.env`를 두지 않는다. 최신 ADK는 셸 값을 지킨다 |
 | `가드: … 중단합니다.` | 가드의 점검에 걸림(호스트가 루프백이 아님, 키가 가짜가 아님, Gmail 변수가 비어 있지 않음, 프록시 변수가 비어 있지 않음) | 걸린 항목을 고친다. 가드를 건너뛰고 서버를 띄우지 않는다 |
 | 2.x로 `adk web`을 쓴 뒤 앱 폴더에 `.adk/session.db`가 생김 | 2.12.0이 세션 DB를 앱 폴더 안에 둔다. `.gitignore:72`의 `*.db`가 가려 `git status`에 안 보인다 | 복사한 폴더에서 돌리거나 끝난 뒤 지운다 |
-| 2.12.0으로 Step 7을 두 번째 따라 하면 `세션 409`가 나오고 `client.py`가 `TypeError`로 끝남 | 2.12.0이 `.adk/session.db`에 세션 `s1`을 남겨, `client.py`가 같은 id로 세션을 다시 만들지 못한다(1.9.0은 이 파일을 만들지 않았다) | 서버를 멈추고 `radar-work`에서 `rm always_on_agents/release_radar_agent/.adk/session.db`로 그 파일 하나를 지운 뒤 다시 띄운다 |
+| 2.12.0에서 세션을 만들 때 `세션 409`가 나온다(세션 이름을 고정한 클라이언트를 두 번째 돌릴 때) | 2.12.0이 세션을 `.adk/session.db`에 남겨서, 같은 이름으로 세션을 다시 만들 수 없다(1.9.0은 이 파일을 만들지 않았다) | 위 `client.py`처럼 실행할 때마다 새 이름을 쓴다. 또는 서버를 멈추고 `radar-work`에서 `rm always_on_agents/release_radar_agent/.adk/session.db`로 그 파일 하나만 지운 뒤 다시 띄운다 |
 
 ## 더 해보기
 
