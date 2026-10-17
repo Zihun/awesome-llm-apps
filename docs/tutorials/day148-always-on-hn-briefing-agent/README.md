@@ -1,6 +1,6 @@
 # Day 148 · 📰 Always-on Hacker News Briefing Agent
 
-> 볼륨 13 🛰️ Always-on Agents · 난이도 ★★☆ ⚠ requirements.txt만 설치하면 Windows에서는 `scout.py`를 불러오는 순간 `ZoneInfoNotFoundError`로 멈추고(Step 1), 앱 README의 실행 예는 스케줄러 API를 모든 네트워크 인터페이스(`--host 0.0.0.0`)에 여는데 엔드포인트에는 인증 코드가 한 줄도 없습니다(Step 5) · 예상 소요 190분(앱은 파이썬 다섯 파일 755줄로 작지만, 대역 서버 둘과 래퍼를 직접 저장해 터미널 셋 이상을 오가며 요청 기록을 맞대어 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(Hacker News·Gmail·Gemini 어디에도 요청을 보내지 않았습니다). 스케줄러 경로는 모델을 부르지 않아 모델 비용이 0이고, 진짜 키로 ADK에게 브리핑을 한 번 물으면 모델 호출이 두 번 나가 0.003달러 안팎입니다(⚠ 추정, 아래 사전 준비) · 원본 앱: `always_on_agents/always_on_hn_briefing_agent`
+> 볼륨 13 🛰️ Always-on Agents · 난이도 ★★☆ ⚠ requirements.txt만 설치하면 Windows에서는 `scout.py`를 불러오는 순간 `ZoneInfoNotFoundError`로 멈추고(Step 1), 앱 README의 실행 예는 스케줄러 API를 모든 네트워크 인터페이스(`--host 0.0.0.0`)에 여는데 엔드포인트에는 인증 코드가 한 줄도 없습니다(Step 5) · 예상 소요 205분(앱은 파이썬 다섯 파일 755줄로 작지만, 대역 서버 둘과 래퍼를 직접 저장해 터미널 셋 이상을 오가며 요청 기록을 맞대어 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(Hacker News·Gmail·Gemini 어디에도 요청을 보내지 않았습니다). 스케줄러 경로는 모델을 부르지 않아 모델 비용이 0이고, 진짜 키로 ADK에게 브리핑을 한 번 물으면 모델 호출이 두 번 나가 0.003달러 안팎입니다(⚠ 추정, 아래 사전 준비) · 원본 앱: `always_on_agents/always_on_hn_briefing_agent`
 
 ## 오늘 만들 것
 
@@ -31,7 +31,7 @@ Hacker News 첫 페이지에서 AI 에이전트·MCP·코딩 에이전트 이야
 | 서비스/도구 | 용도 | 발급·설치 |
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
-| Python 3.12 | 앱 README는 3.10 이상이라고 하지만 오늘 풀리는 `google-adk` 2.12.0은 `Requires-Python >=3.11`입니다(설치된 패키지의 METADATA, 직접 확인). 3.10에서는 `uv pip compile --python-version 3.10`이 `google-adk==2.11.0`으로 풀었고(직접 확인, 3.12는 2.12.0) 이 문서는 3.12.10으로만 돌렸습니다. 2.11.0의 `.env` 로더는 2.12.0과 같은 규칙입니다(Step 6, 소스로 확인하지 못했고 3.10·3.11은 시험하지 못했습니다) | 공통 사전 준비와 같음 |
+| Python 3.12 | 앱 README는 3.10 이상이라고 하지만 오늘 풀리는 `google-adk` 2.12.0은 `Requires-Python >=3.11`입니다(설치된 패키지의 METADATA, 직접 확인). 3.10에서는 `uv pip compile --python-version 3.10`이 `google-adk==2.11.0`으로 풀었고(직접 확인, 3.12는 2.12.0) 이 문서는 3.12.10으로만 돌렸습니다. 2.11.0의 `.env` 로더가 Step 1에서 설명하는 규칙과 같은지는 이 문서가 소스를 읽지 못했고, 3.10·3.11은 시험하지 못했습니다 | 공통 사전 준비와 같음 |
 | Gemini API 키 | 진짜로 `adk web`을 쓸 때만(`GOOGLE_API_KEY`). 이 문서는 가짜 값만 씁니다 | https://aistudio.google.com/apikey |
 | Gmail OAuth 갱신 토큰, 웹훅 주소 | 진짜로 전송할 때만. **이 문서는 쓰지 않았고, 독자도 이 문서를 따라 할 때는 쓰지 마세요** | 앱 README의 Gmail Delivery 절 |
 | 새 작업 폴더 `hn-lab` | 앱 복사본과 가상환경, 대역 서버 파일을 둡니다 | Step 1에서 만듭니다 |
@@ -127,8 +127,8 @@ uv run --no-project python -B -c "import always_on_hn_briefing_agent.scout as s;
 ```
 
 ```text
-Resolved 7 packages in 31ms
-Installed 6 packages in 458ms
+Resolved 7 packages in 29ms
+Installed 6 packages in 532ms
  + colorama==0.4.6
  + iniconfig==2.3.1
  + pluggy==1.7.0
@@ -193,6 +193,9 @@ def problems(env=None):
             out.append(f"{name}가 비어 있지도 fake-로 시작하지도 않음")
     if env.get("ADK_DISABLE_LOAD_DOTENV", "").strip().lower() not in ("1", "true"):
         out.append("ADK_DISABLE_LOAD_DOTENV가 1이 아님 (adk가 .env로 빈 값을 다시 채울 수 있음)")
+    home = (env.get("USERPROFILE") if os.name == "nt" else env.get("HOME")) or ""
+    if not home.replace("\\", "/").rstrip("/").endswith("adkhome"):
+        out.append("홈이 adkhome이 아님 (adk가 진짜 홈의 텔레메트리 동의를 읽고 보낼 수 있음)")
     hook = env.get("AGENTSCOUT_WEBHOOK_URL", "").strip()
     if hook and urlparse(hook).hostname not in LOOPBACK:
         out.append(f"AGENTSCOUT_WEBHOOK_URL의 호스트가 루프백이 아님: {urlparse(hook).hostname!r}")
@@ -228,6 +231,11 @@ PY
 cat > envfake.sh <<'EOF'
 # 대역 서버(127.0.0.1:52711, 가짜 Gemini 52713)로만 향하는 환경. 앱 코드를 돌리는 터미널마다 먼저 읽는다: . ./envfake.sh
 export PYTHONIOENCODING=utf-8
+# ADK는 텔레메트리 동의를 홈의 .adk/config.json에서 읽는다. 홈을 이 폴더 안의 새 폴더로 바꿔 독자의 진짜 동의가 보이지 않게 한다
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/adkhome"
+mkdir -p "$HOME"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
 export GOOGLE_GEMINI_BASE_URL=http://127.0.0.1:52713
 export GOOGLE_API_KEY=fake-key
 export GEMINI_API_KEY=
@@ -248,7 +256,7 @@ export ADK_DISABLE_LOAD_DOTENV=1
 export HTTP_PROXY= HTTPS_PROXY= ALL_PROXY= http_proxy= https_proxy= all_proxy= grpc_proxy=
 export NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost
 export FAKE_LOG=fake/fakes.jsonl
-echo "GOOGLE_API_KEY=${GOOGLE_API_KEY:0:6}  AGENTSCOUT_LIVE_HN='$AGENTSCOUT_LIVE_HN'  NO_PROXY=$NO_PROXY"
+echo "GOOGLE_API_KEY=${GOOGLE_API_KEY:0:6}  AGENTSCOUT_LIVE_HN='$AGENTSCOUT_LIVE_HN'  NO_PROXY=$NO_PROXY  HOME=.../${HOME##*/}"
 EOF
 ```
 
@@ -259,16 +267,20 @@ $env:GOOGLE_GEMINI_BASE_URL = "http://127.0.0.1:52713"; $env:GOOGLE_API_KEY = "f
 foreach ($n in "GEMINI_API_KEY","GOOGLE_CLOUD_PROJECT","GOOGLE_CLOUD_LOCATION","GOOGLE_APPLICATION_CREDENTIALS","GOOGLE_VERTEX_BASE_URL","GOOGLE_GENAI_USE_ENTERPRISE","AGENTSCOUT_LIVE_HN","AGENTSCOUT_DELIVERY","AGENTSCOUT_WEBHOOK_URL","AGENTSCOUT_WEBHOOK_TOKEN","AGENTSCOUT_EMAIL_TO","AGENTSCOUT_EMAIL_FROM","AGENTSCOUT_GMAIL_CLIENT_ID","AGENTSCOUT_GMAIL_CLIENT_SECRET","AGENTSCOUT_GMAIL_REFRESH_TOKEN","OTEL_EXPORTER_OTLP_ENDPOINT","OTEL_EXPORTER_OTLP_TRACES_ENDPOINT","OTEL_EXPORTER_OTLP_METRICS_ENDPOINT","OTEL_EXPORTER_OTLP_LOGS_ENDPOINT","HTTP_PROXY","HTTPS_PROXY","ALL_PROXY","http_proxy","https_proxy","all_proxy","grpc_proxy") { Remove-Item "Env:$n" -ErrorAction SilentlyContinue }
 $env:GOOGLE_GENAI_USE_VERTEXAI = "False"; $env:NO_PROXY = "127.0.0.1,localhost"; $env:no_proxy = "127.0.0.1,localhost"
 $env:ADK_DISABLE_LOAD_DOTENV = "1"
+$env:UV_CACHE_DIR = (uv cache dir)
+$env:USERPROFILE = "$env:TEMP\hn-lab-adkhome"; $env:HOME = $env:USERPROFILE; New-Item -ItemType Directory -Force $env:USERPROFILE | Out-Null
 ```
 
 PowerShell 블록이 bash와 다른 까닭이 있습니다. Windows PowerShell 5.1에서는 환경변수를 빈 문자열로 둘 수 없고, 빈 문자열을 넣으면 변수가 지워집니다(Microsoft 문서 about_Environment_Variables 5.1판, https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables?view=powershell-5.1 , 2026-10-17 확인: "an environment variable can't be set to an empty string. Setting an environment variable to `$null` or an empty string removes it from the current session"). 그래서 위 블록은 `Remove-Item`으로 지웁니다. 지워진 변수는 `.env`가 채울 수 있는데, 이 앱의 스케줄러 경로는 `.env`를 읽지 않지만(`grep`으로 앱에 `dotenv`가 없음을 확인) `adk web`은 읽습니다. google-adk 2.12.0의 `.env` 로더(`cli/utils/envs.py`의 `load_dotenv_for_agent`)는 앱 폴더에서 위로 올라가며 처음 찾은 `.env`를 덮어쓰기로 읽되, 로드 직전에 셸에 있던 키는 값이 비어 있어도 되돌려 놓습니다(소스로 확인). 그래서 bash의 빈 값 덮어쓰기는 막아 주지만 PowerShell에서 지워진 변수는 막지 못합니다. 이 때문에 두 셸 모두 `ADK_DISABLE_LOAD_DOTENV=1`을 걸어 `adk`가 `.env`를 아예 읽지 않게 합니다(같은 파일에서 소스로 확인). PowerShell은 실행해 볼 수 없어서, bash에서 같은 변수들을 `unset`해 "변수가 지워진 상태"를 흉내 내 확인했습니다. 앱 폴더 `.env`에 `AGENTSCOUT_LIVE_HN=true`를 두고 `ADK_DISABLE_LOAD_DOTENV` 없이 `adk web`을 띄우면 도구가 실제 Hacker News로 가려 했고(소켓 감시가 막음), 이 변수를 걸면 `.env`를 읽지 않아 `watch_mode=sample`이었습니다.
 
-두 파일을 저장한 뒤, 가드가 무엇을 막는지 환경 모양 여덟 개로 시험해 봅니다(프로세스 환경은 건드리지 않고 `problems()`에 딕셔너리를 넘깁니다).
+두 블록은 홈(`HOME`·`USERPROFILE`)도 바꿉니다. bash는 `hn-lab/adkhome`, PowerShell은 `%TEMP%\hn-lab-adkhome`입니다. ADK는 텔레메트리 동의를 홈의 `.adk/config.json`에서 읽는데(`Path.home()`, Step 6), 독자가 다른 ADK 실습에서 이미 동의해 뒀다면 홈이 그대로일 때 Step 6의 `adk telemetry disable` 한 줄만 빠져도 `adk` 명령이 끝날 때 `play.googleapis.com`으로 사용 기록이 나갑니다. 이 문서의 확인에서 동의(`true`)를 미리 적어 둔 홈으로 이 경우를 흉내 내자 소켓 감시가 DNS에서 막았습니다(보내지 않음). 홈을 바꾸면 그 동의가 보이지 않습니다. uv 캐시는 `UV_CACHE_DIR`로 원래 자리를 지켜 다시 내려받지 않습니다. `check_env.py`는 홈의 마지막 폴더 이름이 `adkhome`인지 봅니다.
+
+두 파일을 저장한 뒤, 가드가 무엇을 막는지 환경 모양 아홉 개로 시험해 봅니다(프로세스 환경은 건드리지 않고 `problems()`에 딕셔너리를 넘깁니다).
 
 ```bash
 uv run --no-project python -B -c "
 from check_env import problems
-ok = {'GOOGLE_GEMINI_BASE_URL': 'http://127.0.0.1:52713', 'GOOGLE_API_KEY': 'fake-key', 'NO_PROXY': '127.0.0.1', 'no_proxy': '127.0.0.1', 'ADK_DISABLE_LOAD_DOTENV': '1'}
+ok = {'GOOGLE_GEMINI_BASE_URL': 'http://127.0.0.1:52713', 'GOOGLE_API_KEY': 'fake-key', 'NO_PROXY': '127.0.0.1', 'no_proxy': '127.0.0.1', 'ADK_DISABLE_LOAD_DOTENV': '1', 'HOME': '/x/adkhome', 'USERPROFILE': 'C:/x/adkhome'}
 cases = {
  '정상': ok,
  '주소 위장': {**ok, 'GOOGLE_GEMINI_BASE_URL': 'http://127.0.0.1@example.invalid'},
@@ -278,6 +290,7 @@ cases = {
  'live 켜짐': {**ok, 'AGENTSCOUT_LIVE_HN': 'true'},
  '프록시 변수': {**ok, 'HTTPS_PROXY': 'http://proxy.example.invalid:3128'},
  '.env 읽기가 켜짐': {k: v for k, v in ok.items() if k != 'ADK_DISABLE_LOAD_DOTENV'},
+ '진짜 홈': {**ok, 'HOME': '/home/me', 'USERPROFILE': 'C:/Users/me'},
 }
 for name, env in cases.items():
     print(f'{name:18} -> {len(problems(env))}건', problems(env)[:1])
@@ -293,6 +306,7 @@ Gmail 값이 진짜 모양     -> 1건 ['AGENTSCOUT_GMAIL_REFRESH_TOKEN가 비�
 live 켜짐            -> 1건 ['AGENTSCOUT_LIVE_HN에 값이 있음 (이 셸)']
 프록시 변수             -> 1건 ['HTTPS_PROXY에 값이 있음 (프록시를 거치면 루프백 요청도 프록시로 나갈 수 있습니다)']
 .env 읽기가 켜짐        -> 1건 ['ADK_DISABLE_LOAD_DOTENV가 1이 아님 (adk가 .env로 빈 값을 다시 채울 수 있음)']
+진짜 홈               -> 1건 ['홈이 adkhome이 아님 (adk가 진짜 홈의 텔레메트리 동의를 읽고 보낼 수 있음)']
 ```
 
 이제 앱의 단위 테스트를 돌립니다. 앱 README는 테스트를 안내하지 않고, 테스트 파일이 `always_on_hn_briefing_agent.scheduler_api`를 패키지 이름으로 불러서 **앱 폴더의 한 단계 위(`hn-lab`)에서 `python -m pytest`로** 돌려야 합니다(맨 `pytest`는 현재 폴더를 경로에 넣지 않아 `ModuleNotFoundError`, 아래 직접 확인).
@@ -303,7 +317,7 @@ uv run --no-project python check_env.py && uv run --no-project python -B -m pyte
 ```
 
 ```text
-GOOGLE_API_KEY=fake-k  AGENTSCOUT_LIVE_HN=''  NO_PROXY=127.0.0.1,localhost
+GOOGLE_API_KEY=fake-k  AGENTSCOUT_LIVE_HN=''  NO_PROXY=127.0.0.1,localhost  HOME=.../adkhome
 check_env 통과: 대역 서버로만 향함
 .........                                                                [100%]
 ============================== warnings summary ===============================
@@ -312,7 +326,7 @@ check_env 통과: 대역 서버로만 향함
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-9 passed, 1 warning in 1.22s
+9 passed, 1 warning in 1.12s
 ```
 
 아홉 개가 모두 통과했습니다. 경고는 `fastapi.testclient`가 `httpx`를 쓰는 것이 더는 권장되지 않는다는 알림입니다. 맨 `pytest`는 이렇게 됩니다.
@@ -322,7 +336,7 @@ uv run --no-project pytest -p no:cacheprovider -q always_on_hn_briefing_agent/te
 ```
 
 ```text
-1 warning, 2 errors in 0.64s
+1 warning, 2 errors in 0.53s
 E   ModuleNotFoundError: No module named 'always_on_hn_briefing_agent'
 ```
 
@@ -459,7 +473,7 @@ uv run --no-project python -B -c "import sys; sys.path.insert(0, 'always_on_hn_b
 
 ```text
 AgentScout Hacker News Engineering Brief
-Generated: 2026-10-17T05:27:16-07:00
+Generated: 2026-10-17T05:58:43-07:00
 Watch mode: sample
 
 Highest-signal agent-building stories:
@@ -611,7 +625,7 @@ uv run --no-project python -B wrapcheck.py
 ```
 
 ```text
-GOOGLE_API_KEY=fake-k  AGENTSCOUT_LIVE_HN=''  NO_PROXY=127.0.0.1,localhost
+GOOGLE_API_KEY=fake-k  AGENTSCOUT_LIVE_HN=''  NO_PROXY=127.0.0.1,localhost  HOME=.../adkhome
 check_env 통과: 대역 서버로만 향함
 [래퍼] 막음: example.invalid
 https://example.invalid/x -> 래퍼가 막음: example.invalid
@@ -980,8 +994,8 @@ watch_mode: sample | 이야기: 2 | dry_run: False
 delivery: {"attempted": true, "provider": "gmail", "configured": true, "sent": true, "status": "sent", "message_id": "fake-msg-1", "thread_id": "fake-thread-1"}
   rank  1   428 pts  116 com  Show HN: An open-source framework for reliable AI agent workflows
   rank  8   256 pts   73 com  Lessons from running coding agents on production repositories
-{"kind": "token", "fields": {"client_id": "fake-cl", "client_secret": "fake-cl", "refresh_token": "fake-re", "grant_type": "refresh"}, "t": 1792240060.382}
-{"kind": "gmail", "auth_prefix": "Bearer fake-", "to": "to@example.invalid", "sender": "from@example.invalid", "subject": "AgentScout Hacker News brief - 2026-10-17", "content_type": "multipart/alternative", "parts": [["text/plain", 1098], ["text/html", 1309]], "t": 1792240060.413}
+{"kind": "token", "fields": {"client_id": "fake-cl", "client_secret": "fake-cl", "refresh_token": "fake-re", "grant_type": "refresh"}, "t": 1792241948.655}
+{"kind": "gmail", "auth_prefix": "Bearer fake-", "to": "to@example.invalid", "sender": "from@example.invalid", "subject": "AgentScout Hacker News brief - 2026-10-17", "content_type": "multipart/alternative", "parts": [["text/plain", 1098], ["text/html", 1309]], "t": 1792241948.671}
 ```
 
 토큰 요청에는 세 자격 증명과 `grant_type=refresh_token`이 갔고, 메일은 `multipart/alternative`에 `text/plain`(1,098자)과 `text/html`(1,309자) 두 부분이었습니다. 두 요청을 시퀀스로 보면 이렇습니다.
@@ -1020,7 +1034,7 @@ watch_mode: sample | 이야기: 2 | dry_run: False
 delivery: {"attempted": true, "provider": "webhook", "configured": true, "sent": true, "status": 200}
   rank  1   428 pts  116 com  Show HN: An open-source framework for reliable AI agent workflows
   rank  8   256 pts   73 com  Lessons from running coding agents on production repositories
-{"kind": "webhook", "keys": ["html", "next_actions", "stories", "subject", "text"], "subject": "AgentScout Hacker News brief - 2026-10-17", "text_chars": 1097, "html_chars": 1308, "stories": 2, "auth_prefix": "Bearer fak", "content_type": "application/json", "t": 1792240069.186}
+{"kind": "webhook", "keys": ["html", "next_actions", "stories", "subject", "text"], "subject": "AgentScout Hacker News brief - 2026-10-17", "text_chars": 1097, "html_chars": 1308, "stories": 2, "auth_prefix": "Bearer fak", "content_type": "application/json", "t": 1792241957.733}
 ```
 
 웹훅은 `subject`·`text`·`html`·`stories`·`next_actions` 다섯 키의 JSON을 받았고, 토큰은 `Authorization: Bearer …`로 갔습니다(대역은 앞 열 글자만 적었습니다). 이 본문을 Slack·Linear·Jira가 그대로 받아 주는지는 시험하지 않았습니다. 앱 README는 그 서비스들을 나열하지만 본문 모양은 위 다섯 키뿐입니다(`delivery.py:156-164`).
@@ -1122,7 +1136,7 @@ uv run --no-project python -B -W ignore fail500.py
 직접 확인한 출력입니다.
 
 ```text
-GOOGLE_API_KEY=fake-k  AGENTSCOUT_LIVE_HN=''  NO_PROXY=127.0.0.1,localhost
+GOOGLE_API_KEY=fake-k  AGENTSCOUT_LIVE_HN=''  NO_PROXY=127.0.0.1,localhost  HOME=.../adkhome
 웹훅, 연결 거부                          -> HTTP 200 sent=False status=connection_error
 웹훅, 응답 읽다가 시간 초과                   -> HTTP 500 
 웹훅, 응답이 JSON이 아님                   -> HTTP 200 sent=True status=200
@@ -1130,7 +1144,7 @@ Gmail, 토큰 응답 읽다가 시간 초과             -> HTTP 200 sent=False 
 Gmail, 토큰 응답이 JSON이 아님             -> HTTP 500 
 ```
 
-첫째·넷째 줄(연결 거부, Gmail 시간 초과)은 200 안의 실패라 Pub/Sub 푸시 구독은 확인 응답으로 받아들여 재전송 없이 사라집니다. 둘째·다섯째 줄(웹훅 시간 초과, JSON이 아닌 Gmail 응답)은 500이고, 앞의 경우는 받는 쪽이 이미 본문을 받은 뒤의 실패일 수 있습니다. Pub/Sub은 "any other status code"를 부정 확인으로 보고 메시지를 다시 보내므로 같은 브리핑이 두 번 갈 수 있습니다(Pub/Sub 문서와 소스로 확인했고 재전송 자체는 시험하지 못했습니다). 이 실험을 마치면 터미널 1을 다시 띄웁니다(`uv run --no-project python serve_fakes.py 52711`). 터미널 2의 웹훅 설정 앱은 그대로 둡니다(Step 5가 씁니다).
+첫째·넷째 줄(연결 거부, Gmail 시간 초과)은 200 안의 실패라 Pub/Sub 푸시 구독은 확인 응답으로 받아들여 재전송 없이 사라집니다. 둘째·다섯째 줄(웹훅 시간 초과, JSON이 아닌 Gmail 토큰 응답)은 500이고, 웹훅 시간 초과는 받는 쪽이 이미 본문을 받은 뒤의 실패일 수 있습니다. Gmail은 메일 전송 응답이 JSON이 아니어도(`delivery.py:111`의 `json.loads`) 같은 500이 되는데, 그때는 메일이 이미 나간 뒤라 재전송이 중복 메일이 될 수 있습니다(소스로만 보았고 시험하지 못했습니다). Pub/Sub은 "any other status code"를 부정 확인으로 보고 메시지를 다시 보내므로 같은 브리핑이 두 번 갈 수 있습니다(Pub/Sub 문서와 소스로 확인했고 재전송 자체는 시험하지 못했습니다). 이 실험을 마치면 터미널 1을 다시 띄웁니다(`uv run --no-project python serve_fakes.py 52711`). 터미널 2의 웹훅 설정 앱은 그대로 둡니다(Step 5가 씁니다).
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -1273,7 +1287,7 @@ grep -c '"kind": "webhook"' fake/fakes.jsonl
 
 읽는 법입니다. 첫째 줄과 둘째 줄: 서명이나 헤더 없는 Pub/Sub 모양의 요청이 `dry_run: false`를 실어 오면 전송(`delivery.status=200`은 웹훅의 HTTP 상태)이 일어났고, 같은 메시지를 한 번 더 보내면 한 번 더 일어났습니다. 마지막 줄의 `4`가 대역이 받은 웹훅 수입니다. 앱은 메시지를 알아보는 표(ID)나 중복 제거를 갖고 있지 않습니다. Pub/Sub 공식 문서는 푸시 요청에 Pub/Sub가 서명한 JWT를 `Authorization` 헤더로 싣고 받는 쪽이 "signature validation"과 "email and audience claims"를 확인해야 한다고 하며(https://docs.cloud.google.com/pubsub/docs/authenticate-push-subscriptions, 2026-10-17 확인), "Cloud Run … authenticate HTTP calls from Pub/Sub by verifying Pub/Sub-generated tokens … the only configuration that you require is to grant the necessary IAM roles"라고 적습니다. 앱 코드 자체는 아무것도 확인하지 않으므로 이 보호는 배포 환경이 해 주는 경우에만 있습니다. 이 문서는 배포하지 않았고 어느 쪽인지 확인하지 못했습니다.
 
-둘째, 확인 응답입니다. 같은 문서가 푸시의 확인 응답 코드를 102·200·201·202·204로 정하고 "any other status code"는 부정 확인이라 Pub/Sub가 메시지를 다시 보낸다고 합니다(https://docs.cloud.google.com/pubsub/docs/push, 같은 날 확인). 그래서 셋이 이어집니다. 본문이 JSON이 아니거나(`not json`) `message`가 문자열이면 앱은 HTTP 500으로 끝나 메시지가 다시 옵니다(셋째·넷째 줄). 반대로 `data`가 base64가 아니면(다섯째) 조용히 `{}`로 처리해 dry-run으로 200을 돌려줍니다. 그리고 Step 4의 연결 실패는 200이라 재전송 없이 사라지고, 시간 초과 같은 500은 재전송을 부릅니다.
+둘째, 확인 응답입니다. 같은 문서가 푸시의 확인 응답 코드를 102·200·201·202·204로 정하고 "any other status code"는 부정 확인이라 Pub/Sub가 메시지를 다시 보낸다고 합니다(https://docs.cloud.google.com/pubsub/docs/push, 같은 날 확인). 그래서 셋이 이어집니다. 본문이 JSON이 아니거나(`not json`) `message`가 문자열이면 앱은 HTTP 500으로 끝나 메시지가 다시 옵니다(셋째·넷째 줄). 반대로 `data`가 base64가 아니면(다섯째) 조용히 `{}`로 처리해 dry-run으로 200을 돌려줍니다. 그리고 Step 4의 연결 실패는 200이라 재전송 없이 사라지고, 웹훅 응답 시간 초과 같은 500은 재전송을 부릅니다.
 
 셋째, 본문 읽기입니다. 청크 전송 + `dry_run: false`(여섯째)는 dry-run으로 끝났습니다. `request.headers.get("content-length")`가 없으면 본문을 읽지 않고 `{}`로 처리하기 때문입니다(`scheduler_api.py:93-100`). 같은 본문을 `Content-Length`와 보내면(일곱째) 전송됩니다. `dry_run`이 문자열 `"false"`면 전송(여덟째), 숫자 `0`이면 dry-run(아홉째)입니다. `top_n=99`는 10으로 잘리지만 표본이 다섯 개뿐이라 이야기는 다섯입니다(열째). `top_n=abc`는 FastAPI가 422로 막습니다(열한째). `/docs`는 200입니다(열둘째).
 
@@ -1513,17 +1527,21 @@ for i, line in enumerate(open("fake/gemini.jsonl", encoding="utf-8"), start=1):
 PY
 ```
 
-터미널 둘을 더 씁니다. 터미널 4는 가짜 Gemini, 터미널 5는 앱 폴더 **복사본 안**에서 `adk web`을 띄웁니다. 앱 README는 앱 폴더에서 `adk web .`를 안내하고, 목록에 `always_on_hn_briefing_agent`가 하나 뜹니다(아래 `client.py`가 `/list-apps`로 확인). 앞서 띄운 터미널 1·2는 이 단계에 필요 없으니 둬도 멈춰도 됩니다. `adk web`은 **이 폴더 안**에 `.adk/session.db`를 만들어서(저장소의 `.gitignore`가 `*.db`를 무시합니다) 원본이 아니라 복사본에서 돌립니다. `adk` 명령은 터미널이 대화형이고 동의 기록이 없으면 첫 실행에 "Enable telemetry? [Y/n]" 질문을 합니다. 문구는 기본값이 꺼짐이라고 하지만 코드는 Enter(빈 입력)와 `y`를 동의로 받아 `~/.adk/config.json`에 `telemetry: true`를 쓰고, 그 뒤 `adk` 명령이 끝날 때마다 사용 기록(하위 명령·플래그 이름, 실행 시간·종료 상태, OS·Python 판)을 `https://play.googleapis.com/log`로 보냅니다(google-adk 2.12.0의 `cli/cli_tools_click.py` 394~431행과 `cli/_telemetry/_metrics_reporter.py`, 소스로 확인). 그래서 질문에 기대지 않고 둘을 둡니다. 먼저 `adk telemetry disable`로 `false`를 기록합니다(이 문서에서 독자의 진짜 홈 `~/.adk/config.json`에 쓰는 유일한 명령이고, `adk telemetry status`로 상태를 봅니다). 그리고 `adk web`·`adk eval`의 입력을 `< /dev/null`로 닫아, 질문이 나와도 `input()`이 EOF로 끝나 아무것도 기록하지 않게 합니다(PowerShell은 `disable`이 그 몫을 합니다). `adk` 명령 앞뒤에서 `.env`는 `ADK_DISABLE_LOAD_DOTENV=1`(envfake.sh)이 읽지 못하게 합니다.
+터미널 둘을 더 씁니다. 터미널 4는 가짜 Gemini, 터미널 5는 앱 폴더 **복사본 안**에서 `adk web`을 띄웁니다. 앱 README는 앱 폴더에서 `adk web .`를 안내하고, 목록에 `always_on_hn_briefing_agent`가 하나 뜹니다(아래 `client.py`가 `/list-apps`로 확인). 앞서 띄운 터미널 1·2는 이 단계에 필요 없으니 둬도 멈춰도 됩니다. `adk web`은 **이 폴더 안**에 `.adk/session.db`를 만들어서(저장소의 `.gitignore`가 `*.db`를 무시합니다) 원본이 아니라 복사본에서 돌립니다. `adk` 명령은 터미널이 대화형이고 동의 기록이 없으면 첫 실행에 "Enable telemetry? [Y/n]" 질문을 합니다. 문구는 기본값이 꺼짐이라고 하지만 코드는 Enter(빈 입력)와 `y`를 동의로 받아 `~/.adk/config.json`에 `telemetry: true`를 쓰고, 그 뒤 `adk` 명령이 끝날 때마다 사용 기록(하위 명령·플래그 이름, 실행 시간·종료 상태, OS·Python 판)을 `https://play.googleapis.com/log`로 보냅니다(google-adk 2.12.0의 `cli/cli_tools_click.py` 394~431행과 `cli/_telemetry/_metrics_reporter.py`, 소스로 확인). 그래서 질문에 기대지 않고 서로 독립된 방어선 셋을 둡니다. 첫째, `envfake.sh`(PowerShell은 환경 블록)가 홈을 바꿔 독자의 진짜 동의가 보이지 않게 합니다(Step 1). 둘째, `adk telemetry disable`로 바뀐 홈에 `false`를 기록하고 `adk telemetry status`로 봅니다. 홈을 바꾸지 않고 이 명령을 부르면 독자의 진짜 `~/.adk/config.json`에 `false`를 써서 독자의 설정을 바꾸는 부작용이 있습니다(홈을 바꾸지 않았을 때 직접 확인했습니다). 지금은 바뀐 홈에 씁니다. 셋째, `adk web`·`adk eval`의 입력을 `< /dev/null`로 닫아, 질문이 나와도 `input()`이 EOF로 끝나 아무것도 기록하지 않게 합니다. 이 문서의 확인에서 셋 가운데 하나씩 뺀 판과 둘씩 뺀 판을 동의가 미리 적힌 홈에서 모두 돌려 봤습니다(아래). 앞의 `adk` 명령 앞뒤에서 `.env`는 `ADK_DISABLE_LOAD_DOTENV=1`(envfake.sh)이 읽지 못하게 합니다. 아래 두 명령은 터미널 3(`hn-lab` 안, `envfake.sh`를 읽은 터미널)에서 돌립니다.
 
 ```bash
+. ./envfake.sh
 uv run --no-project adk telemetry disable < /dev/null
 uv run --no-project adk telemetry status < /dev/null
 ```
 
 ```text
+GOOGLE_API_KEY=fake-k  AGENTSCOUT_LIVE_HN=''  NO_PROXY=127.0.0.1,localhost  HOME=.../adkhome
 Telemetry collection has been disabled.
 Telemetry collection is disabled.
 ```
+
+동의(`true`)가 미리 적힌 진짜 홈 대역을 만들어 여덟 판(방어선 셋을 모두 둠, 하나씩 뺌 셋, 둘씩 뺌 셋, 모두 뺌)을 돌리고 `adk eval` 한 번이 끝날 때 `play.googleapis.com`으로 가려는 시도를 소켓 감시로 셌습니다(입력을 닫은 판은 질문에 EOF를, 닫지 않은 판은 Enter를 주는 가짜 tty). 감시가 막았을 뿐 실제로 보내지 않았습니다. 결과는 이렇습니다. 셋을 모두 둔 판은 0, 하나씩 뺀 세 판(홈 바꾸기, `disable`, 입력 닫기)은 모두 0이었습니다. 둘을 뺀 판은 홈 바꾸기와 `disable`을 뺀 판이 1(이미 동의한 홈), `disable`과 입력 닫기를 뺀 판이 1(질문에 Enter가 동의가 됨), 홈 바꾸기와 입력 닫기를 뺀 판이 0(`disable`이 진짜 홈에 `false`를 써서 막음), 모두 뺀 판이 1입니다. 그러니 줄 하나가 빠져서는 나가지 않지만 둘이 빠지면 나갈 수 있고, 홈 바꾸기만 빠진 판에서는 `disable`이 독자의 진짜 홈 설정을 `false`로 바꿨습니다. 이 여덟 판 스크립트는 이 문서에 싣지 않았습니다.
 
 ```bash
 # 터미널 4 (가짜 Gemini)
@@ -1607,7 +1625,7 @@ uv run --no-project python -B -c "import sys, json; sys.path.insert(0, 'always_o
 
 ![도구 결과에서 응답까지](diagrams/extra-adk-reply.svg)
 
-**확인.** `목록: ['always_on_hn_briefing_agent']`, 이벤트 셋(첫째·둘째 질문)과 하나(셋째), 요청 기록 다섯 줄.
+**확인.** `adk telemetry status`가 `disabled`, `목록: ['always_on_hn_briefing_agent']`, 이벤트 셋(첫째·둘째 질문)과 하나(셋째), 요청 기록 다섯 줄.
 
 ### Step 7. 배포 구성과 평가 설정 읽기 — 실행하지 않은 것
 
@@ -1701,7 +1719,8 @@ Error: Eval module is not installed, please install via `pip install "google-adk
 ## 실행 체크리스트
 
 - [ ] 복사본에서 `tzdata`·`pytest`를 설치했고 `scout.py`가 import된다
-- [ ] 모든 터미널에서 `envfake.sh`를 읽었고 `check_env 통과`가 먼저 찍혔다
+- [ ] 모든 터미널에서 `envfake.sh`를 읽었고 `check_env 통과`가 먼저 찍혔다(홈이 `adkhome`으로 바뀐다)
+- [ ] `adk` 명령 전에 `adk telemetry status`가 `disabled`를 보였다
 - [ ] 단위 테스트 9개가 통과했고, 그것이 표본 데이터만 시험함을 확인했다
 - [ ] 표본 순위가 163.5 → 124.9 → 106.2 → 73.8 → 71.1로 나왔다
 - [ ] 라이브(대역)에서 AI와 무관한 글이 순위에 들어오는 것을 봤다
@@ -1721,7 +1740,7 @@ Error: Eval module is not installed, please install via `pip install "google-adk
 | `check_env 실패: ...가 루프백이 아님` 또는 `NO_PROXY에 127.0.0.1이 없음` | 셸의 프록시·주소 변수 | `. ./envfake.sh`를 먼저 읽는다 |
 | 라이브 결과에 AI와 무관한 글이 들어온다 | `scout.py:286`의 `"agent" in story.summary.lower()`가 라이브 요약 틀 때문에 항상 참 | 필터를 낱말만 보도록 고친다(독자 몫. 이 문서는 원본을 고치지 않았다) |
 | 전송이 실패했는데 스케줄러에는 성공(200)으로 보임 | 연결 거부·HTTP 오류는 `delivery.py`가 상태 문자열로 돌리고 API는 200 | 응답 본문의 `delivery.sent`를 확인하거나 앞단에서 실패를 감지한다 |
-| 웹훅이나 Gmail 전송에서 API가 500 | 웹훅 응답 읽기 시간 초과, JSON이 아닌 Gmail 응답은 잡히지 않음(`delivery.py:129`, `186-202`). Pub/Sub 푸시라면 다시 보내 중복 전송이 될 수 있음 | 호출 쪽 재시도와 중복 제거를 함께 설계한다(Step 4의 `fail500.py`로 재현) |
+| 웹훅이나 Gmail 전송에서 API가 500 | 웹훅 응답 읽기 시간 초과, JSON이 아닌 Gmail 응답은 잡히지 않음(`delivery.py:129`, `186-202`). Gmail 메일 전송 응답이 JSON이 아닌 경우(`delivery.py:111`)는 메일이 나간 뒤의 500일 수 있음. Pub/Sub 푸시라면 다시 보내 중복 전송이 될 수 있음 | 호출 쪽 재시도와 중복 제거를 함께 설계한다(Step 4의 `fail500.py`로 재현) |
 | 첫 페이지를 못 가져오면 500, 마크업이 바뀌면 빈 브리핑이 전송됨 | 가져오기 오류를 안 잡고(`scout.py:241-242`), 이야기 0개도 전송 대상 | 호출 쪽에서 재시도·빈 브리핑 확인을 둔다 |
 | 같은 Pub/Sub 메시지가 두 번 오면 두 번 전송 | 중복 제거가 없음 | 전송 전 메시지 ID를 기록하게 고친다(독자 몫) |
 | `adk eval`이 `Eval module is not installed` | `requirements.txt`에 `google-adk[eval]` 없음. YAML도 ADK 평가 세트 모양이 아님 | 평가를 쓰려면 추가 패키지와 JSON 평가 세트를 따로 마련 |
