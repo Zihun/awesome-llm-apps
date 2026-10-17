@@ -1,6 +1,6 @@
 # Day 149 · 📡 Release Radar Agent
 
-> 볼륨 13 🛰️ Always-on Agents · 난이도 ★★☆ ⚠ 앱이 고정한 `google-adk==1.9.0`에서는 앱 README의 `adk web .`가 `release_radar_agent`를 목록에 올리지 못하고(Step 7), 모델에게 선언되는 도구 인자 둘이 모두 필수로 바뀌며, `adk web`이 읽는 `.env`가 셸 환경을 덮어씁니다. README의 실행 예는 스케줄러 API를 `--host 0.0.0.0`에 여는데 엔드포인트에 인증 코드가 없습니다(Step 6) · 예상 소요 215분(앱은 파이썬 여섯 파일 1,014줄과 시험 셋이지만, 대역 서버와 래퍼·가드를 직접 저장하고 터미널 둘 이상을 오가며 요청 기록과 두 판의 ADK를 맞대 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(GitHub·Gmail·Gemini 어디에도 요청을 보내지 않았습니다). 스케줄러 경로는 모델을 부르지 않아 모델 비용이 0이고, 진짜 키로 ADK에게 브리프를 한 번 물으면 모델 호출이 두 번 나가 0.005달러 안팎입니다(⚠ 추정, Step 7) · 원본 앱: `always_on_agents/release_radar_agent`
+> 볼륨 13 🛰️ Always-on Agents · 난이도 ★★☆ ⚠ 앱이 고정한 `google-adk==1.9.0`에서는 앱 README의 `adk web .`가 `release_radar_agent`를 목록에 올리지 못하고(Step 7), 모델에게 선언되는 도구 인자 둘이 모두 필수로 바뀌며, `adk web`이 읽는 `.env`가 셸 환경을 덮어씁니다. README의 실행 예는 스케줄러 API를 `--host 0.0.0.0`에 여는데 엔드포인트에 인증 코드가 없습니다(Step 6) · 예상 소요 240분(앱은 파이썬 여섯 파일 1,014줄과 시험 셋이지만, 대역 서버와 래퍼·가드를 직접 저장하고 터미널 둘 이상을 오가며 요청 기록과 두 판의 ADK를 맞대 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(GitHub·Gmail·Gemini 어디에도 요청을 보내지 않았습니다). 스케줄러 경로는 모델을 부르지 않아 모델 비용이 0이고, 진짜 키로 ADK에게 브리프를 한 번 물으면 모델 호출이 두 번 나가 0.005달러 안팎입니다(⚠ 추정, Step 7) · 원본 앱: `always_on_agents/release_radar_agent`
 
 ## 오늘 만들 것
 
@@ -25,7 +25,7 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-위 그림은 묶음끼리만 이었습니다. 묶음 안의 관계는 두 장입니다. 스케줄러 API와 ADK 에이전트가 모두 `radar.py`를 부르고, `radar.py`가 매니페스트·GitHub·순위 코드를 다룹니다.
+위 그림은 묶음끼리만 이었습니다. 화살표 끝이 묶음 안의 상자에 닿아 보이는 곳이 있지만(GitHub 화살표가 스케줄러 API 쪽으로, Gemini 화살표가 `radar.py` 쪽으로 보입니다) 묶음 전체에 이은 것입니다. 실제 관계는 GitHub·매니페스트·순위가 `radar.py`, Gemini가 `agent.py`이고 아래 두 그림이 보여 줍니다. 묶음 안의 관계는 두 장입니다. 스케줄러 API와 ADK 에이전트가 모두 `radar.py`를 부르고, `radar.py`가 매니페스트·GitHub·순위 코드를 다룹니다.
 
 ![목록 읽기와 순위 안의 관계](diagrams/extra-pipeline.svg)
 
@@ -92,6 +92,8 @@ Resolved 107 packages
 Installed 107 packages
 ```
 
+(출력은 앞부분만, 걸린 시간은 줄여서 옮겼습니다. 실제로는 `Using Python …`·`Prepared …` 줄과 설치된 패키지 목록이 이어집니다.)
+
 ```powershell
 # 아래 PowerShell 줄은 실행해 보지 못했습니다.
 mkdir radar-work
@@ -106,12 +108,12 @@ uv pip install --python venv\Scripts\python.exe -r always_on_agents\release_rada
 
 ```bash
 export PYTHONIOENCODING=utf-8 PYTHONUTF8=1 PYTHONDONTWRITEBYTECODE=1 PYTHONWARNINGS=ignore
-PY=venv/Scripts/python.exe     # macOS·Linux는 venv/bin/python
+PY="$PWD/venv/Scripts/python.exe"     # 절대 경로. macOS·Linux는 "$PWD/venv/bin/python"
 ```
 
 ```powershell
 $env:PYTHONIOENCODING = "utf-8"; $env:PYTHONUTF8 = "1"; $env:PYTHONDONTWRITEBYTECODE = "1"; $env:PYTHONWARNINGS = "ignore"
-$PY = "venv\Scripts\python.exe"
+$PY = "$PWD\venv\Scripts\python.exe"
 ```
 
 ```bash
@@ -124,7 +126,7 @@ google-adk 1.9.0 | google-genai 2.31.0 | fastapi 0.115.12 | uvicorn 0.34.2 | sta
 
 세 줄이 그대로 설치됩니다(Python 3.12.10, uv 0.7.2 (481d05d8d 2025-04-30)). `google-adk` 1.9.0은 2025-07-31에 공개됐고(PyPI), 최신은 2.12.0(2026-10-13)입니다. 1.9.0의 메타데이터는 `google-genai>=1.21.1`만 요구해서(PyPI 메타데이터) 오늘 최신 2.31.0이 깔리고, 이 조합으로 앱이 도는 것은 Step 7에서 직접 봅니다. `fastapi==0.115.12`와 `uvicorn==0.34.2`도 오늘 최신(0.141.1, 0.54.0)보다 한참 낡은 판인데 문제 없이 돕니다. 최신 ADK와의 차이는 Step 7에서 두 번째 가상환경으로 맞대어 봅니다.
 
-이제 가드입니다. 가드는 네 가지를 합니다. 환경변수를 **스크립트 안에서 직접** 덮어써서(모델 주소는 `http://127.0.0.1:<포트>/gemini`, 키는 가짜 값, Vertex·전송 설정·매니페스트·라이브 스위치는 빈 값) 셸이나 `.env`에 진짜 값이 있어도 무시하고, `urllib`의 기본 opener를 프록시 없는 것으로 바꾸면서 `api.github.com` 요청은 대역 서버로 돌리고 루프백도 GitHub도 아닌 주소는 요청을 만들기 전에 거절하고, `urllib.request.getproxies()`를 비워 `httpx`·`aiohttp`(Gemini 클라이언트가 씁니다)가 프록시를 찾지 못하게 하고, 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로는 못 나가게 막습니다. 셸에 프록시가 있었다면 그 포트로의 연결은 루프백이어도 막습니다(이유는 Step 7의 `.env` 시험). 셸의 `HTTP(S)_PROXY`·`ALL_PROXY`는 빈 값으로 덮고(`unset`이 아니라 빈 값이어야 나중에 다른 코드가 다시 채우지 못합니다) `NO_PROXY`·`no_proxy`에 루프백을 겁니다. `check_env`는 이 모두와 웹훅 주소 호스트, Gmail 변수가 비어 있는지를 확인하고 하나라도 어긋나면 멈춥니다.
+이제 가드입니다. 가드는 네 가지를 합니다. 환경변수를 **스크립트 안에서 직접** 덮어써서(모델 주소는 `http://127.0.0.1:<포트>/gemini`, 키는 가짜 값, Vertex·전송 설정·매니페스트·라이브 스위치는 빈 값) 셸이나 `.env`에 진짜 값이 있어도 무시하고, `urllib`의 기본 opener를 프록시 없는 것으로 바꾸면서 `api.github.com` 요청은 대역 서버로 돌리고 루프백도 GitHub도 아닌 주소는 요청을 만들기 전에 거절하고, `urllib.request.getproxies()`를 비워 `httpx`·`aiohttp`(Gemini 클라이언트가 씁니다)가 프록시를 찾지 못하게 하고, 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로는 못 나가게 막습니다. 셸에 프록시가 있었다면 그 포트로의 연결은 루프백이어도 막습니다(이유는 Step 7의 `.env` 시험). 셸의 `HTTP(S)_PROXY`·`ALL_PROXY`는 빈 값으로 덮고(`unset`이 아니라 빈 값이어야 나중에 다른 코드가 다시 채우지 못합니다) `NO_PROXY`·`no_proxy`에 루프백을 겁니다. `check_env`는 이 모두와 웹훅 주소 호스트, Gmail 변수가 비어 있는지를 확인하고 하나라도 어긋나면 멈춥니다. 가드 줄을 빠뜨려도 바깥에 닿지 않게 두 가지를 더했습니다. `point_at_fakes`가 끝에서 소켓·`urlopen` 가드(`install`)를 스스로 설치하고, `check_env`는 `urlopen`·`getaddrinfo`·asyncio 연결 함수가 정말 가드의 것인지를 확인합니다. 그래서 래퍼에서 `guard.install()` 한 줄을 지워도 설치되어 있고, `point_at_fakes`를 지우면 `check_env`가 "가드가 설치되어 있지 않습니다"로 멈춥니다. `report()`도 설치되지 않았으면 "0건" 대신 설치되지 않았다고 찍습니다(0건이라는 말이 가드가 없을 때도 나오지 않도록). 래퍼의 가드 줄을 하나씩 지운 판을 돌린 결과는 Step 8 끝에 있습니다.
 
 ```bash
 cat > guard.py <<'EOF'
@@ -158,6 +160,7 @@ GMAIL_VARS = EMPTY_VARS[-5:]
 
 PORT = None
 BLOCKED = []
+INSTALLED = False
 PROXY_PORTS = set()  # 셸이나 .env에 프록시가 있었다면 그 포트: 루프백이어도 연결을 막는다
 
 
@@ -188,6 +191,7 @@ def point_at_fakes(port: int) -> None:
     for name in PROXY_VARS:
         os.environ[name] = ""
     os.environ["NO_PROXY"] = os.environ["no_proxy"] = "127.0.0.1,localhost,::1"
+    install()  # 환경만 정하고 소켓·urlopen 가드를 빠뜨리는 일이 없도록 여기서 함께 설치한다
 
 
 def set_webhook(path: str = "/hook") -> None:
@@ -197,6 +201,13 @@ def set_webhook(path: str = "/hook") -> None:
 
 
 def check_env() -> None:
+    if not (
+        INSTALLED
+        and urllib.request.urlopen.__name__ == "guarded_urlopen"
+        and socket.getaddrinfo.__name__ == "guarded_getaddrinfo"
+        and be.BaseEventLoop.create_connection.__name__ == "guarded_create_connection"
+    ):
+        sys.exit("가드: 소켓·urlopen 가드가 설치되어 있지 않습니다. 중단합니다.")
     host = urlparse(os.environ.get("GOOGLE_GEMINI_BASE_URL", "")).hostname or ""
     if not is_loopback_host(host):
         sys.exit(f"가드: GOOGLE_GEMINI_BASE_URL 호스트가 루프백이 아닙니다 ({host or '비어 있음'}). 중단합니다.")
@@ -255,7 +266,10 @@ _real_create_connection = be.BaseEventLoop.create_connection
 
 
 def install() -> None:
-    """프록시 없는 opener, urlopen 문지기, 소켓·이름 조회·asyncio 연결 막기."""
+    """프록시 없는 opener, urlopen 문지기, 소켓·이름 조회·asyncio 연결 막기. 두 번 불러도 한 번만 설치한다."""
+    global INSTALLED
+    if INSTALLED:
+        return
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     urllib.request.install_opener(opener)
     urllib.request.urlopen = _guarded_urlopen_factory(urllib.request.urlopen)
@@ -289,9 +303,12 @@ def install() -> None:
     socket.socket.connect = guarded_connect
     socket.getaddrinfo = guarded_getaddrinfo
     be.BaseEventLoop.create_connection = guarded_create_connection
+    INSTALLED = True
 
 
 def report() -> None:
+    if not INSTALLED:
+        print("가드: 설치되지 않았습니다. 아래 0건은 아무것도 보증하지 않습니다.")
     print(f"가드: 루프백 밖으로 나가려던 시도 {len(BLOCKED)}건 {BLOCKED[:5]}")
 EOF
 ```
@@ -620,6 +637,8 @@ react 18.2.0 -> 19.0.0 major ('major version',) 70
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
+그림에서 `ranker`·`delivery`가 흐린 것은 본문이 두 코드를 Step 4·5에서 다루기 때문입니다. 이 단계의 `brief.py`는 둘을 이미 거칩니다(출력에 점수와 이유가 찍힙니다).
+
 **확인.** 표본 의존성 다섯(`pydantic==1.10.14`, `requests==2.31.0`, `fastapi==0.114.0`, `react ^18.2.0`, `urllib3==2.2.1`) 가운데 넷이 올라오고 `urllib3`의 일상 패치(`2.2.1 -> 2.2.2`)는 걸러졌습니다. 같은 100점인 `requests`와 `pydantic`은 게시 시각이 늦은 `requests`가 앞입니다(Step 4). 가드 줄이 0건이면 바깥으로 나가려던 시도는 없었습니다.
 
 ### Step 3. 릴리스 가져오기 — 표본과 라이브, GitHub 요청의 모양
@@ -630,11 +649,12 @@ react 18.2.0 -> 19.0.0 major ('major version',) 70
 
 가져오는 함수는 `fetch_github_releases`입니다(`radar.py:253-278`). 요청은 `https://api.github.com/repos/{저장소}/releases?per_page=5`이고, 헤더는 `Accept: application/vnd.github+json`, `User-Agent: release-radar-agent`, `X-GitHub-Api-Version: 2022-11-28`, 그리고 `RELEASE_RADAR_GITHUB_TOKEN`이 있을 때만 `Authorization: Bearer …`입니다. 제한 시간은 15초이고, 오류(`HTTPError`·`URLError`·시간 초과)는 `RuntimeError`로 바꿔 스캔 메모에 한 줄로 남깁니다. 저장소 하나에 요청 하나이고(중복은 합칩니다), 스레드 최대 여덟 개로 동시에 보냅니다(`_live_release_data`, `radar.py:323-345`).
 
-공식 문서로 이 요청의 조건을 확인했습니다(https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api, 2026-10-17에 받아 읽음). 비인증 요청은 "The primary rate limit for unauthenticated requests is 60 requests per hour."이고 IP 주소에 묶이며, 개인 액세스 토큰을 쓰면 "personal rate limit of 5,000 requests per hour"입니다. 한도를 넘으면 "you will receive a 403 or 429 response, and the x-ratelimit-remaining header will be 0"입니다. 릴리스 목록 문서(https://docs.github.com/en/rest/releases/releases)는 공개 저장소만 요청하면 인증 없이 부를 수 있다고 하고, `per_page`는 기본 30·최대 100이라고 합니다(앱은 5). API 버전 문서(https://docs.github.com/en/rest/about-the-rest-api/api-versions)는 헤더가 없으면 2022-11-28이 기본이고 이 버전은 March 10, 2028까지 지원된다고 표로 적습니다. 산수로 옮기면 이렇습니다. 토큰 없이 매핑되는 저장소가 61개 이상인 매니페스트는 한 번의 실행이 시간당 한도를 넘고, `live=true`인 dry-run을 부를 때마다 같은 수가 소비됩니다. 한도 초과의 403이 오면 앱은 `exc`를 문자열로 바꿔 `HTTP Error 403: Forbidden`만 남기고 응답 헤더와 본문은 읽지 않습니다(`radar.py:272-273`). 아래 출력의 `ratelimited/demo` 줄이 그 모양입니다.
+공식 문서로 이 요청의 조건을 확인했습니다(https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api, 2026-10-17에 받아 읽음). 비인증 요청은 "The primary rate limit for unauthenticated requests is 60 requests per hour."이고 IP 주소에 묶이며, 개인 액세스 토큰을 쓰면 "personal rate limit of 5,000 requests per hour"입니다. 한도를 넘으면 "you will receive a 403 or 429 response, and the x-ratelimit-remaining header will be 0"입니다. 릴리스 목록 문서(https://docs.github.com/en/rest/releases/releases)는 "This endpoint can be used without authentication or the aforementioned permissions if only public resources are requested."라고 하고(초안 릴리스는 "Only users with push access will receive listings for draft releases."), `per_page`는 기본 30·최대 100이라고 합니다(앱은 5). API 버전 문서(https://docs.github.com/en/rest/about-the-rest-api/api-versions)는 헤더가 없으면 2022-11-28이 기본이고 이 버전은 March 10, 2028까지 지원된다고 표로 적습니다. 산수로 옮기면 이렇습니다. 토큰 없이 매핑되는 저장소가 61개 이상인 매니페스트는 한 번의 실행이 시간당 한도를 넘고, `live=true`인 dry-run을 부를 때마다 같은 수가 소비됩니다. 한도 초과의 403이 오면 앱은 `exc`를 문자열로 바꿔 `HTTP Error 403: Forbidden`만 남기고 응답 헤더와 본문은 읽지 않습니다(`radar.py:272-273`). 아래 출력의 `ratelimited/demo` 줄이 그 모양입니다.
 
 후보를 거르는 규칙도 `build_release_candidates`에 있습니다(`radar.py:281-320`). 초안(`draft`)·시험판(`prerelease`)은 건너뛰고, 태그에서 숫자 버전을 못 뽑으면 건너뛰고, 현재와 같거나 옛 버전도 건너뜁니다. 현재 버전을 모르면(`None`) 건너뛰지 않고 `unknown`으로 둡니다.
 
 ```bash
+: > fakes.log      # 대역 서버가 쓰는 기록 파일만 비웁니다(서버는 그대로 둡니다)
 $PY brief.py 53149 --live --manifest requirements-demo.txt
 ```
 
@@ -666,6 +686,8 @@ github 요청 6건
 의존성이 일곱인데 요청은 여섯입니다. `uvicorn`이 저장소에 이어지지 않기 때문입니다. `openai/openai-python`의 404는 대역 서버에 그 저장소의 데이터가 없어서이고(제가 만든 대역의 사정입니다), `ratelimited/demo`의 403은 대역이 일부러 돌려준 것입니다. 결과 셋 가운데 `requests 2.0.0 -> 2.32.3`은 앞에서 본 하한 문제입니다. `pydantic==2.9.0`은 대역의 릴리스 `v2.0.0`이 현재보다 옛 버전이라 후보 규칙에서 빠져 소식이 없는데, `requests>=2.0.0`은 현재 버전이 `2.0.0`으로 잡혀 `2.32.3`의 보안 수정이 소식으로 올라옵니다. 헤더 줄의 `auth=Bearer fake-gi`는 가드가 덮어쓴 가짜 토큰이 요청에 실렸다는 뜻이고, 이 값은 대역 서버에만 갔습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
+
+(`ranker`·`delivery`가 흐린 까닭은 Step 2와 같습니다.)
 
 요청과 순위가 `radar.py` 안에서 이어지는 순서는 시퀀스로 그렸습니다. 요청 하나가 흐르는 과정 절의 둘째 그림입니다.
 
@@ -732,7 +754,7 @@ major    'Small fixes.'                                             -> (('major 
 unknown  'Small fixes.'                                             -> 걸러짐
 ```
 
-넷째 줄부터 읽습니다. "Fixes a security issue in the parser."는 `security fix`·`vulnerability`·`cve-`가 없어서 걸러지고, "No security vulnerability was found in this release."는 `vulnerability`가 있어서 보안 수정(100점)으로 올라옵니다. "This is not a breaking change."는 부정을 보지 않아 깨지는 변경(90점)이고, "Removed deprecated warnings …"는 지원 중단(60점)입니다. 메이저가 아닌데 노트가 일상적이면(`minor`·`unknown`의 "Small fixes.") 걸러지고, 메이저면 노트와 상관없이 70점입니다. 앱의 단위 테스트(`test_ranker.py`)는 낱말이 있는 쪽의 분류만 시험하고 부정문이나 낱말 밖의 표현은 시험하지 않습니다. 0.x 버전은 숫자만으로는 메이저가 아니라서(`fastapi 0.114.0 -> 0.115.0`은 `minor`), 깨지는 변경도 노트에 위 낱말이 없으면 소식이 되지 못합니다. Day 148의 순위도 같은 종류의 낱말·점수 산수였습니다([Day 148 Step 2](../day148-always-on-hn-briefing-agent/README.md)).
+둘째 줄부터 읽습니다. "Fixes a security issue in the parser."는 `security fix`·`vulnerability`·`cve-`가 없어서 걸러지고, "No security vulnerability was found in this release."는 `vulnerability`가 있어서 보안 수정(100점)으로 올라옵니다. "This is not a breaking change."는 부정을 보지 않아 깨지는 변경(90점)이고, "Removed deprecated warnings …"는 지원 중단(60점)입니다. 메이저가 아닌데 노트가 일상적이면(`minor`·`unknown`의 "Small fixes.") 걸러지고, 메이저면 노트와 상관없이 70점입니다. 앱의 단위 테스트(`test_ranker.py`)는 낱말이 있는 쪽의 분류만 시험하고 부정문이나 낱말 밖의 표현은 시험하지 않습니다. 0.x 버전은 숫자만으로는 메이저가 아니라서(`fastapi 0.114.0 -> 0.115.0`은 `minor`), 깨지는 변경도 노트에 위 낱말이 없으면 소식이 되지 못합니다. Day 148의 순위도 같은 종류의 낱말·점수 산수였습니다([Day 148 Step 2](../day148-always-on-hn-briefing-agent/README.md)).
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -892,7 +914,7 @@ DELIVERY=off: gmail sent 요청 2 건
 
 Gmail 경로는 요청 둘입니다. 먼저 `https://oauth2.googleapis.com/token`에 갱신 토큰으로 접근 토큰을 받고(본문 키 `client_id`·`client_secret`·`grant_type`·`refresh_token`, 전송마다 새로 받아 캐시가 없습니다), 그 토큰으로 `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`에 메일을 보냅니다(본문 키는 `raw` 하나, 안은 글과 HTML을 겸한 `multipart/alternative` 메일). 설정이 일부만 있으면 요청을 하나도 만들지 않고 빠진 변수 이름을 돌려줍니다. 마지막 줄이 `off` 사례입니다. 전달 방식에 `off`를 적고 Gmail 변수를 채워 두면 요청이 둘 만들어집니다.
 
-웹훅은 `RELEASE_RADAR_WEBHOOK_URL`로 JSON(`subject`·`text`·`html`·`releases`)을 `POST`하고, `RELEASE_RADAR_WEBHOOK_TOKEN`이 있으면 `Authorization: Bearer`를 붙입니다(`delivery.py:258-310`). 스캔 메모와 매니페스트 경로는 본문에 없습니다. 웹훅과 Gmail 두 방식 모두 오류를 예외로 던지지 않고 결과 딕셔너리로 돌려줍니다. 같은 모양이 [Day 148 Step 4](../day148-always-on-hn-briefing-agent/README.md)에 있습니다.
+웹훅은 `RELEASE_RADAR_WEBHOOK_URL`로 JSON(`subject`·`text`·`html`·`releases`)을 `POST`하고, `RELEASE_RADAR_WEBHOOK_TOKEN`이 있으면 `Authorization: Bearer`를 붙입니다(`delivery.py:258-310`). 따로 된 키는 없지만 `text`·`html` 안에 `Manifest: <서버의 매니페스트 경로>`와 `Scan notes:` 목록이 들어 있고(`delivery.py:75`, `84`, `126-136`이 글에 넣고, `271-277`이 그 글을 그대로 싣습니다), `releases`에는 릴리스 노트 전문이 들어 있습니다. 서버 안의 경로와 비공개 저장소 이름이 든 스캔 메모(`git+https://github.com/<조직>/<비공개>` 의존성)도 웹훅 수신처(Slack 같은)로 갑니다(`brief.py --text`의 출력과 웹훅 본문을 직접 비교해 확인). 웹훅과 Gmail 두 방식 모두 오류를 예외로 던지지 않고 결과 딕셔너리로 돌려줍니다. 같은 모양이 [Day 148 Step 4](../day148-always-on-hn-briefing-agent/README.md)에 있습니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -904,7 +926,7 @@ Gmail 경로는 요청 둘입니다. 먼저 `https://oauth2.googleapis.com/token
 
 **할 일.** 엔드포인트는 넷입니다(`scheduler_api.py:81-122`). `GET /health`, `GET /release-radar/dry-run?top_n=&live=`, `POST /release-radar/trigger`, `POST /release-radar/pubsub`. 셋째·넷째는 모두 `run_scheduled_radar`로 가고(`scheduler_api.py:53-78`), 규칙은 이렇습니다. `dry_run`은 `true`·`1`·`yes`면 참, `false`·`0`·`no`면 거짓이고, **없거나 알아볼 수 없는 값이면 참(기본)**입니다. 불리언이 아닌 숫자 `0`도 참으로 떨어집니다(안전한 쪽입니다). `top_n`은 정수로 바꿔 1~25로 자르고 실패하면 10입니다. `dry_run`이 정확히 `False`일 때만 `send_brief`를 부르니, 전송에는 요청이 `dry_run: false`를 명시하는 것과 전달 설정이 있는 것, 두 열쇠가 필요합니다(앱 README가 "two independent guards"라고 부르는 것입니다). `POST /trigger`의 본문이 깨진 JSON이면 빈 사전으로 취급해 dry-run으로 돕니다.
 
-앱 README의 실행 줄은 `uvicorn scheduler_api:app --host 0.0.0.0 --port 8000`입니다(`scheduler_api.py:4`의 머리 주석도 같습니다). 모든 네트워크 인터페이스에 연다는 뜻인데 이 앱에는 인증이 없습니다. `scheduler_api.py`·`radar.py`·`delivery.py`에서 토큰을 다루는 줄은 나가는 요청에 실을 GitHub·웹훅·Gmail 토큰뿐이고, 들어오는 요청의 헤더에서 인증 정보를 읽는 줄은 없습니다(`request.headers`를 읽는 곳은 `content-length` 하나, `scheduler_api.py:103`, `grep`으로 확인). 같은 네트워크에서 이 포트에 닿는 누구나 (1) `dry-run?live=true`로 GitHub 요청을 일으키고(한도는 서버의 IP나 토큰이 씁니다), (2) `{"dry_run": false}`를 보내 설정된 수신처로 브리프를 보낼 수 있습니다. 보낼 곳과 매니페스트는 고를 수 없습니다. 둘 다 환경변수로만 정해집니다(앱 README가 "request payloads cannot select arbitrary local files"라고 하는 부분이고, 단위 테스트 `test_scheduler_manifest_path_is_server_configured`가 시험합니다). 같은 구조의 [Day 148 Step 5](../day148-always-on-hn-briefing-agent/README.md)가 이를 더 길게 다룹니다. 이 문서는 항상 `127.0.0.1`로만 띄웁니다. 아래 래퍼가 원본을 고치지 않고 가드를 건 뒤 `scheduler_api.app`을 `uvicorn.run(…, host="127.0.0.1")`로 엽니다.
+앱 README의 실행 줄은 `uvicorn scheduler_api:app --host 0.0.0.0 --port 8000`입니다(`scheduler_api.py:4`의 머리 주석도 같습니다). 모든 네트워크 인터페이스에 연다는 뜻인데 이 앱에는 인증이 없습니다. `scheduler_api.py`·`radar.py`·`delivery.py`에서 토큰을 다루는 줄은 나가는 요청에 실을 GitHub·웹훅·Gmail 토큰뿐이고, 들어오는 요청의 헤더에서 인증 정보를 읽는 줄은 없습니다(`request.headers`를 읽는 곳은 `content-length` 하나, `scheduler_api.py:103`, `grep`으로 확인). 같은 네트워크에서 이 포트에 닿는 누구나 (1) `dry-run?live=true`로 GitHub 요청을 일으키고(한도는 서버의 IP나 토큰이 씁니다), (2) `{"dry_run": false}`를 보내 설정된 수신처로 브리프를 보내고, (3) **응답 본문으로 브리프 전체를 읽을 수 있습니다.** `dry-run`·`trigger`의 응답은 `"brief": brief` 전체(`scheduler_api.py:73-78`)라서 서버의 의존성 목록과 버전, 서버 안의 매니페스트 경로, 스캔 메모, 릴리스 노트가 담기고, 서버에 `RELEASE_RADAR_GITHUB_TOKEN`이 있으면 그 토큰으로 가져온 비공개 저장소의 릴리스 제목·노트·주소까지 담깁니다(`radar.py:266-268`이 토큰을 붙이고 `ranker.py:59-60`의 `to_dict`가 `notes`를 싣습니다, 소스로 확인). FastAPI 기본 `/docs`·`/openapi.json`도 열려 있습니다(앱이 끄지 않음). 보낼 곳과 매니페스트는 고를 수 없습니다. 둘 다 환경변수로만 정해집니다(앱 README가 "request payloads cannot select arbitrary local files"라고 하는 부분이고, 단위 테스트 `test_scheduler_manifest_path_is_server_configured`가 시험합니다). 같은 구조의 [Day 148 Step 5](../day148-always-on-hn-briefing-agent/README.md)가 이를 더 길게 다룹니다. 이 문서는 항상 `127.0.0.1`로만 띄웁니다. 아래 래퍼가 원본을 고치지 않고 가드를 건 뒤 `scheduler_api.app`을 `uvicorn.run(…, host="127.0.0.1")`로 엽니다.
 
 ```bash
 cat > serve_local.py <<'EOF'
@@ -956,7 +978,14 @@ $PY serve_local.py 53149 53153
 스케줄러 API가 127.0.0.1:53153에서 기다립니다 (live=False, webhook=False)
 ```
 
-터미널 C(B와 같은 환경변수)에서 요청을 보냅니다. 응답이 길어서 `trig.py`가 요약만 찍습니다. `curl`로 같은 요청을 보내려면 앱 README의 예(`curl -X POST "http://127.0.0.1:8000/release-radar/trigger" -H "Content-Type: application/json" -d '{"dry_run": true, "live": true, "top_n": 10}'`)에 `--noproxy '*'`를 붙이고 주소를 위 포트로 바꾸면 됩니다.
+터미널 C를 `radar-work`에서 새로 열어 환경을 다시 줍니다(터미널마다 줍니다).
+
+```bash
+export PYTHONIOENCODING=utf-8 PYTHONUTF8=1 PYTHONDONTWRITEBYTECODE=1 PYTHONWARNINGS=ignore
+PY="$PWD/venv/Scripts/python.exe"
+```
+
+그리고 요청을 보냅니다. 응답이 길어서 `trig.py`가 요약만 찍습니다. `curl`로 같은 요청을 보내려면 앱 README의 예(`curl -X POST "http://127.0.0.1:8000/release-radar/trigger" -H "Content-Type: application/json" -d '{"dry_run": true, "live": true, "top_n": 10}'`)에 `--noproxy '*'`를 붙이고 주소를 위 포트로 바꾸면 됩니다.
 
 ```bash
 cat > trig.py <<'EOF'
@@ -1005,6 +1034,7 @@ except (ValueError, KeyError):
 EOF
 $PY trig.py 53153 health ''
 $PY trig.py 53153 dry-run 'top_n=2&live=false'
+: > fakes.log
 $PY trig.py 53153 dry-run 'top_n=2&live=true'
 $PY showlog.py github | head -1
 $PY trig.py 53153 trigger-raw ''
@@ -1057,6 +1087,7 @@ $PY serve_local.py 53149 53153 --live --webhook --manifest requirements-demo.txt
 
 ```bash
 # 터미널 C
+: > fakes.log
 $PY trig.py 53153 trigger '{"dry_run": false, "top_n": 10}'
 $PY showlog.py hook
 ```
@@ -1081,6 +1112,7 @@ $PY serve_local.py 53149 53153 --webhook-down
 
 ```bash
 # 터미널 C
+: > fakes.log
 $PY trig.py 53153 trigger '{"dry_run": false, "live": false, "top_n": 1}'
 $PY showlog.py hook-fail
 ```
@@ -1093,7 +1125,7 @@ hook-fail 요청 1건
   bytes=1557
 ```
 
-**HTTP는 200인데 `sent`는 `False`입니다.** `send_webhook`이 `HTTPError`를 잡아 결과 딕셔너리로 돌려주고(`delivery.py:294-301`), 스케줄러는 그것을 그대로 본문에 싣기 때문입니다. Cloud Scheduler나 Pub/Sub 푸시는 200만 보므로 실패가 "성공"으로 기록됩니다(문서가 말하는 ack). 마지막은 바뀐 것이 하나도 없는 매니페스트(`pydantic==2.9.0`과 `urllib3==2.2.1`)입니다.
+**HTTP는 200인데 `sent`는 `False`입니다.** `send_webhook`이 `HTTPError`를 잡아 결과 딕셔너리로 돌려주고(`delivery.py:294-301`), 스케줄러는 그것을 그대로 본문에 싣기 때문입니다. Pub/Sub 푸시는 응답 상태 코드로 ack를 정하므로 200이면 전달 실패와 상관없이 ack로 처리됩니다(위 문서 인용). Cloud Scheduler가 무엇을 성공으로 보는지는 확인하지 못했습니다. 마지막은 바뀐 것이 하나도 없는 매니페스트(`pydantic==2.9.0`과 `urllib3==2.2.1`)입니다.
 
 ```bash
 printf 'pydantic==2.9.0\nurllib3==2.2.1\n' > requirements-quiet.txt
@@ -1103,6 +1135,7 @@ $PY serve_local.py 53149 53153 --live --webhook --manifest requirements-quiet.tx
 
 ```bash
 # 터미널 C
+: > fakes.log
 $PY trig.py 53153 trigger '{"dry_run": false}'
 $PY showlog.py hook
 ```
@@ -1177,6 +1210,7 @@ async def main() -> None:
 asyncio.run(main())
 guard.report()
 EOF
+: > fakes.log
 $PY run_once.py 53149 "Give me today's dependency release brief."
 ```
 
@@ -1204,7 +1238,7 @@ gemini 요청 2건
 
 보이는 것이 다섯입니다. 첫째, 앞의 경고 넷 줄 "Default value is not supported in function declaration schema for Google AI."는 ADK 1.9.0이 도구의 기본값(`""`, `10`)을 Gemini API에 보낼 수 없어 떼어 낸다는 뜻이고, 그 결과가 아래 선언 비교입니다. 가운데의 `Warning: there are non-text parts in the response`는 첫 응답이 도구 호출이라 글 부분이 없다는 google-genai의 알림입니다. 둘째, 모델 요청은 둘입니다. 첫째(본문 1,647자)는 지침 899자와 도구 선언을, 둘째(7,063자)는 도구 결과 5,255자를 실었습니다. 가짜 서버가 `key=fake-`를 보았으니 ADK 1.9.0의 모델 클라이언트가 `GOOGLE_GEMINI_BASE_URL`과 환경의 키를 그대로 따랐다는 것(직접 확인)이고, 앞선 프록시나 `.env`의 진짜 값은 쓰이지 않았습니다. 셋째, 도구 결과 5,255자 가운데 `text` 1,103자와 `html` 1,621자, 곧 절반 가까이(2,724자)가 같은 내용을 두 번 적은 것입니다. 모델은 HTML을 쓸 일이 없는데 문맥에 실립니다. 넷째, 결과에는 릴리스 노트 전문(`releases[].notes`)도 실립니다. 노트는 그 저장소 주인이 쓴 글이고 모델 문맥으로 그대로 들어갑니다(소스로 확인: `RankedRelease.notes`가 `to_dict`에 있음). 다섯째, 한 질문의 비용입니다. 두 요청의 본문이 합쳐 8.7천 자이니 영어와 JSON을 3.5~4자에 1토큰으로 어림하면 입력 2.2~2.5천 토큰이고, 입력 $0.50/백만이면 0.0013달러 안팎입니다. 출력은 도구 호출과 요약 글에 추론 토큰이 붙어 천 토큰쯤으로 어림하면 $3/백만으로 0.003달러입니다. 합쳐 0.005달러 안팎입니다(⚠ 추정입니다. 이 문서는 진짜 Gemini를 한 번도 부르지 않아 토큰을 재지 못했고, 추론 토큰이 얼마나 나올지는 알 수 없습니다).
 
-**도구 선언이 두 판에서 다릅니다.** 같은 코드에 최신 ADK를 따로 설치해 같은 질문을 돌립니다. 최신판은 가상환경을 하나 더 만듭니다(설치 줄만 프록시·키 변수를 비운 터미널에서 합니다).
+**도구 선언이 두 판에서 다릅니다.** 같은 코드에 최신 ADK를 따로 설치해 같은 질문을 돌립니다. 최신판은 가상환경을 하나 더 만듭니다.
 
 ```bash
 uv venv --python 3.12 venv-latest
@@ -1376,6 +1410,7 @@ $PY serve_adk.py 53149 web always_on_agents --host 127.0.0.1 --port 53151 --no-r
 ```bash
 # 터미널 C
 curl -s --noproxy '*' http://127.0.0.1:53151/list-apps
+: > fakes.log
 $PY client.py 53151 "Give me today's dependency release brief."
 $PY showlog.py gemini
 ```
@@ -1429,6 +1464,8 @@ git check-ignore -v always_on_agents/release_radar_agent/.adk/session.db
 
 마지막으로 `.env`입니다. 래퍼가 `.env`를 건너뛰는 까닭을 아래 스크립트로 봅니다. `adk web`이 앱을 부를 때 쓰는 함수 `load_dotenv_for_agent`를 직접 불러서, 임시 폴더의 `.env`(`GOOGLE_API_KEY=from-dotenv-file`, `HTTPS_PROXY=http://127.0.0.1:9`)가 가드가 정해 둔 환경을 덮는지 봅니다. 네트워크는 쓰지 않습니다.
 
+(터미널 B에서 서버를 `Ctrl+C`로 멈추고 `cd ../..`로 `radar-work`에 돌아옵니다. 아래 명령은 모두 `radar-work`에서 돌립니다.)
+
 ```bash
 cat > dotenv_probe.py <<'EOF'
 """adk web이 앱을 부를 때 쓰는 .env 읽기 함수가 환경변수를 덮어쓰는지 본다. 네트워크는 쓰지 않는다.
@@ -1464,7 +1501,7 @@ venv-latest/Scripts/python.exe dotenv_probe.py 53149
 읽은 뒤: fake-key ''
 ```
 
-**1.9.0은 `.env`가 셸 환경을 덮습니다.** `envs.py`의 `load_dotenv(…, override=True)`가 이유이고(설치된 패키지의 `google/adk/cli/utils/envs.py` 46행, 소스로 확인), `.env`를 앱 폴더에서 시작해 부모 폴더로 거슬러 올라가며 처음 찾은 것을 읽습니다. 가드가 정한 가짜 키와 대역 주소가 `.env`의 진짜 값으로 바뀌고, 이 문서를 쓰는 동안 실제로 그 일이 있었습니다. 래퍼 없이(`.env`를 건너뛰지 않고) 가드만 건 `adk web`에 진짜 모양의 `.env`와 프록시 변수를 둔 셸을 걸었더니, 첫 `/run`에서 앱이 `generativelanguage.googleapis.com:443`으로 가려고 감시용 프록시에 `CONNECT`를 두 번 보냈습니다(감시용 프록시가 받아 끊었고 바깥에는 나가지 않았습니다). 가드의 소켓 막기는 루프백 프록시로 가는 연결을 통과시켰기 때문에, 프록시 포트로의 연결을 막는 줄과 `.env` 건너뛰기가 그 뒤에 들어갔습니다. 2.12.0은 시작할 때의 환경변수를 기억해 두었다가 `.env`를 읽은 뒤 되돌려 놓고(같은 파일 53~82행), 끄는 스위치 `ADK_DISABLE_LOAD_DOTENV`도 있습니다. 래퍼는 둘 다 합니다. 진짜 키를 `.env`에 두는 독자는, 1.9.0에서는 `.env`가 셸을 이긴다는 것을 알아야 합니다.
+**1.9.0은 `.env`가 셸 환경을 덮습니다.** `envs.py`의 `load_dotenv(…, override=True)`가 이유이고(설치된 패키지의 `google/adk/cli/utils/envs.py` 46행, 소스로 확인), `.env`를 앱 폴더에서 시작해 부모 폴더로 거슬러 올라가며 처음 찾은 것을 읽습니다. 가드가 정한 가짜 키와 대역 주소가 `.env`의 진짜 값으로 바뀌고, 이 문서를 쓰는 동안 실제로 그 일이 있었습니다. 래퍼 없이(`.env`를 건너뛰지 않고) 가드만 건 `adk web`에 진짜 모양의 `.env`와 프록시 변수를 둔 셸을 걸었더니, 첫 `/run`에서 앱이 `generativelanguage.googleapis.com:443`으로 가려고 감시용 프록시에 `CONNECT`를 두 번 보냈습니다(감시용 프록시가 받아 끊었고 바깥에는 나가지 않았습니다). 가드의 소켓 막기는 루프백 프록시로 가는 연결을 통과시켰기 때문에, 프록시 포트로의 연결을 막는 줄과 `.env` 건너뛰기가 그 뒤에 들어갔습니다. 2.12.0은 시작할 때의 환경변수를 기억해 두었다가 `.env`를 읽은 뒤 되돌려 놓고(같은 파일 53~82행), 끄는 스위치 `ADK_DISABLE_LOAD_DOTENV`도 있습니다. 래퍼는 둘 다 합니다. 1.9.0의 `envs.py`에는 `ADK_DISABLE_LOAD_DOTENV`가 없고(설치된 1.9.0 폴더를 `grep`해 직접 확인) 그래서 래퍼가 `envs.load_dotenv`를 바꿉니다. 그리고 가드가 환경변수를 "빈 값으로 덮는다"는 것은 파이썬 프로세스 안에서 `os.environ[이름] = ""`로 정한다는 뜻입니다. PowerShell에서 `$env:이름 = ""`는 변수를 지운다는 점이 알려져 있어서(이 문서는 PowerShell을 실행하지 못해 확인하지 못했습니다), 맨 `adk web`을 PowerShell로 띄우면서 빈 값 덮어쓰기에 기대면 `.env`가 값을 채웁니다. 이 문서의 래퍼는 그 길에 기대지 않고 `.env` 읽기 자체를 건너뜁니다. 진짜 키를 `.env`에 두는 독자는, 1.9.0에서는 `.env`가 셸을 이긴다는 것을 알아야 합니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -1521,7 +1558,7 @@ venv/Scripts/pytest.exe always_on_agents/release_radar_agent/tests/unit -q -p no
 E   ModuleNotFoundError: No module named 'always_on_agents'
 ```
 
-그러면 시험이 코드의 얼마를 지나가는지 `coverage`로 봅니다(`coverage`는 Step 1의 설치에 없으니 한 줄 더 설치합니다. 프록시·키 변수를 비운 터미널에서).
+그러면 시험이 코드의 얼마를 지나가는지 `coverage`로 봅니다(`coverage`는 Step 1의 설치에 없으니 한 줄 더 설치합니다).
 
 ```bash
 uv pip install --python venv/Scripts/python.exe coverage
@@ -1541,7 +1578,7 @@ scheduler_api.py      67     16    76%   20-22, 36-42, 83, 91, 104-105, 120-121
 TOTAL                                                     417    116    72%
 ```
 
-표의 `Missing` 열이 시험이 지나가지 않는 줄입니다. 표에 오른 파일의 72%만 지나갑니다. `agent.py`는 시험이 가져오지도 않아 표에 없습니다. 비어 있는 곳을 이름으로 부르면 이렇습니다. 라이브 가져오기(`radar.py:258-278`의 `fetch_github_releases`, `326-345`의 스레드 풀, 헤더·토큰·오류 처리 전부), 전달 코드 대부분(`delivery.py:183-198`의 토큰 교환, `204-249`의 Gmail 전송, `261-303`의 웹훅 전송), 방식 고르기의 분기(`delivery.py:164-170`), 스케줄러의 깨진 입력 처리(`scheduler_api.py:120-121`), 문자열 불리언 변환(`scheduler_api.py:36-42`)입니다. 곧 단위 테스트는 "표본으로 순위가 맞고, 전달 설정이 없으면 `urlopen`을 부르지 않는다"까지만 확인하고, 이 문서의 Step 3·5·6에서 본 것들은 시험이 없습니다.
+표의 `Name` 열은 실제 출력에서 `always_on_agents\release_radar_agent\…` 경로 접두가 붙어 있고 여기서는 줄였습니다. `Missing` 열이 시험이 지나가지 않는 줄입니다. 표에 오른 파일의 72%만 지나갑니다. `agent.py`는 시험이 가져오지도 않아 표에 없습니다. 비어 있는 곳을 이름으로 부르면 이렇습니다. 라이브 가져오기(`radar.py:258-278`의 `fetch_github_releases`, `326-345`의 스레드 풀, 헤더·토큰·오류 처리 전부), 전달 코드 대부분(`delivery.py:183-198`의 토큰 교환, `204-249`의 Gmail 전송, `261-303`의 웹훅 전송), 방식 고르기의 분기(`delivery.py:164-170`), 스케줄러의 깨진 입력 처리(`scheduler_api.py:120-121`), 문자열 불리언 변환(`scheduler_api.py:36-42`)입니다. 곧 단위 테스트는 "표본으로 순위가 맞고, 전달 설정이 없으면 `urlopen`을 부르지 않는다"까지만 확인하고, 이 문서의 Step 3·5·6에서 본 것들은 시험이 없습니다.
 
 평가 설정(`tests/eval/eval_config.yaml`)은 프롬프트 셋(`daily_brief`·`manifest_brief`·`no_false_delivery`)과 기대 행동을 글로 적은 파일입니다. 이 앱 안에는 그 파일을 읽는 코드가 없고(`grep`으로 확인) 모델을 부르는 평가를 돌리는 스크립트도 없으니, 이 파일은 실제 모델을 부르지 않습니다. ADK가 읽는 평가 집합 모양인지 `EvalSet` 모델로 검증해 봅니다(모델은 부르지 않습니다).
 
@@ -1572,7 +1609,9 @@ EvalSet 검증: 실패 - [('eval_cases.0.evalId', 'missing'), ('eval_cases.0.con
 
 ADK 1.9.0의 `EvalSet`이 요구하는 `evalId`와 `conversation`이 사례마다 없습니다. 곧 이 파일은 `adk eval`이 읽는 형식이 아니고 사람이 읽는 시험 계획입니다. 둘째 사례는 `/workspace/package.json`을 말하는데 이 저장소에는 없는 경로라서, 위 Step 7의 `FileNotFoundError`에 그대로 걸립니다. 같은 파일 모양이 [Day 148 Step 7](../day148-always-on-hn-briefing-agent/README.md)에 있습니다.
 
-끝으로 이 문서가 "진짜 키가 있는 독자"로도 바깥 0이었는지 말씀드립니다. 이 문서의 명령은 셸에 진짜 모양의 가짜 값(`GOOGLE_API_KEY`·`GEMINI_API_KEY`, `GOOGLE_GENAI_USE_VERTEXAI=true`, `RELEASE_RADAR_GITHUB_TOKEN`, Gmail 변수 다섯과 웹훅 주소, `RELEASE_RADAR_LIVE_GITHUB=true`와 없는 매니페스트 경로, 프록시 변수)를 걸고, `radar-work`와 그 위 폴더, 앱 폴더에도 같은 모양의 `.env`를 둔 채로 위에서부터 따라 해 보았습니다. 모든 단계가 이 문서와 같은 출력을 냈고, 가짜 서버가 본 키 앞 다섯 글자는 전부 `fake-`였고, 가드의 막은 횟수는 0건, 프로세스마다 `sitecustomize`로 따로 건 소켓 감시(루프백 밖 연결·이름 조회를 기록하고 거절)의 기록도 0바이트, 감시용 프록시가 받은 연결은 `curl`에 `--noproxy '*'`를 빼고 일부러 부른 한 번뿐이었습니다. 앞 단락의 `.env` 사고는 래퍼를 고치기 전 판에서 났고 지금 판은 고친 뒤입니다.
+끝으로 이 문서가 "진짜 키가 있는 독자"로도 바깥 0이었는지 말씀드립니다. 이 문서의 명령은 셸에 진짜 모양의 가짜 값(`GOOGLE_API_KEY`·`GEMINI_API_KEY`, `GOOGLE_GENAI_USE_VERTEXAI=true`, `RELEASE_RADAR_GITHUB_TOKEN`, Gmail 변수 다섯과 웹훅 주소, `RELEASE_RADAR_LIVE_GITHUB=true`와 없는 매니페스트 경로, 프록시 변수)를 걸고, `radar-work`와 그 위 폴더, 앱 폴더에도 같은 모양의 `.env`를 둔 채로 위에서부터 따라 해 보았습니다. 모든 단계가 이 문서와 같은 출력을 냈고(시각·PID 제외), 가짜 서버가 본 키 앞 다섯 글자는 전부 `fake-`였고, 가드의 막은 횟수는 0건, 감시용 프록시(셸의 프록시 변수가 가리키게 한 기록용 리스너)가 받은 연결은 `curl`에 `--noproxy '*'`를 빼고 일부러 부른 한 번뿐이었습니다. 앞 단락의 `.env` 사고는 래퍼를 고치기 전 판에서 났고 지금 판은 고친 뒤입니다.
+
+가드 줄을 하나씩 빼 본 결과도 적습니다. 독자용 스크립트 여덟(`brief.py`·`serve_local.py`·`run_once.py`·`serve_adk.py`·`pytest_guarded.py`·`dotenv_probe.py`·`deps.py`·`gmail_shape.py`)에서 `guard.point_at_fakes`·`guard.check_env`(두 번 있으면 각각)·`guard.install`·`envs.load_dotenv` 바꾸기·`urlopen` 대역 교체 줄을 하나씩만 지운 사본 **24판**을, 위와 같은 진짜 모양의 환경에서 돌렸습니다(저는 모든 파이썬 프로세스에 루프백 밖 연결을 기록하고 거절하는 별도 감시를 걸었고, 이것은 독자에게 없는 장치라 아래 수치의 근거는 가드의 `blocked.log`와 대역 서버 기록입니다). 결과: 7판은 가드 줄이 없다고 스스로 멈췄고(`point_at_fakes`를 뺀 여섯, `urlopen` 대역 교체를 뺀 `gmail_shape.py`는 `assert`로), 16판은 줄을 빼도 가드가 설치되어 있어 바깥 요청이 0건이었고, 1판(`serve_adk.py`에서 `envs.load_dotenv` 바꾸기 줄을 뺀 것)은 `.env`가 모델 주소를 `generativelanguage.googleapis.com`으로 되돌렸고 가드의 이름 조회 막기가 두 번 막았습니다(`blocked.log` 두 줄, `/run`은 실패, 실제 요청 0). 곧 이 가드는 줄 하나가 빠져도 바깥에 닿지 않지만, 마지막 경우는 "막혔다"이지 "시도가 없었다"가 아닙니다. 첫 판의 가드는 `install()` 한 줄을 빼면 라이브 GitHub 경로를 막지 못했을 것이고(설치했는지 확인하는 줄이 없었습니다) `report()`는 그때도 "0건"을 찍었을 것입니다. 이 구멍이 위 설치 확인을 넣은 까닭입니다.
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
@@ -1627,7 +1666,7 @@ ADK 1.9.0의 `EvalSet`이 요구하는 `evalId`와 `conversation`이 사례마�
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `adk web .` 뒤 ADK Web의 앱 목록에 `release_radar_agent`가 없고 `tests`만 있다 | 앱이 고정한 `google-adk==1.9.0`은 주어진 폴더의 하위 폴더를 앱으로 올린다. 최신 ADK(2.12.0)는 앱 폴더 자신도 올린다(직접 확인) | 부모 폴더에서 `adk web always_on_agents --host 127.0.0.1 …`를 쓴다 |
+| `adk web .` 뒤 ADK Web의 앱 목록에 `release_radar_agent`가 없고 `tests`만 있다 | 앱이 고정한 `google-adk==1.9.0`은 주어진 폴더의 하위 폴더를 앱으로 올린다. 최신 ADK(2.12.0)는 앱 폴더 자신도 올린다(직접 확인) | 부모 폴더에서 `$PY serve_adk.py <포트> web always_on_agents --host 127.0.0.1 --port <포트> --no-reload`(이 문서의 래퍼). 진짜 키로 맨 `adk web`을 쓸 때도 부모 폴더를 주되, 1.9.0은 `.env`가 셸을 덮는다는 것을 기억한다 |
 | `pytest …`가 `ModuleNotFoundError: No module named 'always_on_agents'` | 맨 `pytest`는 현재 폴더를 import 경로에 넣지 않는다. 테스트가 `always_on_agents.release_radar_agent`로 가져온다 | 앱 폴더를 `always_on_agents/` 안에 두고 그 위 폴더에서 `python -m pytest …` |
 | `curl`이 `000`이거나 응답이 없다. 셸에 프록시 변수가 있다 | `curl`이 루프백 요청도 프록시로 보냄 | `curl --noproxy '*'` |
 | `ValueError: Release Radar supports requirements*.txt and package.json manifests.` | 파일 이름이 `requirements`로 시작하는 `.txt`나 `package.json`이 아님(`dev-requirements.txt`도 안 됨) | 이름을 `requirements-dev.txt`처럼 바꾼다 |
@@ -1644,7 +1683,7 @@ ADK 1.9.0의 `EvalSet`이 요구하는 `evalId`와 `conversation`이 사례마�
 
 ## 더 해보기
 
-- `requirements-demo.txt`의 `requests>=2.0.0`을 `requests==2.32.3`으로 바꿔 `brief.py --live`를 다시 돌려, 같은 릴리스가 "older"로 걸러지는지 보세요. 하한과 고정 사이의 차이가 브리프에 얼마나 나는지 보입니다.
+- `requirements-demo.txt`의 `requests>=2.0.0`을 `requests==2.32.3`으로 바꿔 `brief.py --live`를 다시 돌려, 같은 릴리스가 같은 버전(`same`)으로 걸러지는지 보세요. 하한과 고정 사이의 차이가 브리프에 얼마나 나는지 보입니다.
 - `rank_probe.py`에 "Security: fixed a buffer overflow." 같은 문장과 부정문을 더해 어느 것이 걸러지는지 보세요. `SIGNAL_TERMS`(`ranker.py:14-31`)에 낱말을 더하거나 부정 앞의 문장을 거르는 규칙을 복사본에서 시험해 보세요.
 - `send_brief` 앞에 "릴리스가 하나도 없으면 보내지 않는다"는 조건을 복사본에 넣고 Step 6의 마지막 사례를 다시 돌려 `hook 요청 0건`이 되는지 확인해 보세요.
 - `serve_adk.py`의 `.env` 건너뛰기를 빼고 `dotenv_probe.py`가 보인 덮어쓰기를 `adk web`에서 재현하되, 루프백 주소(`GOOGLE_GEMINI_BASE_URL=http://127.0.0.1:53149/gemini`)가 든 `.env`로만 해 보세요. 가짜 서버 기록의 키 앞 다섯 글자가 `.env`의 값으로 바뀌는지 볼 수 있습니다.
