@@ -1,19 +1,19 @@
 ...@../../_tools/theme
-direction: right
+direction: down
 
+wsapi: "작업 공간 경로\n(workspace/*)" { class: ours }
 agentroute: "에이전트 경로\n(mastra-agent)" { class: ours }
 cpk: "/api/copilotkit\n(안 부름)" { class: ours }
-wsapi: "작업 공간 경로\n(workspace/*)" { class: ours }
-calltool: "call-tool\n(안 부름)" { class: ours }
 introspect: "서버 읽기 경로\n(mcp-introspect)" { class: ours }
-openai: "OpenAI gpt-5.5" { class: ext }
+calltool: "call-tool\n(안 부름)" { class: ours }
 e2b: "E2B API" { class: ext }
-excal: "Excalidraw MCP" { class: ext }
+openai: "OpenAI gpt-5.5" { class: ext }
 vm: "E2B VM (원격)" {
   class: group
   label.near: bottom-center
   mcpsrv: "MCP 서버 (mcp-use)" { class: ours }
 }
+excal: "Excalidraw MCP" { class: ext }
 
 agentroute -> openai: "모델 요청"
 cpk -> openai: "같은 도구"
