@@ -132,7 +132,7 @@ export function checkDay(dayDir, { repoRoot, allowNoNextDay = false, heightExcep
       if (throughText.length) problems.push(rel(`선이 글자를 지나갑니다: diagrams/${svgName} (${throughText.length}곳) — 화살표가 다른 라벨이나 묶음 제목을 지나지 않게 꺾어 돌리세요. sequence 그림이면 배우 순서를 바꾸거나 라벨을 줄이세요`));
       const collisions = labelCollisions(svgText);
       if (collisions.length) problems.push(rel(`라벨이 도형이나 다른 라벨에 얹혔습니다: diagrams/${svgName} (${collisions.length}곳) — 화살표가 라벨보다 짧아 라벨이 넘친 것입니다. ELK에 맡겨 선을 늘리거나 라벨을 줄이세요`));
-      if (!f === "sequence.d2") {
+      if (!/shape:\s*sequence_diagram/.test(readFileSync(join(diagrams, f), "utf8"))) {
         const diagonals = diagonalEdges(svgText);
         if (diagonals.length) problems.push(rel(`비스듬한 화살표가 있습니다: diagrams/${svgName} (${diagonals.length}개) — 곧은 화살표는 수평·수직 한 줄일 때만 씁니다. grid 칸 사이 화살표는 꺾이지 않으므로 그 층을 ELK에 맡기세요`));
       }

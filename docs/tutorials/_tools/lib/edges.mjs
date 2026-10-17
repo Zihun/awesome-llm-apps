@@ -341,7 +341,7 @@ export function labelCollisions(svg) {
 }
 
 /** 23. 길이 12px 넘는 선분 중 가로·세로 변화가 둘 다 1.5px를 넘는 것(비스듬한 선).
- *  호출하는 쪽(check.mjs)이 sequence 그림에는 이 검사를 적용하지 않는다. */
+ *  호출하는 쪽(check.mjs)이 d2 소스에 `shape: sequence_diagram`이 있는 그림에는 적용하지 않는다. */
 export function diagonalEdges(svg) {
   const out = [];
   for (const e of connectionsOf(svg)) {

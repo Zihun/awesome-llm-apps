@@ -132,6 +132,25 @@ test("only sequence.d2 gets the sequence caps; a split named sequence-*.d2 gets 
   assert.ok(!problems.some((p) => p.includes("diagrams/sequence.svg") && p.includes("상한")), problems.join("\n"));
 });
 
+// 검사 23(비스듬한 화살표)은 2026-10-09부터 조건이 늘 거짓이라 어느 날에도 돌지 않았다(`!f === "sequence.d2"`).
+// 시퀀스 그림인지는 파일 이름이 아니라 d2 소스의 `shape: sequence_diagram`으로 가린다 — 나눈 시퀀스는 extra-*다.
+test("a diagonal arrow is reported in a structure diagram but not in a sequence diagram", () => {
+  const { repo, dayDir } = fixture();
+  const diagonal = '<svg width="400" height="300"><path d="M 0 0 L 100 50" class="connection" /></svg>';
+  const put = (name, source) => {
+    const d2 = join(dayDir, "diagrams", `${name}.d2`);
+    writeFileSync(d2, source);
+    writeFileSync(join(dayDir, "diagrams", `${name}.svg`), embedHash(diagonal, sourceHash(inlineImports(d2))));
+  };
+  put("overview", DEFAULT_D2);
+  put("extra-split", "...@../../_tools/theme\nshape: sequence_diagram\na -> b\n");
+  put("sequence", "...@../../_tools/theme\nshape: sequence_diagram\na -> b\n");
+  const problems = checkDay(dayDir, { repoRoot: repo });
+  assert.ok(problems.some((p) => p.includes("비스듬한") && p.includes("overview.svg")), problems.join("\n"));
+  assert.ok(!problems.some((p) => p.includes("비스듬한") && p.includes("extra-split.svg")), problems.join("\n"));
+  assert.ok(!problems.some((p) => p.includes("비스듬한") && p.includes("diagrams/sequence.svg")), problems.join("\n"));
+});
+
 // 사용자가 일차별로 허락한 세로 예외(2026-09-26). 허락한 높이까지만 통과하고, 넘으면 다시 걸린다.
 test("a per-day height exception raises the cap for that day's overview only up to the granted height", () => {
   const { repo, dayDir } = fixture();
