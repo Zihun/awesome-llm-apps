@@ -3,16 +3,19 @@ direction: right
 
 api: "AG-UI 엔드포인트\n(ADKAgent)" { class: ours; height: 50 }
 upd: "프로필 도구\n(update_financial_data)" { class: ours; height: 50 }
-budget: "예산\n(BudgetAnalysisAgent)" { class: ours; height: 50 }
-savings: "저축\n(SavingsStrategyAgent)" { class: ours; height: 50 }
-debt: "빚\n(DebtReductionAgent)" { class: ours; height: 50 }
+agents: "분석 에이전트 셋" {
+  class: group
+  budget: "예산\n(BudgetAnalysisAgent)" { class: ours; height: 50 }
+  savings: "저축\n(SavingsStrategyAgent)" { class: ours; height: 50 }
+  debt: "빚\n(DebtReductionAgent)" { class: ours; height: 50 }
+}
 state: "세션 상태\n(financial_data · 분석 결과)" { class: store }
 
 api -> state: "input.state로 덮어쓰기"
 upd -> state: "financial_data 쓰기"
-budget -> state: "output_key 쓰기"
-savings -> state: "output_key 쓰기"
-debt -> state: "output_key 쓰기"
-state -> budget: "프롬프트에 주입"
-state -> savings: "프롬프트에 주입"
-state -> debt: "프롬프트에 주입"
+agents.budget -> state: "output_key 쓰기"
+agents.savings -> state: "output_key 쓰기"
+agents.debt -> state: "output_key 쓰기"
+state -> agents.budget: "프롬프트에 주입"
+state -> agents.savings: "프롬프트에 주입"
+state -> agents.debt: "프롬프트에 주입"
