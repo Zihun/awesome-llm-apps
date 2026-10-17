@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+chat: "CopilotChat\n(chat-theme)" { class: ours }
+render: "메시지 렌더러" { class: ours }
+kit: "UI 키트\n(chat-kit)" { class: ours }
+export: "내보내기\n(tree-to-jsx)" { class: ours }
+code: "JSX 글" { class: file }
+
+chat -> render: "assistant\n메시지"
+render -> kit: "JSON 글,\nschema"
+kit -> render: "React\n부품"
+render -> export: "ui 트리"
+export -> code: "코드"

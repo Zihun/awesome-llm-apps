@@ -9,7 +9,7 @@ llm: "gpt-5.5\n(가짜)" { class: ext }
 
 agent -> llm: "chat.completions\n(도구 결과 포함)"
 llm -> agent: "ui 트리 JSON 글\n(24자 조각)"
-agent -> rt: "TEXT_MESSAGE_CONTENT 등\nMESSAGES_SNAPSHOT"
+agent -> rt: "TEXT_MESSAGE_*,\nMESSAGES_SNAPSHOT,\nRUN_FINISHED"
 rt -> ui: "이벤트 그대로"
 ui -> ui: "반쯤 온 JSON 파싱 ·\nkit.render"
 ui -> user: "카드·차트, Export Code"

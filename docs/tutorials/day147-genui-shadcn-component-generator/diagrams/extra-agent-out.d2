@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: right
+
+graph: "그래프\n(create_agent)" { class: ours }
+tools: "도구\n(search.py)" { class: ours }
+llm: "gpt-5.5\n(가짜)" { class: ext }
+tavily: "Tavily\n(가짜)" { class: ext }
+
+graph -> tools: "도구 호출"
+graph -> llm: "chat.\ncompletions"
+tools -> tavily: "/search"

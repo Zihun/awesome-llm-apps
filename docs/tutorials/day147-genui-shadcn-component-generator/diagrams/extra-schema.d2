@@ -1,14 +1,9 @@
 ...@../../_tools/theme
 direction: right
 
-kit: "컴포넌트\n16개" { class: ours }
-req: "context\n(output_\nschema)" { class: file }
-msg: "App\nContext" { class: file }
-fmt: "response_\nformat" { class: file }
-llm: "gpt-5.5\n(가짜)" { class: ext }
+kit: "부품 16개\n(chat-kit)" { class: ours }
+schema: "output_\nschema\n(객체)" { class: file }
+req: "context 항목\n{description,\nvalue}" { class: file }
 
-kit -> req: "toJson\nSchema"
-req -> msg: "CK\n미들웨어"
-req -> fmt: "apply_\nstructured"
-msg -> llm: "한 번"
-fmt -> llm: "또 한 번"
+kit -> schema: "toJson\nSchema"
+schema -> req: "useAgent\nContext"

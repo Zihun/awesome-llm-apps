@@ -4,18 +4,17 @@ shape: sequence_diagram
 user: 사용자 { class: person }
 ui: "브라우저 화면\n(소스로만)" { class: ours }
 rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
-llm: "gpt-5.5\n(가짜)" { class: ext }
 agent: "에이전트 서버\n(main.py·그래프)" { class: ours }
-tool: "검색 도구\n(search.py)" { class: ours }
-tavily: "Tavily\n(가짜)" { class: ext }
+llm: "gpt-5.5\n(가짜)" { class: ext }
+mem: "체크포인터\n(메모리)" { class: store }
 
 user -> ui: "질문 입력"
 ui -> rt: "POST /api/copilotkit\n{method: agent/run}"
 rt -> agent: "POST /\nRunAgentInput"
+agent -> mem: "aget_state\n(스레드 기록)"
+mem -> agent: "이전 메시지"
 agent -> agent: "App Context 시스템\n메시지를 붙임"
 agent -> llm: "chat.completions\n(stream, response_format, 도구 셋)"
 llm -> agent: "tool_call\nsearch_internet"
-agent -> tool: "search_internet(query)"
-tool -> tavily: "POST /search"
-tavily -> tool: "검색 결과 JSON"
-tool -> agent: "ToolMessage"
+agent -> rt: "TOOL_CALL_START\nTOOL_CALL_END"
+rt -> ui: "이벤트 그대로"

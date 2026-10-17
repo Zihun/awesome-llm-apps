@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: right
+
+patch: "패치\n(patches.py)" { class: ours }
+endpoint: "엔드포인트\n(main.py)" { class: ours }
+graph: "그래프\n(create_agent)" { class: ours }
+mem: "Bounded\nMemorySaver" { class: store }
+
+patch -> endpoint: "메서드\n교체"
+endpoint -> graph: "RunAgent\nInput"
+graph -> mem: "체크\n포인트"

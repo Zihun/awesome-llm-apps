@@ -1,18 +1,18 @@
 # Day 147 · 🎛️ AI Shadcn Component Generator
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 원본의 `pnpm dev`는 에이전트를 `0.0.0.0`에 `reload=True`로 열고(`main.py:61-66`), 화면·런타임의 `pnpm install`·`vite`·`tsx`는 이 문서가 실행하지 않았습니다. 화면이 하는 일(스키마 만들기, 부분 JSON 그리기, 코드 내보내기)은 소스로만 읽었고 두 가지는 파이썬으로 옮겨 써 돌려 봤습니다 · 예상 소요 165분(소스 읽기가 여러 JS 패키지에 걸치고, 파이썬 파일 열둘을 직접 저장해 터미널 셋 이상을 오가며 요청 기록과 이벤트를 맞대 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI·Tavily는 한 번도 부르지 않았습니다). 진짜 키로 첫 질문 하나를 보내면 모델 호출이 한두 번 나가고, 어림으로 $0.05~0.2입니다(⚠ 추정, 아래 사전 준비) · 원본 앱: `generative_ui_agents/ai-shadcn-component-generator`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 원본의 `pnpm dev`는 에이전트를 `0.0.0.0`에 `reload=True`로 열고(`main.py:61-66`), 화면·런타임의 `pnpm install`·`vite`·`tsx`는 이 문서가 실행하지 않았습니다. 화면이 하는 일(스키마 만들기, 부분 JSON 그리기, 코드 내보내기)은 소스로만 읽었고 두 가지는 파이썬으로 옮겨 써 돌려 봤습니다 · 예상 소요 180분(소스 읽기가 여러 JS 패키지에 걸치고, 파이썬 파일 열둘을 직접 저장해 터미널 셋 이상을 오가며 요청 기록과 이벤트를 맞대 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(가짜 서버만 부릅니다. 실제 OpenAI·Tavily는 한 번도 부르지 않았습니다). 진짜 키로 첫 질문 하나를 보내면 모델 호출이 한두 번 나가고, 어림으로 $0.05~0.2입니다(⚠ 추정, 아래 사전 준비) · 원본 앱: `generative_ui_agents/ai-shadcn-component-generator`
 
 ## 오늘 만들 것
 
 말로 "이런 화면"을 설명하면 shadcn/ui 부품으로 짠 화면이 채팅 안에 그려지고, 그 화면을 React 코드로 내보내는 앱입니다. 프로세스는 셋입니다. Vite 화면(포트 5173, React·CopilotKit·hashbrown), Hono로 만든 CopilotKit 런타임(4000), 파이썬 LangGraph 에이전트(8123). 앱 README는 이것을 "스키마로 부품을 조립하는 생성 UI"라고 부르고, "shadcn 컴포넌트 스키마 전체를 에이전트 문맥으로 넘긴다"고 말합니다. 소스를 읽어 보면 뜻이 조금 다릅니다. 화면이 넘기는 것은 shadcn 전체가 아니라 화면이 직접 고른 부품 열여섯 개(`components/ui/`에는 파일 60개)의 스키마이고, 그 스키마는 문맥 글로 한 번, 모델의 구조화 출력 형식(`response_format`)으로 또 한 번, 두 번 실립니다. 에이전트는 화면을 그리는 도구를 부르지 않습니다. 모델의 마지막 답이 곧 부품 트리 JSON이고, 화면이 스트림으로 오는 그 글을 반쯤 온 채로 파싱해 진짜 React 부품으로 그립니다. Day 143의 A2UI는 연산을 담은 도구 호출이 화면을 만들었으니 방식이 다릅니다.
 
-이 문서는 파이썬 쪽만 실제로 돌렸습니다. 화면과 런타임은 `npm install`·`pnpm install`·`npx`·`vite`·`tsx`를 실행하지 않고 소스로만 읽었습니다. 읽은 JS 패키지(`@copilotkit/*` 1.54.0, `@hashbrownai/*` 0.5.0-beta.4, `@ag-ui/*` 0.0.47)는 npm 레지스트리에서 압축 파일을 내려받아 sha512 값을 맞춘 뒤 풀어서 파일로만 열어 본 것입니다. 브라우저는 한 번도 띄우지 않았으므로 카드와 차트가 실제로 어떻게 보이는지는 보여 드리지 못합니다. 화면이 하는 일 중 둘은 파이썬으로 옮겨 써서 돌렸습니다. `ui_schema.py`는 `chat-kit.tsx`의 부품 목록이 만드는 JSON Schema(hashbrown의 `toJsonSchema` 알고리즘을 따라 씀)이고, `tree_to_jsx.py`는 Export Code가 하는 일입니다. 둘 다 제가 소스를 보고 손으로 옮긴 것이어서 실제 화면의 출력과 글자 하나까지 같다고는 보장하지 못합니다. 모델 자리에는 `127.0.0.1`의 가짜 서버가 있고 그 답은 모두 제가 쓴 대본입니다. 그래서 실제 `gpt-5.5`가 이 스키마를 얼마나 잘 따르는지, OpenAI가 이 스키마를 strict 모드로 받아 주는지는 확인하지 못했습니다.
+이 문서는 파이썬 쪽만 실제로 돌렸습니다. 화면과 런타임은 `npm install`·`pnpm install`·`npx`·`vite`·`tsx`를 실행하지 않고 소스로만 읽었습니다. 읽은 JS 패키지(`@copilotkit/*` 1.54.0, `@hashbrownai/*` 0.5.0-beta.4, `@ag-ui/*` 0.0.47)는 npm 레지스트리에서 압축 파일을 내려받아 sha512 값을 맞춘 뒤 풀어서 파일로만 열어 본 것입니다. 브라우저는 한 번도 띄우지 않았으므로 카드와 차트가 실제로 어떻게 보이는지는 보여 드리지 못합니다. 화면이 하는 일 중 둘은 파이썬으로 옮겨 써서 돌렸습니다. `ui_schema.py`는 `chat-kit.tsx`의 부품 목록이 만드는 JSON Schema(hashbrown의 `toJsonSchema` 알고리즘을 따라 씀)이고, `tree_to_jsx.py`는 Export Code가 하는 일입니다. 둘 다 제가 소스를 보고 손으로 옮긴 것이어서 실제 화면의 출력과 글자 하나까지 같다고는 보장하지 못합니다. 모델 자리에는 `127.0.0.1`의 가짜 서버가 있고 그 답은 모두 제가 쓴 대본입니다. 그래서 실제 `gpt-5.5`가 이 스키마를 얼마나 잘 따르는지는 확인하지 못했습니다. OpenAI의 Structured Outputs 문서(2026-10-17에 읽음)는 루트가 `anyOf`가 아닌 객체여야 하고, `anyOf`·`$defs`·`#` 재귀를 지원하며, 객체 속성 5000개·중첩 10단계·이름과 열거값 글자 합 12만 자가 한도라고 적습니다. 이 스키마는 그 안에 있어 보이지만(루트는 객체입니다) `$schema` 키는 문서에 언급이 없어서, 진짜 OpenAI가 strict 모드로 받아 주는지는 확인하지 못했습니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림의 묶음 안 화살표는 묶음 전체의 것입니다. 묶음 안의 이어짐은 보조 구조 그림이 보여 줍니다. 에이전트 그래프는 Step 4(`extra-graph`), 스키마가 두 번 실리는 길은 Step 4(`extra-schema`), 원본의 실행 경로는 Step 8(`extra-dev`)에 있습니다. 앞 날과 이어지는 곳은 이렇습니다. 같은 LangGraph `create_agent`·CopilotKit 미들웨어·AG-UI 서버는 [Day 143](../day143-genui-generative-ui-starter-project/README.md)의 Step 2~3이 가드·가짜 서버·그래프 읽기로 다뤘고, 같은 스택의 다른 앱과 Next.js 쪽 소스 읽기는 [Day 141](../day141-genui-deep-research-agent/README.md)의 Step 4·6이 다뤘습니다. 오늘 새로 나오는 것은 `response_format`을 요청마다 갈아 끼우는 미들웨어, 반쯤 온 JSON을 그리는 hashbrown, 그리고 이 앱이 ag-ui-langgraph에 덧대는 패치 셋입니다.
+그림의 묶음 안 화살표는 묶음 전체의 것입니다. 묶음 안의 이어짐은 보조 구조 그림이 보여 줍니다. 에이전트 묶음은 Step 2의 `extra-agent`와 Step 5의 `extra-agent-out`, 화면 묶음은 Step 6의 `extra-ui`, 그래프의 노드와 갈래는 Step 4의 `extra-graph`·`extra-branch`, 스키마가 두 번 실리는 길은 Step 3·4의 `extra-schema`·`extra-twice`, 원본의 실행 경로는 Step 8의 `extra-dev`에 있습니다. 그림 오른쪽의 `글꼴` 구름은 화면이 `index.html`에서 부르는 바깥 호스트입니다(Step 8). 앞 날과 이어지는 곳은 이렇습니다. 같은 LangGraph `create_agent`·CopilotKit 미들웨어·AG-UI 서버는 [Day 143](../day143-genui-generative-ui-starter-project/README.md)의 Step 2~3이 가드·가짜 서버·그래프 읽기로 다뤘고, 같은 스택의 다른 앱과 Next.js 쪽 소스 읽기는 [Day 141](../day141-genui-deep-research-agent/README.md)의 Step 4·6이 다뤘습니다. 오늘 새로 나오는 것은 `response_format`을 요청마다 갈아 끼우는 미들웨어, 반쯤 온 JSON을 그리는 hashbrown, 그리고 이 앱이 ag-ui-langgraph에 덧대는 패치 셋입니다.
 
-직접 돌려 알게 된 것이 일곱입니다. 첫째, 잠금 파일대로 설치되고 키가 없으면 `main.py:30`에서 멈춥니다(Step 1). 둘째, 원본 `main.py`를 건드리지 않고 `127.0.0.1`에만 열 수 있고, 헬스 체크 주소는 `/health`가 아니라 `//health`입니다(Step 2). 셋째, 화면의 스키마는 약 1만 자이고(Step 3), 모델 요청에 문맥 글(약 1.2만 자)과 `response_format`(약 1.1만 자)으로 두 번 실립니다(Step 4). 넷째, 같은 스레드의 다음 턴마다 문맥 글이 하나씩 쌓입니다(Step 7). 다섯째, `crawl_site`는 `instructions`를 `max_depth` 자리에 넘깁니다(Step 5). 여섯째, 모델의 마지막 답이 JSON이 아니면 스트림이 오류 신호 없이 끊깁니다(Step 5). 일곱째, `BoundedMemorySaver`는 오래된 스레드의 `storage`만 지우고 `writes`·`blobs`는 남깁니다(Step 7).
+직접 돌려 알게 된 것이 일곱입니다. 첫째, 잠금 파일대로 설치되고 키가 없으면 `main.py:30`에서 멈춥니다(Step 1). 둘째, 원본 `main.py`를 건드리지 않고 `127.0.0.1`에만 열 수 있고, 헬스 체크 주소는 `/health`가 아니라 `//health`입니다(Step 2). 셋째, 화면의 스키마는 약 1만 자이고(Step 3), 모델 요청에 문맥 글(약 1.2만 자)과 `response_format`(약 1.1만 자)으로 두 번 실립니다(Step 4). 넷째, 같은 스레드의 다음 턴마다 문맥 글이 하나씩 쌓입니다(Step 7). 다섯째, `crawl_site`는 `instructions`를 `max_depth` 자리에 넘깁니다(Step 5). 여섯째, 모델의 마지막 답이 JSON이 아니면 에이전트 서버의 스트림이 오류 신호 없이 끊깁니다(Step 5). 일곱째, `BoundedMemorySaver`는 오래된 스레드의 `storage`만 지우고 `writes`·`blobs`는 남깁니다(Step 7).
 
 ## 사전 준비
 
@@ -27,9 +27,11 @@
 
 명령은 Git Bash 기준입니다. 한국어 Windows에서 파이썬 출력이 cp949로 깨지지 않도록 터미널마다 환경변수를 다시 줍니다. PowerShell 줄은 실행해 보지 못했습니다(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다).
 
-**이 앱의 모델이 아직 살아 있는지.** 앱이 쓰는 모델은 `gpt-5.5` 하나입니다(`generative_ui_agents/ai-shadcn-component-generator/apps/agent/main.py:31`, `"openai:gpt-5.5"`). OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations)와 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5.5)를 2026-10-16에 읽었습니다. 폐기 문서에 `gpt-5.5`와 그 스냅숏은 올라 있지 않고, 모델 페이지는 기본 스냅숏을 `gpt-5.5-2026-04-23`, `v1/chat/completions`를 Supported로 적습니다. 가격은 입력 $5, 캐시 입력 $0.5, 출력 $30(100만 토큰당)입니다. 비용 어림(⚠ 추정)은 이렇습니다. 첫 질문의 모델 요청 하나가 실은 글이 약 2.4만 자(Step 4에서 잰 값)이니 3~4자에 1토큰으로 어림하면 입력 6~8천 토큰, $0.03~0.04입니다. 출력이 1~2천 토큰이면 $0.03~0.06이 더해지고, 도구를 한 번 거치면 입력이 한 번 더 들어갑니다. 같은 스레드에서 턴을 거듭하면 문맥 글이 턴마다 1.2만 자(약 3천 토큰, $0.015)씩 늘어납니다(Step 7).
+**이 앱의 모델이 아직 살아 있는지.** 앱이 쓰는 모델은 `gpt-5.5` 하나입니다(`generative_ui_agents/ai-shadcn-component-generator/apps/agent/main.py:31`, `"openai:gpt-5.5"`). OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations)와 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5.5)를 2026-10-16에 읽었습니다. 폐기 문서에 `gpt-5.5`와 그 스냅숏은 올라 있지 않고, 모델 페이지는 기본 스냅숏을 `gpt-5.5-2026-04-23`, `v1/chat/completions`를 Supported로 적습니다. 가격은 입력 $5, 캐시 입력 $0.5, 출력 $30(100만 토큰당)입니다. 비용 어림(⚠ 추정)은 이렇습니다. 첫 질문의 모델 요청 하나가 실은 글이 약 2.4만 자(Step 4에서 잰 값)이니 3~4자에 1토큰으로 어림하면 입력 6~8천 토큰, $0.03~0.04입니다. 모델 페이지는 추론 토큰(reasoning)을 지원하고 `reasoning.effort`의 기본값이 `medium`이라고 적는데 앱은 이 값을 정하지 않으므로, 눈에 보이는 출력 말고 추론 토큰도 출력 요금으로 더해집니다(얼마나 나올지는 알 수 없고 아래 어림에 넣지 못했습니다). 보이는 출력이 1~2천 토큰이면 $0.03~0.06이 더해지고, 도구를 한 번 거치면 입력이 한 번 더 들어갑니다. 같은 스레드에서 턴을 거듭하면 문맥 글이 턴마다 1.2만 자(약 3천 토큰, $0.015)씩 늘어납니다(Step 7).
 
 ## 아키텍처 한눈에 보기
+
+이 문서가 소스를 인용하는 서드파티의 판은 이렇습니다. 파이썬: copilotkit 0.1.78(`copilotkit_lg_middleware.py`), langchain 1.2.0(`agents/factory.py`), langchain-openai 1.1.9(`chat_models/base.py`), ag-ui-langgraph 0.0.25(`agent.py`, `endpoint.py`), langgraph-checkpoint 3.0.1(`memory/__init__.py`), tavily-python 0.7.21. JS: `@copilotkit/*`·`@copilotkitnext/*` 1.54.0, `@hashbrownai/*` 0.5.0-beta.4, `@ag-ui/client` 0.0.47, `@ag-ui/langgraph` 0.0.24, `@hono/node-server` 1.19.17, `@scarf/scarf` 1.4.0.
 
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
@@ -68,10 +70,21 @@ cd ..
 Using CPython 3.13.3
 Creating virtual environment at: .venv
 Resolved 53 packages in 1ms
-Installed 52 packages in 588ms
+Installed 52 packages in 1.09s
 ```
 
-(`apps/agent/.env`가 있으면 `cp -r`이 함께 복사합니다. 괜찮습니다. 아래 가드가 모델·검색 주소를 가짜로 먼저 정하고, `.env`는 이미 정해진 변수를 덮어쓰지 못합니다. 이 문서는 상위 폴더와 `agent/.env`에 진짜처럼 보이는 가짜 값을 둔 독자로도 따라 해 보았습니다.) pip 대안은 시험하지 못했습니다. 설치된 판을 봅니다. 이하 모든 파이썬 명령은 이 가상환경의 것으로 돌리므로 터미널마다 아래 두 줄을 먼저 합니다.
+```powershell
+# 아래 PowerShell 줄은 실행해 보지 못했습니다.
+mkdir shadify-work
+cd shadify-work
+$APP = "<저장소>\generative_ui_agents\ai-shadcn-component-generator"
+Copy-Item -Recurse "$APP\apps\agent" .
+cd agent
+uv sync --locked
+cd ..
+```
+
+(`apps/agent/.env`가 있으면 `cp -r`이 함께 복사합니다. 괜찮습니다. 아래 가드가 모델·검색 주소를 가짜로 먼저 정하고 프록시 변수를 비우며, `.env`는 이미 정해진 변수를 덮어쓰지 못합니다. 이 문서는 상위 폴더와 `agent/.env`에 진짜처럼 보이는 가짜 값(`OPENAI_PROXY`·`ALL_PROXY` 포함)을 두고 셸에도 프록시 변수를 건 독자로도 따라 해 보았습니다.) pip 대안은 시험하지 못했습니다. `python -m venv agent/.venv` 뒤 `agent/.venv/Scripts/python -m pip install "langchain==1.2.0" "langgraph==1.0.7" "ag-ui-langgraph==0.0.25" "copilotkit>=0.1.78" "tavily-python>=0.7.21" "langchain-openai>=1.1.0" "openai>=1.68.2,<2" "fastapi>=0.115.5,<1" "uvicorn>=0.29" "python-dotenv>=1.0,<2" "langsmith>=0.4.49" "pydantic>=2,<3"`처럼 `pyproject.toml`의 `dependencies`를 직접 설치하면 되겠지만 잠금 파일의 판은 쓰지 못합니다. 설치된 판을 봅니다. 이하 모든 파이썬 명령은 이 가상환경의 것으로 돌리므로 터미널마다 아래 두 줄을 먼저 합니다.
 
 ```bash
 export PYTHONIOENCODING=utf-8 PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
@@ -93,14 +106,14 @@ copilotkit 0.1.78 | ag-ui-langgraph 0.0.25 | langchain 1.2.0 | langgraph 1.0.7 |
 
 `pyproject.toml`이 고정한 것은 `langchain==1.2.0`, `langgraph==1.0.7`(`bounded_memory_saver.py`가 `MemorySaver.storage`라는 내부 속성에 기대서 고정한다고 주석에 있음), `ag-ui-langgraph==0.0.25`뿐이고 `copilotkit`은 `>=0.1.78`입니다. 나머지는 잠금 파일이 붙듭니다. 같은 `uv sync`를 `--locked` 없이 하면 잠금 파일을 고쳐 쓸 수 있으니, 판이 다르게 나오면 이 문서의 관찰도 달라질 수 있습니다.
 
-이제 가드입니다. 가드는 세 가지를 합니다. 환경변수를 **스크립트 안에서 직접** 덮어써서(모델 주소는 `http://127.0.0.1:<가짜 포트>/v1`, 열쇠는 가짜 값, LangSmith 트레이싱은 끔) 셸이나 `.env`에 진짜 열쇠가 있어도 무시하고, Tavily 클라이언트의 주소를 가짜 서버로 바꾸고, 소켓 연결·이름 조회·asyncio 연결 함수를 루프백 밖으로는 못 나가게 막습니다. 마지막 막기는 이차 방어선입니다. 옛 변수 `OPENAI_API_BASE`는 지우지 않고 가짜 주소로 채워 둡니다. 지우면 `main.py`가 부르는 `load_dotenv()`가 `.env`에서 다시 채우는데, `langchain-openai`는 이 변수를 `base_url` 인자로 넘겨 `OPENAI_BASE_URL`보다 우선하기 때문입니다.
+이제 가드입니다. 가드는 세 가지를 합니다. 환경변수를 **스크립트 안에서 직접** 덮어써서(모델 주소는 `http://127.0.0.1:<가짜 포트>/v1`, 열쇠는 가짜 값, LangSmith 트레이싱은 끔) 셸이나 `.env`에 진짜 열쇠가 있어도 무시하고, Tavily 클라이언트의 주소를 가짜 서버로 바꾸고, 소켓 연결·이름 조회·asyncio 연결 함수를 루프백 밖으로는 못 나가게 막습니다. 마지막 막기는 이차 방어선입니다. 프록시도 막습니다. 셸의 `HTTP(S)_PROXY`·`ALL_PROXY`와 `.env`에서만 올 수 있는 `OPENAI_PROXY`는 빈 값으로 덮고(`openai`·`httpx`가 이 변수들을 따라 가짜 열쇠가 실린 요청을 프록시로 보냅니다. `langchain-openai` 1.1.9의 `OPENAI_PROXY`는 명시 인자라 `NO_PROXY`로도 막히지 않습니다), `NO_PROXY`·`no_proxy`에 루프백을 겁니다. `check_env`는 이 변수들과 `LANGSMITH_ENDPOINT`까지 확인하고, `main.py`를 가져온 뒤에 한 번 더 부릅니다. `drive.py`의 `urllib`은 `ProxyHandler({})`로, 문서의 `curl`은 `--noproxy '*'`로 프록시를 거치지 않습니다. 옛 변수 `OPENAI_API_BASE`는 지우지 않고 가짜 주소로 채워 둡니다. 지우면 `main.py`가 부르는 `load_dotenv()`가 `.env`에서 다시 채우는데, `langchain-openai`는 이 변수를 `base_url` 인자로 넘겨 `OPENAI_BASE_URL`보다 우선하기 때문입니다.
 
 ```bash
 cat > guard.py <<'EOF'
 """루프백 가드. 이 파일을 가장 먼저 불러온다.
 
 1) 환경변수를 스크립트 안에서 직접 덮어쓴다(앞붙임 한 줄에 기대지 않는다).
-2) Tavily 클라이언트의 주소를 가짜 서버로 바꾼다(Tavily는 주소 환경변수가 없다).
+2) Tavily 클라이언트의 주소를 가짜 서버로 바꾸고, 프록시 변수를 비운다.
 3) 소켓 연결과 이름 조회를 루프백 밖으로는 못 나가게 막고, 막은 횟수를 센다.
 """
 import ipaddress
@@ -110,6 +123,7 @@ import sys
 from urllib.parse import urlparse
 
 LOOPBACK_NAMES = {"127.0.0.1", "localhost", "::1"}
+PROXY_VARS = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy", "OPENAI_PROXY")
 FAKE_PORT = None
 
 
@@ -144,6 +158,13 @@ def point_at_fake(port: int) -> str:
     os.environ["COPILOTKIT_TELEMETRY_DISABLED"] = "true"
     os.environ["DO_NOT_TRACK"] = "1"
     os.environ["SCARF_ANALYTICS"] = "false"
+    # LangSmith 주소도 가짜로 채운다(추적이 꺼져 있어도 .env 가 바꿔 둔 주소가 남지 않게).
+    os.environ["LANGSMITH_ENDPOINT"] = os.environ["LANGCHAIN_ENDPOINT"] = f"http://127.0.0.1:{port}"
+    # 프록시: 독자 셸의 HTTP(S)_PROXY·ALL_PROXY 와 .env 의 OPENAI_PROXY 는 가짜 열쇠와 질문을 프록시로 실어 보낸다.
+    # 지우기만 하면 load_dotenv()가 다시 채우므로 빈 값으로 덮고, 루프백은 프록시를 거치지 않게 NO_PROXY 를 건다.
+    for name in PROXY_VARS:
+        os.environ[name] = ""
+    os.environ["NO_PROXY"] = os.environ["no_proxy"] = "127.0.0.1,localhost,::1"
     # Tavily: 생성자의 api_base_url 만이 주소를 바꾼다. 클래스를 감싸 가짜 서버를 가리키게 한다.
     import tavily.tavily as tv
 
@@ -169,6 +190,15 @@ def check_env() -> None:
     for name in ("LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2"):
         if os.environ.get(name, "").lower() in ("1", "true", "yes"):
             sys.exit(f"가드: {name}이 켜져 있습니다. 중단합니다.")
+    for name in PROXY_VARS:
+        if os.environ.get(name):
+            sys.exit(f"가드: 프록시 변수 {name}이 비어 있지 않습니다. 중단합니다.")
+    for name in ("NO_PROXY", "no_proxy"):
+        if "127.0.0.1" not in os.environ.get(name, "").split(","):
+            sys.exit(f"가드: {name}에 127.0.0.1이 없습니다. 중단합니다.")
+    for name in ("LANGSMITH_ENDPOINT", "LANGCHAIN_ENDPOINT"):
+        if not is_loopback_host(urlparse(os.environ.get(name, "")).hostname or ""):
+            sys.exit(f"가드: {name}이 루프백이 아닙니다. 중단합니다.")
     import tavily.tavily as tv
 
     probe = tv.TavilyClient()
@@ -297,7 +327,9 @@ def main():
     )
 ```
 
-`python main.py`로 띄우면 모든 인터페이스에 열리고 파일이 바뀔 때마다 서버가 다시 뜹니다. 이 문서는 `main.py`를 고치지 않고 `run_agent.py`가 `main`을 가져와(`load_dotenv()`와 패치 적용이 여기서 돕니다) 가드를 한 번 더 확인한 뒤 `uvicorn.run(main.app, host="127.0.0.1")`을 부릅니다. `.env`가 값을 바꿨을 수도 있어서 가져온 뒤에 다시 확인하는 것입니다.
+`python main.py`로 띄우면 모든 인터페이스에 열리고 파일이 바뀔 때마다 서버가 다시 뜹니다. 이 문서는 `main.py`를 고치지 않고 `run_agent.py`가 `main`을 가져와(`load_dotenv()`와 패치 적용이 여기서 돕니다) 가드를 한 번 더 확인한 뒤 `uvicorn.run(main.app, host="127.0.0.1")`을 부릅니다. `.env`가 값을 바꿨을 수도 있어서 가져온 뒤에 다시 확인하는 것입니다. `main`을 가져오는 순간 `apply_patches()`(`main.py:21`)도 돌아서 `ag-ui-langgraph`의 메서드 셋이 바뀝니다(무엇을 막는지는 Step 7). 묶음 안의 이어짐은 이 그림과 같습니다. 패치가 엔드포인트의 `LangGraphAgent` 메서드를 바꾸고(`patches.py:39-43`), 엔드포인트가 그래프를 부르고(`main.py:48-56`), 그래프가 체크포인터에 상태를 둡니다(`main.py:36`).
+
+![에이전트 묶음 안 (1)](diagrams/extra-agent.svg)
 
 ```bash
 cat > run_agent.py <<'EOF'
@@ -504,7 +536,8 @@ OPENAI_API_KEY=sk-pretend-real-key LANGSMITH_TRACING=true $PY run_agent.py 57131
 ```powershell
 # 터미널 A (실행해 보지 못했습니다)
 & $PY fake_servers.py 57131 fake.jsonl
-# 터미널 B (실행해 보지 못했습니다)
+# 터미널 B (실행해 보지 못했습니다. 진짜 열쇠가 있는 셸을 흉내 내려고 변수 둘을 앞에 둠)
+$env:OPENAI_API_KEY = "sk-pretend-real-key"; $env:LANGSMITH_TRACING = "true"
 & $PY run_agent.py 57131 57132
 ```
 
@@ -556,21 +589,21 @@ rm blocked.log
 
 ```bash
 netstat -ano | grep -E ":5713[12] .*LISTENING"
-curl -s http://127.0.0.1:57132//health
+curl --noproxy '*' -s http://127.0.0.1:57132//health
 echo
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:57132/health
+curl --noproxy '*' -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:57132/health
 ```
 
 ```text
-  TCP    127.0.0.1:57131        0.0.0.0:0              LISTENING       59920
-  TCP    127.0.0.1:57132        0.0.0.0:0              LISTENING       62120
+  TCP    127.0.0.1:57131        0.0.0.0:0              LISTENING       14552
+  TCP    127.0.0.1:57132        0.0.0.0:0              LISTENING       13540
 {"status":"ok","agent":{"name":"sample_agent"}}
 404
 ```
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-**확인.** `0.0.0.0`이 아니라 `127.0.0.1`이어야 합니다. 이 문서는 "진짜 키가 있는 독자"로도 따라 해 보았습니다. 터미널 B를 위처럼 띄우고, 상위 폴더와 `agent/.env`에 `OPENAI_API_KEY`·`OPENAI_API_BASE=https://api.openai.com/v1`·`TAVILY_API_KEY`·`LANGSMITH_TRACING=true`를 진짜처럼 보이는 가짜 값으로 둔 채 이어지는 Step의 요청을 모두 보낸 뒤, 가짜 서버 기록(`fake.jsonl`)의 `Authorization` 앞머리는 모델 요청에서 `Bearer sk-fake`, Tavily 요청에서 `Bearer tvly-fa`뿐이었고 `.env`의 값은 한 번도 나타나지 않았습니다. `blocked.log`(가드가 막은 시도)는 생기지 않았습니다. 같은 작업을 하는 동안 작성자 쪽 감시 프록시(모든 바깥 요청을 기록하고 거절)도 한 건을 받지 않았습니다(작성자 전용이며 독자 명령에는 넣지 않았습니다).
+**확인.** `0.0.0.0`이 아니라 `127.0.0.1`이어야 합니다. 이 문서는 "진짜 키가 있는 독자"로도 따라 해 보았습니다. 터미널 B를 위처럼 띄우고, 셸에 `HTTP(S)_PROXY`·`ALL_PROXY`를 걸고, 상위 폴더와 `agent/.env`에 `OPENAI_API_KEY`·`OPENAI_API_BASE=https://api.openai.com/v1`·`OPENAI_PROXY`·`ALL_PROXY`·`TAVILY_API_KEY`·`LANGSMITH_TRACING=true`를 진짜처럼 보이는 가짜 값으로 둔 채 이어지는 Step의 요청을 모두 보낸 뒤, 가짜 서버 기록(`fake.jsonl`)의 `Authorization` 앞머리는 모델 요청에서 `Bearer sk-fake`, Tavily 요청에서 `Bearer tvly-fa`뿐이었고 `.env`와 셸의 값은 한 번도 나타나지 않았습니다. 모든 요청이 프록시를 거치지 않고 가짜 서버에 직접 닿았고(가드가 프록시 변수를 비웠기 때문입니다), `blocked.log`(가드가 막은 시도)는 생기지 않았습니다.
 
 ### Step 3. 화면이 보내는 것 — 부품 열여섯 개가 스키마가 됩니다
 
@@ -590,7 +623,7 @@ export function Page() {
 
 `useChatKit()`(`chat-kit.tsx:104-184`)은 hashbrown의 `useUiKit`에 부품 목록을 줍니다. 목록은 `Markdown`(`exposeMarkdown()`), `card`, `calendar`, `row`, `column`, `chart`, `menubar`와 그 부품 넷(`menubar_menu`·`menubar_trigger`·`menubar_content`·`menubar_item`), `code_block`, `input`, `button`, `select`, `label`로 열여섯 개입니다. 각 부품은 `exposeComponent(컴포넌트, {name, description, props, children})`로 이름·설명·속성 스키마·자식 규칙(`"any"`, `"text"`, 지정한 부품 목록, 없음)을 가집니다. `createUiKit`(`@hashbrownai/core`)은 부품마다 `{이름: {props, children?}}` 모양의 객체 하나를 만들고 전체를 `anyOf`로 묶어 `{ui: [...]}`을 루트로 씁니다. 부품 안의 부품(`card`의 `children: "any"` 등)은 같은 `anyOf`를 다시 가리키므로 `toJsonSchema`가 두 번 나온 조각을 `$defs`로 빼고 `$ref`로 잇습니다. `useAgentContext`는 값이 문자열이 아니면 `JSON.stringify`해서 `{description, value}` 항목으로 등록합니다(`@copilotkitnext/react`의 `use-agent-context`).
 
-이 변환을 파이썬으로 옮겨 쓴 것이 `ui_schema.py`입니다. 부품 열여섯 개의 이름·설명·속성은 `chat-kit.tsx`에서 글자 그대로 가져왔고, `toJsonSchema`의 규칙(모든 객체가 `additionalProperties: false`와 모든 키를 `required`로, 스트리밍 속성은 `properties`의 뒤로, 두 번 이상 나온 조각은 설명을 camelCase로 바꾼 이름의 `$defs`로)을 따랐습니다.
+이 변환을 파이썬으로 옮겨 쓴 것이 `ui_schema.py`입니다. 부품 열여섯 개의 이름·설명·속성은 `chat-kit.tsx`에서 글자 그대로 가져왔고, `@hashbrownai/core` 0.5.0-beta.4의 `createUiKit`·`createComponentSchema`·`toJsonSchema`(`index.esm.js`)가 하는 일을 따랐습니다. 모든 객체가 `additionalProperties: false`와 모든 키를 `required`로(순서는 스트리밍 속성을 뒤로 정렬한 뒤의 순서), 두 번 이상 나온 조각은 설명을 camelCase로 바꾼 이름의 `$defs`로, 루트 설명은 예제가 없을 때 `createUiKit`이 쓰는 문장(`Return a JSON object with a single key "ui" ...`)이고, `children: "text"`의 문자열은 스트리밍 판입니다. 손으로 옮겼으므로 실제 출력과 글자까지 같다고는 하지 못합니다.
 
 ```bash
 cat > ui_schema.py <<'EOF'
@@ -694,7 +727,7 @@ def build_ui_type(components):
         if c.children == "any":
             shape["children"] = array("Child Elements", elements, True)
         elif c.children == "text":
-            shape["children"] = string("Content")
+            shape["children"] = string("Content", True)       # createComponentSchema 의 string 은 스트리밍 판이다
         elif isinstance(c.children, list):
             shape["children"] = array("Child Elements", any_of([make(ch) for ch in c.children]), True)
         out = obj(c.desc, {c.name: obj(f"{c.name} node", shape, True)}, True)
@@ -702,7 +735,9 @@ def build_ui_type(components):
         return out
 
     elements.options = [make(c) for c in flat]
-    return obj("UI", {"ui": array("List of elements", elements, True)})
+    # 예제가 없으면 createUiKit 은 루트 설명을 이 문장으로 둔다(index.esm.js 7922-7923)
+    root_desc = 'Return a JSON object with a single key "ui" that matches the schema below. Use only these components.'
+    return obj(root_desc, {"ui": array("List of elements", elements, True)})
 
 
 def camel(desc):
@@ -777,6 +812,7 @@ def to_json_schema(root):
         if n.kind == "object":
             entries = sorted(n.shape.items(), key=lambda kv: kv[1].streaming)   # 스트리밍 속성은 뒤로(안정 정렬)
             out["properties"] = {k: pr(v, in_def, path) for k, v in entries}
+            out["required"] = list(out["properties"])                           # printNode 가 정렬 뒤의 키로 다시 쓴다
         elif n.kind == "array":
             out["items"] = pr(n.element, in_def, path)
         elif n.kind == "anyOf":
@@ -815,12 +851,12 @@ $PY ui_schema.py
 컴포넌트: ['Markdown', 'card', 'calendar', 'row', 'column', 'chart', 'menubar', 'menubar_menu', 'menubar_trigger', 'menubar_content', 'menubar_item', 'code_block', 'input', 'button', 'select', 'label']
 루트 키: ['$schema', 'type', 'properties', 'required', 'additionalProperties', 'description', '$defs'] | ui 항목: {'$ref': '#/$defs/anyOf'}
 $defs 이름: ['anyOf', 'aSingleMenuWithinTheMenubarContainingATriggerAndDropdownContent', 'theClickableLabelThatOpensAMenuDropdown', 'theDropdownContentPanelOfAMenu', 'aSingleClickableItemInsideAMenuDropdown']
-글자 수: 10461
+글자 수: 10562
 ```
 
-![Step 3까지의 구성](diagrams/step3.svg)
+![스키마가 만들어지는 길](diagrams/extra-schema.svg)
 
-**확인.** 결과에서 몇 가지가 보입니다. `Markdown`의 이름은 대문자 M입니다(hashbrown `exposeMarkdown`의 기본 이름). 소문자 `markdown`을 찾는 화면 코드가 있는데 Step 6에서 봅니다. 부품 네 개(`menubar_*`)가 `ui` 최상위에도 후보로 나옵니다. 부품 하나의 모든 속성이 `required`이므로 `row`는 `gap`·`align`·`justify`를 매번 채워야 하고, 이 속성들의 형식은 문자열일 뿐이라 `"large"`도 통과합니다(화면이 모르는 값은 기본값으로 처리합니다. Step 6). 화면이 보내는 요청 전체는 이렇습니다. `@copilotkitnext/core`의 `ProxiedCopilotRuntimeAgent`가 `{method: "agent/run", params: {agentId}, body: RunAgentInput}` 봉투를 런타임 주소에 POST하고(`useSingleEndpoint`의 기본값이 `true`), `RunAgentInput`은 `threadId`·`runId`·`tools`·`context`·`forwardedProps`·`state`·`messages`입니다(`@ag-ui/client` 0.0.47의 `prepareRunAgentInput`). 이 앱의 소스에는 프런트엔드 도구 등록이 없으므로 `tools`는 비어 있을 것이고 `context`에는 위 항목 하나뿐일 것입니다. 이 구성은 소스를 읽어 정한 것이고 실제 브라우저 요청을 보지는 못했습니다. 요청을 대신 보내는 스크립트입니다. 화면처럼 앞 턴의 메시지를 `MESSAGES_SNAPSHOT`으로 교체해 들고 있다가(`@ag-ui/client`의 스냅숏 처리 소스를 따름) 다음 요청에 함께 보냅니다.
+요청을 대신 보내는 스크립트도 이 Step에서 저장합니다. 화면처럼 앞 턴의 메시지를 `MESSAGES_SNAPSHOT`으로 교체해 들고 있다가(`@ag-ui/client`의 스냅숏 처리 소스를 따름) 다음 요청에 함께 보냅니다. `urllib`이 셸의 프록시 변수를 따르지 않도록 `ProxyHandler({})`로 엽니다. Step 4부터 씁니다.
 
 ```bash
 cat > drive.py <<'EOF'
@@ -837,7 +873,7 @@ import os
 import sys
 import uuid
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import ProxyHandler, Request, build_opener
 
 import guard
 import ui_schema
@@ -863,7 +899,8 @@ body = {"threadId": thread, "runId": "r-" + uuid.uuid4().hex[:8], "state": {}, "
 
 req = Request(url, data=json.dumps(body).encode(), headers={"content-type": "application/json", "accept": "text/event-stream"})
 events = []
-with urlopen(req, timeout=60) as resp:
+opener = build_opener(ProxyHandler({}))      # 루프백 호출은 프록시를 거치지 않는다(셸의 HTTP(S)_PROXY 를 따르지 않음)
+with opener.open(req, timeout=60) as resp:
     for line in resp:
         line = line.decode("utf-8").strip()
         if line.startswith("data:"):
@@ -910,11 +947,15 @@ guard.report()
 EOF
 ```
 
+![Step 3까지의 구성](diagrams/step3.svg)
+
+**확인.** 결과에서 몇 가지가 보입니다. `Markdown`의 이름은 대문자 M입니다(hashbrown `exposeMarkdown`의 기본 이름). 소문자 `markdown`을 찾는 화면 코드가 있는데 Step 6에서 봅니다. 부품 네 개(`menubar_*`)가 `ui` 최상위에도 후보로 나옵니다. 부품 하나의 모든 속성이 `required`이므로 `row`는 `gap`·`align`·`justify`를 매번 채워야 하고, 이 속성들의 형식은 문자열일 뿐이라 `"large"`도 통과합니다(화면이 모르는 값은 기본값으로 처리합니다. Step 6). 화면이 보내는 요청 전체는 이렇습니다. `@copilotkitnext/core`의 `ProxiedCopilotRuntimeAgent`가 `{method: "agent/run", params: {agentId}, body: RunAgentInput}` 봉투를 런타임 주소에 POST하고(`useSingleEndpoint`의 기본값 `true`는 `@copilotkit/react-core` 1.54.0의 `CopilotKit` 공급자의 것이고 `copilotkit-Yh_Ld_FX.mjs:1554`, 이 앱이 쓰는 것도 이쪽입니다. `@copilotkitnext/react`의 `CopilotKitProvider`는 기본이 `false`입니다), `RunAgentInput`은 `threadId`·`runId`·`tools`·`context`·`forwardedProps`·`state`·`messages`입니다(`@ag-ui/client` 0.0.47의 `prepareRunAgentInput`). 이 앱의 소스에는 프런트엔드 도구 등록이 없으므로 `tools`는 비어 있을 것이고 `context`에는 위 항목 하나뿐일 것입니다. 화면은 `agent/run` 전에도 요청을 둘 보냅니다. CopilotKit이 시작하며 `{method: "info"}`로 런타임이 가진 에이전트 목록을 묻고(`@copilotkitnext/core` 1.54.0 `index.mjs:337-350`), `CopilotChat`이 마운트하며 `agent/connect`를 보냅니다(`@copilotkitnext/react`의 `CopilotChat.mjs`). 이 문서는 두 요청의 응답을 보지 못했습니다. 이 구성은 소스를 읽어 정한 것이고 실제 브라우저 요청을 보지는 못했습니다.
+
 ### Step 4. 에이전트 그래프와 첫 요청 — 모델이 받은 것
 
 **목적.** 그래프의 노드가 무엇인지, 미들웨어 셋이 어디에 끼는지, 첫 요청에서 모델이 정확히 무엇을 받는지 봅니다.
 
-**할 일.** `main.py:30-44`는 이렇습니다.
+**할 일.** `main.py:30-36`은 이렇습니다.
 
 ```python
 agent = create_agent(
@@ -926,7 +967,7 @@ agent = create_agent(
     checkpointer=BoundedMemorySaver(max_threads=200),
 ```
 
-미들웨어는 셋입니다. `normalize_context`(`middleware.py:45-56`, `@before_agent`)는 상태의 문맥 항목이 Pydantic 객체면 사전으로 바꿉니다. `CopilotKitMiddleware`는 `before_agent`에서 문맥을 `App Context:\n<JSON>`이라는 **시스템 메시지**로 대화에 넣고, 화면이 보낸 프런트엔드 도구가 있으면 모델 도구에 합치되 서버에서 실행하지 않도록 떼어 놓습니다(`copilotkit_lg_middleware.py`를 소스로 확인). `apply_structured_output_schema`(`middleware.py:7-43`, `@wrap_model_call`)는 노드가 아니라 모델 호출을 감쌉니다. 런타임 문맥 또는 `state["copilotkit"]["context"]`에서 `description == "output_schema"`인 항목을 찾아, 값이 문자열이면 `json.loads`하고, 사전이면 `ProviderStrategy(schema=schema, strict=True)`를 `response_format`으로 걸어 요청을 바꿉니다. 그래서 같은 스키마가 문맥 글로, 또 `response_format`으로 두 번 실립니다.
+미들웨어는 셋입니다. `normalize_context`(`middleware.py:45-56`, `@before_agent`)는 상태의 문맥 항목이 Pydantic 객체면 사전으로 바꿉니다. `CopilotKitMiddleware`는 `before_agent`에서 문맥을 `App Context:\n<JSON>`이라는 **시스템 메시지**로 대화에 넣고, 화면이 보낸 프런트엔드 도구가 있으면 모델 도구에 합치되 서버에서 실행하지 않도록 떼어 놓습니다(copilotkit 0.1.78의 `copilotkit_lg_middleware.py`를 소스로 확인). `apply_structured_output_schema`(`middleware.py:7-43`, `@wrap_model_call`)는 노드가 아니라 모델 호출을 감쌉니다. 런타임 문맥 또는 `state["copilotkit"]["context"]`에서 `description == "output_schema"`인 항목을 찾아, 값이 문자열이면 `json.loads`하고, 사전이면 `ProviderStrategy(schema=schema, strict=True)`를 `response_format`으로 걸어 요청을 바꿉니다. 그래서 같은 스키마가 문맥 글로, 또 `response_format`으로 두 번 실립니다.
 
 ```bash
 cat > inspect_graph.py <<'EOF'
@@ -978,7 +1019,9 @@ $PY inspect_graph.py
 
 ![그래프의 노드 이어짐](diagrams/extra-graph.svg)
 
-그림에서 `CK`는 `CopilotKitMiddleware`입니다. 노드는 `model`, `tools`, 그리고 미들웨어의 훅 넷입니다. `after_model`에서 갈라지는 세 갈래가 핵심입니다. 도구 호출이 있으면 `tools`로, 없으면 `after_agent`로 끝내고, 프런트엔드 도구뿐이었다면 그 호출을 떼어 낸 채 끝으로 갑니다. 체크포인터는 `create_agent`에 직접 붙어 있습니다(Day 143은 서버 파일이 따로 붙였습니다). 이제 요청을 하나 보냅니다. 화면 제안 문구 "Make a dashboard"(`suggestions.ts:7-9`)의 글입니다. 터미널 C에서 환경변수 두 줄을 한 뒤 보냅니다.
+![after_model의 갈래](diagrams/extra-branch.svg)
+
+그림에서 `CK`는 `CopilotKitMiddleware`입니다. 노드는 `model`, `tools`, 그리고 미들웨어의 훅 넷입니다. `after_model`에서 갈라지는 세 갈래는 [Day 143 Step 3](../day143-genui-generative-ui-starter-project/README.md)이 같은 모양의 그래프로 이미 설명했고, 여기서는 이 앱에 맞춘 말만 적습니다(`extra-branch`). 처리할 도구 호출이 있으면 `tools`로, 도구 호출이 없으면 `after_agent`로 끝나고, 호출은 있는데 처리할 것이 남지 않았으면(결과 메시지가 이미 붙었음) `model`로 되돌아갑니다(langchain 1.2.0 `agents/factory.py`의 `_make_model_to_tools_edge`를 소스로 확인). 프런트엔드 도구뿐이던 호출은 `after_model`이 떼어 내서 둘째 갈래(끝)로 갑니다. 체크포인터는 `create_agent`에 직접 붙어 있습니다(Day 143은 서버 파일이 따로 붙였습니다). 이제 요청을 하나 보냅니다. 화면 제안 문구 "Make a dashboard"(`suggestions.ts:7-9`)의 글입니다. 터미널 C에서 환경변수 두 줄을 한 뒤 보냅니다.
 
 ```bash
 $PY drive.py 57132 "Generate a simple dashboard with a title, menu and 2 chart columns." --thread dash1 | grep -v "TEXT_MESSAGE_CONTENT\|STEP_FINISHED"
@@ -1047,13 +1090,13 @@ $PY show_requests.py
 ```
 
 ```text
-모델 요청 1: Bearer sk-fake stream=True 메시지 ['s', 'u', 's'] 글자 [455, 67, 11874]
+모델 요청 1: Bearer sk-fake stream=True 메시지 ['s', 'u', 's'] 글자 [455, 67, 11979]
    App Context 1개 | 도구 [('search_internet', True), ('extract_site', True), ('crawl_site', True)] | response_format json_schema/StructuredOutput strict=True 11171자
 ```
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-![스키마가 두 번 실리는 길](diagrams/extra-schema.svg)
+![스키마가 두 번 실리는 길](diagrams/extra-twice.svg)
 
 **확인.** 메시지 순서가 `system, user, system`입니다. `App Context` 시스템 메시지가 사용자 말 **뒤**에 붙었습니다. `before_agent`가 돌려준 메시지 목록을 LangGraph의 `add_messages`가 합칠 때 아이디가 없는 새 메시지는 끝에 붙기 때문입니다(`MESSAGES_SNAPSHOT`도 `user system assistant` 순서입니다). 첫 메시지(455자)는 `main.py:37-43`의 시스템 프롬프트입니다. 도구 셋 모두 `strict=True`로 묶였고(`create_agent`가 구조화 출력에 `bind_tools(..., strict=True)`를 씁니다), 요청은 `stream=True`입니다. 글자 수는 시스템 프롬프트 455 + 사용자 67 + `App Context` 약 1.2만 + `response_format` 약 1.1만입니다. 같은 스키마가 두 번 실려 첫 질문부터 약 2.4만 자입니다.
 
@@ -1085,7 +1128,21 @@ card
 가드: 루프백 밖으로 나가려던 시도 0건 []
 ```
 
-`TOOL_CALL_START`와 `TOOL_CALL_END`는 있는데 `TOOL_CALL_ARGS`가 없습니다. 스키마를 빼고(`--no-schema`, 곧 `response_format` 없이) 같은 질문을 보내 비교합니다.
+`TOOL_CALL_START`와 `TOOL_CALL_END`는 있는데 `TOOL_CALL_ARGS`가 없습니다. 이유는 아래에서 보고, 먼저 이 요청이 가짜 서버에 남긴 기록을 봅니다. 모델 요청은 이제 셋입니다. 둘째·셋째 요청과 그 사이의 검색 요청입니다.
+
+```bash
+$PY show_requests.py | tail -n 5
+```
+
+```text
+모델 요청 2: Bearer sk-fake stream=True 메시지 ['s', 'u', 's'] 글자 [455, 91, 11979]
+   App Context 1개 | 도구 [('search_internet', True), ('extract_site', True), ('crawl_site', True)] | response_format json_schema/StructuredOutput strict=True 11171자
+/search  Bearer tvly-fa  {"query": "best pizza in San Francisco"}
+모델 요청 3: Bearer sk-fake stream=True 메시지 ['s', 'u', 's', 'a', 't'] 글자 [455, 91, 11979, 4, 315]
+   App Context 1개 | 도구 [('search_internet', True), ('extract_site', True), ('crawl_site', True)] | response_format json_schema/StructuredOutput strict=True 11171자
+```
+
+둘째 모델 요청은 첫 질문과 같은 모양이고, 셋째에는 도구 결과(`ToolMessage`)가 들어 있으며 둘 다 `response_format`이 그대로입니다. 이제 스키마를 빼고(`--no-schema`, 곧 `response_format` 없이) 같은 질문을 보내 비교합니다.
 
 ```bash
 $PY drive.py 57132 "Research the best pizza in San Francisco" --thread ns1 --no-schema | grep -E "^TOOL_CALL" | cut -c1-70
@@ -1098,23 +1155,15 @@ TOOL_CALL_END
 TOOL_CALL_RESULT       {"query": "best pizza in San Francisco", "resul
 ```
 
-이 문서의 재현에서는 `response_format`이 있을 때만 인자 조각이 없습니다. 소스로 보면 이유가 이렇습니다. `response_format`이 붙으면 `langchain-openai`는 `beta.chat.completions.stream` 도우미로 스트림을 받고(`base.py`의 `_astream`), 도우미가 사이사이에 내놓는 이벤트는 빈 조각이 되며, `ag-ui-langgraph`는 도구 호출 중에 도구 데이터 없는 조각이 오면 호출이 끝난 것으로 읽습니다(`agent.py`의 `is_tool_call_end_event`). 이 앱의 화면 소스는 도구 호출의 인자를 쓰지 않으므로(도구 렌더러 등록이 없음) 영향이 없어 보이지만 화면은 실행하지 못했습니다. 모델 요청은 이제 셋입니다. 둘째·셋째 요청과 그 사이의 검색 요청입니다.
-
-```bash
-$PY show_requests.py | tail -n 5
-```
-
-```text
-모델 요청 4: Bearer sk-fake stream=True 메시지 ['s', 'u'] 글자 [455, 40]
-   App Context 0개 | 도구 [('search_internet', None), ('extract_site', None), ('crawl_site', None)] | response_format 없음
-/search  Bearer tvly-fa  {"query": "best pizza in San Francisco"}
-모델 요청 5: Bearer sk-fake stream=True 메시지 ['s', 'u', 'a', 't'] 글자 [455, 40, 4, 315]
-   App Context 0개 | 도구 [('search_internet', None), ('extract_site', None), ('crawl_site', None)] | response_format 없음
-```
+이 문서의 재현에서는 `response_format`이 있을 때만 인자 조각이 없습니다. 소스로 보면 이유가 이렇습니다. `response_format`이 붙으면 `langchain-openai`는 `beta.chat.completions.stream` 도우미로 스트림을 받고(`base.py`의 `_astream`), 도우미가 사이사이에 내놓는 이벤트는 빈 조각이 되며, `ag-ui-langgraph`는 도구 호출 중에 도구 데이터 없는 조각이 오면 호출이 끝난 것으로 읽습니다(`agent.py`의 `is_tool_call_end_event`). 이 앱의 화면 소스는 도구 호출의 인자를 쓰지 않으므로(도구 렌더러 등록이 없음) 영향이 없어 보이지만 화면은 실행하지 못했습니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-두 번째 모델 요청에는 도구 결과(`ToolMessage`)가 들어 있고 `response_format`은 그대로입니다. 다음은 `crawl_site`입니다. `search.py:24-26`은 `_get_client().crawl(website, instructions)`를 부르는데, `tavily-python` 0.7.21의 시그니처는 `crawl(self, url, max_depth=None, max_breadth=None, limit=None, instructions=None, ...)`입니다. 두 번째 자리 인자는 `instructions`가 아니라 `max_depth`입니다.
+다음은 `crawl_site`입니다. 에이전트 묶음에서 그래프가 도구를 부르고 도구가 Tavily를 부르는 길은 그림과 같습니다.
+
+![에이전트 묶음 안 (2)](diagrams/extra-agent-out.svg)
+
+`search.py:24-26`은 `_get_client().crawl(website, instructions)`를 부르는데, `tavily-python` 0.7.21의 시그니처는 `crawl(self, url, max_depth=None, max_breadth=None, limit=None, instructions=None, ...)`입니다. 두 번째 자리 인자는 `instructions`가 아니라 `max_depth`입니다.
 
 ```bash
 $PY drive.py 57132 "Crawl example.com for pricing" --thread crawl1 > /dev/null
@@ -1146,13 +1195,17 @@ TEXT_MESSAGE_END
 langchain.agents.structured_output.StructuredOutputValidationError: Failed to parse structured output for tool 'response_format': Native structured output expected valid JSON for response_format, but 
 ```
 
-글이 JSON이 아니면 `StructuredOutputValidationError`가 서버 쪽 로그에 남고(`agent.out`의 그 줄), 스트림은 `RUN_ERROR`도 `RUN_FINISHED`도 없이 끝납니다. 화면이 그 끊긴 스트림을 어떻게 보여 주는지는 확인하지 못했습니다. strict 모드의 진짜 OpenAI가 JSON을 어기는 일이 드물더라도, 이 앱에는 마지막 답이 JSON인지 확인하거나 오류를 내보내는 곳이 없습니다.
+글이 JSON이 아니면 `StructuredOutputValidationError`가 서버 쪽 로그에 남고(`agent.out`의 그 줄), 에이전트 서버의 스트림은 `RUN_ERROR`도 `RUN_FINISHED`도 없이 끝납니다. 다만 실제 화면 경로에는 CopilotKit 런타임이 끼어 있고, 그 기본 러너(`InMemoryAgentRunner`, `@copilotkitnext/runtime` 1.54.0)는 스트림이 끝났는데 종료 이벤트가 없으면 `finalizeRunEvents`(`@copilotkitnext/shared`)로 `RUN_ERROR`(code `INCOMPLETE_STREAM`, "Run ended without emitting a terminal event")를 붙입니다(소스로 확인, 실행하지 못했습니다). 그러니 화면이 받는 것은 오류 이벤트일 것이고, 그것을 어떻게 보여 주는지는 확인하지 못했습니다. strict 모드의 진짜 OpenAI가 JSON을 어기는 일이 드물더라도, 이 앱의 에이전트 쪽에는 마지막 답이 JSON인지 확인하거나 오류를 내보내는 곳이 없습니다.
+
+**확인.** 위 출력에서 세 가지를 확인합니다. 도구를 거친 요청이 모델 요청 둘과 `/search` 하나를 남기고(`show_requests.py`), `/crawl` 본문의 `max_depth`에 지시문이 들어가 있고, 마지막 답이 JSON이 아닐 때 서버 로그에 `StructuredOutputValidationError`가 남으며 스트림에 `RUN_FINISHED`가 없습니다.
 
 ### Step 6. 화면이 그리고 내보내는 법 — 소스로 읽었습니다
 
 **목적.** JSON 글이 어떻게 부품이 되고, Export Code가 무엇을 만드는지 봅니다.
 
-**할 일.** `custom-message-renderer.tsx:19-59`가 답 메시지마다 `useJsonParser(message.content ?? "", kit.schema)`로 반쯤 온 글을 파싱하고 `kit.render(value)`로 그립니다. `kit.render`(`@hashbrownai/react`의 `useUiKit`)는 `value.ui`의 노드를 부품 레지스트리로 렌더하고, 노드가 모두 완성됐을 때 스키마 검증을 합니다. 덜 온 부품은 `exposeComponent`의 `fallback`, 곧 "👨‍🍳 Cooking..."으로 나옵니다(`chat-kit.tsx:14-16`). 파싱이 끝나면(`parserState.isComplete`) 그리고 `ui`에 마크다운이 아닌 노드가 있으면 Export Code 버튼이 붙습니다. 그 "마크다운이 아닌" 판단이 `keys[0] !== "markdown"`(`custom-message-renderer.tsx:36`)이고, `tree-to-jsx.ts:35`도 `tagName === "markdown"`을 소문자로 비교합니다. 그런데 Step 3에서 본 대로 키트의 이름은 `Markdown`입니다. 소스를 읽은 결론은 이렇습니다. 마크다운만 있는 답에도 Export 버튼이 붙을 것이고, 내보내는 코드에는 `Markdown` 줄이 남을 것입니다. 실제 화면에서 보지는 못했습니다.
+**할 일.** `custom-message-renderer.tsx:19-59`가 답 메시지마다 `useJsonParser(message.content ?? "", kit.schema)`로 반쯤 온 글을 파싱하고 `kit.render(value)`로 그립니다. `kit.render`(`@hashbrownai/react`의 `useUiKit`)는 `value.ui`의 노드를 부품 레지스트리로 렌더하고, 노드가 모두 완성됐을 때 스키마 검증을 합니다. 덜 온 부품은 `exposeComponent`의 `fallback`, 곧 "👨‍🍳 Cooking..."으로 나옵니다(`chat-kit.tsx:14-16`). 파싱이 끝나면(`parserState.isComplete`) 그리고 `ui`에 마크다운이 아닌 노드가 있으면 Export Code 버튼이 붙습니다. 그 "마크다운이 아닌" 판단이 `keys[0] !== "markdown"`(`custom-message-renderer.tsx:37`)이고, `tree-to-jsx.ts:35`도 `tagName === "markdown"`을 소문자로 비교합니다. 그런데 Step 3에서 본 대로 키트의 이름은 `Markdown`입니다. 소스를 읽은 결론은 이렇습니다. 마크다운만 있는 답에도 Export 버튼이 붙을 것이고, 내보내는 코드에는 `Markdown` 줄이 남을 것입니다. 그 줄은 노드 감싸개(`complete`·`partialValue`·`value`를 가진 객체)가 그대로 직렬화돼 `children={{"complete":…,"partialValue":…,"value":…}}` 모양일 것입니다(소스로 읽은 추정). 실제 화면에서 보지는 못했습니다. 화면 묶음 안의 이어짐은 그림과 같습니다. `CopilotChat`이 `assistantMessage`로 이 렌더러를 쓰고(`chat-theme.ts:12`), 렌더러가 키트로 글을 파싱·렌더하고(`custom-message-renderer.tsx:24-25`), 트리를 내보내기로 넘깁니다.
+
+![화면 묶음 안](diagrams/extra-ui.svg)
 
 화면 쪽 부품에도 읽을 만한 곳이 있습니다. `layout.tsx:45`의 `Row`에는 `[&>*:nth-child(n+4)]:hidden`이 있어 자식 넷째부터 숨깁니다(시스템 프롬프트의 "2 columns max"와 맞물립니다). `gap`·`align`·`justify`는 표에 없는 값이면 기본값으로 돌아갑니다(`layout.tsx:46-48`). Export가 만드는 코드가 무엇인지는 `tree_to_jsx.py`로 봅니다. 옮겨 쓴 것이므로 실제 버튼의 출력과 같다고 보장하지 못합니다. 입력은 `props.value`로 감싼 파서 모양을 가정했습니다(`tree-to-jsx.ts:46-47`이 읽는 필드).
 
@@ -1289,7 +1342,7 @@ $PY show_requests.py | tail -n 2
 ```text
 MESSAGES_SNAPSHOT      user system assistant tool assistant user system assistant
 글 길이: 787
-모델 요청 9: Bearer sk-fake stream=True 메시지 ['s', 'u', 's', 'a', 't', 'a', 'u', 's'] 글자 [455, 91, 11874, 4, 315, 298, 31, 11874]
+모델 요청 9: Bearer sk-fake stream=True 메시지 ['s', 'u', 's', 'a', 't', 'a', 'u', 's'] 글자 [455, 91, 11979, 4, 315, 298, 31, 11979]
    App Context 2개 | 도구 [('search_internet', True), ('extract_site', True), ('crawl_site', True)] | response_format json_schema/StructuredOutput strict=True 11171자
 ```
 
@@ -1332,6 +1385,12 @@ EOF
 OPENAI_API_KEY=sk-pretend-real-key LANGSMITH_TRACING=true $PY run_unpatched.py 57131 57133 2>&1 | tee agent_unpatched.out
 ```
 
+```powershell
+# 터미널 D (실행해 보지 못했습니다)
+$env:OPENAI_API_KEY = "sk-pretend-real-key"; $env:LANGSMITH_TRACING = "true"
+& $PY run_unpatched.py 57131 57133
+```
+
 ```bash
 for port in 57132 57133; do
   $PY drive.py $port "Research the best pizza in San Francisco" --thread sh-$port > /dev/null
@@ -1371,6 +1430,8 @@ guard.install_socket_guard()
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "agent"))
 
 import main  # noqa: E402
+
+guard.check_env()                          # main.py 의 load_dotenv() 뒤에 한 번 더
 
 saver = main.agent.checkpointer
 saver.max_threads = 3                      # 200 번 돌리지 않으려고 이 실험에서만 낮춘다
@@ -1423,23 +1484,27 @@ blobs 가 가리키는 스레드: ['t1', 't2', 't3', 't4', 't5', 't6']
 
 런타임 `server.ts:11-43`은 이렇습니다. `new LangGraphHttpAgent({url: process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8123"})`(`@ag-ui/langgraph` 0.0.24의 `LangGraphHttpAgent`는 `@ag-ui/client`의 `HttpAgent`에 이름만 붙인 것)를 `default` 에이전트로 등록하고, `createCopilotEndpointSingleRoute({basePath: "/api/copilotkit"})`를 Hono 앱에 얹습니다. 소스에서 확인한 것은 이렇습니다. `serve({fetch, port})`에는 `hostname`이 없어서(`@hono/node-server` 1.19.17의 `listen`에 호스트가 `undefined`로 갑니다) Node 기본대로 모든 인터페이스에 열립니다. CORS는 두 곳에서 모든 출처를 허용합니다(`server.ts:25`의 `cors()`와 엔드포인트 자체의 `origin: "*"`). 파이썬 에이전트에도 인증이 없어서 두 포트 중 하나에 닿을 수 있는 사람은 앱 주인의 열쇠로 모델과 Tavily를 부를 수 있습니다. `localhost`가 IPv6 `::1`로 먼저 풀리는 환경에서는 에이전트를 `127.0.0.1`에만 열면 연결이 어긋날 수 있어서, 이렇게 띄운다면 런타임에 `LANGGRAPH_DEPLOYMENT_URL=http://127.0.0.1:8123`을 주는 것이 안전합니다(실행하지 못한 제안입니다). 같은 이유로 `hostname: "127.0.0.1"` 한 줄을 복사본 `server.ts`에 더하는 것도 제안일 뿐 시험하지 못했습니다. 앱 README는 `apps/runtime/.env`에 `OPENAI_API_KEY`를 두라고 하고 `render.yaml`도 그 변수를 만들지만, `server.ts`와 `@copilotkitnext/runtime` 1.54.0 안에는 그 변수를 읽는 곳이 없습니다(소스에서 찾지 못했습니다). 런타임은 열쇠를 쓰지 않는 길로 보입니다.
 
-화면 쪽에서 눈여겨볼 것입니다. `vite.config.ts:14-23`은 `/api/copilotkit`와 `/realtime/session`을 4000으로 프록시하는데 런타임에는 `/realtime/session` 경로가 없습니다. 쓰이지 않는 흔적으로 보입니다. `apps/ui/src/components/chat/input.tsx`와 `weather.tsx`도 어디에서도 가져오지 않고(`grep`으로 확인), `package.json`의 `@frenchfryai/*` 셋도 소스가 가져오지 않습니다. `index.html:8-22`는 Google Fonts와 `cdn.fonts.net`의 스크립트·스타일을 부르므로 화면을 열면 브라우저가 그 호스트에 접속하고, 그 스크립트는 페이지 안에서 실행됩니다. 이 문서는 화면을 띄우지 않았습니다. JS 쪽에는 잠금 파일이 없습니다. 앱의 `.gitignore`가 `pnpm-lock.yaml`을 제외해서, `pnpm install`은 `^` 범위를 그날 가장 새 판으로 풉니다(`@copilotkit/*`와 `@hashbrownai/*`만 정확히 고정). 이 문서가 읽은 것은 고정된 판들이고 나머지 판은 모릅니다. 설치할 때 주의할 점이 하나 더 있습니다. `@copilotkit/runtime`·`@copilotkit/react-core`가 `@scarf/scarf`(`^1.3.0`)를 의존하고, 이 패키지는 `postinstall`에서 `node ./report.js`를 돌려 `scarf.sh`에 설치 통계를 보냅니다(1.4.0 소스로 확인). 환경변수 `SCARF_ANALYTICS=false`나 `DO_NOT_TRACK=1`이면 보내지 않습니다(`report.js`가 읽음). pnpm이 의존성의 설치 스크립트를 기본으로 막는 판이 있는지는 확인하지 못했으니, 설치할 독자는 두 변수를 먼저 거는 것이 안전합니다. 텔레메트리는 `@copilotkit/runtime`의 `v2`·`langgraph` 진입점이 가져오는 파일에서 찾지 못했고(가져오기 목록을 읽음), `@copilotkit/react-core` 1.54.0의 `dist`에는 `telemetry`·`scarf`·`segment`·`analytics`라는 글자가 없었습니다. `@copilotkit/shared`는 열어 보지 않았습니다.
+화면 쪽에서 눈여겨볼 것입니다. `vite.config.ts:14-23`은 `/api/copilotkit`와 `/realtime/session`을 4000으로 프록시하는데 런타임에는 `/realtime/session` 경로가 없습니다. 쓰이지 않는 흔적으로 보입니다. `apps/ui/src/components/chat/input.tsx`와 `weather.tsx`도 어디에서도 가져오지 않고(`grep`으로 확인), `package.json`의 `@frenchfryai/*` 셋도 소스가 가져오지 않습니다. `index.html:8-22`는 Google Fonts와 `cdn.fonts.net`의 스크립트·스타일을 부르므로 화면을 열면 브라우저가 그 호스트에 접속하고, 그 스크립트는 페이지 안에서 실행됩니다. 이 문서는 화면을 띄우지 않았습니다. JS 쪽에는 잠금 파일이 없습니다. 앱의 `.gitignore`가 `pnpm-lock.yaml`을 제외해서, `pnpm install`은 `^` 범위를 그날 가장 새 판으로 풉니다(정확히 고정한 것은 `@copilotkit/*` 1.54.0, `@hashbrownai/*` 0.5.0-beta.4, `@frenchfryai/*` 0.1.1, `recharts` 2.15.4뿐). 이 문서가 읽은 것은 고정된 판들이고 나머지 판은 모릅니다. 설치할 때 주의할 점이 하나 더 있습니다. `@copilotkit/runtime`·`@copilotkit/react-core`가 `@scarf/scarf`(`^1.3.0`)를 의존하고, 이 패키지는 `postinstall`에서 `node ./report.js`를 돌려 `scarf.sh`에 설치 통계를 보냅니다(1.4.0 소스로 확인). 환경변수 `SCARF_ANALYTICS=false`나 `DO_NOT_TRACK=1`이면 보내지 않습니다(`report.js`가 읽음). pnpm 쪽은 공식 문서(2026-10-17에 읽음)로 갈립니다. pnpm 10.0.0 릴리스 노트는 "Lifecycle scripts of dependencies are not executed during installation by default!"라고 적고, 현재 설정 문서는 `allowBuilds`(v10.26.0에 생김)에 올리지 않은 패키지의 스크립트를 기본으로 허용하지 않고 검토 전으로 취급하며, `strictDepBuilds`(v10.3.0에 생김, 현재 문서의 기본값 `true`)가 켜져 있으면 검토 전 빌드 스크립트가 있을 때 설치가 0이 아닌 코드로 끝난다고 적습니다. 그러니 `scarf`의 `postinstall`은 pnpm 9 이하에서만 기본으로 돌고, 최근 pnpm에서는 오히려 설치가 승인 요구로 멈출 수 있습니다. 앱에는 `packageManager` 필드가 없어서 독자의 pnpm 판에 따라 갈립니다. 어느 쪽이든 설치할 독자는 두 변수를 먼저 거는 것이 안전합니다. 텔레메트리는 `@copilotkit/runtime`의 `v2`·`langgraph` 진입점이 가져오는 파일에서 찾지 못했고(가져오기 목록을 읽음), `@copilotkit/react-core` 1.54.0의 `dist`에는 `telemetry`·`scarf`·`segment`·`analytics`라는 글자가 없었습니다. `@copilotkit/shared`는 열어 보지 않았습니다.
 
 마지막으로 저장소 맨 위의 `.mcp.json`은 Claude Code가 이 폴더를 열면 `npx shadcn@latest mcp`를 MCP 서버로 쓰자고 제안하는 설정입니다(`npx`가 패키지를 내려받아 실행합니다). 앱의 일부가 아니라 개발 도구용이고, 이 문서는 어떤 경로로도 실행하지 않았습니다. `.claude/settings.json`은 `render` 플러그인을 켭니다. `render.yaml`은 에이전트를 `uv run uvicorn main:app --host 0.0.0.0 --port $PORT`로 띄우고 Python 3.12.6을 고정합니다(읽기만 했고 배포하지 않았습니다).
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
-**확인.** 이 Step에는 실행한 것이 없습니다. 확인할 것은 두 가지입니다. 독자가 원본 명령을 쓰려 한다면 `pnpm install` 앞에 `SCARF_ANALYTICS=false DO_NOT_TRACK=1`을 걸었는지, 에이전트를 `0.0.0.0`으로 열지 않았는지입니다.
+**확인.** 이 Step에는 실행한 것이 없습니다. 이 문서에는 화면까지 안전하게 띄우는 명령이 없습니다. 원본의 `pnpm dev`는 그대로 쓰지 마세요. `dev:agent`가 에이전트를 `0.0.0.0`에 `reload=True`로 열고 런타임도 모든 인터페이스에 열리며 둘 다 인증이 없습니다. 화면까지 시험하려면 에이전트와 런타임을 루프백으로만 열도록 직접 바꿔야 하는데 이 문서는 그것을 시험하지 못했습니다. 설치만 할 독자는 `pnpm install` 앞에 `SCARF_ANALYTICS=false DO_NOT_TRACK=1`을 겁니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 "Research the best pizza in San Francisco..."를 보내면, 화면(`CopilotChat`)은 단일 경로 봉투 `{method: "agent/run", params, body: RunAgentInput}`을 런타임에 POST하고, 런타임은 `RunAgentInput`만 에이전트 서버 `/`에 POST합니다. 에이전트는 `CopilotKitMiddleware`가 `App Context`를 붙인 뒤 `response_format`을 건 모델 요청을 스트림으로 보냅니다. 모델이 `search_internet`을 부르면 도구가 Tavily를 부르고 결과가 `ToolMessage`로 돌아옵니다. 시퀀스는 여기까지고, 이어지는 답은 두 번째 그림입니다.
+사용자가 "Research the best pizza in San Francisco..."를 보내면, 화면(`CopilotChat`)은 단일 경로 봉투 `{method: "agent/run", params, body: RunAgentInput}`을 런타임에 POST하고, 런타임은 `RunAgentInput`만 에이전트 서버 `/`에 POST합니다. 에이전트는 `CopilotKitMiddleware`가 `App Context`를 붙인 뒤 `response_format`을 건 모델 요청을 스트림으로 보냅니다. 모델이 `search_internet`을 부르면 에이전트는 그 호출의 시작과 끝 이벤트를 런타임을 거쳐 화면으로 내보냅니다. 에이전트는 시작할 때 체크포인터에서 이 스레드의 기록을 읽습니다(`aget_state`, 새 스레드면 빈 기록입니다). 단계마다 일어나는 저장(`put`)은 그림에 넣지 않았고 몇 번인지는 세지 않았습니다. 첫 그림은 여기까지입니다. 도구를 부르는 쪽은 둘째 그림입니다.
+
+![요청 시퀀스 가운데](diagrams/extra-tool.svg)
+
+도구가 Tavily를 부르고 결과가 `ToolMessage`로 돌아오면, 에이전트는 `TOOL_CALL_RESULT`를 내보냅니다. 이어지는 답은 셋째 그림입니다.
 
 ![요청 시퀀스 뒷부분](diagrams/extra-answer.svg)
 
-모델의 두 번째 응답은 부품 트리 JSON의 글 조각이고, 에이전트는 이를 `TEXT_MESSAGE_CONTENT`로, 마지막에 `MESSAGES_SNAPSHOT`으로 내려보냅니다. 런타임은 이벤트를 그대로 전달하고, 화면은 반쯤 온 JSON을 파싱해 `kit.render`로 그립니다. 앞 두 줄(런타임과 화면)은 소스를 읽은 것이고 실행하지 못했습니다. 화면에서 부품이 그려지는 모양은 보지 못했습니다.
+모델의 두 번째 응답은 부품 트리 JSON의 글 조각이고, 에이전트는 이를 `TEXT_MESSAGE_*` 이벤트로, 마지막에 `MESSAGES_SNAPSHOT`과 `RUN_FINISHED`로 내려보냅니다. 런타임은 이벤트를 그대로 전달하고, 화면은 반쯤 온 JSON을 파싱해 `kit.render`로 그립니다. 앞 두 줄(런타임과 화면)은 소스를 읽은 것이고 실행하지 못했습니다. 화면에서 부품이 그려지는 모양은 보지 못했습니다.
 
 ## 실행 체크리스트
 
@@ -1451,7 +1516,7 @@ blobs 가 가리키는 스레드: ['t1', 't2', 't3', 't4', 't5', 't6']
 - [ ] 도구를 거친 요청이 모델 호출 두 번과 `/search` 한 번을 남기고, `/crawl`의 `max_depth`에 지시문이 들어간 것을 확인했다
 - [ ] 두 번째 턴의 모델 요청에 `App Context`가 둘이다
 - [ ] 패치를 끈 서버에서만 `ValueError: Message ID not found in history`가 난다
-- [ ] 가짜 서버 기록에 `Bearer sk-fake`·`Bearer tvly-fa` 말고 다른 열쇠가 없고 `blocked.log`가 없다
+- [ ] 가짜 서버 기록에 `Bearer sk-fake`·`Bearer tvly-fa` 말고 다른 열쇠가 없고 `blocked.log`가 없다(셸에 프록시 변수를 건 채로도 같다)
 - [ ] 띄운 서버(57131·57132·57133)를 모두 멈췄다
 
 ## 문제 해결
@@ -1460,8 +1525,8 @@ blobs 가 가리키는 스레드: ['t1', 't2', 't3', 't4', 't5', 't6']
 |---|---|---|
 | `OpenAIError: The api_key client option must be set...`, 멈춘 곳 `[30]` | `main.py:30`이 가져오는 순간 모델 클라이언트를 만든다 | 직접 확인. 서버는 `run_agent.py`로 띄운다(가드가 가짜 열쇠를 먼저 정한다) |
 | `curl .../health`가 404 | 헬스 체크 주소가 `//health`다(`path="/"`에 `/health`를 이어 붙임) | 직접 확인. `//health`로 부른다 |
-| `가드: OPENAI_BASE_URL 호스트가 루프백이 아닙니다` | 가드가 주소를 확인하고 멈춤 | 정상 동작. 이 문서의 스크립트는 `point_at_fake`가 가짜 주소를 정한 뒤 확인한다 |
-| 첫 요청에서 이벤트 0건, 서버 로그에 `ValueError: Message ID not found in history` | 클라이언트가 보낸 기록이 서버 체크포인트보다 짧아 "다시 만들기" 경로로 갔는데 패치가 꺼져 있다 | 직접 확인. `src/patches.py`의 `apply()`를 지우지 않는다(`run_unpatched.py`가 일부러 끈 것) |
+| `curl .../health`가 빈 줄과 `403` | 셸의 `HTTP(S)_PROXY`를 따라 프록시로 갔다 | 직접 확인. `curl --noproxy '*'`로 부른다(`drive.py`는 `ProxyHandler({})`로 이미 거치지 않는다) |
+| 같은 스레드의 다음 요청(기록이 서버보다 짧을 때)에서 이벤트 0건, 서버 로그에 `ValueError: Message ID not found in history` | 클라이언트가 보낸 기록이 서버 체크포인트보다 짧아 "다시 만들기" 경로로 갔는데 패치가 꺼져 있다 | 직접 확인. `src/patches.py`의 `apply()`를 지우지 않는다(`run_unpatched.py`가 일부러 끈 것) |
 | 모델의 답이 JSON이 아니면 서버 로그에 `StructuredOutputValidationError`, 스트림이 오류 신호 없이 끝남 | 마지막 답이 `response_format`을 따르지 않음 | 직접 확인. 앱에는 이를 처리하는 곳이 없다. 가짜 서버의 "bad json" 장면 |
 | 같은 스레드에서 턴이 늘수록 요청이 커진다 | 턴마다 `App Context` 시스템 메시지가 하나씩 쌓인다 | 직접 확인. 더 해보기 참고 |
 | 포트가 이미 쓰이고 있다고 나온다 | 흔한 포트와 겹침 | 49152~65535의 다른 번호로 바꾼다(문서의 57131~57133은 예시) |

@@ -17,18 +17,20 @@ rt: "런타임" { class: ours }
 agent: "에이전트" {
   class: group
   grid-columns: 1
-  endpoint: "엔드포인트\n(main.py)" { class: ours }
-  graph: "그래프\n(main.py)" { class: ours }
-  tools: "도구\n(search.py)" { class: ours }
-  patch: "패치\n(patches)" { class: ours }
-  mem: "Bounded\nSaver" { class: store }
+  endpoint: "서버" { class: ours }
+  graph: "그래프" { class: ours }
+  tools: "도구" { class: ours }
+  patch: "패치" { class: ours }
+  mem: "저장소" { class: store }
 }
 
 llm: "gpt-5.5\n(가짜)" { class: ext }
 tavily: "Tavily\n(가짜)" { class: ext }
+fonts: "글꼴" { class: ext }
 
 user -> ui.chat: "질문"
-ui -> rt: "입력"
+ui -> rt: "요청"
 rt -> agent: "AG-UI"
-agent -> llm: "LLM"
-agent -> tavily: "검색"
+agent -> llm: "모델 요청"
+agent -> tavily: "/search"
+ui -> fonts: "GET"

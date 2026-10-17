@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 화면\n(소스로만)" { class: ours }
+rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
+agent: "에이전트 서버\n(main.py·그래프)" { class: ours }
+tool: "검색 도구\n(search.py)" { class: ours }
+tavily: "Tavily\n(가짜)" { class: ext }
+
+agent -> tool: "search_internet(query)"
+tool -> tavily: "POST /search"
+tavily -> tool: "검색 결과 JSON"
+tool -> agent: "ToolMessage"
+agent -> rt: "TOOL_CALL_RESULT"
+rt -> ui: "이벤트 그대로"
