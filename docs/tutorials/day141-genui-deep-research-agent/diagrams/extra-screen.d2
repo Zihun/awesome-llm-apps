@@ -12,5 +12,6 @@ user -> chat: 질문
 chat -> runtime: "POST /api/copilotkit"
 runtime -> agent: "RunAgentInput"
 agent -> runtime: "AG-UI 이벤트"
+runtime -> chat: "채팅 글 (TEXT_MESSAGE)"
 runtime -> cards: "도구 호출 · 결과"
 cards -> work: "계획 · 파일 · 출처"

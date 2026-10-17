@@ -1141,7 +1141,7 @@ grep -c "scraped\|failed" src/components/Workspace.tsx
 | `.env.example`을 복사했더니 서버가 `0.0.0.0`으로 뜨고 모델이 `gpt-5.2`다 | 그 파일의 `SERVER_HOST=0.0.0.0`·`OPENAI_MODEL=gpt-5.2`(`generative_ui_agents/ai-deep-research-agent/.env.example:4`, `generative_ui_agents/ai-deep-research-agent/.env.example:12`)가 `os.getenv`에 들어온다 | 복사한 `.env`에서 두 줄을 지우고 `--host 127.0.0.1`로 직접 띄웁니다 |
 | 서버 로그에 `openai.APIConnectionError: Connection error.`가 나오고 `ask.py`가 `RUN_FINISHED` 없이 끝난다 | 모델 서버(이 문서에서는 가짜 서버)에 닿지 못했는데 스트림에는 오류 이벤트가 없다(Step 5) | 터미널 1의 가짜 서버가 떠 있는지, `FAKE_BASE`의 포트가 맞는지 확인합니다 |
 | `refuse: FAKE_BASE='' is not loopback`으로 스크립트가 멈춘다 | 터미널에 `FAKE_BASE`가 없다. 터미널마다 다시 줘야 한다 | `export FAKE_BASE=http://127.0.0.1:58317` |
-| 가짜 서버 없이 `refuse: HTTPS_PROXY is set`으로 `run_local.py`가 멈춘다 | 앱의 `load_dotenv()`가 `.env`에 적힌 프록시 변수를 다시 채웠고 가드의 `verify_env()`가 막았다 | `.env`에서 프록시 줄을 지웁니다 |
+| `refuse: HTTP_PROXY is set`(`.env`에 적힌 변수에 따라 `HTTPS_PROXY`·`ALL_PROXY` 등)로 `run_local.py`가 멈춘다 | 앱의 `load_dotenv()`가 `.env`에 적힌 프록시 변수를 다시 채웠고 가드의 `verify_env()`가 막았다 | `.env`에서 프록시 줄을 지웁니다 |
 | 같은 질문을 두 번 보냈더니 두 번째에는 계획·검색 없이 마지막 글만 나온다 | 같은 `threadId`의 상태가 `MemorySaver`에 남아 대화가 이어진다 | `ask.py`처럼 요청마다 새 `threadId`를 씁니다 |
 | `emit_tool_calls`에 없는 도구(`ls`·`task`)의 호출이 스트림에 나온다(화면에서는 기본 JSON 카드가 될 것으로 읽힙니다) | 그 설정은 목록으로는 걸러 내지 않는다(Step 5, 소스로 확인) | 걸러야 한다면 `emit_tool_calls=False`를 쓰는 식으로 설계가 달라야 하며 이 문서는 시험하지 않았습니다 |
 | 화면의 파일 카드 제목이 "Writing: file"이다 | 카드가 읽는 `args.path`와 deepagents의 `file_path`가 다르다(Step 7, 소스로 확인) | 복사본의 `ToolCard.tsx:91`을 `args.file_path`로 바꾸는 것이 한 방법입니다(시험하지 못했습니다) |
