@@ -1,11 +1,11 @@
 ...@../../_tools/theme
-direction: right
+direction: down
 
 round_one: "round_one" { class: ours }
-round_two: "round_two" { class: ours }
-ask: "ask" { class: ours }
 parse: "parse_positions" { class: ours }
 openrouter: "OpenRouter\n(openrouter.ai)" { class: ext }
+round_two: "round_two" { class: ours }
+ask: "ask" { class: ours }
 
 round_one -> ask: "모델마다 한 번\n(스레드 풀)"
 round_two -> ask: "모델마다 한 번\n(스레드 풀)"
