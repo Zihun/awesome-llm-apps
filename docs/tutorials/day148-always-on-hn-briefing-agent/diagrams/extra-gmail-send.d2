@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+api: "스케줄러 API (scheduler_api.py)" { class: ours }
+dl: "전송 (delivery.py)" { class: ours }
+gm: "Gmail 전송 (gmail.googleapis.com 자리)" { class: ext }
+
+dl -> dl: "EmailMessage: text/plain + text/html"
+dl -> gm: "POST /send {raw: base64url 메시지}\nAuthorization: Bearer"
+gm -> dl: "{id, threadId}"
+dl -> api: "{provider: gmail, sent: true, status: sent}"

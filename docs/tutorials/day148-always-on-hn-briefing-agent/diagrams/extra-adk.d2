@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+web: "ADK Web (로컬)" { class: ext }
+gem: "Gemini" { class: ext }
+agent: "ADK 에이전트 (agent.py)" { class: ours }
+scout: "수집·순위·글 (scout.py)" { class: ours }
+
+user -> web: "질문 (POST /run)"
+web -> agent: "Runner 실행"
+agent -> gem: "요청 1: 지침 + 도구 선언 1개 + 질문"
+gem -> agent: "functionCall preview_agent_builder_brief(top_n)"
+agent -> scout: "run_ambient_scout(live=None, top_n)"

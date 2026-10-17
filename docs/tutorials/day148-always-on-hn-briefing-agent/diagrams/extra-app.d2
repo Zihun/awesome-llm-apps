@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+scheduler: "스케줄러" { class: ext }
+agent: "ADK 에이전트\n(agent.py)" { class: ours }
+api: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+scout: "수집·순위·글\n(scout.py)" { class: ours }
+delivery: "전송\n(delivery.py)" { class: ours }
+hn: "Hacker News" { class: ext }
+gmail: "Gmail API" { class: ext }
+webhook: "웹훅 수신처" { class: ext }
+
+user -> agent: "질문"
+scheduler -> api: "POST 트리거"
+agent -> scout: "도구 호출"
+api -> scout: "live, top_n"
+scout -> hn: "GET /news"
+hn -> scout: "HTML"
+api -> delivery: "brief"
+delivery -> gmail: "토큰 · 메일"
+delivery -> webhook: "POST JSON"

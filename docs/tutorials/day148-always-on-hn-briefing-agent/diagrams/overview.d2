@@ -1,0 +1,31 @@
+...@../../_tools/theme
+direction: down
+
+user: 사용자 { class: person }
+scheduler: "스케줄러\n(Cloud Scheduler)" { class: ext }
+env: "환경변수\n(AGENTSCOUT_*)" { class: file }
+
+app: "AgentScout (always_on_hn_briefing_agent/)" {
+  class: group
+  grid-columns: 2
+  grid-gap: 10
+  api: "스케줄러 API\n(scheduler_api.py)" { class: ours }
+  agent: "ADK 에이전트\n(agent.py)" { class: ours }
+  scout: "수집·순위·글\n(scout.py)" { class: ours }
+  delivery: "전송\n(delivery.py)" { class: ours }
+}
+
+hn: "Hacker News\n첫 페이지" { class: ext }
+gemini: "Gemini\n(gemini-3-flash-preview)" { class: ext }
+gmail: "Gmail API" { class: ext }
+webhook: "웹훅 수신처" { class: ext }
+
+user -> app: "질문\n(ADK Web)"
+scheduler -> app: "POST 트리거 /\nPub/Sub 푸시"
+env -> app: "전송 방식 ·\n수신처 · live"
+app -> hn: "GET 첫 페이지\n(live일 때만)"
+hn -> app: "HTML"
+app -> gemini: "요청\n(지침 · 도구 선언)"
+gemini -> app: "도구 호출\n· 글"
+app -> gmail: "토큰 교환 · 메일"
+app -> webhook: "POST JSON"

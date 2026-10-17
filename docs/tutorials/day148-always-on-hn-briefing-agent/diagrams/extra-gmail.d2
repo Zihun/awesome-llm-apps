@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+api: "스케줄러 API (scheduler_api.py)" { class: ours }
+dl: "전송 (delivery.py)" { class: ours }
+tok: "토큰 서버 (oauth2.googleapis.com 자리)" { class: ext }
+
+api -> dl: "send_brief(brief)"
+dl -> dl: "AGENTSCOUT_DELIVERY=gmail → send_gmail"
+dl -> tok: "POST /token\nclient_id · client_secret · refresh_token"
+tok -> dl: "access_token"

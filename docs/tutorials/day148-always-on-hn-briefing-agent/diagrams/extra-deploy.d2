@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+sched: "Cloud Scheduler\n(0 9 * * 1-5)" { class: ext }
+topic: "Pub/Sub\n(푸시 구독)" { class: ext }
+env: "서비스 환경변수\n(Gmail · 웹훅)" { class: file }
+svc: "HTTP 서비스\n(scheduler_api:app)" { class: ours }
+hn: "Hacker News" { class: ext }
+gmail: "Gmail API" { class: ext }
+hook: "웹훅 수신처" { class: ext }
+
+sched -> svc: "POST\n/trigger"
+sched -> topic: "메시지\n(JSON)"
+topic -> svc: "POST\n/pubsub"
+env -> svc: "수신처 ·\n자격 증명"
+svc -> hn: "GET /news"
+svc -> gmail: "토큰 · 메일"
+svc -> hook: "POST JSON"

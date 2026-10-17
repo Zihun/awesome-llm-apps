@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+scout: "수집·순위·글 (scout.py)" { class: ours }
+agent: "ADK 에이전트 (agent.py)" { class: ours }
+gem: "Gemini" { class: ext }
+web: "ADK Web (로컬)" { class: ext }
+user: 사용자 { class: person }
+
+scout -> agent: "brief 딕셔너리 (text · html · stories)"
+agent -> gem: "요청 2: 위 내용 + functionResponse"
+gem -> agent: "글 (브리핑)"
+agent -> web: "이벤트 3개"
+web -> user: "이벤트 목록 (JSON)"

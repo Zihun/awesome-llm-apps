@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+sch: "스케줄러" { class: ext }
+api: "스케줄러 API (scheduler_api.py)" { class: ours }
+scout: "수집·순위·글 (scout.py)" { class: ours }
+hn: "Hacker News" { class: ext }
+dl: "전송 (delivery.py)" { class: ours }
+hook: "웹훅 수신처" { class: ext }
+
+sch -> api: "POST /agent-scout/trigger\n{dry_run: false, top_n, live: true}"
+api -> scout: "run_ambient_scout(live=True, top_n)"
+scout -> hn: "GET /news"
+hn -> scout: "HTML 첫 페이지"
+scout -> scout: "파싱 → 점수 → 상위 top_n → render_brief"
+scout -> api: "brief (text · html · stories · next_actions)"
+api -> dl: "send_brief(brief)"
+dl -> hook: "POST {subject, text, html,\nstories, next_actions}"
+hook -> dl: "HTTP 상태 · 응답 앞 500자"
+dl -> api: "{provider, sent, status}"
+api -> sch: "200 {dry_run, top_n, delivery, brief}"
