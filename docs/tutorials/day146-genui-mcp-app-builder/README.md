@@ -1,6 +1,6 @@
 # Day 146 · 🛠️ AI MCP App Builder
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ · 예상 소요 240분(원본은 추적 파일 21,782줄이지만 코드는 7,275줄이고 이 문서는 요청 경로 하나만 따라갑니다. 그래도 서드파티 패키지 열한 개를 받아 해시를 맞추고 읽고, 내가 쓴 Node 스크립트 셋을 저장해 돌려 보고, 그림 서른네 장을 오가며 소스와 맞대 읽는 시간이 본문 낱말 수보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(OpenAI·E2B·Excalidraw 어디에도 요청을 보내지 않았고, 바깥 접속은 npm 레지스트리에서 공개 압축 파일을 받는 것뿐입니다. 진짜 키로 원본을 쓸 때의 어림은 사전 준비의 표) · 원본 앱: `generative_ui_agents/ai-mcp-app-builder`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ · 예상 소요 240분(원본은 추적 파일 21,782줄이지만 코드는 7,275줄이고 이 문서는 요청 경로 하나만 따라갑니다. 그래도 서드파티 패키지 열한 개를 받아 해시를 맞추고 읽고, 내가 쓴 Node 스크립트 셋을 저장해 돌려 보고, 그림 마흔한 장을 오가며 소스와 맞대 읽는 시간이 본문 낱말 수보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(OpenAI·E2B·Excalidraw 어디에도 요청을 보내지 않았고, 바깥 접속은 npm 레지스트리에서 공개 압축 파일을 받는 것뿐입니다. 진짜 키로 원본을 쓸 때의 어림은 사전 준비의 표) · 원본 앱: `generative_ui_agents/ai-mcp-app-builder`
 
 ## 오늘 만들 것
 
@@ -544,7 +544,7 @@ apps/web/app/page.tsx:397:        mounted two CopilotChat instances → duplicat
 
 (직접 확인한 출력입니다.) 가리키는 곳은 둘 다 자기 자신의 `endpoint:` 줄이고, 화면 쪽은 `CopilotKitProvider.tsx`의 `runtimeUrl`뿐입니다. 나머지는 주석입니다.
 
-이 그림의 모델·E2B·MCP로 가는 선은 "Next.js 서버" 묶음 전체에서 나옵니다. 흐린 부품에서 나오는 것처럼 보여도, 실제로 그 선을 긋는 것은 방금 들어온 에이전트 경로입니다. 서버 읽기 경로(Step 5)는 MCP 서버와 Excalidraw만 부르고, 작업 공간 경로(Step 7)는 E2B만 부릅니다. 부품 단위 선은 위의 보조 구조 그림 둘에 있습니다.
+이 그림의 모델·E2B·MCP로 가는 선은 "Next.js 서버" 묶음 전체에서 나옵니다. 흐린 부품에서 나오는 것처럼 보여도, 실제로 그 선을 긋는 것은 방금 들어온 에이전트 경로입니다. 서버 읽기 경로(Step 5)는 MCP 서버와 Excalidraw만 부르고, 작업 공간 경로(Step 7)는 E2B를 부르고, 같은 묶음의 `call-tool`은 요청이 준 MCP 서버 주소에 직접 붙습니다. 부품 단위 선은 위의 보조 구조 그림 둘에 있습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -1192,7 +1192,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, HOST, () => console.log(`fake MCP on http://${HOST}:${PORT}/mcp`));
 ```
 
-다음은 읽는 쪽입니다. 사이드바가 하는 순서(`initialize` → `tools/list` → `resources/read` → `resources/list`)를 JSON-RPC로 직접 보냅니다. 첫머리에서 호스트가 루프백인지 `URL`로 뽑아 비교하므로 `http://127.0.0.1@example.invalid/mcp`처럼 꾸민 주소도 지나가지 못합니다. 셸에 프록시 변수(`HTTP_PROXY` 등)가 있으면 `NO_PROXY`·`no_proxy`에 루프백이 들어 있는지도 보고, 없으면 접속 전에 멈춥니다. 아래쯤에서 `<base>` 처리는 앱의 정규식을 내가 다시 적은 것이고 앱 코드를 실행한 것이 아닙니다. 마지막 `tools/call`은 사이드바가 아니라 Step 6의 채팅 경로가 하는 일을 보이려고 내가 덧붙인 호출입니다.
+다음은 읽는 쪽입니다. 사이드바가 하는 순서(`initialize` → `tools/list` → `resources/read` → `resources/list`)를 JSON-RPC로 직접 보냅니다. 첫머리에서 호스트가 루프백인지 `URL`로 뽑아 비교하므로 `http://127.0.0.1@example.invalid/mcp`처럼 꾸민 주소도 지나가지 못합니다. 셸에 프록시 변수(`HTTP_PROXY` 등)가 있으면 대상 호스트가 `NO_PROXY`·`no_proxy` 목록에 그대로 들어 있는지도 보고, 없으면 접속 전에 멈춥니다. 아래쯤에서 `<base>` 처리는 앱의 정규식을 내가 다시 적은 것이고 앱 코드를 실행한 것이 아닙니다. 마지막 `tools/call`은 사이드바가 아니라 Step 6의 채팅 경로가 하는 일을 보이려고 내가 덧붙인 호출입니다.
 
 `probe.mjs`로 저장합니다.
 
@@ -1207,12 +1207,12 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(host)) {
   console.error("루프백이 아니어서 멈춥니다:", host);
   process.exit(1);
 }
-// 프록시 변수가 걸려 있으면 NO_PROXY/no_proxy에 루프백이 들어 있어야 한다(없으면 요청이 프록시로 새는 환경일 수 있다).
+// 프록시 변수가 걸려 있으면 NO_PROXY/no_proxy 목록에 이 대상 호스트가 그대로 들어 있어야 한다(없으면 요청이 프록시로 새는 환경일 수 있다).
 const proxyVars = ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy"];
 if (proxyVars.some((k) => process.env[k])) {
   const no = (process.env.NO_PROXY || process.env.no_proxy || "").split(",").map((s) => s.trim());
-  if (!no.includes("127.0.0.1") && !no.includes("localhost")) {
-    console.error("프록시 변수가 있는데 NO_PROXY에 루프백이 없어 멈춥니다");
+  if (!no.includes(host)) {
+    console.error("프록시 변수가 있는데 NO_PROXY 목록에 " + host + "가 없어 멈춥니다");
     process.exit(1);
   }
 }
@@ -1276,6 +1276,12 @@ tools/call structuredContent: {"bill":80,"tip":16}
 snapshot.result: {"content":[{"type":"text","text":"{\"bill\":80,\"tip\":16}"}],"structuredContent":{"bill":80,"tip":16}}
 resources: ui://widget/tip-calculator.html
 --- requests.log
+initialize
+notifications/initialized
+tools/list
+resources/read
+tools/call
+resources/list
 initialize
 notifications/initialized
 tools/list
@@ -1529,23 +1535,31 @@ export async function POST(req: NextRequest) {
 | E2B API | 에이전트 경로(서버) | 샌드박스 만들기, 파일 내용, 명령 | `E2B_API_KEY`를 비움(키가 없으면 SDK가 "API key is required"로 멈춤, 소스로 확인) |
 | 샌드박스 공개 주소 | 서버와 화면 | MCP 호출, 위젯 HTML 안의 자원 | 앱에 옵션이 없음 |
 | `mcp.excalidraw.com` | 서버(요청마다 둘, 사이드바 읽기 하나) | MCP 접속, `tools/list` | 클라이언트 `NEXT_PUBLIC_DEFAULT_MCP_SERVERS=[]` |
-| PostHog·Scarf | 샌드박스 안 `mcp-use` 서버와 `pnpm dev`가 독자 PC에서 띄우는 로컬 `mcp-use` 서버 | 서버 이름, 도구 이름·설명·스키마, `baseUrl`, 그리고 `initialize`·도구 호출·자원 읽기 이벤트(인자 길이·성공 여부 등) | `MCP_USE_ANONYMIZED_TELEMETRY=false`(샌드박스 안에, 로컬에서는 `pnpm dev`를 띄우는 셸에) |
+| PostHog·Scarf | 샌드박스 안 `mcp-use` 서버와 `pnpm dev`가 독자 PC에서 띄우는 로컬 `mcp-use` 서버 | 서버 이름, 도구 이름·설명·스키마, `baseUrl`, 그리고 `initialize`·도구 호출·자원 읽기 이벤트(인자 길이·성공 여부 등) | `MCP_USE_ANONYMIZED_TELEMETRY=false`. 샌드박스 안에는 앱이 환경변수를 넘기는 코드가 없고, 로컬 `pnpm dev`에서는 아래 Turborepo 문단의 제약이 있음 |
 | Segment·Scarf | CopilotKit 런타임(서버, 요청마다 시도, 5% 표본) | 런타임 인스턴스 정보. 같은 런타임에 요청·스트림 이벤트 capture 지점도 있지만 이 앱 경로에서 불리는지는 확인하지 못했습니다 | `COPILOTKIT_TELEMETRY_DISABLED=true` 또는 `DO_NOT_TRACK=1` |
-| Next.js 텔레메트리 | `next` | 익명 사용 통계 | `NEXT_TELEMETRY_DISABLED=1` |
-| Turborepo 텔레메트리 | `turbo`(`pnpm dev`) | 익명 사용 통계(Turborepo 문서, WebFetch 요약: "Collection of telemetry data is optional") | `TURBO_TELEMETRY_DISABLED=1` 또는 `DO_NOT_TRACK=1` |
+| Next.js 텔레메트리 | `next` | 익명 사용 통계 | `NEXT_TELEMETRY_DISABLED=1`(`pnpm dev`로 띄우면 위 엄격 모드 제약) |
+| Turborepo 텔레메트리 | `turbo`(`pnpm dev`) | 익명 사용 통계(Turborepo 문서, WebFetch 요약: "Collection of telemetry data is optional") | `TURBO_TELEMETRY_DISABLED=1` 또는 `DO_NOT_TRACK=1`(turbo 프로세스가 직접 읽는 변수로 보이지만 확인하지 못했습니다) |
+
+**`pnpm dev`에서 끄는 변수가 닿는가.** `pnpm dev`는 `turbo run dev`이고 `turbo.json`에는 `envMode`가 없어 Turborepo 기본인 엄격 모드입니다. Turborepo 문서(https://turborepo.dev/docs/crafting-your-repository/using-environment-variables, WebFetch 요약)는 엄격 모드가 작업에 `turbo.json`의 `env`·`globalEnv`에 적힌 변수만 보이게 거른다고 하고, 거르지 않고 넘기려면 `passThroughEnv`·`globalPassThroughEnv`에 적으라고 합니다. 또 Turborepo는 `.env` 파일을 읽지 않는다고 합니다(프레임워크나 도구가 읽을 일). 이 앱의 `globalEnv`(`generative_ui_agents/ai-mcp-app-builder/turbo.json:3-18`)에는 `MCP_USE_ANONYMIZED_TELEMETRY`도 `NEXT_TELEMETRY_DISABLED`도 `COPILOTKIT_TELEMETRY_DISABLED`도 없습니다. 그러니 셸에 둔 이 변수들이 `pnpm dev`가 띄운 작업에 닿는다는 근거가 없고, 닿지 않을 가능성이 있습니다(turbo를 돌리지 않아 단정은 못 합니다). 로컬 `mcp-use` 서버가 `.env`를 읽는지도 확인하지 않았습니다. 확실한 길은 둘로 읽힙니다. 하나는 아래 안전한 형태처럼 `--filter web`으로 로컬 `mcp-use` 서버를 아예 띄우지 않는 것입니다. 다른 하나는 `turbo.json`에 `"globalPassThroughEnv": ["MCP_USE_ANONYMIZED_TELEMETRY", ...]`를 더하는 것인데, 이것도 실행해 보지 못했습니다.
 
 CopilotKit 런타임 텔레메트리는 `@copilotkit/shared` 1.54.1의 `TelemetryClient`에서 읽었습니다.
 
 ```bash
 cd "$WORK"
-grep -n 'COPILOTKIT_TELEMETRY_DISABLED\|DO_NOT_TRACK\|sampleRate = |analytics-node'\|sampleRate = |analytics-node' pkgs/shared-1.54.1/package/dist/telemetry/telemetry-client.mjs | head -8
+grep -n 'COPILOTKIT_TELEMETRY_DISABLED\|DO_NOT_TRACK\|sampleRate = \|new Analytics' pkgs/shared-1.54.1/package/dist/telemetry/telemetry-client.mjs | head -8
 grep -n 'telemetryClient.capture' pkgs/runtime-1.54.1/package/dist/lib/integrations/nextjs/app-router.mjs
 ```
 
 ```text
-bash: -c: line 2: unexpected EOF while looking for matching `''
-
-(exit 2)
+10:* - COPILOTKIT_TELEMETRY_DISABLED=true or COPILOTKIT_TELEMETRY_DISABLED=1
+11:* - DO_NOT_TRACK=true or DO_NOT_TRACK=1
+14:	return process.env.COPILOTKIT_TELEMETRY_DISABLED === "true" || process.env.COPILOTKIT_TELEMETRY_DISABLED === "1" || process.env.DO_NOT_TRACK === "true" || process.env.DO_NOT_TRACK === "1";
+21:		this.sampleRate = .05;
+28:		this.segment = new Analytics({ writeKey: process.env.COPILOTKIT_SEGMENT_WRITE_KEY || "n7XAZtQCGS2v1vvBy3LgBCv2h3Y8whja" });
+71:		_sampleRate = sampleRate ?? .05;
+72:		if (process.env.COPILOTKIT_TELEMETRY_SAMPLE_RATE) _sampleRate = parseFloat(process.env.COPILOTKIT_TELEMETRY_SAMPLE_RATE);
+74:		this.sampleRate = _sampleRate;
+12:	telemetryClient.capture("oss.runtime.instance_created", getRuntimeInstanceTelemetryInfo(options));
 ```
 
 (직접 확인한 출력입니다.) 앱은 요청마다 `copilotRuntimeNextJSAppRouterEndpoint`를 새로 부르므로 이 `capture`도 요청마다 시도됩니다. Next.js의 변수는 Next.js 문서(https://nextjs.org/telemetry)에서 읽었습니다.
@@ -1559,11 +1573,11 @@ Copy-Item .env.example .env
 pnpm dev
 ```
 
-내가 읽은 바로 이 명령을 그대로 쓰기 전에 알아 둘 것이 다섯입니다. (1) `pnpm dev`는 터보가 세 앱의 `dev`를 한꺼번에 띄웁니다. 로컬 `mcp-use` 서버도 그 하나이고 위 PostHog·Scarf 전송과 사용자 ID 파일이 독자 PC에서 생깁니다. 웹은 `next dev --turbopack`이고 Next 문서의 `-H` 기본값이 `0.0.0.0`이어서 모든 네트워크 인터페이스에 열립니다. Three.js 샘플 서버는 코드에서 `createMcpExpressApp({ host: "0.0.0.0" })`와 `cors()`로 열립니다(`generative_ui_agents/ai-mcp-app-builder/apps/threejs-server/server-utils.ts:28-29`). (2) `.env.example`을 그대로 복사하면 Step 3에서 본 `E2B_REPO_URL` 어긋남(`generative_ui_agents/ai-mcp-app-builder/.env.example:12-13`)이 그대로 따라옵니다. (3) `OPENAI_API_KEY`가 비면 `createOpenAI`가 키 없이 만들어지고 첫 요청에서 실패합니다. (4) 서버 쪽 `DEFAULT_MCP_SERVERS=[]`는 빈 목록이 아니라 Excalidraw로 되돌아갑니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/mcp-defaults.ts:29`). 비우려면 클라이언트 쪽 `NEXT_PUBLIC_DEFAULT_MCP_SERVERS=[]`를 씁니다. (5) 루프백으로만 열고 텔레메트리를 끄려면 웹 앱만, 이렇게 띄우는 것이 내가 읽은 범위의 안전한 형태입니다. `--filter web`이라 로컬 `mcp-use` 서버와 Three.js 샘플 서버가 뜨지 않고, `-H 127.0.0.1`이 같은 네트워크의 접근을 막습니다. 이것도 **실행해 보지 못했습니다**.
+내가 읽은 바로 이 명령을 그대로 쓰기 전에 알아 둘 것이 다섯입니다. (1) `pnpm dev`는 터보가 세 앱의 `dev`를 한꺼번에 띄웁니다. 로컬 `mcp-use` 서버도 그 하나이고 위 PostHog·Scarf 전송과 사용자 ID 파일이 독자 PC에서 생깁니다. 웹은 `next dev --turbopack`이고 위에서 본 대로 `0.0.0.0`에 열립니다. Three.js 샘플 서버는 코드에서 `createMcpExpressApp({ host: "0.0.0.0" })`와 `cors()`로 열립니다(`generative_ui_agents/ai-mcp-app-builder/apps/threejs-server/server-utils.ts:28-29`). (2) `.env.example`을 그대로 복사하면 Step 3에서 본 `E2B_REPO_URL` 어긋남(`generative_ui_agents/ai-mcp-app-builder/.env.example:12-13`)이 그대로 따라옵니다. (3) `OPENAI_API_KEY`가 비면 `createOpenAI`가 키 없이 만들어지고 첫 요청에서 실패합니다. (4) 서버 쪽 `DEFAULT_MCP_SERVERS=[]`는 빈 목록이 아니라 Excalidraw로 되돌아갑니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/lib/mcp-defaults.ts:29`). 비우려면 클라이언트 쪽 `NEXT_PUBLIC_DEFAULT_MCP_SERVERS=[]`를 씁니다. (5) 루프백으로만 열고 텔레메트리를 끄려면 웹 앱만, 이렇게 띄우는 것이 내가 읽은 범위의 안전한 형태입니다. `--filter web`이라 turbo를 거치지 않고(그래서 위 변수들이 그대로 닿는다고 읽힙니다. `TURBO_TELEMETRY_DISABLED`는 필요 없습니다) 로컬 `mcp-use` 서버와 Three.js 샘플 서버가 뜨지 않고, `-H 127.0.0.1`이 같은 네트워크의 접근을 막습니다. 이것도 **실행해 보지 못했습니다**.
 
 ```bash
 cd <저장소>/generative_ui_agents/ai-mcp-app-builder
-NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true TURBO_TELEMETRY_DISABLED=1 NEXT_PUBLIC_DEFAULT_MCP_SERVERS='[]' \
+NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_PUBLIC_DEFAULT_MCP_SERVERS='[]' \
   pnpm --filter web dev -H 127.0.0.1 -p 58147
 ```
 
@@ -1575,9 +1589,9 @@ NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true TURBO_TELEMETRY_DIS
 
 ## 요청 한 건이 흐르는 과정
 
-"팁 계산기 위젯 만들어 줘" 한 줄이 위젯이 되어 뜨기까지를 시간 순서로 그렸습니다. 길이 길어서 스물세 장으로 나눴고, 경계는 배우가 바뀌는 곳입니다. 에이전트 경로가 서로 말하는 상대가 한 그림에 둘을 넘으면 선이 다른 상대의 수명선과 라벨을 지나는 것을 피할 수 없어서(순서를 모두 시험했습니다) 한 장에는 에이전트 경로의 상대가 둘까지만 두었습니다.
+"팁 계산기 위젯 만들어 줘" 한 줄이 위젯이 되어 뜨기까지를 시간 순서로 그렸습니다. 길이 길어서 서른 장으로 나눴고, 경계는 배우가 바뀌는 곳입니다. 에이전트 경로가 서로 말하는 상대가 한 그림에 둘을 넘으면 선이 다른 상대의 수명선과 라벨을 지나는 것을 피할 수 없어서(순서를 모두 시험했습니다) 한 장에는 에이전트 경로의 상대가 둘까지만 두었습니다.
 
-먼저 밝힙니다. 모델이 도구를 부르는 순서는 앱 지침이 권하는 순서(Workflow A)입니다. 모델이 그대로 따랐다는 관찰이 아닙니다. 그리고 그림에 없는 것이 하나 있습니다. 화면 행동이 끼면 에이전트 경로로 요청이 한 번 더 가고(Step 3), 그 후속 요청마다 첫 장의 열네 메시지(서버 두 번 접속과 닫기)가 처음부터 되풀이됩니다. 이 되풀이는 첫 장에만 그렸고, 아래 후속 요청 장(`add_mcp_server`·`set_active_workspace`·`refresh_mcp_tools`·`show_mcp_test_prompts` 뒤)은 모델 호출부터 시작합니다. 모델이 화면 행동 둘을 한 단계에 묶어 부르면 요청이 그만큼 줄어듭니다. 어느 쪽인지는 모델이 정합니다. 지침의 열 단계 가운데 10번(사용자에게 알리는 마지막 답)까지 그렸습니다.
+먼저 밝힙니다. 모델이 도구를 부르는 순서는 앱 지침이 권하는 순서(Workflow A)입니다. 모델이 그대로 따랐다는 관찰이 아닙니다. 그리고 그림에 없는 것이 하나 있습니다. 화면 행동이 끼면 에이전트 경로로 요청이 한 번 더 가고(Step 3), 그 후속 요청마다 첫 장의 `rt`↔MCP 열두 메시지(서버 두 번 접속과 닫기)와 에이전트 만들기가 처음부터 되풀이됩니다. 코드의 `POST`는 `/api/mastra-agent`로 오는 모든 요청에서 이 준비를 먼저 합니다. 채팅 안 위젯 쪽의 세 요청(사용자의 새 메시지, 위젯 HTML 가져오기, 위젯의 도구 호출)은 이 준비를 요청마다 그렸습니다. 화면 행동 뒤의 후속 요청 네 번(`add_mcp_server`·`set_active_workspace`·`refresh_mcp_tools`·`show_mcp_test_prompts` 뒤)은 그리지 않고 여기에 이름으로 적습니다. 그 요청들의 준비도 같은 열두 메시지이지만 서버 목록이 `add_mcp_server` 뒤에는 달라서 `tools/list`가 새 서버에도 갑니다. 그림은 모델 호출부터 시작합니다. 모델이 화면 행동 둘을 한 단계에 묶어 부르면 요청이 그만큼 줄어듭니다. 어느 쪽인지는 모델이 정합니다. 지침의 열 단계 가운데 10번(사용자에게 알리는 마지막 답)까지 그렸습니다.
 
 첫 장은 서버가 요청 하나를 받아 모델을 부르기 전까지입니다. 같은 서버에 두 번 붙고(첫 연결은 UI 도구를 찾고 곧 닫고, 둘째는 모델에게 줄 도구를 얻음), 둘째 연결은 `return` 직후 `finally`가 닫습니다. 닫는 때는 모델 호출과 겹칠 수 있어서 이 메시지를 이 자리에 둔 것은 코드 위치(응답 객체를 만든 직후)를 따른 것입니다.
 
@@ -1635,29 +1649,55 @@ NEXT_TELEMETRY_DISABLED=1 COPILOTKIT_TELEMETRY_DISABLED=true TURBO_TELEMETRY_DIS
 
 ![마지막 답](diagrams/extra-answer.svg)
 
-열일곱째 장부터는 채팅 안의 위젯입니다. 사용자가 만든 도구를 써 보라고 하면 모델이 그 도구(`서버ID_이름`)를 부르는 길입니다. 이 호출은 에이전트의 일반 도구 호출과 같고, 모델의 호출 조각이 오자마자 서버가 `TOOL_CALL_START`·`TOOL_CALL_ARGS`·`TOOL_CALL_END`를 화면에 흘립니다(`@ag-ui/mastra`의 `onToolCallPart`).
+열일곱째 장부터는 채팅 안의 위젯입니다. 사용자가 만든 도구를 써 보라고 하면 모델이 그 도구(`서버ID_이름`)를 부르는 길입니다. 새 사용자 메시지도 `/api/mastra-agent`로 가는 요청이므로 서버가 준비부터 합니다. 먼저 사용자의 입력과 요청입니다.
 
-![채팅에서 도구 호출](diagrams/extra-chatrun.svg)
+![채팅 요청](diagrams/extra-chatrun.svg)
 
-열여덟째 장에서 서버가 MCP 서버를 부르고, 실행이 끝난 뒤 결과를 `TOOL_CALL_RESULT`로 흘리고(`onToolResultPart`) `ACTIVITY_SNAPSHOT`을 하나 더 냅니다. 이 이벤트가 위젯을 그리라는 신호입니다.
+이 요청의 서버 준비입니다. 첫 장과 같은 열두 메시지를 두 장으로 나눠 그렸습니다. 서버마다 UI 도구를 찾는 연결을 열고 닫습니다.
+
+![새 메시지 요청의 준비 앞부분](diagrams/extra-prep-chat-a.svg)
+
+이어서 모델용 연결, 에이전트·런타임 만들기, `finally`에서 닫기입니다.
+
+![새 메시지 요청의 준비 뒷부분](diagrams/extra-prep-chat-b.svg)
+
+준비가 끝나면 모델이 불립니다. 모델의 호출 조각이 오자마자 서버가 `TOOL_CALL_START`·`TOOL_CALL_ARGS`·`TOOL_CALL_END`를 화면에 흘립니다(`@ag-ui/mastra`의 `onToolCallPart`).
+
+![모델 호출과 도구 호출 이벤트](diagrams/extra-chatmodel.svg)
+
+서버가 MCP 서버를 부르고, 실행이 끝난 뒤 결과를 `TOOL_CALL_RESULT`로 흘리고(`onToolResultPart`) `ACTIVITY_SNAPSHOT`을 하나 더 냅니다. 이 이벤트가 위젯을 그리라는 신호입니다.
 
 ![도구 실행과 활동 이벤트](diagrams/extra-chattool.svg)
 
-열아홉째 장은 같은 때 모델에게 도구 결과가 가고 마지막 글이 나오는 길입니다.
+같은 때 모델에게 도구 결과가 가고 마지막 글이 나옵니다. 이 장의 마지막 메시지가 위젯 HTML을 가져오는 새 요청입니다. 렌더러가 서버에서 HTML을 받으려고 `forwardedProps`에 요청을 실어 보냅니다.
 
-![채팅 도구 호출의 끝](diagrams/extra-chatend.svg)
+![채팅 도구 호출의 끝과 HTML 요청](diagrams/extra-chatend.svg)
 
-스무째 장은 위젯 HTML을 가져오는 길입니다. 렌더러는 서버에서 HTML을 받으려고 `forwardedProps`에 요청을 실은 새 실행을 보냅니다. 서버는 이것을 에이전트 없이 MCP 요청으로 대신 처리하고 `RUN_FINISHED`의 `result`에 담아 돌려줍니다. 연결은 요청마다 새로 맺고 `finally`에서 닫습니다.
+이 요청도 서버가 준비부터 합니다.
+
+![HTML 요청의 준비 앞부분](diagrams/extra-prep-read-a.svg)
+
+![HTML 요청의 준비 뒷부분](diagrams/extra-prep-read-b.svg)
+
+준비 뒤에 미들웨어가 `RUN_STARTED`를 내고(코드에서 이 이벤트는 `handleRequest` 안 미들웨어가 내므로 준비 다음입니다), 에이전트 없이 MCP 요청으로 대신 처리해 `RUN_FINISHED`의 `result`에 담아 돌려줍니다. 연결은 이 처리에서도 새로 맺고 `finally`에서 닫습니다.
 
 ![위젯 HTML 가져오기](diagrams/extra-chatread.svg)
 
-스물한째 장은 바깥 iframe과 안쪽 위젯이 만나는 길입니다.
+바깥 iframe과 안쪽 위젯이 만나는 길입니다.
 
 ![iframe 띄우기](diagrams/extra-chatframe.svg)
 
-스물둘째·스물셋째 장은 위젯이 서버를 부르는 길입니다. 위젯의 `tools/call`이 렌더러를 거쳐 다시 에이전트 경로에 `forwardedProps` 요청으로 가고, 서버가 MCP 서버에 대신 붙어 결과를 돌려줍니다. 이 길에는 모델이 끼지 않습니다. 사용자가 위젯의 버튼을 누를 때마다 서버 요청이 한 번씩 가고, 요청마다 연결을 새로 맺고 닫습니다.
+위젯이 서버를 부르는 길입니다. 위젯의 `tools/call`이 렌더러를 거쳐 에이전트 경로에 `forwardedProps` 요청으로 갑니다. 이 길에는 모델이 끼지 않습니다.
 
 ![위젯의 도구 호출 요청](diagrams/extra-chatcall.svg)
+
+이 요청도 서버가 준비부터 합니다. 사용자가 위젯의 버튼을 누를 때마다 이 모든 것이 되풀이됩니다.
+
+![도구 호출 요청의 준비 앞부분](diagrams/extra-prep-proxy-a.svg)
+
+![도구 호출 요청의 준비 뒷부분](diagrams/extra-prep-proxy-b.svg)
+
+준비 뒤에 서버가 `RUN_STARTED`를 내고 MCP 서버에 대신 붙어 결과를 돌려줍니다. 요청마다 연결을 새로 맺고 닫습니다.
 
 ![서버가 대신 부르는 길](diagrams/extra-chatproxy.svg)
 

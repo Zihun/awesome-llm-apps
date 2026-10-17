@@ -5,7 +5,6 @@ sb: "샌드박스 MCP 서버" { class: ours }
 rt: "에이전트 경로 (mastra-agent)" { class: ours }
 ui: "브라우저 (렌더러)" { class: ours }
 
-ui -> rt: "POST forwardedProps: resources/read"
 rt -> ui: "RUN_STARTED"
 rt -> sb: "initialize"
 sb -> rt: "initialize 응답"

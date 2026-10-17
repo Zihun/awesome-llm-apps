@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+mcp: "MCP 서버들 (헤더 목록)" { class: ext }
+
+rt -> mcp: "initialize (모델용 MCPClient 연결)"
+mcp -> rt: "initialize 응답"
+rt -> mcp: "notifications/initialized"
+rt -> mcp: "tools/list"
+mcp -> rt: "도구 (서버ID_이름)"
+rt -> rt: "Agent·MastraAgent·CopilotRuntime 만들기"
+rt -> mcp: "return 직후 finally: 연결 닫기"

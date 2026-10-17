@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 (CopilotKit)" { class: ours }
+rt: "에이전트 경로 (mastra-agent)" { class: ours }
+llm: "OpenAI gpt-5.5" { class: ext }
+
+rt -> llm: "지침 + 도구 + 메시지"
+llm -> rt: "서버ID_tip-calculator 호출"
+rt -> ui: "TOOL_CALL_START · ARGS · END"
