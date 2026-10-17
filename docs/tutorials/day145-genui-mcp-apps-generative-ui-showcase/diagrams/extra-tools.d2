@@ -9,11 +9,12 @@ app: "항공권 앱\n(iframe)" { class: ours }
 mcp: "MCP 서버 도구 16개" {
   class: group
   label.near: bottom-center
-  ui: "UI 도구 4개\nsearch-flights\nsearch-hotels\ncreate-portfolio\ncreate-board" { class: ours }
-  helper: "도우미 12개\nselect-flight ·\nbook-flight ·\nexecute-trade ·\nmove-card 등" { class: ours }
+  ui: "UI 도구 4개\n(search-flights 등)" { class: ours }
+  helper: "도우미 12개\n(select-flight 등)" { class: ours }
 }
 
 llm -> rt: "tool_call\n(4개 중 하나)"
 app -> host: "tools/call\n(이름 아무거나)"
 host -> rt: "__proxiedMCP\nRequest"
-rt -> mcp: "tools/call"
+rt -> mcp.ui: "tools/call\n(모델 경로 · 프록시)"
+rt -> mcp.helper: "tools/call\n(프록시만)"

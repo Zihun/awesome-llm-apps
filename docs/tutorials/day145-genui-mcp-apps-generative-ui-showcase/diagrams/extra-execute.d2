@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "브라우저 화면\n(CopilotKit)" { class: ours }
+rt: "런타임 +\n미들웨어" { class: ours }
+mcp: "MCP 서버\n(:3001)" { class: ours }
+
+rt -> mcp: "initialize\n(+ initialized 알림)"
+mcp -> rt: "세션 아이디\n(HTML 네 장을 새로 읽음)"
+rt -> mcp: "tools/call\nsearch-flights"
+mcp -> rt: "structuredContent\n(항공편 5~8개)"
+rt -> ui: "TOOL_CALL_RESULT\n(글 요약)"
+rt -> ui: "ACTIVITY_SNAPSHOT\nmcp-apps"
+rt -> ui: "RUN_FINISHED\n(스트림이 끝난 뒤)"

@@ -1,6 +1,6 @@
 # Day 145 · ✈️ MCP Apps Generative UI Showcase
 
-> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 앱 화면도 서버도 실행하지 않은 날입니다. 소스와 내려받은 패키지 압축 파일을 읽고, 읽은 내용을 `grep`과 작은 Node 스크립트로 확인합니다. 앱이 보내는 크기 알림 이름(`size-change`)이 읽은 호스트가 듣는 이름(`size-changed`)과 달라 보이는데, 화면으로 보지는 못했습니다(Step 5) · 예상 소요 125분(실행할 앱이 없어 손으로 돌려 보는 일은 적지만, 읽어야 하는 소스가 앱 파일 여섯 개에 패키지 셋의 소스맵까지 이어지고, 같은 요청이 브라우저·런타임·MCP 서버를 세 번씩 오가서 한 줄씩 따라가는 데 시간이 듭니다) · API 비용 대략 이 문서의 따라 하기는 $0(앱을 띄우지 않으니 모델은 한 번도 부르지 않습니다). 진짜 키로 앱을 돌린다면 질문 한 번에 모델 호출이 한 번이고 어림으로 $0.01~0.02입니다(⚠ 추정, 아래 Step 4) · 원본 앱: `generative_ui_agents/mcp-apps-generative-ui-showcase`
+> 볼륨 12 🖼️ Generative UI · 난이도 ★★★ ⚠ 앱 화면도 서버도 실행하지 않은 날입니다. 소스와 내려받은 패키지 압축 파일을 읽고, 읽은 내용을 `grep`과 작은 Node 스크립트로 확인합니다. 앱이 보내는 크기 알림 이름(`size-change`)이 읽은 호스트가 듣는 이름(`size-changed`)과 달라 보이는데, 화면으로 보지는 못했습니다(Step 5) · 예상 소요 165분(실행할 앱이 없어 손으로 돌려 보는 일은 적지만, 읽어야 하는 소스가 앱 파일 여섯 개에 패키지 여럿의 소스맵까지 이어지고, 같은 요청이 브라우저·런타임·MCP 서버를 세 번씩 오가서 한 줄씩 따라가야 하며, 마지막 Step에서 바깥으로 나가는 길을 막는 확인 스크립트를 저장해 돌려 보고 읽기 때문입니다) · API 비용 대략 이 문서의 따라 하기는 $0(앱을 띄우지 않으니 모델은 한 번도 부르지 않습니다). 진짜 키로 앱을 돌린다면 질문 한 번에 모델 호출이 한 번이고 어림으로 $0.01~0.05입니다(⚠ 추정, 아래 Step 4) · 원본 앱: `generative_ui_agents/mcp-apps-generative-ui-showcase`
 
 ## 오늘 만들 것
 
@@ -12,9 +12,9 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-그림에서 사용자는 뺐습니다. 사용자와 주고받는 것은 시퀀스 그림이 맡습니다. 런타임에서 MCP 서버로 가는 화살표는 서버 묶음 전체로 갑니다. 묶음 안의 도구·데이터·메모리 관계는 Step 2·3이 글로 보여 줍니다. 앱 iframe은 브라우저 안에 있지만 믿는 범위가 달라 묶음 밖에 그렸습니다.
+그림이 한 장에 담기 어려워 보조 구조 그림이 따로 있습니다. 사용자와 앱의 관계는 Step 5의 `extra-sandbox`, MCP 서버 안의 관계는 Step 3의 `extra-server`, 모델 경로와 iframe 경로는 Step 4의 `extra-tools`, 바깥으로 나가는 요청은 Step 7의 `extra-outbound`입니다. 런타임에서 MCP 서버로 가는 화살표는 서버 묶음 전체로 갑니다. 앱 iframe은 브라우저 안에서 도는 것이지만 믿는 범위가 달라 묶음 밖에 그렸습니다.
 
-직접 읽어서 알게 된 것이 여덟입니다. 첫째, 모델에게 보이는 도구는 MCP 서버의 도구 열여섯 가운데 `ui/resourceUri`가 달린 네 개뿐입니다. 시스템 프롬프트가 이름을 대는 도우미 도구 열둘은 모델에게 주어지지 않고 iframe만 부릅니다(Step 4). 둘째, 모델은 질문 한 번에 한 번 불리고, 마법사 안의 클릭은 모델을 거치지 않고 런타임의 "프록시 요청" 길로 MCP 서버에 갑니다(Step 4·6). 셋째, 미들웨어는 MCP 연결을 요청마다 새로 맺고 닫습니다. 질문 하나에 두 번(앱을 띄우는 자원 읽기까지 세 번), 서버는 연결마다 HTML 네 장을 디스크에서 다시 읽습니다(Step 2·4). 넷째, 항공편·호텔·종목은 모두 지어낸 데이터이고 서버 메모리에만 있습니다(Step 3). 다섯째, iframe의 `sandbox` 속성은 `allow-scripts allow-same-origin`을 함께 켜 둡니다. 사양은 호스트와 샌드박스의 출처가 달라야 한다고 적는데, 이 구현은 `srcdoc`으로 만들어 출처가 같을 것으로 읽힙니다(Step 5). 여섯째, `postMessage`는 양쪽 모두 `"*"`로 보내고 `event.origin`을 보지 않으며, 보낸 창이 맞는지(`event.source`)만 봅니다(Step 5·6). 일곱째, 앱이 보내는 크기 알림 이름과 호스트가 듣는 이름이 한 글자 다릅니다(Step 5). 여덟째, MCP 서버는 모든 네트워크 인터페이스에 열리고 CORS가 `*`이며 인증이 없습니다(Step 7).
+직접 읽어서 알게 된 것이 여덟입니다. 첫째, 모델에게 보이는 도구는 MCP 서버의 도구 열여섯 가운데 `ui/resourceUri`가 달린 네 개뿐입니다. 시스템 프롬프트가 이름을 대는 도우미 도구 열둘은 모델에게 주어지지 않고 iframe만 부릅니다(Step 4). 둘째, 모델은 질문 한 번에 한 번 불리고, 마법사 안의 클릭은 모델을 거치지 않고 런타임의 "프록시 요청" 길로 MCP 서버에 갑니다(Step 4·6). 셋째, 미들웨어는 MCP 연결을 요청마다 새로 맺고 닫습니다. 질문 하나에 두 번(앱을 띄우는 자원 읽기까지 세 번), 서버는 연결마다 HTML 네 장을 디스크에서 다시 읽습니다(Step 2·4). 넷째, 항공편·호텔·종목은 모두 지어낸 데이터이고 서버 메모리에만 있습니다(Step 3). 다섯째, iframe의 `sandbox` 속성은 `allow-scripts allow-same-origin`을 함께 켜 둡니다. 사양은 호스트와 샌드박스의 출처가 달라야 한다고 적는데, 이 구현은 `srcdoc`으로 만들어 HTML 규격상 호스트 페이지와 같은 출처가 되고, 안쪽 앱의 스크립트는 채팅 페이지에도 닿습니다(Step 5). 여섯째, `postMessage`는 양쪽 모두 `"*"`로 보내고 `event.origin`을 보지 않습니다. 호스트와 프록시는 보낸 창(`event.source`)만 보고, 앱은 그것도 보지 않습니다(Step 5·6). 일곱째, 앱이 보내는 크기 알림 이름과 호스트가 듣는 이름이 한 글자 다릅니다(Step 5). 여덟째, MCP 서버는 모든 네트워크 인터페이스에 열리고 CORS가 `*`이며 인증이 없고, 설치와 화면 검사창까지 합치면 바깥으로 나가는 요청이 다섯 갈래입니다(Step 7).
 
 ## 사전 준비
 
@@ -48,9 +48,8 @@
 
 **목적.** 이 앱이 프로세스 둘(Next.js 3000, MCP 서버 3001)이라는 것을 확인하고, 앱 README의 설치 명령을 실행하지 않는 까닭을 밝히고, 읽을 세 패키지의 소스를 꺼냅니다.
 
-**할 일.** 원본 앱 README가 알려 주는 실행 순서는 이렇습니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/README.md:45-55`).
+**할 일.** 원본 앱 README가 알려 주는 실행 순서는 이렇습니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/README.md:46-54`, 앞뒤의 코드 펜스 줄은 뺐습니다).
 
-```bash
 ```bash
 # Terminal 1: Build and run MCP Server
 cd mcp-server
@@ -62,9 +61,8 @@ npm run dev
 npm run dev
 # Frontend at http://localhost:3000
 ```
-```
 
-이 문서는 위 명령도, 그 앞의 `npm install`도 실행하지 않았습니다. 까닭은 셋입니다. 루트에는 `pnpm-lock.yaml`만 있고 `package-lock.json`이 없어서 `npm install`은 잠금 없이 새로 풉니다. 의존성이 많습니다. `pnpm-lock.yaml`의 `packages:` 절은 788개 항목(제가 센 값)이고 `mcp-server/package-lock.json`은 176개입니다. 그중 `esbuild`(0.27.2)는 `hasInstallScript`가 켜져 있어 설치 때 스크립트가 돕니다. 그리고 `npm run build`가 부르는 `build:app`(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/package.json:17`)은 `rm -rf dist && BUILD_APP=flights-app vite build`처럼 POSIX 셸 문법이라, npm이 Windows에서 스크립트를 기본으로 `cmd.exe`에 넘기므로(npm 문서의 `script-shell`) Git Bash로 npm을 불러도 안 맞을 것으로 읽힙니다. 실행하지 않아 확인하지는 못했습니다.
+이 문서는 위 명령도, 그 앞의 `npm install`도 실행하지 않았습니다. 까닭은 셋입니다. 루트에는 `pnpm-lock.yaml`만 있고 `package-lock.json`이 없어서 `npm install`은 잠금 없이 새로 풉니다. 의존성이 많습니다. `pnpm-lock.yaml`의 `packages:` 절은 788개 항목(제가 센 값)이고 `mcp-server/package-lock.json`은 176개입니다. 그중 `esbuild`(0.27.2)는 `hasInstallScript`가 켜져 있어 설치 때 스크립트가 돌고, 루트 쪽에서는 `@copilotkit/react-core`·`@copilotkit/runtime`이 끌어오는 `@scarf/scarf` 1.4.0의 `postinstall`(`node ./report.js`)이 `scarf.sh`로 설치 통계를 보냅니다(소스로 확인, 끄는 변수는 Step 7). 그리고 `npm run build`가 부르는 `build:app`(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/package.json:17`)은 `rm -rf dist && BUILD_APP=flights-app vite build`처럼 POSIX 셸 문법입니다. npm 문서(`script-shell` 설정)의 원문은 기본값이 POSIX에서 `/bin/sh`, Windows에서 `cmd.exe`라고 적으므로, Windows에서는 Git Bash 안에서 `npm run`을 불러도 이 줄이 `cmd.exe`에서 돌아 `BUILD_APP=…`에서 막힐 것으로 읽힙니다. 실행하지 않아 확인하지는 못했습니다. 처방은 Step 7에 있습니다.
 
 이제 읽을 패키지를 받습니다. `<저장소>`는 이 저장소를 받은 경로입니다. 저장소 밖 아무 폴더에서 시작합니다.
 
@@ -211,9 +209,11 @@ grep -c 'mimeType: "text/html+mcp"' $APP/mcp-server/server.ts
 
 **목적.** 이 앱의 항공권·호텔·종목이 실제 데이터가 아니라는 것과 어디에 사는지를 확인합니다.
 
-**할 일.** `flights.ts`의 머리 주석이 "mock airport/airline data"라고 밝힙니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:1-4`). 항공편은 검색할 때마다 지어집니다. 편수는 5~8개 무작위이고, 항공사는 여섯을 돌려 가며 고르고, 편명 번호·가격(±20%)·경유 횟수·남은 좌석도 `Math.random()`입니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:405-413`). 그래서 같은 질문을 두 번 하면 다른 항공편이 나옵니다. 좌석 배치는 항공편 아이디를 씨앗으로 하는 난수라 같은 편에서는 같습니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:489-537`). 검색과 예약은 모듈 안의 `Map` 둘에 쌓이고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:176-177`), 예약이 끝나면 그 검색은 지워집니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:653`). 결제는 어디에도 없습니다. 서버 프로세스가 죽으면 모두 사라집니다.
+**할 일.** `flights.ts`의 머리 주석이 "mock airport/airline data"라고 밝힙니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:1-4`). 항공편은 검색할 때마다 지어집니다. 편수는 5~8개 무작위이고, 항공사는 여섯을 돌려 가며 고르고, 편명 번호·경유 횟수·남은 좌석도 `Math.random()`입니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:405-413`). 가격은 비행시간에 비례하는 값에 ±20% 난수를 곱합니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:364-365`). 그래서 같은 질문을 두 번 하면 다른 항공편이 나옵니다. 좌석 배치는 항공편 아이디를 씨앗으로 하는 난수라 같은 편에서는 같습니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:489-537`). 검색과 예약은 모듈 안의 `Map` 둘에 쌓이고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:176-177`), 예약이 끝나면 그 검색은 지워집니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:653`). 결제는 어디에도 없습니다. 서버 프로세스가 죽으면 모두 사라집니다.
 
-서버는 포트폴리오와 칸반 보드도 "세션별로 저장한다"고 주석을 달지만(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:66-70`) 저장소는 `Map` 하나이고 키는 포트폴리오·보드 아이디입니다. MCP 세션과 무관합니다. 연결마다 세션이 새로 생겨도 데이터가 이어지는 까닭이 이것입니다(Step 4).
+서버는 포트폴리오와 칸반 보드도 "세션별로 저장한다"고 주석을 달지만(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:66-70`) 저장소는 `Map` 하나이고 키는 포트폴리오·보드 아이디입니다. MCP 세션과 무관합니다. 연결마다 세션이 새로 생겨도 데이터가 이어지는 까닭이 이것입니다(Step 4). 서버 안의 관계는 아래 그림입니다. `server.ts`가 데이터 파일의 함수를 부르고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:26-31`), 데이터 파일이 자기 `Map`에 쌓고, `server.ts`가 포트폴리오·보드용 `Map` 둘을 따로 가집니다.
+
+![MCP 서버 안의 관계](diagrams/extra-server.svg)
 
 데이터의 수는 원본 README가 적은 숫자(공항 15·도시 10·호텔 30·종목 18)와 맞는지 셉니다. 아래 스크립트를 저장해 돌립니다.
 
@@ -294,7 +294,7 @@ const determineModel = () => {
 );
 ```
 
-`MCPAppsMiddleware`(0.0.3)의 `run`은 요청이 올 때마다 MCP 서버에 붙어 `tools/list`를 받고, `_meta["ui/resourceUri"]`가 문자열인 도구만 남겨(`hasUIResource`) 모델에게 가는 도구 목록에 더합니다. 이 앱이 `page.tsx`에서 프런트엔드 도구를 따로 등록하지 않으므로(소스로 확인) 모델의 도구는 `search-flights`·`search-hotels`·`create-portfolio`·`create-board` 넷이 전부입니다. 도우미 열둘은 모델에게 보이지 않고, 시스템 프롬프트가 이름을 대고 있어도 모델이 부를 수 없습니다. 모델이 그 넷 가운데 하나를 부르면, 미들웨어는 모델의 스트림이 끝난 뒤에 그 도구 호출에 결과가 없는 것을 찾아 직접 MCP 서버에 `tools/call`을 하고, 두 이벤트를 만들어 냅니다. 글로 된 결과(`TOOL_CALL_RESULT`)와 `activityType: "mcp-apps"`인 `ACTIVITY_SNAPSHOT`입니다. 스냅숏의 내용은 도구 결과, `resourceUri`, 서버 해시, 모델이 준 인자(`toolInput`)입니다. HTML은 싣지 않고 주소만 싣습니다. 모델이 보는 길과 iframe이 부르는 길이 어디서 갈라지는지는 아래 그림입니다.
+`MCPAppsMiddleware`(0.0.3)의 `run`은 요청이 올 때마다 MCP 서버에 붙어 `tools/list`를 받고, `_meta["ui/resourceUri"]`가 문자열인 도구만 남겨(`hasUIResource`) 모델에게 가는 도구 목록에 더합니다. 이 앱이 `page.tsx`에서 프런트엔드 도구를 따로 등록하지 않으므로(소스로 확인) 모델의 도구는 `search-flights`·`search-hotels`·`create-portfolio`·`create-board` 넷이 전부입니다. 도우미 열둘은 모델에게 보이지 않고, 시스템 프롬프트가 이름을 대고 있어도 모델이 부를 수 없습니다. 모델이 그 넷 가운데 하나를 부르면, 미들웨어는 모델이 내보내는 이벤트(`RUN_STARTED`, 도구 호출의 시작·인자·끝)를 그대로 브라우저로 넘기고 `RUN_FINISHED`만 붙잡아 둡니다. 스트림이 끝나면 그 도구 호출에 결과가 없는 것을 찾아 직접 MCP 서버에 `tools/call`을 하고, 이벤트 둘을 따로 내보낸 뒤 붙잡아 둔 `RUN_FINISHED`를 마지막에 보냅니다. 글로 된 결과(`TOOL_CALL_RESULT`)와 `activityType: "mcp-apps"`인 `ACTIVITY_SNAPSHOT`입니다. 스냅숏의 내용은 도구 결과, `resourceUri`, 서버 해시, 모델이 준 인자(`toolInput`)입니다. HTML은 싣지 않고 주소만 싣습니다. 모델이 보는 길과 iframe이 부르는 길이 어디서 갈라지는지는 아래 그림입니다. 질문 한 번이 지나는 순서는 아래 "요청 한 건이 흐르는 과정"의 세 장입니다.
 
 ![모델과 iframe이 부르는 도구](diagrams/extra-tools.svg)
 
@@ -322,9 +322,9 @@ grep -n 'hasUIResource\|new Client(\|client.connect\|case "\|MCP method not allo
 601:        .filter(hasUIResource)
 ```
 
-읽을 곳은 세 가지입니다. `new Client(`가 세 군데(289·468·579행)이고 모두 바로 뒤에서 `client.connect`를 하고 `finally`에서 닫으므로 MCP 연결은 쓰일 때마다 새로 맺고 닫습니다. 목록 받기(579행 아래)와 도구 실행(468행 아래)이 질문 한 번에 연결을 둘 쓰고, 뒤에 나오는 자원 읽기(289행 아래, Step 5)가 하나 더입니다. 601행이 필터이고, 308~323행의 `case`들이 iframe이 프록시로 보낼 수 있는 메서드의 전부입니다(`tools/call`·`resources/read`·`notifications/message`·`ping`). 허용하는 **도구 이름**을 거르는 곳은 없습니다. iframe은 UI 도구가 아닌 도우미 열둘도, UI 도구도 이름만 알면 부를 수 있습니다.
+읽을 곳은 세 가지입니다. `new Client(`가 세 군데(289·468·579행)이고 모두 바로 뒤에서 `client.connect`를 하고 `finally`에서 닫으므로 MCP 연결은 쓰일 때마다 새로 맺고 닫습니다. 목록 받기(579행 아래)와 도구 실행(468행 아래)이 질문 한 번에 연결을 둘 쓰고, 뒤에 나오는 자원 읽기(289행 아래, Step 5)가 하나 더입니다. 601행이 필터이고, 308~323행의 `case`들이 `__proxiedMCPRequest`로 미들웨어에 들어올 수 있는 메서드의 전부입니다(`tools/call`·`resources/read`·`notifications/message`·`ping`). 이 가운데 호스트가 iframe의 요청으로 넘기는 것은 `tools/call` 하나입니다(`resources/read`는 호스트가 자기 일로 쓰고, 그 밖의 메서드는 "Method not found"를 받습니다, Step 5). 그러나 `/api/copilotkit`에 이 필드를 직접 실어 보내는 쪽에는 넷 모두 열려 있습니다. 허용하는 **도구 이름**을 거르는 곳은 어디에도 없습니다. iframe은 UI 도구가 아닌 도우미 열둘도, UI 도구도 이름만 알면 부를 수 있습니다.
 
-모델 호출이 한 번이라는 것은 이렇게 읽습니다. `BuiltInAgent`의 `maxSteps`는 설정하지 않았고 그 설정의 주석이 기본을 1이라 적습니다(`agent.txt`, 소스로 확인). 같은 실행 안에서 도구 결과가 모델에게 돌아가 다시 답하게 하는 호출은 소스에 보이지 않고, 결과는 대화에만 남는 것으로 읽힙니다. 비용은 이렇게 어림합니다(⚠ 추정). 시스템 프롬프트는 261낱말·1,926자이고(`route.ts` 34~66행의 `wc`), 4자에 1토큰으로 어림하면 약 500토큰입니다. 도구 넷의 설명과 스키마, 대화 내용을 더해 한 번에 입력 1,500~2,500토큰 정도로 잡으면 입력이 $0.01 안팎이고 출력(도구 호출 한 줄)은 그 몇 분의 일입니다. 이 숫자는 대화가 길어질수록 커집니다. 마법사 안의 클릭에는 모델 비용이 붙지 않습니다. 단 마법사 마지막 화면의 [Add to Calendar] 단추는 예외입니다. 이 단추는 `ui/message`로 "Add this flight to my calendar"라는 사용자 메시지를 채팅에 넣고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/flights-app.html:1716-1721`) 에이전트를 다시 돌리는데, 모델의 도구 가운데 일정 도구는 없으므로 말로만 답할 것으로 읽힙니다.
+모델 호출이 한 번이라는 것은 이렇게 읽습니다. `BuiltInAgent`의 `maxSteps`는 설정하지 않았고 그 설정의 주석이 기본을 1이라 적습니다(`agent.txt`, 소스로 확인). 같은 실행 안에서 도구 결과가 모델에게 돌아가 다시 답하게 하는 호출은 소스에 보이지 않고, 결과는 대화에만 남는 것으로 읽힙니다. 비용은 이렇게 어림합니다(⚠ 추정). 시스템 프롬프트는 261낱말·1,926자이고(`route.ts` 34~66행의 `wc`), 4자에 1토큰으로 어림하면 약 500토큰입니다. 도구 넷의 설명과 스키마, 대화 내용을 더해 한 번에 입력 1,500~2,500토큰 정도로 잡으면 입력이 $0.01 안팎입니다. 출력은 도구 호출 한 줄이지만 모델 페이지는 `gpt-5.5`가 추론 토큰을 쓰고 추론 강도 기본값이 `medium`이라고 적고, 런타임은 `providerOptions`를 주지 않습니다(`@copilotkit/runtime` 1.59.2, 소스로 확인). 추론 토큰은 출력 단가로 붙으므로, 출력 쪽은 알 수 없는 만큼 범위를 넓혀 질문 한 번에 $0.01~0.05쯤으로 잡는 편이 안전합니다. 이 숫자는 대화가 길어질수록 커집니다. 마법사 안의 클릭에는 모델 비용이 붙지 않습니다. 단 마법사 마지막 화면의 [Add to Calendar] 단추는 예외입니다. 이 단추는 `ui/message`로 "Add this flight to my calendar"라는 사용자 메시지를 채팅에 넣고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/flights-app.html:1716-1721`) 에이전트를 다시 돌리는데, 모델의 도구 가운데 일정 도구는 없으므로 말로만 답할 것으로 읽힙니다.
 
 ### Step 5. 호스트 쪽 — 이중 iframe, 출처, 크기 알림
 
@@ -334,7 +334,11 @@ grep -n 'hasUIResource\|new Client(\|client.connect\|case "\|MCP method not allo
 
 ![자원 읽기 시퀀스](diagrams/extra-resource.svg)
 
-그다음 iframe을 둘 만듭니다. 바깥 iframe은 프록시 HTML을 `srcdoc`으로 가지고, 그 안에서 안쪽 iframe이 앱 HTML을 `srcdoc`으로 가집니다. 둘의 `sandbox` 값은 같습니다.
+그다음 iframe을 둘 만듭니다. 바깥 iframe은 프록시 HTML을 `srcdoc`으로 가지고, 그 안에서 안쪽 iframe이 앱 HTML을 `srcdoc`으로 가집니다. 둘의 `sandbox` 값은 같습니다. 프록시가 뜨면 먼저 `sandbox-proxy-ready`를 호스트에 보내고, 호스트는 그것을 기다린 뒤 `sandbox-resource-ready`에 HTML을 실어 **프록시에** 보냅니다. 프록시는 그 HTML을 메시지로 넘기지 않고 안쪽 iframe의 `srcdoc` 속성에 넣습니다.
+
+![프록시 시퀀스](diagrams/extra-proxy.svg)
+
+구조는 아래 그림입니다. 사용자는 채팅 사이드바에 질문하고, 마법사 안에서는 안쪽 iframe을 직접 누르고 입력합니다.
 
 ![이중 iframe 구조](diagrams/extra-sandbox.svg)
 
@@ -351,11 +355,11 @@ grep -n 'hasUIResource\|new Client(\|client.connect\|case "\|MCP method not allo
         iframeRef.current.contentWindow.postMessage(msg, "*");
 ```
 
-세 줄이 말하는 것은 이렇습니다. 첫째, 사양(SEP-1865, https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx 를 2026-10-16에 읽음)은 웹 호스트의 샌드박스에 `allow-scripts`와 `allow-same-origin`을 요구하면서 "호스트와 샌드박스는 출처가 달라야 한다(MUST)"고 적습니다. 이 구현은 프록시를 별도 출처의 주소가 아니라 `srcdoc` 문자열로 만듭니다. 앱 폴더의 `public/sandbox.html`은 같은 일을 하는 파일이지만 이 버전의 호스트는 쓰지 않습니다(아래 확인). `srcdoc` 문서는 만든 쪽의 출처를 물려받는 것으로 알고 있으므로, 이 조합에서는 안쪽 앱이 부모 문서에 손댈 수 있고 MDN이 "`allow-scripts`와 `allow-same-origin`을 함께 쓰면 `sandbox` 속성을 스스로 지울 수 있어 속성이 없는 것과 같아진다"고 경고한 상황에 해당할 것으로 읽힙니다. 다만 이 문서는 브라우저를 열지 않았고 그 출처를 직접 보지 않았습니다. 둘째, 메시지 처리는 **보낸 창**(`event.source`)이 방금 만든 iframe인지만 보고 `event.origin`은 보지 않습니다. 셋째, 호스트가 iframe에 보낼 때 대상 출처가 `"*"`입니다. 사양 문서의 예시도 `'*'`를 쓰고 출처 검사를 정하지 않으니 사양을 벗어난 것은 아닙니다.
+세 줄이 말하는 것은 이렇습니다. 첫째, 사양(SEP-1865, https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx 를 2026-10-16에 읽음)은 웹 호스트의 샌드박스에 `allow-scripts`와 `allow-same-origin`을 요구하면서 "호스트와 샌드박스는 출처가 달라야 한다(MUST)"고 적습니다. 이 구현은 프록시를 별도 출처의 주소가 아니라 `srcdoc` 문자열로 만듭니다. HTML 규격(https://html.spec.whatwg.org/multipage/document-sequences.html)의 출처 결정 절은 URL이 `about:srcdoc`이면 만든 쪽의 출처를 그대로 돌려주고, 샌드박스 출처 플래그(`allow-same-origin`이 없을 때 켜지는 것)가 있을 때만 새 불투명 출처를 줍니다. 그러니 `allow-same-origin`을 켠 두 겹의 `srcdoc` iframe은 모두 **호스트 페이지와 같은 출처**입니다. 안쪽 앱의 스크립트는 부모(프록시)만이 아니라 같은 출처인 최상위 창, 곧 채팅 페이지에도 직접 닿습니다. 규격의 iframe 절(https://html.spec.whatwg.org/multipage/iframe-embed-object.html)도 MDN과 같은 경고를 적습니다. 두 값을 함께 켜고 같은 출처이면 안의 페이지가 `sandbox` 속성을 지우고 다시 불러 샌드박스를 완전히 벗어날 수 있다는 것입니다. 이 문서가 직접 보지 못한 것은 브라우저의 실제 동작뿐입니다. 앱 폴더의 `public/sandbox.html`은 같은 일을 하는 파일이지만 이 버전의 호스트는 쓰지 않습니다(아래 확인). 그 파일을 쓰더라도 Next의 `public/`에서 서빙하면 그것도 `localhost:3000`, 곧 같은 출처라 달라지지 않습니다. 사양의 위협 모델은 "악성 서버가 해로운 HTML을 보냄", "앱이 호스트의 민감한 데이터를 빼냄"을 막으려는 것인데(`apps.mdx`의 보안 절), 이 호스트 판은 그 둘을 막지 못합니다. 이 쇼케이스의 HTML은 같은 저장소의 MCP 서버가 주므로 실제 위험은 그 서버를 믿느냐에 달렸습니다. 둘째, 호스트의 메시지 처리는 **보낸 창**(`event.source`)이 방금 만든 iframe인지만 보고 `event.origin`은 보지 않습니다. 셋째, 호스트가 iframe에 보낼 때 대상 출처가 `"*"`입니다. 사양 문서의 예시도 `'*'`를 쓰고 출처 검사를 정하지 않으니 사양을 벗어난 것은 아닙니다.
 
-크기 알림이 하나 어긋납니다. 호스트가 듣는 이름은 `ui/notifications/size-changed`이고 그 알림이 와야 iframe 높이를 바꿉니다. 처음 높이는 100px입니다. 네 앱이 모두 `ui/notifications/size-change`로 보냅니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/flights-app.html:1695-1703`). 공식 사양 문서에도 호스트에도 앞의 이름은 없습니다. 호스트가 이 이름을 따로 받지 않는 한 iframe은 100px에 머물 것으로 읽히지만, 이 문서는 화면을 열지 않았으므로 단정하지 않습니다(문제 해결 표).
+크기 알림이 하나 어긋납니다. 호스트가 듣는 이름은 `ui/notifications/size-changed`이고 그 알림이 와야 iframe 높이를 바꿉니다. 처음 높이는 100px입니다. 네 앱이 모두 `ui/notifications/size-change`로 보냅니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/flights-app.html:1695-1703`). 공식 사양 문서에도 호스트에도 앞의 이름은 없습니다. 1.59.2 호스트에서 iframe 높이가 바뀌는 길은 이 알림이 정하는 `iframeSize` 하나뿐이라(소스로 확인), 소스로는 iframe이 100px에 머무는 것으로 읽힙니다. 남는 불확실성은 화면에서의 모습뿐이고, 이 문서는 화면을 열지 않았으므로 단정하지 않습니다(문제 해결 표).
 
-앱이 열리면 앱이 먼저 `ui/initialize`를 보내고 호스트가 답한 뒤, 호스트가 `tool-input`과 `tool-result`를 앱에 보냅니다. 호스트가 받아 주는 앱의 요청은 `ui/initialize`·`ui/message`·`ui/open-link`·`tools/call` 넷이고, 그 밖의 메서드에는 "Method not found" 오류를 돌려줍니다.
+앱이 열리면 앱이 먼저 `ui/initialize`를 보내고 호스트가 답한 뒤 앱이 `initialized`를 보냅니다. 그다음 호스트가 따로 도는 두 효과에서 `tool-input`과 `tool-result`를 차례로 보내고, 앱은 크기를 `size-change`로 알립니다(앞에서 본 이름 불일치). 프록시가 중계하는 메시지는 사양의 생명주기 그림처럼 앱과 호스트 사이에 곧바로 그렸고, 프록시 자신이 보내는 것은 앞의 프록시 시퀀스에 있습니다. 호스트가 받아 주는 앱의 요청은 `ui/initialize`·`ui/message`·`ui/open-link`·`tools/call` 넷이고, 그 밖의 메서드에는 "Method not found" 오류를 돌려줍니다. 이 가운데 `tools/call`만 런타임으로 넘어갑니다.
 
 ![핸드셰이크 시퀀스](diagrams/extra-handshake.svg)
 
@@ -425,7 +429,7 @@ trading-app.html:1130
 
 ![예약 시퀀스](diagrams/extra-book.svg)
 
-서버 쪽에서는 `select-flight`가 검색을 찾아 `selectedFlightId`를 적고 좌석표를 만들고, `select-seats`는 그 항공편이 선택된 것인지와 좌석이 비었는지 보고 요금을 합치고, `book-flight`는 승객 수가 검색의 인원과도, 고른 좌석 수와도 같을 때만 예약을 만듭니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:467-483`·`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:542-586`·`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:591-660`). 칸반 앱은 카드 제목과 설명을 이스케이프 없이 `innerHTML`로 넣습니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/kanban-app.html:1216-1218`). 카드 내용은 모델이 지은 도구 인자에서 오므로, 이 앱을 가두는 것은 앱 코드의 정제가 아니라 Step 5의 iframe뿐입니다.
+서버 쪽에서는 `select-flight`가 검색을 찾아 `selectedFlightId`를 적고 좌석표를 만들고, `select-seats`는 그 항공편이 선택된 것인지와 좌석이 비었는지 보고 요금을 합치고, `book-flight`는 승객 수가 검색의 인원과도, 고른 좌석 수와도 같을 때만 예약을 만듭니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:467-483`·`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:542-586`·`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:591-660`). 칸반 앱은 값을 이스케이프 없이 `innerHTML`로 넣습니다. 모델이 정하는 `create-board` 인자는 `projectName`과 `template` 둘뿐이고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:775-781`), 그중 이스케이프 없이 들어가는 것은 보드 제목입니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/kanban-app.html:1181`, 대입은 `generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/kanban-app.html:1255`). 카드 제목·설명은 서버 템플릿(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/kanban.ts:265-273`)이나 보드 화면에서 사람이 넣은 `add-card`·`update-card` 인자에서 오고 같은 방식으로 들어갑니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/kanban-app.html:1216-1218`). 앱 코드가 정제하지 않으니 가두는 일은 iframe이 맡는데, 그 iframe은 Step 5에서 본 대로 호스트와 같은 출처라 가두지 못합니다. 거기서 도는 스크립트는 채팅 페이지에도 닿습니다. 이 쇼케이스에서는 HTML을 같은 저장소의 서버가 주므로 당장의 위험은 작지만, 다른 서버의 앱을 붙이는 순간 위험은 그 서버를 믿느냐에 달린 것이 됩니다.
 
 **확인.** 앱이 부르는 도구 이름과 통신 모듈의 검사를 찾아봅니다.
 
@@ -446,36 +450,180 @@ name: "book-flight"
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-### Step 7. 직접 돌린다면 — 먼저 알아 둘 것
+### Step 7. 직접 돌린다면 — 바깥으로 나가는 길을 막고 띄우기
 
-**목적.** 이 문서가 실행하지 않은 부분을 독자가 실행할 때 무엇이 바깥에 닿는지 소스로 미리 적어 둡니다. 아래 명령은 이 문서가 실행해 보지 못한 것입니다.
+**목적.** 이 문서가 실행하지 않은 부분을 독자가 실행할 때 무엇이 바깥에 닿는지 소스로 적고, 그것을 줄 하나를 빠뜨려도 막는 확인 스크립트(`launch.mjs`)를 만듭니다. 이 문서는 스크립트의 확인 부분을 `--dry`로 돌려 보았을 뿐, 설치·서버·화면 명령은 하나도 실행하지 않았습니다.
 
-**할 일.** 바깥에 닿는 것은 이렇습니다. 앱을 그대로 띄우면 MCP 서버는 `app.listen(PORT)`이라 호스트를 정하지 않아 모든 네트워크 인터페이스에 열립니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:1117`). CORS는 `origin: "*"`이고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:1010-1015`) `/mcp`에는 인증이 없어서, 같은 네트워크의 누구나 열여섯 도구를 부를 수 있습니다. 데이터는 가짜지만 서버 메모리에 쌓입니다. `next dev`와 `next start`의 호스트 기본값은 `0.0.0.0`입니다(Next.js CLI 문서를 2026-10-16에 읽음). 런타임 엔드포인트도 CORS를 열어 두고(`createCopilotEndpoint`에 `cors`를 주지 않으면 모든 출처를 허용한다고 소스에 적혀 있음) 인증이 없으니, 키가 든 `/api/copilotkit`이 같은 네트워크에 열립니다. 텔레메트리는 둘입니다. CopilotKit 런타임은 `https://telemetry.copilotkit.ai/ingest`로 이벤트를 보내되 익명 이벤트를 5%만 보내고, `DO_NOT_TRACK=1`이나 `COPILOTKIT_TELEMETRY_DISABLED=true`로 끕니다. 런타임은 매 실행 요청에도 `oss.runtime.copilot_request_created` 이벤트를 만듭니다(둘 다 소스로 확인). Next.js의 익명 텔레메트리는 `NEXT_TELEMETRY_DISABLED=1`로 끕니다(Next 문서). 화면에서는 `showDevConsole="auto"`가 `localhost`·`127.0.0.1`에서만 인스펙터를 켭니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/page.tsx:162`). 브라우저는 앱 iframe이 열릴 때 Google Fonts에서 글꼴을 받고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/flights-app.html:7-10`), `layout.tsx`가 가져오는 `next/font/google`도 Google 글꼴을 쓰는 경로입니다(Next가 언제 무엇을 내려받는지는 확인하지 않았습니다).
+**할 일.** 먼저 무엇이 열리고 무엇이 나가는지입니다. 같은 네트워크에 열리는 것은 바인딩 때문입니다. MCP 서버는 `app.listen(PORT)`이라 호스트를 정하지 않아 모든 인터페이스에 열리고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:1117`), `next dev`와 `next start`의 호스트 기본값도 `0.0.0.0`입니다(Next.js CLI 문서를 2026-10-16에 읽음). `/mcp`와 `/api/copilotkit`에는 인증이 없어서 같은 네트워크의 누구나 도구 열여섯과 키가 든 런타임을 부를 수 있습니다. CORS는 이와 별개입니다. MCP 서버는 `origin: "*"`이고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:1010-1015`), 런타임 엔드포인트도 `cors`를 주지 않으면 모든 출처를 허용합니다(소스로 확인). 그래서 루프백에만 열어도, 독자 브라우저에 열려 있는 아무 웹사이트가 `localhost:3000`·`3001`에 요청해 응답을 읽을 수 있습니다(브라우저의 로컬 네트워크 제한이 허락하는 한).
 
-그러므로 독자가 돌린다면 위 점을 막는 쪽으로 시작합니다. 새 폴더에 복사본을 만들고, 복사본에서만 MCP 서버의 줄 하나를 고쳐 루프백에만 엽니다.
+바깥으로 나가는 요청은 다섯 갈래입니다.
+
+![바깥으로 나가는 요청](diagrams/extra-outbound.svg)
+
+- 설치: `@scarf/scarf` 1.4.0의 `postinstall`이 `scarf.sh`로 설치 통계를 보냅니다. 두 CopilotKit 패키지에 `scarfSettings`가 없어 기본은 보내는 쪽입니다. `SCARF_ANALYTICS=false`·`SCARF_NO_ANALYTICS=true`·`DO_NOT_TRACK=1` 가운데 하나로 끕니다(`@scarf/scarf` 1.4.0 `report.js`, 소스로 확인).
+- CopilotKit 런타임: `https://telemetry.copilotkit.ai/ingest`로 익명 이벤트의 5%를 보내고, 실행 요청마다 `copilot_request_created` 이벤트를 만듭니다. `DO_NOT_TRACK=1`이나 `COPILOTKIT_TELEMETRY_DISABLED=true`로 끕니다(소스로 확인).
+- Next.js: 익명 텔레메트리를 `NEXT_TELEMETRY_DISABLED=1`로 끕니다(Next 문서).
+- 화면의 검사창: `page.tsx`의 `showDevConsole="auto"`(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/page.tsx:162`)는 `localhost`·`127.0.0.1`에서 `@copilotkit/web-inspector` 1.59.2를 불러오고, 이것이 붙을 때 Google Fonts 링크를 넣고 `https://cdn.copilotkit.ai/announcements.json`을 가져옵니다. 끄는 환경변수는 없고 `showDevConsole={false}`로 바꿔야 합니다(소스로 확인).
+- 앱 iframe: 열릴 때 Google Fonts에서 글꼴을 받습니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/flights-app.html:7-10`). `layout.tsx`가 가져오는 `next/font/google`도 Google 글꼴을 쓰는 경로입니다(Next가 언제 무엇을 내려받는지는 확인하지 않았습니다). 이 둘은 막는 방법이 없고 아래 스크립트도 막지 못합니다.
+
+이를 막는 쪽으로 시작합니다. 복사본에 패치를 하고, 패치와 환경을 확인한 뒤에만 명령을 부르는 스크립트를 둡니다. `<저장소>`와 `$APP`은 Step 1의 것입니다. 패치는 `sed`로 하고 `grep -c`로 확인합니다.
 
 ```bash
 cp -r $APP app-copy
-cd app-copy/mcp-server
-# server.ts의 app.listen(PORT, () => {  를  app.listen(PORT, "127.0.0.1", () => {  로 고친다
-export DO_NOT_TRACK=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_TELEMETRY_DISABLED=1
+sed -i 's/app.listen(PORT, () => {/app.listen(PORT, "127.0.0.1", () => {/' app-copy/mcp-server/server.ts
+sed -i 's/showDevConsole="auto"/showDevConsole={false}/' app-copy/src/app/page.tsx
+grep -c 'app.listen(PORT, "127.0.0.1"' app-copy/mcp-server/server.ts
+grep -c 'showDevConsole={false}' app-copy/src/app/page.tsx
 ```
 
-그다음 `npm ci` → `npm run build`(`build:app`이 POSIX 문법이므로 Git Bash가 아닌 Windows에서는 안 될 수 있습니다) → `npm run dev`로 서버를, 다른 터미널에서 `npm install`(또는 루트의 `pnpm-lock.yaml`에 맞게 `pnpm install`) 뒤 `npm run dev -- -H 127.0.0.1`(`--`는 npm이 `next`에 플래그를 넘기는 문법)로 화면을 띄웁니다. 터미널마다 위 `export`를 다시 합니다. `.env.local`에 `OPENAI_API_KEY`를 넣으면 질문마다 위에서 어림한 비용이 듭니다. 셸에 `MCP_SERVER_URL`이 있으면 미들웨어가 그 주소로 붙고(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/api/copilotkit/[[...slug]]/route.ts:72`), `ANTHROPIC_API_KEY`나 `GOOGLE_API_KEY`가 있고 OpenAI 키가 없으면 그 제공자로 요청이 갑니다. 이 문서는 위 명령을 하나도 실행하지 않았고, 설치 단계의 `esbuild` 설치 스크립트도 실행하지 않았습니다.
+```text
+1
+1
+```
 
-**확인.** 이 문서가 읽은 것과 읽지 못한 것을 나눕니다.
+```powershell
+Copy-Item -Recurse $APP app-copy
+$f = "app-copy\mcp-server\server.ts"
+(Get-Content $f -Raw).Replace('app.listen(PORT, () => {', 'app.listen(PORT, "127.0.0.1", () => {') | Set-Content -NoNewline -Encoding utf8 $f
+$f = "app-copy\src\app\page.tsx"
+(Get-Content $f -Raw).Replace('showDevConsole="auto"', 'showDevConsole={false}') | Set-Content -NoNewline -Encoding utf8 $f
+(Select-String -Path app-copy\mcp-server\server.ts -SimpleMatch 'app.listen(PORT, "127.0.0.1"').Count
+(Select-String -Path app-copy\src\app\page.tsx -SimpleMatch 'showDevConsole={false}').Count
+```
 
-- 직접 확인한 것: 위 `grep`·`wc`·`count.mjs` 출력, 레지스트리 메타데이터(`engines`), 잠금 파일의 항목 수.
-- 소스로 확인한 것: 서버·런타임·앱 HTML·세 패키지의 동작. 모두 읽기였고 실행하지 않았습니다.
-- 확인하지 못한 것: 화면에서 마법사가 어떻게 보이는지, iframe 높이, `srcdoc` iframe의 실제 출처, 진짜 모델이 도구를 고르는 모습, `npm`·`pnpm` 설치와 `vite build`의 성공 여부, 서버 세션 맵(`transports`)이 연결마다 비는지.
+위 PowerShell 줄은 실행해 보지 못했습니다. 이어서 스크립트를 저장합니다. 환경변수는 터미널의 `export`에 기대지 않고 스크립트가 직접 정해 자식 프로세스에 넘기므로, 터미널이 달라도 같습니다. 화면의 `-H 127.0.0.1`도 스크립트 안에 고정되어 있습니다.
+
+```bash
+cat > launch.mjs <<'EOF'
+// 복사본 폴더의 패치와 환경을 확인한 뒤에만 설치·서버·화면 명령을 부른다.
+// 사용법: node launch.mjs <install|mcp|web> <복사본 폴더> [--dry]
+// --dry 는 확인만 하고 아무것도 실행하지 않는다.
+import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
+
+const [mode, dir, flag] = process.argv.slice(2);
+const fail = (msg) => {
+  console.error("멈춥니다: " + msg);
+  process.exit(1);
+};
+if (!["install", "mcp", "web"].includes(mode) || !dir) {
+  fail("사용법: node launch.mjs <install|mcp|web> <복사본 폴더> [--dry]");
+}
+
+// 1. 환경은 이 스크립트가 직접 정한다. 터미널에 export가 없어도, 다른 터미널이어도 같다.
+const env = {
+  ...process.env,
+  DO_NOT_TRACK: "1",
+  COPILOTKIT_TELEMETRY_DISABLED: "true",
+  NEXT_TELEMETRY_DISABLED: "1",
+  SCARF_ANALYTICS: "false",
+  NO_PROXY: "localhost,127.0.0.1",
+  no_proxy: "localhost,127.0.0.1",
+};
+
+// 2. 셸에 이미 있는 값이 앱을 바깥으로 돌리지 않는지 본다.
+const url = process.env.MCP_SERVER_URL;
+if (url) {
+  let host = "";
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    fail(`MCP_SERVER_URL을 읽을 수 없습니다: ${url}`);
+  }
+  if (!["localhost", "127.0.0.1"].includes(host)) {
+    fail(`MCP_SERVER_URL의 호스트가 루프백이 아닙니다: ${host}`);
+  }
+}
+
+// 3. 복사본에 패치가 들어갔는지 본다. 하나라도 빠지면 멈춘다.
+const read = (rel) => readFileSync(join(dir, rel), "utf8");
+if (!read("mcp-server/server.ts").includes('app.listen(PORT, "127.0.0.1"')) {
+  fail('mcp-server/server.ts에 app.listen(PORT, "127.0.0.1", ...) 패치가 없습니다');
+}
+const page = read("src/app/page.tsx");
+if (!page.includes("showDevConsole={false}") || page.includes('showDevConsole="auto"')) {
+  fail("src/app/page.tsx의 showDevConsole 패치가 없습니다");
+}
+
+// 4. 모드마다 명령은 이 표에 고정되어 있다. 화면은 항상 -H 127.0.0.1이다.
+const plans = {
+  install: [
+    { cwd: join(dir, "mcp-server"), cmd: "npm", args: ["ci"] },
+    { cwd: dir, cmd: "npm", args: ["install"] },
+  ],
+  mcp: [{ cwd: join(dir, "mcp-server"), cmd: "npm", args: ["run", "dev"] }],
+  web: [{ cwd: dir, cmd: "npm", args: ["run", "dev", "--", "-H", "127.0.0.1"] }],
+}[mode];
+
+console.log("확인 통과: MCP 서버 루프백 패치, 검사창 끔, 환경 넷과 NO_PROXY, MCP_SERVER_URL " + (url ? "루프백" : "없음"));
+for (const p of plans) {
+  console.log(`${flag === "--dry" ? "(실행하지 않음) " : ""}${p.cwd} 에서: ${p.cmd} ${p.args.join(" ")}`);
+}
+if (flag === "--dry") process.exit(0);
+
+for (const p of plans) {
+  const r = spawnSync(p.cmd, p.args, { cwd: p.cwd, env, stdio: "inherit", shell: process.platform === "win32" });
+  if (r.status !== 0) process.exit(r.status ?? 1);
+}
+EOF
+node launch.mjs web app-copy --dry
+```
+
+**확인.** 패치된 복사본에서 `--dry`는 이렇게 나옵니다(이 문서가 직접 돌려 본 출력입니다. 줄 끝의 경로 구분자는 Windows에서 `\`입니다).
+
+```text
+확인 통과: MCP 서버 루프백 패치, 검사창 끔, 환경 넷과 NO_PROXY, MCP_SERVER_URL 없음
+(실행하지 않음) app-copy\mcp-server 에서: npm run dev
+```
+
+위는 `mcp` 모드의 출력이고, `web` 모드는 둘째 줄이 `app-copy 에서: npm run dev -- -H 127.0.0.1`입니다. 패치를 빠뜨리거나 바깥 주소를 주면 멈추는지도 봤습니다.
+
+```text
+멈춥니다: mcp-server/server.ts에 app.listen(PORT, "127.0.0.1", ...) 패치가 없습니다        (둘 다 안 했을 때)
+멈춥니다: src/app/page.tsx의 showDevConsole 패치가 없습니다                                   (서버 패치만 했을 때)
+멈춥니다: MCP_SERVER_URL의 호스트가 루프백이 아닙니다: evil.example                          (MCP_SERVER_URL=https://evil.example/mcp)
+```
+
+멈출 때 종료 코드는 1이고 아무 명령도 부르지 않습니다. 이 스크립트가 **막지 못하는 것**은 앱 iframe·`next/font`의 Google 글꼴 요청, 그리고 OpenAI 호출 자체(`.env.local`에 키를 넣으면 질문마다 Step 4의 어림 비용이 듭니다)입니다. 셸에 `ANTHROPIC_API_KEY`나 `GOOGLE_API_KEY`가 있고 OpenAI 키가 없으면 그 제공자로 요청이 가는 것도(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/api/copilotkit/[[...slug]]/route.ts:18-29`) 스크립트는 보지 않습니다. 진짜로 띄우는 순서는 이렇습니다. 아래는 이 문서가 실행해 보지 못한 것입니다.
+
+```bash
+node launch.mjs install app-copy
+cd app-copy/mcp-server
+npm run build --script-shell "<Git 설치 경로>/bin/bash.exe"
+cd ../..
+node launch.mjs mcp app-copy
+```
+
+```bash
+node launch.mjs web app-copy
+```
+
+두 터미널에서 각각 위 줄만 칩니다. `npm run build`의 `--script-shell`은 Windows에서 npm이 스크립트를 돌릴 셸을 Git Bash의 `bash.exe`로 바꾸는 설정입니다(npm 문서 `script-shell`, 이 문서는 해 보지 못했습니다). macOS·Linux에서는 기본 셸이 `/bin/sh`라 이 옵션이 필요 없습니다. 옵션을 쓰지 않는 길은 `mcp-server/apps`에서 `BUILD_APP=flights-app npx vite build`를 네 앱에 대해 따로 돌리는 것인데, `npx`를 쓰므로 독자가 진짜로 돌릴 때만 해당하고 이 문서는 해 보지 못했습니다.
+
+이 문서가 읽은 것과 읽지 못한 것을 나눕니다.
+
+- 직접 확인한 것: 위 `grep`·`wc`·`count.mjs` 출력, `launch.mjs`의 `--dry` 확인과 멈춤 세 경우, 레지스트리 메타데이터(`engines`), 잠금 파일의 항목 수.
+- 소스로 확인한 것: 서버·런타임·앱 HTML·패키지(미들웨어·react-core·runtime·web-inspector·scarf·MCP SDK)의 동작. 모두 읽기였고 실행하지 않았습니다.
+- 확인하지 못한 것: 화면에서 마법사가 어떻게 보이는지, iframe 높이, 브라우저가 실제로 `srcdoc` iframe에 주는 출처, 진짜 모델이 도구를 고르는 모습, `npm`·`pnpm` 설치와 `vite build`의 성공 여부, `--script-shell`의 동작, `/health`의 세션 수가 실제로 늘어나는지.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
 ## 요청 한 건이 흐르는 과정
 
-![요청 시퀀스](diagrams/sequence.svg)
+"예시 문구 클릭"에서 도구 호출 결과까지는 시퀀스가 세 장입니다. 첫 장은 질문이 MCP 서버에서 도구를 받아 오기까지입니다. `page.tsx`의 단추가 메시지를 넣고 `copilotkit.runAgent`를 부르면(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/page.tsx:175-188`) 브라우저가 `/api/copilotkit`에 `POST`하고, 미들웨어가 먼저 MCP 서버에 `initialize`로 새 세션을 열어(서버는 이때 HTML 네 장을 다시 읽습니다) `tools/list`를 받습니다.
 
-"예시 문구 클릭"에서 모델의 도구 호출 결과까지가 위 그림입니다. `page.tsx`의 단추가 메시지를 넣고 `copilotkit.runAgent`를 부르면(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/page.tsx:175-188`) 브라우저가 `/api/copilotkit`에 `POST`하고, 런타임의 미들웨어가 먼저 MCP 서버에서 도구를 받아 UI 도구만 모델에게 줍니다. 모델이 `search-flights`와 인자를 돌려주면 미들웨어가 그것을 MCP 서버에 실행하고, 결과와 `mcp-apps` 스냅숏이 브라우저에 갑니다. 이 한 번의 질문에 모델 호출은 한 번, MCP 연결은 둘입니다. 이어지는 자원 읽기가 연결 하나를 더 쓰고(Step 5), 앱이 열려 `tool-result`를 받으면 곧바로 검색 결과 화면(2단계)을 그립니다(Step 6). 그다음부터는 마법사의 클릭마다 같은 우회 길(Step 6의 세 그림)을 한 번씩 지나, 항공권 하나를 예약하기까지 MCP 연결이 모두 여섯 번 열립니다. 모델은 처음 한 번 말고는 관여하지 않습니다.
+![요청 시퀀스 1: 도구 목록 받기](diagrams/sequence.svg)
+
+둘째 장은 모델 호출입니다. 미들웨어가 UI 도구 넷만 얹어 모델을 부르고, 모델이 내보내는 이벤트를 그대로 브라우저로 넘깁니다.
+
+![요청 시퀀스 2: 모델 호출](diagrams/extra-model.svg)
+
+셋째 장은 스트림이 끝난 뒤입니다. 미들웨어가 새 세션을 열어 도구를 실행하고, 결과와 `mcp-apps` 스냅숏을 따로 보낸 뒤 붙잡아 둔 `RUN_FINISHED`를 보냅니다.
+
+![요청 시퀀스 3: 도구 실행과 결과](diagrams/extra-execute.svg)
+
+이 한 번의 질문에 모델 호출은 한 번, MCP 연결은 둘입니다. 이어지는 자원 읽기(Step 5)가 하나를 더 쓰고, 앱이 열려 `tool-result`를 받으면 곧바로 검색 결과 화면(2단계)을 그립니다(Step 6). 그다음부터는 마법사의 클릭마다 같은 우회 길(Step 6의 세 그림)을 한 번씩 지나, 항공권 하나를 예약하기까지 MCP 연결이 모두 여섯 번 열립니다. 모델은 처음 한 번 말고는 관여하지 않습니다. 연결을 여섯 번 맺고도 서버가 어떻게 되는지는 소스로 읽을 수 있습니다. `@modelcontextprotocol/sdk` 1.25.2 클라이언트의 `close()`는 요청을 취소(abort)할 뿐 DELETE를 보내지 않고(`terminateSession`은 따로 있습니다), 서버의 전송 객체는 DELETE를 받거나 서버가 닫을 때만 `close()`되어 `onclose`가 불립니다. 따라서 `generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:1018`의 `transports`에 연결마다 항목(과 HTML 네 장을 든 `McpServer`)이 쌓이는 것으로 읽힙니다. 서버의 `/health`가 보여 주는 `sessions` 수가 늘어나는지로 확인할 수 있지만 이 문서는 서버를 띄우지 않아 확인하지 못했습니다.
 
 ## 실행 체크리스트
 
@@ -485,7 +633,7 @@ export DO_NOT_TRACK=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_TELEMETRY_DISABLED
 - [ ] Step 4: 미들웨어 소스에서 `hasUIResource` 필터와 `new Client(` 세 곳을 찾았다
 - [ ] Step 5: `host.txt`에서 `sandbox` 값과 `size-changed`를, 앱에서 `size-change`를 찾아 이름이 다른 것을 확인했다
 - [ ] Step 6: 앱이 부르는 도구 이름 넷과 `event.origin` 검사가 0건인 것을 확인했다
-- [ ] Step 7: 원본을 그대로 띄우면 모든 인터페이스에 열린다는 것, 끄는 환경변수 셋을 이해했다
+- [ ] Step 7: 원본을 그대로 띄우면 모든 인터페이스에 열린다는 것, 바깥으로 나가는 요청 다섯 갈래를 이해했고, `launch.mjs --dry`가 패치된 복사본에서 통과하고 패치를 빠뜨리면 멈추는 것을 확인했다
 - [ ] 앱을 띄우지 않았고 `npm install`·`npx`를 실행하지 않았다(`ls $APP`에 `node_modules`가 없다)
 
 ## 문제 해결
@@ -494,10 +642,11 @@ export DO_NOT_TRACK=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_TELEMETRY_DISABLED
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| 앱 자리에 "flights-app Loading... The app UI needs to be built"가 뜬다 | `apps/dist/`가 없다. `loadHtml`이 자리표시 HTML을 돌려준다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:74-95`) | `mcp-server`에서 `npm run build`. Windows 비Bash 셸에서는 `build:app`이 안 될 수 있어 Git Bash에서 `npm`을 부르거나 Vite 빌드 네 번을 `BUILD_APP`을 환경에 걸고 따로 돌린다 |
+| 앱 자리에 "flights-app Loading... The app UI needs to be built"가 뜬다 | `apps/dist/`가 없다. `loadHtml`이 자리표시 HTML을 돌려준다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:74-95`) | `mcp-server`에서 `npm run build`. Windows에서는 npm이 기본으로 `cmd.exe`에서 스크립트를 돌려 `build:app`이 막힐 수 있으므로 `npm run build --script-shell "<Git 설치 경로>/bin/bash.exe"`로 셸을 바꾼다(npm 문서의 `script-shell`, 해 보지 못함). Git Bash에서 npm을 부르는 것만으로는 바뀌지 않는다 |
 | 마법사가 100px 높이로 잘려 보인다 | 앱은 `size-change`를, 호스트(react-core 1.59.2)는 `size-changed`를 듣는다(Step 5) ⚠ 소스로 읽은 추정 | 복사본의 `apps/*.html` 네 곳의 알림 이름을 `size-changed`로 고치고 다시 빌드. 고치기 전 높이와 비교해 본다 |
 | `Invalid airport code: XXX` | 공항 코드는 15개뿐이다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:395-399`) | JFK·LAX·LHR·CDG·NRT·DXB·SIN·SFO·ORD·MIA·SEA·BOS·FRA·HKG·SYD 중에서 고른다 |
-| 예약 직후 같은 검색으로 좌석을 또 고르면 "Search session not found" | 예약이 끝나면 검색을 지운다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:653`). 서버를 다시 띄워도 `Map`이 비어 같은 오류가 난다 | 새로 검색한다 |
+| 서버를 다시 띄운 뒤 열려 있던 마법사에서 항공편을 고르면 "Flight or search not found." | 검색과 예약은 서버 `Map`에만 있어 재시작하면 사라진다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/src/flights.ts:176-177`, 메시지는 `generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:287-294`) | 새로 검색한다 |
+| `launch.mjs`가 "멈춥니다"라고 한다 | 복사본 패치가 빠졌거나 `MCP_SERVER_URL`이 루프백이 아니다(Step 7) | 메시지가 가리키는 패치를 하거나 `MCP_SERVER_URL`을 지운다 |
 | [Add to Calendar]를 눌러도 일정이 안 생긴다 | 단추는 채팅에 문장만 넣고, 모델의 도구에 일정 도구가 없다(Step 4) | 일정 도구를 가진 MCP 서버를 `mcpServers`에 더하거나 단추를 지운다 |
 | 키가 없는데 질문하면 실패한다 | OpenAI·Anthropic·Google 키가 모두 비어 있으면 `openai/gpt-5.5`가 키 없이 불린다(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/api/copilotkit/[[...slug]]/route.ts:28`) | `.env.local`에 `OPENAI_API_KEY` |
 | `vite`가 Node 버전 경고나 오류를 낸다(⚠ `engines`에서 읽은 것) | `vite@7.3.1`은 Node `^20.19.0 \|\| >=22.12.0`이 필요한데 `mcp-server/.nixpacks`는 20.18.1이다 | Node 20.19 이상으로 맞춘다 |
@@ -511,4 +660,4 @@ export DO_NOT_TRACK=1 COPILOTKIT_TELEMETRY_DISABLED=true NEXT_TELEMETRY_DISABLED
 
 ## 다음 날 예고
 
-[Day 146 · 🛠️ AI MCP App Builder](../day146-genui-mcp-app-builder/README.md) — 오늘은 서버가 미리 만든 HTML 네 장을 띄웠다면 내일은 **에이전트가 MCP 앱 자체를 지어 냅니다.** 원본 `generative_ui_agents/ai-mcp-app-builder`는 pnpm 모노레포이고, 락 파일과 이미지를 뺀 추적 파일 135개의 `wc -l` 합계가 21,782줄입니다. 그중 51개(13,388줄)는 `apps/mcp-use-server/.agent/`의 스킬 문서이고, 코드는 `.ts`·`.tsx`·`.js`·`.jsx`가 7,122줄입니다. 중심은 `apps/web/app/api/mastra-agent/route.ts`(920줄)의 Mastra 에이전트와 `apps/web/app/api/workspace/` 아래 파일 도구 여섯, 그리고 `apps/web/app/components/McpAppPreview.tsx`(204줄)의 미리보기입니다. 이 미리보기도 `sandbox="allow-scripts allow-same-origin"`인 iframe입니다(199행). 에이전트가 지은 MCP 서버는 E2B 클라우드 샌드박스(`E2B_API_KEY`)에서 돌아가며 이 문서의 규칙대로 소스로만 읽습니다. 모델은 `OPENAI_MODEL`이 없으면 `gpt-5.5`입니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/mastra-agent/route.ts:783`).
+[Day 146 · 🛠️ AI MCP App Builder](../day146-genui-mcp-app-builder/README.md) — 오늘은 서버가 미리 만든 HTML 네 장을 띄웠다면 내일은 **에이전트가 MCP 앱 자체를 지어 냅니다.** 원본 `generative_ui_agents/ai-mcp-app-builder`는 pnpm 모노레포이고, 락 파일과 이미지를 뺀 추적 파일 135개의 `wc -l` 합계가 21,782줄입니다. 그중 51개(13,388줄)는 `apps/mcp-use-server/.agent/`의 스킬 문서이고, 코드는 `.ts`·`.tsx`·`.js`·`.jsx`가 7,122줄입니다. 중심은 `apps/web/app/api/mastra-agent/route.ts`(920줄)의 Mastra 에이전트와 `apps/web/app/api/workspace/` 아래 라우트 일곱(`download`·`edit-file`·`exec`·`info`·`provision`·`read-file`·`write-file`), 그리고 `apps/web/app/components/McpAppPreview.tsx`(204줄)의 미리보기입니다. 이 미리보기도 `sandbox="allow-scripts allow-same-origin"`인 iframe입니다(199행). 에이전트가 지은 MCP 서버는 E2B 클라우드 샌드박스(`E2B_API_KEY`)에서 돌아가며 이 문서의 규칙대로 소스로만 읽습니다. 모델은 `OPENAI_MODEL`이 없으면 `gpt-5.5`입니다(`generative_ui_agents/ai-mcp-app-builder/apps/web/app/api/mastra-agent/route.ts:783`).

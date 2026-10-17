@@ -1,11 +1,14 @@
 ...@../../_tools/theme
 direction: down
 
+user: 사용자 { class: person }
 page: "Next.js 페이지\n(호스트 스크립트\nMCPAppsActivity\nRenderer)" { class: ours }
 outer: "바깥 iframe (프록시)\nsrcdoc = 프록시 HTML\nsandbox=allow-scripts\nallow-same-origin\nallow-forms" { class: ours }
 inner: "안쪽 iframe (앱)\nsrcdoc = 앱 HTML\n같은 sandbox 값\n(flights-app.html)" { class: ours }
 
+user -> page: "질문 ·\n예시 문구 클릭"
+user -> inner: "마법사 클릭 · 입력"
 page -> outer: "sandbox-resource-ready{html} ·\n응답 · 알림 (postMessage, '*')"
-outer -> inner: "그대로 전달\n(postMessage, '*')"
+outer -> inner: "html은 srcdoc 속성으로,\n나머지는 그대로 전달('*')"
 inner -> outer: "tools/call · ui/message ·\nui/initialize · size-change"
-outer -> page: "그대로 전달\n(postMessage, '*')"
+outer -> page: "sandbox-proxy-ready ·\n그대로 전달 ('*')"

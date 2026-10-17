@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+inst: "설치\n(npm·pnpm install)" { class: ours }
+browser: "브라우저\n(검사창 · iframe 앱)" { class: ours }
+rt: "런타임\n(route.ts)" { class: ours }
+
+scarf: "scarf.sh\n(설치 통계)" { class: ext }
+cdn: "cdn.copilotkit.ai\n(announcements.json)" { class: ext }
+fonts: "Google Fonts" { class: ext }
+tel: "telemetry.\ncopilotkit.ai" { class: ext }
+llm: "OpenAI\n(gpt-5.5)" { class: ext }
+
+inst -> scarf: "@scarf/scarf\npostinstall"
+browser -> cdn: "공지 fetch\n(검사창)"
+browser -> fonts: "글꼴 CSS"
+rt -> tel: "익명 이벤트\n(5%)"
+rt -> llm: "모델 호출"

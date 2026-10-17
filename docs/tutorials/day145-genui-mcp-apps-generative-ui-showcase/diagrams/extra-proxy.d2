@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "항공권 앱\n(안쪽 iframe)" { class: ours }
+proxy: "프록시\n(바깥 iframe)" { class: ours }
+ui: "브라우저 화면\n(CopilotKit)" { class: ours }
+
+proxy -> ui: "ui/notifications/\nsandbox-proxy-ready"
+ui -> proxy: "ui/notifications/\nsandbox-resource-ready\n(html)"
+proxy -> app: "inner.srcdoc = html\n(메시지가 아니라 속성)"

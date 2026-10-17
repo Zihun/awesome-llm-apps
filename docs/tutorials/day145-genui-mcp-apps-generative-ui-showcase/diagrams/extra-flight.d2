@@ -10,6 +10,7 @@ mcp: "MCP 서버\n(:3001)" { class: ours }
 user -> app: "항공편 고르고\n[좌석 선택]"
 app -> ui: "tools/call\nselect-flight"
 ui -> rt: "run + forwardedProps\n(__proxiedMCPRequest)"
+rt -> ui: "RUN_STARTED"
 rt -> mcp: "tools/call\nselect-flight"
 mcp -> rt: "seatMap\n(20행 x 6열)"
 rt -> ui: "RUN_FINISHED\n(result)"

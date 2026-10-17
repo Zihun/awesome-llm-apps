@@ -1,11 +1,13 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-app: "항공권 앱\n(iframe)" { class: ours }
+app: "항공권 앱\n(안쪽 iframe)" { class: ours }
 ui: "브라우저 화면\n(CopilotKit)" { class: ours }
+proxy: "프록시\n(바깥 iframe)" { class: ours }
 
-ui -> app: "sandbox-resource-ready\n(html)"
-app -> ui: "ui/initialize"
-ui -> app: "hostCapabilities"
+app -> ui: "ui/initialize\n(프록시가 중계)"
+ui -> app: "hostCapabilities\n(프록시가 중계)"
 app -> ui: "ui/notifications/\ninitialized"
-ui -> app: "tool-input ·\ntool-result"
+ui -> app: "ui/notifications/\ntool-input"
+ui -> app: "ui/notifications/\ntool-result"
+app -> ui: "ui/notifications/\nsize-change"

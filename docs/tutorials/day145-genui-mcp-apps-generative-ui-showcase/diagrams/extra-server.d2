@@ -1,0 +1,10 @@
+...@../../_tools/theme
+direction: down
+
+srv: "server.ts\n(도구 16개)" { class: ours }
+data: "src/flights.ts ·\nhotels.ts ·\nstocks.ts ·\nkanban.ts" { class: ours }
+mem: "서버 메모리\n(Map)" { class: store }
+
+srv -> data: "함수 호출\n(searchFlights 등)"
+data -> mem: "flightSearches ·\nbookings 등"
+srv -> mem: "activePortfolios ·\nactiveBoards"

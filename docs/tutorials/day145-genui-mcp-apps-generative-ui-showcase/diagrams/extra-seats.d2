@@ -10,6 +10,7 @@ mcp: "MCP 서버\n(:3001)" { class: ours }
 user -> app: "좌석 고르고\n[확인]"
 app -> ui: "tools/call\nselect-seats"
 ui -> rt: "run + forwardedProps\n(__proxiedMCPRequest)"
+rt -> ui: "RUN_STARTED"
 rt -> mcp: "tools/call\nselect-seats"
 mcp -> rt: "selectedSeats ·\ntotalSeatFee"
 rt -> ui: "RUN_FINISHED\n(result)"

@@ -6,6 +6,7 @@ rt: "런타임 +\n미들웨어" { class: ours }
 mcp: "MCP 서버\n(:3001)" { class: ours }
 
 ui -> rt: "run + forwardedProps\n(resources/read)"
+rt -> ui: "RUN_STARTED"
 rt -> mcp: "resources/read\nui://flights/..."
 mcp -> rt: "HTML 한 장"
 rt -> ui: "RUN_FINISHED\n(result)"
