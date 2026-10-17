@@ -410,11 +410,12 @@ Please check your .env file and ensure all required variables are set.
 ```
 
 ```powershell
-$env:OPENAI_API_KEY = "sk-fake"; $env:GITHUB_PERSONAL_ACCESS_TOKEN = "ghp_fake"; Remove-Item Env:PERPLEXITY_API_KEY -ErrorAction SilentlyContinue
+$env:OPENAI_API_KEY = "sk-fake"; $env:GITHUB_PERSONAL_ACCESS_TOKEN = "ghp_fake"; $env:PYTHON_DOTENV_DISABLED = "1"; Remove-Item Env:PERPLEXITY_API_KEY -ErrorAction SilentlyContinue
 "bye" | uv run --no-project python multi_mcp_agent.py
+Remove-Item Env:PYTHON_DOTENV_DISABLED
 ```
 
-(PowerShell에서는 변수에 빈 값을 넣으면 변수가 지워지므로 `Remove-Item`을 씁니다. 이 줄은 실행해 보지 못했습니다. 상위 폴더 `.env`가 키를 채우면 위 네 줄 대신 Step 4의 출력이 나오는데, 서버가 모두 가짜라 안전합니다.)
+PowerShell에서는 `$env:PERPLEXITY_API_KEY = ""`로 빈 값을 줄 수 없습니다. Microsoft 문서(about_Environment_Variables)에 "In PowerShell, an environment variable can't be set to an empty string. Setting an environment variable to `$null` or an empty string removes it from the current session."라고 적혀 있어 변수가 지워집니다. 그러면 `load_dotenv()`가 상위 폴더 `.env`의 진짜 Perplexity 키로 채워 검사를 통과하고, 그 키가 가짜 서버 넷의 환경에 실립니다(bash에서 지워진 변수를 흉내 내 직접 확인했습니다. 바깥으로 나가는 요청은 없었습니다). 그래서 `PYTHON_DOTENV_DISABLED=1`로 `.env` 읽기를 끕니다(python-dotenv 1.2.4에서 확인). 이 줄은 PowerShell에서 실행해 보지 못했습니다. 기대하는 출력은 위 bash와 같은 키 누락 안내이고, 마지막 줄이 끈 설정을 되돌립니다.
 
 ### Step 4. 서버가 뜨는 순간, 서버가 받는 환경, 시간 제한
 
