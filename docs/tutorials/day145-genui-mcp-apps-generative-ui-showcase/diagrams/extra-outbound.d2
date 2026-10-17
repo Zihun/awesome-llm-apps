@@ -2,17 +2,22 @@
 direction: down
 
 inst: "설치\n(npm·pnpm install)" { class: ours }
-browser: "브라우저\n(검사창 · iframe 앱)" { class: ours }
+nextsrv: "Next 서버\n(next dev)" { class: ours }
 rt: "런타임\n(route.ts)" { class: ours }
+insp: "검사창\n(브라우저)" { class: ours }
+iframeapp: "앱 iframe\n(브라우저)" { class: ours }
 
 scarf: "scarf.sh\n(설치 통계)" { class: ext }
+nexttel: "Next.js\n텔레메트리" { class: ext }
+tel: "telemetry.\ncopilotkit.ai" { class: ext }
 cdn: "cdn.copilotkit.ai\n(announcements.json)" { class: ext }
 fonts: "Google Fonts" { class: ext }
-tel: "telemetry.\ncopilotkit.ai" { class: ext }
 llm: "OpenAI\n(gpt-5.5)" { class: ext }
 
 inst -> scarf: "@scarf/scarf\npostinstall"
-browser -> cdn: "공지 fetch\n(검사창)"
-browser -> fonts: "글꼴 CSS"
+nextsrv -> nexttel: "익명 통계"
 rt -> tel: "익명 이벤트\n(5%)"
-rt -> llm: "모델 호출"
+insp -> cdn: "공지 fetch"
+insp -> fonts: "글꼴 CSS"
+iframeapp -> fonts: "글꼴 CSS"
+rt -> llm: "모델 호출\n(정상 경로)"

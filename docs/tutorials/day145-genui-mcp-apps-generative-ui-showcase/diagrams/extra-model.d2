@@ -5,7 +5,7 @@ ui: "브라우저 화면\n(CopilotKit)" { class: ours }
 rt: "런타임 +\n미들웨어" { class: ours }
 llm: "gpt-5.5\n(OpenAI)" { class: ext }
 
+rt -> ui: "RUN_STARTED\n(모델 요청보다 먼저)"
 rt -> llm: "시스템 프롬프트 + 대화 내용 +\n도구 4개(이름·설명·스키마)"
-rt -> ui: "RUN_STARTED"
 llm -> rt: "tool_call search-flights\n(JFK, LAX, 날짜, 2명)"
 rt -> ui: "TOOL_CALL_START ·\nARGS · END"

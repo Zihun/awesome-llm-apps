@@ -359,9 +359,11 @@ grep -n 'hasUIResource\|new Client(\|client.connect\|case "\|MCP method not allo
 
 크기 알림이 하나 어긋납니다. 호스트가 듣는 이름은 `ui/notifications/size-changed`이고 그 알림이 와야 iframe 높이를 바꿉니다. 처음 높이는 100px입니다. 네 앱이 모두 `ui/notifications/size-change`로 보냅니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/flights-app.html:1695-1703`). 공식 사양 문서에도 호스트에도 앞의 이름은 없습니다. 1.59.2 호스트에서 iframe 높이가 바뀌는 길은 이 알림이 정하는 `iframeSize` 하나뿐이라(소스로 확인), 소스로는 iframe이 100px에 머무는 것으로 읽힙니다. 남는 불확실성은 화면에서의 모습뿐이고, 이 문서는 화면을 열지 않았으므로 단정하지 않습니다(문제 해결 표).
 
-앱이 열리면 앱이 먼저 `ui/initialize`를 보내고 호스트가 답한 뒤 앱이 `initialized`를 보냅니다. 그다음 호스트가 따로 도는 두 효과에서 `tool-input`과 `tool-result`를 차례로 보내고, 앱은 크기를 `size-change`로 알립니다(앞에서 본 이름 불일치). 프록시가 중계하는 메시지는 사양의 생명주기 그림처럼 앱과 호스트 사이에 곧바로 그렸고, 프록시 자신이 보내는 것은 앞의 프록시 시퀀스에 있습니다. 호스트가 받아 주는 앱의 요청은 `ui/initialize`·`ui/message`·`ui/open-link`·`tools/call` 넷이고, 그 밖의 메서드에는 "Method not found" 오류를 돌려줍니다. 이 가운데 `tools/call`만 런타임으로 넘어갑니다.
+앱이 열리면 앱이 먼저 `ui/initialize`를 보내고 호스트가 답한 뒤 앱이 `initialized`를 보냅니다. 그다음 호스트가 따로 도는 두 효과에서 `tool-input`과 `tool-result`를 차례로 보내고, 앱은 크기를 `size-change`로 알립니다(앞에서 본 이름 불일치). 앱은 `initialized` 직후 같은 호출 안에서 크기 관찰을 걸고, 호스트는 준비 상태가 바뀐 뒤의 효과에서 보내므로, `size-change`가 `tool-input`·`tool-result`보다 앞서는지 뒤서는지는 소스가 정하지 않습니다. 둘째 그림은 임의로 뒤에 놓았습니다. 앱과 호스트 사이 메시지는 모두 프록시를 거쳐 가므로, 그림마다 프록시의 중계를 화살표로 그렸습니다. 호스트가 받아 주는 앱의 요청은 `ui/initialize`·`ui/message`·`ui/open-link`·`tools/call` 넷이고, 그 밖의 메서드에는 "Method not found" 오류를 돌려줍니다. 이 가운데 `tools/call`만 런타임으로 넘어갑니다.
 
 ![핸드셰이크 시퀀스](diagrams/extra-handshake.svg)
+
+![알림 시퀀스(순서는 소스가 정하지 않음)](diagrams/extra-notify.svg)
 
 **확인.** 위 세 줄과 이름 불일치를 직접 찾아봅니다. (`host.txt`는 Step 1에서 만들었습니다.)
 
@@ -456,13 +458,13 @@ name: "book-flight"
 
 **할 일.** 먼저 무엇이 열리고 무엇이 나가는지입니다. 같은 네트워크에 열리는 것은 바인딩 때문입니다. MCP 서버는 `app.listen(PORT)`이라 호스트를 정하지 않아 모든 인터페이스에 열리고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:1117`), `next dev`와 `next start`의 호스트 기본값도 `0.0.0.0`입니다(Next.js CLI 문서를 2026-10-16에 읽음). `/mcp`와 `/api/copilotkit`에는 인증이 없어서 같은 네트워크의 누구나 도구 열여섯과 키가 든 런타임을 부를 수 있습니다. CORS는 이와 별개입니다. MCP 서버는 `origin: "*"`이고(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:1010-1015`), 런타임 엔드포인트도 `cors`를 주지 않으면 모든 출처를 허용합니다(소스로 확인). 그래서 루프백에만 열어도, 독자 브라우저에 열려 있는 아무 웹사이트가 `localhost:3000`·`3001`에 요청해 응답을 읽을 수 있습니다(브라우저의 로컬 네트워크 제한이 허락하는 한).
 
-바깥으로 나가는 요청은 다섯 갈래입니다.
+바깥으로 나가는 요청은 다섯 갈래입니다. 아래 그림은 이 다섯 갈래를 화살표 하나씩으로 그리고(검사창과 앱 iframe은 따로), 정상 경로인 OpenAI 호출을 하나 더 그렸습니다. 설치 → scarf.sh, Next 서버 → Next 텔레메트리, 런타임 → CopilotKit 텔레메트리, 검사창 → cdn·Google Fonts, 앱 iframe → Google Fonts의 순서입니다.
 
 ![바깥으로 나가는 요청](diagrams/extra-outbound.svg)
 
 - 설치: `@scarf/scarf` 1.4.0의 `postinstall`이 `scarf.sh`로 설치 통계를 보냅니다. 두 CopilotKit 패키지에 `scarfSettings`가 없어 기본은 보내는 쪽입니다. `SCARF_ANALYTICS=false`·`SCARF_NO_ANALYTICS=true`·`DO_NOT_TRACK=1` 가운데 하나로 끕니다(`@scarf/scarf` 1.4.0 `report.js`, 소스로 확인).
 - CopilotKit 런타임: `https://telemetry.copilotkit.ai/ingest`로 익명 이벤트의 5%를 보내고, 실행 요청마다 `copilot_request_created` 이벤트를 만듭니다. `DO_NOT_TRACK=1`이나 `COPILOTKIT_TELEMETRY_DISABLED=true`로 끕니다(소스로 확인).
-- Next.js: 익명 텔레메트리를 `NEXT_TELEMETRY_DISABLED=1`로 끕니다(Next 문서).
+- Next.js: `next dev`가 익명 텔레메트리를 보내고, `NEXT_TELEMETRY_DISABLED=1`로 끕니다(Next 문서).
 - 화면의 검사창: `page.tsx`의 `showDevConsole="auto"`(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/page.tsx:162`)는 `localhost`·`127.0.0.1`에서 `@copilotkit/web-inspector` 1.59.2를 불러오고, 이것이 붙을 때 Google Fonts 링크를 넣고 `https://cdn.copilotkit.ai/announcements.json`을 가져옵니다. 끄는 환경변수는 없고 `showDevConsole={false}`로 바꿔야 합니다(소스로 확인).
 - 앱 iframe: 열릴 때 Google Fonts에서 글꼴을 받습니다(`generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/apps/flights-app.html:7-10`). `layout.tsx`가 가져오는 `next/font/google`도 Google 글꼴을 쓰는 경로입니다(Next가 언제 무엇을 내려받는지는 확인하지 않았습니다). 이 둘은 막는 방법이 없고 아래 스크립트도 막지 못합니다.
 
@@ -484,21 +486,21 @@ grep -c 'showDevConsole={false}' app-copy/src/app/page.tsx
 ```powershell
 Copy-Item -Recurse $APP app-copy
 $f = "app-copy\mcp-server\server.ts"
-(Get-Content $f -Raw).Replace('app.listen(PORT, () => {', 'app.listen(PORT, "127.0.0.1", () => {') | Set-Content -NoNewline -Encoding utf8 $f
+(Get-Content $f -Raw -Encoding utf8).Replace('app.listen(PORT, () => {', 'app.listen(PORT, "127.0.0.1", () => {') | Set-Content -NoNewline -Encoding utf8 $f
 $f = "app-copy\src\app\page.tsx"
-(Get-Content $f -Raw).Replace('showDevConsole="auto"', 'showDevConsole={false}') | Set-Content -NoNewline -Encoding utf8 $f
-(Select-String -Path app-copy\mcp-server\server.ts -SimpleMatch 'app.listen(PORT, "127.0.0.1"').Count
-(Select-String -Path app-copy\src\app\page.tsx -SimpleMatch 'showDevConsole={false}').Count
+(Get-Content $f -Raw -Encoding utf8).Replace('showDevConsole="auto"', 'showDevConsole={false}') | Set-Content -NoNewline -Encoding utf8 $f
+(Select-String -Path app-copy\mcp-server\server.ts -Encoding utf8 -SimpleMatch 'app.listen(PORT, "127.0.0.1"').Count
+(Select-String -Path app-copy\src\app\page.tsx -Encoding utf8 -SimpleMatch 'showDevConsole={false}').Count
 ```
 
-위 PowerShell 줄은 실행해 보지 못했습니다. 이어서 스크립트를 저장합니다. 환경변수는 터미널의 `export`에 기대지 않고 스크립트가 직접 정해 자식 프로세스에 넘기므로, 터미널이 달라도 같습니다. 화면의 `-H 127.0.0.1`도 스크립트 안에 고정되어 있습니다.
+위 PowerShell 줄은 실행해 보지 못했습니다. `server.ts`에 `★` 같은 비ASCII 글자가 있어서(예: `generative_ui_agents/mcp-apps-generative-ui-showcase/mcp-server/server.ts:433`) Windows PowerShell 5.1이 기본 코드 페이지로 읽으면 깨질 수 있어, 읽고 쓰는 쪽 모두 UTF-8을 줍니다(5.1은 BOM을 붙여 씁니다). 이어서 스크립트를 저장합니다. 환경변수는 터미널의 `export`에 기대지 않고 스크립트가 직접 정해 자식 프로세스에 넘기므로, 터미널이 달라도 같습니다. 화면의 `-H 127.0.0.1`도 스크립트 안에 고정되어 있습니다.
 
 ```bash
 cat > launch.mjs <<'EOF'
 // 복사본 폴더의 패치와 환경을 확인한 뒤에만 설치·서버·화면 명령을 부른다.
 // 사용법: node launch.mjs <install|mcp|web> <복사본 폴더> [--dry]
 // --dry 는 확인만 하고 아무것도 실행하지 않는다.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 
@@ -507,32 +509,49 @@ const fail = (msg) => {
   console.error("멈춥니다: " + msg);
   process.exit(1);
 };
-if (!["install", "mcp", "web"].includes(mode) || !dir) {
-  fail("사용법: node launch.mjs <install|mcp|web> <복사본 폴더> [--dry]");
+if (!["install", "mcp", "web"].includes(mode)) {
+  fail("모드는 install, mcp, web 가운데 하나입니다. 사용법: node launch.mjs <모드> <복사본 폴더> [--dry]");
+}
+if (!dir || dir.startsWith("--")) {
+  fail("복사본 폴더를 주세요. 사용법: node launch.mjs <모드> <복사본 폴더> [--dry]");
+}
+if (!existsSync(join(dir, "mcp-server", "server.ts"))) {
+  fail(`${dir} 안에 mcp-server/server.ts가 없습니다. 복사본 폴더가 맞는지 보세요`);
 }
 
-// 1. 환경은 이 스크립트가 직접 정한다. 터미널에 export가 없어도, 다른 터미널이어도 같다.
+// 1. 자식 프로세스에 줄 환경을 이 스크립트가 직접 만든다. 터미널에 export가 없어도 같다.
+//    독자의 NO_PROXY는 덮어쓰지 않고 루프백을 덧붙인다.
+const withLoopback = (v) => [...new Set([...(v || "").split(",").map((x) => x.trim()).filter(Boolean), "localhost", "127.0.0.1"])].join(",");
 const env = {
   ...process.env,
   DO_NOT_TRACK: "1",
   COPILOTKIT_TELEMETRY_DISABLED: "true",
   NEXT_TELEMETRY_DISABLED: "1",
   SCARF_ANALYTICS: "false",
-  NO_PROXY: "localhost,127.0.0.1",
-  no_proxy: "localhost,127.0.0.1",
+  NO_PROXY: withLoopback(process.env.NO_PROXY || process.env.no_proxy),
+  no_proxy: withLoopback(process.env.NO_PROXY || process.env.no_proxy),
 };
 
-// 2. 셸에 이미 있는 값이 앱을 바깥으로 돌리지 않는지 본다.
-const url = process.env.MCP_SERVER_URL;
-if (url) {
+// 2. MCP_SERVER_URL이 바깥을 가리키지 않는지 본다. 셸의 값과 복사본의 .env 파일들을 모두 본다.
+const urls = [];
+if (process.env.MCP_SERVER_URL) urls.push(["셸", process.env.MCP_SERVER_URL]);
+for (const name of [".env", ".env.local", ".env.development", ".env.development.local"]) {
+  const file = join(dir, name);
+  if (!existsSync(file)) continue;
+  for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\s*(?:export\s+)?MCP_SERVER_URL\s*=\s*(.*?)\s*$/);
+    if (m) urls.push([name, m[1].replace(/^["']|["']$/g, "")]);
+  }
+}
+for (const [where, url] of urls) {
   let host = "";
   try {
     host = new URL(url).hostname;
   } catch {
-    fail(`MCP_SERVER_URL을 읽을 수 없습니다: ${url}`);
+    fail(`${where}의 MCP_SERVER_URL을 읽을 수 없습니다: ${url}`);
   }
   if (!["localhost", "127.0.0.1"].includes(host)) {
-    fail(`MCP_SERVER_URL의 호스트가 루프백이 아닙니다: ${host}`);
+    fail(`${where}의 MCP_SERVER_URL 호스트가 루프백이 아닙니다: ${host}`);
   }
 }
 
@@ -556,7 +575,7 @@ const plans = {
   web: [{ cwd: dir, cmd: "npm", args: ["run", "dev", "--", "-H", "127.0.0.1"] }],
 }[mode];
 
-console.log("확인 통과: MCP 서버 루프백 패치, 검사창 끔, 환경 넷과 NO_PROXY, MCP_SERVER_URL " + (url ? "루프백" : "없음"));
+console.log("패치 확인 통과(MCP 서버 루프백, 검사창 끔). 자식 환경에 설정함: 텔레메트리 끄기 넷, NO_PROXY에 루프백 덧붙임. MCP_SERVER_URL 검사: " + (urls.length ? urls.map(([w]) => w).join("·") + " 루프백" : "설정 없음"));
 for (const p of plans) {
   console.log(`${flag === "--dry" ? "(실행하지 않음) " : ""}${p.cwd} 에서: ${p.cmd} ${p.args.join(" ")}`);
 }
@@ -570,19 +589,21 @@ EOF
 node launch.mjs web app-copy --dry
 ```
 
-**확인.** 패치된 복사본에서 `--dry`는 이렇게 나옵니다(이 문서가 직접 돌려 본 출력입니다. 줄 끝의 경로 구분자는 Windows에서 `\`입니다).
+**확인.** 위 마지막 줄(`web` 모드)을 패치된 복사본에서 `--dry`로 돌린 출력은 이렇습니다(이 문서가 직접 돌려 본 출력입니다). `mcp` 모드는 둘째 줄이 `app-copy/mcp-server 에서: npm run dev`입니다.
 
 ```text
-확인 통과: MCP 서버 루프백 패치, 검사창 끔, 환경 넷과 NO_PROXY, MCP_SERVER_URL 없음
-(실행하지 않음) app-copy\mcp-server 에서: npm run dev
+패치 확인 통과(MCP 서버 루프백, 검사창 끔). 자식 환경에 설정함: 텔레메트리 끄기 넷, NO_PROXY에 루프백 덧붙임. MCP_SERVER_URL 검사: 설정 없음
+(실행하지 않음) app-copy 에서: npm run dev -- -H 127.0.0.1
 ```
 
-위는 `mcp` 모드의 출력이고, `web` 모드는 둘째 줄이 `app-copy 에서: npm run dev -- -H 127.0.0.1`입니다. 패치를 빠뜨리거나 바깥 주소를 주면 멈추는지도 봤습니다.
+패치를 빠뜨리거나 바깥 주소를 주면 멈추는지도 봤습니다.
 
 ```text
 멈춥니다: mcp-server/server.ts에 app.listen(PORT, "127.0.0.1", ...) 패치가 없습니다        (둘 다 안 했을 때)
 멈춥니다: src/app/page.tsx의 showDevConsole 패치가 없습니다                                   (서버 패치만 했을 때)
-멈춥니다: MCP_SERVER_URL의 호스트가 루프백이 아닙니다: evil.example                          (MCP_SERVER_URL=https://evil.example/mcp)
+멈춥니다: 셸의 MCP_SERVER_URL 호스트가 루프백이 아닙니다: evil.example                      (MCP_SERVER_URL=https://evil.example/mcp)
+멈춥니다: .env.local의 MCP_SERVER_URL 호스트가 루프백이 아닙니다: evil.example               (app-copy/.env.local에 같은 줄)
+멈춥니다: 복사본 폴더를 주세요. 사용법: node launch.mjs <모드> <복사본 폴더> [--dry]            (폴더 인자 없이)
 ```
 
 멈출 때 종료 코드는 1이고 아무 명령도 부르지 않습니다. 이 스크립트가 **막지 못하는 것**은 앱 iframe·`next/font`의 Google 글꼴 요청, 그리고 OpenAI 호출 자체(`.env.local`에 키를 넣으면 질문마다 Step 4의 어림 비용이 듭니다)입니다. 셸에 `ANTHROPIC_API_KEY`나 `GOOGLE_API_KEY`가 있고 OpenAI 키가 없으면 그 제공자로 요청이 가는 것도(`generative_ui_agents/mcp-apps-generative-ui-showcase/src/app/api/copilotkit/[[...slug]]/route.ts:18-29`) 스크립트는 보지 않습니다. 진짜로 띄우는 순서는 이렇습니다. 아래는 이 문서가 실행해 보지 못한 것입니다.
@@ -599,7 +620,7 @@ node launch.mjs mcp app-copy
 node launch.mjs web app-copy
 ```
 
-두 터미널에서 각각 위 줄만 칩니다. `npm run build`의 `--script-shell`은 Windows에서 npm이 스크립트를 돌릴 셸을 Git Bash의 `bash.exe`로 바꾸는 설정입니다(npm 문서 `script-shell`, 이 문서는 해 보지 못했습니다). macOS·Linux에서는 기본 셸이 `/bin/sh`라 이 옵션이 필요 없습니다. 옵션을 쓰지 않는 길은 `mcp-server/apps`에서 `BUILD_APP=flights-app npx vite build`를 네 앱에 대해 따로 돌리는 것인데, `npx`를 쓰므로 독자가 진짜로 돌릴 때만 해당하고 이 문서는 해 보지 못했습니다.
+`npm run build` 줄은 `launch.mjs` 밖에 있습니다. 빌드(`tsc`와 `vite build`)는 서버를 열지 않고 이 문서가 읽은 앱 소스에는 바깥으로 요청을 보내는 코드가 없지만, `vite`와 `esbuild` 안은 읽지 않았으므로 바깥 요청이 없다고 확인한 것은 아닙니다. 두 터미널에서 각각 위 줄만 칩니다. `npm run build`의 `--script-shell`은 Windows에서 npm이 스크립트를 돌릴 셸을 Git Bash의 `bash.exe`로 바꾸는 설정입니다(npm 문서 `script-shell`, 이 문서는 해 보지 못했습니다). macOS·Linux에서는 기본 셸이 `/bin/sh`라 이 옵션이 필요 없습니다. 옵션을 쓰지 않는 길은 `mcp-server/apps`에서 `BUILD_APP=flights-app npx vite build`를 네 앱에 대해 따로 돌리는 것인데, `npx`를 쓰므로 독자가 진짜로 돌릴 때만 해당하고 이 문서는 해 보지 못했습니다.
 
 이 문서가 읽은 것과 읽지 못한 것을 나눕니다.
 

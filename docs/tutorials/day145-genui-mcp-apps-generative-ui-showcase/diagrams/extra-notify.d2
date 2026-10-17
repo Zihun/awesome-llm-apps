@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+app: "항공권 앱\n(안쪽 iframe)" { class: ours }
+proxy: "프록시\n(바깥 iframe)" { class: ours }
+ui: "브라우저 화면\n(CopilotKit)" { class: ours }
+
+ui -> proxy: "ui/notifications/\ntool-input"
+proxy -> app: "tool-input\n(그대로 전달)"
+ui -> proxy: "ui/notifications/\ntool-result"
+proxy -> app: "tool-result\n(그대로 전달)"
+app -> proxy: "ui/notifications/\nsize-change"
+proxy -> ui: "size-change\n(그대로 전달)"
