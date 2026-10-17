@@ -1,8 +1,6 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
-user: 사용자 { class: person }
-ui: "브라우저 화면\n(소스로만)" { class: ours }
 rt: "CopilotKit 런타임\n(소스로만)" { class: ours }
 agent: "에이전트 서버\n(serve.py·그래프)" { class: ours }
 tool: "백엔드 도구\n(src/*.py)" { class: ours }
@@ -11,7 +9,4 @@ llm: "gpt-5.5\n(가짜 서버)" { class: ext }
 agent -> tool: "generate_a2ui()"
 tool -> llm: "보조 호출\n(tool_choice=render_a2ui)"
 llm -> tool: "render_a2ui(\nsurfaceId, components, data)"
-tool -> agent: "a2ui_operations JSON"
-agent -> rt: "SSE: TOOL_CALL_RESULT"
-rt -> ui: "A2UI 미들웨어:\nACTIVITY_SNAPSHOT"
-ui -> user: "Metric · PieChart 그려짐"
+agent -> rt: "SSE: TOOL_CALL_START ·\nTOOL_CALL_END render_a2ui"

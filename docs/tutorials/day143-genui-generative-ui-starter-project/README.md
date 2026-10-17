@@ -26,7 +26,7 @@
 
 명령은 Git Bash 기준입니다. 한국어 Windows에서 파이썬 출력이 cp949로 깨지지 않도록 아래 환경변수에 `PYTHONIOENCODING=utf-8`을 둡니다. PowerShell 줄은 실행해 보지 못했습니다(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다).
 
-**이 앱의 모델이 아직 살아 있는지.** 앱이 쓰는 모델은 `gpt-5.5` 하나입니다(`generative_ui_agents/generative-ui-starter-project/agent/main.py:19`와 `generative_ui_agents/generative-ui-starter-project/agent/src/a2ui_dynamic_schema.py:68`). OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations)와 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5.5)를 2026-10-16에 원문으로 읽었습니다. 폐기 문서에 `gpt-5.5`와 그 스냅숏은 올라 있지 않고, 모델 페이지는 기본 스냅숏을 `gpt-5.5-2026-04-23`, `v1/chat/completions`를 Supported로 적습니다. 이 앱은 `ChatOpenAI`를 쓰고, 이 문서가 설치한 `langchain-openai` 1.1.9는 `gpt-5.5`를 `v1/chat/completions`로 보냅니다(가짜 서버가 받은 경로로 확인, Step 2). 가격은 모델 페이지 기준 입력 $5, 캐시 입력 $0.5, 출력 $30(100만 토큰당)입니다. 비용 어림(⚠ 추정)은 이렇습니다. "대시보드" 장면 하나에서 가짜 서버가 받은 모델 요청 넷(메인 둘, 보조 하나, 마무리 하나)의 본문이 합쳐 약 4.7만 자(4자에 1토큰으로 어림하면 입력 약 1.2만 토큰)였고, 진짜 화면은 여기에 A2UI 컴포넌트 스키마와 지침 글을 더 실어 보내므로 입력이 1.5~2.5만 토큰이라 치면 $0.1 안팎, 출력은 알 수 없어 $0.05~0.15를 더 잡았습니다.
+**이 앱의 모델이 아직 살아 있는지.** 앱이 쓰는 모델은 `gpt-5.5` 하나입니다(`generative_ui_agents/generative-ui-starter-project/agent/main.py:19`와 `generative_ui_agents/generative-ui-starter-project/agent/src/a2ui_dynamic_schema.py:68`). OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations)와 모델 페이지(https://developers.openai.com/api/docs/models/gpt-5.5)를 2026-10-16에 원문으로 읽었습니다. 폐기 문서에 `gpt-5.5`와 그 스냅숏은 올라 있지 않고, 모델 페이지는 기본 스냅숏을 `gpt-5.5-2026-04-23`, `v1/chat/completions`를 Supported로 적습니다. 이 앱은 `ChatOpenAI`를 쓰고, 이 문서가 설치한 `langchain-openai` 1.1.9는 `gpt-5.5`를 `v1/chat/completions`로 보냅니다(가짜 서버가 받은 경로로 확인, Step 2). 가격은 모델 페이지 기준 입력 $5, 캐시 입력 $0.5, 출력 $30(100만 토큰당)입니다. 비용 어림(⚠ 추정)은 이렇습니다. "대시보드" 장면 하나에서 가짜 서버가 받은 모델 요청 넷(메인 둘, 보조 하나, 마무리 하나)의 본문이 합쳐 약 4.8만 자(4자에 1토큰으로 어림하면 입력 약 1.2만 토큰)였고, 진짜 화면은 여기에 A2UI 컴포넌트 스키마와 지침 글을 더 실어 보내므로 입력이 1.5~2.5만 토큰이라 치면 $0.1 안팎, 출력은 알 수 없어 $0.05~0.15를 더 잡았습니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -726,8 +726,8 @@ CONTEXT = [
     {"description": SCHEMA_DESC,
      "value": json.dumps([{"name": "Metric", "props": {"label": "string", "value": "string"}},
                           {"name": "PieChart", "props": {"data": "array"}}])},
-    {"description": "A2UI generation guidelines", "value": "GENERATION-GUIDELINES-TEXT"},
-    {"description": "A2UI design guidelines", "value": "DESIGN-GUIDELINES-TEXT"},
+    {"description": "A2UI generation guidelines — protocol rules, tool arguments, path rules, data model format, and form/two-way-binding instructions.", "value": "GENERATION-GUIDELINES-TEXT"},
+    {"description": "A2UI design guidelines — visual design rules, component hierarchy tips, and action handler patterns.", "value": "DESIGN-GUIDELINES-TEXT"},
 ]
 
 
@@ -906,10 +906,10 @@ $PY drive.py 53872 todos
   TEXT_MESSAGE_CONTENT: 'manage_todos '
   TEXT_MESSAGE_CONTENT: 'finished.'
   TEXT_MESSAGE_END
-  STATE_SNAPSHOT: keys=['messages', 'todos', 'copilotkit'] todos=3
+  STATE_SNAPSHOT: keys=['messages', 'copilotkit', 'todos'] todos=3
   MESSAGES_SNAPSHOT
   RUN_FINISHED
-todos: [('Read the docs', '4b84f0c1'), ('Build a prototype', 'ed931cc4'), ('Explore agent state', '734f7774')]
+todos: [('Read the docs', '98dbde46'), ('Build a prototype', '056710b7'), ('Explore agent state', '8ea33d4f')]
 가드: 루프백 밖으로 나가려던 시도 0건 []
 ```
 
@@ -1174,7 +1174,7 @@ $PY drive.py 53872 flights
     result = a2ui.render(operations=ops)
 ```
 
-이 글에는 화면이 `context`로 보낸 카탈로그 설명과 컴포넌트 스키마, 생성 지침이 들어가야 보조 모델이 열한 개 컴포넌트를 알아봅니다. React 쪽 `A2UICatalogContext`가 `context`에 네 항목을 올립니다. 카탈로그 정보, 컴포넌트 스키마(`@copilotkit/a2ui-renderer`의 `A2UI_SCHEMA_CONTEXT_DESCRIPTION`이라는 설명 글을 가진 항목), 생성 지침, 디자인 지침입니다(`@copilotkit/react-core` 소스). "대시보드" 장면을 보냅니다. `drive.py`의 `CONTEXT`가 이 네 항목을 흉내 냅니다. 설명 글은 화면의 상수와 같은 글자를 쓰고, 내용은 제가 쓴 짧은 글입니다.
+이 글에는 화면이 `context`로 보낸 카탈로그 설명과 컴포넌트 스키마, 생성 지침이 들어가야 보조 모델이 열한 개 컴포넌트를 알아봅니다. React 쪽 `A2UICatalogContext`가 `context`에 네 항목을 올립니다. 카탈로그 정보, 컴포넌트 스키마(`@copilotkit/a2ui-renderer`의 `A2UI_SCHEMA_CONTEXT_DESCRIPTION`이라는 설명 글을 가진 항목), 생성 지침, 디자인 지침입니다(`@copilotkit/react-core` 소스). "대시보드" 장면을 보냅니다. `drive.py`의 `CONTEXT`가 이 네 항목을 흉내 냅니다. 네 항목의 설명 글은 화면 소스(`A2UICatalogContext.tsx`와 `@copilotkit/a2ui-renderer`의 상수)에 적힌 글을 그대로 쓰고, 값은 제가 쓴 짧은 글입니다.
 
 ```bash
 $PY drive.py 53872 dashboard
@@ -1215,15 +1215,15 @@ $PY drive.py 53872 dashboard
 서버를 띄운 터미널 B에는 앱 자신의 디버그 출력이 찍힙니다(실제 터미널에는 `Deserializing unregistered type ag_ui.core.types.Context …` 경고 줄이 수십 개 섞여 나옵니다. 아래는 그 줄을 빼고, 긴 `[A2UI-RESPONSE]` 줄은 앞부분만 남긴 것입니다).
 
 ```text
-[A2UI-DEBUG] query_data called: query='financial sales data' at 20:22:06
+[A2UI-DEBUG] query_data called: query='financial sales data' at 14:18:34
 [A2UI-DEBUG] generate_a2ui STARTED at t=0
 [A2UI-DEBUG]   messages count: 4
 [A2UI-DEBUG]   context entries: 4, context_text_len: 0
 [A2UI-DEBUG]   calling secondary LLM at t=0.0s
 [A2UI-RESPONSE] content='' additional_kwargs={} response_metadata={'finish_reason': 'tool_calls', 'model_name': 'gpt-5.5', 'model_provider': 'openai'}
-[A2UI-DEBUG]   secondary LLM responded at t=0.0s
+[A2UI-DEBUG]   secondary LLM responded at t=0.1s
 [A2UI-DEBUG]   components=6 data_keys=[] surface=sales-dashboard
-[A2UI-DEBUG] generate_a2ui DONE at t=0.0s result_len=818
+[A2UI-DEBUG] generate_a2ui DONE at t=0.1s result_len=818
 ```
 
 `context entries: 4, context_text_len: 0`입니다. 항목은 네 개인데 글이 0자입니다. 가짜 서버가 받은 기록으로도 확인합니다.
@@ -1240,8 +1240,8 @@ $PY show_log.py fake.jsonl | tail -10
 22 /v1/chat/completions model=gpt-5.5 stream=True tools=1 tool_choice=render_a2ui 마지막 role=tool
       system        0자 ''
       user         36자 'Using A2UI show me a sales dashboard'
-      system      757자 'App Context:\n[\n  {\n    "description": "A2UI catalo'
-                항목: ['A2UI catalog capabilities: a', 'A2UI Component Schema — avai', 'A2UI generation guidelines', 'A2UI design guidelines']
+      system      949자 'App Context:\n[\n  {\n    "description": "A2UI catalo'
+                항목: ['A2UI catalog capabilities: a', 'A2UI Component Schema — avai', 'A2UI generation guidelines —', 'A2UI design guidelines — vis']
       assistant     0자 ''
       tool       6753자 '[{"date": "2026-01-05", "category": "Revenue", "su'
 23 /v1/chat/completions model=gpt-5.5 stream=True tools=11 tool_choice=None 마지막 role=tool
@@ -1249,7 +1249,7 @@ $PY show_log.py fake.jsonl | tail -10
 
 첫 줄은 이 문서 내내 모델 요청에 실린 `Authorization`이 가짜 값뿐이었다는 증거입니다. 보조 호출(`tool_choice=render_a2ui`)은 메시지 다섯을 받았고, 첫 시스템 메시지(`SystemMessage(content=prompt)`)가 0자입니다. 원인은 하나입니다. `copilotkit.context`의 항목은 `dict`가 아니라 `ag_ui.core.types.Context` 객체인데, `generate_a2ui`의 `isinstance(entry, dict)` 조건(`generative_ui_agents/generative-ui-starter-project/agent/src/a2ui_dynamic_schema.py:60-63`)이 그것을 모두 걸러 냅니다.
 
-그렇다고 보조 모델이 아무것도 모르는 것은 아닙니다. 위 출력의 둘째 시스템 메시지(757자)가 `App Context:`로 시작하는 글입니다. `CopilotKitMiddleware.before_agent`가 `copilotkit.context`를 이 글로 만들어 대화에 끼워 넣고(`copilotkit` 패키지의 `copilotkit_lg_middleware.py`, `Context` 객체는 `model_dump`로 풉니다), `generate_a2ui`는 대화(`messages[:-1]`)를 통째로 넘기기 때문입니다. `항목:` 줄이 보여 주듯 네 항목, 곧 카탈로그 정보·컴포넌트 스키마·생성 지침·디자인 지침이 모두 그 안에 있습니다. 다만 이 글은 시스템 지시 자리가 아니라 사용자 질문 뒤에 놓이고, 앱이 쓰려던 자리(`prompt`)는 비어 있습니다.
+그렇다고 보조 모델이 아무것도 모르는 것은 아닙니다. 위 출력의 둘째 시스템 메시지(949자)가 `App Context:`로 시작하는 글입니다. `CopilotKitMiddleware.before_agent`가 `copilotkit.context`를 이 글로 만들어 대화에 끼워 넣고(`copilotkit` 패키지의 `copilotkit_lg_middleware.py`, `Context` 객체는 `model_dump`로 풉니다), `generate_a2ui`는 대화(`messages[:-1]`)를 통째로 넘기기 때문입니다. `항목:` 줄이 보여 주듯 네 항목, 곧 카탈로그 정보·컴포넌트 스키마·생성 지침·디자인 지침이 모두 그 안에 있습니다. 다만 이 글은 시스템 지시 자리가 아니라 사용자 질문 뒤에 놓이고, 앱이 쓰려던 자리(`prompt`)는 비어 있습니다.
 
 `ag-ui-langgraph` 0.0.33에는 스키마 항목을 `context`에서 빼서 `state["ag-ui"]["a2ui_schema"]`로 옮기는 코드가 있습니다(`ag_ui_langgraph/agent.py`의 `langgraph_default_merge_state`). 이 코드는 설명 글이 정확히 `…use these component names and props when creating A2UI operations.`인 항목만 고르는데, 이 앱의 화면이 보내는 글(`@copilotkit/a2ui-renderer` 1.56.2의 상수)은 `props`가 아니라 `properties`입니다. 한 낱말이 달라서 이 앱의 실제 화면으로는 분리가 일어나지 않는다는 것이 소스로 읽은 결론입니다. `a2ui_schema` 상태는 비어 있고 `copilotkit.context`에 네 항목이 모두 남습니다. 이 문서의 첫 시도는 `drive.py`에 파이썬 쪽 글자(`props`)를 베껴 넣어 분리가 일어난다고 잘못 읽었고, 화면의 글자로 고쳐 다시 돌려 위 출력을 얻었습니다. Docker가 고정한 `ag-ui-langgraph` 0.0.22는 이 문서가 설치하지 않아 확인하지 못했습니다.
 
@@ -1281,7 +1281,7 @@ npm run dev          # 이 문서는 실행하지 않았습니다
   },
 ```
 
-`npm install`의 `postinstall`이 `install:agent`, 곧 `scripts/setup-agent.sh`를 부르고, 그 안에서 `uv sync`가 돕니다. `dev:agent`는 `scripts/run-agent.sh`이고, 그 안의 줄은 `npx @langchain/langgraph-cli dev --port 8123 --no-browser`(3행)입니다. `npx`는 이름 그대로 `@langchain/langgraph-cli`의 최신판을 내려받아 실행합니다. 이 문서를 쓴 날의 최신은 1.5.3(2026-10-12 공개)이고, 그 압축 파일을 내려받아 `dev.mjs`·`dev.python.mjs`·`analytics.mjs`를 읽었습니다. 하는 일은 그림 `extra-dev`와 같습니다. 이 도구는 파이썬 설정(`python_version`이 있는 `langgraph.json`)을 보면 "실험적"이라는 경고를 내고, 자기 안의 `uv` 0.9.11 바이너리가 없으면 GitHub 릴리스에서 내려받은 뒤 `uv run --with langgraph-cli[inmem] langgraph dev`로 파이썬 서버를 띄웁니다. 그리고 시작할 때 운영체제·버전·명령 이름을 Supabase로 보냅니다(`LANGGRAPH_CLI_NO_ANALYTICS=1`이면 끔). 파이썬 `langgraph dev`도 같은 통계를 따로 보냅니다(`langgraph_cli/analytics.py`, 같은 변수로 끔). `--no-browser`가 붙어 있어 LangGraph Studio(smith.langchain.com)를 자동으로 열지는 않습니다.
+`npm install`의 `postinstall`이 `install:agent`, 곧 `scripts/setup-agent.sh`를 부르고, 그 안에서 `uv sync`가 돕니다. `dev:agent`는 `scripts/run-agent.sh`이고, 그 안의 줄은 `npx @langchain/langgraph-cli dev --port 8123 --no-browser`(3행)입니다. `npx`는 이름 그대로 `@langchain/langgraph-cli`의 최신판을 내려받아 실행합니다. 이 문서를 쓴 날의 최신은 1.5.3(2026-10-12 공개)이고, 그 압축 파일을 내려받아 `dev.mjs`·`dev.python.mjs`·`analytics.mjs`를 읽었습니다. 하는 일은 그림 `extra-dev`와 같습니다(npm 레지스트리와 PyPI에서 내려받는 것도 그렸습니다). 이 도구는 파이썬 설정(`python_version`이 있는 `langgraph.json`)을 보면 "실험적"이라는 경고를 내고, 자기 안의 `uv` 0.9.11 바이너리가 없으면 GitHub 릴리스에서 내려받은 뒤 `uv run --with langgraph-cli[inmem] langgraph dev`로 파이썬 서버를 띄웁니다. 그리고 시작할 때 운영체제·버전·명령 이름을 Supabase로 보냅니다(`LANGGRAPH_CLI_NO_ANALYTICS=1`이면 끔). 파이썬 `langgraph dev`도 같은 통계를 따로 보냅니다(`langgraph_cli/analytics.py`, 같은 변수로 끔). `--no-browser`가 붙어 있어 LangGraph Studio(smith.langchain.com)를 자동으로 열지는 않습니다.
 
 ![원본 `dev:agent`의 실행 경로](diagrams/extra-dev.svg)
 
@@ -1344,7 +1344,7 @@ cat $APP/scripts/run-agent.sh
 
 ## 요청 한 건이 흐르는 과정
 
-"대시보드" 질문 하나가 지나가는 길입니다. 한 그림에 다 담으면 세로 상한(1,500px)을 넘어 넷으로 나눴고, 경계는 코드의 실제 순서에서 잘랐습니다. "에이전트 서버" 배우 하나는 `serve.py`와 그래프를 합친 것이고, 둘 사이의 연결은 Step 3의 `extra-agent`에 있습니다. 첫 그림은 질문이 런타임을 거쳐 첫 모델 호출과 `query_data` 실행까지 가는 앞부분입니다.
+"대시보드" 질문 하나가 지나가는 길입니다. 한 그림에 다 담으면 세로 상한(1,500px)을 넘어 다섯으로 나눴고, 경계는 코드의 실제 순서에서 잘랐습니다. "에이전트 서버" 배우 하나는 `serve.py`와 그래프를 합친 것이고, 둘 사이의 연결은 Step 3의 `extra-agent`에 있습니다. 첫 그림은 질문이 런타임을 거쳐 첫 모델 호출과 `query_data` 실행까지 가는 앞부분입니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -1352,11 +1352,15 @@ cat $APP/scripts/run-agent.sh
 
 ![도구 결과와 두 번째 호출](diagrams/extra-query.svg)
 
-이어서 보조 모델 호출과 화면에 그려지는 부분입니다.
+이어서 보조 모델 호출입니다.
 
-![보조 호출과 화면](diagrams/extra-secondary.svg)
+![보조 호출](diagrams/extra-secondary.svg)
 
-도구가 보조 모델을 직접 부르므로(`tool -> llm`), 이 호출은 에이전트 그래프의 모델 노드를 거치지 않습니다. 그래서 `tools=1`·`tool_choice=render_a2ui`로 기록에 따로 보입니다. 마지막은 모델의 짧은 글 답입니다.
+도구가 보조 모델을 직접 부르므로(`tool -> llm`), 이 호출은 에이전트 그래프의 모델 노드를 거치지 않습니다. 그래서 `tools=1`·`tool_choice=render_a2ui`로 기록에 따로 보입니다. 보조 호출이 스트리밍되는 동안 `render_a2ui`의 `TOOL_CALL_START`·`TOOL_CALL_END`가 AG-UI 이벤트로 새어 나오는 것도 Step 7의 출력에서 보입니다. 다음은 도구가 연산을 돌려주고 화면이 그리는 부분입니다.
+
+![연산과 화면](diagrams/extra-render.svg)
+
+마지막은 모델의 짧은 글 답입니다.
 
 ![마무리 답](diagrams/extra-reply.svg)
 
@@ -1385,7 +1389,7 @@ cat $APP/scripts/run-agent.sh
 | (이 문서는 본 적 없음) `python serve.py`로 띄웠더니 같은 네트워크에서 접속됨 | `serve.py:58`이 `host="0.0.0.0"`, CORS는 모든 출처 허용 | 이 문서의 `run_serve.py`처럼 `host="127.0.0.1"`로 `uvicorn.run`을 부른다 |
 | `manage_todos` 호출이 `todos.0.id: Field required`로 떨어짐 | 모델에게 보이는 스키마는 `id` 필수, 코드의 "없으면 채움"은 닿지 못함 | 모델이 `id`를 빈 문자열로 주게 하거나 `todos.py`의 `Todo`에서 `id`를 선택으로 바꾼다(원본을 고치려면 복사본에서) |
 | 서버 로그에 `Deserializing unregistered type ag_ui.core.types.Context from checkpoint ... will be blocked in a future version` | 체크포인터가 `Context` 객체를 직렬화·역직렬화함 | 지금은 경고만이다. 판이 올라가 막히면 `allowed_msgpack_modules`에 `('ag_ui.core.types', 'Context')`를 더한다(경고 문구가 안내) |
-| (이 문서는 본 적 없음) `generate_a2ui`가 만든 UI가 이상함 | 보조 모델의 첫 시스템 글(`prompt`)이 0자임(Step 7). 지침과 스키마는 `App Context` 메시지로만 간다 | 복사본의 `generate_a2ui`에서 `isinstance(entry, dict)` 대신 `getattr(entry, "value", "")`로 `Context` 객체도 읽게 한다(이 문서는 시험하지 못했다) |
+| (이 문서는 본 적 없음) `generate_a2ui`가 만든 UI가 이상함 | 보조 모델의 첫 시스템 글(`prompt`)이 0자임(Step 7). 지침과 스키마는 `App Context` 메시지로만 간다 | 복사본의 `generate_a2ui`에서 `isinstance(entry, dict)` 대신 `getattr(entry, "value", "")`로 `Context` 객체도 읽게 한다. 그러면 같은 지침이 `prompt`와 `App Context`로 두 번 가므로 `prompt`에는 스키마·지침만 넣는 편이 낫다(이 문서는 시험하지 못했다) |
 | `query_data`의 첫 행에 `null` 키가 보임 | `db.csv` 2행의 `notes`에 따옴표 없는 쉼표가 있어 `csv.DictReader`가 남는 칸을 `None` 키로 모음(직접 확인) | 해당 칸을 따옴표로 감싼다 |
 | (이 문서는 본 적 없음) 앱 README대로 Node 18로 설치하려는데 막힘 | `next@16.1.6`이 Node `>=20.9.0` 요구 | Node 20.9 이상을 쓴다 |
 | (이 문서는 본 적 없음) `npm run dev` 첫 실행에서 느리거나 바깥 접속 | `npx`가 CLI와 `uv`를 내려받고 통계를 보내며 `npm install`·`next dev`도 통계를 보냄(Step 8) | Step 8의 변수를 `npm install` 앞에 건다 |
