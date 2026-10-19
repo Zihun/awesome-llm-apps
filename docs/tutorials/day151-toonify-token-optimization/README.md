@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-JSON 데이터를 TOON(Token-Oriented Object Notation)이라는 더 짧은 글 형식으로 바꿔 모델에게 보낼 토큰을 줄인다는 앱을 따라 봅니다. 앱은 파이썬 파일 셋과 README로 이루어집니다. `toonify_app.py`(312줄)는 Streamlit 화면이고, `toonify_demo.py`(311줄)는 같은 비교를 터미널에서 하면서 키가 있으면 `gpt-4`와 `claude-3-5-sonnet-20241022`를 실제로 부르는 데모이며, `quick_test.py`(74줄)는 설치 확인용입니다. 바꾸는 일은 `from toon import encode, decode`로 가져오는 두 함수가 맡고, 토큰은 `tiktoken`으로 셉니다. 볼륨 14의 둘째이자 마지막 날입니다. 첫날 [Day 150](../day150-headroom-context-optimization/README.md)의 원본 `headroom_demo.py`는 토큰을 `len(json_output) // 4`, 곧 글자 수 나누기 4로 어림합니다(58·98·119~120행, 소스로 확인). 오늘 앱은 어림이 아니라 `tiktoken`의 인코딩으로 셉니다. 같은 목표(모델에 보낼 글을 줄이기)를 두 도구가 다른 쪽에서 건드리는 셈입니다.
+JSON 데이터를 TOON(Token-Oriented Object Notation)이라는 더 짧은 글 형식으로 바꿔 모델에게 보낼 토큰을 줄인다는 앱을 따라 봅니다. 앱은 파이썬 파일 셋과 README로 이루어집니다. `toonify_app.py`(312줄)는 Streamlit 화면이고, `toonify_demo.py`(311줄)는 같은 비교를 터미널에서 하면서 키가 있으면 `gpt-4`와 `claude-3-5-sonnet-20241022`를 실제로 부르는 데모이며, `quick_test.py`(74줄)는 설치 확인용입니다. 바꾸는 일은 `from toon import encode, decode`로 가져오는 두 함수가 맡고, 토큰은 `tiktoken`으로 셉니다. 볼륨 14의 둘째이자 마지막 날입니다. 첫날 [Day 150](../day150-headroom-context-optimization/README.md)의 원본 `headroom_demo.py`는 토큰을 `len(json_output) // 4`, 곧 글자 수 나누기 4로 어림합니다(58·98·119~120행, 소스로 확인). Day 150은 그 어림 옆에 `tiktoken`으로 센 실제 토큰 수를 나란히 놓고 읽었고, 인코딩 파일을 내려받는 단계도 Step 2에 따로 두었습니다. 오늘 앱은 처음부터 어림이 아니라 `tiktoken`의 인코딩으로 셉니다. 같은 목표(모델에 보낼 글을 줄이기)를 두 도구가 다른 쪽에서 건드리는 셈입니다.
 
 이 문서는 OpenAI와 Anthropic 어디에도 요청을 보내지 않았습니다. 데모의 두 호출은 `127.0.0.1`의 가짜 서버로만 가게 했고, 토큰을 세려면 `tiktoken`이 BPE 인코딩 파일을 한 번 내려받아야 하는데 그것은 Step 2에서 따로 한 단계로 둡니다. 그 한 단계가 이 문서에서 바깥으로 나가는 유일한 요청이고, 그 뒤의 모든 실행은 오프라인입니다. 캐시가 없으면 몰래 받지 않고 멈춥니다(Step 3). 직접 돌려 보거나 소스로 확인한 것이 일곱입니다.
 
@@ -129,7 +129,7 @@ toon_format -> 없음
 
 **목적.** `tiktoken`이 토큰을 세는 데 쓰는 BPE 순위표를 한 번 받아 작업 폴더 안에 둡니다. 이 단계가 지나면 이 문서의 모든 실행은 오프라인입니다.
 
-**할 일.** `tiktoken`은 인코딩을 처음 쓸 때 파일을 내려받습니다. `cl100k_base`의 주소와 기대 해시가 소스에 있습니다(`tiktoken_ext/openai_public.py`의 75~78행: 주소 `https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken`, `expected_hash`는 sha256). 받는 일은 `requests.get`이고(`tiktoken`의 `load.py` 17행) 받은 내용의 해시가 다르면 `ValueError`로 멈춥니다(67~71행). 저장 위치는 환경변수 `TIKTOKEN_CACHE_DIR`이고 없으면 임시 폴더의 `data-gym-cache`입니다(37~48행). 캐시 파일 이름은 주소의 sha1입니다. 이미 있는 캐시 파일의 해시가 다르면 `tiktoken`은 그 파일을 지우고 **다시 내려받습니다**(54~64행). 변수 값이 빈 문자열이면 캐시를 끄고 매번 내려받습니다(13~15행). 이것이 다음 Step에서 가드가 캐시 해시를 직접 보고 빈 값을 거부하는 까닭입니다. 이 앱이 쓰는 인코딩은 `cl100k_base` 하나입니다(Step 5). 아래를 `toonify-lab/fetch_encoding.py`로 저장합니다.
+**할 일.** `tiktoken`은 인코딩을 처음 쓸 때 파일을 내려받습니다. `cl100k_base`의 주소와 기대 해시가 소스에 있습니다(`tiktoken_ext/openai_public.py`의 75~78행: 주소 `https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken`, `expected_hash`는 sha256). 받는 일은 `requests.get`이고(`tiktoken`의 `load.py` 17행) 받은 내용의 해시가 다르면 `ValueError`로 멈춥니다(67~71행). 저장 위치는 환경변수 `TIKTOKEN_CACHE_DIR`이고 없으면 임시 폴더의 `data-gym-cache`입니다(37~48행). 캐시 파일 이름은 주소의 sha1입니다. 이미 있는 캐시 파일의 해시가 다르면 `tiktoken`은 그 파일을 지우고 **다시 내려받습니다**(54~64행). 변수 값이 빈 문자열이면 캐시를 끄고 매번 내려받습니다(13~15행). 이것이 다음 Step에서 가드가 캐시 해시를 직접 보고 빈 값을 거부하는 까닭입니다. 이 앱이 쓰는 인코딩은 `cl100k_base` 하나입니다(Step 5). [Day 150](../day150-headroom-context-optimization/README.md)의 Step 2도 같은 방식으로 `cl100k_base`(1,681,126바이트)와 `o200k_base`를 받았습니다. 그 날의 캐시 폴더가 남아 있다면 해시 이름이 같은 `cl100k_base` 파일을 `toonify-lab/tiktoken_cache/`로 복사해 와도 됩니다. 어느 쪽이든 아래 스크립트와 Step 3의 가드가 해시를 확인합니다. 아래를 `toonify-lab/fetch_encoding.py`로 저장합니다.
 
 ```python
 """One-time download of the cl100k_base encoding file. This is the only step that goes outside.
