@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-Day 155 · 🎙️ Thinking Out Loud — (작성 필요)
+[Day 155 · 🎙️ Thinking Out Loud](../day155-thinking-out-loud/README.md) — (작성 필요)
