@@ -2,7 +2,7 @@
 shape: sequence_diagram
 
 client: "요청 보내는 쪽\n(proxy_client.py)" { class: ours }
-proxy: "headroom proxy\n(run_proxy.py)" { class: ours }
+proxy: "headroom proxy\n(run_proxy.py)" { class: ext }
 fake: "대역 서버\n(fakes.py)" { class: ext }
 
 client -> proxy: "POST /v1/chat/completions\n메시지 3개, 도구 결과 로그 100줄"
