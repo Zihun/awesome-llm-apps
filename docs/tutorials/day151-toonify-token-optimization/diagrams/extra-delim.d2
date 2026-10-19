@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+demo: "데모" { class: ours }
+toon: "TOON 변환" { class: ours }
+
+demo -> toon: "encode(items,\n{delimiter: tab})"
+toon -> demo: "TOON 글"
+demo -> toon: "encode(items,\n{delimiter: pipe})"
+toon -> demo: "TOON 글"
+demo -> user: "출력"

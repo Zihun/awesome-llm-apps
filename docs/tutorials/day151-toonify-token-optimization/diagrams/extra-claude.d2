@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+demo: "데모" { class: ours }
+tik: "토큰 세기" { class: ours }
+an: "Anthropic" { class: ext }
+
+demo -> tik: "count_tokens(JSON 글로 바꾼 프롬프트) — OpenAI 답의 prompt_tokens와 비교하려고"
+tik -> demo: "토큰 수"
+demo -> an: "messages.create(\nclaude-3-5-sonnet-20241022)"
+an -> demo: "답 · usage.input_tokens"

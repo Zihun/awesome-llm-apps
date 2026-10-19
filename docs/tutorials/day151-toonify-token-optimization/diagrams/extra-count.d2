@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+screen: "Streamlit 화면" { class: ours }
+tik: "토큰 세기" { class: ours }
+cache: "BPE 순위표" { class: file }
+
+screen -> tik: "count_tokens(\nJSON 글, 모델)"
+tik -> cache: "cl100k_base 읽기\n(해시 확인)"
+cache -> tik: "순위표"
+tik -> screen: "JSON 토큰 수"
+screen -> tik: "count_tokens(\nTOON 글, 모델)"
+tik -> screen: "TOON 토큰 수"
+screen -> screen: "calculate_cost(\n토큰 수, 모델)"
+screen -> user: "메트릭 넷 · 코드 블록 둘 ·\n비용표"

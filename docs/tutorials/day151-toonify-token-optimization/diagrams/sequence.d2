@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+screen: "Streamlit 화면" { class: ours }
+toon: "TOON 변환" { class: ours }
+
+user -> screen: "예시 · 모델 · 구분자 선택"
+screen -> screen: "json.dumps(\nindent=2)"
+screen -> toon: "encode(data,\n구분자 · 키 접기)"
+toon -> screen: "TOON 글"

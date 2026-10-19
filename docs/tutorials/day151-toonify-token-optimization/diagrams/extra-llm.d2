@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+toon: "TOON 변환" { class: ours }
+demo: "데모" { class: ours }
+oa: "OpenAI" { class: ext }
+
+demo -> toon: "decode(TOON 글) — 처음 TOON 글이\n원래 dict와 같은지 assert"
+toon -> demo: "dict"
+demo -> toon: "encode(customer_orders)"
+toon -> demo: "TOON 글"
+demo -> oa: "chat.completions.create(gpt-4,\nTOON 프롬프트, max_tokens=200)"
+oa -> demo: "답 · usage.prompt_tokens"

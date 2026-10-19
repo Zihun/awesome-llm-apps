@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+demo: "데모" { class: ours }
+toon: "TOON 변환" { class: ours }
+
+demo -> toon: "encode(nested_data)"
+toon -> demo: "키 접기 끔: 7줄"
+demo -> toon: "encode(nested_data,\n{key_folding: safe})"
+toon -> demo: "키 접기 켬: 5줄"

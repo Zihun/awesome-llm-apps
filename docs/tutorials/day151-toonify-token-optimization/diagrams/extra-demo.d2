@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+demo: "데모" { class: ours }
+tik: "토큰 세기" { class: ours }
+toon: "TOON 변환" { class: ours }
+
+user -> demo: "python toonify_demo.py"
+demo -> demo: "json.dumps(\nindent=2)"
+demo -> tik: "count_tokens(json_str) — 모델 이름은 기본값 gpt-4, 글자 수가 아니라 토큰 수"
+tik -> demo: "275 토큰"
+demo -> toon: "encode(\nproducts_data)"
+toon -> demo: "TOON 글"
+demo -> tik: "count_tokens(toon_str) — 같은 gpt-4, 같은 cl100k_base"
+tik -> demo: "120 토큰"
