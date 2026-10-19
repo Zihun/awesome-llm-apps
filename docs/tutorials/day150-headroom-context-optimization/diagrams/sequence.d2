@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+client: "요청 보내는 쪽\n(proxy_client.py)" { class: ours }
+proxy: "headroom proxy\n(run_proxy.py)" { class: ours }
+fake: "대역 서버\n(fakes.py)" { class: ext }
+
+client -> proxy: "POST /v1/chat/completions\n메시지 3개, 도구 결과 로그 100줄"
+proxy -> proxy: "앞 메시지 2개는 고정,\n마지막 도구 결과를 표 모양으로 압축\n(7,158 → 3,664 토큰)"
+proxy -> fake: "POST /v1/chat/completions\n본문 10,785바이트"
+fake -> proxy: "대본 답 (PG-5523 포함)"
+proxy -> client: "같은 답"
