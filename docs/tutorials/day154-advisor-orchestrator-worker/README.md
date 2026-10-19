@@ -65,7 +65,7 @@
 
 **목적.** 이 문서의 실습이 이 PC의 진짜 홈과 에이전트 설정을 보지도 쓰지도 못하게 하고, 파이썬이 바깥으로 연결을 열면 막히게 합니다. 에이전트 설정 폴더는 지금 이 문서를 읽는 도구가 쓰고 있을 수 있으므로, HOME·USERPROFILE·CLAUDE_CONFIG_DIR·TEMP·TMP·TMPDIR을 모두 스크래치로 돌립니다.
 
-**할 일.** `REPO`(이 저장소의 복사본)와 `LAB`(실습 폴더)를 자기 절대 경로로 바꿔 아래 블록을 붙입니다. `LAB`는 Claude Code·Codex 같은 에이전트를 쓰는 작업 폴더 밖에 새로 만드는 폴더여야 합니다. Claude Code 문서는 시작 폴더 아래의 `.claude/skills`도 불러온다고 적으므로, 그 아래에 Step 5의 설치본이 있으면 실제 세션이 그것을 쓸 수 있습니다. 이 문서의 **모든 블록은 첫머리에 `export REPO=…`와 `export LAB=…` 두 줄을 다시 두고** 그 다음 `env.sh`를 불러옵니다. 블록은 서브셸 안에서 돌며, 불러오기가 실패하면(경로가 비었거나, 상대 경로이거나, 폴더가 없거나, `.claude`·`.agents`·`.codex`·`.cursor`·`.copilot`·`.gemini` 같은 에이전트 설정 폴더 아래로 풀리면) 아무것도 하지 않고 멈춥니다. 그래서 새 터미널에서 블록만 붙여도 진짜 홈에 쓰지 않습니다. 원본 저장소에는 아무것도 쓰지 않습니다.
+**할 일.** `REPO`(이 저장소의 복사본)와 `LAB`(실습 폴더)를 자기 절대 경로로 바꿔 아래 블록을 붙입니다. `LAB`는 Claude Code·Codex 같은 에이전트를 쓰는 작업 폴더 밖에 새로 만드는 폴더여야 합니다. Claude Code 문서는 시작 폴더 아래의 `.claude/skills`도 불러온다고 적으므로, 그 아래에 Step 5의 설치본이 있으면 실제 세션이 그것을 쓸 수 있습니다. 이 문서의 **모든 블록은 첫머리에 `export REPO=…`와 `export LAB=…` 두 줄을 다시 두고** 그 다음 `env.sh`를 불러옵니다. 블록은 서브셸 안에서 돌며, 불러오기가 실패하면(경로가 비었거나, 상대 경로이거나, 폴더가 없거나, `.claude`·`.agents`·`.codex`·`.cursor`·`.copilot`·`.gemini` 같은 에이전트 설정 폴더 아래로 풀리면) 아무것도 하지 않고 멈춥니다. Step 1 블록은 그보다 먼저, 적힌 `LAB`(소문자로 맞춘 문자열)가 그런 폴더 아래이면 `LAB`도 `env.sh`도 만들지 않습니다. 그래서 새 터미널에서 블록만 붙여도 진짜 홈에 쓰지 않습니다. 한 가지 예외가 있습니다. 블록 첫머리의 `( . "$LAB/env.sh" || exit 1` 줄 자체를 빼고 붙이면 서브셸도 환경 파일도 없이 나머지 줄이 지금 폴더에서 돌아, 그 폴더에 실습 파일(`stubbin`·`lab` 등)이 생깁니다. 이때도 에이전트 설정 폴더나 바깥에는 닿지 않고, 대역 실행은 `STUBBIN`이 비어 있어 멈춥니다(리뷰에서 재현). 원본 저장소에는 아무것도 쓰지 않습니다.
 
 ```bash
 # --- Step 1: 스크래치 작업 폴더, 환경 파일, 네트워크 가드 ---
@@ -75,12 +75,13 @@
 export REPO=/path/to/awesome-llm-apps
 export LAB=/path/to/skills-lab
 test -f "$REPO/agent_skills/registry.json" || echo "REPO가 저장소 루트가 아닙니다"
-mkdir "$LAB" && cd "$LAB" && cat > env.sh <<'EOF'
+PRE=ok; case "$(printf '%s' "$LAB" | tr 'A-Z\\' 'a-z/')/" in */.claude/*|*/.agents/*|*/.codex/*|*/.cursor/*|*/.copilot/*|*/.gemini/*|*/.openclaw/*|*/.hermes/*) PRE=no; echo "LAB가 에이전트 설정 폴더 아래입니다: $LAB";; esac
+[ "$PRE" = ok ] && mkdir "$LAB" && cd "$LAB" && cat > env.sh <<'EOF'
 # 이 문서의 모든 블록은 이 파일을 불러오고, 불러오기가 실패하면 아무것도 하지 않고 멈춘다.
 unset VIRTUAL_ENV
 : "${REPO:?REPO를 먼저 지정하세요}"
 : "${LAB:?LAB를 먼저 지정하세요}"
-case "$LAB" in /*|[A-Za-z]:*) ;; *) echo "LAB는 절대 경로여야 합니다: $LAB" >&2; return 1;; esac
+case "$LAB" in /*|[A-Za-z]:[/\\]*) ;; *) echo "LAB는 절대 경로여야 합니다: $LAB" >&2; return 1;; esac
 LAB="$(cd "$LAB" 2>/dev/null && pwd -P)" || { echo "LAB 폴더가 없습니다" >&2; return 1; }
 case "$LAB" in
   */.claude|*/.claude/*|*/.agents|*/.agents/*|*/.codex|*/.codex/*|*/.cursor|*/.cursor/*|*/.copilot|*/.copilot/*|*/.gemini|*/.gemini/*|*/.openclaw/*|*/.hermes/*)

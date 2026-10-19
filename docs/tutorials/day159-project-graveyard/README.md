@@ -66,15 +66,14 @@
 
 **목적.** 이 문서의 실습이 이 PC의 진짜 홈을 보지도 쓰지도 못하게 하고, 파이썬이 바깥으로 연결을 열면 막히게 합니다. 이 스킬의 스크립트는 홈을 두 번 읽습니다. 기본 뿌리가 `~`로 시작하고(`graveyard.py:30`), 내 이메일을 `git config --global`에서 읽습니다(`graveyard.py:358`). 둘 다 홈을 바꾸면 작업 폴더 안을 향합니다. 파이썬은 Windows에서 `~`를 `USERPROFILE`로, 그 밖에서는 `HOME`으로 풀고, git은 `GIT_CONFIG_GLOBAL`을 직접 줄 수 있어서 셋을 모두 둡니다. 에이전트 설정 폴더(`CLAUDE_CONFIG_DIR`)와 임시 폴더(`TEMP`·`TMP`·`TMPDIR`)도 같이 돌립니다.
 
-**할 일.** `REPO`를 자기 저장소 경로로 바꿔 아래 블록을 한 번에 붙입니다. 작업 폴더는 어떤 git 저장소 안에도 만들지 않습니다. 환경 파일이 그것을 확인하고, 저장소 안이거나 `REPO`가 틀렸으면 `return 1`로 환경 파일 불러오기를 멈춥니다. 그러면 `pyrun`이 정의되지 않아 뒤의 스크립트 실행 줄이 하나도 돌지 않습니다(저장소 안이면 `git`이 맨 위를 찾아 이 스크립트의 `git config user.email`이 그 저장소의 설정을 읽게 됩니다. Step 6에서 보입니다). 이후 블록은 새 터미널에서 시작한다면 `export REPO=…` 한 줄과 `. ./env.sh`(`lab159` 안에서)로 시작합니다. 원본 저장소에는 아무것도 쓰지 않습니다.
+**할 일.** `REPO`를 자기 저장소 경로로 바꿔 아래 블록을 한 번에 붙입니다. 작업 폴더는 어떤 git 저장소 안에도 만들지 않습니다. 블록의 둘째 줄은 지금 폴더가 에이전트 설정 폴더(`.claude`·`.agents`·`.codex`·`.cursor`·`.copilot`·`.openclaw`·`.hermes`) 아래이면 `lab159`도 `env.sh`도 만들지 않습니다(적힌 경로를 소문자로 맞춰 봅니다). 환경 파일은 git 저장소 안인지를 확인하고, 저장소 안이거나 `REPO`가 틀렸으면 `return 1`로 환경 파일 불러오기를 멈춥니다. 그러면 `pyrun`이 정의되지 않아 뒤의 스크립트 실행 줄이 하나도 돌지 않습니다(저장소 안이면 `git`이 맨 위를 찾아 이 스크립트의 `git config user.email`이 그 저장소의 설정을 읽게 됩니다. Step 6에서 보입니다). 이후 블록은 새 터미널에서 시작한다면 `export REPO=…` 한 줄과 `. ./env.sh`(`lab159` 안에서)로 시작합니다. 원본 저장소에는 아무것도 쓰지 않습니다.
 
 ```bash
 # --- Step 1: 작업 폴더, 환경 파일, 네트워크 가드 ---
 # REPO는 awesome-llm-apps를 받은 폴더다(자기 경로로 바꾼다). 작업 폴더는 어떤 git 저장소 안에도 두지 않는다.
 export REPO=/path/to/awesome-llm-apps
-mkdir lab159
-cd lab159
-cat > env.sh <<'EOT'
+PRE=ok; case "$(pwd -P | tr 'A-Z' 'a-z')/" in */.claude/*|*/.agents/*|*/.codex/*|*/.cursor/*|*/.copilot/*|*/.openclaw/*|*/.hermes/*) PRE=no; echo "지금 폴더가 에이전트 설정 폴더 아래입니다. 다른 곳에서 시작하세요";; esac
+[ "$PRE" = ok ] && mkdir -p lab159 && cd lab159 && cat > env.sh <<'EOT'
 # 이 문서의 모든 명령은 이 파일을 불러온 셸에서 돌린다.
 unset VIRTUAL_ENV
 : "${REPO:?REPO를 먼저 지정하세요}"
@@ -122,8 +121,8 @@ if pyrun -c "import socket; socket.create_connection(('192.0.2.1', 80), 1)" 2>&1
 else
   echo "guard NOT loaded - stop here"; false
 fi
-cat guard.log
-: > guard.log
+cat "${GUARD_LOG:?}"
+: > "${GUARD_LOG:?}"
 pyrun -c "import os; print('~ ->', os.path.expanduser('~'))"
 ```
 
@@ -877,24 +876,26 @@ repos: 13 | git files: 676 | fingerprint: de54e5ec24f17eab
 그런데 "읽는 명령"이 "아무것도 실행하지 않는 명령"은 아닙니다. `read_repo`는 저장소마다 `git ls-files`를 부르고(`graveyard.py:150`), git은 그때 **그 저장소의 `.git/config`에 적힌 `core.fsmonitor` 명령을 실행합니다.** 인자 없이 돌리면 `~/Downloads`·`~/Desktop`까지 훑으므로(Step 3), 받아 온 저장소의 설정이 내 권한으로 명령을 돌릴 수 있습니다. 무해한 표지 기록 명령으로 확인합니다. 저장소 하나의 설정에 표지 파일에 한 줄 쓰는 스크립트를 걸고 세 가지로 돌립니다. 그 저장소에서 `git ls-files`만, 스킬 스크립트를 래퍼 없이 직접(홈은 가짜이고 뿌리는 이 폴더 하나입니다), 래퍼로입니다.
 
 ```bash
-cat > hook.sh <<'EOT'
+# 모든 경로가 $LAB 아래다. 환경 파일을 불러오지 않았으면 줄마다 멈춘다.
+cat > "${LAB:?먼저 lab159 안에서 . ./env.sh를 불러오세요}/hook.sh" <<'EOT'
 #!/bin/sh
 echo "fsmonitor ran" >> "$(dirname "$0")/hook-marker.txt"
 EOT
-chmod +x hook.sh
-mkdir -p evilroot/evil
-git -C evilroot/evil init -q -b main
-echo x > evilroot/evil/a.txt
-git -C evilroot/evil add -A
-git -C evilroot/evil -c user.name=Dana -c user.email=dana@example.test commit -q -m init
-git -C evilroot/evil config core.fsmonitor "$(win "$LAB")/hook.sh"
-: > hook-marker.txt
+chmod +x "${LAB:?}/hook.sh"
+E="${LAB:?}/evilroot/evil" M="${LAB:?}/hook-marker.txt"
+mkdir -p "${E:?}"
+git -C "${E:?}" init -q -b main
+echo x > "${E:?}/a.txt"
+git -C "${E:?}" add -A
+git -C "${E:?}" -c user.name=Dana -c user.email=dana@example.test commit -q -m init
+git -C "${E:?}" config core.fsmonitor "$(win "$LAB")/hook.sh"
+: > "${M:?}"
 echo "--- 1) 그 저장소에서 git ls-files만"
-git -C evilroot/evil ls-files; echo "표지 줄 수: $(wc -l < hook-marker.txt)"; : > hook-marker.txt
+git -C "${E:?}" ls-files; echo "표지 줄 수: $(wc -l < "${M:?}")"; : > "${M:?}"
 echo "--- 2) 스킬 스크립트를 래퍼 없이 직접"
-pyrun project/.claude/skills/project-graveyard/scripts/graveyard.py evilroot --no-art | grep "^repos scanned"; echo "표지 줄 수: $(wc -l < hook-marker.txt)"; : > hook-marker.txt
+pyrun "${LAB:?}/project/.claude/skills/project-graveyard/scripts/graveyard.py" "${LAB:?}/evilroot" --no-art | grep "^repos scanned"; echo "표지 줄 수: $(wc -l < "${M:?}")"; : > "${M:?}"
 echo "--- 3) 래퍼로"
-pyrun gy.py evilroot --no-art | grep "^repos scanned"; echo "표지 줄 수: $(wc -l < hook-marker.txt)"
+pyrun "${LAB:?}/gy.py" "${LAB:?}/evilroot" --no-art | grep "^repos scanned"; echo "표지 줄 수: $(wc -l < "${M:?}")"
 ```
 
 ```text
@@ -910,7 +911,7 @@ repos scanned: 1   alive: 1   finished: 0   dead: 0   not yours (skipped): 0
 표지 줄 수: 0
 ```
 
-`git ls-files`만으로 표지가 한 줄 생겼고 스킬 스크립트를 직접 돌려도 한 줄 생겼습니다(이 숫자는 앞 실행의 표지를 비운 뒤의 줄 수입니다). 래퍼로 돌리면 0줄입니다. 래퍼가 `GIT_CONFIG_COUNT`·`GIT_CONFIG_KEY_n`·`GIT_CONFIG_VALUE_n`을 환경에 더해 명령줄 수준의 `core.fsmonitor=false`를 주기 때문이고, 이 수준은 저장소 자신의 설정을 이깁니다. 스크립트가 git을 `-c` 옵션 없이 부르므로(`graveyard.py:51-61`) 스크립트 쪽에서 `-c core.fsmonitor=false`를 줄 방법은 없었고, 환경 변수가 그 자리를 대신했습니다. `GIT_CONFIG_PARAMETERS`는 따로 써 보지 않았습니다. 이 방어는 `core.fsmonitor`만 막습니다. 스크립트가 쓰는 다른 git 명령(`log`·`remote get-url`·`tag --list`·`config`)은 같은 저장소에서 표지를 만들지 않았지만, 저장소 설정이 실행하는 다른 장치까지 모두 막았다고 확인한 것은 아닙니다. 그래서 받아 온 저장소가 있는 폴더를 훑기 전에는 그 `.git/config`를 먼저 읽어 보는 편이 안전합니다. 스킬의 "The script is read-only"(`SKILL.md:62`)는 스크립트 코드에 대해서는 맞고, 훑은 저장소의 설정이 실행하는 명령까지 말하는 문장은 아닙니다.
+`git ls-files`만으로 표지가 한 줄 생겼고 스킬 스크립트를 직접 돌려도 한 줄 생겼습니다(이 숫자는 앞 실행의 표지를 비운 뒤의 줄 수입니다). 래퍼로 돌리면 0줄입니다. 래퍼가 `GIT_CONFIG_COUNT`·`GIT_CONFIG_KEY_n`·`GIT_CONFIG_VALUE_n`을 환경에 더해 명령줄 수준의 `core.fsmonitor=false`를 주기 때문이고, 이 수준은 저장소 자신의 설정을 이깁니다. 스크립트가 git을 `-c` 옵션 없이 부르므로(`graveyard.py:51-61`) 스크립트 쪽에서 `-c core.fsmonitor=false`를 줄 방법은 없었고, 환경 변수가 그 자리를 대신했습니다. `GIT_CONFIG_PARAMETERS`는 따로 써 보지 않았습니다. 이 방어는 `core.fsmonitor`만 막습니다. 스크립트가 쓰는 다른 git 명령(`log`·`remote get-url`·`tag --list`·`config`)은 같은 저장소에서 표지를 만들지 않았지만, 저장소 설정이 실행하는 다른 장치까지 모두 막았다고 확인한 것은 아닙니다. 리뷰에서 확인한 예가 둘 있습니다. `.gitattributes`가 가리키는 `filter.<이름>.clean`과 `diff.external`은 이 환경 변수로 막히지 않고 `git status`·`git diff` 때 실행됩니다. 이 스크립트는 그 두 명령을 부르지 않습니다. 그래서 받아 온 저장소가 있는 폴더를 훑기 전에는 그 `.git/config`를 먼저 읽어 보는 편이 안전합니다. 스킬의 "The script is read-only"(`SKILL.md:62`)는 스크립트 코드에 대해서는 맞고, 훑은 저장소의 설정이 실행하는 명령까지 말하는 문장은 아닙니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
