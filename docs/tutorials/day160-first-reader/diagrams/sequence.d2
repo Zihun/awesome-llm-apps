@@ -2,11 +2,10 @@
 shape: sequence_diagram
 
 agent: "코딩 에이전트" { class: ext }
-feed: "feed.py serve" { class: ours }
-reader: "독자 흉내" { class: ext }
+scanner: "스캐너 하위 에이전트" { class: ext }
+skim: "skim.py" { class: ours }
 
-agent -> feed: "serve 초안 --run 실행폴더 --readers keen,skeptic --ready-file"
-feed -> agent: "feed.json (주소만)"
-agent -> reader: "READER_FEED 한 줄"
-reader -> feed: "GET /토큰/start"
-feed -> reader: "패시지 1"
+agent -> scanner: "초안 경로를 주고 스캐너를 맡김"
+scanner -> skim: "skim.py 초안"
+skim -> scanner: "스캐너 화면"
+scanner -> agent: "열지 말지 한 줄 (skim.txt)"

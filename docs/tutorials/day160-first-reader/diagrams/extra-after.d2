@@ -4,10 +4,10 @@ shape: sequence_diagram
 agent: "코딩 에이전트" { class: ext }
 recall: "recall.py" { class: ours }
 run: "실행 폴더" { class: store }
-room: "room.py" { class: ours }
+fresh: "새 하위 에이전트" { class: ext }
 
 agent -> recall: "recall.py 독자 폴더"
 recall -> run: "log.jsonl 읽기"
-agent -> room: "room.py 실행 폴더"
-room -> run: "세션 읽기"
-room -> agent: "room.html"
+recall -> agent: "로그와 여섯 문항 번들"
+agent -> fresh: "번들만 건넴"
+fresh -> agent: "로그로만 답한 회상"

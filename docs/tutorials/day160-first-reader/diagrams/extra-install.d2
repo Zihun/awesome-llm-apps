@@ -1,0 +1,13 @@
+...@../../_tools/theme
+direction: down
+
+repo: "저장소 스킬 폴더 (agent_skills/first-reader)" { class: file }
+copy: "프로젝트 설치본 (reader-lab/.claude/skills/first-reader)" { class: file }
+cli: "skills CLI (npx skills add, 안 돌림)" { class: ext }
+home: "홈 설치 (~/.claude/skills, 쓰지 않음)" { class: file }
+evals: "시험 폴더 (agent_skills/evals/first-reader)" { class: file }
+
+repo -> copy: "cp -r (이 문서)"
+cli -> copy: "프로젝트 범위 (기본)"
+cli -> home: "-g"
+repo -> evals: "설치에 안 따라옴"

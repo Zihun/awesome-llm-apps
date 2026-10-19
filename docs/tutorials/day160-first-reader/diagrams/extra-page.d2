@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+room: "room.py" { class: ours }
+tpl: "room_template.html" { class: file }
+ann: "room-annotations.json" { class: file }
+run: "실행 폴더 (세션)" { class: store }
+html: "room.html" { class: file }
+fonts: "fonts.googleapis.com (열면 요청)" { class: ext }
+
+room -> tpl: "읽기"
+room -> ann: "읽기"
+room -> run: "읽기"
+room -> html: "쓰기"
+html -> fonts: "글꼴 요청 (열지 않음)"

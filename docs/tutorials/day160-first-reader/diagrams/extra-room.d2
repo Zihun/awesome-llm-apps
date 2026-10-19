@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "코딩 에이전트" { class: ext }
+room: "room.py" { class: ours }
+run: "실행 폴더" { class: store }
+
+agent -> room: "room.py 실행 폴더 --annotations"
+room -> run: "세션 읽기"
+room -> agent: "room.html"

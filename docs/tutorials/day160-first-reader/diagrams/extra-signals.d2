@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "코딩 에이전트" { class: ext }
+signals: "signals.py" { class: ours }
+
+agent -> signals: "signals.py 초안 --json (독자 실험이 끝난 뒤)"
+signals -> agent: "신뢰 신호 숫자"

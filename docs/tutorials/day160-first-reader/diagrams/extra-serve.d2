@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "코딩 에이전트" { class: ext }
+feed: "feed.py serve" { class: ours }
+reader: "독자 흉내" { class: ext }
+
+agent -> feed: "serve 초안 --run 실행폴더 --readers keen,skeptic --ready-file"
+feed -> agent: "feed.json (주소만)"
+agent -> reader: "READER_FEED 한 줄"
+reader -> feed: "GET /토큰/start"
+feed -> reader: "패시지 1"

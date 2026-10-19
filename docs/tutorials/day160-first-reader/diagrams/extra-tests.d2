@@ -1,0 +1,25 @@
+...@../../_tools/theme
+direction: right
+
+lint: "skill_lint.py (1단계)" { class: ours }
+scan: "skill_scanner.py (1b단계)" { class: ours }
+trig: "run_trigger_evals.py (2단계)" { class: ours }
+reg: "registry_lint.py" { class: ours }
+t2b: "test_first_reader.py (2b단계)" { class: ours }
+installed: "설치본 SKILL.md·scripts" { class: file }
+cases: "trigger-cases.json" { class: file }
+regjson: "registry.json" { class: file }
+readmes: "README.md 둘 (루트·agent_skills)" { class: file }
+fixtures: "fixtures/*.md" { class: file }
+evalsjson: "evals.json (3단계)" { class: file }
+model: "모델 (3단계, 안 돌림)" { class: ext }
+
+lint -> installed: "읽기"
+scan -> installed: "읽기"
+trig -> installed: "설명 읽기"
+trig -> cases: "읽기"
+reg -> regjson: "읽기"
+reg -> readmes: "읽기"
+t2b -> installed: "스크립트 실행"
+t2b -> fixtures: "합성 입력"
+evalsjson -> model: "프롬프트·기대 (안 돌림)"

@@ -1,14 +1,17 @@
 ...@../../_tools/theme
 direction: down
 
-client: "feed.py next (urllib)" { class: ours }
+guard: "소켓 가드 (sitecustomize.py)" { class: ours }
 env: "프록시 변수 (http_proxy)" { class: file }
+sys: "시스템 프록시 (Windows 레지스트리)" { class: file }
+client: "feed.py start (urllib)" { class: ours }
 tap: "기록 서버 (127.0.0.1)" { class: ours }
 feed: "피드 서버 (127.0.0.1)" { class: ours }
-guard: "소켓 가드 (sitecustomize.py)" { class: ours }
 outside: "바깥 호스트" { class: ext }
 
-env -> client: "있으면 따른다"
+guard -> env: "지우고 NO_PROXY 걸기"
+client -> env: "읽음 (있으면 따름)"
+client -> sys: "변수가 없으면 읽음"
 client -> tap: "토큰이 든 요청"
 tap -> feed: "그대로 넘김"
-guard -> outside: "연결·이름 조회 거부"
+client -> outside: "바깥 연결 (가드가 막음)"

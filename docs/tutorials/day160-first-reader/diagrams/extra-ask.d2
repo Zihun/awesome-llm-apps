@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "코딩 에이전트" { class: ext }
+ask: "ask.py" { class: ours }
+run: "실행 폴더" { class: store }
+fresh: "새 하위 에이전트" { class: ext }
+
+agent -> ask: "ask.py 실행폴더 독자 질문"
+ask -> run: "성향·log.jsonl 읽기"
+ask -> agent: "질문 번들"
+agent -> fresh: "번들만 건넴"
+fresh -> agent: "독자 목소리의 답"
