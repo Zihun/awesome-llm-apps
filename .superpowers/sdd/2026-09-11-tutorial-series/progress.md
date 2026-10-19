@@ -8,6 +8,28 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-19 밤) — 볼륨 15 끝. Day 153까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 153/167). 다음(볼륨 16 🧩 Agent Skills, Day 154~161, 8일)은 사용자 지시를 받고.**
+- Task 31(152~153) 전부 complete. 날마다 커밋(작성 → 수정):
+  - 152: 5d07b96 → 858fc06·105a38e
+  - 153: 90ae2d2·a995afa → 1220687·bf0130e(내가: 재확인 Minor)
+  - 골격 153·154 8753e7b.
+- 리뷰(opus) 152 / 153, 재확인(sonnet) 152 / 153.
+- 도구: 시험이 TEMP에 남기던 tut-* 폴더를 support/tempdir.mjs로 지우게 함 26f3acd(RED→GREEN, npm test 58/58). 옛 tut-* 708개는 진짜 TEMP에서 지움.
+- 검사: npm test 58/58, 전체 check 4건(모두 미작성 골격 154), 152 19.8·153 21.2/분.
+- Ruling(2026-10-19, 볼륨 15):
+  - 진짜 모델·데이터셋은 받지 않는다. 진짜 학습과 GPU도 쓰지 않는다. 대신 무작위 가중치 장난감 모델로 LoRA와 SFTTrainer를 CPU에서 몇 걸음 돌린다.
+  - HF 계열 라이브러리는 오프라인 변수, 스크래치 HF_HOME, 스크래치 HOME·USERPROFILE·CLAUDE_CONFIG_DIR, 소켓 가드 아래서만 돌린다.
+  - **TEMP·TMP·TMPDIR·UNSLOTH_COMPILE_LOCATION도 스크래치로 돌린다.** Git Bash는 TMPDIR을 진짜 Temp로 미리 잡는다. 독자 명령에도 두 겹으로 넣는다.
+  - 감시 훅이 실제로 불러와졌는지 예약 주소(192.0.2.1)로 먼저 단언한 뒤 시험한다.
+- 사고:
+  - 152 리뷰어: 훅이 문법 오류로 빠진 채 자기 코드가 huggingface.co 이름 조회 1회. 진짜 HF 토큰 파일을 열었다 읽지 않고 닫음.
+  - 152 재확인자: 훅 없이 2회. 192.0.2.1 시간 초과, 없는 경로 열기만.
+  - 153 작성자: example.com 직접 GET 1회.
+  - 빈 heredoc 여러 번(152·153 작성자, 재확인자들). 모두 즉시 멈춤.
+  - 진짜 %TEMP%에 unsloth_compiled_cache가 두 번(17:16, 19:01), torchinductor_zihun·빈 .locks 폴더도 생김. 원인은 TEMP를 안 돌린 실행과 152 문서 명령. 모두 내가 이름으로 지움.
+  - 진짜 토큰·자격 증명 mtime은 그대로다(HF token 2025-12-21, credentials 13:26). ~/.python_history도 그대로다.
+- 사용량 한도로 한 번 멈춤. 152·153 고침 에이전트를 TaskStop 했다가 SendMessage로 이어 감.
+
 **멈춤 지점 (2026-10-19) — 볼륨 14 끝. Day 151까지 작성·리뷰·수정·재확인을 마쳤고, 앞 ADK 날 텔레메트리 점검도 끝내고 푸시함(진도 151/167). 다음(볼륨 15 🔧 LLM Fine-tuning, Day 152~153)은 사용자 지시를 받고 시작한다.**
 - **Task 30(150~151) 전부 complete.** 날마다 커밋(작성 → 수정):
   - 150: 442cff2 → e2f71c9·afc7da8(내가: 재확인 Minor 넷)
@@ -1587,3 +1609,24 @@ Task 30: 150 fix round 1 DONE — e2f71c9(check 통과, 18.8/분, 4,331낱말/23
 Task 30: 재확인 150 dispatched (sonnet) → rereview-150.md(진짜 홈이 보이는 서드파티 실행 금지 명시).
 Task 30: 재확인 150 DONE (a608aef411317de3f) — ✅ 22/22 해결. 줄 하나 빼기 67판(check_env가 멈춤 35·일부 3·그대로 돌고 바깥 0 23·어휘 받기 6), 금지 호스트 시도 0, --host 뺀 판은 HEADROOM_HOST=0.0.0.0에서 프록시가 기동 거절. Step 7 작성자 측정 표 재현(hf 41/41·pypi 1/1·github 3/3·anthropic 1/0). 진짜 홈이 보인 서드파티 실행 0(credentials.json 523바이트·13:26 그대로). 새 Minor 4: sequence proxy ours, CCR 8,437,760 재현 안 됨(8,433,664), :1155 스위치 목록, :18 표현·:3 머리말 길이.
 Task 30: 내가 고침 — sequence proxy를 ext로, CCR 크기를 세 측정 범위로(SQLite 한 쪽 차이), :1155 겹 목록을 guard.py 그대로, :18 "스위치를 모두 끄고"를 무엇을 뺐는지로. :3 머리말은 한 줄 머리말 틀(검사가 예상 소요를 읽음)이라 나누지 않음. render 1·check 통과·19.0/분 → 150 complete. Task 30(150~151)·ADK 점검 전부 complete.
+2026-10-19 사용자 "시작해" — 볼륨 15(Day 152~153). 골격 153·154 8753e7b. 브리프 task-31-write-brief.md·review-31-brief.md.
+Ruling(2026-10-19, 볼륨 15): 진짜 모델·데이터셋(unsloth/Llama-3.2-3B-Instruct 4bit, unsloth/gemma-3-270m-it, mlabonne/FineTome-100k)은 받지 않고 진짜 학습·GPU(이 PC RTX 5060 Laptop 8GB) 쓰지 않음. HF 계열 라이브러리는 오프라인 변수·스크래치 HF_HOME·스크래치 HOME·USERPROFILE·CLAUDE_CONFIG_DIR·소켓 가드 아래서만(진짜 홈에 ~/.cache/huggingface/token 있음). 공개 카드·config.json은 인증 없는 curl/WebFetch로 읽어도 됨. 축소판(무작위 가중치 장난감 모델 + 그 자리 토크나이저 + 손으로 만든 ShareGPT 몇 개, peft LoRA·trl SFTTrainer CPU 몇 걸음) 권장. Unsloth는 소스로, Windows PyPI torch는 CPU판이라 불러오기 결과를 적음. 사용자에게: 실제 학습은 원하면 따로.
+Task 31: 작성 152·153 (sonnet) dispatched. 동시 2.
+Task 31: 152 작성 DONE_WITH_CONCERNS — 5d07b96, check 통과, 21.6/분(3,556낱말/165분). 주장: 이 PC import unsloth가 NotImplementedError(torch 2.14.1+cpu), load_in_4bit는 …-unsloth-bnb-4bit(2.37GB) 요청, trl 1.15.0은 tokenizer=·dataset_text_field=·max_seq_length= 거부(TypeError), trl 손실이 Triton 커널이라 장난감은 compute_loss 한 줄 교체, LoRA 24,313,856(0.757%), 60걸음 = 0.48%, labels==input_ids·시작 토큰 둘, Unsloth 통계(HF 받기)·8.8.8.8:53 TCP 시험·GitHub mapper — 오프라인 변수·UNSLOTH_DISABLE_STATISTICS로 끔. 사고: 빈 heredoc으로 스크래치 venv python 1회(즉시 종료), /tmp에 파일 1개 만들었다 옮김.
+Task 31: 리뷰 152 dispatched (opus) → review-152.md. 동시 2: 작성 153, 리뷰 152.
+Task 31: 153 작성 DONE_WITH_CONCERNS — 90ae2d2(작성)·a995afa(블로그 링크 문장), check 통과, 20.9/분(3,860낱말/185분), overview·step 683×991, sequence 820×1290. 바깥 0(변수 블록·guard.py 각각 빼도 0, 둘 다 뺀 사본에서만 huggingface_hub telemetry·agent-harnesses 2건). 주장: Unsloth trl 패치를 CPU에서 직접 불러 재현 — 앱 호출은 받아지나 TrainingArguments를 거치며 max_seq_length=2048이 사라져 1024로 잘림, 토크나이저를 안 넘기면 fix_untrained_tokens가 AttributeError일 수 있음. 사고: 빈 heredoc `python3 -` 2회(곧 종료), 프록시 시험 중 `curl --noproxy '*' -x`가 example.com에 직접 GET 1건(바깥 요청), 하네스가 스크래치 rm 1건 막음.
+Task 31: 리뷰 153 dispatched (opus) → review-153.md. 동시 2: 리뷰 152·153.
+Task 31: 리뷰 152 DONE (a1d985f9b56bbd30e) — ❌ C0·I6·M13. I1 "멈추지 않은 환경에서도 인자 셋을 받지 않는다" 틀림(Unsloth를 불러오면 trl 패치로 받아짐), I2 Step 7 표는 순수 trl 기본값 — 앱의 Unsloth 설정은 adamw_8bit·0.001·3407·loss_type nll(rl.py:3076-3149·:3690), I3 기대 출력 셋에서 줄이 말없이 빠짐(본문이 그 줄을 근거로 듦), I4 Llama 3.2 라이선스 이름 규칙 요약이 원문 35행보다 좁음, I5 CPU fp16=True 2걸음 됨, I6 overview 화살표(저장 주체·데이터→학습기·학습기↔LoRA·Unsloth→학습기). 맞음: NotImplementedError·2,372,084,511바이트·순수 trl TypeError·Triton·숫자 전부·통계 끄기(mapper는 오프라인 변수로만)·줄 하나 빼기 9판 바깥 0. **리뷰어 근접 사고:** 감시 훅이 문법 오류로 안 불린 채 자기 -c 코드가 huggingface.co 이름 조회 1회(연결 없음)·진짜 ~/.cache/huggingface/token을 열었다 읽지 않고 닫음(서드파티 없음, mtime·크기 그대로). PowerShell 1회 하네스 거부.
+Task 31: 152 fix round 1 dispatched (resume a49caaf91eb9be2ec) — 훅·가드 불러와졌는지 먼저 단언하라고 강조.
+Task 31: 리뷰 153 DONE — ❌ C0·I3·M10(I1 load_in_8bit·full_finetuning 미설명, I2 overview 스크립트 노드·Hub 경로·저장 주체, I3 sequence trainer.train()·순서). 리뷰어 지적: 진짜 %TEMP%\unsloth_compiled_cache(17:16, 13파일)는 TEMP를 안 돌린 작업자 흔적 → 내가 그것과 torchinductor_zihun(빈 폴더)·작업자 /tmp 파일 열(ov_*.d2·p188.py·patch_train.txt·seedrun.*·shuf.sh·home-after*.txt)을 이름으로 지움. 153 fix round 1 dispatched (resume a7c760cef94a3aeb5, TEMP·컴파일 캐시도 스크래치로).
+도구: 시험이 만든 tut-* 임시 폴더를 지우지 않아 진짜 TEMP에 708개 쌓임 → support/tempdir.mjs(tempDir, 파일 끝에 rmSync) + test/tempdir.test.mjs(RED→GREEN), npm test 58/58, 새 폴더 0. 남은 것: 옛 tut-* 708개 지우기(접두사 확인 중 중단).
+**사용량 한도로 멈춤(2026-10-19):** 152·153 고침 1회차 에이전트를 멈춤(TaskStop). 작업 트리에 두 날의 그림 변경이 커밋 안 된 채 남음 — 재개할 때 SendMessage로 a49caaf91eb9be2ec(152)·a7c760cef94a3aeb5(153)를 이어 가거나, git diff로 상태를 보고 다시 지시. 그 뒤: 재확인 → 볼륨 15 마감(test·check·roadmap·장부·메모리·푸시).
+재개(2026-10-19): 한도가 풀려 152·153 고침 1회차를 SendMessage로 이어 가게 함(작업 트리 변경부터 확인하라고). 옛 tut-* 708개(접두사 아홉 가지로 모두 일치, 다른 이름 0)를 진짜 TEMP에서 지움 → 0개.
+Task 31: 153 fix round 1 DONE — 1220687(check 통과, 21.1/분, 4,329낱말/205분, overview·step 1129×995, sequence 820×1378). I3·M10 전부. 주장: 바깥 요청 둘은 trl _send_telemetry(Authorization 없음), HF_HUB_OFFLINE·HF_HUB_DISABLE_TELEMETRY·DO_NOT_TRACK 각각 단독으로 0, 변수 블록에 telemetry 둘·TEMP·TMP·TMPDIR·UNSLOTH_COMPILE_LOCATION 추가, guard.py도 tmp/로. 감시 훅 사전 단언은 못 했다고 밝힘 → 재확인에서 단언 먼저.
+Task 31: 재확인 153 dispatched (sonnet) → rereview-153.md. 동시 2: 수정 152, 재확인 153.
+Task 31: 152 fix round 1 DONE — 858fc06(check 통과, 22.0/분 — 범위 끝, 4,282낱말/195분). I6·M13 전부: UNSLOTH_ALLOW_CPU=1 시험 스위치로 재현(unsloth_probe.py 선택 단계), 앱 경로 설정 adamw_8bit·0.001·3407·nll, defaults.py는 "순수 trl 값"으로 분리, 8비트 모멘트 0.24GB, 라이선스 35행 원문(AUP 주소 404·사본 200), fp16 CPU 2걸음, overview 저장 주체=스크립트(1141×991), 구조 화살표 셋은 높이 상한 때문에 extra-structure.d2(683×755)로(승인된 보조 그림 방식). 소켓 가드 설치 단언 뒤에만 import unsloth.
+Task 31: 재확인 152 dispatched (sonnet) → rereview-152.md. 동시 2: 재확인 152·153.
+Task 31: 재확인 153 DONE (ae9698fd71a5af3c5) — ✅ 13/13. 줄 하나 빼기 46판(판마다 192.0.2.1:53이 감시에 막히는지 먼저 단언), 하나만 뺀 35판·짝 5판 바깥 0, TEMP 넷은 두 겹 중 하나만 있어도 지켜짐. 새 Minor 3. 진짜 %TEMP%\unsloth_compiled_cache가 19:01에 다시 생김 — Day 152 README에 TEMP·UNSLOTH_COMPILE_LOCATION 줄이 없음(grep 0), 그 시각 152 작성자가 문서대로 따라 함 → 재확인 152에 Important 후보로 확인 요청, 폴더는 내가 다시 지움. 재확인자 빈 heredoc 1회.
+Task 31: 내가 고침 — N1 (10 s)가 실행마다 다름을 밝힘, N3 원인 셋을 ①②③로·loader.py 2119~2126. N2(원본 스크립트 노드가 step3~8에서 -todo 아님, sft·lora가 ours)는 그대로: 마지막 step에 -todo 금지(검사 19)라 끝까지 흐리게 둘 수 없고, 앱 안에서 도는 라이브러리를 ours로 그리는 것은 Day 150 lib과 같은 관례. check 통과·21.2/분 → 153 complete.
+Task 31: 재확인 152 DONE (aa995edcc38e60bdb) — 19/19 해결, 새 I1·M3. N-I1: 변수 블록·guard.py가 TEMP·TMP·TMPDIR·UNSLOTH_COMPILE_LOCATION을 안 돌림 → unsloth_probe.py가 독자 TEMP·작업 폴더에 unsloth_compiled_cache, import torch만으로 TEMP에 torchinductor_<사용자>(19:01 현상과 같음). Git Bash는 TMPDIR을 진짜 Temp로 미리 잡음. Day 153 두 겹 처방을 이 PC에서 시험 — 기준 TEMP 새 파일 0, 하나씩 뺀 6판 exit 1. 줄 하나 빼기 16판+보조 판 네트워크·HF·진짜 홈 0. 재확인자 실수: 빈 heredoc 전역 python3 1회, 훅 문법 오류로 훅 없이 시험 2회(192.0.2.1:80 시간 초과, 진짜 .cache 아래 없는 경로 열기 2회, 토큰은 안 엶).
+Task 31: 152 fix round 2 dispatched (resume a49caaf91eb9be2ec) — TEMP 두 겹·torch 인덕터 캐시 변수·Minor 3·예상 소요.
