@@ -1,6 +1,6 @@
 # Day 091 · 👨🏻‍💼 AI Sales Intelligence Agent Team
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠(모델 서비스 종료) · 예상 소요 95분(Step마다 스텁 콜백으로 파이프라인 7단계를 직접 실행해 보고, 서비스 종료된 모델 둘을 SDK 소스로 재확인하고, `adk web`까지 띄워 확인하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 배틀카드 1건에 Gemini 호출이 **최소 12회**(코디네이터 1 + 1~5단계 5 + 6·7단계 각 2(도구 선택 + 함수 응답 요약) + 도구 안 직접 `Client()` 호출 2) 들어가는 구조지만 `gemini-3-*-preview` 요금표를 확인하지 못해 원화 추정은 하지 않습니다(키가 없어 실제 과금도 확인 못함) — 게다가 3~5단계와 7단계 도구가 쓰는 모델 둘은 **이미 서비스가 종료돼** 키를 넣어도 3단계에서 멈춥니다(아래) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ ⚠(모델 서비스 종료) · 예상 소요 102분(Step마다 스텁 콜백으로 파이프라인 7단계를 직접 실행해 보고, 서비스 종료된 모델 둘을 SDK 소스로 재확인하고, `adk web`까지 띄워 확인하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 배틀카드 1건에 Gemini 호출이 **최소 12회**(코디네이터 1 + 1~5단계 5 + 6·7단계 각 2(도구 선택 + 함수 응답 요약) + 도구 안 직접 `Client()` 호출 2) 들어가는 구조지만 `gemini-3-*-preview` 요금표를 확인하지 못해 원화 추정은 하지 않습니다(키가 없어 실제 과금도 확인 못함) — 게다가 3~5단계와 7단계 도구가 쓰는 모델 둘은 **이미 서비스가 종료돼** 키를 넣어도 3단계에서 멈춥니다(아래) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team`
 
 ## 오늘 만들 것
 
@@ -492,11 +492,17 @@ text events:
 **할 일.** `ai_sales_intelligence_agent_team` 폴더 **안에서** 실행합니다(Step 2~6과 달리 부모 폴더가 아닙니다 — `adk web`은 에이전트 폴더 자체를 인자로 받습니다).
 
 ```bash
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="${TMPDIR:-/tmp}/day091-adkhome"; mkdir -p "$HOME"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
 cd ai_sales_intelligence_agent_team
-uv run --no-project adk web --no_use_local_storage .
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --no_use_local_storage . < /dev/null
 ```
 
 (저장소 루트에서 곧바로 시작한다면 `cd advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team`을 씁니다. `--no_use_local_storage`는 Day 088도 이미 쓴 적이 있는 플래그입니다(088:409) — 다만 이 옵션이 막는 로컬 저장소는 홈 디렉터리가 아니라 **에이전트 폴더 자신의 `.adk/`**입니다. google-adk 2.10.0의 `cli/utils/dot_adk_folder.py`(소스로 확인)를 보면 `DotAdkFolder.dot_adk_dir`가 `agent_dir / ".adk"`이고 그 안에 `session.db`·`artifacts/`를 둡니다 — 이 옵션 없이 띄우면 `ai_sales_intelligence_agent_team/.adk/`가 생긴다는 뜻입니다.)
+
+블록의 앞 세 줄은 홈(`HOME`·`USERPROFILE`)을 임시 폴더로 바꾸고(uv 캐시는 원래 자리를 지킵니다), `adk telemetry disable`과 `< /dev/null`이 같은 일을 따로 한 번씩 더 막습니다. 까닭은 Day 088과 같습니다. 이 문서의 `requirements.txt`는 오늘 google-adk 2.12.0으로 풀리고(직접 확인), 이 판의 `adk` 명령은 `~/.adk/config.json`에 `telemetry: true`가 있으면 명령이 끝날 때 `https://play.googleapis.com/log`로 사용 기록을 보냅니다(`cli/_telemetry/_metrics_reporter.py`, 소스로 확인). 동의는 질문에 Enter만 쳐도 `true`가 되고, 다른 ADK 실습에서 이미 동의했다면 질문 없이 보냅니다. 동의 `true`가 미리 적힌 홈을 흉내 내 위 블록을 돌리면 `play.googleapis.com`으로 가려는 시도가 0이었고, 세 줄(홈 바꾸기, `disable`, `< /dev/null`)을 하나씩 뺀 세 판도 모두 0이었습니다. 방어를 하나도 두지 않고 `adk web`만 돌린 판은 1이었습니다(소켓 감시가 막았을 뿐 실제로는 보내지 않았습니다, 직접 확인). 홈을 바꾸지 않고 `adk telemetry disable`을 부르면 진짜 `~/.adk/config.json`에 `false`를 쓰는 부작용이 있으니 홈 줄과 함께 두세요.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -557,7 +563,7 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 |---|---|---|
 | 앱 자신의 README대로 `cd awesome-llm-apps/advanced_ai_agents/multi_agent_apps/agent_team/ai_sales_intelligence_team`을 실행하면 폴더를 찾지 못함 | 실제 경로는 `agent_team`이 아니라 `agent_teams`(복수형)이고, 폴더명도 `ai_sales_intelligence_team`이 아니라 `ai_sales_intelligence_agent_team`이다(직접 확인 — 두 군데가 다르다) | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_sales_intelligence_agent_team`으로 이동 |
 | `tools.py`를 임포트하거나 앱을 실행하면 소스 폴더 옆에 `outputs/`가 생김 | `OUTPUTS_DIR.mkdir(exist_ok=True)`가 모듈 최상위 코드라 **임포트 시점에** 실행된다(`tools.py:15-16`, 직접 확인) | 저장소 안에서 재현할 때는 앱 폴더를 스크래치로 복사한 사본에서 임포트·실행한다 |
-| `adk web`을 대화형 터미널에서 처음 실행하면 텔레메트리 동의 프롬프트가 뜬다 | Day 014·088과 같은 `sys.stdin.isatty()` 분기(`google/adk/utils/_telemetry_config.py`) | 비대화형으로 실행하면(`< /dev/null`) 프롬프트 텍스트만 찍히고 막히지 않는다. 또는 한 번 답하거나 `adk telemetry disable` |
+| `adk web`을 대화형 터미널에서 처음 실행하면 텔레메트리 동의 프롬프트가 뜬다 | Day 014·088과 같은 `sys.stdin.isatty()` 분기(`google/adk/utils/_telemetry_config.py`) | 비대화형으로 실행하면(`< /dev/null`) 프롬프트 텍스트만 찍히고 막히지 않는다. 또는 Step 7처럼 홈을 바꾼 터미널에서 `adk telemetry disable`(프롬프트에 Enter만 치면 켜집니다) |
 | `/run`에 메시지를 보내면 응답 본문이 `Internal Server Error`뿐 | `GOOGLE_API_KEY`가 없으면 첫 Gemini 호출(코디네이터 자신의 모델 호출)에서 `google-genai`의 `Client` 생성자가 `ValueError`를 던지고 ADK는 이를 HTTP 500으로만 반환한다(Day 014·088과 같은 지점) | `GOOGLE_API_KEY`를 셸 환경변수로 설정하고 서버 재시작. 원인은 서버 터미널 로그에서 확인 |
 | Windows PowerShell에서 `curl` 명령이 매개변수 오류를 냄 | PowerShell이 `curl`을 `Invoke-WebRequest`의 별칭으로 미리 정의해 둔다(Day 014에서 이미 확인) | `curl.exe`처럼 확장자를 붙여 호출 |
 | 실제 키를 넣고 `adk web`으로 돌려도 3단계(`positioning_analyzer_agent`)에서 멈추고 배틀카드·차트가 나오지 않음 | 3~5단계가 쓰는 `gemini-3-pro-preview`(2026-03-09 종료)와 7단계 도구가 쓰는 `gemini-3-pro-image-preview`(2026-06-25 종료)가 이미 Google 공식 문서에서 서비스 종료로 확인된다(Day 082가 같은 모델로 먼저 확인, Step 5에서 SDK 모델 목록으로 재확인) | 리포 코드는 고치지 않음 — `agent.py:114,167,215`를 `gemini-3.1-pro-preview`로, `tools.py:166`을 `gemini-3-pro-image`로 바꿔야 끝까지 감 |
