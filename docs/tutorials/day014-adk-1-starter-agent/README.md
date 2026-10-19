@@ -1,6 +1,6 @@
 # Day 014 · Google ADK Crash Course · 1_starter_agent
 
-> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★☆☆ · 예상 소요 45분 · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/1_starter_agent`
+> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★☆☆ · 예상 소요 60분 · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/1_starter_agent`
 
 ## 오늘 만들 것
 
@@ -165,10 +165,25 @@ creative_writing_agent
 **할 일.** `1_starter_agent` 폴더(즉 `creative_writing_agent`의 부모 폴더)에서 실행합니다.
 
 ```bash
+# adk를 부르는 터미널마다 먼저 실행합니다. 홈을 새 폴더로 바꿔 독자의 텔레메트리 동의가 보이지 않게 합니다
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="$(mktemp -d)"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --port 8987 --no_use_local_storage . < /dev/null
+```
+
+```powershell
+# PowerShell(실행해 보지 못했습니다). adk를 부르는 터미널마다 먼저 실행합니다. `<` 리다이렉션이 없어 `< /dev/null`은 뺐습니다
+$env:UV_CACHE_DIR = (uv cache dir)
+$env:USERPROFILE = "$env:TEMP\adkhome-day014"; $env:HOME = $env:USERPROFILE; New-Item -ItemType Directory -Force $env:USERPROFILE | Out-Null
+uv run --no-project adk telemetry disable
 uv run --no-project adk web --port 8987 --no_use_local_storage .
 ```
 
-`adk` 계열 명령을 이 컴퓨터에서 처음 실행하면 텔레메트리 수집 동의를 묻는 프롬프트가 먼저 뜨고, 답하기 전까지는 서버가 시작되지 않습니다 — 문제 해결에 정리했습니다. 서버가 뜨면 ADK는 `.` 아래 하위 폴더를 스캔해 `creative_writing_agent`를 찾아 임포트해 두고, FastAPI 앱과 채팅 웹 UI를 같은 프로세스에서 서비스합니다. 이 앱 어디에도 `uvicorn.run`이나 `app = FastAPI()` 같은 코드가 없다는 점이 볼륨 1과의 핵심 차이입니다 — 서버는 전적으로 `google-adk` 패키지가 제공합니다.
+위 블록의 처음 세 줄은 홈(`HOME`·`USERPROFILE`)을 이 터미널만의 새 임시 폴더로 바꿉니다. ADK 2.12.0은 텔레메트리 동의를 홈의 `.adk/config.json`에서 읽고(`utils/_telemetry_config.py`, `Path.home()`), 켜져 있으면 `adk` 명령이 끝날 때 하위 프로세스가 `play.googleapis.com`으로 사용 기록을 보냅니다(`cli/_telemetry/_metrics_collector.py`의 `shutdown`, `_metrics_reporter.py`). 독자가 다른 ADK 실습에서 이미 동의해 뒀다면 질문 없이 나가고, 처음이라도 `Enable telemetry? [Y/n]`에 그냥 Enter를 누르면 켜집니다(`cli/cli_tools_click.py`). 그래서 서로 독립된 세 줄을 겹쳤습니다. 새 홈, `adk telemetry disable`(진짜 홈에서 부르면 독자의 ADK 설정이 바뀌므로 새 홈에서만 부릅니다), 그리고 `< /dev/null`(입력이 비어 있어 Enter가 오지 않으니 질문이 와도 켜지지 않습니다. Windows의 Python은 NUL을 터미널로 봐서 질문 문구는 찍히지만 답은 파일 끝으로 끝납니다)입니다. 이 문서의 확인에서는 동의(`true`)를 미리 적어 둔 홈으로 독자를 흉내 내고 `adk web`을 띄웠다 멈췄습니다. 원래 명령 그대로는 `play.googleapis.com` 요청 시도가 1건 잡혔고, 세 줄에서 하나씩 뺀 판 3개는 모두 0건이었습니다(소켓 감시가 막아 실제로는 보내지 않았습니다).
+
+`adk` 계열 명령을 이 컴퓨터에서 처음 실행하면 텔레메트리 수집 동의를 묻는 프롬프트가 먼저 뜨고, 답하기 전까지는 서버가 시작되지 않습니다 — 문제 해결에 정리했습니다. 위 블록은 이 질문이 뜨지 않게 합니다. 서버가 뜨면 ADK는 `.` 아래 하위 폴더를 스캔해 `creative_writing_agent`를 찾아 임포트해 두고, FastAPI 앱과 채팅 웹 UI를 같은 프로세스에서 서비스합니다. 이 앱 어디에도 `uvicorn.run`이나 `app = FastAPI()` 같은 코드가 없다는 점이 볼륨 1과의 핵심 차이입니다 — 서버는 전적으로 `google-adk` 패키지가 제공합니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -252,7 +267,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8987/run -H "C
 - [ ] `.env.example`의 `GOOGLE_GENAI_USE_VERTEXAI`/`GOOGLE_API_KEY` 역할을 이해했다
 - [ ] `creative_writing_agent/agent.py`가 `LlmAgent` 생성자 호출 하나뿐이라는 것을 직접 읽었다
 - [ ] `adk web --help`로 디렉터리 탐색 규칙(`agent.py`, `__init__.py`, `root_agent.yaml` 중 하나)을 확인했다
-- [ ] `adk telemetry disable`을 실행하거나 최초 실행 프롬프트에 답했다
+- [ ] 새 홈 블록을 읽고 `adk telemetry disable`을 실행했다 (`adk` 명령 끝에는 `< /dev/null`)
 - [ ] `uv run adk web`로 서버를 띄우고 `curl .../list-apps`에서 `creative_writing_agent`를 확인했다
 - [ ] 키 없이 세션을 만들고 `/run`을 호출해 HTTP 500과 `ValueError: No API key was provided...`를 직접 봤다
 
@@ -261,7 +276,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8987/run -H "C
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 레슨 안내대로 `pip install -r requirements.txt`를 실행하면 `No module named pip` | `uv venv`로 새로 만든 가상환경에는 `pip`이 기본으로 설치되지 않는다(직접 확인) | `uv pip install -r requirements.txt`를 대신 사용 (또는 `uv venv --seed`로 pip까지 함께 설치) |
-| `adk` 계열 명령을 처음 실행하면 `Enable telemetry? [Y/n]:`에서 멈추고, 비대화형 셸에서는 응답을 받지 못해 그대로 대기 | google-adk 2.9.2가 최초 실행 시 텔레메트리 동의를 대화형으로 묻는다(직접 확인) | `adk telemetry disable`을 먼저 실행하거나, 대화형 터미널에서 Y/n으로 답한다 |
+| `adk` 계열 명령을 처음 실행하면 `Enable telemetry? [Y/n]:`에서 멈추고, 비대화형 셸에서는 응답을 받지 못해 그대로 대기 | google-adk 2.9.2가 최초 실행 시 텔레메트리 동의를 대화형으로 묻는다(직접 확인) | Step 4의 블록처럼 새 홈에서 `adk telemetry disable < /dev/null`을 먼저 실행하고 `adk` 명령 끝에 `< /dev/null`을 붙인다 (질문에 그냥 Enter는 켜는 쪽이다) |
 | `/run`에 메시지를 보내면 응답 본문이 `Internal Server Error`뿐이고, 진짜 원인은 응답에 없다 | `GOOGLE_API_KEY`가 없으면 `google-genai`의 `Client` 생성자가 `ValueError`를 던지고, ADK는 이를 HTTP 500으로만 반환한다(직접 확인) | `.env`에 `GOOGLE_API_KEY`를 설정하고 서버를 재시작. 실패 원인은 응답이 아니라 서버 터미널 로그에서 확인 |
 | 기본 옵션으로 `adk web`을 띄우고 세션을 하나만 만들어도 `creative_writing_agent/.adk/session.db`가 생긴다 | `--no_use_local_storage`를 주지 않으면 ADK가 에이전트 디렉터리 밑에 세션·아티팩트를 로컬 파일로 저장하는 것이 기본값이다(직접 확인). 이 문서의 확인 명령은 저장소를 건드리지 않으려고 이 옵션을 붙였다 | 리포 폴더 안에서 그대로 실습한다면 `--no_use_local_storage`를 붙이거나, 생긴 `.adk/`를 커밋하지 않도록 유의 |
 | Windows PowerShell에서 이 문서의 `curl` 명령이 매개변수 오류를 낸다 | PowerShell은 `curl`을 `Invoke-WebRequest`의 별칭으로 미리 정의해 두므로, `-s`·`-X`·`-d` 같은 실제 curl 옵션을 받지 못한다 | `curl.exe`처럼 확장자를 붙여 Windows에 내장된 실제 curl 실행 파일을 직접 호출 (같은 인자 그대로 사용 가능) |
