@@ -1,6 +1,6 @@
 # Day 023 · Google ADK Crash Course · adk_yaml_examples
 
-> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ ⚠ · 예상 소요 80분(파이썬 코드는 한 줄도 없지만, 그 대신 프레임워크 자신의 YAML 로더·의존성·보안 가드 네 곳을 소스로 따라가는 데 시간을 씁니다 — 바로 앞 Day 022(95분)보다는 짧습니다) · API 비용 $0 (API 키 없이 진행 — 실제 Gemini·Firecrawl 호출은 하지 않았습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples`
+> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ ⚠ · 예상 소요 85분(파이썬 코드는 한 줄도 없지만, 그 대신 프레임워크 자신의 YAML 로더·의존성·보안 가드 네 곳을 소스로 따라가는 데 시간을 씁니다 — 바로 앞 Day 022(95분)보다는 짧습니다) · API 비용 $0 (API 키 없이 진행 — 실제 Gemini·Firecrawl 호출은 하지 않았습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples`
 
 ## 오늘 만들 것
 
@@ -313,14 +313,23 @@ env: {'FIRECRAWL_API_KEY': '${FIRECRAWL_API_KEY}'}
 
 ```bash
 cd ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/multi_agent_web_research_team
+# adk를 부르는 터미널마다 먼저 실행합니다. 홈을 새 폴더로 바꿔 독자의 텔레메트리 동의가 보이지 않게 합니다
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="$(mktemp -d)"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --port 8989 --no_use_local_storage . < /dev/null
+```
+
+```powershell
+# PowerShell(실행해 보지 못했습니다). adk를 부르는 터미널마다 먼저 실행합니다. `<` 리다이렉션이 없어 `< /dev/null`은 뺐습니다
+$env:UV_CACHE_DIR = (uv cache dir)
+$env:USERPROFILE = "$env:TEMP\adkhome-day023"; $env:HOME = $env:USERPROFILE; New-Item -ItemType Directory -Force $env:USERPROFILE | Out-Null
 uv run --no-project adk telemetry disable
 uv run --no-project adk web --port 8989 --no_use_local_storage .
 ```
 
-```powershell
-uv run --no-project adk telemetry disable
-uv run --no-project adk web --port 8989 --no_use_local_storage .
-```
+위 블록의 처음 세 줄은 홈(`HOME`·`USERPROFILE`)을 이 터미널만의 새 임시 폴더로 바꿉니다. ADK 2.12.0은 텔레메트리 동의를 홈의 `.adk/config.json`에서 읽고(`utils/_telemetry_config.py`, `Path.home()`), 켜져 있으면 `adk` 명령이 끝날 때 하위 프로세스가 `play.googleapis.com`으로 사용 기록을 보냅니다(`cli/_telemetry/_metrics_collector.py`의 `shutdown`, `_metrics_reporter.py`). 독자가 다른 ADK 실습에서 이미 동의해 뒀다면 질문 없이 나가고, 처음이라도 `Enable telemetry? [Y/n]`에 그냥 Enter를 누르면 켜집니다(`cli/cli_tools_click.py`). 그래서 서로 독립된 세 줄을 겹쳤습니다. 새 홈, `adk telemetry disable`(진짜 홈에서 부르면 독자의 ADK 설정이 바뀌므로 새 홈에서만 부릅니다), 그리고 `< /dev/null`(입력이 비어 있어 Enter가 오지 않으니 질문이 와도 켜지지 않습니다. Windows의 Python은 NUL을 터미널로 봐서 질문 문구는 찍히지만 답은 파일 끝으로 끝납니다)입니다. 이 문서의 확인에서는 동의(`true`)를 미리 적어 둔 홈으로 독자를 흉내 내고 `adk web`을 띄웠다 멈췄습니다. 원래 문서에는 `adk telemetry disable` 한 줄만 있어서(그것도 진짜 홈에서 독자의 ADK 설정을 바꿨습니다), 그 줄을 빼면 동의가 미리 있던 홈에서 `play.googleapis.com` 요청 시도가 1건 잡혔습니다. 세 줄에서 하나씩 뺀 판 3개는 모두 0건이었습니다(소켓 감시가 막아 실제로는 보내지 않았습니다).
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -384,7 +393,7 @@ curl.exe -s -X POST http://127.0.0.1:8989/run -H "Content-Type: application/json
 ## 더 해보기
 
 - `research_agent.yaml`의 `env: FIRECRAWL_API_KEY: "${FIRECRAWL_API_KEY}"`(`ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/multi_agent_web_research_team/multi_agent_web_researcher/research_agent.yaml:33`)는 이미 빈 문자열이 아니므로 지금 이대로도 keyless 모드가 아닙니다 — 사본을 두 벌 만들어, ① 이 `env:` 줄 자체를 지운 것(→ 진짜 keyless 메시지가 뜨는지)과 ② 실제 Firecrawl 키 문자열을 넣은 것(→ 인증 모드로 뜨는지)을 `npx firecrawl-mcp`로 비교해보기
-- `mcp` 설치와 `ADK_ALLOW_CONFIG_STDIO_MCP_SERVERS=1`을 갖춘 채로 `adk web` 대신 `adk run`(웹 UI를 거치지 않는 CLI 실행)으로 이 폴더를 띄워, `web=True`가 켜는 `args` 차단을 정말 피해 가는지, 그렇다면 다음엔 어디서 멈추는지 확인해보기
+- `mcp` 설치와 `ADK_ALLOW_CONFIG_STDIO_MCP_SERVERS=1`을 갖춘 채로 `adk web` 대신 `adk run`(웹 UI를 거치지 않는 CLI 실행)으로 이 폴더를 띄워, `web=True`가 켜는 `args` 차단을 정말 피해 가는지, 그렇다면 다음엔 어디서 멈추는지 확인해보기 (`adk run`도 `adk` 명령이라 Step 5의 홈 블록과 `adk telemetry disable`을 먼저 붙입니다. 입력이 필요해 `< /dev/null`은 붙일 수 없습니다)
 - `root_agent.yaml`의 `sub_agents`(`ai_agent_framework_crash_course/google_adk_crash_course/adk_yaml_examples/multi_agent_web_research_team/multi_agent_web_researcher/root_agent.yaml:22`)에 존재하지 않는 파일을 가리키는 `config_path`를 사본에 추가하거나, 상위 폴더로 나가는 `config_path: ../outside.yaml`을 넣어 Step 3의 경로 순회 방어가 정말로 막는지 확인해보기
 
 ## 다음 날 예고
