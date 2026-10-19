@@ -6,15 +6,16 @@ user: 독자 {
   label.near: outside-top-center
 }
 guard: "가드\n(guard.py)" { class: ours }
-hub: "Hugging Face Hub\n(이 문서는 부르지 않음)" { class: ext }
-toy: "장난감 재료\n(toy-gemma/ · conversations.json)" { class: file }
+hub: "Hugging Face Hub" { class: ext }
+toy: "장난감 재료 (toy-gemma/ · conversations.json)" { class: file }
+script: "원본 스크립트 (finetune_gemma3.py)" { class: ours }
 tmpl: "gemma-3 채팅 틀\n(common.py)" { class: ours }
 lora: "LoRA r=16\n(peft)" { class: ours }
-sft: "SFTTrainer\n(trl)" { class: ours }
-unsloth: "Unsloth\n(소스·CPU 재현)" { class: ours }
-ckpt: "outputs/\ncheckpoint-60" { class: file }
-out: "finetuned_model/\n(어댑터만)" { class: file }
-cache: "HF_HOME 캐시\n(진짜 실행 때)" { class: store }
+sft: "SFTTrainer (trl)" { class: ours }
+unsloth: "Unsloth (소스 재현)" { class: ext }
+ckpt: "outputs/checkpoint-60" { class: file }
+out: "finetuned_model/ (어댑터만)" { class: file }
+cache: "HF_HOME 캐시" { class: store }
 
 user -> guard: "스크립트 실행"
 guard -> hub: "연결 거부"
@@ -22,8 +23,11 @@ toy -> tmpl: "대화 · 토크나이저"
 toy -> lora: "무작위 가중치"
 tmpl -> sft: "text 열"
 lora -> sft: "LoRA 모델"
+script -> sft: "SFTTrainer · train()"
+script -> unsloth: "FastModel · 채팅 틀"
+script -> hub: "load_dataset"
+script -> out: "save_pretrained"
 sft -> ckpt: "체크포인트"
-sft -> out: "어댑터 저장"
 unsloth -> sft: "trl 패치"
 unsloth -> hub: "모델 요청 · 통계"
 hub -> cache: "내려받기"

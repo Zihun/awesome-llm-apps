@@ -1,10 +1,10 @@
 # Day 153 · 🦥 Gemma 3 Fine-tuning
 
-> 볼륨 15 🔧 LLM Fine-tuning · 난이도 ★★☆(앱은 파일 하나지만 CUDA GPU와 Hugging Face 내려받기가 필요하고, 이 문서의 실습은 스크립트 열 개를 CPU에서 돌립니다) ⚠ 오늘 `requirements.txt`로 설치되는 `trl` 1.15.0만으로는 원본의 `SFTTrainer(...)` 인자를 받지 않습니다. Unsloth가 `trl`을 고쳐 주는 길을 GPU 없이 CPU에서 재현하면 받아지지만, 앱이 `SFTConfig` 대신 `TrainingArguments`를 쓰는 탓에 `max_seq_length=2048`이 사라져 글이 1024토큰에서 잘렸습니다(Step 5. GPU에서 원본을 돌려 보지는 못했습니다) · 예상 소요 185분(앱은 90줄이지만 스크립트 열 개를 저장하고 오프라인 가드와 숫자 확인을 한 걸음씩 거칩니다) · API 비용 대략 0원(API 키가 필요 없고 Hugging Face도 한 번도 부르지 않았습니다. GPU 사용료는 이 문서가 쓰지 않았습니다) · 원본 앱: `advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning`
+> 볼륨 15 🔧 LLM Fine-tuning · 난이도 ★★☆(앱은 파일 하나지만 CUDA GPU와 Hugging Face 내려받기가 필요하고, 이 문서의 실습은 스크립트 열 개를 CPU에서 돌립니다) ⚠ 오늘 `requirements.txt`로 설치되는 `trl` 1.15.0만으로는 원본의 `SFTTrainer(...)` 인자를 받지 않습니다. Unsloth가 `trl`을 고쳐 주는 길을 GPU 없이 CPU에서 재현하면 받아지지만, 앱이 `SFTConfig` 대신 `TrainingArguments`를 쓰는 탓에 `max_seq_length=2048`이 사라져 글이 1024토큰에서 잘렸습니다(Step 5. GPU에서 원본을 돌려 보지는 못했습니다) · 예상 소요 205분(앱은 90줄이지만 스크립트 열 개를 저장하고 오프라인 가드와 숫자 확인을 한 걸음씩 거칩니다) · API 비용 대략 0원(API 키가 필요 없고 Hugging Face도 한 번도 부르지 않았습니다. GPU 사용료는 이 문서가 쓰지 않았습니다) · 원본 앱: `advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning`
 
 ## 오늘 만들 것
 
-Google의 작은 언어 모델 Gemma 3(2.7억 매개변수, 270M)을 Unsloth로 불러 LoRA로 일부만 학습하고, 그 결과를 어댑터 파일로 저장하는 스크립트 하나를 따라 봅니다. 원본은 `finetune_gemma3.py`(90줄)가 전부이고 앱 README(45줄)와 `requirements.txt`(6줄)가 곁에 있습니다. 흐름은 `FastModel.from_pretrained`로 모델을 4-bit로 불러오기, `get_peft_model`로 LoRA 붙이기, `gemma-3` 채팅 틀로 FineTome-100k 대화를 글 한 줄씩으로 바꾸기, TRL의 `SFTTrainer`로 60걸음 학습하기, `save_pretrained`로 저장하기입니다. 볼륨 15의 둘째이자 마지막 날입니다. 볼륨 14의 Day 150~151은 모델에 보낼 글을 줄이는 도구였고, 볼륨 15는 글이 아니라 모델의 가중치 일부를 학습합니다. [Day 152](../day152-llama3.2-finetuning/README.md)의 원본 `finetune_llama3.2.py`(편집기에서 63줄)와 뼈대가 같습니다. 같은 FineTome-100k, 같은 LoRA 설정(`r=16`과 일곱 투영 이름), 같은 배치 2×4와 60걸음입니다. 오늘은 같은 것을 다시 설명하지 않고, 그 원본과 다른 점이 실제로 무슨 뜻인지에 집중합니다. 다른 점은 다섯입니다. `FastLanguageModel` 대신 `FastModel`을 쓰고(2행), `SFTConfig` 대신 `TrainingArguments`를 쓰고(6행, 64행), `SFTTrainer`에 토크나이저를 넘기지 않고(59~63행), 채팅 틀이 `gemma-3`이고(38행), 저장할 때 토크나이저를 저장하지 않습니다(84행).
+Google의 작은 언어 모델 Gemma 3(2.7억 매개변수, 270M)을 Unsloth로 불러 LoRA로 일부만 학습하고, 그 결과를 어댑터 파일로 저장하는 스크립트 하나를 따라 봅니다. 원본은 `finetune_gemma3.py`(90줄)가 전부이고 앱 README(45줄)와 `requirements.txt`(6줄)가 곁에 있습니다. 흐름은 `FastModel.from_pretrained`로 모델을 4-bit로 불러오기, `get_peft_model`로 LoRA 붙이기, `gemma-3` 채팅 틀로 FineTome-100k 대화를 글 한 줄씩으로 바꾸기, TRL의 `SFTTrainer`로 60걸음 학습하기, `save_pretrained`로 저장하기입니다. 볼륨 15의 둘째이자 마지막 날입니다. 볼륨 14의 Day 150~151은 모델에 보낼 글을 줄이는 도구였고, 볼륨 15는 글이 아니라 모델의 가중치 일부를 학습합니다. [Day 152](../day152-llama3.2-finetuning/README.md)의 원본 `finetune_llama3.2.py`(편집기에서 63줄)와 뼈대가 같습니다. 같은 FineTome-100k, 같은 LoRA 설정(`r=16`과 일곱 투영 이름), 같은 배치 2×4와 60걸음입니다. 오늘은 같은 것을 다시 설명하지 않고, 그 원본과 다른 점이 실제로 무슨 뜻인지에 집중합니다. 중요한 다른 점은 다섯입니다. `FastLanguageModel` 대신 `FastModel`을 쓰고(2행), `SFTConfig` 대신 `TrainingArguments`를 쓰고(6행, 64행), `SFTTrainer`에 토크나이저를 넘기지 않고(59~63행), 채팅 틀이 `gemma-3`이고(38행), 저장할 때 토크나이저를 저장하지 않습니다(84행). 이 밖에 Day 152의 `SFTTrainer`가 받던 `data_collator=DataCollatorForSeq2Seq(...)`(`finetune_llama3.2.py` 44행)가 이 앱에는 없고, 상단 상수에 `LOAD_IN_8BIT`와 `FULL_FINETUNING` 스위치가 있습니다(12~13행, 켜면 무엇이 달라지는지는 Step 8).
 
 이 문서는 진짜 모델과 데이터셋을 내려받지 않았고, 진짜 학습도 돌리지 않았으며, GPU도 쓰지 않았습니다. 이 PC에는 NVIDIA GPU가 있지만 쓰지 않았습니다. 대신 무작위 가중치로 만든 **장난감** Gemma 3 모양 모델(층 2개, 폭 64)과 그 자리에서 만든 토크나이저, 손으로 쓴 대화 12개로 같은 흐름을 CPU에서 돌립니다. 이것은 Gemma가 아니라 같은 구조 가족의 아주 작은 모형이므로, 손실 값이 진짜 학습의 결과를 말해 주지는 않습니다. 장난감으로 볼 수 있는 것은 숫자가 아니라 모양입니다. 어떤 글이 만들어지는지, 몇 개 매개변수가 학습되는지, 어떤 호출이 받아지는지, 어떤 파일이 저장되는지입니다. 진짜 앱이 무엇을 받고 어디에 쌓는지는 Hugging Face의 공개 카드와 파일 목록, 설치된 패키지의 소스로 읽었습니다(Step 8). 직접 돌려 보거나 소스로 확인한 것이 여덟입니다.
 
@@ -29,7 +29,7 @@ Google의 작은 언어 모델 Gemma 3(2.7억 매개변수, 270M)을 Unsloth로 
 | CUDA GPU | 원본 앱을 진짜로 돌릴 때만. 앱 README는 "runnable on a CUDA GPU"라고 적는다. 이 문서는 GPU를 쓰지 않았다 | 없음 |
 | Hugging Face 계정 | 필요 없다. 앱이 받는 `unsloth/` 저장소는 접근 신청이 없는 공개 저장소다(API의 `gated`가 `false`). 원본 `google/gemma-3-270m-it`는 `gated`가 `manual`이라 약관 동의가 필요하다 | https://huggingface.co/unsloth/gemma-3-270m-it |
 
-⚠ **라이선스.** 이 문서는 Gemma Terms of Use(https://ai.google.dev/gemma/terms, 2026-10-19에 읽음, 쪽 머리에 "Last modified: April 1, 2026", 그 쪽에 "This documentation is deprecated"와 새 문서 gemma.ai 안내가 있음)와 `unsloth/gemma-3-270m-it` 카드(`license: gemma`, 약관 링크)에서 다음을 읽었습니다. 약관은 부록의 목록에 Gemma 3을 포함합니다. 3.1절은 Gemma나 Model Derivatives를 제3자에게 배포(Distribution)할 때 약관 사본을 주고, 고친 파일에 고쳤다는 표시를 달고, 호스팅 서비스가 아니면 "Gemma is provided under and subject to the Gemma Terms of Use found at ai.google.dev/gemma/terms"라는 Notice 파일을 붙이라고 합니다. 3.2절은 금지 사용 정책을 약관에 포함시킵니다. 정의 1.1(e)는 Gemma를 고치거나 그 위에 만든 모델을 Model Derivatives로 적고 "Outputs are not deemed Model Derivatives"라고 합니다. 학습된 LoRA 어댑터 파일이 여기에 드는지는 약관이 어댑터를 따로 말하지 않아 확인하지 못했습니다. 자기 PC에 두고 쓰는 것과 남에게 주는 것은 약관에서 다른 일입니다. 데이터셋 FineTome-100k 카드(https://huggingface.co/datasets/mlabonne/FineTome-100k, 같은 날)는 `license` 항목이 없고, "arcee-ai/The-Tome의 부분집합을 fineweb-edu 분류기로 다시 거른 것"이라고만 적습니다. The-Tome 카드의 `license`는 `mit`이지만 그 카드가 모았다는 아홉 개 데이터셋 각각의 조건은 확인하지 못했습니다. `unsloth` 2026.10.6은 Apache-2.0, `unsloth_zoo`는 LGPL-3.0-or-later, `trl`은 Apache-2.0, `peft`는 Apache(패키지 메타데이터로 확인)입니다. 법률 조언이 아닙니다.
+⚠ **라이선스.** 이 문서는 Gemma Terms of Use(https://ai.google.dev/gemma/terms, 2026-10-19에 읽음, 쪽 머리에 "Last modified: April 1, 2026", 그 쪽에 "This documentation is deprecated"와 새 문서 gemma.ai 안내가 있음)와 `unsloth/gemma-3-270m-it` 카드(`license: gemma`, 약관 링크)에서 다음을 읽었습니다. 약관은 부록의 목록에 Gemma 3을 포함합니다. 3.1절은 Gemma나 Model Derivatives를 제3자에게 배포(Distribution)할 때 3.2절의 사용 제한을 그 사람들과의 계약에 집행 가능한 조항으로 넣고 그 제한이 적용된다고 알리며, 약관 사본을 주고, 고친 파일에 고쳤다는 표시를 달고, 호스팅 서비스가 아니면 "Gemma is provided under and subject to the Gemma Terms of Use found at ai.google.dev/gemma/terms"라는 Notice 파일을 붙이라고 합니다. 3.2절은 금지 사용 정책을 약관에 포함시킵니다. 정의 1.1(e)는 Gemma를 고치거나 그 위에 만든 모델을 Model Derivatives로 적고 "Outputs are not deemed Model Derivatives"라고 합니다. 학습된 LoRA 어댑터 파일이 여기에 드는지는 약관이 어댑터를 따로 말하지 않아 확인하지 못했습니다. 자기 PC에 두고 쓰는 것과 남에게 주는 것은 약관에서 다른 일입니다. 데이터셋 FineTome-100k 카드(https://huggingface.co/datasets/mlabonne/FineTome-100k, 같은 날)는 `license` 항목이 없고, "arcee-ai/The-Tome의 부분집합을 fineweb-edu 분류기로 다시 거른 것"이라고만 적습니다. The-Tome 카드의 `license`는 `mit`이지만 그 카드가 모았다는 아홉 개 데이터셋 각각의 조건은 확인하지 못했습니다. `unsloth` 2026.10.6은 Apache-2.0, `unsloth_zoo`는 LGPL-3.0-or-later, `trl`은 Apache-2.0, `peft`는 Apache(패키지 메타데이터로 확인)입니다. 법률 조언이 아닙니다.
 
 이 문서의 스크립트는 영어 문장과 한글을 섞어 출력합니다. 출력을 파이프나 파일로 받는 한국어 Windows에서는 먼저 인코딩을 맞춥니다. Step 1의 변수 블록에도 들어 있습니다.
 
@@ -96,7 +96,7 @@ tokenizers==0.23.3
 uv pip install -r requirements-lab.txt
 ```
 
-패키지 59개가 설치됩니다(`uv pip list`로 센 값, 직접 확인). 이 줄이 인터넷에 닿는 유일한 줄입니다. 설치 뒤 다음 파일 `guard.py`를 저장합니다. 모든 스크립트가 맨 첫 줄에서 불러오는 파일입니다. 불러오는 프로세스 안에서 네 가지를 합니다. 첫째, `HF_HUB_OFFLINE`·`HF_DATASETS_OFFLINE`·`TRANSFORMERS_OFFLINE`을 `1`로 덮어씁니다. 둘째, `HF_HOME`을 이 폴더의 `hf/`로, `HOME`·`USERPROFILE`·`CLAUDE_CONFIG_DIR`을 `fake-home/`으로 덮어씁니다. 이 PC의 진짜 홈에는 Hugging Face 토큰(`~/.cache/huggingface/token`)과 코딩 도구의 자격 증명이 있을 수 있고, 라이브러리가 그것을 보지 못해야 합니다. 셋째, 토큰·프록시·API 키 변수를 지우고 `HF_ENDPOINT`를 죽은 루프백 주소로 돌립니다. 넷째, 소켓에서 루프백이 아닌 이름 조회와 연결을 거부합니다. 환경변수는 `huggingface_hub`가 불려 올 때 읽히므로 가드는 반드시 첫 줄입니다.
+패키지 59개가 설치됩니다(`uv pip list`로 센 값, 직접 확인). 이 줄이 인터넷에 닿는 유일한 줄입니다. 설치 뒤 다음 파일 `guard.py`를 저장합니다. 모든 스크립트가 맨 첫 줄에서 불러오는 파일입니다. 불러오는 프로세스 안에서 네 가지를 합니다. 첫째, `HF_HUB_OFFLINE`·`HF_DATASETS_OFFLINE`·`TRANSFORMERS_OFFLINE`을 `1`로 덮어씁니다. 둘째, `HF_HOME`을 이 폴더의 `hf/`로, `HOME`·`USERPROFILE`·`CLAUDE_CONFIG_DIR`을 `fake-home/`으로, `TEMP`·`TMP`·`TMPDIR`과 Unsloth가 생성한 코드를 쌓는 `UNSLOTH_COMPILE_LOCATION`을 `tmp/`로 덮어씁니다. 서드파티가 쓰는 임시 파일이 독자의 진짜 임시 폴더를 어지럽히지 않게 하는 줄입니다(`torch`의 컴파일 캐시도 `tmp/`에 생겼습니다). 이 PC의 진짜 홈에는 Hugging Face 토큰(`~/.cache/huggingface/token`)과 코딩 도구의 자격 증명이 있을 수 있고, 라이브러리가 그것을 보지 못해야 합니다. 셋째, 토큰·프록시·API 키 변수를 지우고 `HF_ENDPOINT`를 죽은 루프백 주소로 돌립니다. 넷째, 소켓에서 루프백이 아닌 이름 조회와 연결을 거부합니다. 환경변수는 `huggingface_hub`가 불려 올 때 읽히므로 가드는 반드시 첫 줄입니다.
 
 `gemma3-lab/guard.py`
 
@@ -105,7 +105,7 @@ uv pip install -r requirements-lab.txt
 
 What it does, in this process only:
   1. forces the Hugging Face libraries offline (HF_HUB_OFFLINE, HF_DATASETS_OFFLINE, TRANSFORMERS_OFFLINE),
-  2. points HF_HOME, HOME, USERPROFILE and CLAUDE_CONFIG_DIR at folders inside this lab, so a token file in your
+  2. points HF_HOME, HOME, USERPROFILE, CLAUDE_CONFIG_DIR, TEMP and the Unsloth compile cache at folders inside this lab, so a token file in your
      real home (~/.cache/huggingface/token, ~/.claude/...) is never found,
   3. drops token and proxy variables and sends HF_ENDPOINT to a dead loopback port,
   4. refuses every network name lookup and connection that is not loopback.
@@ -117,7 +117,8 @@ from pathlib import Path
 LAB = Path(__file__).resolve().parent
 FAKE_HOME = LAB / "fake-home"
 HF_HOME = LAB / "hf"
-for folder in (FAKE_HOME / ".claude", HF_HOME):
+TMP_DIR = LAB / "tmp"
+for folder in (FAKE_HOME / ".claude", HF_HOME, TMP_DIR):
     folder.mkdir(parents=True, exist_ok=True)
 
 for name in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN", "HF_TOKEN_PATH", "HF_HUB_ENABLE_HF_TRANSFER",
@@ -142,6 +143,10 @@ os.environ.update({
     "HOMEPATH": str(FAKE_HOME)[len(FAKE_HOME.drive):] or "\\",
     "CLAUDE_CONFIG_DIR": str(FAKE_HOME / ".claude"),
     "TOKENIZERS_PARALLELISM": "false",
+    "TEMP": str(TMP_DIR),
+    "TMP": str(TMP_DIR),
+    "TMPDIR": str(TMP_DIR),
+    "UNSLOTH_COMPILE_LOCATION": str(TMP_DIR / "unsloth_compiled_cache"),
 })
 
 _LOOPBACK = ("127.0.0.1", "::1", "localhost")
@@ -216,10 +221,12 @@ if __name__ == "__main__":
 ```bash
 export PYTHONIOENCODING=utf-8
 export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+export HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1
 export HF_HOME="$PWD/hf"
 export HOME="$PWD/fake-home" USERPROFILE="$PWD/fake-home" CLAUDE_CONFIG_DIR="$PWD/fake-home/.claude"
+export TEMP="$PWD/tmp" TMP="$PWD/tmp" TMPDIR="$PWD/tmp" UNSLOTH_COMPILE_LOCATION="$PWD/tmp/unsloth_compiled_cache"
 unset HF_TOKEN HUGGING_FACE_HUB_TOKEN
-mkdir -p "$HF_HOME" "$CLAUDE_CONFIG_DIR"
+mkdir -p "$HF_HOME" "$CLAUDE_CONFIG_DIR" "$TEMP"
 ```
 
 ```powershell
@@ -227,12 +234,17 @@ $env:PYTHONIOENCODING = "utf-8"
 $env:HF_HUB_OFFLINE = "1"
 $env:HF_DATASETS_OFFLINE = "1"
 $env:TRANSFORMERS_OFFLINE = "1"
+$env:HF_HUB_DISABLE_TELEMETRY = "1"
+$env:DO_NOT_TRACK = "1"
 $env:HF_HOME = "$PWD\hf"
 $env:HOME = "$PWD\fake-home"
 $env:USERPROFILE = "$PWD\fake-home"
 $env:CLAUDE_CONFIG_DIR = "$PWD\fake-home\.claude"
+$env:TEMP = "$PWD\tmp"
+$env:TMP = "$PWD\tmp"
+$env:UNSLOTH_COMPILE_LOCATION = "$PWD\tmp\unsloth_compiled_cache"
 Remove-Item Env:HF_TOKEN, Env:HUGGING_FACE_HUB_TOKEN -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force $env:HF_HOME, $env:CLAUDE_CONFIG_DIR | Out-Null
+New-Item -ItemType Directory -Force $env:HF_HOME, $env:CLAUDE_CONFIG_DIR, $env:TEMP | Out-Null
 ```
 
 (PowerShell 형태는 실행해 보지 못했습니다. PowerShell에서 변수에 빈 문자열 `""`을 대입하면 변수가 지워지므로, 값을 비우는 줄 대신 지우는 줄을 쓰거나 위처럼 값을 정합니다. 이 이름들은 그 터미널에 남으므로 끝나면 터미널을 닫습니다.)
@@ -252,7 +264,7 @@ Path.home() = fake-home
 token that huggingface_hub can see: None
 ```
 
-여기서 두 겹을 따로 시험한 결과는 이렇습니다(직접 확인). 새 폴더에서 셸에 진짜처럼 생긴 가짜 `OPENAI_API_KEY`·`ANTHROPIC_API_KEY`·`HF_TOKEN`, 프록시 변수 다섯(기록만 하는 루프백 프록시를 가리킴), `HF_HUB_OFFLINE=0`, 진짜 `HF_ENDPOINT`를 두고, 상위 폴더에 같은 모양의 가짜 키가 든 `.env`를, 독자 홈에 가짜 `~/.cache/huggingface/token`과 `~/.claude/.credentials.json`을 두었습니다. 그 상태로 이 문서의 스크립트를 순서대로 돌렸을 때 기록 프록시에 도착한 요청과 소켓 감시에 걸린 시도가 모두 0이었습니다. 변수 블록 없이 `guard.py`만으로 돌렸을 때도, `guard.py`의 `import guard` 줄을 뺀 사본에 변수 블록만 걸고 돌렸을 때도 0이었고 `huggingface_hub.get_token()`은 `None`이었습니다. 둘 다 없는 사본에서는 `show_template.py`와 `count_lora.py`가 0이었지만 `train_toy.py`는 `huggingface.co:443`으로 가는 요청 둘을 시도했고(기록 프록시가 받았습니다), `get_token()`은 셸의 `HF_TOKEN` 값을 돌려주었습니다. 요청 둘은 `huggingface_hub` 1.33.0이 스스로 보내는 것입니다. 하나는 사용 통계 `HEAD /api/telemetry/…`(토큰 없이 보내고 `HF_HUB_OFFLINE`나 `HF_HUB_DISABLE_TELEMETRY`로 꺼집니다)이고, 하나는 에이전트 목록 `GET /api/agent-harnesses`(`HF_HUB_OFFLINE`로 꺼집니다)입니다(소스로 확인: `huggingface_hub/utils/_telemetry.py`와 `utils/_detect_agent.py`, 호출 스택으로도 확인). 모델 폴더만 읽는 스크립트도 두 겹이 없으면 바깥에 말을 겁니다. 진짜 앱에서는 이 겹이 진짜 토큰이 요청에 실리는 것을 막는 유일한 것입니다(Step 8).
+여기서 두 겹을 따로 시험한 결과는 이렇습니다(직접 확인). 새 폴더에서 셸에 진짜처럼 생긴 가짜 `OPENAI_API_KEY`·`ANTHROPIC_API_KEY`·`HF_TOKEN`, 프록시 변수 다섯(기록만 하는 루프백 프록시를 가리킴), `HF_HUB_OFFLINE=0`, 진짜 `HF_ENDPOINT`를 두고, 상위 폴더에 같은 모양의 가짜 키가 든 `.env`를, 독자 홈에 가짜 `~/.cache/huggingface/token`과 `~/.claude/.credentials.json`을 두었습니다. 그 상태로 이 문서의 스크립트를 순서대로 돌렸을 때 기록 프록시에 도착한 요청과 소켓 감시에 걸린 시도가 모두 0이었습니다. 변수 블록 없이 `guard.py`만으로 돌렸을 때도, `guard.py`의 `import guard` 줄을 뺀 사본에 변수 블록만 걸고 돌렸을 때도 0이었고 `huggingface_hub.get_token()`은 `None`이었습니다. 둘 다 없는 사본에서는 `show_template.py`와 `count_lora.py`가 0이었지만 `train_toy.py`는 `huggingface.co:443`으로 가는 요청 둘을 시도했고(기록 프록시가 받았습니다), `get_token()`은 셸의 `HF_TOKEN` 값을 돌려주었습니다. 요청 둘은 `trl` 1.15.0의 트레이너가 만들어질 때 나갑니다(소스로 확인: `trl/trainer/base_trainer.py` 81행의 `_send_telemetry`). 하나는 사용 통계 `HEAD /api/telemetry/trl/<트레이너 이름>`이고, 사용자 에이전트에 모델 종류(`gemma3_text`)·PEFT 여부·데이터 출처의 종류·장치(CPU는 `cpu`, CUDA면 GPU 이름까지)가 실립니다. 다른 하나는 그 요청의 헤더를 만들 때 `huggingface_hub` 1.33.0이 `detect_agent()`로 받는 에이전트 목록 `GET /api/agent-harnesses`입니다(`utils/_headers.py`, `utils/_detect_agent.py`). 요청을 루프백 허브 대역으로 돌려 본 결과 둘 다 `Authorization` 헤더가 없었습니다. 오프라인 변수, `HF_HUB_DISABLE_TELEMETRY`, `DO_NOT_TRACK` 가운데 하나만 있어도 둘이 모두 꺼졌습니다(각각 직접 확인). 같은 모델 폴더를 읽는 `count_lora.py`와 `load_back.py`는 트레이너를 만들지 않아 0건이었습니다. 진짜 앱에서는 이 겹이 진짜 토큰이 요청에 실리는 것을 막는 유일한 것입니다(Step 8).
 
 ### Step 2. 장난감 재료 — 무작위 가중치의 Gemma 3 모양 모델
 
@@ -660,7 +672,7 @@ def model():
 
 def app_args(cls=TrainingArguments, **extra):  # finetune_gemma3.py:64-74
     return cls(per_device_train_batch_size=2, gradient_accumulation_steps=4, warmup_steps=5, max_steps=60,
-               learning_rate=2e-4, bf16=False, fp16=False, logging_steps=1, output_dir="outputs", disable_tqdm=True,
+               learning_rate=2e-4, bf16=False, fp16=False, logging_steps=1, output_dir="outputs", disable_tqdm=True, gradient_checkpointing=False,
                **extra)
 
 
@@ -708,10 +720,11 @@ SFTConfig(max_length, dataset_text_field)      accepted
 | `TrainingArguments`만 | 받아짐 | 받아짐, 상한 1024 |
 | `tokenizer=` + `TrainingArguments` | `TypeError ... 'tokenizer'` | 받아짐, 상한 1024 |
 | `SFTConfig(max_length=2048, dataset_text_field="text")` | 받아짐 | 받아짐, 상한 2048 |
+| 위에 `processing_class=tokenizer`를 더함(이 문서가 권하는 고침) | 받아짐 | 받아짐, `args.max_length`는 `None`이 되고 padding-free가 자동으로 켜짐("Padding-free auto-enabled"), 긴 글은 Unsloth의 데이터 준비에서 2048로 잘림 |
 
-읽을 것이 다섯입니다. 첫째, Unsloth의 트레이너는 앱의 호출을 받아 줍니다. `tokenizer=`, `dataset_text_field=`, `max_seq_length=`와 `TrainingArguments`가 모두 통과합니다. 둘째, 글이 달라집니다. Unsloth의 데이터 준비 코드는 첫 글이 `<bos>`로 시작하면 "We found double BOS tokens - we shall remove one automatically."를 찍고 `add_special_tokens=False`로 토큰화합니다(소스로 확인: unsloth_zoo 2026.10.6의 `unsloth_zoo/dataset_utils.py` 2810~2822행). 장난감의 첫 예시가 순수한 `trl`에서는 `[2, 2, 4, ...]`로 시작해 `[..., 5, 204, 5]`로 끝났는데(Step 6) 여기서는 `[2, 4, 90, ...]`과 `[..., 19, 5, 204]`입니다. BOS가 하나이고 `trl`이 붙이던 끝 표시도 없습니다. 그러니 이 앱에 `.removeprefix('<bos>')`가 없어도 Unsloth 경로에서는 BOS가 하나입니다. 셋째, 질문 토큰까지 손실에 들어가는 것은 이 경로에서도 같았습니다. 학습기가 내놓는 첫 배치에서 `labels`가 `input_ids`와 같았습니다(패딩 자리만 `-100`). 넷째, 앱의 `max_seq_length=2048`이 사라집니다. 긴 글(2,454토큰) 하나로 쟀더니 앱의 호출에서는 첫 예시가 1024토큰으로 잘렸고, `SFTConfig(max_length=2048)`에서는 2048, `SFTConfig`에 길이를 주지 않았을 때는 모델의 `max_seq_length`(2048)를 따라 2048이었습니다. 까닭은 추정입니다. Unsloth가 생성한 트레이너는 `args`에 `max_length` 필드가 있을 때만 길이를 보정하는데 `TrainingArguments`에는 그 필드가 없고, 그다음에야 `trl`이 `TrainingArguments`를 기본값 1024의 `SFTConfig`로 바꾸는 것으로 읽었습니다. 트레이너에 직접 준 `max_seq_length=`는 어디에도 반영되지 않았습니다(`trainer.max_seq_length`가 `None`). 다섯째, 토크나이저를 넘기지 않는 모양에서는 다른 곳이 멈출 수 있습니다. Unsloth의 트레이너는 `__init__`의 인자 `processing_class`를 그대로 `fix_untrained_tokens(model, tokenizer, ...)`에 넘기는데(생성된 `UnslothSFTTrainer.py`, `unsloth_zoo/tokenizer_utils.py` 449행에서 `tokenizer.convert_ids_to_tokens`를 부름), 모델 임베딩에 값이 거의 0인 행이 하나라도 있으면 `None`에 그 메서드를 부르다 `AttributeError: 'NoneType' object has no attribute 'convert_ids_to_tokens'`로 멈춥니다. 장난감은 패딩 토큰(0번)의 행이 0이라 실제로 멈췄고(`tokenizer=`를 같이 넘기면 통과), 그 행을 0이 아니게 만든 변형에서는 통과했습니다. **진짜 270M의 임베딩에 그런 행이 있는지는 가중치를 받지 않아 확인하지 못했습니다.** 그래서 앱의 모양이 진짜 모델에서 멈추는지는 모릅니다. 공식 270M 노트북은 `tokenizer = tokenizer`를 넘깁니다.
+읽을 것이 다섯입니다. 첫째, Unsloth의 트레이너는 앱의 호출을 받아 줍니다. `tokenizer=`, `dataset_text_field=`, `max_seq_length=`와 `TrainingArguments`가 모두 통과합니다. 둘째, 글이 달라집니다. Unsloth의 데이터 준비 코드는 첫 글이 `<bos>`로 시작하면 "We found double BOS tokens - we shall remove one automatically."를 찍고 `add_special_tokens=False`로 토큰화합니다(소스로 확인: unsloth_zoo 2026.10.6의 `unsloth_zoo/dataset_utils.py` 2810~2822행). 장난감의 첫 예시가 순수한 `trl`에서는 `[2, 2, 4, ...]`로 시작해 `[..., 5, 204, 5]`로 끝났는데(Step 6) 여기서는 `[2, 4, 90, ...]`과 `[..., 19, 5, 204]`입니다. BOS가 하나이고 `trl`이 붙이던 끝 표시도 없습니다. 그러니 이 앱에 `.removeprefix('<bos>')`가 없어도 Unsloth 경로에서는 BOS가 하나입니다. 셋째, 질문 토큰까지 손실에 들어가는 것은 이 경로에서도 같았습니다. 학습기가 내놓는 첫 배치에서 `labels`가 `input_ids`와 같았습니다(패딩 자리만 `-100`). 넷째, 앱의 `max_seq_length=2048`이 사라집니다. 긴 글(2,454토큰) 하나로 쟀더니 앱의 호출에서는 첫 예시가 1024토큰으로 잘렸고, `SFTConfig(max_length=2048)`에서는 2048, `SFTConfig`에 길이를 주지 않았을 때는 모델의 `max_seq_length`(2048)를 따라 2048이었습니다. 까닭은 소스로 이렇게 읽힙니다. 첫째, Unsloth의 `_backwards_compatible_trainer`는 `max_seq_length`와 `dataset_text_field`를 호출자가 넘긴 `TrainingArguments` 객체에 그대로 `setattr`합니다(`unsloth/trainer.py` 1741~1749행). 둘째, 생성된 `UnslothSFTTrainer.__init__`은 `args`에 `max_length`가 없으면 길이 보정을 건너뜁니다(생성된 파일 2449~2450행). 셋째, `trl`이 `SFTConfig(**args.to_dict())`로 다시 만드는데(`trl/trainer/sft_trainer.py` 645~651행) `to_dict()`는 데이터클래스 필드만 담으므로(`transformers/training_args.py` 2143행) 붙인 값이 사라지고 기본값 1024가 쓰입니다. 트레이너에 직접 준 `max_seq_length=`는 어디에도 반영되지 않았습니다(`trainer.max_seq_length`가 `None`). 다섯째, 토크나이저를 넘기지 않는 모양에서는 다른 곳이 멈출 수 있습니다. Unsloth의 트레이너는 `__init__`의 인자 `processing_class`를 그대로 `fix_untrained_tokens(model, tokenizer, ...)`에 넘기는데(생성된 `UnslothSFTTrainer.py`, `unsloth_zoo/tokenizer_utils.py` 449행에서 `tokenizer.convert_ids_to_tokens`를 부름), 모델 임베딩에 값이 거의 0인 행이 하나라도 있으면 `None`에 그 메서드를 부르다 `AttributeError: 'NoneType' object has no attribute 'convert_ids_to_tokens'`로 멈춥니다. 장난감은 패딩 토큰(0번)의 행이 0이라 실제로 멈췄고(`tokenizer=`를 같이 넘기면 통과), 그 행을 0이 아니게 만든 변형에서는 통과했습니다. **진짜 270M의 임베딩에 그런 행이 있는지는 가중치를 받지 않아 확인하지 못했습니다.** 그래서 앱의 모양이 진짜 모델에서 멈추는지는 모릅니다. 공식 270M 노트북은 `tokenizer = tokenizer`를 넘깁니다.
 
-이 결과는 모두 GPU 없이 CPU에서, 장난감 모델과 Unsloth의 패치 함수를 직접 불러 얻은 재현입니다. **GPU에서 원본을 돌렸을 때도 같은지는 확인하지 못했습니다.** 고치는 방향은 위 표의 마지막 줄입니다. `TrainingArguments`를 `SFTConfig`로 바꾸고 `dataset_text_field`와 `max_length`(앱의 `max_seq_length` 자리)를 거기에 넣고, `processing_class=tokenizer`를 함께 넘기는 것입니다. 이 고침도 진짜 모델로는 돌려 보지 못했습니다.
+이 결과는 모두 GPU 없이 CPU에서, 장난감 모델과 Unsloth의 패치 함수를 직접 불러 얻은 재현입니다. 실제 경로와 다른 점이 있습니다. 실제로는 `PatchFastRL`이 `llama.py`를 불러오는 도중에 불리는데(`unsloth/_gpu_init.py` 752행, `llama.py` 4933행) 재현은 `import unsloth`가 끝난 뒤 불렀고, 모델은 `FastModel.get_peft_model`이 아니라 `peft`로 만든 장난감입니다. 토크나이저 `None`에서 멈추는 곳은 생성된 `__init__`이 `super().__init__`보다 먼저 `fix_untrained_tokens`를 부르는 코드라서 GPU에 의존하지 않는다고 읽었습니다. **GPU에서 원본을 돌렸을 때도 같은지는 확인하지 못했습니다.** 고치는 방향은 위 표의 마지막 줄입니다. `TrainingArguments`를 `SFTConfig`로 바꾸고 `dataset_text_field`와 `max_length`(앱의 `max_seq_length` 자리)를 거기에 넣고, `processing_class=tokenizer`를 함께 넘기는 것입니다. 이 고침의 효과(2048)는 맞지만 `trainer.args.max_length`를 찍어 보면 `None`이 나오고 padding-free가 켜져 있습니다. 토크나이저를 빼면 padding-free가 켜지지 않고 `args.max_length`가 2048 그대로입니다. 이 고침도 진짜 모델로는 돌려 보지 못했습니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -737,7 +750,7 @@ class CpuSFTTrainer(SFTTrainer):
                                     num_items_in_batch=num_items_in_batch)
 ```
 
-`train_toy.py`는 앱의 `train`과 `main`(54~84행)을 그대로 따라갑니다. LoRA를 붙이고, 앱의 정밀도 고르기(56~57행)를 하고, 토크나이저는 넘기지 않고, 앱의 숫자로 학습하고, 저장합니다. 달라지는 점은 `TrainingArguments`가 `SFTConfig`로 바뀌고 `max_length`와 `dataset_text_field`가 거기 들어간다는 것(Step 5), 그리고 보고 싶은 값을 찍는다는 것입니다. 이 학습은 순수한 `trl` 경로입니다. Unsloth의 트레이너와 글이 어떻게 다른지는 Step 5에서 보았습니다.
+`train_toy.py`는 앱의 `train`과 `main`(54~84행)을 그대로 따라갑니다. LoRA를 붙이고, 앱의 정밀도 고르기(56~57행)를 하고, 토크나이저는 넘기지 않고, 앱의 숫자로 학습하고, 저장합니다. 달라지는 점은 `TrainingArguments`가 `SFTConfig`로 바뀌고 `max_length`와 `dataset_text_field`가 거기 들어간다는 것(Step 5), 그리고 `SFTConfig`의 `gradient_checkpointing` 기본값이 `True`라서 앱 경로(`TrainingArguments`, 기본 `False`)에 맞추려고 `False`를 준다는 것(직접 확인: 기본값은 `TrainingArguments` False, `SFTConfig` True), 보고 싶은 값을 찍는다는 것입니다. 이 학습은 순수한 `trl` 경로입니다. Unsloth의 트레이너와 글이 어떻게 다른지는 Step 5에서 보았습니다.
 
 `gemma3-lab/train_toy.py`
 
@@ -791,6 +804,7 @@ trainer = CpuSFTTrainer(
         dataset_text_field="text",
         disable_tqdm=True,
         dataloader_pin_memory=False,
+        gradient_checkpointing=False,  # the app's TrainingArguments default; SFTConfig defaults to True
     ),
 )
 seen = trainer.processing_class
@@ -938,7 +952,9 @@ adapter_model.safetensors: 130,520 bytes
 
 앱의 `MODEL_NAME`은 `unsloth/gemma-3-270m-it`이지만 `load_in_4bit=True`이면 Unsloth가 받는 곳은 다른 저장소입니다. 설치된 `unsloth` 2026.10.6의 매퍼(`unsloth/models/mapper.py` 1084~1088행, 이름 바꾸기는 `unsloth/models/loader_utils.py`의 `get_model_name`)가 `unsloth/gemma-3-270m-it`을 `unsloth/gemma-3-270m-it-unsloth-bnb-4bit`로 바꿉니다(`FLOAT_TO_INT_MAPPER`를 직접 조회해 확인). 공식 270M 노트북은 `load_in_4bit = False`로 16-bit를 받습니다. 쌓이는 곳은 `HF_HOME` 아래입니다. 허브 캐시는 `HF_HOME/hub`, 데이터셋 캐시는 `HF_HOME/datasets`입니다(두 경로는 가드를 건 상태에서 `huggingface_hub`와 `datasets`에 물어 직접 확인). 기본값은 사용자 홈의 `.cache/huggingface`입니다. 데이터셋은 Arrow로 바뀌어 약 240MB가 되고(카드의 `dataset_size`), `.map`이 `text` 열을 더하면 캐시 파일이 하나 더 생길 수 있습니다(재지 못했습니다). 학습이 끝나면 작업 폴더에 `outputs/`와 `finetuned_model/`이 생깁니다.
 
-설치입니다. 이 PC의 별도 가상환경에서 원본 `requirements.txt`를 설치하고 `try_unsloth.py`로 불러 보았습니다(직접 확인). 새 폴더에서 원본의 여섯 줄을 `uv pip install -r`로 설치하면 86개가 풀리고, PyPI의 Windows 휠 크기를 합하면 363.4MB입니다(가장 큰 것이 `torch` 124.1MB, `triton-windows` 52.8MB, `bitsandbytes` 39.1MB, `unsloth` 30.4MB). `torch`는 `2.14.1+cpu`, 곧 PyPI가 Windows에 주는 CPU판입니다. GPU가 있어도 `requirements.txt`만으로는 CUDA판이 설치되지 않습니다. CUDA판을 받는 방법은 PyTorch의 설치 안내를 따라야 하고, 이 문서는 확인하지 못했습니다. Unsloth의 Windows 설치 쪽(https://unsloth.ai/docs/get-started/install-and-update/windows-installation)은 읽어 보니 Intel GPU 설치를 다루고 있어서 NVIDIA용 안내는 찾지 못했습니다. 이 스크립트는 그 가상환경이 `.venv-real`이라고 가정합니다.
+**상단 스위치를 바꾸면.** 앱 README는 `MODEL_NAME`·`MAX_SEQ_LEN`·`LOAD_IN_4BIT`·`FULL_FINETUNING`을 고쳐 보라고 권하고, 코드에는 `LOAD_IN_8BIT`도 있습니다(12행). 소스로 읽은 것입니다(unsloth 2026.10.6의 `unsloth/models/loader.py`, `FastModel.from_pretrained`). `FULL_FINETUNING=True`이면 앱의 `LOAD_IN_4BIT=True`가 그대로 남아 있어도 2119~2125행이 "Unsloth: You selected full finetuning support, but 4bit / 8bit is enabled - disabling LoRA / QLoRA."를 찍고 4-bit·8-bit·16-bit 플래그를 모두 꺼서 16-bit 가중치를 받습니다. 앱은 `if not FULL_FINETUNING:`(26행) 때문에 LoRA를 붙이지 않으므로 268,098,176개 전부가 학습되고, `save_pretrained`는 어댑터가 아니라 모델 전체를 저장합니다. 그러면 Step 4의 학습 매개변수 수·메모리 어림과 Step 7의 저장물 크기는 이 경우에 맞지 않습니다. `LOAD_IN_8BIT=True`만 켜고 `LOAD_IN_4BIT=True`를 그대로 두면 둘이 겹쳐 2159~2165행이 `RuntimeError: Unsloth: Can only load in 4bit or 8bit or 16bit, not a combination!`을 냅니다(판정은 212~215행의 `_precision_flags_conflict`). 8-bit를 쓰려면 `LOAD_IN_4BIT = False`도 함께 바꿔야 합니다. 앞의 문장은 작성자의 CPU 시험(`UNSLOTH_ALLOW_CPU=1`, 로컬 장난감 경로)에서 그대로 찍혔고, 로드는 CPU 제약으로 이어서 멈췄습니다. `RuntimeError`는 GPU와 `bitsandbytes`가 있어야 가는 경로라서 CPU에서는 "`bitsandbytes`를 쓸 수 없어 4-bit·8-bit를 끈다"는 안내가 먼저 나와 재현하지 못했습니다(소스로만 확인). 또 `SFTTrainer`에 collator를 넘기지 않으므로 Unsloth가 padding-free 배치를 막지 않습니다(collator가 있으면 막습니다, `unsloth/trainer.py` 1858~1859행).
+
+설치입니다. 이 PC의 별도 가상환경에서 원본 `requirements.txt`를 설치하고 `try_unsloth.py`로 불러 보았습니다(직접 확인). 새 폴더에서 원본의 여섯 줄을 `uv pip install -r`로 설치하면 86개가 풀리고, PyPI의 Windows 휠 크기를 합하면 363.4MB입니다(가장 큰 것이 `torch` 124.1MB, `triton-windows` 52.8MB, `bitsandbytes` 39.1MB, `unsloth` 30.4MB). `torch`는 `2.14.1+cpu`, 곧 PyPI가 Windows에 주는 CPU판입니다. GPU가 있어도 `requirements.txt`만으로는 CUDA판이 설치되지 않습니다. CUDA판은 따로 받아야 하고, 방법은 아래 Unsloth Windows 문서가 안내합니다. Unsloth의 Windows 설치 문서(https://unsloth.ai/docs/get-started/install/windows-installation, 2026-10-19에 읽음)는 WSL 경로와 `pip install torch torchvision --force-reinstall --index-url https://download.pytorch.org/whl/cu130`을 안내합니다. 읽기만 했고 따라 하지는 않았습니다. 이 스크립트는 그 가상환경이 `.venv-real`이라고 가정합니다.
 
 ```bash
 cp ../advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning/requirements.txt requirements.txt
@@ -952,7 +968,7 @@ uv venv .venv-real --python 3.13
 uv pip install --python .venv-real -r requirements.txt
 ```
 
-(복사 경로는 `gemma3-lab`이 저장소 루트 옆에 있다고 가정합니다. 다르면 경로를 맞추세요. PowerShell 줄은 실행해 보지 못했습니다.) 이 줄도 인터넷에 닿는 설치 줄입니다. 그 뒤 터미널에 Step 1의 변수 블록을 걸고 `try_unsloth.py`로 `import unsloth`를 시도합니다. 이 스크립트도 `guard.py`를 맨 앞에서 불러 오프라인으로 돕니다.
+(복사 경로는 `gemma3-lab`이 저장소 루트 옆에 있다고 가정합니다. 다르면 경로를 맞추세요. PowerShell 줄은 실행해 보지 못했습니다.) 이 줄도 인터넷에 닿는 설치 줄입니다. Step 1의 변수 블록을 건 터미널이 아니라 **변수 블록을 걸지 않은 새 터미널**에서 돌리세요. `HOME`이 `fake-home`으로 바뀌어 있으면 Linux·macOS의 `uv`는 캐시와 관리하는 Python을 그쪽에서 찾아 다시 받을 수 있습니다(`uv` 문서의 기본 경로 기준, 이 PC에서는 재현하지 못했습니다). 설치가 끝나면 변수 블록을 건 터미널로 돌아와 아래 명령을 돌립니다. 그 뒤 터미널에 Step 1의 변수 블록을 걸고 `try_unsloth.py`로 `import unsloth`를 시도합니다. 이 스크립트도 `guard.py`를 맨 앞에서 불러 오프라인으로 돕니다.
 
 `gemma3-lab/try_unsloth.py`
 
@@ -1000,24 +1016,24 @@ datasets        4.8.5
 bitsandbytes    0.50.2
 triton-windows  3.8.0.post29
 torch.__version__: 2.14.1+cpu | cuda available: False
-import unsloth -> NotImplementedError: Unsloth cannot find any torch accelerator? You need a GPU. (5 s)
+import unsloth -> NotImplementedError: Unsloth cannot find any torch accelerator? You need a GPU. (10 s)
 ```
 
-GPU가 없는 이 환경에서 `import unsloth`는 `NotImplementedError: Unsloth cannot find any torch accelerator? You need a GPU.`로 멈춥니다(소스로 확인: unsloth 2026.10.6의 `unsloth/device_type.py` 108행). 그러니 오늘 이 PC의 CPU판 `torch`로는 원본 스크립트의 첫 줄(`from unsloth import FastModel`)에서 끝납니다. 앱 README의 설치 줄 `pip install --upgrade --force-reinstall --no-cache-dir unsloth unsloth_zoo`(16행)는 `unsloth`와 `unsloth_zoo`만 새로 받는 것이 아닙니다. pip 문서는 `--force-reinstall`을 "Reinstall all packages even if they are already up-to-date"라고 적고(https://pip.pypa.io/en/stable/cli/pip_install/, pip 26.2.1, 2026-10-19), `--no-cache-dir`은 캐시를 쓰지 않습니다. 이미 위 요구 사항이 모두 설치된 환경에서 같은 줄에 `--dry-run`을 붙여 돌렸더니 "Would install"에 86개가 모두 올라왔습니다. `torch`와 `transformers`, `trl`, `peft`를 포함해서입니다(직접 확인, 실제 설치는 하지 않음). 그래서 이 줄은 독자 명령으로 권하지 않습니다. 이미 CUDA판 `torch`가 있는 환경에서 돌리면 그것도 다시 설치될 수 있습니다.
+GPU가 없는 이 환경에서 `import unsloth`는 `NotImplementedError: Unsloth cannot find any torch accelerator? You need a GPU.`로 멈춥니다(소스로 확인: unsloth_zoo 2026.10.6의 `unsloth_zoo/device_type.py` 416행에서 던지고 `unsloth/_gpu_init.py`가 다시 던집니다. Day 152도 같은 곳을 가리킵니다). 그러니 오늘 이 PC의 CPU판 `torch`로는 원본 스크립트의 첫 줄(`from unsloth import FastModel`)에서 끝납니다. 앱 README의 설치 줄 `pip install --upgrade --force-reinstall --no-cache-dir unsloth unsloth_zoo`(16행)는 `unsloth`와 `unsloth_zoo`만 새로 받는 것이 아닙니다. pip 문서는 `--force-reinstall`을 "Reinstall all packages even if they are already up-to-date"라고 적고(https://pip.pypa.io/en/stable/cli/pip_install/, pip 26.2.1, 2026-10-19), `--no-cache-dir`은 캐시를 쓰지 않습니다. 이미 위 요구 사항이 모두 설치된 환경에서 같은 줄에 `--dry-run`을 붙여 돌렸더니 "Would install"에 86개가 모두 올라왔습니다. `torch`와 `transformers`, `trl`, `peft`를 포함해서입니다(직접 확인, 실제 설치는 하지 않음). 그래서 이 줄은 독자 명령으로 권하지 않습니다. 이미 CUDA판 `torch`가 있는 환경에서 돌리면 그것도 다시 설치될 수 있습니다.
 
-바깥으로 나가는 것은 [Day 152](../day152-llama3.2-finetuning/README.md) Step 4가 같은 `unsloth`로 자세히 다루었습니다. 모델·데이터셋 내려받기, `from_pretrained`마다 Hugging Face의 `unslothai/<이름>` 저장소를 받는 통계, 그 직전의 `8.8.8.8` 포트 53 접속 시험, 모델 이름이 표에 없을 때의 GitHub 조회와 그것을 끄는 `UNSLOTH_DISABLE_STATISTICS`·오프라인 변수입니다. 오늘 앱은 `FastModel`을 쓰므로 통계는 `unsloth/models/vision.py` 3287행에서 불립니다(소스로 확인, `FastLanguageModel`은 `llama.py` 2980행). 모델 이름은 표에 있어 GitHub 조회는 타지 않습니다. 이 문서가 더 재 본 것은 셋입니다. 작성자가 한 실험이고 독자 명령이 아닙니다. 이 PC의 진짜 홈이 아니라 스크래치 홈, 가짜 토큰 파일, 루프백으로 돌린 허브 대역, 소켓 감시 아래에서 했습니다.
+바깥으로 나가는 것은 [Day 152](../day152-llama3.2-finetuning/README.md) Step 4가 같은 `unsloth`로 자세히 다루었습니다. 모델·데이터셋 내려받기, `from_pretrained`마다 Hugging Face의 `unslothai/<이름>` 저장소를 받는 통계, 그 직전의 `8.8.8.8` 포트 53 접속 시험, 모델 이름이 표에 없을 때의 GitHub 조회와 그것을 끄는 `UNSLOTH_DISABLE_STATISTICS`·오프라인 변수입니다. 오늘 앱은 `FastModel`을 쓰므로 통계는 `unsloth/models/vision.py` 3287행에서 불립니다(소스로 확인, `FastLanguageModel`은 `llama.py` 2980행). 모델 이름은 표에 있어 GitHub 조회는 타지 않습니다. Day 152에 없는 것이 하나 있습니다. Unsloth가 만든 트레이너의 부모도 `trl`의 트레이너라서(생성된 `UnslothSFTTrainer.py`) 원본을 가드 없이 돌리면 Step 1의 `HEAD /api/telemetry/trl/…`가 그대로 나가고, CUDA에서는 `gpu`에 `torch.cuda.get_device_name(0)`이 실립니다(소스로 확인, 토큰은 실리지 않음). 오프라인 변수·`HF_HUB_DISABLE_TELEMETRY`·`DO_NOT_TRACK`로 꺼집니다. 이 문서가 더 재 본 것은 셋입니다. 작성자가 한 실험이고 독자 명령이 아닙니다. 이 PC의 진짜 홈이 아니라 스크래치 홈, 가짜 토큰 파일, 루프백으로 돌린 허브 대역, 소켓 감시 아래에서 했습니다.
 
-첫째, **끄는 변수가 실제로 듣는지** 대역에 도착하는 요청 수로 쟀습니다. 통계 요청이 대역 허브(`HF_ENDPOINT`)로 도착하는 설정에서 `UNSLOTH_DISABLE_STATISTICS=0`(값이 `0`이어도 변수가 있기만 하면 꺼집니다), `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` 각각 넣으면 요청이 0건이었습니다(소스로는 `unsloth/models/_utils.py` 4376~4398행). 둘째, **Windows에서는 통계가 일어나지 않습니다.** `has_internet()`(4254~4273행)이 `8.8.8.8:53`에 연결을 시도하고(소켓 감시에 기록되고 막힘, 직접 확인), 그다음 120초 제한을 거는 `execute_with_time_limit`가 Windows에는 없는 `SIGALRM`을 요구해 `NotImplementedError`를 내며(`unsloth_zoo/rl_environments.py` 986~987행) `_get_statistics`가 그 예외를 삼킵니다(`_utils.py` 4345~4375행). 그래서 이 PC에서 Hugging Face로 가는 통계 요청은 만들어지지 않습니다. Linux·macOS처럼 시간 제한이 되는 것으로 바꿔 돌렸더니(그 함수만 시험용으로 바꿈) 대역에 요청 셋이 도착했습니다. `GET /api/models/unslothai/other/revision/main`, `GET /api/models/unslothai/repeat/revision/main`, 그리고 인증 없는 `GET /api/agent-harnesses`(`huggingface_hub` 1.33.0이 스스로 보내는 것, Step 1)입니다. 셋째, 앞의 둘에는 `Authorization: Bearer hf_…`가 **실렸습니다.** `HF_HOME`에 둔 가짜 토큰 파일의 값이 갔습니다. 진짜 홈에 토큰이 있는 독자가 가드 없이 원본을 돌리면 그 토큰이 간다는 뜻이고, Step 1의 가드가 `HOME`·`HF_HOME`을 가리는 까닭입니다. GPU 쪽 통계 둘(`vram-N`, GPU 수)은 CPU에서는 거기까지 가지 못해 재지 못했습니다. 생성된 트레이너 파일은 작업 폴더(또는 임시 폴더) 아래 `unsloth_compiled_cache/`에 쌓입니다(작성자 CPU 실험에서 확인, 위치는 `UNSLOTH_COMPILE_LOCATION`).
+첫째, **끄는 변수가 실제로 듣는지** 대역에 도착하는 요청 수로 쟀습니다. 통계 요청이 대역 허브(`HF_ENDPOINT`)로 도착하는 설정에서 `UNSLOTH_DISABLE_STATISTICS=0`(값이 `0`이어도 변수가 있기만 하면 꺼집니다), `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` 각각 넣으면 요청이 0건이었습니다(소스로는 `unsloth/models/_utils.py` 4376~4398행). 둘째, **Windows에서는 통계가 일어나지 않습니다.** `has_internet()`(4254~4273행)이 `8.8.8.8:53`에 연결을 시도하고(소켓 감시에 기록되고 막힘, 직접 확인), 그다음 120초 제한을 거는 `execute_with_time_limit`가 Windows에는 없는 `SIGALRM`을 요구해 `NotImplementedError`를 내며(`unsloth_zoo/rl_environments.py` 986~987행) `_get_statistics`가 그 예외를 삼킵니다(`_utils.py` 4345~4375행). 그래서 이 PC에서 Hugging Face로 가는 통계 요청은 만들어지지 않습니다. Linux·macOS처럼 시간 제한이 되는 것으로 바꿔 돌렸더니(그 함수만 시험용으로 바꿈) 대역에 요청 셋이 도착했습니다. `GET /api/models/unslothai/other/revision/main`, `GET /api/models/unslothai/repeat/revision/main`, 그리고 인증 없는 `GET /api/agent-harnesses`(`huggingface_hub` 1.33.0이 스스로 보내는 것, Step 1)입니다. 셋째, 앞의 둘에는 `Authorization: Bearer hf_…`가 **실렸습니다.** `HF_HOME`에 둔 가짜 토큰 파일의 값이 갔습니다. 진짜 홈에 토큰이 있는 독자가 가드 없이 원본을 돌리면 그 토큰이 간다는 뜻이고, Step 1의 가드가 `HOME`·`HF_HOME`을 가리는 까닭입니다. GPU 쪽 통계 둘(`vram-N`, GPU 수)은 CPU에서는 거기까지 가지 못해 재지 못했습니다. 생성된 트레이너 파일은 작업 폴더(또는 임시 폴더) 아래 `unsloth_compiled_cache/`에 쌓입니다(작성자 CPU 실험에서 확인). 위치는 `UNSLOTH_COMPILE_LOCATION`으로 정하고(소스로 확인: `unsloth_zoo/compiler.py` 497행, 직접 확인: 이 변수를 정하면 파일이 거기에만 생김) Step 1의 블록이 그것을 `tmp/`로 돌립니다.
 
 앱 README의 블로그 링크(`unsloth.ai/blog/gemma3`)는 열어 보지 않았습니다. 이 문서의 어떤 단계도 허브에 요청하지 않았고, 설치(PyPI)와 공개 문서·카드 읽기(`curl`, 인증 없음)를 빼면 바깥으로 나간 것이 없습니다.
 
-GPU가 있는 독자가 원본을 돌린다면 이 문서가 확인한 한계는 다음과 같습니다. `torch`를 CUDA판으로 바꿔야 하고(확인하지 못함), `SFTTrainer` 줄이 `max_seq_length`를 잃거나 토크나이저 `None`에서 멈출 수 있으며(Step 5, GPU에서는 확인하지 못함), 첫 실행이 약 433MB와 117MB를 받고, 통계 요청이 홈의 토큰과 함께 나갈 수 있습니다. 이 모든 것을 알고도 돌린다면 복사본에서 돌려 원본 폴더에 `outputs/`와 `finetuned_model/`이 생기지 않게 하세요.
+GPU가 있는 독자가 원본을 돌린다면 이 문서가 확인한 한계는 다음과 같습니다. `torch`를 CUDA판으로 바꿔야 하고(확인하지 못함), `SFTTrainer` 줄이 `max_seq_length`를 잃거나 토크나이저 `None`에서 멈출 수 있으며(Step 5, GPU에서는 확인하지 못함), 첫 실행이 약 433MB와 117MB를 받고, Unsloth 통계 요청이 홈의 토큰과 함께 나가고 `trl`의 사용 통계도 나갈 수 있습니다. 이 모든 것을 알고도 돌린다면 복사본에서 돌려 원본 폴더에 `outputs/`와 `finetuned_model/`이 생기지 않게 하세요.
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
 ## 요청 한 건이 흐르는 과정
 
-여기서 한 건은 학습 한 번(`python train_toy.py`)입니다. 독자가 스크립트를 돌리면 스크립트가 채팅 틀로 `text` 열을 만들고, `get_peft_model`로 LoRA를 붙이고, `SFTTrainer`를 만듭니다. 트레이너는 토크나이저를 모델 폴더에서 다시 불러와 글을 토큰으로 바꾸고, 배치 2개씩 네 번 모아 한 걸음을 계산하고(손실은 모델에게서 받습니다), 60걸음 동안 최적화 걸음을 되풀이하고, 마지막에 `outputs/checkpoint-60/`에 저장합니다. 스크립트는 이어서 어댑터를 `finetuned_model/`에 저장하고 손실 기록을 보여 줍니다. 진짜 앱의 흐름도 같고, 앞에 모델과 데이터셋을 허브에서 받는 일이 붙습니다(Step 8).
+여기서 한 건은 학습 한 번(`python train_toy.py`)입니다. 독자가 스크립트를 돌리면 스크립트가 채팅 틀로 `text` 열을 만들고, `get_peft_model`로 LoRA를 붙이고, `SFTTrainer`를 만듭니다. 만드는 동안 트레이너는 토크나이저를 모델 폴더에서 다시 불러와 글을 토큰으로 바꿉니다. 스크립트가 `trainer.train()`을 부르면 트레이너는 배치 2개씩 네 번 모아 한 걸음을 계산하고(손실은 모델에게서 받습니다), 60걸음 동안 최적화 걸음을 되풀이하고, 마지막에 `outputs/checkpoint-60/`에 저장합니다. 스크립트는 이어서 손실 기록을 보여 주고, 그다음 `model.save_pretrained`로 어댑터를 `finetuned_model/`에 저장합니다(트레이너가 쓰는 것은 `outputs/`뿐이고 `finetuned_model/`은 스크립트가 씁니다). 진짜 앱의 흐름도 같고, 앞에 모델과 데이터셋을 허브에서 받는 일이 붙습니다(Step 8).
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
