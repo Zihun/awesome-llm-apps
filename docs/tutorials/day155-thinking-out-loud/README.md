@@ -1,6 +1,6 @@
 # Day 155 · 🎙️ Thinking Out Loud
 
-> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 150분(스크립트가 없는 스킬이라 돌릴 것은 적지만, 지시문 158줄과 명세 두 쪽을 읽고 시험 다섯 줄의 출력을 해석하고 램블을 손으로 에코로 바꾸고, 블록마다 bash와 PowerShell 두 벌을 읽고 고르는 데 시간이 듭니다) · API 비용 대략 0원(모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/thinking-out-loud`
+> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 155분(스크립트가 없는 스킬이라 돌릴 것은 적지만, 지시문 158줄과 명세 두 쪽을 읽고 시험 다섯 줄의 출력을 해석하고 램블을 손으로 에코로 바꾸고, 블록마다 bash와 PowerShell 두 벌을 읽고 고르는 데 시간이 듭니다) · API 비용 대략 0원(모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/thinking-out-loud`
 
 ## 오늘 만들 것
 
@@ -51,7 +51,7 @@
 
 ### Step 1. 원본을 읽기만 한다
 
-**목적.** 원본 폴더에는 아무것도 쓰지 않고, 스킬이 무엇으로 이루어졌는지 파일과 줄 수로 확인합니다. 이 문서에서 파일을 만들거나 복사하는 블록(Step 3, 6, 7)은 앞 터미널의 변수에 기대지 않습니다. 블록마다 첫머리에서 저장소 위치와 스크래치 폴더를 다시 정하고, 목적지는 `${LAB:?}`처럼 비어 있으면 그 줄에서 멈추게 쓰며, 목적지가 `~/.claude`·`~/.agents`·`~/.codex` 같은 진짜 에이전트 설정 폴더 아래로 풀리면 멈춥니다. 새 터미널에서 Step 3부터 시작해도, 줄 하나를 빼고 붙여 넣어도 진짜 설정 폴더에는 아무것도 쓰이지 않습니다. 이것은 가짜 홈(안에 `.claude/skills/existing`과 가짜 자격 증명 파일을 둔 폴더)에서 블록을 글자 그대로 돌리고 줄을 하나씩 빼 보며 직접 확인했습니다(Step 3).
+**목적.** 원본 폴더에는 아무것도 쓰지 않고, 스킬이 무엇으로 이루어졌는지 파일과 줄 수로 확인합니다. 이 문서에서 파일을 만들거나 복사하거나 목록을 찍는 블록(Step 3, 4, 6, 7)은 앞 터미널의 변수에 기대지 않습니다. 블록마다 첫머리에서 저장소 위치와 스크래치 폴더를 다시 정하고, 스크래치 폴더 경로는 먼저 정규화합니다(Git Bash는 `cygpath -u`와 `realpath -m`, PowerShell은 `GetFullPath`). 정규화한 경로가 `~/.claude`·`~/.agents`·`~/.codex`·`~/.cursor`·`~/.copilot`·`~/.openclaw`·`~/.hermes`나 `CLAUDE_CONFIG_DIR` 아래이면 멈추고, 목적지는 `${LAB:?}`처럼 비어 있으면 그 줄에서 멈추게 씁니다. 그래서 새 터미널에서 시작해도, 줄 하나를 빼고 붙여 넣어도, `TMPDIR`·`TEMP`가 설정 폴더 아래(Windows 형식 경로 포함)여도 진짜 설정 폴더에는 아무것도 쓰이지 않습니다. 이것은 가짜 홈에서 블록을 글자 그대로 돌리고 줄을 하나씩 빼고 `TMPDIR`·`TEMP`를 바꿔 가며 직접 확인했습니다(Step 3). 한계도 Step 3 끝에 적었습니다.
 
 **할 일.** 저장소 루트에서 줄 수와 파이썬 파일 수를 셉니다. `wc -l`은 끝에 개행이 없는 파일을 한 줄 적게 세므로 편집기의 줄 수와 다를 수 있는데, 이 세 파일은 모두 개행으로 끝나서 같습니다.
 
@@ -144,9 +144,9 @@ python -B -X utf8 -c "import re; t=open('agent_skills/thinking-out-loud/SKILL.md
 
 ```bash
 REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
-LAB="${TMPDIR:-/tmp}/tol-lab"
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/tol-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
 PROJ="${LAB:?LAB이 비었습니다}/myproj"
-case "$PROJ" in "$HOME/.claude"*|"$HOME/.agents"*|"$HOME/.codex"*|"$HOME/.cursor"*|"$HOME/.copilot"*|"$HOME/.openclaw"*|"$HOME/.hermes"*) echo "멈춥니다: $PROJ"; PROJ="" ;; esac
 mkdir -p "${PROJ:?}/.claude/skills/thinking-out-loud" "${PROJ:?}/.agents/skills/thinking-out-loud"
 cp -r "${REPO:?}/agent_skills/thinking-out-loud/." "${PROJ:?}/.claude/skills/thinking-out-loud/"
 cp -r "${REPO:?}/agent_skills/thinking-out-loud/." "${PROJ:?}/.agents/skills/thinking-out-loud/"
@@ -157,11 +157,9 @@ diff -r "${REPO:?}/agent_skills/thinking-out-loud" "${PROJ:?}/.claude/skills/thi
 ```powershell
 $ErrorActionPreference = "Stop"
 $Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
-$Lab  = Join-Path $env:TEMP "tol-lab"
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "tol-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
 $Proj = Join-Path $Lab "myproj"
-foreach ($bad in ".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes") {
-  if ($Proj.StartsWith((Join-Path $HOME $bad), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $Proj" }
-}
 foreach ($d in ".claude",".agents") {
   $dest = Join-Path (Join-Path $Proj $d) "skills/thinking-out-loud"
   New-Item -ItemType Directory -Force $dest | Out-Null
@@ -170,7 +168,7 @@ foreach ($d in ".claude",".agents") {
 Get-ChildItem $Proj -Recurse -File | ForEach-Object { $_.FullName.Substring($Proj.Length + 1) }
 ```
 
-(`$HOME/awesome-llm-apps`는 클론한 위치로 바꿉니다. 같은 블록을 다시 돌려도 안쪽에 폴더가 겹쳐 생기지 않게 `/.`와 `/*`로 내용만 복사합니다.) 세 가지 방어선이 있습니다. 첫째, `LAB`이나 `PROJ`가 비면 `${LAB:?}`·`${PROJ:?}`(PowerShell은 `Join-Path`가 빈 값에 내는 오류와 `$ErrorActionPreference = "Stop"`)가 그 줄에서 멈춥니다. 둘째, 목적지가 진짜 에이전트 설정 폴더 아래로 풀리면(예를 들어 `TMPDIR`가 `~/.claude/...`를 가리키는 경우) 그 줄이 `PROJ`를 비워 뒤의 모든 줄을 멈춥니다. 셋째, 설치·목록 블록이 앞 터미널의 변수를 쓰지 않으므로 새 터미널에서도 같은 결과가 납니다. 직접 확인한 것은 이렇습니다. 홈을 스크래치의 가짜 홈(`.claude/skills/existing`과 가짜 `.credentials.json`이 있음)으로 바꾸고 Git Bash에서 블록을 글자 그대로 돌렸고, 앞 줄 여덟 개를 하나씩 빼 보았으며, `TMPDIR`를 가짜 `.claude` 아래로 돌린 판도 돌렸습니다. 모든 판에서 가짜 `.claude`와 `.agents`의 파일 목록 해시는 그대로였습니다. PowerShell 블록은 Windows PowerShell 5.1에서 같은 가짜 홈으로 같은 식으로(줄을 하나씩 빼고, `TEMP`를 가짜 `.claude` 아래로 돌려) 돌렸고 같았습니다.
+(`$HOME/awesome-llm-apps`는 클론한 위치로 바꿉니다. 같은 블록을 다시 돌려도 안쪽에 폴더가 겹쳐 생기지 않게 `/.`와 `/*`로 내용만 복사합니다.) 방어선은 셋입니다. 첫째, 스크래치 폴더(`LAB`, PowerShell은 `$Lab`)를 정하는 줄이 경로를 정규화한 뒤 진짜 에이전트 설정 폴더(홈 아래 `.claude`·`.agents`·`.codex`·`.cursor`·`.copilot`·`.openclaw`·`.hermes`와 `CLAUDE_CONFIG_DIR`) 아래이면 `LAB`을 비우거나(bash) 예외를 던집니다(PowerShell). 이 검사는 `LAB`을 정하는 같은 줄(PowerShell은 한 줄짜리 함수)에 있어서, 그 줄을 빼면 `LAB`도 정해지지 않습니다. 둘째, 모든 목적지는 `${LAB:?}`·`${PROJ:?}`(PowerShell은 `Join-Path`가 빈 값에 내는 오류와 `$ErrorActionPreference = "Stop"`)로 써서 비면 그 줄에서 멈춥니다. 셋째, 블록이 앞 터미널의 변수를 쓰지 않으므로 새 터미널에서도 같은 결과입니다. 직접 확인한 것은 이렇습니다. 가짜 홈(`.claude/skills/existing`과 가짜 `.credentials.json`, `.agents`·`.codex`·`.cursor`·`CLAUDE_CONFIG_DIR` 폴더를 둠)을 만들고 README에서 뽑은 블록을 글자 그대로 돌렸습니다. Step 4 블록은 파일을 읽기만 해서 판에서 뺐습니다. bash는 Step 3·6·7의 여섯 블록을 `TMPDIR`가 정상일 때, 가짜 `.claude`(`tmp`·`.claude` 자체·`skills`)·`.agents/tmp`·`.codex`·`.cursor` 아래일 때, Windows 형식(`C:\...\.claude	mpw`)일 때, `CLAUDE_CONFIG_DIR` 아래일 때 돌렸고, 줄을 하나씩 빼는 판(정상·`.claude/tmp`·Windows 형식·`CLAUDE_CONFIG_DIR`)을 더해 모두 202판입니다. PowerShell은 Windows PowerShell 5.1로 같은 여섯 블록을 `TEMP`가 정상·`.claude	mp`·`.agents	mp`·`.codex`·`CLAUDE_CONFIG_DIR` 아래일 때와 줄 빼기로 147판 돌렸습니다. 349판 모두에서 가짜 설정 폴더의 파일 목록 해시가 그대로였습니다. 가드가 없는 같은 모양의 블록은 같은 환경에서 가짜 설정 폴더를 실제로 바꿉니다(검사 도구가 헛돌지 않는다는 확인). 헷갈리기 쉬운 한계 셋은 이렇습니다. 하나, bash 가드는 GNU `realpath`(Git Bash·Linux)에 기댑니다. macOS 기본 `realpath`에는 `-m`이 없어 그 줄이 `LAB`을 비우고 블록이 멈춥니다. 둘, PowerShell의 `GetFullPath`는 심볼릭 링크·정션·8.3 짧은 이름(`ZIHUN~1`)을 풀지 않으므로, 설정 폴더로 이어지는 링크는 PowerShell 가드가 못 잡습니다(bash의 `realpath`는 링크를 풉니다. 링크 판은 돌려 보지 못했습니다). 셋, 이 가드는 이 문서가 만드는 폴더(`tol-lab`)만 지킵니다. `TMPDIR`를 비워 두면 Git Bash의 `/tmp`가 진짜 `%TEMP%`로 풀리므로 터미널의 `TMPDIR`·`TEMP`는 스크래치 폴더로 지정해 두는 것이 좋습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -203,21 +201,26 @@ Get-ChildItem $Proj -Recurse -File | ForEach-Object { $_.FullName.Substring($Pro
 ```bash
 REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
 cd "${REPO:?}"
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/tol-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
 python -B -X utf8 agent_skills/evals/tools/skill_lint.py agent_skills/thinking-out-loud --strict
 python -B -X utf8 agent_skills/evals/tools/skill_scanner.py agent_skills/thinking-out-loud
 python -B -X utf8 agent_skills/evals/tools/run_trigger_evals.py
 python -B -X utf8 agent_skills/evals/tools/registry_lint.py --check --root .
-python -B -X utf8 agent_skills/evals/tools/skill_lint.py "${TMPDIR:-/tmp}/tol-lab/myproj/.claude/skills/thinking-out-loud" --strict
+python -B -X utf8 agent_skills/evals/tools/skill_lint.py "${LAB:?}/myproj/.claude/skills/thinking-out-loud" --strict
 ```
 
 ```powershell
+$ErrorActionPreference = "Stop"
 $Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
 Set-Location $Repo
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "tol-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
 python -B -X utf8 agent_skills/evals/tools/skill_lint.py agent_skills/thinking-out-loud --strict
 python -B -X utf8 agent_skills/evals/tools/skill_scanner.py agent_skills/thinking-out-loud
 python -B -X utf8 agent_skills/evals/tools/run_trigger_evals.py
 python -B -X utf8 agent_skills/evals/tools/registry_lint.py --check --root .
-python -B -X utf8 agent_skills/evals/tools/skill_lint.py (Join-Path $env:TEMP "tol-lab/myproj/.claude/skills/thinking-out-loud") --strict
+python -B -X utf8 agent_skills/evals/tools/skill_lint.py (Join-Path $Lab "myproj/.claude/skills/thinking-out-loud") --strict
 ```
 
 (`agent_skills/evals/README.md`는 `python3`로 적습니다. Windows에서는 `python`입니다. `python`이 가상환경의 것인지 시스템의 것인지는 `python -c "import sys; print(sys.executable)"`로 봅니다. 이 도구들은 표준 라이브러리만 쓰므로 어느 쪽이어도 해가 없습니다. PowerShell 블록은 실행해 보지 못했습니다.)
@@ -301,7 +304,8 @@ Checking registry at ... (mode=check)
 **할 일.** 램블 하나를 `ramble.txt`로 저장합니다. 음성 서두, 번복(Slack에서 email로, 이슈에서 커밋만으로), 곁가지, 모호한 낱말("the usual cutoff"), 나중에 한 말로 바뀌는 것, 최우선 조건을 일부러 넣었습니다. 129낱말입니다.
 
 ```bash
-LAB="${TMPDIR:-/tmp}/tol-lab"
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/tol-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
 mkdir -p "${LAB:?}"
 cat > "${LAB:?}/ramble.txt" <<'EOF'
 ok switching to voice sorry for typos. so i want a small tool that tells me when my side projects go quiet, like a weekly nudge, maybe a slack message no wait email is better i never open slack. it should look at git activity, not just commits but open issues too i guess. the usual cutoff for quiet, whatever, we can pick that later. oh and my friend dana wants one too so it has to work for more than one person. actually forget issues, just commits, issues are a rabbit hole. random thought, this could be a menu bar app someday but not now. and it has to run by itself on sunday evening, if i have to remember to run it that defeats the whole purpose.
@@ -310,7 +314,8 @@ EOF
 
 ```powershell
 $ErrorActionPreference = "Stop"
-$Lab = Join-Path $env:TEMP "tol-lab"
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "tol-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
 New-Item -ItemType Directory -Force $Lab | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText((Join-Path $Lab "ramble.txt"), @'
@@ -321,7 +326,8 @@ ok switching to voice sorry for typos. so i want a small tool that tells me when
 (heredoc과 here-string은 내용이 있는 파일 저장용입니다. PowerShell 블록은 Windows PowerShell 5.1에서 가짜 홈과 스크래치 `TEMP`로 돌렸고, 저장된 파일의 첫 바이트가 BOM(`ef bb bf`)이 아님을 확인했습니다. 5.1의 `Set-Content -Encoding utf8`은 BOM을 붙이므로 쓰지 않고 .NET으로 씁니다.) 이제 `SKILL.md`의 다섯 부분과 압축 규칙을 따라 손으로 바꿉니다. 판단 하나하나는 이렇습니다. 번복 둘은 Ledger에 "앞 입장, 뒤 입장, 뒤를 채택"으로 한 줄씩 넣습니다. "the usual cutoff"는 모호한 수량 낱말이므로 Locked에 넣지 않고 Open에 넣습니다. 최우선 조건("그러지 않으면 목적이 사라진다")은 Locked에 `**Top priority**`로 표시합니다. 곁가지(menu bar app)는 Parked 한 줄입니다. Dana의 이메일이 "그녀 몫으로 따로 나가는가"는 램블에 없는 추론이라 Inferred에, 일요일 저녁의 시간대는 Guessed에 둡니다. 번복의 채택된 입장(email, commits only)은 Ledger에만 두고 Locked에 되풀이하지 않습니다. "Nothing appears twice"(`SKILL.md:110`, "Every fact lives in exactly one section")를 이 문서는 Mission을 요약으로 보고 뺀 채 Locked와 Ledger 사이에서 지키는 쪽으로 읽었습니다. 원본 참고 문서의 예시는 email을 Mission·Locked·Ledger 세 곳에 적습니다. 규칙이 요약과 채택 결과를 어디까지 한 곳으로 치는지 말하지 않으므로 어느 읽기가 맞는지는 이 문서가 정하지 않습니다. Mission은 2인칭("your side projects")으로 씁니다. 틀이 Mission을 "what you are actually trying to achieve"(`echo-format.md:15`)로 적기 때문입니다. `echo-good.md`로 저장합니다.
 
 ```bash
-LAB="${TMPDIR:-/tmp}/tol-lab"
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/tol-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
 mkdir -p "${LAB:?}"
 cat > "${LAB:?}/echo-good.md" <<'EOF'
 ## Mission
@@ -351,7 +357,8 @@ EOF
 
 ```powershell
 $ErrorActionPreference = "Stop"
-$Lab = Join-Path $env:TEMP "tol-lab"
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "tol-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
 New-Item -ItemType Directory -Force $Lab | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText((Join-Path $Lab "echo-good.md"), @'
@@ -448,7 +455,8 @@ sys.exit(1 if problems else 0)
 일부러 망가뜨린 견본 `echo-bad.md`도 만듭니다. 규칙을 어긴 곳이 여럿입니다(제목 하나 빠짐, 되풀이, 두 줄 불릿, 접두어 없는 추가, 인사말, 군말 언급).
 
 ```bash
-LAB="${TMPDIR:-/tmp}/tol-lab"
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/tol-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
 mkdir -p "${LAB:?}"
 cat > "${LAB:?}/echo-bad.md" <<'EOF'
 ## Mission
@@ -470,7 +478,8 @@ EOF
 
 ```powershell
 $ErrorActionPreference = "Stop"
-$Lab = Join-Path $env:TEMP "tol-lab"
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "tol-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
 New-Item -ItemType Directory -Force $Lab | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText((Join-Path $Lab "echo-bad.md"), @'
@@ -495,14 +504,16 @@ You said you want a tool for quiet projects. Sounds like a great idea! I'll star
 
 ```bash
 REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
-LAB="${TMPDIR:-/tmp}/tol-lab"
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/tol-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
 mkdir -p "${LAB:?}"
 awk '/^\*\*Echo:\*\*/{f=1;next} f' "${REPO:?}/agent_skills/thinking-out-loud/references/echo-format.md" > "${LAB:?}/ref-echo.md"
 ```
 
 ```powershell
 $ErrorActionPreference = "Stop"
-$Lab = Join-Path $env:TEMP "tol-lab"
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "tol-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
 New-Item -ItemType Directory -Force $Lab | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding $false
 $Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
@@ -514,12 +525,15 @@ $i = [array]::IndexOf($lines, "**Echo:**")
 세 견본을 잽니다.
 
 ```bash
-LAB="${TMPDIR:-/tmp}/tol-lab"
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/tol-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
 for f in echo-good.md echo-bad.md ref-echo.md; do python -B -X utf8 "${LAB:?}/echo_check.py" "${LAB:?}/$f"; done
 ```
 
 ```powershell
-$Lab = Join-Path $env:TEMP "tol-lab"
+$ErrorActionPreference = "Stop"
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "tol-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
 foreach ($f in "echo-good.md","echo-bad.md","ref-echo.md") { python -B -X utf8 (Join-Path $Lab "echo_check.py") (Join-Path $Lab $f) }
 ```
 
