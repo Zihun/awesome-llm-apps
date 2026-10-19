@@ -9,7 +9,7 @@ evals: "시험 1~1b\n(구조 · 보안)" { class: ours }
 trig: "시험 2~3\n(트리거 · 행동)" { class: ours }
 skill: "스킬 폴더\n(SKILL.md)" { class: file }
 install: "설치된 복사본\n(.claude/skills)" { class: file }
-host: "오케스트레이터\n(에이전트)" { class: ours }
+host: "오케스트레이터 (독자의 에이전트)" { class: ext }
 tmp: "임시 파일 (브리프 · 결과)" { class: file }
 workers: "작업자 (agy)" { class: ext }
 advisor: "조언자\n(claude CLI)" { class: ext }
@@ -26,4 +26,4 @@ host -> workers: "발송 3개씩"
 workers -> tmp: "결과 파일"
 host -> gate: "결과 판정"
 host -> advisor: "상담"
-host -> api: "CLI 없음"
+host -> api: "대체 호출: 브리프 · 상담글"

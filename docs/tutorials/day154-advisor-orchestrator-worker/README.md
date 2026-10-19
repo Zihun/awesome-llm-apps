@@ -1,10 +1,10 @@
 # Day 154 · 🧠 Advisor Orchestrator Worker
 
-> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆(스크립트 없이 글만 있는 스킬이지만, 오늘은 스킬이 무엇이고 어떻게 시험하고 설치하는지를 처음부터 짚습니다) ⚠ SKILL.md가 상담의 제한 시간으로 권하는 `perl -e 'alarm shift; exec @ARGV' …` 방식은 이 PC의 Windows Git Bash에서 제한 시간이 지나도 끊지 못했습니다. GNU `timeout`은 끊었습니다(Step 7) · 예상 소요 150분(실습 스크립트 열세 개를 저장하고 돌리며, 시험 출력과 공식 문서 대조를 읽는 시간이 들어 있습니다) · API 비용 대략 0원(모델을 한 번도 부르지 않았고 API 키도 쓰지 않았습니다. 이 스킬을 진짜로 돌릴 때의 비용 어림은 Step 7) · 원본 앱: `agent_skills/advisor-orchestrator-worker`
+> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆(스크립트 없이 글만 있는 스킬이지만, 오늘은 스킬이 무엇이고 어떻게 시험하고 설치하는지를 처음부터 짚습니다) ⚠ SKILL.md가 상담의 제한 시간으로 권하는 `perl -e 'alarm shift; exec @ARGV' …` 방식은 이 PC의 Windows Git Bash에서 제한 시간이 지나도 끊지 못했습니다. GNU `timeout`은 끊었습니다(Step 7) · 예상 소요 170분(실습 스크립트 열세 개를 저장하고 돌리며, 시험 출력과 공식 문서 대조를 읽는 시간이 들어 있습니다) · API 비용 대략 0원(모델을 한 번도 부르지 않았고 API 키도 쓰지 않았습니다. 이 스킬을 진짜로 돌릴 때의 비용 어림은 Step 7) · 원본 앱: `agent_skills/advisor-orchestrator-worker`
 
 ## 오늘 만들 것
 
-오늘부터 볼륨 16 "🧩 Agent Skills"입니다. 앞 볼륨들은 모델을 API로 불렀고, 볼륨 15의 [Day 152](../day152-llama3.2-finetuning/README.md)와 [Day 153](../day153-gemma3-finetuning/README.md)는 모델 가중치의 일부를 학습했습니다. 이번에는 파이썬 앱이 아니라 코딩 에이전트에게 주는 지시 묶음, 곧 **스킬(skill)**입니다. `agent_skills/README.md`(5행)는 스킬을 "`SKILL.md` 파일과 스크립트·참고 문서가 든 폴더로, 에이전트가 발견해 필요할 때 불러오는 것"이라고 설명합니다. 이 볼륨은 그런 폴더 여덟 개를 하루에 하나씩 읽습니다. 오늘은 첫 스킬이자, 스킬이라는 것 자체를 설명하는 날입니다. 뒤의 날들은 이 문서를 가리키고 자기 스킬에 집중합니다.
+오늘부터 볼륨 16 "🧩 Agent Skills"입니다. 앞 볼륨들은 모델을 API로 불렀고, 볼륨 15의 [Day 152](../day152-llama3.2-finetuning/README.md)와 [Day 153](../day153-gemma3-finetuning/README.md)는 모델 가중치의 일부를 학습했습니다. 이번에는 파이썬 앱이 아니라 코딩 에이전트에게 주는 지시 묶음, 곧 **스킬(skill)**입니다. `agent_skills/README.md`(5행)는 스킬을 "`SKILL.md` 파일과 스크립트·참고 문서가 든 폴더로, 에이전트가 발견해 필요할 때 불러오는 것"이라고 설명합니다. 이 볼륨은 스킬 일곱과, 스킬을 고쳐 주는 앱 하나(`self-improving-agent-skills`는 `SKILL.md`가 아니라 `backend/`·`frontend/`가 든 앱이고 `registry.json`에도 없습니다)를 하루에 하나씩 읽습니다. 오늘은 첫 스킬이자, 스킬이라는 것 자체를 설명하는 날입니다. 뒤의 날들은 이 문서를 가리키고 자기 스킬에 집중합니다.
 
 오늘의 스킬 `advisor-orchestrator-worker`는 `SKILL.md`(139줄), `README.md`(58줄), `references/`의 파일 셋(`advisor-consult.md` 32줄, `fallbacks.md` 44줄, `worker-brief.md` 30줄), 그림 하나(`advisor_skill.jpeg`)로 이루어져 있고 스크립트는 없습니다. 하는 일은 에이전트를 세 층 모델 팀의 오케스트레이터로 만드는 것입니다. 값싼 작업자(기본값 Gemini 3.8 Flash를 Antigravity CLI `agy`로 부름)는 하위 작업을 하나씩 맡아 병렬로 돌고, 비싼 조언자(기본값 Claude Fable 5.1을 `claude` CLI로 부름)는 계획 검토와 마감 점검 두 번과 갈림길에서만 부르고, 모든 결과는 PASS·FIX·ESCALATE 관문을 지나며, 예산을 미리 선언합니다. 오케스트레이터는 그 스킬을 불러온 에이전트 자신입니다.
 
@@ -21,7 +21,7 @@
 7. SKILL.md의 작업자 발송 스니펫을 대역으로 돌리면, 작업자마다 빈 임시 폴더에서 `env -i`로 시작하고, 큰따옴표·`$(…)`·백틱이 든 브리프는 글자 그대로 전달되며, 실패와 빈 출력은 개별로 잡힙니다(Step 6).
 8. "산출물을 실제로 실행하라"는 검증 규칙은, 약한 확인 셋이 모두 통과한 산출물을 실행 한 번이 떨어뜨리는 것으로 보였습니다(Step 7).
 9. 상담 제한 시간으로 권하는 `perl` 방식은 Git Bash에서 2초 제한이 7초 뒤에야 끝났고 종료 코드가 0이었으며, `timeout 2`는 2초 뒤 종료 코드 124로 끊었습니다(Step 7).
-10. 하위 작업 12개의 예산 상한은 작업자 호출 24번과 상담 5번이고, 가정을 둔 어림은 0.37달러에서 4.51달러입니다. 스킬의 모델 이름·가격·헤더는 공식 문서와 대조했고 어긋나는 곳은 날짜 표기 하나였습니다(Step 7, 8).
+10. 하위 작업 12개의 예산 상한은 작업자 호출 24번과 상담 5번이고, 가정을 둔 어림은 0.37달러에서 4.51달러입니다. 스킬의 모델 이름·가격·헤더는 공식 문서와 대조했고 어긋나는 곳은 날짜 표기 하나였습니다. 다만 `agy`의 권한 플래그가 없을 때의 동작은 스킬의 말(호출이 멈춘다)과 Google 공식 문서의 말(권한을 얻지 못한 도구는 soft-deny되고 실행은 계속되어 종료 코드 0)이 다릅니다(Step 7, 8).
 
 ## 사전 준비
 
@@ -44,7 +44,7 @@
 |---|---|---|
 | 스킬 머리말 | 이름, 언제 쓰는지(설명), 라이선스, 메타데이터, 환경 요건(`compatibility`) | `agent_skills/advisor-orchestrator-worker/SKILL.md:1-20` |
 | 팀과 "모델은 손잡이" 규칙 | 오케스트레이터가 하는 일과 하지 않는 일, 모델 ID는 바꿔 끼운다 | `agent_skills/advisor-orchestrator-worker/SKILL.md:22-32` |
-| 작업자 | `agy`로 병렬 발송, 빈 임시 폴더, 3개씩, 실패 시 API 대체 | `agent_skills/advisor-orchestrator-worker/SKILL.md:36-70` (스니펫 44-52) |
+| 작업자 | `agy`로 병렬 발송, 빈 임시 폴더, 3개씩, 실패 시 API 대체 | `agent_skills/advisor-orchestrator-worker/SKILL.md:36-70` (스니펫 46-51) |
 | 조언자 | 상담글을 표준입력으로, 제한 시간, 실패 시 API 대체 | `agent_skills/advisor-orchestrator-worker/SKILL.md:72-80` |
 | 일곱 단계 루프 | 틀 잡기, 계획, 계획 검토, 발송, 검증, 종합, 마감 점검 | `agent_skills/advisor-orchestrator-worker/SKILL.md:82-115` |
 | 경계와 예산 | 조언자를 중간에 부르는 네 경우, 예산 한 줄 | `agent_skills/advisor-orchestrator-worker/SKILL.md:117-130` |
@@ -55,7 +55,7 @@
 | 스킬 소개 | 팀 표, 규칙, 설치, 파일 목록 | `agent_skills/advisor-orchestrator-worker/README.md:1-58` |
 | 레지스트리 항목 | 이름·설명·라이선스·`install`·`evals_dir` | `agent_skills/registry.json:4-16` |
 | 1·1b·레지스트리 시험 | 구조, 보안, 레지스트리 | `agent_skills/evals/tools/skill_lint.py`(385줄), `skill_scanner.py`(423줄), `registry_lint.py`(290줄) |
-| 2·3단계 시험 데이터 | 트리거 사례 여섯, 행동 시험 넷 | `agent_skills/evals/advisor-orchestrator-worker/trigger-cases.json`(41줄), `evals.json`(56줄), 도구 `run_trigger_evals.py`(132줄) |
+| 2·3단계 시험 데이터 | 트리거 사례 여섯, 행동 시험 넷 | `agent_skills/evals/advisor-orchestrator-worker/trigger-cases.json`(41줄, 마지막 개행이 없어 편집기에서는 42줄), `evals.json`(56줄, 편집기에서는 57줄), 도구 `run_trigger_evals.py`(132줄) |
 | `agy`, `claude`, Gemini API, Anthropic API | 진짜 모델 | 코드 없음 (외부. 이 문서는 부르지 않음) |
 | 이 문서의 대역과 소켓 가드 | 진짜 CLI 대신 서는 스크립트, 바깥 접속 차단 | 코드 없음 (Step 1, 6에서 직접 만듦) |
 
@@ -65,32 +65,41 @@
 
 **목적.** 이 문서의 실습이 이 PC의 진짜 홈과 에이전트 설정을 보지도 쓰지도 못하게 하고, 파이썬이 바깥으로 연결을 열면 막히게 합니다. 에이전트 설정 폴더는 지금 이 문서를 읽는 도구가 쓰고 있을 수 있으므로, HOME·USERPROFILE·CLAUDE_CONFIG_DIR·TEMP·TMP·TMPDIR을 모두 스크래치로 돌립니다.
 
-**할 일.** 먼저 `REPO`를 자기 저장소 경로로 바꿔 아래 블록을 한 번에 붙입니다. 이후 블록은 새 터미널에서 시작한다면 `export REPO=…` 한 줄과 `. ./env.sh`(`skills-lab` 안에서)로 시작합니다. `env.sh`가 작업 폴더로 돌아옵니다. 원본 저장소에는 아무것도 쓰지 않습니다.
+**할 일.** `REPO`(이 저장소의 복사본)와 `LAB`(실습 폴더)를 자기 절대 경로로 바꿔 아래 블록을 붙입니다. `LAB`는 Claude Code·Codex 같은 에이전트를 쓰는 작업 폴더 밖에 새로 만드는 폴더여야 합니다. Claude Code 문서는 시작 폴더 아래의 `.claude/skills`도 불러온다고 적으므로, 그 아래에 Step 5의 설치본이 있으면 실제 세션이 그것을 쓸 수 있습니다. 이 문서의 **모든 블록은 첫머리에 `export REPO=…`와 `export LAB=…` 두 줄을 다시 두고** 그 다음 `env.sh`를 불러옵니다. 블록은 서브셸 안에서 돌며, 불러오기가 실패하면(경로가 비었거나, 상대 경로이거나, 폴더가 없거나, `.claude`·`.agents`·`.codex`·`.cursor`·`.copilot`·`.gemini` 같은 에이전트 설정 폴더 아래로 풀리면) 아무것도 하지 않고 멈춥니다. 그래서 새 터미널에서 블록만 붙여도 진짜 홈에 쓰지 않습니다. 원본 저장소에는 아무것도 쓰지 않습니다.
 
 ```bash
 # --- Step 1: 스크래치 작업 폴더, 환경 파일, 네트워크 가드 ---
-# REPO는 awesome-llm-apps를 받은 폴더다(자기 경로로 바꾼다).
+# REPO는 awesome-llm-apps를 받은 폴더, LAB는 이 문서의 실습 폴더다(둘 다 자기 절대 경로로 바꾼다).
+# LAB는 Claude Code·Codex 등을 쓰는 작업 폴더 밖에 만든다.
+# 그 아래에 .claude/skills가 있으면 에이전트 세션이 불러올 수 있다.
 export REPO=/path/to/awesome-llm-apps
-test -f "$REPO/agent_skills/registry.json" || { echo "REPO가 저장소 루트가 아닙니다"; false; }
-mkdir skills-lab
-cd skills-lab
-cat > env.sh <<'EOF'
-# 이 문서의 모든 명령은 이 파일을 불러온 셸에서 돌린다.
+export LAB=/path/to/skills-lab
+test -f "$REPO/agent_skills/registry.json" || echo "REPO가 저장소 루트가 아닙니다"
+mkdir "$LAB" && cd "$LAB" && cat > env.sh <<'EOF'
+# 이 문서의 모든 블록은 이 파일을 불러오고, 불러오기가 실패하면 아무것도 하지 않고 멈춘다.
 unset VIRTUAL_ENV
 : "${REPO:?REPO를 먼저 지정하세요}"
-export LAB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$LAB"
+: "${LAB:?LAB를 먼저 지정하세요}"
+case "$LAB" in /*|[A-Za-z]:*) ;; *) echo "LAB는 절대 경로여야 합니다: $LAB" >&2; return 1;; esac
+LAB="$(cd "$LAB" 2>/dev/null && pwd -P)" || { echo "LAB 폴더가 없습니다" >&2; return 1; }
+case "$LAB" in
+  */.claude|*/.claude/*|*/.agents|*/.agents/*|*/.codex|*/.codex/*|*/.cursor|*/.cursor/*|*/.copilot|*/.copilot/*|*/.gemini|*/.gemini/*|*/.openclaw/*|*/.hermes/*)
+    echo "LAB가 에이전트 설정 폴더 아래입니다: $LAB" >&2; return 1;;
+esac
+[ -f "$LAB/env.sh" ] || { echo "LAB에 env.sh가 없습니다: $LAB" >&2; return 1; }
+export LAB
+cd "$LAB" || return 1
 mkdir -p "$LAB/home/.claude" "$LAB/tmp"
 win() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi; }
 export HOME="$LAB/home" CLAUDE_CONFIG_DIR="$LAB/home/.claude" TMPDIR="$LAB/tmp"
 export USERPROFILE="$(win "$LAB/home")" TEMP="$(win "$LAB/tmp")" TMP="$(win "$LAB/tmp")"
-export GUARD_LOG="$LAB/guard.log"
+export GUARD_LOG="$LAB/guard.log" STUBBIN="$LAB/stubbin"
 if [ -x "$LAB/venv/Scripts/python.exe" ]; then export PY="$LAB/venv/Scripts/python.exe"; else export PY="$LAB/venv/bin/python"; fi
 pyrun() { "$PY" -X utf8 -I -B "$@"; }
 EOF
-. ./env.sh
+( . "$LAB/env.sh" || exit 1
 uv venv --python 3.13 venv
-. ./env.sh
+. "$LAB/env.sh"
 SP=$("$PY" -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
 cat > "$SP/sitecustomize.py" <<'EOF'
 # 소켓 가드: 파이썬이 바깥으로 연결을 열려는 모든 시도를 막고 guard.log에 한 줄씩 남긴다.
@@ -107,12 +116,16 @@ socket.socket.connect_ex = _blocked("connect_ex")
 socket.create_connection = _blocked("create_connection")
 socket.getaddrinfo = _blocked("getaddrinfo")
 EOF
+)
 ```
 
 가드는 `sitecustomize.py`로 가상환경에 심은 파일 하나입니다. 파이썬이 시작할 때 자동으로 불러오며, 연결·이름 조회를 막고 `guard.log`에 한 줄씩 남깁니다. 불러와졌는지는 문서 예시용으로 예약된 주소 `192.0.2.1`로 먼저 확인합니다. 이 주소는 실제로 연결되지 않는 주소입니다.
 
 ```bash
 # --- 가드가 불러와졌는지 예약 주소(192.0.2.1)로 먼저 단언한다 ---
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 if pyrun -c "import socket; socket.create_connection(('192.0.2.1', 80), 1)" 2>&1 | grep -q "GUARD blocked"; then
   echo "guard loaded"
 else
@@ -120,6 +133,7 @@ else
 fi
 cat guard.log
 : > guard.log
+)
 ```
 
 **확인.** 기대 출력입니다.
@@ -141,7 +155,9 @@ create_connection (('192.0.2.1', 80), 1)
 
 ```bash
 # --- Step 2: 스킬 폴더를 해부한다 (읽기만) ---
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 S="$REPO/agent_skills/advisor-orchestrator-worker"
 ( cd "$S" && find . -type f | sort && wc -l SKILL.md README.md references/*.md )
 sed -n 1,20p "$S/SKILL.md"
@@ -161,6 +177,7 @@ print("body:", body.count("\n"), "lines,", len(body.split()), "words")
 print("SKILL.md bytes:", len(t.encode("utf-8")))
 EOF
 pyrun sizes.py "$S/SKILL.md"
+)
 ```
 
 **확인.** 기대 출력(앞쪽)입니다.
@@ -216,7 +233,9 @@ Claude Code 문서(code.claude.com/docs/en/skills, 같은 날)는 명세 밖의 
 
 ```bash
 # --- Step 3: 1단계 구조, 1b단계 보안, 레지스트리 시험 ---
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 T="$REPO/agent_skills/evals/tools"
 S="$REPO/agent_skills/advisor-orchestrator-worker"
 cd "$REPO"
@@ -225,6 +244,7 @@ pyrun "$T/skill_scanner.py" "$S"; echo "exit=$?"
 pyrun "$T/registry_lint.py"; echo "exit=$?"
 cd "$LAB"
 echo "guard 기록 줄 수: $(wc -l < guard.log)"
+)
 ```
 
 **확인.** 기대 출력입니다. 경로는 자기 저장소의 것으로 나옵니다.
@@ -253,7 +273,9 @@ guard 기록 줄 수: 0
 
 ```bash
 # --- 대조 실험: 시험이 실제로 걸리는지 (스크래치 복사본에서만) ---
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 T="$REPO/agent_skills/evals/tools"
 S="$REPO/agent_skills/advisor-orchestrator-worker"
 mkdir -p ctl/dirname ctl/lure ctl/nocompat
@@ -266,6 +288,7 @@ cp -r "$S" ctl/nocompat/advisor-orchestrator-worker
 sed -i '15,19d' ctl/nocompat/advisor-orchestrator-worker/SKILL.md
 sed -n 10,17p ctl/nocompat/advisor-orchestrator-worker/SKILL.md
 pyrun "$T/skill_scanner.py" ctl/nocompat/advisor-orchestrator-worker | tail -3
+)
 ```
 
 기대 출력입니다.
@@ -288,7 +311,7 @@ Summary: 2 CRITICAL, 0 WARN, 0 INFO
 exit=1
 ```
 
-마지막 실험이 중요합니다. 스킬 원본에서 `compatibility` 다섯 줄(15~19행)을 지운 사본을 스캐너에 넣어도 결과는 여전히 `clean — no findings`입니다(출력 끝의 `Summary: 0 CRITICAL, 0 WARN, 0 INFO`). 소스로 확인한 까닭은 둘입니다. 스캐너의 네트워크 규칙(`skill_scanner.py:71`의 `NET_PATTERNS`)은 `curl` 다음 같은 줄에 `https://`가 있어야 걸리는데, 이 스킬의 `curl`은 주소를 다음 줄에 적습니다(`agent_skills/advisor-orchestrator-worker/references/fallbacks.md:20-21`, `agent_skills/advisor-orchestrator-worker/references/fallbacks.md:39`). 그리고 `NET01`은 `SKILL.md`에서는 아예 검사하지 않습니다(`skill_scanner.py:312-315`, `if not is_skill_md`). 그래서 이 스킬이 바깥과 통신한다는 사실을 알려 주는 것은 스캐너가 아니라 머리말의 `compatibility` 문장 하나와 읽는 사람의 눈입니다. 스캐너 스스로도 "SKILL.md를 끝까지 읽으라, 자연어 공격은 패턴 스캐너를 피한다"고 적습니다.
+마지막 실험이 중요합니다. 스킬 원본에서 `compatibility` 다섯 줄(15~19행)을 지운 사본을 스캐너에 넣어도 결과는 여전히 `clean — no findings`입니다(출력 끝의 `Summary: 0 CRITICAL, 0 WARN, 0 INFO`). 소스로 확인한 까닭은 둘입니다. 하나는 스캐너의 네트워크 규칙 `NET_PATTERNS`(`skill_scanner.py:78`)의 패턴 `\b(?:curl|wget)\s+(?:-[A-Za-z-]+\s+)*["']?https?://`가 `curl`과 주소 사이에 글자로 된 옵션만 허용한다는 것입니다. 이 스킬의 `curl`은 `--max-time 300`처럼 옵션에 **숫자 인자**가 붙어 있어 두 곳 모두 패턴에 맞지 않습니다(`agent_skills/advisor-orchestrator-worker/references/fallbacks.md:20`은 주소도 다음 줄에 있고, `fallbacks.md:39`는 주소가 같은 줄에 있는데도 `300` 때문에 빠집니다). 스크래치 사본에서 확인했습니다. 39행에서 `--max-time 300 `만 지우면 `NET01` 한 건(INFO)이 나오고, 20~21행을 한 줄로 합치기만 하면 여전히 0건이며, 합치고 `300`도 지우면 한 건이 나옵니다. 다른 하나는 `NET01`이 `SKILL.md`에서는 아예 검사되지 않는다는 것입니다(`skill_scanner.py:312-315`, `if not is_skill_md`). 그래서 이 스킬이 바깥과 통신한다는 사실을 알려 주는 것은 스캐너가 아니라 머리말의 `compatibility` 문장 하나와 읽는 사람의 눈입니다. 스캐너 스스로도 "SKILL.md를 끝까지 읽으라, 자연어 공격은 패턴 스캐너를 피한다"고 적습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -300,7 +323,9 @@ exit=1
 
 ```bash
 # --- Step 4: 2단계 트리거 시험, 2b단계, 3단계 읽기 ---
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 T="$REPO/agent_skills/evals/tools"
 E="$REPO/agent_skills/evals/advisor-orchestrator-worker"
 pyrun "$T/run_trigger_evals.py"
@@ -329,6 +354,7 @@ print("total:", sum(len(e["expectations"]) for e in d["evals"]))
 EOF
 pyrun evals_summary.py "$E/evals.json"
 echo "guard 기록 줄 수: $(wc -l < guard.log)"
+)
 ```
 
 **확인.** 기대 출력입니다(첫 줄이 이 스킬의 것입니다).
@@ -384,13 +410,15 @@ guard 기록 줄 수: 0
 npx skills add https://github.com/Shubhamsaboo/awesome-llm-apps/tree/main/agent_skills/advisor-orchestrator-worker
 ```
 
-그 CLI가 무엇인지는 공개 문서로만 확인했습니다. skills.sh의 바닥글은 Vercel이 만든다고 적고 저장소를 github.com/vercel-labs/skills로 가리키며, 그 저장소의 설명(2026-10-19에 읽음)은 이렇습니다. 기본은 현재 프로젝트의 `./<에이전트>/skills/`에 설치하고(Claude Code는 `.claude/skills/`), `-g`는 사용자 폴더(`~/.claude/skills/`)에 설치합니다. 여러 에이전트에는 정본 한 벌을 두고 심볼릭 링크를 거는 것이 기본이며 `--copy`는 복사입니다. 익명 사용 통계를 보내고 `DISABLE_TELEMETRY=1` 또는 `DO_NOT_TRACK=1`로 끕니다. 직접 내려받는 크기는 기본으로 10 MiB, 풀면 25 MiB, 파일 1000개로 제한됩니다. 설명이 말하지 않아 확인하지 못한 것은 GitHub 폴더 주소를 내려받는 방식(clone인지 압축 파일인지)입니다. CLI의 소스는 읽지 않았고 실행하지도 않았습니다.
+그 CLI가 무엇인지는 공개 문서로만 확인했습니다. skills.sh의 바닥글은 Vercel이 만든다고 적고 저장소를 github.com/vercel-labs/skills로 가리키며, 그 저장소의 설명(2026-10-19에 읽음)은 이렇습니다. 기본은 현재 프로젝트의 `./<에이전트>/skills/`에 설치하고(Claude Code는 `.claude/skills/`), `-g`는 사용자 폴더(`~/.claude/skills/`)에 설치합니다. 여러 에이전트에는 정본 한 벌을 두고 심볼릭 링크를 거는 것이 기본이며 `--copy`는 복사입니다. 익명 사용 통계를 보내고 `DISABLE_TELEMETRY=1` 또는 `DO_NOT_TRACK=1`로 끕니다. 직접 내려받는 크기는 기본으로 10 MiB, 풀면 25 MiB, 파일 1000개로 제한됩니다. 받는 방식도 적혀 있습니다. GitHub HTTPS·약식 주소는 먼저 **독자의 일반 Git 자격 증명**을 쓰고, 실패하면 인증된 GitHub CLI로 `gh repo clone`을, 그다음 SSH를 시도합니다. GitHub 폴더(tree) 주소는 먼저 API를 익명으로 부르고, 그다음 환경에 명시한 토큰, 그다음 `gh api`를 씁니다. 같은 문서는 `gh auth token`을 실행하거나 저장된 GitHub CLI 자격 증명을 Node.js 프로세스에 복사하지 않는다고 적습니다. 곧 이 명령은 독자의 Git·`gh`·SSH 자격 증명이 닿는 곳에서 돕니다. CLI의 소스는 읽지 않았고 실행하지도 않았습니다.
 
-다른 하나는 폴더 복사입니다. 진짜 `~/.claude/skills/`로 복사하면 이 PC의 Claude Code 설정을 바꾸게 되므로, 같은 일을 스크래치 프로젝트에 합니다. Claude Code 문서가 말하는 프로젝트 위치(`.claude/skills/<이름>/SKILL.md`)이고, 저장소 README가 팀 공용으로 권하는 `.agents/skills/`(Codex·Cursor·Copilot·Antigravity가 읽는다고 README가 적음. 이 문서는 그 에이전트들이 읽는지 확인하지 못했고, Claude Code 문서는 이 경로를 언급하지 않습니다)도 만들어 봅니다.
+다른 하나는 폴더 복사입니다. 진짜 `~/.claude/skills/`로 복사하면 이 PC의 Claude Code 설정을 바꾸게 되므로, 같은 일을 스크래치 프로젝트에 합니다. Claude Code 문서가 말하는 프로젝트 위치(`.claude/skills/<이름>/SKILL.md`)이고, 저장소 README가 팀 공용으로 권하는 `.agents/skills/`도 만들어 봅니다. Antigravity는 Google 공식 문서(antigravity.google/docs/skills, 2026-10-19에 읽음)가 "Antigravity defaults to `.agents/skills`"라고 적고 CLI의 작업 공간 경로를 `<workspace-root>/.agents/skills/<skill-folder>/`, 전역 경로를 `~/.gemini/antigravity-cli/skills/<skill-folder>/`로 적습니다. Codex·Cursor·Copilot이 이 경로를 읽는다는 저장소 README의 말은 이 문서가 확인하지 못했고, Claude Code 문서는 `.agents/skills`를 언급하지 않습니다.
 
 ```bash
 # --- Step 5: 스크래치 프로젝트에 설치한다 (진짜 ~/.claude는 건드리지 않는다) ---
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 S="$REPO/agent_skills/advisor-orchestrator-worker"
 mkdir -p proj/.claude/skills proj/.agents/skills
 cp -r "$S" proj/.claude/skills/
@@ -400,6 +428,7 @@ cp -r "$S" proj/.agents/skills/
 diff -r proj/.claude/skills/advisor-orchestrator-worker proj/.agents/skills/advisor-orchestrator-worker && echo "두 복사본이 같다"
 pyrun "$REPO/agent_skills/evals/tools/skill_lint.py" proj/.claude/skills/advisor-orchestrator-worker --strict
 ls "$HOME/.claude"
+)
 ```
 
 **확인.** 기대 출력입니다.
@@ -425,7 +454,7 @@ Linting …/proj/.claude/skills/advisor-orchestrator-worker (strict=on)
 
 마지막 `ls "$HOME/.claude"`는 아무것도 출력하지 않습니다. 스크래치 `.claude`가 비어 있다는 뜻이고, 진짜 `~/.claude`는 열지도 않았습니다.
 
-폴더에 들어가는 것은 파일 여섯 개, 442,609바이트입니다. 그중 426,573바이트(96%)가 `advisor_skill.jpeg`(1832×858, README 7행이 인용하는 그림)입니다. 저장소 README는 "스킬 폴더에는 실행에 필요한 것만 있다"고 말하고(`agent_skills/README.md:60`) 이 스킬의 README도 "설치되는 것은 돌아가는 것뿐"이라고 말하지만(`agent_skills/advisor-orchestrator-worker/README.md:56`), 에이전트가 읽을 일이 없는 소개 `README.md`와 그림이 같이 복사됩니다. 시험 파일(`agent_skills/evals/`)은 복사되지 않습니다. 설치된 사본에는 설치 시점에 실행되는 것이 없습니다. 스크립트가 없고, 1b단계 스캐너가 설치 유도 문구를 찾지 못했습니다.
+폴더에 들어가는 것은 파일 여섯 개, 442,609바이트입니다. 그중 426,573바이트(96%)가 `advisor_skill.jpeg`(1832×858, README 7행이 인용하는 그림)입니다. 저장소 README는 "스킬 폴더에는 실행에 필요한 것만 있다"고 말하고(`agent_skills/README.md:60`) 이 스킬의 README도 "설치되는 것은 돌아가는 것뿐"이라고 말하지만(`agent_skills/advisor-orchestrator-worker/README.md:56`), 에이전트가 읽을 일이 없는 소개 `README.md`와 그림이 같이 복사됩니다. 시험 파일(`agent_skills/evals/`)은 복사되지 않습니다. 설치된 사본에는 설치 시점에 실행되는 것이 없습니다. 스크립트가 없고, 1b단계 스캐너가 설치 유도 문구를 찾지 못했습니다. 실습이 끝나면 `LAB` 폴더를 지웁니다. 지우기 전에 `echo "$LAB"`로 경로를 확인하세요. 이 문서는 지우는 명령을 블록으로 두지 않았습니다. 경로를 잘못 지정한 삭제가 가장 위험한 명령이기 때문입니다. 탐색기나 `rm -r <그 경로>`로 폴더 하나만 지웁니다.
 
 이 스킬이 진짜 에이전트에서 발견되고 불리는 장면은 이 문서가 에이전트를 띄우지 않았으므로 직접 보지 못했습니다. Step 2에서 인용한 공식 문서와 `SKILL.md` 본문으로 읽은 것까지가 이 문서의 몫입니다.
 
@@ -433,14 +462,17 @@ Linting …/proj/.claude/skills/advisor-orchestrator-worker (strict=on)
 
 ### Step 6. 틀 잡기와 작업자 발송을 대역으로 돌린다
 
-**목적.** SKILL.md의 작업자 발송 스니펫(44~52행)이 말하는 안전 규칙을 모델 없이 실제로 움직여 봅니다. 이 PC에는 진짜 `agy`와 `claude`가 PATH에 있을 수 있으므로, 이름이 같은 대역을 PATH 맨 앞에 두고 **대역이 불렸는지 단언한 뒤에야** 돌립니다. 대역은 모델을 부르지 않고 소켓도 열지 않으며, 받은 인자와 환경을 `stub.log`에 기록할 뿐입니다.
+**목적.** SKILL.md의 작업자 발송 스니펫(46~51행)이 말하는 안전 규칙을 모델 없이 실제로 움직여 봅니다. 이 PC에는 진짜 `agy`와 `claude`가 PATH 어딘가에 있을 수 있고, 비대화 환경에서 `agy`는 `--dangerously-skip-permissions`로 불립니다. 그래서 스크립트 셋(`frame.sh`·`wave.sh`·`advisor.sh`)은 모두 같은 첫머리를 가집니다. 줄 하나가 빠져도 진짜 CLI에 닿지 않게 한 겹이 아니라 여러 겹입니다. (1) `: "${STUBBIN:?…}"`는 `STUBBIN`이 비어 있으면 실행 전에 멈춥니다. (2) 대역 폴더 안의 표식 파일 `.stub-marker`가 없으면 멈춥니다. (3) `HOME`이 `LAB` 아래가 아니면 멈춥니다. (4) 키 환경 변수를 지웁니다. (5) PATH를 대역 폴더가 맨 앞인 것으로 다시 정합니다. (6) `command -v agy`와 `command -v claude`가 **정확히** `$STUBBIN/agy`·`$STUBBIN/claude`와 같은지 단언합니다. 이전 판은 `STUBBIN=` 앞붙임 하나에 (5)와 (6)이 함께 기댔고, 그것이 빠지면 단언이 모든 절대 경로를 통과시켰습니다. 지금은 `env.sh`가 `STUBBIN`을 정합니다. 이 방어선들이 대역을 PATH 맨 앞에 두므로 대역은 대역이고, 진짜 CLI는 PATH에 있더라도 불리지 않습니다. 대역은 모델을 부르지 않고 소켓도 열지 않으며, 받은 인자와 환경을 `stub.log`에 기록할 뿐입니다.
 
-**할 일.** 먼저 대역 둘과 틀 잡기 단계의 도구 확인(`SKILL.md:86-87`의 목록)을 만듭니다. API 키 세 개가 모두 없다고 가정하려고 `env -u`로 지워서 돌립니다.
+**할 일.** 먼저 대역 둘과 틀 잡기 단계의 도구 확인(`SKILL.md:86-87`의 목록)을 만듭니다. 이 스크립트는 API 키 환경 변수가 셸에 있었는지 먼저 알려 주고 나서 지웁니다.
 
 ```bash
 # --- Step 6: 진짜 agy·claude 대신 대역을 세운다 ---
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 mkdir -p stubbin lab
+printf 'stand-in\n' > stubbin/.stub-marker
 cat > stubbin/agy <<'EOF'
 #!/bin/bash
 # agy(Antigravity CLI)의 대역. 모델을 부르지 않고 소켓도 열지 않는다.
@@ -477,36 +509,45 @@ printf '1. VERDICT: stub verdict\n2. TOP RISKS: none\n3. SPECIFIC FIXES: none\n4
 EOF
 chmod +x stubbin/agy stubbin/claude
 cat > lab/frame.sh <<'EOF'
-# Frame 단계의 도구 확인. PATH에는 대역과 시스템 도구만 둔다.
-export PATH="$STUBBIN:/usr/bin"
+# Frame 단계의 도구 확인. 아래 단언이 모두 맞아야만 진행하고, 하나라도 어긋나면 멈춘다.
+: "${STUBBIN:?STUBBIN이 비었습니다. env.sh를 먼저 불러오세요}"
+[ -f "$STUBBIN/.stub-marker" ] || { echo "GUARD: 대역 폴더가 아님: $STUBBIN" >&2; exit 9; }
+case "$HOME" in "${LAB:?}"/*) ;; *) echo "GUARD: HOME이 스크래치가 아님" >&2; exit 9;; esac
+for v in GEMINI_API_KEY GOOGLE_API_KEY ANTHROPIC_API_KEY; do [ -n "${!v}" ] && echo "$v set (이 스크립트가 지움)" || echo "$v unset"; done; unset GEMINI_API_KEY GOOGLE_API_KEY ANTHROPIC_API_KEY
+export PATH="$STUBBIN:/usr/bin:/bin"
+for t in agy claude; do [ "$(command -v $t)" = "$STUBBIN/$t" ] || { echo "GUARD: $t가 대역이 아님" >&2; exit 9; }; done
 for t in agy claude jq perl; do printf '%-7s -> %s\n' "$t" "$(command -v $t || echo MISSING)"; done
-case "$(command -v agy)" in "$STUBBIN"/*) ;; *) echo "GUARD: agy가 대역이 아님" >&2; exit 9;; esac
-case "$(command -v claude)" in "$STUBBIN"/*) ;; *) echo "GUARD: claude가 대역이 아님" >&2; exit 9;; esac
-for v in GEMINI_API_KEY GOOGLE_API_KEY ANTHROPIC_API_KEY; do [ -n "${!v}" ] && echo "$v set" || echo "$v unset"; done
 EOF
-env -u GEMINI_API_KEY -u GOOGLE_API_KEY -u ANTHROPIC_API_KEY STUBBIN="$LAB/stubbin" bash lab/frame.sh
+bash lab/frame.sh
+)
 ```
 
 ```text
+GEMINI_API_KEY unset
+GOOGLE_API_KEY unset
+ANTHROPIC_API_KEY unset
 agy     -> …/skills-lab/stubbin/agy
 claude  -> …/skills-lab/stubbin/claude
 jq      -> MISSING
 perl    -> /usr/bin/perl
-GEMINI_API_KEY unset
-GOOGLE_API_KEY unset
-ANTHROPIC_API_KEY unset
 ```
 
 `agy`와 `claude`가 대역으로 풀리고 `jq`는 없습니다. 이것이 스킬이 말하는 틀 잡기 단계의 확인입니다. 스킬은 도구가 없으면 정확히 어떻게 설치하는지 알리고, 한 역할이 비면 그 역할을 에이전트가 맡는 `[DEGRADED: <역할>]` 모드를 제안하며, 두 역할 이상이 비면 그냥 한 모델의 일로 진행하라고 합니다(`SKILL.md:88-95`). `jq`는 API 대체 길(`fallbacks.md`)의 도구라서 이 PC에서는 그 길이 닫혀 있고, 이 문서는 그 길의 `curl`을 어떤 형태로도 돌리지 않았습니다.
 
-이제 웨이브 하나입니다. 작업자 셋 가운데 하나는 `FAIL`이 든 하위 작업이라 종료 코드 1로, 하나는 `EMPTY`가 든 하위 작업이라 종료 코드 0이지만 빈 출력으로 끝나게 대역을 짰습니다. 브리프의 INPUTS 줄에는 일부러 큰따옴표, `$(not run)`, 백틱을 넣었습니다. 발송 부분(`d=$(mktemp -d)`부터 `pids+=($!)`까지)은 SKILL.md 46~52행의 스니펫이고 앞뒤의 반복문·판정만 이 문서가 붙였습니다.
+이제 웨이브 하나입니다. 작업자 셋 가운데 하나는 `FAIL`이 든 하위 작업이라 종료 코드 1로, 하나는 `EMPTY`가 든 하위 작업이라 종료 코드 0이지만 빈 출력으로 끝나게 대역을 짰습니다. 브리프의 INPUTS 줄에는 일부러 큰따옴표, `$(not run)`, 백틱을 넣었습니다. 발송 부분(`d=$(mktemp -d)`부터 `pids+=($!)`까지, `agent_skills/advisor-orchestrator-worker/SKILL.md:46-51`)은 SKILL.md의 스니펫이고 앞뒤의 단언·반복문·판정만 이 문서가 붙였습니다.
 
 ```bash
-# --- 웨이브 하나: SKILL.md의 발송 스니펫(45~51행)을 그대로 쓴다 ---
-. ./env.sh
+# --- 웨이브 하나: SKILL.md의 발송 스니펫(46~51행)을 그대로 쓴다 ---
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 cat > lab/wave.sh <<'EOF'
-export PATH="$STUBBIN:/usr/bin"
-case "$(command -v agy)" in "$STUBBIN"/*) ;; *) echo "GUARD: agy가 대역이 아님" >&2; exit 9;; esac
+: "${STUBBIN:?STUBBIN이 비었습니다. env.sh를 먼저 불러오세요}"
+[ -f "$STUBBIN/.stub-marker" ] || { echo "GUARD: 대역 폴더가 아님: $STUBBIN" >&2; exit 9; }
+case "$HOME" in "${LAB:?}"/*) ;; *) echo "GUARD: HOME이 스크래치가 아님" >&2; exit 9;; esac
+unset GEMINI_API_KEY GOOGLE_API_KEY ANTHROPIC_API_KEY
+export PATH="$STUBBIN:/usr/bin:/bin"
+for t in agy claude; do [ "$(command -v $t)" = "$STUBBIN/$t" ] || { echo "GUARD: $t가 대역이 아님" >&2; exit 9; }; done
 : > "$HOME/stub.log"
 work=$(mktemp -d); pids=(); names=(W1 W2 W3); outs=()
 subtasks=("price of app A" "FAIL price of app B" "EMPTY price of app C")
@@ -527,7 +568,8 @@ for i in 0 1 2; do
 done
 echo "--- stub.log"; sort "$HOME/stub.log" | uniq -c
 EOF
-STUBBIN="$LAB/stubbin" bash lab/wave.sh
+bash lab/wave.sh
+)
 ```
 
 **확인.** 기대 출력입니다.
@@ -547,7 +589,7 @@ W3: failed dispatch (exit 0, bytes 0)
 
 읽는 법은 이렇습니다. `cwd_entries=0`은 작업자가 시작한 임시 폴더가 비어 있었다는 뜻으로, `.antigravity.md`나 프로젝트 맥락이 새지 않게 한다는 스킬의 말(`SKILL.md:39-43`)과 맞습니다. `env_names`는 `env -i HOME=… PATH=…` 때문에 작업자가 본 환경 변수 이름들입니다. `HOME`과 `PATH` 외의 `MSYSTEM`·`PWD`·`SHLVL`·`SYSTEMROOT`·`WINDIR`·`_`는 Git Bash와 Windows가 프로세스 시작 때 채우는 것으로 보이며(출처는 확인하지 못했습니다), 키 이름은 하나도 없습니다. 스킬 스스로 이것을 "누출을 줄이는 것이지 샌드박스가 아니다"(`SKILL.md:55-56`)라고 말합니다. `inputs=[…]`는 브리프의 따옴표·`$(…)`·백틱이 한 글자도 해석되지 않고 인자로 갔다는 증거이고, 브리프를 파일에 쓰고 `-p "$(cat "$brief")"`로 넘기는 설계가 셸 문자열 끼워 넣기를 피한다는 말과 맞습니다. W2는 종료 코드로, W3은 빈 출력으로 실패가 잡혔습니다. SKILL.md가 "0이 아닌 종료나 빈 `$out`은 실패한 발송"이라고 한 두 경우입니다(`SKILL.md:62-63`). `stub.log`를 `sort | uniq -c`로 모은 까닭은 세 작업자가 한 파일에 동시에 쓰기 때문에 줄이 섞일 수 있어서이고, 같은 이유가 스킬이 작업자마다 출력 파일을 두라고 하는 까닭입니다(`SKILL.md:60-62`).
 
-이 스니펫이 진짜 `agy`에서 같은 일을 하는지는 확인하지 못했습니다. `--dangerously-skip-permissions`, `--effort`, `--print-timeout`의 뜻은 Google의 공식 문서를 찾지 못해 제3자 치트시트(computingforgeeks.com의 Antigravity CLI cheat sheet)로만 읽었습니다. 그 글은 첫째 플래그를 "모든 도구 권한 요청을 자동 승인함, 조심해서 쓸 것", 셋째를 "응답을 기다리는 최대 시간, 기본 5m"이라고 적습니다. 첫째가 이 스킬의 가장 큰 권한 결정입니다. 비대화 환경에서 이 플래그가 없으면 호출이 멈춘다는 것이 스킬의 설명(`SKILL.md:54-55`)이고, 켜면 작업자가 가진 도구(웹 검색·파일 작업)가 묻지 않고 실행됩니다.
+이 스니펫이 진짜 `agy`에서 같은 일을 하는지는 확인하지 못했습니다(`agy`를 한 번도 실행하지 않았습니다). 플래그의 뜻은 Google 공식 문서(antigravity.google/docs/cli/headless, 2026-10-19에 읽음)의 표로 확인했습니다. `--dangerously-skip-permissions`(기본 false)는 "Auto-approve all tool permission requests", `--print-timeout`(기본 5m)은 "Maximum time to wait for a response", `--effort`는 "Reasoning effort: `low`, `medium`, or `high`", `--model`은 "Model slug for this run"입니다. 같은 문서의 경고는 "`--dangerously-skip-permissions` approves all tool calls, including file writes and command execution"입니다. 이것이 이 스킬의 가장 큰 권한 결정입니다. 켜면 작업자의 도구(웹 검색·파일 작업)가 묻지 않고 실행됩니다. 스킬은 이 플래그가 비TTY에서 필요하다고 말합니다(`SKILL.md:54-55`, "or the call hangs"). 공식 문서의 말은 다릅니다. "A tool that requires approval it can’t obtain is soft-denied"이고, 실행은 계속되어 종료 코드 0으로 끝난다고 적습니다. 곧 플래그가 없으면 호출이 멈추는 것이 아니라 도구가 조용히 거부된 채 성공처럼 끝날 수 있으므로, 스킬이 "빈 `$out`은 실패한 발송"으로 보는 검사(`SKILL.md:62-63`)가 이 경우의 안전망입니다. 이 차이가 실제로 어떻게 나타나는지는 확인하지 못했습니다. 문서는 또 헤드리스 모드가 캐시된 자격 증명을 쓴다고 적습니다("Authenticate once with an interactive `agy` session first").
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -559,7 +601,9 @@ W3: failed dispatch (exit 0, bytes 0)
 
 ```bash
 # --- Step 7: 검증 관문, 상담 제한 시간, 예산 ---
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 mkdir -p lab/verify
 printf '%s\n' 'import sys' 'def total(prices):' '    return sum(prices) / len(prices)   # 합계가 아니라 평균을 돌려준다' 'if __name__ == "__main__":' '    t = total([10, 20, 30])' '    print("total =", t)' '    sys.exit(0 if t == 60 else 1)' > lab/verify/worker_out.py
 printf '%s\n' '# worker output' 'The script prints the total of the prices.' > lab/verify/worker_readme.md
@@ -567,6 +611,7 @@ echo "약한 확인 1: 파일이 있다"; test -f lab/verify/worker_out.py && ec
 echo "약한 확인 2: README에 total이 있다"; grep -q "total" lab/verify/worker_readme.md && echo pass
 echo "약한 확인 3: 문법이 맞다"; pyrun -c "import ast,sys; ast.parse(open(sys.argv[1], encoding='utf-8').read()); print('pass')" lab/verify/worker_out.py
 echo "진짜 확인: 산출물을 실행한다"; pyrun lab/verify/worker_out.py; echo "exit=$?"
+)
 ```
 
 기대 출력입니다.
@@ -588,10 +633,16 @@ exit=1
 다음은 상담의 제한 시간입니다. SKILL.md가 권하는 방식은 `perl -e 'alarm shift; exec @ARGV' 300 claude …`이고(`SKILL.md:75-76`) 까닭은 "macOS에는 `timeout(1)`이 없어서"입니다. 같은 구조에 제한 시간만 2초로 줄이고, 멈추는 대역(`HANG`이 든 상담글에 6초 자는 대역)으로 `perl` 방식과 GNU `timeout` 방식을 나란히 돌립니다. 대역이 불렸는지 단언한 뒤에 돌립니다.
 
 ```bash
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 cat > lab/advisor.sh <<'EOF'
-export PATH="$STUBBIN:/usr/bin"
-case "$(command -v claude)" in "$STUBBIN"/*) ;; *) echo "GUARD: claude가 대역이 아님" >&2; exit 9;; esac
+: "${STUBBIN:?STUBBIN이 비었습니다. env.sh를 먼저 불러오세요}"
+[ -f "$STUBBIN/.stub-marker" ] || { echo "GUARD: 대역 폴더가 아님: $STUBBIN" >&2; exit 9; }
+case "$HOME" in "${LAB:?}"/*) ;; *) echo "GUARD: HOME이 스크래치가 아님" >&2; exit 9;; esac
+unset GEMINI_API_KEY GOOGLE_API_KEY ANTHROPIC_API_KEY
+export PATH="$STUBBIN:/usr/bin:/bin"
+for t in agy claude; do [ "$(command -v $t)" = "$STUBBIN/$t" ] || { echo "GUARD: $t가 대역이 아님" >&2; exit 9; }; done
 : > "$HOME/stub.log"
 printf 'CONSULT TYPE: plan review\nQUESTION: is the plan ok?\n' > "$LAB/consult-ok.txt"
 printf 'CONSULT TYPE: plan review\nHANG\n' > "$LAB/consult-hang.txt"
@@ -604,7 +655,8 @@ start=$SECONDS
 timeout 2 claude --model claude-fable-5-1 -p < "$LAB/consult-hang.txt"
 echo "exit=$? after $((SECONDS-start))s"
 EOF
-STUBBIN="$LAB/stubbin" bash lab/advisor.sh
+bash lab/advisor.sh
+)
 ```
 
 **확인.** 기대 출력입니다. 시간은 몇 초씩 오갈 수 있습니다.
@@ -626,7 +678,9 @@ exit=124 after 2s
 마지막은 예산입니다. SKILL.md는 틀 잡기 단계에서 "하위 작업 수의 두 배의 작업자 발송(재시도와 대체 길 재발송도 포함)에 상담 5번(그중 둘은 필수)"을 한 예로 들고, 상한이 중요한 것이 아니라 상한을 넘겨 쓰는 일이 조용히 일어나지 않는 것이 중요하다고 말합니다. 이 숫자에 공식 가격을 곱해 어림해 봅니다. 가격은 2026-10-19에 읽은 공식 페이지의 것이고(Gemini 3.8 Flash 입력 0.75달러·출력 3.75달러, Claude Fable 5.1 입력 10달러·출력 50달러, 백만 토큰당), 토큰 수는 이 문서의 **가정**입니다. 작업자 한 번에 입력 1,500·출력 2,000토큰, 상담 한 번에 입력 6,000토큰이고 출력은 보통 1,500토큰이며 상한은 `fallbacks.md`의 `max_tokens` 16,000입니다.
 
 ```bash
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 cat > budget.py <<'EOF'
 import sys
 n = int(sys.argv[1])
@@ -644,6 +698,7 @@ print("가장 싼 경우 $%.2f, 상한까지 다 쓴 경우 $%.2f (가정은 위
 EOF
 pyrun budget.py 12
 pyrun budget.py 3
+)
 ```
 
 ```text
@@ -665,12 +720,15 @@ pyrun budget.py 3
 
 ```bash
 # --- Step 8: SKILL.md가 말하는 이름·주소·주장을 줄 단위로 대조한다 ---
-. ./env.sh
+export REPO=/path/to/awesome-llm-apps
+export LAB=/path/to/skills-lab
+( . "$LAB/env.sh" || exit 1
 cd "$REPO/agent_skills"
 grep -rn "gemini-3.8-flash\|claude-fable-5-1\|claude-opus-5\|server-side-fallback\|gpt-6\|GPT-6\|Sep 2026\|July 2026" advisor-orchestrator-worker --include=*.md | cut -c1-150
 grep -rn "https://" advisor-orchestrator-worker/references advisor-orchestrator-worker/SKILL.md | cut -c1-150
 echo "셸로 바로 넘기는 줄: $(grep -rn '| *bash\|| *sh$' advisor-orchestrator-worker --include=*.md | wc -l)"
 cd "$LAB"
+)
 ```
 
 **확인.** 기대 출력입니다(긴 줄은 150자에서 잘립니다).
@@ -703,7 +761,7 @@ advisor-orchestrator-worker/SKILL.md:14:  source: "https://github.com/Shubhamsab
 | 작업자 `gemini-3.8-flash`(`SKILL.md:48`, `fallbacks.md:21`) | Gemini API 모델 페이지: Stable 목록에 "New Stable". 가격 페이지: 입력 0.75달러·출력 3.75달러(2026-12-31까지, 이후 1.50·7.50). 사용 중단일은 그 페이지에 없음 | 맞음 |
 | README의 오케스트레이터 기본값 `GPT-6 Astra`(`README.md:13`) | OpenAI 모델 페이지: 주력 모델 `gpt-6-astra`, 입력 10달러·출력 50달러, 사용 중단 표시 없음 | 맞음 |
 | 모델 표 머리의 "Sep 2026"(`README.md:11`)와 같은 README의 "July 2026"(`README.md:17`), SKILL.md의 "current July 2026"(`SKILL.md:29`) | — | 어긋남. 한쪽은 9월, 두 곳은 7월이라고 같은 기본값을 부름. 소스 안의 날짜 표기 불일치로 읽음 |
-| `agy`의 플래그와 "Antigravity 할당량은 앱·CLI·SDK가 공유"(`SKILL.md:58-59`) | Google 공식 문서를 찾지 못함. 플래그는 제3자 치트시트로만 읽음 | 확인하지 못함 |
+| `agy`의 플래그와 "Antigravity 할당량은 앱·CLI·SDK가 공유"(`SKILL.md:58-59`) | Google 공식 문서(antigravity.google/docs/cli/headless, 2026-10-19에 읽음): 플래그 `--dangerously-skip-permissions`·`--print-timeout`(기본 5m)·`--effort`·`--model`은 표와 맞음. 그러나 "권한 플래그가 없으면 호출이 멈춘다"와 달리 "A tool that requires approval it can’t obtain is soft-denied"이고 실행은 계속되어 종료 코드 0. 할당량 공유 주장은 그 문서에 없음 | 플래그는 맞음. 권한 없을 때의 동작은 스킬(멈춤)과 공식(soft-deny, 종료 코드 0)이 다름. 할당량 공유는 확인하지 못함 |
 
 저장소 README의 "바(The bar)" 다섯 줄과 설치 전 경고 문단(`agent_skills/README.md:9-15`, `agent_skills/README.md:56-60`)도 이 스킬에 대어 봅니다.
 
@@ -711,11 +769,11 @@ advisor-orchestrator-worker/SKILL.md:14:  source: "https://github.com/Shubhamsab
 |---|---|---|
 | Real scripts(결정적인 일은 토큰이 아니라 코드로) | 스크립트 없음. 폴더에 스크립트가 없고 bash 스니펫이 마크다운 안에만 있음 | 해당 없음. 이 스킬은 글만 있는 스킬이고 그 사실을 1단계 시험도 통과시킴 |
 | Researched references(참고 문서는 출처와 함께) | 참고 문서 셋에 주소는 두 개뿐이고 둘 다 호출 대상 API 주소임(`agent_skills/advisor-orchestrator-worker/references/fallbacks.md:21`, `agent_skills/advisor-orchestrator-worker/references/fallbacks.md:39`). 인용한 출처 없음 | 이 문서가 확인한 범위에서는 출처 인용 없음 |
-| Evidence over vibes(주장은 확인 가능해야) | 모델 이름·헤더는 공식 문서로 확인됨. `agy` 관련은 확인 못 함 | 대체로 맞음 |
+| Evidence over vibes(주장은 확인 가능해야) | 모델 이름·헤더는 공식 문서로 확인됨. `agy` 플래그도 공식 문서로 확인됨. 다만 권한 플래그가 없을 때의 동작은 스킬과 공식 문서가 다르고 할당량 공유는 확인 못 함 | 대체로 맞음 |
 | Local and private by default(선언하지 않은 네트워크 호출 없음, 내 기계를 떠나지 않음) | 네트워크를 쓰며 `compatibility`가 밝힘. 하위 작업의 입력 전부가 작업자(Google)로, 상담글이 조언자(Anthropic)로 감 | "선언했다"는 맞고 "내 기계를 떠나지 않는다"는 이 스킬에는 해당하지 않음 |
 | Tested before shipped(실제 입력으로 시험) | 1·1b·2단계 통과(직접 확인), 3단계 시험 데이터 24항목 있음(읽기만, 돌리지 않음) | 직접 확인한 만큼만 확인함 |
 | 설치 시 실행 없음, `curl`을 셸로 넘기라는 요구 없음(`agent_skills/README.md:58`) | 스크립트 없음. 스캐너가 LURE·EXEC 규칙에서 찾지 못했고, 셸로 바로 넘기는 줄 수는 0 | 확인함. 스킬 안의 `curl`은 실행 중 API 호출이지 설치 단계가 아님 |
-| 설치 전에 SKILL.md와 모든 스크립트를 읽을 것(`agent_skills/README.md:58`) | Anthropic 문서도 같은 말을 함("신뢰할 수 있는 출처의 스킬만, 소프트웨어처럼 다룰 것, 번들 파일을 모두 검토") | 문서와 일치 |
+| 설치 전에 SKILL.md와 모든 스크립트를 읽을 것(`agent_skills/README.md:58`) | Anthropic 문서(2026-10-19)는 "Use Skills only from trusted sources: those you created yourself or obtained from Anthropic"이라고 하고, 그 밖의 출처라면 "exercise extreme caution and thoroughly audit it"라고 하며 번들 파일을 모두 검토하라고 함("Treat like installing software") | 이 저장소의 스킬은 직접 만든 것도 Anthropic의 것도 아니므로 원문 기준으로는 "감사한 뒤 신중히 쓴다" 쪽입니다. 저장소 README의 "먼저 읽어라"는 그 감사 단계와 같은 말임 |
 
 이 스킬을 켜기 전에 사람이 확인할 것을 모으면 이렇습니다. 하나, 작업 내용이 외부 두 곳으로 나갑니다. 둘, 작업자는 `--dangerously-skip-permissions`로 도구를 권한 확인 없이 쓰는데 스킬 스스로 "샌드박스가 아니다"라고 말합니다. 셋, API 대체 길은 키를 `curl`의 `-H` 인자로 넘기는데(`agent_skills/advisor-orchestrator-worker/references/fallbacks.md:22`, `agent_skills/advisor-orchestrator-worker/references/fallbacks.md:40`), 명령줄 인자는 같은 PC의 다른 프로세스가 볼 수 있는 곳에 남을 수 있다는 점은 일반적인 주의일 뿐 이 문서가 확인한 것은 아닙니다. 넷, `SKILL.md`에는 `allowed-tools`가 없으므로 도구 허가는 호스트 에이전트의 설정에 달려 있습니다.
 
@@ -753,6 +811,7 @@ advisor-orchestrator-worker/SKILL.md:14:  source: "https://github.com/Shubhamsab
 - [ ] 작업자 발송 웨이브에서 W2·W3 실패가 개별로 잡히고 `cwd_entries=0`, `inputs=[…]`가 글자 그대로인 것을 보았다
 - [ ] 약한 확인 셋이 통과한 산출물을 실행이 떨어뜨리는 것을 보았고, `perl` 방식과 `timeout`의 차이를 보았다
 - [ ] 모델 이름·헤더·가격 표를 공식 문서 날짜와 함께 읽었다
+- [ ] 실습이 끝나 `echo "$LAB"`로 경로를 확인한 뒤 `LAB` 폴더 하나를 지웠다(그 안의 `proj/.claude/skills`가 에이전트 세션에 불려 가지 않도록 에이전트를 쓰는 작업 폴더 밖에 두었다)
 
 ## 문제 해결
 
@@ -760,7 +819,8 @@ advisor-orchestrator-worker/SKILL.md:14:  source: "https://github.com/Shubhamsab
 |---|---|---|
 | 한국어 Windows에서 시험 도구가 `UnicodeEncodeError: 'cp949' codec can't encode character '—'` 또는 `UnicodeDecodeError: 'cp949' codec can't decode byte 0xe2`로 죽음 | 도구가 줄표(—)를 출력하고 `run_trigger_evals.py:59`는 인코딩 없이 `SKILL.md`를 엽니다. 기본 인코딩이 cp949입니다 | `python -X utf8 …`로 돌립니다. `PYTHONUTF8=1`을 환경에 걸어도 `-I`(격리 모드)는 `PYTHON*` 변수를 무시하므로 `-I`와 함께 쓸 때는 `-X utf8`이어야 합니다. 실제로 `-I`만으로는 위 오류가 났습니다 |
 | `ERROR: name '…' must equal the skill directory name '…'` | 복사한 폴더 이름이 머리말의 `name`과 다릅니다 | 폴더 이름을 `name`과 같게 하거나 머리말의 `name`을 폴더에 맞춥니다. 설치할 때 폴더 이름을 바꾸지 않습니다 |
-| `GUARD: agy가 대역이 아님` | PATH 앞에 대역 폴더가 없거나, 셸이 `agy`를 캐시해 둔 경로로 부릅니다 | `STUBBIN`을 `…/skills-lab/stubbin`의 절대 경로로 주고 같은 줄에서 `bash`를 돌립니다. 단언이 실패하면 진행하지 않습니다 |
+| `STUBBIN이 비었습니다`, `GUARD: 대역 폴더가 아님`, `GUARD: HOME이 스크래치가 아님`, `GUARD: agy가 대역이 아님` | `env.sh`를 불러오지 않은 셸에서 스크립트를 돌렸거나(`STUBBIN`·`HOME`이 스크래치가 아님), `stubbin/`을 만드는 Step 6 블록을 건너뛰었습니다 | 스크립트는 진짜 CLI에 닿기 전에 `exit 9`로 멈춘 것이므로 정상입니다. 블록 첫머리의 `export REPO=…`·`export LAB=…` 두 줄과 `env.sh` 불러오기를 확인하고 Step 6의 첫 블록부터 다시 돌립니다. 단언을 지우거나 약하게 고쳐서 통과시키지 않습니다 |
+| `LAB는 절대 경로여야 합니다`, `LAB 폴더가 없습니다`, `LAB가 에이전트 설정 폴더 아래입니다` | `env.sh`의 첫 줄들이 실습 폴더 경로를 검사해 멈춘 것입니다 | `LAB`를 Claude Code·Codex 같은 에이전트의 설정 폴더(`~/.claude` 등)와 상관없는 새 절대 경로로 다시 지정합니다 |
 | `jq -> MISSING` | 스킬은 API 대체 길의 JSON 조립에 `jq`가 필요하다고 `compatibility`에서 밝힙니다 | 진짜로 쓸 때는 `jq`를 설치합니다. 이 문서는 설치하지 않았고 `jq`가 필요한 `curl` 길을 돌리지 않았습니다 |
 | 상담에 제한 시간을 줬는데 끊기지 않음(Windows Git Bash) | `perl -e 'alarm shift; exec @ARGV'` 방식이 이 `perl`에서는 제한을 이어 주지 못하는 것으로 보입니다(Step 7) | 이 PC처럼 GNU `timeout`이 있으면 `timeout 300 claude --model claude-fable-5-1 -p < "$consult"`로 바꿔 씁니다. 종료 코드 124가 시간 초과입니다. macOS에는 기본으로 없다는 것이 스킬의 말입니다 |
 | 모델 ID가 바뀌었거나 철수 공지가 남 | SKILL.md는 "모델은 손잡이, 층이 오래 가는 것"이라고 말합니다(`SKILL.md:28-32`) | `agent_skills/advisor-orchestrator-worker/SKILL.md:48`, `agent_skills/advisor-orchestrator-worker/SKILL.md:76`, `agent_skills/advisor-orchestrator-worker/references/fallbacks.md:21`, `agent_skills/advisor-orchestrator-worker/references/fallbacks.md:36-37`, 1단계 시험을 다시 돌려 확인합니다. 설명(`description`)을 바꿨다면 트리거 시험도 다시 돌립니다(`agent_skills/evals/README.md`) |
