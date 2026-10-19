@@ -1,6 +1,6 @@
 # Day 152 · 🦙 Llama 3.2 Fine-tuning
 
-> 볼륨 15 🔧 LLM Fine-tuning · 난이도 ★★☆(원본은 파일 하나 63줄이지만 CUDA GPU가 있어야 돕니다. 이 문서의 실습은 GPU 없이 CPU에서 도는 장난감 축소판이고, 원본 스크립트는 실행하지 않았습니다) ⚠ 이 PC에서는 원본이 `unsloth`를 불러오는 두 번째 줄에서 멈춥니다(CPU판 `torch`, Step 4). 또 앱의 `SFTTrainer` 인자 셋은 순수한 `trl` 1.15.0이 받지 않아서 앱은 Unsloth의 `trl` 패치에 기대는데, 그 패치는 `unsloth`가 불러와질 때만 적용됩니다(Step 7). 앱이 GPU에서 끝까지 도는지는 이 문서가 확인하지 않았습니다 · 예상 소요 195분(스크립트 스물하나를 저장하고 돌리며(설치만 해도 내려받기가 335MiB입니다) 같은 숫자를 여러 방식으로 재 보는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 0원(모델 API를 한 번도 부르지 않았습니다. 원본을 GPU에서 돌릴 때의 비용은 Colab 무료 등급이나 자기 GPU 전기료이고 이 문서가 재 보지 않았습니다) · 원본 앱: `advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning`
+> 볼륨 15 🔧 LLM Fine-tuning · 난이도 ★★☆(원본은 파일 하나 63줄이지만 CUDA GPU가 있어야 돕니다. 이 문서의 실습은 GPU 없이 CPU에서 도는 장난감 축소판이고, 원본 스크립트는 실행하지 않았습니다) ⚠ 이 PC에서는 원본이 `unsloth`를 불러오는 두 번째 줄에서 멈춥니다(CPU판 `torch`, Step 4). 또 앱의 `SFTTrainer` 인자 셋은 순수한 `trl` 1.15.0이 받지 않아서 앱은 Unsloth의 `trl` 패치에 기대는데, 그 패치는 `unsloth`가 불러와질 때만 적용됩니다(Step 7). 앱이 GPU에서 끝까지 도는지는 이 문서가 확인하지 않았습니다 · 예상 소요 220분(스크립트 스물하나를 저장하고 돌리며(설치만 해도 내려받기가 335MiB입니다) 같은 숫자를 여러 방식으로 재 보는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 0원(모델 API를 한 번도 부르지 않았습니다. 원본을 GPU에서 돌릴 때의 비용은 Colab 무료 등급이나 자기 GPU 전기료이고 이 문서가 재 보지 않았습니다) · 원본 앱: `advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning`
 
 ## 오늘 만들 것
 
@@ -36,7 +36,7 @@ Hugging Face 라이브러리를 불러오는 모든 프로세스는 **오프라�
 
 **모델.** 이 앱의 모델은 API로 부르는 것이 아니라 가중치를 내려받아 학습하는 것이라 OpenAI·Anthropic의 폐기 문서 대상이 아닙니다. 대신 **라이선스와 접근 조건**이 있습니다(2026-10-19에 카드 원문으로 확인).
 
-- **Llama 3.2 Community License.** `unsloth/Llama-3.2-3B-Instruct`의 카드는 "Use of Llama 3.2 is governed by the Llama 3.2 Community License"라고 적고, `license: llama3.2`입니다. 라이선스 원문(https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/LICENSE, `curl`로 2026-10-19에 읽음)의 요점은 다음과 같습니다. 파생물을 배포하면 라이선스 사본을 주고 "Built with Llama"를 눈에 띄게 적어야 합니다. 35행의 이름 규칙은 "If you use the Llama Materials or any outputs or results of the Llama Materials to create, train, fine tune, or otherwise improve an AI model, which is distributed or made available, you shall also include \"Llama\" at the beginning of any such AI model name"입니다. Llama Materials 자체를 **미세조정**해 배포하는 이 앱의 `finetuned_model/`도 이 문장에 해당하니, 배포하면 모델 이름이 "Llama"로 시작해야 합니다. 배포본에는 `Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.`라는 고지를 남기고(41행), 사용은 Acceptable Use Policy를 따라야 합니다(44행). 라이선스가 적은 주소 https://www.llama.com/llama3_2/use-policy는 같은 날 따라가 보니 두 번 넘어간 뒤 `404`였고, 사본은 https://raw.githubusercontent.com/meta-llama/llama-models/main/models/llama3_2/USE_POLICY.md(`200`)에 있습니다. 출시일 기준 월간 활성 사용자가 7억 명을 넘는 곳은 Meta에 따로 허가를 받아야 합니다(46행). 이 문서가 만든 장난감은 Llama의 가중치를 한 개도 담지 않아 이 조건의 대상이 아니지만, 원본 스크립트의 `finetuned_model/`은 Llama 3.2의 파생물입니다.
+- **Llama 3.2 Community License.** `unsloth/Llama-3.2-3B-Instruct`의 카드는 "Use of Llama 3.2 is governed by the Llama 3.2 Community License"라고 적고, `license: llama3.2`입니다. 라이선스 원문(https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/LICENSE, `curl`로 2026-10-19에 읽음)의 요점은 다음과 같습니다. 파생물을 배포하면 라이선스 사본을 주고 "Built with Llama"를 눈에 띄게 적어야 합니다. 35행의 이름 규칙은 "If you use the Llama Materials or any outputs or results of the Llama Materials to create, train, fine tune, or otherwise improve an AI model, which is distributed or made available, you shall also include \"Llama\" at the beginning of any such AI model name"입니다. Llama Materials 자체를 **미세조정**해 배포하는 이 앱의 `finetuned_model/`도 이 문장에 해당하니, 배포하면 모델 이름이 "Llama"로 시작해야 합니다. 배포본에는 `Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.`라는 고지를 남기고(41행), 사용은 Acceptable Use Policy를 따라야 합니다(44행). 라이선스가 적은 주소 https://www.llama.com/llama3_2/use-policy는 같은 날 따라가 보니 여러 번(301·302·308) 넘어간 뒤 `404`였고, 사본은 https://raw.githubusercontent.com/meta-llama/llama-models/main/models/llama3_2/USE_POLICY.md(`200`)에 있습니다. 출시일 기준 월간 활성 사용자가 7억 명을 넘는 곳은 Meta에 따로 허가를 받아야 합니다(46행). 이 문서가 만든 장난감은 Llama의 가중치를 한 개도 담지 않아 이 조건의 대상이 아니지만, 원본 스크립트의 `finetuned_model/`은 Llama 3.2의 파생물입니다.
 - **접근 신청과 미러의 차이.** 원본 저장소 `meta-llama/Llama-3.2-3B-Instruct`는 `gated: manual`이라 로그인하고 접근을 신청해야 합니다. 로그인 없이 `curl`로 `config.json`을 읽으면 `401`과 "Access to model meta-llama/Llama-3.2-3B-Instruct is restricted"가 돌아옵니다(직접 확인). 앱이 쓰는 `unsloth/` 미러는 `gated: False`라 신청 없이 내려받아지지만 카드는 같은 라이선스를 적습니다. 미러에서 받는다고 조건이 사라지는 것은 아닙니다.
 - **FineTome-100k.** 카드(https://huggingface.co/datasets/mlabonne/FineTome-100k)는 `arcee-ai/The-Tome`에서 `arcee-ai/qwen2-72b-magpie-en`을 뺀 부분집합을 `fineweb-edu-classifier`로 다시 걸러 만들었다고 적고, 머리의 메타데이터에 **`license` 줄이 없습니다**(Step 3에서 직접 확인). 부모 `The-Tome` 카드는 `license: mit`이고 아홉 개 공개 데이터셋(`BAAI/Infinity-Instruct` 등)을 모았다고 적지만, 그 아홉 개 각각의 라이선스는 확인하지 못했습니다. 사업에 쓰려면 직접 확인하세요.
 
@@ -99,7 +99,7 @@ trl
 
 **목적.** Hugging Face 계열 라이브러리를 불러오는 모든 프로세스가 바깥에 닿지 않고, 이 PC의 진짜 홈(Hugging Face 토큰, Claude 자격 증명)을 보지 못하게 합니다. 줄 하나를 빼도 스크립트가 시작하자마자 멈추게 합니다.
 
-**할 일.** 이유부터입니다. `huggingface_hub`는 토큰을 인자로 주지 않아도 기본으로 기계에서 읽어 요청에 싣습니다(`huggingface_hub/utils/_headers.py` 42~44행의 설명, `get_token()`이 `HF_TOKEN` 환경변수와 홈의 `~/.cache/huggingface/token`을 봄). Unsloth는 한술 더 떠서 `from_pretrained` 첫머리에서 `hf_login(token)`으로 그 토큰을 미리 읽어 이후 모든 Hub 호출에 넘깁니다(`unsloth/models/llama.py` 2938행, `models/_utils.py` 7920~7927행). 내가 홈에 가짜 토큰 파일(`hf_FAKE…`)을 둔 폴더로 `HOME`을 돌리고 오프라인·소켓 가드 아래에서 `get_token()`을 불렀더니 그 가짜 값이 읽혔습니다. 그러니 `HOME`과 `USERPROFILE`을 이 폴더 안의 빈 폴더로 돌리고 `HF_HOME`도 폴더 안에 둡니다. 가드는 그 밖의 경로 변수(`HF_TOKEN_PATH`, 캐시 경로, `XDG_CACHE_HOME`)와 프록시 변수까지 봅니다. 프록시는 루프백 주소여도 안 됩니다. 소켓 가드가 루프백을 허용하기 때문에, 루프백 프록시가 있으면 바깥 요청이 허용된 루프백 소켓으로 빠져나갈 수 있습니다. 이 실습은 네트워크가 전혀 필요 없으니 프록시 변수는 모두 지웁니다.
+**할 일.** 이유부터입니다. `huggingface_hub`는 토큰을 인자로 주지 않아도 기본으로 기계에서 읽어 요청에 싣습니다(`huggingface_hub/utils/_headers.py` 42~44행의 설명, `get_token()`이 `HF_TOKEN` 환경변수와 홈의 `~/.cache/huggingface/token`을 봄). Unsloth는 한술 더 떠서 `from_pretrained` 첫머리에서 `hf_login(token)`으로 그 토큰을 미리 읽어 이후 모든 Hub 호출에 넘깁니다(`unsloth/models/llama.py` 2938행, `models/_utils.py` 7920~7927행). 내가 홈에 가짜 토큰 파일(`hf_FAKE…`)을 둔 폴더로 `HOME`을 돌리고 오프라인·소켓 가드 아래에서 `get_token()`을 불렀더니 그 가짜 값이 읽혔습니다. 그러니 `HOME`과 `USERPROFILE`을 이 폴더 안의 빈 폴더로 돌리고 `HF_HOME`도 폴더 안에 둡니다. 가드는 그 밖의 경로 변수(`HF_TOKEN_PATH`, 캐시 경로, `XDG_CACHE_HOME`)와 프록시 변수까지 봅니다. 프록시는 루프백 주소여도 안 됩니다. 소켓 가드가 루프백을 허용하기 때문에, 루프백 프록시가 있으면 바깥 요청이 허용된 루프백 소켓으로 빠져나갈 수 있습니다. 이 실습은 네트워크가 전혀 필요 없으니 프록시 변수는 모두 지웁니다. 임시 폴더도 같습니다. `torch`는 `import`만 해도 임시 폴더에 `torchinductor_<사용자>/`를 만들고 Unsloth는 컴파일한 트레이너 코드를 `unsloth_compiled_cache/`에 쌓는데, Git Bash는 `TMPDIR`을 진짜 Temp 폴더로 미리 잡아 두므로 `TEMP`만 돌려서는 부족합니다. 그래서 `TEMP`·`TMP`·`TMPDIR`과 `UNSLOTH_COMPILE_LOCATION`을 모두 이 폴더의 `tmp/`로 돌리고 가드가 그 위치와 `tempfile.gettempdir()`를 검사합니다.
 
 가드를 `finetune-lab/guard.py`로 저장합니다. `check()`는 아래가 하나라도 어긋나면 이유를 모두 적고 종료 코드 1로 끝납니다. `install()`은 파이썬의 `socket`에서 루프백이 아닌 곳으로의 접속·이름 조회를 막고(Windows asyncio는 `socket.connect`를 부르지 않아 `IocpProactor.connect`도 막습니다), 시도를 `guard.log`에 한 줄씩 적습니다.
 
@@ -117,6 +117,9 @@ What it refuses (each is a separate layer, any one of them missing stops the run
     ~/.cache/huggingface/token and ~/.claude/.credentials.json are never visible
   - HF_TOKEN / HUGGING_FACE_HUB_TOKEN / HF_ENDPOINT must not be set; the other HF path variables (cache, token file, XDG_CACHE_HOME)
     must be unset or inside this lab folder
+  - TEMP, TMP, TMPDIR and UNSLOTH_COMPILE_LOCATION must be inside this lab folder (Git Bash presets TMPDIR to the real Temp, so TEMP
+    alone is not enough), and tempfile.gettempdir() must be too: torch writes torchinductor_<user>/ and unsloth writes
+    unsloth_compiled_cache/ there; TORCHINDUCTOR_CACHE_DIR and TRITON_CACHE_DIR are checked like the other cache variables
   - no proxy variable may be set: a proxy on 127.0.0.1 would let a non-loopback request leave through an allowed loopback socket
   - UNSLOTH_DISABLE_STATISTICS must be present (unsloth only tests for presence)
   - any socket connect or name lookup to a non-loopback address raises, and the attempt is appended to guard.log
@@ -132,7 +135,7 @@ OFFLINE = ("HF_HUB_OFFLINE", "HF_DATASETS_OFFLINE", "TRANSFORMERS_OFFLINE")
 LOOPBACK = ("127.0.0.1", "::1", "localhost")
 PROXY = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "GRPC_PROXY", "http_proxy", "https_proxy", "all_proxy", "grpc_proxy")
 HF_PATHS = ("HF_HUB_CACHE", "HUGGINGFACE_HUB_CACHE", "HF_DATASETS_CACHE", "TRANSFORMERS_CACHE", "HF_ASSETS_CACHE",
-            "HF_XET_CACHE", "HF_TOKEN_PATH", "HF_STORED_TOKENS_PATH", "XDG_CACHE_HOME")
+            "HF_XET_CACHE", "HF_TOKEN_PATH", "HF_STORED_TOKENS_PATH", "XDG_CACHE_HOME", "TORCHINDUCTOR_CACHE_DIR", "TRITON_CACHE_DIR")
 _installed = False
 
 
@@ -235,6 +238,13 @@ def check():
     for name in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN", "HF_ENDPOINT"):
         if name in os.environ:
             bad.append(f"{name} is set")
+    tmp = LAB / "tmp"
+    for name in ("TEMP", "TMP", "TMPDIR", "UNSLOTH_COMPILE_LOCATION"):
+        if not _inside(os.environ.get(name, "/nonexistent"), tmp):
+            bad.append(f"{name} is not inside {tmp}: temporary and compile-cache files would land in the real Temp folder")
+    import tempfile
+    if not _inside(tempfile.gettempdir(), tmp):
+        bad.append(f"tempfile.gettempdir() is {tempfile.gettempdir()}, outside the lab tmp folder (does the folder exist? mkdir tmp)")
     for name in HF_PATHS:
         if name in os.environ and not _inside(os.environ[name], LAB):
             bad.append(f"{name} points outside the lab folder: {os.environ[name]}")
@@ -263,22 +273,24 @@ guard.install()
 이 문서의 터미널마다 `finetune-lab` 폴더에서 아래 블록을 **먼저** 겁니다. 환경변수는 그 터미널에만 있습니다. 홈을 바꾸므로 끝나면 터미널을 닫으세요.
 
 ```bash
-mkdir -p home hf_home
+mkdir -p home hf_home tmp
 export PYTHONIOENCODING=utf-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD"
 export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 export HF_HOME="$PWD/hf_home" HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 UNSLOTH_DISABLE_STATISTICS=1
 export HOME="$PWD/home" USERPROFILE="$PWD/home" CLAUDE_CONFIG_DIR="$PWD/home/.claude"
+export TEMP="$PWD/tmp" TMP="$PWD/tmp" TMPDIR="$PWD/tmp" UNSLOTH_COMPILE_LOCATION="$PWD/tmp/unsloth_compiled_cache"
 unset HTTP_PROXY HTTPS_PROXY ALL_PROXY GRPC_PROXY http_proxy https_proxy all_proxy grpc_proxy
-unset HF_TOKEN HUGGING_FACE_HUB_TOKEN HF_ENDPOINT HF_TOKEN_PATH HF_HUB_CACHE HUGGINGFACE_HUB_CACHE HF_DATASETS_CACHE TRANSFORMERS_CACHE XDG_CACHE_HOME
+unset HF_TOKEN HUGGING_FACE_HUB_TOKEN HF_ENDPOINT HF_TOKEN_PATH HF_HUB_CACHE HUGGINGFACE_HUB_CACHE HF_DATASETS_CACHE TRANSFORMERS_CACHE XDG_CACHE_HOME TORCHINDUCTOR_CACHE_DIR TRITON_CACHE_DIR
 ```
 
 ```powershell
-New-Item -ItemType Directory -Force home, hf_home
+New-Item -ItemType Directory -Force home, hf_home, tmp
 $env:PYTHONIOENCODING = "utf-8"; $env:PYTHONDONTWRITEBYTECODE = "1"; $env:PYTHONPATH = "$PWD"
 $env:HF_HUB_OFFLINE = "1"; $env:HF_DATASETS_OFFLINE = "1"; $env:TRANSFORMERS_OFFLINE = "1"
 $env:HF_HOME = "$PWD\hf_home"; $env:HF_HUB_DISABLE_TELEMETRY = "1"; $env:DO_NOT_TRACK = "1"; $env:UNSLOTH_DISABLE_STATISTICS = "1"
 $env:HOME = "$PWD\home"; $env:USERPROFILE = "$PWD\home"; $env:CLAUDE_CONFIG_DIR = "$PWD\home\.claude"
-"HTTP_PROXY","HTTPS_PROXY","ALL_PROXY","GRPC_PROXY","HF_TOKEN","HUGGING_FACE_HUB_TOKEN","HF_ENDPOINT","HF_TOKEN_PATH","HF_HUB_CACHE","HUGGINGFACE_HUB_CACHE","HF_DATASETS_CACHE","TRANSFORMERS_CACHE","XDG_CACHE_HOME" | ForEach-Object { Remove-Item "Env:$_" -ErrorAction SilentlyContinue }
+$env:TEMP = "$PWD\tmp"; $env:TMP = "$PWD\tmp"; $env:TMPDIR = "$PWD\tmp"; $env:UNSLOTH_COMPILE_LOCATION = "$PWD\tmp\unsloth_compiled_cache"
+"HTTP_PROXY","HTTPS_PROXY","ALL_PROXY","GRPC_PROXY","HF_TOKEN","HUGGING_FACE_HUB_TOKEN","HF_ENDPOINT","HF_TOKEN_PATH","HF_HUB_CACHE","HUGGINGFACE_HUB_CACHE","HF_DATASETS_CACHE","TRANSFORMERS_CACHE","XDG_CACHE_HOME","TORCHINDUCTOR_CACHE_DIR","TRITON_CACHE_DIR" | ForEach-Object { Remove-Item "Env:$_" -ErrorAction SilentlyContinue }
 ```
 
 (PowerShell 형태는 실행해 보지 못했습니다. PowerShell에서는 변수에 `""`를 대입하면 변수가 지워지므로 위처럼 값이 있는 줄은 값을 주고, 지울 것은 `Remove-Item`으로 지웁니다. Windows는 변수 이름의 대소문자를 구분하지 않아 소문자 프록시 변수도 함께 지워집니다.) `UNSLOTH_DISABLE_STATISTICS`는 값이 아니라 **있는지**만 봅니다. 소스가 `"UNSLOTH_DISABLE_STATISTICS" in os.environ`이라 `0`이나 `false`를 넣어도 통계가 꺼집니다(Step 4).
@@ -1179,7 +1191,7 @@ uv run --no-project python trl_as_written.py
 
 이것은 오늘 판이 바뀌어서 생긴 문제가 아닙니다. 앱의 학습 줄(`tokenizer=`, `SFTConfig`, `DataCollatorForSeq2Seq`)은 2026-08-02의 커밋 `779e9f9b`에서 들어갔고(`git log`), 그날의 최신 `trl`은 1.9.2(PyPI 업로드 2026-07-28)였습니다. 그 바퀴를 받아 압축을 풀지 않고 읽으니 `SFTTrainer.__init__`에 세 인자가 이미 없었고 `SFTConfig`에도 `max_seq_length` 필드가 없었습니다(직접 확인). 앱은 처음부터 Unsloth의 `trl` 패치에 기대 쓰인 것입니다. 패치는 `unsloth`가 정상으로 불러와질 때 이 순서로 설치됩니다(소스). `unsloth/_gpu_init.py` 752행의 `from .models import *` → `models/llama.py` 4933행 `PatchFastRL` → `models/rl.py`가 `trl.SFTTrainer`·`trl.SFTConfig`를 Unsloth판으로 바꿈(3675~3700행의 `exec`들) → `_gpu_init.py` 773행 `_patch_trl_trainer()` → `trainer.py`의 `_backwards_compatible_trainer`(1677행)가 `tokenizer`를 `processing_class`로 바꾸고(1686행) 설정에 속하는 인자를 `SFTConfig`로 옮깁니다. `max_seq_length`는 `models/rl.py`가 만드는 설정 클래스에 필드를 더해 `max_length`로 복사합니다(3194~3204행, 2603~2605행).
 
-**선택: 패치를 실행해 보기.** 이 PC에서는 보통의 import가 멈추니 Step 4의 시험 스위치를 씁니다. 스위치는 패치 설치를 건너뛰므로, 아래 스크립트는 `unsloth`를 스위치로 불러온 뒤 스위치를 지우고 GPU 환경과 같은 순서로 설치 함수 둘(`PatchFastRL`, `_patch_trl_trainer`)을 직접 부릅니다. 독자 해결책이 아니라 읽은 소스를 확인하는 시험이므로 건너뛰어도 됩니다. 가드와 소켓 가드가 설치되었다는 단언이 통과한 **뒤에만** `unsloth`를 불러옵니다. 실행하면 작업 폴더에 `unsloth_compiled_cache/`와 `outputs_probe/`가 생깁니다. `unsloth_probe.py`로 저장합니다.
+**선택: 패치를 실행해 보기.** 이 PC에서는 보통의 import가 멈추니 Step 4의 시험 스위치를 씁니다. 스위치는 패치 설치를 건너뛰므로, 아래 스크립트는 `unsloth`를 스위치로 불러온 뒤 스위치를 지우고 GPU 환경과 같은 순서로 설치 함수 둘(`PatchFastRL`, `_patch_trl_trainer`)을 직접 부릅니다. 독자 해결책이 아니라 읽은 소스를 확인하는 시험이므로 건너뛰어도 됩니다. 가드와 소켓 가드가 설치되었다는 단언이 통과한 **뒤에만** `unsloth`를 불러옵니다. 실행하면 Unsloth가 만든 트레이너 코드가 `tmp/unsloth_compiled_cache/`에 쌓이고(`UNSLOTH_COMPILE_LOCATION`, 소스는 `unsloth_zoo/compiler.py` 918~924행이 임시 폴더를 쓰는 길도 갖고 있어 `TEMP`·`TMP`·`TMPDIR`까지 이 폴더 안으로 돌렸습니다) 작업 폴더에 `outputs_probe/`가 생깁니다. `torch`는 `import`만 해도 임시 폴더에 `torchinductor_<사용자>/`를 만들어서(`torch/_inductor/runtime/cache_dir_utils.py` 32~33행) 그것도 `tmp/` 안으로 갑니다. `unsloth_probe.py`로 저장합니다.
 
 ```python
 """OPTIONAL (Step 7): load unsloth on this CPU-only torch through its CPU test switch
@@ -1524,7 +1536,7 @@ every tensor is a LoRA tensor (no base weights saved)? True
 max |logit(base) - logit(base + adapter)| = 0.30142
 ```
 
-읽을 것이 넷입니다. 첫째, `adapter_model.safetensors`가 134,616바이트이고 안의 원소는 32,768개(위에서 센 학습 매개변수 수 그대로) 32비트라 `32,768 × 4 = 131,072`바이트에 머리글이 붙은 값입니다. 안에는 `lora_A`·`lora_B` 14쌍만 있고 기본 모델 가중치는 한 개도 없습니다. 둘째, 같은 일이 진짜 모델에서 일어나면 어댑터는 24,313,856개이므로 16비트로 저장하면 약 49MB, 32비트면 약 97MB입니다(⚠ 어림이고 Unsloth가 어떤 정밀도로 저장하는지는 확인하지 못했습니다). 3B 모델 전체(수 GB)가 아니라 이만큼입니다. 이 어댑터는 반드시 같은 기본 모델 위에 얹어야 쓸 수 있고, `adapter_config.json`의 `base_model_name_or_path`가 그 모델을 가리킵니다. 셋째, `lora_B`는 `False`로 0이 아닙니다. LoRA는 `B`를 0으로 시작해서 학습 전에는 모델이 기본 모델과 같은데, 60걸음 뒤 0이 아니게 되었고 저장된 어댑터를 얹으면 같은 입력의 로짓이 최대 0.30 달라집니다. 어댑터가 모델을 바꾼다는 뜻입니다(값은 무작위 모델이라 의미 없습니다). 넷째, 토크나이저 파일(`tokenizer.json`, `tokenizer_config.json`, `chat_template.jinja`)이 함께 저장됩니다. 한편 앱은 `finetuned_model/` 말고도 학습기가 쓰는 `outputs/checkpoint-60/`(옵티마이저 상태 포함, Step 7)을 남깁니다. 장난감은 `save_strategy="no"`로 그것을 막았습니다. 앱 63행이 그것을 부르기 때문이고, 저장소 이력에서 이 줄은 "Added tokenizer and saved the model at the end"라는 변경(`779e9f9b`)으로 들어왔습니다.
+읽을 것이 넷입니다. 첫째, `adapter_model.safetensors`가 134,616바이트이고 안의 원소는 32,768개(위에서 센 학습 매개변수 수 그대로) 32비트라 `32,768 × 4 = 131,072`바이트에 머리글이 붙은 값입니다. 안에는 `lora_A`·`lora_B` 14쌍만 있고 기본 모델 가중치는 한 개도 없습니다. 둘째, 같은 일이 진짜 모델에서 일어나면 어댑터는 24,313,856개이므로 16비트로 저장하면 약 49MB, 32비트면 약 97MB입니다(⚠ 어림이고 Unsloth가 어떤 정밀도로 저장하는지는 확인하지 못했습니다). 3B 모델 전체(수 GB)가 아니라 이만큼입니다. 이 어댑터는 반드시 같은 기본 모델 위에 얹어야 쓸 수 있고, `adapter_config.json`의 `base_model_name_or_path`가 그 모델을 가리킵니다. 셋째, `lora_B`는 `False`로 0이 아닙니다. LoRA는 `B`를 0으로 시작해서 학습 전에는 모델이 기본 모델과 같은데, 60걸음 뒤 0이 아니게 되었고 저장된 어댑터를 얹으면 같은 입력의 로짓이 최대 0.30 달라집니다. 어댑터가 모델을 바꾼다는 뜻입니다(값은 무작위 모델이라 의미 없습니다). 넷째, 토크나이저 파일(`tokenizer.json`, `tokenizer_config.json`, `chat_template.jinja`)이 함께 저장됩니다. 한편 앱은 `finetuned_model/` 말고도 학습기가 쓰는 `outputs/checkpoint-60/`(옵티마이저 상태 포함, Step 7)을 남깁니다. 장난감은 `save_strategy="no"`로 그 체크포인트를 막았습니다. 토크나이저 파일이 저장되는 것은 앱 63행의 `tokenizer.save_pretrained` 때문이고, 저장소 이력에서 이 줄은 "Added tokenizer and saved the model at the end"라는 변경(`779e9f9b`)으로 들어왔습니다.
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
