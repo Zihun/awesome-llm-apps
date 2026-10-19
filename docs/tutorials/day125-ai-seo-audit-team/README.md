@@ -1,6 +1,6 @@
 # Day 125 · 🔍 AI SEO Audit Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않습니다(`mcp` 패키지가 빠짐, Step 1) · 예상 소요 115분(앱은 `agent.py` 352줄 하나지만 가짜 Gemini 서버와 가짜 MCP 서버를 직접 저장하고, 서버를 늦게 띄우거나 도구 이름을 바꿔 가며 같은 요청을 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 큽니다) · API 비용 대략 감사 한 건에 $0.03~0.08 + Firecrawl 크레딧(⚠ 추정입니다. 이 문서는 Gemini와 Firecrawl을 한 번도 부르지 않았습니다. 모델 호출은 한 건에 여섯 번이고, 입력은 지시문과 앞 에이전트의 대화를 합쳐 3만~6만 토큰 안팎으로 어림했습니다. `gemini-2.5-flash`의 유료 요금 입력 $0.30/백만, 출력 $2.50/백만으로 1~3센트이고, 검색 근거 호출은 무료 한도 밖이면 1,000건에 $35라서 한 건에 3.5센트를 더합니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_seo_audit_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠ `requirements.txt`만 설치하면 앱이 import되지 않습니다(`mcp` 패키지가 빠짐, Step 1) · 예상 소요 119분(앱은 `agent.py` 352줄 하나지만 가짜 Gemini 서버와 가짜 MCP 서버를 직접 저장하고, 서버를 늦게 띄우거나 도구 이름을 바꿔 가며 같은 요청을 여러 번 돌려 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 큽니다) · API 비용 대략 감사 한 건에 $0.03~0.08 + Firecrawl 크레딧(⚠ 추정입니다. 이 문서는 Gemini와 Firecrawl을 한 번도 부르지 않았습니다. 모델 호출은 한 건에 여섯 번이고, 입력은 지시문과 앞 에이전트의 대화를 합쳐 3만~6만 토큰 안팎으로 어림했습니다. `gemini-2.5-flash`의 유료 요금 입력 $0.30/백만, 출력 $2.50/백만으로 1~3센트이고, 검색 근거 호출은 무료 한도 밖이면 1,000건에 $35라서 한 건에 3.5센트를 더합니다) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_seo_audit_team`
 
 ## 오늘 만들 것
 
@@ -813,19 +813,26 @@ Step 3에서 띄운 가짜 Gemini(포트 54171)가 아직 떠 있어야 합니�
 uv run --no-project python patch_copy.py orig/ai_seo_audit_team lab/ai_seo_audit_team
 printf 'GOOGLE_API_KEY=fake-key\nGOOGLE_GEMINI_BASE_URL=http://127.0.0.1:54171\nFIRECRAWL_API_KEY=fc-from-dotenv\n' > lab/ai_seo_audit_team/.env
 rm -f mcp.log
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="$PWD/adkhome"; mkdir -p "$HOME"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
 cd lab/ai_seo_audit_team
-uv run --no-project adk web --host 127.0.0.1 --port 54187 --no-reload
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --host 127.0.0.1 --port 54187 --no-reload < /dev/null
 ```
 
 ```powershell
 uv run --no-project python patch_copy.py orig\ai_seo_audit_team lab\ai_seo_audit_team
 Set-Content lab\ai_seo_audit_team\.env "GOOGLE_API_KEY=fake-key`nGOOGLE_GEMINI_BASE_URL=http://127.0.0.1:54171`nFIRECRAWL_API_KEY=fc-from-dotenv"
 Remove-Item mcp.log -ErrorAction SilentlyContinue
+$env:UV_CACHE_DIR = (uv cache dir)
+$env:USERPROFILE = "$env:TEMP\seo-lab-adkhome"; $env:HOME = $env:USERPROFILE; New-Item -ItemType Directory -Force $env:USERPROFILE | Out-Null
 Set-Location lab\ai_seo_audit_team
-uv run --no-project adk web --host 127.0.0.1 --port 54187 --no-reload
+$null | uv run --no-project adk telemetry disable
+$null | uv run --no-project adk web --host 127.0.0.1 --port 54187 --no-reload
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다.) 첫 실행에는 "Enable telemetry? [Y/n]" 질문이 나옵니다. 질문 글은 기본값이 꺼짐이라고 하지만 프롬프트는 `[Y/n]`이니 `n`이라고 답하세요. 내 실행은 입력이 막힌 환경이라 질문만 나오고 넘어갔고, 홈에 파일이 생기지 않았습니다(홈은 스크래치로 돌렸습니다). 이 주소(`127.0.0.1`)는 내 PC 밖에서 안 보입니다. 셋째 터미널에서 `seo-lab`으로 돌아와 요청을 보냅니다. 세션은 `.adk/session.db`에 남으니 다시 보낼 때는 세션 이름(`s1`)을 `s2`처럼 바꾸세요. 같은 이름은 `HTTP Error 409: Conflict`입니다(직접 확인).
+(PowerShell 줄은 실행해 보지 못했습니다.) 홈 줄(`HOME`·`USERPROFILE`)이 홈을 바꾸는 까닭이 있습니다. 이 문서의 `requirements.txt`는 오늘 google-adk 2.12.0으로 풀리고(직접 확인), 이 판의 `adk` 명령은 `~/.adk/config.json`에 `telemetry: true`가 있으면 명령이 끝날 때 `https://play.googleapis.com/log`로 사용 기록을 보냅니다(`cli/_telemetry/_metrics_reporter.py`, 소스로 확인). 첫 실행의 "Enable telemetry? [Y/n]" 질문 글은 기본값이 꺼짐이라고 하지만 프롬프트는 `[Y/n]`이고 코드는 Enter를 동의로 받으며, 다른 ADK 실습에서 이미 동의했다면 질문 없이 보내므로 `n`이라고 답하는 것만으로는 막히지 않습니다. 그래서 질문에 기대지 않고 서로 독립된 방어선 셋을 둡니다. 홈을 바꿔 진짜 동의가 보이지 않게 하고, `adk telemetry disable`로 바뀐 홈에 `false`를 쓰고, `adk web` 입력을 `< /dev/null`로 닫습니다(PowerShell은 `<`를 쓸 수 없어 `$null |`로 파이프를 물립니다. 파이프는 터미널이 아니라서 질문이 뜨지 않습니다). 동의 `true`가 미리 적힌 홈을 흉내 내 위 bash 블록을 돌리면 `play.googleapis.com`으로 가려는 시도가 0이었고, 세 줄을 하나씩 뺀 세 판도 모두 0이었습니다. 방어를 하나도 두지 않고 `adk web`만 돌린 판은 1이었습니다(소켓 감시가 막았을 뿐 실제로는 보내지 않았습니다, 직접 확인). 홈을 바꾸지 않고 `disable`을 부르면 진짜 `~/.adk/config.json`에 `false`를 쓰는 부작용이 있으니 홈 줄과 함께 두세요. 이 주소(`127.0.0.1`)는 내 PC 밖에서 안 보입니다. 셋째 터미널에서 `seo-lab`으로 돌아와 요청을 보냅니다. 세션은 `.adk/session.db`에 남으니 다시 보낼 때는 세션 이름(`s1`)을 `s2`처럼 바꾸세요. 같은 이름은 `HTTP Error 409: Conflict`입니다(직접 확인).
 
 ```bash
 uv run --no-project python client.py 54187 s1 "Audit https://example.com"
