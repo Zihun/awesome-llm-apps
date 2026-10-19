@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+opt: "SkillOptimizer" { class: ours }
+exe: "executor" { class: ours }
+gemini: "Gemini (가짜 서버)" { class: ext }
+
+opt -> exe: "새 SKILL.md로 다시 실행 요청"
+exe -> gemini: "Execute this skill"
+gemini -> exe: "출력 글"
+exe -> opt: "출력"
+opt -> exe: "다시 채점 요청"
+exe -> gemini: "Evaluate this output"
+gemini -> exe: "점수 JSON"
+exe -> opt: "새 점수"

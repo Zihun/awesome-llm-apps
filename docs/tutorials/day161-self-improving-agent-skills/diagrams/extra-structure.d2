@@ -15,8 +15,12 @@ opt: "SkillOptimizer (adk_optimizer.py) 가 만드는 ADK 에이전트 셋" {
   analyst: "analyst" { class: ours }
   mutator: "mutator" { class: ours }
 }
+siblings: "형제 스킬 폴더 (agent_skills/*)" { class: file }
+env: "프로세스 환경변수 GOOGLE_API_KEY" { class: store }
 gemini: "Gemini API (가짜 서버)" { class: ext }
 
 api -> store: "읽기 · 쓰기"
-api -> opt: "optimize() 호출"
-opt -> gemini: "프롬프트"
+api -> opt: "analyze_skill() · optimize() 호출"
+api -> siblings: "예제 목록 · 불러오기"
+opt -> env: "생성자가 요청 키를 덮어씀"
+opt -> gemini: "프롬프트 (키는 첫 호출 때 환경에서 읽음)"

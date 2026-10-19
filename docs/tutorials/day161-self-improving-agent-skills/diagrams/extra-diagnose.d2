@@ -1,0 +1,18 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+api: "엔드포인트 (app.py)" { class: ours }
+opt: "SkillOptimizer" { class: ours }
+ana: "analyst" { class: ours }
+gemini: "Gemini (가짜 서버)" { class: ext }
+mut: "mutator" { class: ours }
+
+opt -> api: "experiment_start 이벤트 (라운드마다)"
+opt -> ana: "실패 다섯 건 + SKILL.md 앞 2,000자"
+ana -> gemini: "진단 요청 (output_schema)"
+gemini -> ana: "원인 · 전략 JSON"
+ana -> opt: "diagnosis · strategy"
+opt -> mut: "진단 + SKILL.md 전문"
+mut -> gemini: "수정 요청 (output_schema)"
+gemini -> mut: "새 SKILL.md 전문"
+mut -> opt: "description · new_skill_md"

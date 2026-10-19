@@ -1,6 +1,6 @@
 # Day 161 · ♾️ Self-Improving Agent Skills
 
-> 볼륨 16 🧩 Agent Skills · 난이도 ★★★ · 예상 소요 210분(파이썬 파일 스물다섯 개를 직접 만들고, 터미널 셋에서 가짜 서버를 대본을 바꿔 가며 여러 번 다시 띄우고, 실험 열 개의 출력을 읽고 소스와 맞대 보는 데 시간이 듭니다) · API 비용 대략 0원(Gemini를 한 번도 부르지 않았습니다. 진짜 키로 쓴다면 20라운드 한 번에 모델을 약 150번 부르고 1달러 안팎입니다. 어림입니다) · 원본 앱: `agent_skills/self-improving-agent-skills`
+> 볼륨 16 🧩 Agent Skills · 난이도 ★★★ · 예상 소요 260분(파이썬 파일 스물일곱 개를 직접 만들고, 터미널 셋에서 가짜 서버를 대본을 바꿔 가며 여러 번 다시 띄우고, 줄을 하나씩 뺀 판과 실험 열두 개의 출력을 읽고 소스와 맞대 보는 데 시간이 듭니다) · API 비용 대략 0원(Gemini를 한 번도 부르지 않았습니다. 진짜 키로 쓴다면 20라운드 한 번에 모델을 약 150번 부르고 1달러 안팎입니다. 어림입니다) · 원본 앱: `agent_skills/self-improving-agent-skills`
 
 ## 오늘 만들 것
 
@@ -13,8 +13,8 @@
 1. `agent_skills/self-improving-agent-skills`에는 `SKILL.md`가 없습니다. 스킬 구조 검사는 오류 1, 보안 검사는 "SKILL.md 없음", 레지스트리 검사는 통과이고 레지스트리에는 이 앱이 없습니다(Step 1).
 2. `requirements.txt`는 하한만 있어서 오늘 `google-adk` 2.12.0이 풀리고, 이 판은 Python 3.11 이상을 요구합니다. 앱 README는 3.10 이상이라고 적습니다(Step 1).
 3. `python app.py`는 서버를 `0.0.0.0`에 엽니다. 앱은 ADK를 라이브러리로만 쓰고 `adk` 명령을 쓰지 않으며, 불러온 뒤에도 `google.adk.cli` 모듈이 하나도 올라오지 않습니다(Step 2).
-4. zip의 위험한 이름 여섯 개(`..`, 절대 경로, 드라이브 문자)는 건너뛰어지고 점 두 개가 든 멀쩡한 이름 하나도 함께 빠집니다. 그런데 서버는 압축을 디스크에 풀지 않으므로 이 검사가 지키는 것은 다른 곳입니다. 크기 한도는 풀기 **전**에는 압축 크기에만, 파일 하나 1 MB는 풀어 읽은 **뒤**에 걸려서, 130,801바이트 zip이 서버 메모리를 약 254 MB 올렸습니다. Windows에서는 폴더 안 파일 하나짜리 zip이 "No SKILL.md found"로 거절되고, 폴더로 감싼 zip의 `references/`는 분석에 실리지 않습니다(Step 3, 4).
-5. API 키를 요청 본문으로 받는 설계는 키가 서버 프로세스의 환경변수 하나(`GOOGLE_API_KEY`)에 덮어써진다는 뜻입니다. 두 세션을 동시에 돌리면 한쪽 요청에 다른 쪽 키가 실렸고, 빈 문자열 키는 서버 셸의 `GEMINI_API_KEY`로 이어졌으며, CORS는 어떤 Origin이든 되돌려 주고 인증은 없습니다. 키가 응답이나 로그에 남지는 않았습니다(Step 4).
+4. zip의 위험한 이름 여섯 개(`..`, 절대 경로, 드라이브 문자)는 건너뛰어지고 점 두 개가 든 멀쩡한 이름 하나도 함께 빠집니다. 그런데 서버는 압축을 디스크에 풀지 않으므로 이 검사가 지키는 것은 다른 곳입니다. 크기 한도는 풀기 **전**에는 압축 크기에만, 파일 하나 1 MB는 풀어 읽은 **뒤**에 걸려서, 130,801바이트 zip이 서버 메모리를 약 256 MB 올렸습니다. Windows에서는 폴더 안 파일 하나짜리 zip이 "No SKILL.md found"로 거절되고, 폴더로 감싼 zip의 `references/`는 분석에 실리지 않습니다(Step 3, 4).
+5. API 키를 요청 본문으로 받는 설계는 키가 서버 프로세스의 환경변수 하나(`GOOGLE_API_KEY`)에 덮어써진다는 뜻입니다. 두 세션을 동시에 돌리면 한쪽 요청에 다른 쪽 키가 실렸고, 빈 문자열 키는 서버 셸의 `GEMINI_API_KEY`로 이어졌으며, CORS는 어떤 Origin이든 되돌려 주고 인증은 없습니다. 서버 셸에 Vertex 설정이 있으면 요청의 키는 무시되고 진짜 자격 증명(gcloud 로그인)을 찾으러 갑니다. 키가 응답이나 로그에 남지는 않았습니다(Step 4).
 6. 20라운드 한 번은 모델 요청 151건(시나리오 3개 기준)이고 입력만 약 26만 토큰(어림)입니다. README가 말하는 "목표 통과율에서 멈춤"은 코드에 없어서 100%가 된 뒤에도 남은 16라운드가 다 돌았습니다(Step 5).
 7. 점수가 **오르면** 남기는 규칙(`>`) 때문에, 아무것도 바꾸지 않은 변경이 판정 잡음 하나로 "개선"이 되었고, 머리말을 지운 변경이 점수만 올라 남아서 구조 검사가 실패하는 스킬이 내려왔습니다(Step 5).
 8. 멈춤 버튼은 멈추지 않습니다. 멈춘 뒤에도 요청이 48건 더 나갔고 상태는 `stopped`에서 다시 `complete`가 되었습니다. 화면은 SSE 주소를 부르지 않고 3초마다 상태를 읽으며, 예제 버튼 둘은 서버에 없는 이름이라 404입니다(Step 6, 7).
@@ -22,7 +22,7 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-위 그림의 "호출하는 쪽"과 "백엔드"는 묶음이고, 묶음 안 상자 사이의 관계는 [`extra-structure`](diagrams/extra-structure.svg)에 화살표로 따로 그렸습니다.
+위 그림의 "호출하는 쪽"과 "백엔드"는 묶음이고, 묶음 안 상자 사이의 관계는 [`extra-structure`](diagrams/extra-structure.svg)에 화살표로 따로 그렸습니다. 거기에는 엔드포인트가 읽는 형제 스킬 폴더와, `SkillOptimizer`가 요청 키를 덮어쓰고 google-genai가 첫 호출 때 읽는 프로세스 환경변수 `GOOGLE_API_KEY`도 있습니다. 요청 흐름은 아래 "요청 한 건이 흐르는 과정"에 에이전트별로 나눠 그렸습니다.
 
 ![백엔드 안의 구조](diagrams/extra-structure.svg)
 
@@ -62,7 +62,7 @@
 
 **목적.** 원본에는 아무것도 쓰지 않고, 앱이 무엇으로 이루어졌고 오늘 어떤 판으로 설치되는지 확인합니다. 그리고 이 폴더가 저장소의 스킬 시험 도구에 어떻게 보이는지 봅니다.
 
-**할 일.** 저장소 루트에서 시작합니다. 먼저 작업 폴더와 환경 파일을 만듭니다. `LAB`은 저장소 밖의 새 폴더로 자기 경로로 바꿉니다. 환경 파일은 HOME·USERPROFILE·CLAUDE_CONFIG_DIR·TEMP를 이 폴더로 돌려서, 이 문서가 부르는 프로세스가 진짜 홈의 설정과 자격 증명을 볼 수 없게 합니다.
+**할 일.** 저장소 루트에서 시작합니다. 먼저 작업 폴더와 환경 파일을 만듭니다. `LAB`은 저장소 밖의 새 폴더로 자기 경로로 바꿉니다. 환경 파일은 HOME·USERPROFILE·CLAUDE_CONFIG_DIR·TEMP와 gcloud 설정 폴더(`CLOUDSDK_CONFIG`)를 이 폴더로 돌려서, 이 문서가 부르는 프로세스가 진짜 홈의 설정과 gcloud 자격 증명을 보지 않게 합니다. Windows의 `APPDATA`는 돌리지 않습니다. 돌리면 uv가 관리하는 Python을 찾지 못하고 새로 내려받으려 하기 때문입니다. 대신 google-auth가 `CLOUDSDK_CONFIG`를 `%APPDATA%\gcloud`보다 먼저 보는 점에 기댑니다(Step 4에서 시험합니다). 환경 파일의 첫 줄들은 `LAB`이 비었거나 `.claude`·`.agents` 같은 에이전트 설정 폴더(또는 `CLAUDE_CONFIG_DIR`) 아래이면 멈춥니다. 마지막 세 줄은 이 셸에서 따로 `adk`를 치는 경우를 위한 준비입니다. 새 홈에 `{"telemetry": false}`를 미리 쓰고, `adk`를 칠 때는 `adk telemetry disable`을 먼저 한 번(이 홈의 설정만 바뀝니다) 하고 `adk … < /dev/null`처럼 stdin을 닫습니다. 첫 질문의 Enter가 텔레메트리를 켜기 때문입니다([Day 149](../day149-release-radar-agent/README.md)).
 
 ```bash
 cd awesome-llm-apps
@@ -71,40 +71,70 @@ export LAB=/path/to/d161-lab          # 저장소 밖의 새 폴더(자기 경�
 mkdir -p "$LAB/home" "$LAB/tmp" "$LAB/uvcache" "$LAB/work"
 cat > "$LAB/env.sh" <<'EOF'
 # Day 161 작업 셸의 환경. 이 문서의 모든 명령은 이 파일을 불러온 셸에서 돌린다.
+: "${REPO:?REPO를 먼저 정하세요}" "${LAB:?LAB을 먼저 정하세요}"
+_lab=$(cd "$LAB" 2>/dev/null && pwd -P) || { echo "LAB 폴더가 없습니다: $LAB"; return 1; }
+_low=$(printf '%s/' "$_lab" | tr 'A-Z' 'a-z')
+case "$_low" in
+  */.claude/*|*/.agents/*|*/.codex/*|*/.cursor/*|*/.copilot/*|*/.openclaw/*|*/.hermes/*)
+    echo "LAB이 에이전트 설정 폴더 아래입니다: $_lab"; return 1 ;;
+esac
+if [ -n "${CLAUDE_CONFIG_DIR:-}" ] && _cfg=$(cd "$CLAUDE_CONFIG_DIR" 2>/dev/null && pwd -P); then
+  _cfg=$(printf '%s/' "$_cfg" | tr 'A-Z' 'a-z')
+  case "$_low" in "$_cfg"*) echo "LAB이 CLAUDE_CONFIG_DIR 아래입니다"; return 1 ;; esac
+fi
 export HOME="$LAB/home" USERPROFILE="$LAB/home" CLAUDE_CONFIG_DIR="$LAB/home/.claude"
 export TEMP="$LAB/tmp" TMP="$LAB/tmp" TMPDIR="$LAB/tmp"
+export CLOUDSDK_CONFIG="$LAB/home/gcloud"
 export UV_CACHE_DIR="$LAB/uvcache"
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8 PYTHONDONTWRITEBYTECODE=1
 export NO_PROXY=127.0.0.1,localhost,::1 no_proxy=127.0.0.1,localhost,::1
 export BACKEND="$REPO/agent_skills/self-improving-agent-skills/backend"
-export FAKE_PORT=51873 APP_PORT=51877
+export FAKE_PORT=51873 APP_PORT=51877 APP2_PORT=51881
 case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) VBIN=Scripts/python.exe ;; *) VBIN=bin/python ;; esac
 export PY="$LAB/venv/$VBIN"
 unset VIRTUAL_ENV
 EOF
-source "$LAB/env.sh"
-cd "$LAB/work"
+source "$LAB/env.sh" && {
+  mkdir -p "$LAB/home/.adk" "$LAB/home/gcloud"
+  printf '{"telemetry": false}\n' > "$LAB/home/.adk/config.json"
+  cd "$LAB/work"
+}
 ```
 
 ```powershell
 Set-Location awesome-llm-apps
 $env:REPO = (Get-Location).Path
 $env:LAB = "C:\d161-lab"              # 저장소 밖의 새 폴더(자기 경로로 바꾼다)
-New-Item -ItemType Directory -Force "$env:LAB\home","$env:LAB\tmp","$env:LAB\uvcache","$env:LAB\work" | Out-Null
-$env:HOME = "$env:LAB\home"; $env:USERPROFILE = "$env:LAB\home"; $env:CLAUDE_CONFIG_DIR = "$env:LAB\home\.claude"
-$env:TEMP = "$env:LAB\tmp"; $env:TMP = "$env:LAB\tmp"; $env:TMPDIR = "$env:LAB\tmp"; $env:UV_CACHE_DIR = "$env:LAB\uvcache"
-$env:PYTHONUTF8 = "1"; $env:PYTHONIOENCODING = "utf-8"; $env:PYTHONDONTWRITEBYTECODE = "1"
-$env:NO_PROXY = "127.0.0.1,localhost,::1"
-$env:BACKEND = "$env:REPO\agent_skills\self-improving-agent-skills\backend"
-$env:FAKE_PORT = "51873"; $env:APP_PORT = "51877"
-$PY = "$env:LAB\venv\Scripts\python.exe"
-Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue
-Set-Location "$env:LAB\work"
+$ok = $true
+if (-not (Test-Path $env:LAB)) { New-Item -ItemType Directory -Force $env:LAB | Out-Null }
+$low = ((Resolve-Path $env:LAB).Path.TrimEnd('\') + '\').ToLower()
+foreach ($d in '.claude','.agents','.codex','.cursor','.copilot','.openclaw','.hermes') {
+  if ($low.Contains("\$d\")) { Write-Host "LAB이 에이전트 설정 폴더($d) 아래입니다"; $ok = $false }
+}
+if ($env:CLAUDE_CONFIG_DIR -and (Test-Path $env:CLAUDE_CONFIG_DIR)) {
+  $cfg = ((Resolve-Path $env:CLAUDE_CONFIG_DIR).Path.TrimEnd('\') + '\').ToLower()
+  if ($low.StartsWith($cfg)) { Write-Host "LAB이 CLAUDE_CONFIG_DIR 아래입니다"; $ok = $false }
+}
+if ($ok) {
+  New-Item -ItemType Directory -Force "$env:LAB\home","$env:LAB\tmp","$env:LAB\uvcache","$env:LAB\work","$env:LAB\home\.adk","$env:LAB\home\gcloud" | Out-Null
+  [IO.File]::WriteAllText("$env:LAB\home\.adk\config.json", '{"telemetry": false}' + "`n")
+  $env:HOME = "$env:LAB\home"; $env:USERPROFILE = "$env:LAB\home"; $env:CLAUDE_CONFIG_DIR = "$env:LAB\home\.claude"
+  $env:TEMP = "$env:LAB\tmp"; $env:TMP = "$env:LAB\tmp"; $env:TMPDIR = "$env:LAB\tmp"; $env:UV_CACHE_DIR = "$env:LAB\uvcache"
+  $env:CLOUDSDK_CONFIG = "$env:LAB\home\gcloud"
+  $env:PYTHONUTF8 = "1"; $env:PYTHONIOENCODING = "utf-8"; $env:PYTHONDONTWRITEBYTECODE = "1"
+  $env:NO_PROXY = "127.0.0.1,localhost,::1"
+  $env:BACKEND = "$env:REPO\agent_skills\self-improving-agent-skills\backend"
+  $env:FAKE_PORT = "51873"; $env:APP_PORT = "51877"; $env:APP2_PORT = "51881"
+  $PY = "$env:LAB\venv\Scripts\python.exe"
+  Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue
+  Set-Location "$env:LAB\work"
+}
 ```
 
-(PowerShell 줄은 이 문서에서 실행해 보지 못했습니다. 이 문서의 나머지 명령은 모두 bash로 돌렸고, PowerShell에서는 `"$PY" x.py`를 `& $PY x.py`로, `$APP_PORT`를 `$env:APP_PORT`로, `curl`을 `curl.exe`로 바꿉니다. 새 터미널마다 위 블록을 다시 실행합니다.) 이어서 줄 수와 `.env` 흔적을 세고, 가상환경을 만들어 앱의 `requirements.txt`를 그대로 설치합니다. `psutil`은 Step 3의 메모리 재기, `pytest`와 `coverage`는 Step 8에 씁니다.
+(PowerShell 줄은 이 문서에서 Windows PowerShell 5.1로 환경 블록의 점검 부분과 환경변수 앞붙임·로그 인코딩만 시험했고, 나머지는 실행해 보지 못했습니다. 이 문서의 명령은 모두 Git Bash로 돌렸습니다. 파일을 만드는 `cat > x.py <<'EOF'` 블록과 `grep`·`sed`·`head`·`cut`·`for` 같은 셸 도구가 든 블록은 Git Bash에서 치는 것이 가장 안전합니다. 서버를 띄우는 터미널 A·B·B2와 파이썬만 부르는 줄은 PowerShell에서 `"$PY" x.py`를 `& $PY x.py`로, `$APP_PORT`를 `$env:APP_PORT`로, `curl`을 `curl.exe`로 바꿔 씁니다. `VAR=값 명령`꼴의 앞붙임은 PowerShell에서는 세션에 남으므로 위 블록처럼 `try { … } finally { Remove-Item Env:… }`로 감쌉니다. 새 터미널마다 위 블록을 다시 실행합니다.) 이어서 줄 수와 `.env` 흔적을 세고, 가상환경을 만들어 앱의 `requirements.txt`를 그대로 설치합니다. `psutil`은 Step 3의 메모리 재기, `pytest`와 `coverage`는 Step 8에 씁니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cd "$REPO/agent_skills/self-improving-agent-skills"
 wc -l README.md backend/app.py backend/adk_optimizer.py backend/test_app.py backend/requirements.txt
 cat frontend/src/app/*.tsx frontend/src/components/*.tsx | wc -l
@@ -115,6 +145,7 @@ cd "$LAB/work"
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 uv venv --python 3.12 "$LAB/venv"
 uv pip install --python "$PY" -r "$BACKEND/requirements.txt" psutil pytest coverage 2>&1 | grep -E "^(Resolved|Prepared|Installed)"
 uv pip list --python "$PY" | grep -E -i "^(fastapi|uvicorn|starlette|pydantic|python-multipart|google-adk|google-genai|httpx|opentelemetry-sdk) "
@@ -146,9 +177,9 @@ uv pip compile "$BACKEND/requirements.txt" --python-version 3.10 --no-header --n
 Using CPython 3.12.10
 Creating virtual environment at: <LAB>/venv
 Activate with: source <LAB>/venv/Scripts/activate
-Resolved 57 packages in 999ms
-Prepared 57 packages in 4.91s
-Installed 57 packages in 1.68s
+Resolved 57 packages in 736ms
+Prepared 57 packages in 4.53s
+Installed 57 packages in 1.53s
 Using Python 3.12.10 environment at: <LAB>\venv
 fastapi                            0.141.1
 google-adk                         2.12.0
@@ -163,14 +194,15 @@ Using Python 3.12.10 environment at: <LAB>\venv
 57
 {'google-adk': '>=3.11', 'starlette': '>=3.11', 'fastapi': '>=3.10'}
 warning: The requested Python version 3.10 is not available; 3.13.3 will be used to build dependencies instead.
-Resolved 51 packages in 133ms
+Resolved 51 packages in 127ms
 google-adk==2.11.0
 starlette==1.7.0
 ```
 
-`requirements.txt`는 `>=` 하한만 있어서 오늘은 `fastapi` 0.141.1, `uvicorn` 0.54.0, `starlette` 1.9.0, `pydantic` 2.14.1, `python-multipart` 0.0.32, `google-genai` 2.31.0, `google-adk` 2.12.0으로 풀리고, 시험 도구까지 57개 패키지입니다. `google-adk` 2.12.0과 `starlette` 1.9.0은 `Requires-Python >=3.11`이라서 앱 README(56행)의 "Python 3.10+"는 오늘은 맞지 않습니다. 3.10으로 해석만 해 보면 `google-adk` 2.11.0과 `starlette` 1.7.0이 나옵니다(해석만 봤고 3.10에서 설치하거나 실행하지는 않았습니다. 3.10이 없으면 위처럼 uv가 경고합니다). 다음은 같은 폴더를 저장소의 스킬 시험 도구에 보여 줍니다. 읽기만 하는 검사입니다.
+`requirements.txt`는 `>=` 하한만 있어서 오늘은 `fastapi` 0.141.1, `uvicorn` 0.54.0, `starlette` 1.9.0, `pydantic` 2.14.1, `python-multipart` 0.0.32, `google-genai` 2.31.0, `google-adk` 2.12.0으로 풀리고, 시험 도구까지 57개 패키지입니다. `google-adk` 2.12.0과 `starlette` 1.9.0은 `Requires-Python >=3.11`이라서 앱 README(56행)의 "Python 3.10+"는 이 문서가 시험한 판(2.12.0·1.9.0)에는 맞지 않습니다. 3.10으로 해석만 해 보면 더 낮은 `google-adk` 2.11.0과 `starlette` 1.7.0이 나와 이 문서와 다른 조합이 됩니다(해석만 봤고 3.10에서 설치하거나 돌려 보지는 않았으므로 3.10에서 앱이 안 된다는 뜻은 아닙니다. 3.10이 없으면 위처럼 uv가 경고합니다). 다음은 같은 폴더를 저장소의 스킬 시험 도구에 보여 줍니다. 읽기만 하는 검사입니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cd "$REPO"
 "$PY" -B -X utf8 agent_skills/evals/tools/skill_lint.py agent_skills/self-improving-agent-skills --strict
 "$PY" -B -X utf8 agent_skills/evals/tools/skill_scanner.py agent_skills/self-improving-agent-skills
@@ -196,9 +228,10 @@ Checking registry at <REPO> (mode=check)
 
 **목적.** 앱을 돌리기 전에 바깥으로 나갈 길을 막고, 모델 자리에 가짜 서버를 둡니다. 원본의 마지막 줄(`app.py:587-589`)이 `uvicorn.run(app, host="0.0.0.0", port=8891)`이라서 `python app.py`는 같은 네트워크의 누구에게나 서버를 엽니다. 이 문서는 원본을 고치지 않고 `app.py`를 불러오기만 한 뒤 uvicorn을 `127.0.0.1`로 직접 엽니다.
 
-**할 일.** 파일 셋을 만듭니다. `guard.py`는 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로 못 나가게 막고 환경변수를 프로세스 안에서 직접 정합니다. `fake_gemini.py`는 127.0.0.1의 한 포트에서 `generateContent` 요청에 대본대로 답합니다. 키가 `fake-`로 시작하지 않으면 401로 거절하고 키 전체는 기록하지 않습니다. `serve_backend.py`가 둘을 엮어 서버를 엽니다.
+**할 일.** 파일 셋을 만듭니다. `guard.py`는 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로 못 나가게 막고, 루프백 밖에서 **듣는 것**(bind)과 `gcloud` 실행도 막으며, 환경변수를 프로세스 안에서 직접 정합니다. `fake_gemini.py`는 127.0.0.1의 한 포트에서 `generateContent` 요청에 대본대로 답합니다. 키가 `fake-`로 시작하지 않으면 401로 거절하고 키 전체는 기록하지 않습니다. `serve_backend.py`가 둘을 엮어 서버를 엽니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > guard.py <<'EOF'
 """루프백 가드. 서버를 띄우는 파일이 가장 먼저 불러온다.
 
@@ -222,7 +255,7 @@ EMPTY_VARS = ("GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION", "GOOGLE_APPLICATI
 
 BLOCKED = []
 INSTALLED = False
-_connect, _gai, _create = socket.socket.connect, socket.getaddrinfo, be.BaseEventLoop.create_connection
+_connect, _bind, _gai, _create = socket.socket.connect, socket.socket.bind, socket.getaddrinfo, be.BaseEventLoop.create_connection
 
 
 def is_loopback(host: str) -> bool:
@@ -255,6 +288,13 @@ def install() -> None:
             raise ConnectionRefusedError(f"가드: 루프백 밖 연결을 막았습니다 ({host})")
         return _connect(self, address)
 
+    def guarded_bind(self, address):
+        host = address[0] if isinstance(address, tuple) else str(address)
+        if self.family in (socket.AF_INET, socket.AF_INET6) and not is_loopback(host):
+            _note("bind", host)
+            raise OSError(f"가드: 루프백 밖에서 듣는 것을 막았습니다 ({host})")
+        return _bind(self, address)
+
     def guarded_getaddrinfo(host, *a, **k):
         if isinstance(host, (str, bytes)):
             name = host.decode() if isinstance(host, bytes) else host
@@ -270,19 +310,23 @@ def install() -> None:
         return await _create(self, protocol_factory, host, port, **kw)
 
     socket.socket.connect = guarded_connect
+    socket.socket.bind = guarded_bind
     socket.getaddrinfo = guarded_getaddrinfo
     be.BaseEventLoop.create_connection = guarded_create_connection
 
     real_popen = subprocess.Popen
 
     class GuardedPopen(real_popen):
-        """하위 프로세스는 이 가드를 물려받지 않는다. ADK 2.x의 텔레메트리 전송 프로세스는 띄우지 못하게 한다."""
+        """하위 프로세스는 이 가드를 물려받지 않는다. ADK의 텔레메트리 전송 프로세스와 gcloud는 띄우지 못하게 한다."""
 
         def __init__(self, args, *a, **k):
             text = " ".join(map(str, args)) if isinstance(args, (list, tuple)) else str(args)
             if "_metrics_reporter" in text:
                 _note("subprocess", "adk metrics reporter")
                 raise OSError("가드: ADK 텔레메트리 전송 프로세스를 막았습니다")
+            if "gcloud" in text.lower():  # google-auth가 프로젝트 아이디를 찾으려고 부른다. 진짜 gcloud 설정을 읽는다
+                _note("subprocess", "gcloud")
+                raise OSError("가드: gcloud 실행을 막았습니다")
             super().__init__(args, *a, **k)
 
     subprocess.Popen = GuardedPopen
@@ -301,15 +345,20 @@ def point_at_fake(port: int, shell_keys: dict | None = None) -> None:
     install()
 
 
-def check_env() -> None:
+def require_installed() -> None:
     ok = (
         INSTALLED
         and socket.getaddrinfo.__name__ == "guarded_getaddrinfo"
+        and socket.socket.bind.__name__ == "guarded_bind"
         and be.BaseEventLoop.create_connection.__name__ == "guarded_create_connection"
         and subprocess.Popen.__name__ == "GuardedPopen"
     )
     if not ok:
         sys.exit("가드: 소켓 가드가 설치되어 있지 않습니다. 중단합니다.")
+
+
+def check_env() -> None:
+    require_installed()
     host = urlparse(os.environ.get("GOOGLE_GEMINI_BASE_URL", "")).hostname or ""
     if not is_loopback(host):
         sys.exit(f"가드: GOOGLE_GEMINI_BASE_URL 호스트가 루프백이 아닙니다 ({host or '비어 있음'}). 중단합니다.")
@@ -327,6 +376,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > fake_gemini.py <<'EOF'
 """가짜 Gemini 서버. 127.0.0.1의 한 포트에서 generateContent 요청에 대본대로 답한다(실제 모델이 아니다).
 
@@ -477,10 +527,12 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > serve_backend.py <<'EOF'
 """백엔드를 가드 아래에서 127.0.0.1로만 연다. 모델은 가짜 서버가 대신한다.
 
-사용: BACKEND=<backend 폴더> python serve_backend.py <가짜 Gemini 포트> <앱 포트>
+사용: BACKEND=<backend 폴더> python serve_backend.py <가짜 Gemini 포트> <앱 포트> [로그 파일]
+로그 파일을 주면 화면에 찍는 글을 UTF-8로 그 파일에도 적는다(셸의 tee는 PowerShell 5.1에서 UTF-16이라 쓰지 않는다).
 원본 app.py의 마지막 줄은 host="0.0.0.0"이라 `python app.py`는 모든 네트워크 인터페이스에 열린다.
 여기서는 app.py를 불러오기만 하고 uvicorn을 우리가 127.0.0.1로 연다.
 """
@@ -494,10 +546,38 @@ import guard  # noqa: E402
 sys.path.insert(0, os.environ["BACKEND"])  # 원본 app.py·adk_optimizer.py가 있는 폴더(복사하지 않고 읽기만 한다)
 
 fake_port, app_port = int(sys.argv[1]), int(sys.argv[2])
+if len(sys.argv) > 3:
+
+    class Tee:
+        """화면과 로그 파일에 같이 쓴다."""
+
+        def __init__(self, stream, path):
+            self.stream, self.file = stream, open(path, "a", encoding="utf-8", newline="\n", buffering=1)
+
+        def write(self, text):
+            self.file.write(text)
+            return self.stream.write(text)
+
+        def flush(self):
+            self.file.flush()
+            self.stream.flush()
+
+        def isatty(self):
+            return False
+
+    sys.stdout, sys.stderr = Tee(sys.stdout, sys.argv[3]), Tee(sys.stderr, sys.argv[3])
 guard.point_at_fake(fake_port, json.loads(os.environ.get("D161_SHELL_KEYS", "{}")))
 
+# 쓰기가 이 프로세스 밖으로 새지 않게 한다: 바이트코드(원본 폴더의 __pycache__)와 임시 파일(내려받기 zip)
+sys.dont_write_bytecode = True
+import tempfile  # noqa: E402
+
+tempfile.tempdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tmp")
+os.makedirs(tempfile.tempdir, exist_ok=True)
+
 # ADK 2.x의 `adk` 명령은 첫 실행에 텔레메트리를 묻고(Enter는 켬), 동의가 있으면 하위 프로세스가 사용 기록을 보낸다.
-# 이 앱은 `adk` 명령을 쓰지 않지만(소스로 확인), 같은 폴더에서 `adk`를 부르는 실수에 대비해 독립된 방어선을 둔다.
+# 이 앱은 `adk` 명령을 쓰지 않으므로(소스로 확인) 이 서버 프로세스에서는 아래 줄들이 막을 대상이 없다.
+# 이 줄들은 이 프로세스 안에서만 든다. 같은 셸에서 따로 `adk`를 치는 경우는 환경 파일의 준비(Step 1)가 맡는다.
 adk_home = os.path.join(os.path.dirname(os.path.abspath(__file__)), "adk-home")  # 이 파일 옆의 새 폴더
 os.makedirs(os.path.join(adk_home, ".adk"), exist_ok=True)
 os.environ["HOME"] = os.environ["USERPROFILE"] = adk_home  # 1) 진짜 홈의 동의 기록을 읽지도 쓰지도 않는다
@@ -512,13 +592,14 @@ import app as backend  # noqa: E402  (원본 app.py. __main__ 블록은 실행�
 import uvicorn  # noqa: E402
 
 print(f"서버 PID {os.getpid()} (psutil로 메모리를 볼 때 쓴다)", flush=True)
-uvicorn.run(backend.app, host="127.0.0.1", port=app_port, log_level="info")
+uvicorn.run(backend.app, host="127.0.0.1", port=app_port, log_level="info", use_colors=False)
 EOF
 ```
 
-`serve_backend.py`의 ADK 관련 줄은 [Day 149](../day149-release-radar-agent/README.md)가 `adk` 명령의 텔레메트리(첫 실행의 질문, 하위 프로세스가 `play.googleapis.com`으로 보내는 사용 기록, 가드를 물려받지 않는 점)를 자세히 적은 방어선과 같은 다섯 겹입니다. 홈을 새 폴더로 바꾸고, 그 홈에 `{"telemetry": false}`를 미리 쓰고, stdin을 닫고, `adk`의 `.env` 읽기를 끄고, 가드가 전송 하위 프로세스 실행을 거절하게 합니다. 다만 이 앱은 `adk` 명령을 쓰지 않으니 필요 없을 수도 있습니다. 먼저 그것을 소스로 확인하고, 원본이 서버를 어디에 여는지도 열지 않고 확인합니다. `probe_main.py`는 `app.py`를 `__main__`으로 돌리되 `uvicorn.run`만 가로채 인자를 찍습니다. `adk_library_check.py`는 두 백엔드 파일에서 `adk` 명령과 하위 프로세스 줄을 찾고, `app`을 불러온 뒤 올라온 ADK 모듈과 사용 통계 코드가 든 파일을 봅니다.
+`serve_backend.py`의 ADK 관련 줄은 [Day 149](../day149-release-radar-agent/README.md)가 `adk` 명령의 텔레메트리(첫 실행의 질문, 하위 프로세스가 `play.googleapis.com`으로 보내는 사용 기록, 가드를 물려받지 않는 점)를 자세히 적은 방어선과 비슷한 다섯 겹입니다. 홈을 새 폴더로 바꾸고, 그 홈에 `{"telemetry": false}`를 미리 쓰고, stdin을 닫고, 가드가 전송 하위 프로세스 실행을 거절하게 하는 넷은 같고, 넷째 줄이 다릅니다. Day 149는 동의를 읽는 함수가 늘 `False`를 돌려주게 했는데 여기서는 `adk`가 `.env`를 읽지 못하게 하는 스위치(`ADK_DISABLE_LOAD_DOTENV`, 텔레메트리와는 무관)를 켭니다. 그리고 이 줄들은 **이 서버 프로세스 안에서만** 듭니다. 이 앱은 `adk` 명령을 쓰지 않으니 이 프로세스에서는 막을 대상이 없고, 같은 셸이나 다른 터미널에서 따로 `adk`를 치는 경우는 이 줄들이 닿지 않습니다. 그 경우의 대비는 Step 1의 환경 파일과 새 홈의 `config.json`입니다. 먼저 이 앱이 `adk`를 쓰지 않는다는 것을 소스로 확인하고, 원본이 서버를 어디에 여는지도 열지 않고 확인합니다. `probe_main.py`는 `app.py`를 `__main__`으로 돌리되 `uvicorn.run`만 가로채 인자를 찍습니다. `adk_library_check.py`는 두 백엔드 파일에서 `adk` 명령과 하위 프로세스 줄을 찾고, `app`을 불러온 뒤 올라온 ADK 모듈과 사용 통계 코드가 든 파일을 봅니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_main.py <<'EOF'
 """`python app.py`가 서버를 어디에 여는지 연다 하지 않고 본다: uvicorn.run을 가로채 인자만 찍는다.
 사용: BACKEND=<backend 폴더> python probe_main.py"""
@@ -529,7 +610,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import guard  # noqa: E402
 
-guard.install()
+guard.install()  # 가로채기 줄이 빠져도 0.0.0.0에서 듣는 것(bind)은 가드가 막는다
+guard.require_installed()
 backend = os.environ["BACKEND"]
 sys.path.insert(0, backend)
 import uvicorn  # noqa: E402
@@ -545,6 +627,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > adk_library_check.py <<'EOF'
 """이 앱이 ADK를 라이브러리로만 쓰는지 본다. 모델은 부르지 않는다.
 사용: BACKEND=<backend 폴더> python adk_library_check.py
@@ -600,13 +683,14 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_main.py
 "$PY" adk_library_check.py
 ```
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-터미널 A에서 가짜 Gemini를, 터미널 B에서 백엔드를 띄웁니다. 터미널마다 Step 1의 환경 블록을 먼저 실행합니다. B는 출력을 `app.log`에도 남깁니다(Step 3·4에서 읽습니다).
+터미널 A에서 가짜 Gemini를, 터미널 B에서 백엔드를 띄웁니다. 터미널마다 Step 1의 환경 블록을 먼저 실행합니다. B는 출력을 UTF-8로 `app.log`에도 남깁니다(Step 3·4에서 읽습니다. 셸의 `tee`는 쓰지 않습니다. Windows PowerShell 5.1의 `Tee-Object`는 파일을 UTF-16LE로 써서, 바이트로 ASCII 키를 세는 Step 4의 검사가 키가 있어도 0을 내기 때문입니다).
 
 ```bash
 # 터미널 A
@@ -617,19 +701,20 @@ cd "$LAB/work"
 ```bash
 # 터미널 B
 cd "$LAB/work"
-"$PY" serve_backend.py "$FAKE_PORT" "$APP_PORT" 2>&1 | tee app.log
+"$PY" serve_backend.py "$FAKE_PORT" "$APP_PORT" app.log
 ```
 
 ```powershell
-# 터미널 A (PowerShell, 실행해 보지 못함)
+# 터미널 A (PowerShell)
 Set-Location "$env:LAB\work"; & $PY fake_gemini.py $env:FAKE_PORT fake.log
-# 터미널 B
-Set-Location "$env:LAB\work"; & $PY serve_backend.py $env:FAKE_PORT $env:APP_PORT 2>&1 | Tee-Object app.log
+# 터미널 B (PowerShell)
+Set-Location "$env:LAB\work"; & $PY serve_backend.py $env:FAKE_PORT $env:APP_PORT app.log
 ```
 
 터미널 C에서 서버가 어디에 열렸는지 봅니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 curl --noproxy '*' -s "http://127.0.0.1:$APP_PORT/health"; echo
 curl --noproxy '*' -s "http://127.0.0.1:$APP_PORT/api/models"; echo
 netstat -ano | grep ":$APP_PORT " | grep LISTENING
@@ -655,12 +740,12 @@ OTEL_* 환경변수: ['OTEL_EXPORTER_OTLP_ENDPOINT']
 ```text
 {"status":"healthy"}
 {"default":"gemini-3.8-flash","suggestions":["gemini-3.8-flash","gemini-3-flash-preview","gemini-3.1-pro-preview"]}
-  TCP    127.0.0.1:51877        0.0.0.0:0              LISTENING       26296
+  TCP    127.0.0.1:51877        0.0.0.0:0              LISTENING       39108
 ```
 
-`app.py`를 `__main__`으로 돌리되 `uvicorn.run`만 가로채 보면 원본은 `host='0.0.0.0'`, 포트 8891입니다. 이 문서의 서버는 `127.0.0.1:51877`에만 듭니다(`netstat`의 마지막 줄. 다른 OS는 `lsof -nP -iTCP:$APP_PORT -sTCP:LISTEN`). 두 백엔드 파일에는 `adk` 명령이나 하위 프로세스 줄이 0개이고, `google`에서 가져오는 것은 `google.adk.agents`·`runners`·`sessions`와 `google.genai`뿐입니다. `app`을 불러온 뒤 `google.adk.cli` 모듈은 하나도 올라오지 않았습니다. 사용 통계를 보내는 코드는 설치된 ADK에서 `cli/` 아래 파일 넷과 `utils/_telemetry_config.py`에만 있습니다. 올라온 `google.adk.telemetry` 모듈 둘은 OpenTelemetry 추적용인데, 추적 제공자가 SDK의 `TracerProvider`가 아니라 `ProxyTracerProvider`이고 내보낼 곳이 없습니다. 이 확인은 `OTEL_EXPORTER_OTLP_ENDPOINT`가 셸에 있는 상태에서 했습니다. 막힌 연결은 0건입니다. 그래서 이 앱을 라이브러리로 쓰는 한 텔레메트리 질문과 전송 하위 프로세스는 나오지 않지만, 같은 폴더에서 `adk web` 같은 명령을 직접 치면 사정이 달라집니다. 서버 파일의 방어선은 그 실수에 대한 대비입니다.
+`app.py`를 `__main__`으로 돌리되 `uvicorn.run`만 가로채 보면 원본은 `host='0.0.0.0'`, 포트 8891입니다. 이 문서의 서버는 `127.0.0.1:51877`에만 듭니다(`netstat`의 마지막 줄. 다른 OS는 `lsof -nP -iTCP:$APP_PORT -sTCP:LISTEN`). 두 백엔드 파일에는 `adk` 명령이나 하위 프로세스 줄이 0개이고, `google`에서 가져오는 것은 `google.adk.agents`·`runners`·`sessions`와 `google.genai`뿐입니다. `app`을 불러온 뒤 `google.adk.cli` 모듈은 하나도 올라오지 않았습니다. 사용 통계를 보내는 코드는 설치된 ADK에서 `cli/` 아래 파일 넷과 `utils/_telemetry_config.py`에만 있습니다. 올라온 `google.adk.telemetry` 모듈 둘은 OpenTelemetry 추적용인데, 추적 제공자가 SDK의 `TracerProvider`가 아니라 `ProxyTracerProvider`이고 내보낼 곳이 없습니다. 이 확인은 `OTEL_EXPORTER_OTLP_ENDPOINT`가 셸에 있는 상태에서 했습니다. 막힌 연결은 0건입니다. 그래서 이 앱을 라이브러리로 쓰는 한 텔레메트리 질문과 전송 하위 프로세스는 나오지 않습니다. 같은 셸에서 `adk web` 같은 명령을 직접 치면 사정이 달라집니다. 별개 프로세스라서 서버 파일의 줄은 하나도 닿지 않고, stdin이 터미널이면 ADK 2.12.0은 텔레메트리를 켤지 묻고 Enter가 켭니다(Day 149가 소스로 확인한 `cli_tools_click.py`의 동작입니다). 이 문서의 환경 파일은 그 셸의 HOME을 새 폴더로 돌리고 거기에 거절을 미리 써 두었습니다.
 
-`serve_backend.py`에서 문장 줄을 하나씩 뺀 스무 판도 돌려 봤습니다. 셸에는 진짜 모양의 키(`AIzaSy…` 꼴의 가짜), Vertex 설정, 프록시 변수(감시용 가짜 프록시를 가리킴), `OTEL_EXPORTER_OTLP_ENDPOINT`를 두고 모델 호출이 있는 한 라운드까지 시켰습니다. 열세 판은 `NameError`·`ModuleNotFoundError`·`IndentationError`나 가드의 "소켓 가드가 설치되어 있지 않습니다"(`point_at_fake` 줄을 뺀 판)로 서버가 뜨기 전에 멈췄고(마지막 판은 `uvicorn.run`이 없어 서버가 열리지 않음), 일곱 판은 줄이 빠진 채 서버가 떠서 한 라운드를 끝냈습니다. 모두 루프백 밖으로 나가려던 시도, 감시 프록시에 닿은 연결, 가드 기록이 0이었습니다.
+독자 명령에서 줄 하나를 빠뜨려도 안전한지 줄을 하나씩 뺀 판으로 시험했습니다. 셸에는 진짜 모양의 키(`AIzaSy…` 꼴의 가짜), Vertex 설정, 프록시 변수(감시용 가짜 프록시를 가리킴), `OTEL_EXPORTER_OTLP_ENDPOINT`를 두었고, Windows의 `APPDATA`는 가짜 폴더에 가짜 gcloud 자격 증명 파일(가짜 갱신 토큰)을 두어 독자의 모양을 흉내 냈습니다. `serve_backend.py`는 38판입니다. 20판은 `NameError`·`ModuleNotFoundError`·`IndentationError`나 가드의 "소켓 가드가 설치되어 있지 않습니다"(`point_at_fake` 줄을 뺀 판)로 서버가 뜨기 전에 멈췄고(한 판은 `uvicorn.run`이 없어 서버가 열리지 않음), 18판은 줄이 빠진 채 서버가 떠서 모델 호출이 있는 한 라운드까지 끝냈습니다. `probe_main.py` 14판에서는 `uvicorn.run = fake_run` 줄을 뺀 판이 원본의 `0.0.0.0:8891` 열기를 시도했지만 가드의 bind 막기가 거절했습니다(8891에 듣는 프로세스 0). `probe_vertex.py`는 `GOOGLE_APPLICATION_CREDENTIALS`가 없는 셸과 있는 셸에서 각각 23판, 환경 파일은 줄을 하나씩 뺀 16판을 `probe_vertex.py`와 함께 돌렸습니다. 환경 파일에서 `CLOUDSDK_CONFIG` 줄(이나 그 앞의 점검 줄)을 뺀 판은 탐침이 아무것도 하지 않고 "멈춤:"으로 끝났고, 가드 줄을 뺀 판은 `require_installed()`가 멈췄습니다. 모든 판에서 루프백 밖으로 나가려던 시도, 감시 프록시에 닿은 연결, 파이썬 하위 프로세스(gcloud 포함) 실행이 0이었고 가드 기록에는 의도한 Vertex 관찰의 메타데이터 서버 줄과 그 bind 거절 한 줄뿐이었습니다. 원본의 `__pycache__`와 진짜 TEMP는 환경 파일의 해당 줄을 빼도 `serve_backend.py`가 스스로 바이트코드를 끄고 임시 폴더를 `work/tmp`로 돌려 지켜졌습니다(원본 대신 복사본으로 확인했습니다).
 
 ### Step 3. zip 올리기 — 위험한 이름과 크기 제한
 
@@ -669,6 +754,7 @@ OTEL_* 환경변수: ['OTEL_EXPORTER_OTLP_ENDPOINT']
 **할 일.** 먼저 소스를 읽습니다. 순서는 이렇습니다. 이름이 `.zip`이 아니면 400(189행), 읽은 크기가 10 MB를 넘으면 413(192행)이고 이 검사는 풀기 **전**입니다. 항목마다 디렉터리·`__MACOSX`·`.DS_Store`는 조용히 건너뛰고(199행), `_is_safe_path`(`".." not in name and not os.path.isabs(name)`, 181~183행)가 아니면 경고하고 건너뛰고, 확장자가 허용 목록(`.md .txt .json .yaml .yml .py .js .ts .html .css .xml .toml .cfg .ini .sh`, 28~31행)에 없으면 **읽기 전에** 건너뛰고, 그다음에야 `zf.read(name)`으로 전부 풀어 읽고(207행) 1 MB를 넘으면 건너뛰고(208행), 이미 50개면 멈춥니다(211행). 읽은 파일은 `{이름: 글}` 사전에 담길 뿐입니다(215행). 이어서 공통 앞 폴더를 벗기는 `os.path.commonpath`·`relpath`(218~223행)가 있습니다. 시험용 zip을 만듭니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > mkzips.py <<'EOF'
 """합성 zip을 만든다. 모두 직접 지은 가짜 스킬이고, 위험한 항목은 이름만 위험하다(내용은 한 줄 글).
 
@@ -750,10 +836,14 @@ write("twoskills.zip", [
 
 # 9) 맨 위에 폴더가 없는 zip(스킬 폴더 안에서 내용물만 묶은 모양)
 write("flat.zip", [("SKILL.md", SKILL), ("references/notes.md", "# notes\nextra context\n")])
+
+# 10) 압축이 안 되는 60 MB: 10 MB 한도는 본문을 다 읽은 뒤에 보므로 413이어도 서버 메모리는 오른다
+write("over60mb.zip", [("o/SKILL.md", SKILL), ("o/noise.md", os.urandom(60 * 1024 * 1024))])
 EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" mkzips.py zips
 ```
 
@@ -769,11 +859,13 @@ noskill.zip          136 bytes
 notzip.zip     (zip이 아닌 파일)
 twoskills.zip        566 bytes
 flat.zip             365 bytes
+over60mb.zip   62,934,084 bytes
 ```
 
 `good.zip`은 폴더 하나에 `SKILL.md`·`references/`·`scripts/`·그림을 담았고, `hostile.zip`은 `SKILL.md` 하나와 이름이 이상한 항목 아홉을 담았습니다. `bomb.zip`은 풀면 128 MiB인데 압축은 130,801바이트입니다. 화면 대신 백엔드를 부르는 시험 클라이언트와 올리기 시험을 만듭니다. 클라이언트는 프록시 환경변수를 읽지 않고(`trust_env=False`) 루프백 주소만 부릅니다. 요청 모양은 `UploadStep.tsx`에서 읽은 그대로입니다. 두 번째 인자 `APP_PID`는 터미널 B가 처음에 찍은 서버 PID입니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > lab.py <<'EOF'
 """화면(Next.js) 대신 백엔드를 부르는 시험용 클라이언트. 요청 모양은 frontend/src/components/*.tsx에서 읽은 그대로다.
 
@@ -856,6 +948,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_zip.py <<'EOF'
 """zip 올리기 시험. 사용: python probe_zip.py <zip 폴더> [서버 PID]
 서버 PID를 주면 올릴 때마다 서버 프로세스의 최대 작업 집합(MB)도 적는다(psutil 필요)."""
@@ -878,7 +971,7 @@ def peak_mb():
     return f"  서버 최대 {proc.memory_info().peak_wset / 2**20:,.0f} MB" if proc else ""
 
 
-for name in ("good", "hostile", "many", "bigfile", "bomb", "over10mb", "noskill", "notzip", "twoskills", "folded"):
+for name in ("good", "hostile", "many", "bigfile", "over60mb", "bomb", "over10mb", "noskill", "notzip", "twoskills", "folded"):
     t = time.time()
     r = lab.upload(os.path.join(zdir, name + ".zip"))
     dt = time.time() - t
@@ -904,10 +997,12 @@ export APP_PID=12345      # 터미널 B가 찍은 "서버 PID" 값으로 바꾼�
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_zip.py zips "$APP_PID"
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 grep -E "Skipping|Max file" app.log | sed -e 's/^INFO:app://' -e 's/^WARNING:app://'
 ```
 
@@ -916,17 +1011,18 @@ grep -E "Skipping|Max file" app.log | sed -e 's/^INFO:app://' -e 's/^WARNING:app
 **확인.** 직접 확인한 출력입니다.
 
 ```text
-good       HTTP 200  파일  3개  ['SKILL.md', 'references\\notes.md', 'scripts\\run.py']  (0.0s)  서버 최대 82 MB
-hostile    HTTP 200  파일  3개  ['SKILL.md', 'dot.md', 'double.md']  (0.0s)  서버 최대 82 MB
-many       HTTP 200  파일 50개  ['SKILL.md', 'f00.md', 'f01.md', 'f02.md', 'f03.md', 'f04.md', 'f05.md', 'f06.md', 'f07.md', 'f08.md', 'f09.md', 'f10.md']  (0.0s)  서버 최대 82 MB
-bigfile    HTTP 400  {"detail":"No SKILL.md found"}  (0.0s)  서버 최대 82 MB
-bomb       HTTP 400  {"detail":"No SKILL.md found"}  (0.2s)  서버 최대 336 MB
-over10mb   HTTP 413  {"detail":"Upload exceeds 10MB limit"}  (0.1s)  서버 최대 336 MB
-noskill    HTTP 400  {"detail":"No SKILL.md found"}  (0.0s)  서버 최대 336 MB
-notzip     HTTP 400  {"detail":"Invalid zip file"}  (0.0s)  서버 최대 336 MB
-twoskills  HTTP 200  파일  3개  ['examples\\SKILL.md', 'SKILL.md', 'references\\OLD-SKILL.md']  (0.0s)  서버 최대 336 MB
+good       HTTP 200  파일  3개  ['SKILL.md', 'references\\notes.md', 'scripts\\run.py']  (0.0s)  서버 최대 83 MB
+hostile    HTTP 200  파일  3개  ['SKILL.md', 'dot.md', 'double.md']  (0.0s)  서버 최대 83 MB
+many       HTTP 200  파일 50개  ['SKILL.md', 'f00.md', 'f01.md', 'f02.md', 'f03.md', 'f04.md', 'f05.md', 'f06.md', 'f07.md', 'f08.md', 'f09.md', 'f10.md']  (0.0s)  서버 최대 83 MB
+bigfile    HTTP 400  {"detail":"No SKILL.md found"}  (0.0s)  서버 최대 83 MB
+over60mb   HTTP 413  {"detail":"Upload exceeds 10MB limit"}  (0.2s)  서버 최대 143 MB
+bomb       HTTP 400  {"detail":"No SKILL.md found"}  (0.2s)  서버 최대 339 MB
+over10mb   HTTP 413  {"detail":"Upload exceeds 10MB limit"}  (0.0s)  서버 최대 339 MB
+noskill    HTTP 400  {"detail":"No SKILL.md found"}  (0.0s)  서버 최대 339 MB
+notzip     HTTP 400  {"detail":"Invalid zip file"}  (0.0s)  서버 최대 339 MB
+twoskills  HTTP 200  파일  3개  ['examples\\SKILL.md', 'SKILL.md', 'references\\OLD-SKILL.md']  (0.0s)  서버 최대 339 MB
            메타데이터 {'name': 'inner', 'description': 'inner example'}
-folded     HTTP 200  파일  2개  ['SKILL.md', 'references\\a.md']  (0.0s)  서버 최대 336 MB
+folded     HTTP 200  파일  2개  ['SKILL.md', 'references\\a.md']  (0.0s)  서버 최대 339 MB
            메타데이터 {'name': 'fold', 'description': '>-'}
 upload-files HTTP 200 ['SKILL.md', '.secret.md', 'refs\\a.md']
   보낸 이름: ['pile/SKILL.md', 'pile/../evil.md', 'pile/.secret.md', '.top.md', 'pile/notes..md', 'pile/logo.png', 'pile/refs/a.md']
@@ -954,18 +1050,19 @@ Skipping non-text file: pile/logo.png
 읽는 법입니다.
 
 - **위험한 이름은 건너뛰어집니다.** `../evil.md`, `rule-demo/../../evil2.md`, `../evil3.md`(원래 `..\evil3.md`), `/abs.md`, `C:/win-abs.md`, `C:/win-abs2.md`(원래 `C:\win-abs2.md`) 여섯이 "unsafe zip entry"로 빠지고 `SKILL.md`와 `dot.md`(`./dot.md`), `double.md`(`//double.md`)가 남습니다. 거절 규칙은 `..`라는 **부분 문자열**이라 `rule-demo/notes..md`처럼 점 둘이 든 멀쩡한 이름도 함께 빠져서 로그에는 일곱 줄이 찍힙니다. Windows에서 파이썬은 zip을 읽을 때 `\`를 `/`로 바꾸므로 `..\evil3.md`는 `../evil3.md`로 읽혀 걸립니다. 앱을 POSIX에서 돌리면 `\`가 이름 안의 글자로 남아 `..`만 걸립니다. 이 판단은 소스에서 한 것이고 POSIX에서 돌려 보지는 못했습니다.
-- **그 검사가 지키는 것은 디스크가 아닙니다.** 서버는 항목을 `{이름: 글}` 사전에만 담고 풀어 쓰지 않습니다. 이름은 나중에 `/api/download`가 `improved_skill.zip`에 다시 적는 이름이 됩니다(`app.py:499-504`). 그러니 이 검사의 실제 대상은 그 zip을 **내려받아 푸는 사람의 PC**입니다. `_is_safe_path`가 `os.path.isabs`에 기대는 점은 파이썬 판에 따라 다릅니다. 아래 `paths.py`는 파이썬 3.12에서는 `/abs.md`가 Windows에서도 절대 경로로 잡히지만 3.14.2에서는 아니라고 보여 줍니다. `zipfile.writestr`가 맨 앞의 `/`를 지우지 않는 것은 따로 확인했으니, 3.13 이상의 Windows와 `C:/…`를 못 거르는 POSIX에서는 이런 이름이 내려받는 zip에 실릴 수 있다는 추론이 나옵니다(이 조합으로 서버를 띄워 보지는 못했습니다).
+- **그 검사가 지키는 것은 디스크가 아닙니다.** 서버는 항목을 `{이름: 글}` 사전에만 담고 풀어 쓰지 않습니다. 이름은 나중에 `/api/download`가 `improved_skill.zip`에 다시 적는 이름이 됩니다(`app.py:499-504`). 그러니 이 검사의 실제 대상은 그 zip을 **내려받아 푸는 사람의 PC**입니다. `_is_safe_path`가 `os.path.isabs`에 기대는 점은 파이썬 판에 따라 다릅니다. 아래 `paths.py`는 파이썬 3.12에서는 `/abs.md`가 Windows에서도 절대 경로로 잡히지만 3.14.2에서는 아니라고 보여 줍니다. 그렇다고 3.13 이상의 Windows에서 `/abs.md`가 내려받는 zip에 실리는 것은 아닙니다. 다른 이름과 섞이면 `os.path.commonpath`가 루트 이름과 상대 이름을 섞지 못해 `ValueError`를 던지고 업로드 전체가 500이 되며, 루트 이름만 있으면 `relpath`가 앞의 `\`를 벗깁니다(아래 `up314.py` 출력으로 직접 확인했습니다). 내려받는 zip에 실릴 수 있는 쪽은 `C:/…`를 절대 경로로 보지 못하는 POSIX입니다. `zipfile.writestr`는 이름을 그대로 적습니다(따로 확인했습니다). 이 POSIX 경로는 서버를 띄워 보지 못했습니다.
 - **개수는 50개에서 조용히 잘립니다.** `many.zip`(60개)이 50개로 올라오고 응답에는 잘렸다는 말이 없습니다(서버 로그에만 "Max file count reached").
-- **크기 한도는 풀기 전에 하나, 뒤에 하나입니다.** `over10mb.zip`(10,490,313바이트)은 413입니다. 그런데 항목 하나가 1 MB를 넘는지는 `zf.read`로 **다 읽은 뒤**에 보므로, `bomb.zip`(130,801바이트)이 올라가자 서버 최대 작업 집합이 82 MB에서 336 MB로 약 254 MB 뛰었습니다(`bigfile.zip`은 1 MB 남짓이라 눈에 띄지 않습니다). 이 압축비는 1,026배(134,217,728 ÷ 130,801)입니다. 같은 비율이라면 한도의 10 MB zip은 약 10 GB를 풀게 합니다. 이것은 산수이고 돌려 보지 않았습니다. 이 요청은 업로드한 사람이 서버 메모리를 쓰게 합니다.
+- **크기 한도는 풀기 전에 하나, 뒤에 하나입니다.** `over10mb.zip`(10,490,313바이트)은 413입니다. 그런데 항목 하나가 1 MB를 넘는지는 `zf.read`로 **다 읽은 뒤**에 보므로, `bomb.zip`(130,801바이트)이 올라가자 서버 최대 작업 집합이 시험 시작 때의 83 MB에서 339 MB로 약 256 MB 뛰었습니다(`bigfile.zip`은 1 MB 남짓이라 눈에 띄지 않습니다. 표의 `over60mb` 줄이 143 MB인 것은 아래 60 MB 시험입니다). 이 압축비는 1,026배(134,217,728 ÷ 130,801)입니다. 같은 비율이라면 한도의 10 MB zip은 약 10 GB를 풀게 합니다. 이것은 산수이고 돌려 보지 않았습니다. 이 요청은 업로드한 사람이 서버 메모리를 쓰게 합니다. 10 MB 검사도 같습니다. `upload_skill`은 `await file.read()`로 본문을 **다 읽은 뒤**에 길이를 보므로(`app.py:191-192`) 413은 돌려줄 뿐 서버가 읽는 양을 제한하지 않습니다. 압축이 안 되는 60 MB짜리 `over60mb.zip`은 413인데 서버 최대 작업 집합이 83 MB에서 143 MB로 올랐습니다(표의 `over60mb` 줄).
 - **Windows에서는 폴더 안 파일 하나짜리 zip이 거절됩니다.** `bigfile.zip`과 `bomb.zip`은 큰 파일이 빠지고 `SKILL.md`만 남았는데 응답은 400 "No SKILL.md found"입니다. 원인은 218~223행입니다. 파일이 하나일 때 `os.path.commonpath`가 그 파일 경로 자신을 돌려주는데, Windows에서는 슬래시가 역슬래시로 바뀌어 `common != file_list[0]`이 참이 되고 `relpath(이름, 이름)`이 `.`이 되어 파일이 사라집니다. 아래 `paths.py`가 같은 계산을 보여 줍니다. 스킬을 `SKILL.md` 하나로 쓰고 폴더째 묶으면 만나는 가장 흔한 모양입니다. 폴더 없이 묶거나 파일이 둘 이상이면 됩니다.
 - **같은 이유로 `file_list`가 역슬래시를 갖습니다.** `references\notes.md`처럼 나오는 이름은 Step 4에서 분석 프롬프트에서 `references/` 파일이 빠지는 원인이 됩니다.
 - **`SKILL.md`가 둘이면 먼저 나온 것이 이깁니다.** `twoskills.zip`은 안쪽 `examples/SKILL.md`가 먼저 나와서 세션의 이름이 `inner`가 됩니다. 이 영향은 Step 6에서 봅니다.
 - **머리말을 읽는 줄이 YAML이 아닙니다.** `folded.zip`의 `description: >-`(접힌 설명)는 `">-"`가 되고, 안쪽에 들여 쓴 `metadata:`의 하위 키는 위로 올라옵니다(`parse_skill_frontmatter`, `app.py:128-145`). 줄마다 `strip()`을 한 뒤 `startswith(" ")`를 검사하니 그 검사는 늘 거짓입니다. [agentskills.io 명세](https://agentskills.io/specification)는 머리말을 YAML이라고 하고 `metadata`를 문자열 키·값의 맵으로 정의합니다. 이 저장소의 일곱 스킬 가운데 여섯이 `description: >-`를 써서 예제 목록의 설명도 `>-`가 됩니다(Step 6).
 - **폴더 올리기(`/api/upload-files`)도 같은 이름 검사를 합니다.** `pile/../evil.md`와 `pile/notes..md`와 `.top.md`(맨 앞 점)와 `logo.png`가 빠지고, 하위 폴더의 `.secret.md`는 통과합니다(맨 앞 점만 걸러서).
 
-같은 계산을 파이썬 판에 따라 비교합니다.
+같은 계산을 파이썬 판에 따라 비교합니다. 3.14가 없으면 마지막 두 줄은 건너뜁니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > paths.py <<'EOF'
 """app.py의 경로 검사가 쓰는 함수가 Windows(ntpath)와 POSIX(posixpath)에서 어떻게 다른지 본다. 서버를 띄우지 않는다."""
 import ntpath
@@ -984,6 +1081,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" paths.py
 python3.14 -B paths.py | head -4
 ```
@@ -1002,6 +1100,67 @@ python 3.14.2
   isabs('C:\\x.md'): nt=True, posix=False
 ```
 
+파이썬 3.14용 가상환경을 하나 더 만들어 같은 `hostile.zip`과 루트 이름만 든 zip을 올려 봅니다. 서버 없이 `TestClient`로 `app.py`를 부르고 모델도 네트워크도 쓰지 않습니다.
+
+```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+cat > up314.py <<'EOF'
+"""파이썬 판이 달라지면 업로드 검사가 어떻게 달라지는지 본다(서버 없이 TestClient, 모델·네트워크 없음).
+사용: BACKEND=<backend 폴더> python up314.py <hostile.zip 이 든 폴더>"""
+import io
+import os
+import sys
+import zipfile
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.environ["BACKEND"])
+from fastapi.testclient import TestClient  # noqa: E402
+
+import app as backend  # noqa: E402
+
+print("python", sys.version.split()[0])
+client = TestClient(backend.app)
+
+
+def post(label, data):
+    r = client.post("/api/upload", files={"file": ("s.zip", data, "application/zip")})
+    names = r.json().get("file_list") if r.status_code == 200 else r.json()
+    print(f"  {label:28s} HTTP {r.status_code} {names}")
+    return r
+
+
+post("hostile.zip", open(os.path.join(sys.argv[1], "hostile.zip"), "rb").read())
+buf = io.BytesIO()
+with zipfile.ZipFile(buf, "w") as zf:
+    zf.writestr("/SKILL.md", "---\nname: rooted\ndescription: d\n---\n# x\n")
+    zf.writestr("/abs.md", "rooted only")
+post("rooted names only", buf.getvalue())
+EOF
+```
+
+```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+uv venv --python 3.14 "$LAB/venv314"
+uv pip install --python "$LAB/venv314/$VBIN" -r "$BACKEND/requirements.txt" httpx 2>&1 | grep -E "^(Resolved|Installed)"
+for v in venv venv314; do "$LAB/$v/$VBIN" up314.py zips 2>&1 | grep -E "^(python|  (hostile|rooted))"; done
+```
+
+```text
+Using CPython 3.14.2 interpreter at: C:\Users\<you>\AppData\Local\Python\pythoncore-3.14-64\python.exe
+Creating virtual environment at: <LAB>/venv314
+Activate with: source <LAB>/venv314/Scripts/activate
+Resolved 50 packages in 226ms
+Installed 50 packages in 1.49s
+python 3.12.10
+  hostile.zip                  HTTP 200 ['SKILL.md', 'dot.md', 'double.md']
+  rooted names only            HTTP 400 {'detail': 'No SKILL.md found'}
+python 3.14.2
+  hostile.zip                  HTTP 500 {'detail': 'Error processing file'}
+  rooted names only            HTTP 200 ['SKILL.md', 'abs.md']
+```
+
+3.12에서는 `hostile.zip`이 통과하고 루트 이름만 든 zip은 400입니다(`/SKILL.md`가 거절되어 스킬이 없습니다). 3.14.2에서는 `hostile.zip`이 통째로 500 `Error processing file`이고(루트 이름 `/abs.md`가 상대 이름과 섞여 `commonpath`가 실패), 루트 이름만 든 zip은 통과해 `abs.md`가 됩니다.
+
 ### Step 4. 분석과 API 키 — 키를 요청 본문으로 받는다는 것
 
 **목적.** `/api/analyze`가 모델에게 무엇을 보내는지, 그리고 API 키를 요청 본문으로 받는 설계(`app.py:104-125`의 `gemini_api_key: str`)가 실제로 무엇을 뜻하는지 가짜 키로 확인합니다.
@@ -1009,6 +1168,7 @@ python 3.14.2
 **할 일.** `analyze_skill`(`adk_optimizer.py:139-165`)은 `SKILL.md`와, 이름에 `references/`가 든 파일만 프롬프트에 넣습니다. `README.md`와 `scripts/`는 들어가지 않습니다. 같은 `good.zip`을 폴더째 올린 것과 폴더 없이 올린 `flat.zip`으로 가짜 서버가 받은 분석 프롬프트를 비교합니다. `showlog.py`가 가짜 서버의 기록을 요약합니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > showlog.py <<'EOF'
 """가짜 Gemini 서버의 기록(fake.log)을 요약한다. 사용: python showlog.py <기록 파일>"""
 import collections
@@ -1031,6 +1191,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 : > fake.log
 "$PY" lab.py flow zips/good.zip 1 > flow1.txt; head -2 flow1.txt | cut -c1-150
 "$PY" showlog.py fake.log | tail -1
@@ -1040,10 +1201,10 @@ EOF
 ```
 
 ```text
-upload: HTTP 200 {"session_id":"4287a079-22c9-4fba-bad4-f2f190f0e97d","file_list":["SKILL.md","references\\notes.md","scripts\\run.py"],"metadata":{"n
+upload: HTTP 200 {"session_id":"6f9ac089-112a-49c7-9969-aafde0c9b633","file_list":["SKILL.md","references\\notes.md","scripts\\run.py"],"metadata":{"n
 analyze: HTTP 200 시나리오 3개, 평가 4개, model=gemini-3.8-flash
 분석 프롬프트: 675자 | 'Reference files:' 블록: False | 참고 파일: []
-upload: HTTP 200 {"session_id":"05fde0b9-2092-4c20-a265-1e10bfc59712","file_list":["SKILL.md","references/notes.md"],"metadata":{"name":"rule-demo","d
+upload: HTTP 200 {"session_id":"9292148d-d5d0-4ef3-bf28-0eeba04fe90f","file_list":["SKILL.md","references/notes.md"],"metadata":{"name":"rule-demo","d
 analyze: HTTP 200 시나리오 3개, 평가 4개, model=gemini-3.8-flash
 분석 프롬프트: 739자 | 'Reference files:' 블록: True | 참고 파일: ['references/notes.md']
 ```
@@ -1054,12 +1215,22 @@ analyze: HTTP 200 시나리오 3개, 평가 4개, model=gemini-3.8-flash
 
 ```bash
 # 터미널 B2
-cd "$LAB/work"
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 D161_SHELL_KEYS='{"GOOGLE_API_KEY":"fake-shell-google-1111","GEMINI_API_KEY":"fake-shell-gemini-2222"}' \
-  "$PY" serve_backend.py "$FAKE_PORT" 51881 2>&1 | tee app2.log
+  "$PY" serve_backend.py "$FAKE_PORT" "$APP2_PORT" app2.log
+```
+
+```powershell
+# 터미널 B2 (PowerShell). 환경변수 앞붙임은 세션에 남으므로 끝나면 지웁니다
+Set-Location "$env:LAB\work"
+try {
+  $env:D161_SHELL_KEYS = '{"GOOGLE_API_KEY":"fake-shell-google-1111","GEMINI_API_KEY":"fake-shell-gemini-2222"}'
+  & $PY serve_backend.py $env:FAKE_PORT $env:APP2_PORT app2.log
+} finally { Remove-Item Env:D161_SHELL_KEYS -ErrorAction SilentlyContinue }
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_keys.py <<'EOF'
 """API 키를 요청 본문으로 받는 설계가 무엇을 뜻하는지 가짜 키로 시험한다.
 
@@ -1135,19 +1306,34 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 : > fake.log
-APP_PORT=51881 "$PY" probe_keys.py single fake.log
+APP_PORT="$APP2_PORT" "$PY" probe_keys.py single fake.log
 ```
 
-동시에 돌리는 시험은 가짜 서버를 `D161_DELAY=0.03`으로 다시 띄웁니다(터미널 A를 멈추고 아래로 바꿉니다). 두 스킬을 서로 다른 키로 동시에 최적화합니다.
+```powershell
+# PowerShell: APP_PORT를 이 명령에만 바꿉니다
+$old = $env:APP_PORT
+try { $env:APP_PORT = $env:APP2_PORT; & $PY probe_keys.py single fake.log } finally { $env:APP_PORT = $old }
+```
+
+동시에 돌리는 시험은 가짜 서버를 `D161_DELAY=0.03`으로 다시 띄웁니다(터미널 A를 멈추고 아래로 바꿉니다. 기록도 비웁니다). 두 스킬을 서로 다른 키로 동시에 최적화합니다.
 
 ```bash
 # 터미널 A (다시)
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 D161_DELAY=0.03 "$PY" fake_gemini.py "$FAKE_PORT" fake.log
 ```
 
+```powershell
+# 터미널 A (다시, PowerShell). 앞붙임 변수는 끝나면 지웁니다
+Set-Location "$env:LAB\work"
+try { $env:D161_DELAY = "0.03"; & $PY fake_gemini.py $env:FAKE_PORT fake.log } finally { Remove-Item Env:D161_DELAY -ErrorAction SilentlyContinue }
+```
+
 ```bash
-for i in 1 2 3; do : > fake.log; APP_PORT=51881 "$PY" probe_keys.py race fake.log; echo; done
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+for i in 1 2 3; do : > fake.log; APP_PORT="$APP2_PORT" "$PY" probe_keys.py race fake.log; echo; done
 ```
 
 ![Step 4까지의 구성](diagrams/step4.svg)
@@ -1161,38 +1347,52 @@ gemini_api_key 필드 없음               → HTTP 422 Field required
 ```
 
 ```text
-skill-a: 보낸 키 'fake-keyA-aaaa' / 모델 서버가 받은 키별 요청 수 {'fake-keyA-aaaa': 1, 'fake-keyB-bbbb': 15}
-skill-b: 보낸 키 'fake-keyB-bbbb' / 모델 서버가 받은 키별 요청 수 {'fake-keyB-bbbb': 10}
+skill-a: 보낸 키 'fake-keyA-aaaa' / 모델 서버가 받은 키별 요청 수 {'fake-keyA-aaaa': 17}
+skill-b: 보낸 키 'fake-keyB-bbbb' / 모델 서버가 받은 키별 요청 수 {'fake-keyB-bbbb': 1, 'fake-keyA-aaaa': 18}
 
-skill-a: 보낸 키 'fake-keyA-aaaa' / 모델 서버가 받은 키별 요청 수 {'fake-keyA-aaaa': 2, 'fake-keyB-bbbb': 15}
-skill-b: 보낸 키 'fake-keyB-bbbb' / 모델 서버가 받은 키별 요청 수 {'fake-keyB-bbbb': 13}
+skill-a: 보낸 키 'fake-keyA-aaaa' / 모델 서버가 받은 키별 요청 수 {'fake-keyA-aaaa': 13}
+skill-b: 보낸 키 'fake-keyB-bbbb' / 모델 서버가 받은 키별 요청 수 {'fake-keyB-bbbb': 2, 'fake-keyA-aaaa': 16}
 
-skill-a: 보낸 키 'fake-keyA-aaaa' / 모델 서버가 받은 키별 요청 수 {'fake-keyA-aaaa': 2, 'fake-keyB-bbbb': 13}
-skill-b: 보낸 키 'fake-keyB-bbbb' / 모델 서버가 받은 키별 요청 수 {'fake-keyB-bbbb': 13}
+skill-a: 보낸 키 'fake-keyA-aaaa' / 모델 서버가 받은 키별 요청 수 {'fake-keyA-aaaa': 2, 'fake-keyB-bbbb': 14}
+skill-b: 보낸 키 'fake-keyB-bbbb' / 모델 서버가 받은 키별 요청 수 {'fake-keyB-bbbb': 16}
 ```
 
 - **빈 키는 서버 셸의 다른 키로 이어집니다.** 첫 요청의 키는 그대로 모델 서버에 닿습니다(`fake-req-key-1`). 둘째는 빈 문자열인데 `HTTP 200`이고 모델 서버가 받은 키는 서버 셸에 있던 **`GEMINI_API_KEY`**(`fake-shell-gem…`)입니다. 첫 요청이 `GOOGLE_API_KEY`를 덮어썼고, 빈 문자열은 거짓이라 `google-genai`가 `GOOGLE_API_KEY or GEMINI_API_KEY`(설치된 `google/genai/_api_client.py`의 `get_env_api_key`)의 뒤쪽으로 넘어간 것입니다. 키 필드를 빼면 422이지만 빈 문자열은 통과합니다. 서버를 띄운 셸에 `GEMINI_API_KEY`가 있으면 **키 없는 요청이 서버 주인의 키로 모델을 부른다**는 뜻입니다.
 - **셸이나 `.env`의 `GOOGLE_API_KEY`는 첫 요청이 덮어씁니다.** 앱 README는 `.env`의 `GOOGLE_API_KEY`가 "로컬 개발용 선택 사항"이라고 하지만, 요청이 키를 보내면 그 값이, 빈 값을 보내도 빈 값이 이깁니다. 앞 단계의 확인대로 코드는 `.env`를 읽지도 않습니다.
-- **동시에 돌면 키가 섞입니다.** 환경변수가 하나이고 ADK의 클라이언트는 첫 호출 때 만들어지므로 먼저 시작한 세션의 요청에 나중에 시작한 세션의 키가 실립니다. 세 번 돌린 결과가 위와 같습니다. 세 번 모두 스킬 A의 요청 16·17·15건 가운데 A의 키는 1·2·2건뿐이고 나머지는 B의 키였습니다. 문서를 쓰며 앞서 탐색한 실행에서는 방향이 반대인 판도 있었으니, 누구의 키로 나가는지는 타이밍이 정합니다. 쓴 사람의 키로 남의 스킬 글이 나가고, 남의 계정에 요금이 붙습니다.
+- **동시에 돌면 키가 섞입니다.** 환경변수가 하나이고 ADK의 클라이언트는 첫 호출 때 만들어지므로 먼저 시작한 세션의 요청에 나중에 시작한 세션의 키가 실립니다. 세 번 돌린 결과가 위와 같습니다. 세 번 모두 스킬 A의 요청 16·17·15건 가운데 A의 키는 1·2·2건뿐이고 나머지는 B의 키였습니다. 문서를 쓰며 앞서 탐색한 실행에서는 방향이 반대인 판도 있었으니, 누구의 키로 나가는지는 타이밍이 정합니다. 쓴 사람의 키로 남의 스킬 글이 나가고, 남의 계정에 요금이 붙습니다. 방향과 건수는 실행마다 다릅니다.
 - **서버를 여럿이 쓰면 안 되는 설계입니다.** 인증이 없고(`app.py`에서 `authorization`·`Depends`·`request.headers`를 찾으면 0줄) 세션 아이디가 유일한 비밀입니다.
 
 다음은 Vertex 설정이 셸에 있는 경우, CORS, 키가 남는 곳입니다.
 
+이 탐침은 일부러 Vertex 모드를 켭니다. 그러면 google-auth가 독자의 **진짜 자격 증명**을 찾습니다. Windows에서 gcloud 로그인이 있으면 `%APPDATA%\gcloud\application_default_credentials.json`(갱신 토큰)을 읽고, 프로젝트를 얻으려고 `gcloud config get project`를 하위 프로세스로 띄웁니다. 그래서 `probe_vertex.py`는 시작 전에 `CLOUDSDK_CONFIG`가 `LAB` 아래인지(환경 파일을 불러왔는지)와 `GOOGLE_APPLICATION_CREDENTIALS`가 없는지를 확인하고 아니면 아무것도 하지 않고 멈춥니다. google-auth는 `CLOUDSDK_CONFIG`가 있으면 `%APPDATA%\gcloud` 대신 그 폴더를 보므로(설치된 google-auth 2.62.0의 `_cloud_sdk.py`), 비어 있는 새 `gcloud` 폴더를 가리키면 진짜 자격 증명에 닿지 않습니다. 가드는 `gcloud` 실행을 거절하고, 가드 설치를 `require_installed()`가 한 번 더 확인합니다.
+
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_vertex.py <<'EOF'
 """독자의 셸에 Vertex AI 설정이 있으면 키를 요청 본문으로 줘도 어디로 가는지 본다(가짜 값, 소켓 가드 아래).
-사용: BACKEND=<backend 폴더> python probe_vertex.py"""
-import asyncio
+사용: BACKEND=<backend 폴더> python probe_vertex.py
+이 탐침은 일부러 Vertex 모드를 켠다. 그러면 google-auth가 독자의 진짜 자격 증명(gcloud 로그인)을 찾는다.
+그래서 시작하기 전에 두 가지를 확인하고 하나라도 어긋나면 아무것도 하지 않고 멈춘다.
+"""
 import os
 import sys
+
+lab = os.path.realpath(os.environ.get("LAB", "/nonexistent-lab"))
+gcloud = os.path.realpath(os.environ.get("CLOUDSDK_CONFIG", "/nonexistent-gcloud"))
+if not (gcloud + os.sep).startswith(lab + os.sep):
+    sys.exit("멈춤: CLOUDSDK_CONFIG가 LAB 아래가 아닙니다. 환경 파일을 불러오세요(진짜 gcloud 자격 증명을 읽을 수 있습니다).")
+if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+    sys.exit("멈춤: GOOGLE_APPLICATION_CREDENTIALS가 설정돼 있습니다. 이 탐침은 그 파일을 읽게 됩니다. 지우고 다시 하세요.")
+
+import asyncio  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import guard  # noqa: E402
 
-guard.install()  # 루프백 밖으로는 나가지 못하고, 시도는 BLOCKED에 남는다
+guard.install()  # 루프백 밖으로는 나가지 못하고(시도는 BLOCKED에 남는다) gcloud도 띄우지 못한다
+guard.require_installed()  # 위 줄이 빠졌으면 여기서 멈춘다
 os.environ.update(GOOGLE_GENAI_USE_VERTEXAI="true", GOOGLE_CLOUD_PROJECT="fake-project", GOOGLE_CLOUD_LOCATION="us-central1")
 os.environ["GOOGLE_GEMINI_BASE_URL"] = ""
-os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)  # 자격 증명 파일이 없는 경우를 본다
 sys.path.insert(0, os.environ["BACKEND"])
 from adk_optimizer import SkillOptimizer  # noqa: E402
 
@@ -1206,6 +1406,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_vertex.py 2>&1 | tail -2
 ```
 
@@ -1214,19 +1415,31 @@ EOF
 막은 시도: [('dns', '169.254.169.254'), ('dns', '169.254.169.254'), ('dns', '169.254.169.254')]
 ```
 
-서버 셸에 `GOOGLE_GENAI_USE_VERTEXAI=true`와 프로젝트가 있으면 요청 본문의 키는 **무시됩니다**. 프로세스가 환경변수의 `GOOGLE_API_KEY`만 고치기 때문에 `google-genai`는 Vertex 모드로 가고, 응용 프로그램 기본 자격 증명을 찾느라 메타데이터 서버 주소(`169.254.169.254`)로 세 번 연결을 시도했습니다(가드가 막았습니다). 이 PC에 `gcloud` 로그인이 있었다면 그 신원으로 Vertex AI를 불렀을 것입니다. 그 길은 확인하지 못했습니다. 이어서 CORS와 인증, 키가 남는 곳을 봅니다.
+```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/some-credentials.json "$PY" probe_vertex.py
+```
+
+```text
+멈춤: GOOGLE_APPLICATION_CREDENTIALS가 설정돼 있습니다. 이 탐침은 그 파일을 읽게 됩니다. 지우고 다시 하세요.
+```
+
+서버 셸에 `GOOGLE_GENAI_USE_VERTEXAI=true`와 프로젝트가 있으면 요청 본문의 키는 **무시됩니다**. 프로세스가 환경변수의 `GOOGLE_API_KEY`만 고치기 때문에 `google-genai`는 Vertex 모드로 가고, 빈 `gcloud` 폴더에서는 응용 프로그램 기본 자격 증명을 찾느라 메타데이터 서버 주소(`169.254.169.254`)로 세 번 연결을 시도했습니다(가드가 막았습니다). 둘째 블록은 `GOOGLE_APPLICATION_CREDENTIALS`가 있으면 멈추는 것을 보입니다. 이 설정을 서버를 띄우는 셸에 둔 독자나, 환경 파일 없이 Windows에서 gcloud 로그인이 있는 독자의 서버는 진짜 자격 증명으로 Vertex AI를 부릅니다. 이 문서는 그 길을 시험하지 않았습니다. 작성 과정에서 가짜 `APPDATA`(가짜 갱신 토큰 파일)와 감시 프록시로 같은 탐침을 돌려, `CLOUDSDK_CONFIG` 없이 돌리면 그 파일을 읽고 `oauth2.googleapis.com`으로 토큰 갱신을 시도하는 것을 봤습니다. 이어서 CORS와 인증, 키가 남는 곳을 봅니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 curl --noproxy '*' -s -i -X OPTIONS -H "Origin: http://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" "http://127.0.0.1:$APP_PORT/api/analyze" | grep -i -E "^(HTTP|access-control-allow-(origin|credentials|methods))"
 curl --noproxy '*' -s -i -H "Origin: http://evil.example" "http://127.0.0.1:$APP_PORT/api/models" | grep -i -E "^(HTTP|access-control-allow-(origin|credentials))"
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 grep -n -i -E "authorization|Depends|api_key_header|request\.headers" "$BACKEND/app.py" || echo "(인증을 보는 줄이 없다)"
 grep -n "allow_origins\|allow_credentials" "$BACKEND/app.py"
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_keyleak.py <<'EOF'
 """요청 본문으로 보낸 키가 응답·내려받기·서버 로그에 남는지 센다. 사용: python probe_keyleak.py <zip> <서버 로그>..."""
 import contextlib
@@ -1245,12 +1458,25 @@ status = lab.client.get(f"/api/status/{sid}").content
 zbytes = lab.client.get(f"/api/download/{sid}").content
 inner = b"".join(zipfile.ZipFile(io.BytesIO(zbytes)).read(n) for n in zipfile.ZipFile(io.BytesIO(zbytes)).namelist())
 print("키가 든 곳(발견 횟수): /api/status 응답", status.count(key), "| 내려받은 zip 안의 파일들", inner.count(key), "| 내려받은 zip 자체", zbytes.count(key))
+
+
+def count_in_log(path: str) -> int:
+    """Windows PowerShell 5.1의 Tee-Object는 로그를 UTF-16LE로 쓴다. 그 바이트에서는 ASCII 키가 보이지 않으므로 글로 바꿔 센다."""
+    raw = open(path, "rb").read()
+    if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        text = raw.decode("utf-16", errors="replace")
+    else:
+        text = raw.decode("utf-8", errors="replace")
+    return text.count(lab.KEY)
+
+
 for path in sys.argv[2:]:
-    print(f"  서버 로그 {os.path.basename(path)}: {open(path, 'rb').read().count(key)}")
+    print(f"  서버 로그 {os.path.basename(path)}: {count_in_log(path)}")
 EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 : > fake.log
 "$PY" probe_keyleak.py zips/good.zip app.log app2.log
 ```
@@ -1277,6 +1503,23 @@ access-control-allow-credentials: true
   서버 로그 app2.log: 0
 ```
 
+검사가 로그 인코딩에 속지 않는지도 봅니다. 서버 로그를 Windows PowerShell 5.1의 `Tee-Object`로 남기면 파일이 UTF-16LE(BOM 있음)라서 바이트로 ASCII 키를 세는 검사는 키가 있어도 0을 냅니다(Microsoft 문서: "Tee-Object uses "Unicode" (UTF-16LE) encoding when it writes to files", PowerShell 6부터는 BOM 없는 UTF-8). 이 문서의 서버는 로그를 스스로 UTF-8로 쓰지만, 검사 쪽(`probe_keyleak.py`의 `count_in_log`)도 BOM을 보고 글로 바꿔 셉니다. 아래는 그런 UTF-16 파일을 파이썬으로 만들어 시험한 것입니다. PowerShell 5.1 자체는 이 문서에서 실행해 보지 못했습니다.
+
+```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+"$PY" -c "open('app_utf16.log', 'w', encoding='utf-16').write('server log line with fake-key-' + 'A' * 12 + '\n')"
+"$PY" -c "print('바이트로 센 값:', open('app_utf16.log', 'rb').read().count(b'fake-key-' + b'A' * 12))"
+: > fake.log
+"$PY" probe_keyleak.py zips/good.zip app.log app_utf16.log
+```
+
+```text
+바이트로 센 값: 0
+키가 든 곳(발견 횟수): /api/status 응답 0 | 내려받은 zip 안의 파일들 0 | 내려받은 zip 자체 0
+  서버 로그 app.log: 0
+  서버 로그 app_utf16.log: 1
+```
+
 `allow_origins=["*"]`와 `allow_credentials=True`(`app.py:96-97`)를 함께 두면 Starlette는 요청의 `Origin`을 그대로 돌려줍니다. 가짜 `http://evil.example`을 보내도 `access-control-allow-origin: http://evil.example`이고 자격 증명 허용이 켜져 있습니다. 어떤 웹 페이지의 스크립트든 브라우저를 통해 이 API를 부르고 응답을 읽을 수 있다는 서버 쪽 사실입니다. 브라우저가 로컬 주소로 가는 요청에 따로 거는 제한은 이 문서에서 시험하지 않았습니다. 앞의 "빈 키" 결과와 합치면 `0.0.0.0`으로 연 서버와 인증 없음과 CORS `*`는 서로 겹쳐 위험이 커지는 조합입니다. 반대로 요청 본문의 키는 응답(`/api/status`)에도, 내려받은 zip에도, 서버 로그 둘에도 한 번도 나오지 않았습니다(발견 0). 화면은 키 입력란을 `type="password"`로 두고 React 상태에만 들고 있으며 `localStorage`에는 테마만 씁니다(Step 7). 안내문 "Stored locally, sent only to the backend"(`UploadStep.tsx:316-318`)의 "저장"은 사실 저장이 아니라 요청마다 다시 보내는 것입니다. 마지막으로 Google 요금표에서 무료 단계의 `Used to improve our products` 칸이 `gemini-3.8-flash`에 `Yes`입니다(Step 8). 무료 키로 쓰면 올린 스킬 글이 제품 개선에 쓰일 수 있다는 뜻입니다.
 
 ### Step 5. 최적화 루프 — 호출 수, 유지와 되돌림, 그리고 점수의 한계
@@ -1286,6 +1529,7 @@ access-control-allow-credentials: true
 **할 일.** `SkillOptimizer`(`adk_optimizer.py:48-90`)는 같은 모델 문자열로 에이전트 셋을 만듭니다. **executor**는 세 모드(실행·분석·채점)를 한 에이전트가 맡고, **analyst**와 **mutator**는 Pydantic `output_schema`(`FailureAnalysis`, `SkillMutation`)를 가져 요청에 JSON 응답 설정이 붙습니다(가짜 서버 기록에서 `schema=True`, `mime=application/json`. executor는 둘 다 없음). 루프(167~272행)는 이렇습니다. 기준선 점수를 재고, 라운드마다 analyst가 실패 다섯 건과 `SKILL.md`의 앞 2,000자만 보고 진단하고(`adk_optimizer.py:339-341`), mutator가 전문을 받아 새 `SKILL.md` 전문을 돌려주고, executor가 다시 실행·채점하고, **`new_pct > baseline_pct`면 남기고** 아니면 버립니다(`adk_optimizer.py:220`). 채점은 시나리오마다 executor가 스킬 글을 프롬프트로 받아 "출력"을 만들고(실행), **같은 executor가** 그 출력을 기준에 비춰 JSON으로 채점합니다(`adk_optimizer.py:285-300`). 이 앱의 README가 예로 드는 `project-graveyard`를 올려 20라운드를 돌립니다. `zipdir.py`는 README의 `zip -r` 대신 같은 일을 하는 파이썬 한 파일입니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > zipdir.py <<'EOF'
 """폴더 하나를 zip으로 묶는다(README의 `zip -r project-graveyard.zip project-graveyard/` 대신). 사용: python zipdir.py <폴더> <출력 zip>"""
 import os
@@ -1305,6 +1549,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" zipdir.py "$REPO/agent_skills/project-graveyard" zips/project-graveyard.zip
 : > fake.log
 "$PY" lab.py flow zips/project-graveyard.zip 20 > flow20.txt
@@ -1319,7 +1564,7 @@ sed -n '5,9p;24,29p' flow20.txt
 
 ```text
 zips/project-graveyard.zip 18314 bytes
-upload: HTTP 200 {"session_id":"97a7b86c-a0c6-4d6d-98b2-c8893109927d","file_list":["README.md","SKILL.md","references\\causes-of-death.md","scripts\\graveyard.py"],"metadata":{"name":"project-graveyar
+upload: HTTP 200 {"session_id":"93e5f032-bcf8-446c-b55d-50ec1fd0053d","file_list":["README.md","SKILL.md","references\\causes-of-death.md","scripts\\graveyard.py"],"metadata":{"name":"project-graveyar
   실험  0  baseline   0.0%  
   실험  1  keep      25.0%  Add RULE 1
   실험  2  keep      50.0%  Add RULE 2
@@ -1352,10 +1597,19 @@ download: 200 application/zip 49875 bytes
 
 ```bash
 # 터미널 A (다시)
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 D161_MUTATOR=noop D161_NOISE=0.25 "$PY" fake_gemini.py "$FAKE_PORT" fake.log
 ```
 
+```powershell
+# 터미널 A (다시, PowerShell)
+Set-Location "$env:LAB\work"
+try { $env:D161_MUTATOR = "noop"; $env:D161_NOISE = "0.25"; & $PY fake_gemini.py $env:FAKE_PORT fake.log }
+finally { Remove-Item Env:D161_MUTATOR,Env:D161_NOISE -ErrorAction SilentlyContinue }
+```
+
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_noise.py <<'EOF'
 """아무것도 바꾸지 않는 변경도 '개선'으로 남는지 본다. 사용: python probe_noise.py <zip> [라운드]
 가짜 모델 서버를 D161_MUTATOR=noop D161_NOISE=0.25로 띄워 둔다(판정의 25%가 거꾸로 나온다)."""
@@ -1375,6 +1629,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_noise.py zips/good.zip 12 > noise.txt
 sed -n '5,17p' noise.txt
 grep -E "^(기준선|개선된)" noise.txt
@@ -1398,16 +1653,24 @@ grep -E "^(기준선|개선된)" noise.txt
 개선된 SKILL.md가 원본과 같은가: True
 ```
 
-아무것도 바꾸지 않았는데 기준선 50.0%에서 10라운드의 "no change"가 66.7%로 **남겨졌고**(`keep`) 최종 보고는 50.0 → 66.7, "유지 1"입니다. 내려받은 `SKILL.md`는 원본과 같습니다. 판정이 한 번 운 좋게 오르면 `baseline = result`(`adk_optimizer.py:235`)로 그 점수가 새 기준이 되어 이후 라운드는 더 높은 값을 넘어야 합니다. 앱은 한 번의 표본만 비교하고 같은 스킬을 다시 재지 않습니다. 이 잡음 25%는 제가 정한 값이라 실제 Gemini 판정이 얼마나 흔들리는지는 모릅니다. 시나리오 3개 × 기준 4개면 확인이 12개라 한 칸이 8.3%포인트입니다.
+아무것도 바꾸지 않았는데 기준선 50.0%에서 10라운드의 "no change"가 66.7%로 **남겨졌고**(`keep`) 최종 보고는 50.0 → 66.7, "유지 1"입니다. 내려받은 `SKILL.md`는 원본과 같습니다. 판정이 한 번 운 좋게 오르면 `baseline = result`(`adk_optimizer.py:234`)로 그 점수가 새 기준이 되어 이후 라운드는 더 높은 값을 넘어야 합니다. 앱은 한 번의 표본만 비교하고 같은 스킬을 다시 재지 않습니다. 이 잡음 25%는 제가 정한 값이라 실제 Gemini 판정이 얼마나 흔들리는지는 모릅니다. 시나리오 3개 × 기준 4개면 확인이 12개라 한 칸이 8.3%포인트입니다.
 
 다음은 점수는 오르는데 구조가 깨지는 변경입니다. mutator의 지시문은 "YAML 머리말과 전체 구조를 유지하라"(`adk_optimizer.py:86-87`)이지만 검사하는 코드는 없습니다. 가짜 mutator가 두 번째 변경에서 머리말을 지우게 하고(`D161_MUTATOR=break`) 4라운드를 돌린 뒤, 내려받은 결과를 스크래치에 풀어 저장소의 구조 검사에 넣습니다. 비교용으로 정상 변경(`rule`)의 결과도 같은 검사를 받습니다.
 
 ```bash
 # 터미널 A (다시)
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 D161_MUTATOR=break "$PY" fake_gemini.py "$FAKE_PORT" fake.log
 ```
 
+```powershell
+# 터미널 A (다시, PowerShell)
+Set-Location "$env:LAB\work"
+try { $env:D161_MUTATOR = "break"; & $PY fake_gemini.py $env:FAKE_PORT fake.log } finally { Remove-Item Env:D161_MUTATOR -ErrorAction SilentlyContinue }
+```
+
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_break.py <<'EOF'
 """점수가 오르면 구조를 깨는 변경도 남는지 본다. 사용: python probe_break.py <zip> <풀어 둘 폴더>
 가짜 모델 서버를 D161_MUTATOR=break로 띄워 둔다(두 번째 변경이 머리말 전체를 지운다)."""
@@ -1430,19 +1693,29 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_break.py zips/good.zip broken | tail -3 | cut -c1-120
 ```
 
 ```bash
-# 터미널 A (다시, 기본 대본으로)
+# 터미널 A (다시, 기본 대본으로. 앞의 앞붙임 변수가 남아 있지 않은 새 실행)
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" fake_gemini.py "$FAKE_PORT" fake.log
 ```
 
+```powershell
+# 터미널 A (다시, 기본 대본으로, PowerShell). 앞에서 지우지 않았다면 먼저 지웁니다
+Remove-Item Env:D161_MUTATOR,Env:D161_NOISE,Env:D161_DELAY -ErrorAction SilentlyContinue
+Set-Location "$env:LAB\work"; & $PY fake_gemini.py $env:FAKE_PORT fake.log
+```
+
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_break.py zips/good.zip intact | tail -2 | cut -c1-120
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 for d in intact broken; do
   echo "== $d"
   "$PY" -B -X utf8 "$REPO/agent_skills/evals/tools/skill_lint.py" "$d/rule-demo" --strict
@@ -1482,10 +1755,18 @@ Linting <LAB>\work\broken\rule-demo (strict=on)
 
 ```bash
 # 터미널 A (다시)
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 D161_DELAY=0.1 "$PY" fake_gemini.py "$FAKE_PORT" fake.log
 ```
 
+```powershell
+# 터미널 A (다시, PowerShell)
+Set-Location "$env:LAB\work"
+try { $env:D161_DELAY = "0.1"; & $PY fake_gemini.py $env:FAKE_PORT fake.log } finally { Remove-Item Env:D161_DELAY -ErrorAction SilentlyContinue }
+```
+
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_stop.py <<'EOF'
 """멈춤 버튼이 하는 일을 본다. 사용: python probe_stop.py <zip> <fake 기록 파일>
 가짜 모델 서버를 느리게(D161_DELAY=0.1) 띄워 두고 돌린다."""
@@ -1529,13 +1810,26 @@ print(f"끝난 뒤 모델 서버가 받은 요청 {n_requests()}건 (멈춤 뒤 
 EOF
 ```
 
+`probe_stop.py`는 기록 파일의 줄 수를 세므로 시작 전에 기록을 비웁니다(PowerShell은 `Clear-Content fake.log`).
+
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+: > fake.log
 "$PY" probe_stop.py zips/good.zip fake.log
 ```
 
-가짜 서버를 기본 대본으로 되돌린 뒤(터미널 A를 다시 띄웁니다) 나머지를 봅니다. `probe_sse.py`는 화면이 쓰지 않는 `/api/stream`을 읽고, `probe_names.py`는 `SKILL.md`가 둘인 zip을 개선해 내려받고, `probe_errors.py`는 오류가 올라오는 길을 보고, `probe_examples.py`는 예제 목록을 봅니다.
+가짜 서버를 기본 대본으로 되돌립니다. 터미널 A를 멈추고 앞붙임 변수 없이 다시 띄웁니다(PowerShell은 `Remove-Item Env:D161_DELAY`를 먼저 합니다).
 
 ```bash
+# 터미널 A (다시, 기본 대본)
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+"$PY" fake_gemini.py "$FAKE_PORT" fake.log
+```
+
+나머지를 봅니다. `probe_sse.py`는 화면이 쓰지 않는 `/api/stream`을 읽고, `probe_names.py`는 `SKILL.md`가 둘인 zip을 개선해 내려받고, `probe_errors.py`는 오류가 올라오는 길을 보고, `probe_examples.py`는 예제 목록을 봅니다.
+
+```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_sse.py <<'EOF'
 """/api/stream 이 보내는 이벤트를 본다(화면은 이 주소를 부르지 않는다). 사용: python probe_sse.py <zip>"""
 import json
@@ -1562,6 +1856,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_names.py <<'EOF'
 """두 SKILL.md가 든 zip을 한 번 개선해 내려받고, 어느 파일의 내용이 바뀌었는지 본다."""
 import io
@@ -1591,6 +1886,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_errors.py <<'EOF'
 """오류가 화면까지 어떻게 올라오는지 본다. 사용: python probe_errors.py <zip>"""
 import os
@@ -1616,6 +1912,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > probe_examples.py <<'EOF'
 """/api/examples 목록과 각 예제 불러오기, 그리고 화면이 쓰는 두 이름을 시험한다."""
 import os
@@ -1640,18 +1937,22 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_sse.py zips/good.zip
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_names.py zips/twoskills.zip
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_errors.py zips/good.zip
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" probe_examples.py
 ```
 
@@ -1663,7 +1964,7 @@ EOF
 같은 세션에 시작을 한 번 더 → HTTP 400 {'detail': 'Optimization already running'}
 멈춤 요청 → HTTP 200 {'status': 'stopped'} | 그때까지 모델 서버가 받은 요청 5건
   + 0.0s 상태 'stopped', 요청 누계 5건, 실험 0개
-  +20.1s 상태 'complete', 요청 누계 53건, 실험 7개
+  +20.7s 상태 'complete', 요청 누계 53건, 실험 7개
 끝난 뒤 모델 서버가 받은 요청 53건 (멈춤 뒤 48건 더)
 ```
 
@@ -1716,11 +2017,48 @@ load %2e%2e                       HTTP 400 {"detail":"Invalid example name"}
 load self-improving-agent-skills  HTTP 400 {"detail":"No SKILL.md found"}
 ```
 
+`cp949_check.py`는 서버 없이 `TestClient`로 같은 두 엔드포인트를 UTF-8 모드를 끄고 부릅니다.
+
+```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+cat > cp949_check.py <<'EOF'
+"""UTF-8 모드가 아닐 때(한국어 Windows 기본 cp949) 예제 목록이 어떻게 되는지 본다. 사용: BACKEND=<backend 폴더> python -X utf8=0 cp949_check.py"""
+import locale
+import os
+import sys
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.environ["BACKEND"])
+from fastapi.testclient import TestClient  # noqa: E402
+
+import app as backend  # noqa: E402
+
+print("preferred encoding:", locale.getpreferredencoding(False), "| utf8_mode:", sys.flags.utf8_mode)
+c = TestClient(backend.app, raise_server_exceptions=False)
+print("/api/examples ->", c.get("/api/examples").status_code)
+for n in ("project-graveyard", "commit-archaeologist", "thinking-out-loud"):
+    print("load", n, "->", c.post(f"/api/examples/{n}/load").status_code)
+EOF
+```
+
+```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
+"$PY" -X utf8=0 -B cp949_check.py 2>&1 | grep -E "^(preferred|/api|load)"
+```
+
+```text
+preferred encoding: cp949 | utf8_mode: 0
+/api/examples -> 500
+load project-graveyard -> 500
+load commit-archaeologist -> 500
+load thinking-out-loud -> 500
+```
+
 - **멈춤은 상태 글자만 바꿉니다.** `/api/stop`(`app.py:475-485`)은 `stop_requested`를 `True`로 쓰고 상태를 `stopped`로 바꾸지만, 그 값을 읽는 줄이 `app.py`와 `adk_optimizer.py` 어디에도 없습니다. 멈춤을 보낼 때 가짜 서버가 받은 요청이 5건이었는데 끝나고 보니 53건, 멈춘 뒤에도 **48건**이 더 나갔고 상태는 20초 뒤 `complete`로 돌아왔습니다. 화면은 `stopped`를 받으면 폴링을 접고 멈춘 줄 알지만 서버는 남은 라운드를 다 돌고, 진짜 모델이라면 그만큼의 요금이 붙습니다. 상태가 `complete`로 덮이는 것은 콜백(`app.py:395-396`)과 끝부분(`app.py:462`)이 상태를 다시 쓰기 때문입니다.
 - **화면은 폴링, 서버는 스트림도 줍니다.** `/api/stream`은 `baseline`·`experiment_start`·`experiment_result`·`complete` 이벤트를 SSE로 보내고 `complete`에는 개선된 `SKILL.md` 전문이 실립니다. 그런데 화면에는 `EventSource`도 이 주소 호출도 없고(Step 7의 `grep`), `/api/status`를 3초마다 읽습니다. README가 이 앱의 특징으로 내세우는 "SSE로 실시간 진행"은 화면에서는 쓰이지 않습니다.
 - **`SKILL.md`가 둘이면 다 덮어씁니다.** `/api/download`(`app.py:499-504`)는 이름이 `SKILL.md`로 끝나는 **모든** 파일에 개선된 글을 씁니다. `twoskills.zip`을 개선해 내려받으면 안쪽 `examples/SKILL.md`(`name: inner`)가 개선 대상으로 뽑혔고, 결과 zip의 **루트 `SKILL.md`와 `references/OLD-SKILL.md`까지** 그 글로 바뀌었습니다. 내려받는 zip에는 `CHANGELOG.json`이 덧붙습니다(`app.py:505-507`).
 - **`/api/analyze`는 원인을 숨기고 `/api/start`는 드러냅니다.** 모양이 틀린 모델 이름은 400 `Invalid model name`으로 바로 거절되지만, 모양이 맞고 서버에 없는 모델은 분석에서 500 `Analysis failed. Check your API key and try again.`로만 올라옵니다(`app.py:295-297`). 로그에는 트레이스백이 남지만 화면에는 "키를 확인하라"는 말만 갑니다. 시작한 뒤의 오류는 `status.error`에 원문이 담겨 404 `NOT_FOUND`가 그대로 보입니다.
-- **예제 버튼은 서버가 모르는 이름입니다.** 화면의 두 예제(`code-reviewer`, `content-writer`, `UploadStep.tsx:53-64`)는 `/api/examples/<이름>/load`에서 404이고, 서버가 실제로 갖는 목록(`agent_skills/` 아래 `SKILL.md`가 있는 폴더 일곱)은 화면이 부르지 않습니다. 목록의 설명은 `description: >-`인 여섯 스킬에서 `>-`입니다. 일곱 중 하나(`advisor-orchestrator-worker`)는 폴더에 JPEG가 있어 `open(..., "r")`이 UTF-8로 읽다가 500입니다(`app.py:559`. UTF-8 모드에서 확인했고, 인코딩이 다른 PC에서는 다르게 실패할 수 있습니다). 이 앱의 폴더 자신은 `SKILL.md`가 없어 불러지지 않습니다. 앱 README의 구조도(49~50행)가 `frontend/` 아래에 두는 `code-reviewer/`·`content-writer/` 폴더도 저장소에 없습니다.
+- **예제 버튼은 서버가 모르는 이름입니다.** 화면의 두 예제(`code-reviewer`, `content-writer`, `UploadStep.tsx:53-64`)는 `/api/examples/<이름>/load`에서 404이고, 서버가 실제로 갖는 목록(`agent_skills/` 아래 `SKILL.md`가 있는 폴더 일곱)은 화면이 부르지 않습니다. 목록의 설명은 `description: >-`인 여섯 스킬에서 `>-`입니다. 일곱 중 하나(`advisor-orchestrator-worker`)는 폴더에 JPEG가 있어 `open(..., "r")`이 UTF-8로 읽다가 500입니다(`app.py:559`. 위 출력은 환경 파일이 `PYTHONUTF8=1`을 켠 UTF-8 모드의 것입니다. 아래 `cp949_check.py`를 `-X utf8=0`으로 돌리면 한국어 Windows의 기본 인코딩(cp949)이 되어 목록 자체가 500이 됩니다). 이 앱의 폴더 자신은 `SKILL.md`가 없어 불러지지 않습니다. 앱 README의 구조도(49~50행)가 `frontend/` 아래에 두는 `code-reviewer/`·`content-writer/` 폴더도 저장소에 없습니다.
 - **세션은 메모리에만 있습니다.** `sessions` 사전(`app.py:33`)에 담기고 5분마다 1시간이 지난 것을 지웁니다(`app.py:63-76`. 실행 중인 세션은 지우지 않습니다). 서버를 다시 띄우면 모두 사라집니다. 내려받는 zip을 만드는 임시 폴더는 60초 뒤에 지웁니다(`app.py:513-518`).
 
 ### Step 7. Next.js 화면을 소스로 읽는다 (실행하지 않음)
@@ -1730,6 +2068,7 @@ load self-improving-agent-skills  HTTP 400 {"detail":"No SKILL.md found"}
 **할 일.** 화면은 `page.tsx`(116줄)가 단계(1~4)와 세션 아이디·키·모델·시나리오·평가·결과를 `useState`로 들고, 네 컴포넌트가 단계마다 하나씩입니다. `UploadStep`(407줄)이 업로드·분석을, `ConfigStep`(373)이 시나리오와 기준의 편집·재생성·저장을, `RunningStep`(313)이 시작·폴링·멈춤과 차트를, `ResultsStep`(190)이 점수·변경 목록·diff·내려받기를 맡습니다. 요청을 부르는 줄을 모으고, 고정된 값과 저장소 사용, HTML을 직접 넣는 곳을 찾고, 의존성 잠금 파일을 읽습니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cd "$REPO/agent_skills/self-improving-agent-skills/frontend"
 grep -rn "fetch(" src | cut -c1-110
 grep -rn "EventSource\|/api/stream" src || echo "(화면에 EventSource도 /api/stream 호출도 없다)"
@@ -1741,6 +2080,7 @@ cd "$LAB/work"
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > lockscan.py <<'EOF'
 """package-lock.json을 읽기만 한다(설치하지 않는다). 사용: python lockscan.py <package-lock.json>"""
 import collections
@@ -1764,6 +2104,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" lockscan.py "$REPO/agent_skills/self-improving-agent-skills/frontend/package-lock.json"
 ```
 
@@ -1832,11 +2173,12 @@ lockfileVersion 3 | 패키지 140 개 | 이름은 self-improving-skills-frontend
 
 ```bash
 cd agent_skills/self-improving-agent-skills/frontend
+export NEXT_TELEMETRY_DISABLED=1   # PowerShell: $env:NEXT_TELEMETRY_DISABLED = "1"
 npm install        # 이 문서는 실행하지 않았다
 npm run dev        # 이 문서는 실행하지 않았다
 ```
 
-실행하기 전에 알아 둘 점은 공식 문서로 읽은 것입니다. Next.js는 기본으로 익명 사용 통계를 모으고 `NEXT_TELEMETRY_DISABLED=1`이나 `next telemetry disable`로 끕니다([nextjs.org/telemetry](https://nextjs.org/telemetry), 2026-10-19에 읽음). 이 화면은 `next/font/google`(`layout.tsx:2`)로 Inter 글꼴을 쓰는데, 문서는 글꼴 CSS와 파일을 **빌드할 때 내려받아** 정적 파일로 두고 방문자의 브라우저는 Google에 요청하지 않는다고 합니다([글꼴 API](https://nextjs.org/docs/app/api-reference/components/font)). 곧 `npm run dev`나 `build`는 Google 글꼴 서버에 접속합니다. 직접 해 본 것이 아니라 문서의 문장입니다.
+실행하기 전에 알아 둘 점은 공식 문서로 읽은 것입니다. Next.js는 기본으로 익명 사용 통계를 모으고 `NEXT_TELEMETRY_DISABLED=1`이나 `next telemetry disable`로 끕니다([nextjs.org/telemetry](https://nextjs.org/telemetry), 2026-10-19에 읽음). 이 화면은 `next/font/google`(`layout.tsx:2`)로 Inter 글꼴을 쓰는데, 문서는 글꼴 CSS와 파일을 **빌드할 때 내려받아** 정적 파일로 두고 방문자의 브라우저는 Google에 요청하지 않는다고 합니다([글꼴 API](https://nextjs.org/docs/app/api-reference/components/font)). 그러니 `build`는 Google 글꼴 서버에서 받을 것으로 읽힙니다. 개발 서버(`dev`)도 그럴 것으로 보이나 이 문서는 확인하지 못했습니다. 모두 직접 해 본 것이 아니라 문서의 문장입니다.
 
 ### Step 8. 시험과 모델 상태, 마무리
 
@@ -1845,6 +2187,7 @@ npm run dev        # 이 문서는 실행하지 않았다
 **할 일.** `test_app.py`를 **복사본**에서 돌립니다(원본 폴더에 아무것도 쓰지 않으려는 것입니다). 같은 시험을 `coverage`로 한 번 더 돌려 어느 줄이 시험에 닿는지 봅니다. 그다음 공식 문서 세 쪽(모델, 폐기, 요금)을 내려받아 글로 바꾸고 모델 셋의 행을 뽑습니다. 이 단계의 `curl`만 바깥(Google 문서 서버)에 닿는 읽기 요청이고 키는 싣지 않습니다.
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cp -r "$BACKEND" "$LAB/tcopy"
 cd "$LAB/tcopy"
 "$PY" -B -m pytest -p no:cacheprovider -q 2>&1 | tail -2
@@ -1854,6 +2197,7 @@ cd "$LAB/work"
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > htmltext.py <<'EOF'
 import re, sys, html
 t = open(sys.argv[1], encoding="utf-8", errors="replace").read()
@@ -1869,6 +2213,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 cat > modelrows.py <<'EOF'
 """htmltext.py가 만든 문서 글에서 모델 셋의 폐기 표 행과 요금표 행을 뽑는다. 사용: python modelrows.py <docs 폴더>"""
 import os
@@ -1897,6 +2242,7 @@ EOF
 ```
 
 ```bash
+cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 mkdir -p docs
 for p in models deprecations pricing; do
   curl -sL "https://ai.google.dev/gemini-api/docs/$p" -o "docs/$p.html"
@@ -1911,8 +2257,8 @@ done
 
 ```text
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-19 passed, 1 warning in 1.25s
-19 passed, 1 warning in 2.21s
+19 passed, 1 warning in 1.32s
+19 passed, 1 warning in 2.50s
 Name               Stmts   Miss  Cover
 --------------------------------------
 adk_optimizer.py     135     99    27%
@@ -1957,7 +2303,7 @@ TOTAL                509    299    41%
 
 ```bash
 # 각 서버 터미널에서 Ctrl+C. 그다음 터미널 C에서
-netstat -ano | grep -E ":($FAKE_PORT|$APP_PORT|51881) " | grep LISTENING || echo "서버 없음"
+netstat -ano | grep -E ":($FAKE_PORT|$APP_PORT|$APP2_PORT) " | grep LISTENING || echo "서버 없음"
 git -C "$REPO" status --short agent_skills
 find "$REPO/agent_skills" -name __pycache__
 ```
@@ -1971,16 +2317,27 @@ find "$REPO/agent_skills" -name __pycache__
 ![요청 시퀀스](diagrams/sequence.svg)
 
 1. 화면이 `POST /api/upload`로 zip을 보냅니다. 엔드포인트가 항목을 검사하고(자기 자신에게 오는 화살표. 이름·확장자·크기·개수), 세션 아이디와 파일 목록을 돌려줍니다(Step 3).
-2. 키와 모델을 받으면 화면이 `POST /api/analyze`를 보냅니다. 엔드포인트는 `SkillOptimizer(키, 모델)`을 만들어 환경변수에 키를 쓰고, optimizer가 `SKILL.md`와 `references/` 파일을 모델에게 보내 시나리오와 평가 JSON을 받아 화면에 돌려줍니다(Step 4).
+2. 키와 모델을 받으면 화면이 `POST /api/analyze`를 보냅니다. 엔드포인트는 `SkillOptimizer(키, 모델)`을 만들어 환경변수에 키를 쓰고, `analyze_skill(skill_files)`를 부릅니다. optimizer가 `SKILL.md`와 이름에 `references/`가 든 파일(Windows에서 폴더째 묶은 zip이면 빠집니다)을 모델에게 보내 시나리오와 평가 JSON을 받고, 그것이 엔드포인트를 거쳐 화면으로 돌아갑니다(Step 4).
+
+![시작](diagrams/extra-start.svg)
+
 3. 사용자가 고른 것을 `POST /api/update-config`로 저장하고 `POST /api/start`를 보냅니다. 엔드포인트는 백그라운드 작업으로 `optimize()`를 시작하고 **바로** `started`를 돌려줍니다(Step 5, 6).
 
-![루프](diagrams/extra-loop.svg)
+이제 백그라운드 작업이 도는 장면을 에이전트별로 나눠 그렸습니다. 먼저 기준선입니다. 시나리오마다 executor가 두 번 모델을 부릅니다. 실행 프롬프트(`Execute this skill:`)와 채점 프롬프트(`Evaluate this output`)이고 응답도 둘입니다. 그림은 한 시나리오만 그렸고 시나리오 수만큼 되풀이됩니다. 끝나면 `baseline` 이벤트가 콜백으로 엔드포인트에 갑니다.
 
-백그라운드 작업 안에서 optimizer는 기준선을 재고(시나리오마다 실행과 채점), 실패가 있으면 진단을 받고, `SKILL.md` 한 군데의 수정을 받고, 다시 실행과 채점을 해서 점수가 오르면 남기고 아니면 되돌립니다. 이 순서가 라운드마다 되풀이됩니다. 이 그림은 한 라운드만 그렸습니다.
+![기준선](diagrams/extra-baseline.svg)
 
-![결과 가져오기](diagrams/extra-result.svg)
+다음은 라운드의 앞부분입니다. 라운드가 시작되면 `experiment_start` 이벤트가 가고, analyst가 실패 다섯 건과 `SKILL.md`의 앞 2,000자로 진단하고(실패가 없으면 이 부분을 건너뜁니다), mutator가 진단과 전문으로 새 `SKILL.md`를 만듭니다. 두 에이전트 모두 `output_schema`를 걸어 JSON을 받습니다.
 
-그동안 화면은 3초마다 `GET /api/status`로 지금까지의 실험을 읽고, `complete`가 되면 `final_result`를 받아 결과 화면으로 가서 `GET /api/download`로 `improved_skill.zip`을 받습니다. 폴링은 루프와 **동시에** 돌지만 그림은 읽기 쉽게 따로 그렸습니다.
+![진단과 수정](diagrams/extra-diagnose.svg)
+
+그다음은 라운드의 뒷부분입니다. executor가 새 `SKILL.md`로 다시 실행하고 다시 채점합니다. 시나리오마다 되풀이하는 것은 기준선과 같습니다.
+
+![다시 채점](diagrams/extra-rescore.svg)
+
+점수가 오르면 남기고 아니면 되돌리는 판정은 optimizer 안에서 일어나고(자기 자신에게 오는 화살표), 그 결과가 `experiment_result` 이벤트로 엔드포인트에 갑니다. 이 둘이 라운드마다 되풀이되고, 모든 라운드가 끝나면 `complete` 이벤트가 갑니다. 그동안 화면은 3초마다 `GET /api/status`로 지금까지의 실험을 읽고, `complete`가 되면 `final_result`를 받아 결과 화면으로 가서 `GET /api/download`로 `improved_skill.zip`을 받습니다. 폴링은 루프와 **동시에** 돌지만 그림은 읽기 쉽게 이 장면에 모아 그렸습니다.
+
+![판정과 결과 가져오기](diagrams/extra-result.svg)
 
 ## 실행 체크리스트
 
@@ -1988,7 +2345,7 @@ find "$REPO/agent_skills" -name __pycache__
 - [ ] `python app.py`를 직접 돌리지 않았다(`0.0.0.0`으로 열린다). `serve_backend.py`로만 띄웠다
 - [ ] 서버가 `127.0.0.1:<포트>`에만 듣는 것을 `netstat`으로 봤다
 - [ ] 키는 `fake-`로 시작하는 값만 썼고, 가짜 서버가 `fake-`가 아닌 키를 401로 거절하는 것을 알고 있다
-- [ ] `guard.log` 같은 가드 기록(`blocked.log`)이 비어 있거나, 있다면 막힌 것만 들어 있다
+- [ ] 작업 폴더의 `blocked.log`(가드가 막은 시도)가 비어 있거나, 있다면 Step 4의 Vertex 관찰 세 줄뿐이다
 - [ ] 화면은 실행하지 않았고 `npm install`도 하지 않았다
 - [ ] 서버를 모두 끝냈고 포트가 비었다
 - [ ] 원본 `agent_skills/`에서 `git status --short`가 비어 있고 `__pycache__`가 없다
@@ -2006,15 +2363,18 @@ find "$REPO/agent_skills" -name __pycache__
 | 분석이 500 "Analysis failed. Check your API key and try again." | 어떤 예외든 같은 문장으로 올라온다(`app.py:295-297`). 없는 모델 이름도 이 문장이다 | 서버 터미널의 트레이스백을 본다. 모델 이름을 확인한다 |
 | 멈춤을 눌렀는데 요청이 계속 나간다 | `stop_requested`를 읽는 줄이 없다 | 서버를 끝낸다. 고치려면 루프 안에서 `session["stop_requested"]`를 본다("더 해보기") |
 | 예제 버튼을 누르면 "Failed to load example" | 화면의 `code-reviewer`·`content-writer`가 서버에 없다 | 자기 스킬을 zip으로 올린다 |
+| `/api/examples` 목록이 500이다(UTF-8 모드가 아닐 때) | `app.py:533, 559`의 `open(..., "r")`가 기본 인코딩(한국어 Windows는 cp949)으로 읽는다 | `PYTHONUTF8=1`을 건다(환경 파일). 원본 README대로 `python app.py`를 치면 만난다 |
 | 예제 `advisor-orchestrator-worker`가 500 | 폴더의 JPEG를 UTF-8 글로 읽으려 한다(`app.py:559`) | 그 예제를 쓰지 않는다 |
 | 키를 비워 보냈더니 모델이 불린다 | 서버 셸의 `GEMINI_API_KEY`가 쓰인다 | 서버를 띄우는 셸에서 `GOOGLE_API_KEY`·`GEMINI_API_KEY`를 지운다(이 문서의 `guard.py`는 프로세스 안에서 둘 다 빈 값으로 덮는다) |
-| 셸에 Vertex 설정이 있는데 키가 소용없다 | 요청의 키는 `GOOGLE_API_KEY`만 바꾼다 | 서버 셸에서 `GOOGLE_GENAI_USE_VERTEXAI`를 지운다 |
+| 셸에 Vertex 설정이 있는데 키가 소용없다 | 요청의 키는 `GOOGLE_API_KEY`만 바꾼다. Vertex 모드는 gcloud 로그인 같은 진짜 자격 증명을 쓴다 | 서버 셸에서 `GOOGLE_GENAI_USE_VERTEXAI`를 지운다. 환경 파일은 `CLOUDSDK_CONFIG`를 `LAB` 아래로 돌려 gcloud 설정을 읽지 않게 한다(Windows의 `APPDATA`는 돌리지 않는다) |
+| `probe_vertex.py`가 "멈춤:"으로 끝난다 | `CLOUDSDK_CONFIG`가 `LAB` 아래가 아니거나 `GOOGLE_APPLICATION_CREDENTIALS`가 설정돼 있다(진짜 자격 증명을 읽게 된다) | 환경 파일을 불러오고, 그 변수를 지운다 |
 | `NEXT_PUBLIC_API_URL`을 안 줬는데 화면이 서버에 못 간다 | 화면의 기본값이 `http://localhost:8891` | 서버를 그 포트로 열거나 변수를 준다 |
 | 한국어 Windows에서 출력이 깨지거나 `UnicodeEncodeError` | 파이프·파일 출력이 cp949로 나간다 | `PYTHONUTF8=1`·`PYTHONIOENCODING=utf-8`을 건다(환경 파일) |
-| `address already in use` | 이미 같은 포트에 서버가 있다 | 포트를 49152~65535의 다른 값으로 바꾼다(`FAKE_PORT`·`APP_PORT`) |
+| `address already in use` | 이미 같은 포트에 서버가 있다 | 포트를 49152~65535의 다른 값으로 바꾼다(`FAKE_PORT`·`APP_PORT`·`APP2_PORT`, 환경 파일) |
 
 ## 더 해보기
 
+- 스크래치 사본의 `upload_skill`에서 `await file.read()` 앞에 `Content-Length`(없으면 읽는 만큼)로 10 MB를 먼저 검사하게 바꾸고 `over60mb.zip`을 다시 올려 서버 최대 작업 집합이 오르지 않는지 `probe_zip.py`로 보세요.
 - 스크래치 사본의 `app.py`에서 업로드의 `zf.read(name)` 앞에 `zf.getinfo(name).file_size > MAX_FILE_SIZE`를 검사하게 바꾸고 `bomb.zip`을 다시 올려, 서버 메모리가 더 뛰지 않는지 `probe_zip.py`로 보세요. 같은 곳에서 압축을 푼 총량 한도도 넣어 보세요.
 - `SkillOptimizer`가 환경변수 대신 `google.adk.models.Gemini(client=genai.Client(api_key=...))`를 에이전트 셋에 넘기도록 스크래치 사본을 고치고 `probe_keys.py race`를 다시 돌려, 섞임이 0이 되는지 확인하세요.
 - 루프 안에서 `session["stop_requested"]`를 보게 하거나 목표 통과율을 받게 해서 `probe_stop.py`의 "멈춤 뒤 요청"이 0이 되게 해 보세요. 진짜 키를 가진 뒤라면, 같은 스킬의 기준선을 세 번 재서 판정이 얼마나 흔들리는지 먼저 재 보고 그 폭보다 작은 향상은 버리는 규칙을 넣어 보세요. 그 폭이 얼마인지는 이 문서가 모릅니다.

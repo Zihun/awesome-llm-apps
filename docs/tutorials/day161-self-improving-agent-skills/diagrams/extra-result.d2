@@ -3,9 +3,13 @@ shape: sequence_diagram
 
 ui: "화면 (Next.js)" { class: ours }
 api: "엔드포인트 (app.py)" { class: ours }
+opt: "SkillOptimizer" { class: ours }
 
+opt -> opt: "new_pct > baseline_pct 이면 유지"
+opt -> api: "experiment_result 이벤트"
 ui -> api: "GET /api/status (3초마다)"
 api -> ui: "experiments (지금까지)"
+opt -> api: "complete 이벤트 (모든 라운드 뒤)"
 ui -> api: "GET /api/status (complete)"
 api -> ui: "final_result"
 ui -> api: "GET /api/download"
