@@ -1,6 +1,6 @@
 # Day 095 · 🏚️ 🍌 AI Home Renovation Agent with Nano Banana Pro
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(모델 서비스 종료) · 예상 소요 70분(Step마다 함수를 직접 호출해 보고, 부모 폴더에서 `--python`으로 가상환경을 직접 가리키는 실행법을 셸별로 맞춰 보고, `adk web`까지 띄워 어디서 멈추는지 확인하는 손 시간이 듭니다) · API 비용 대략 계획 한 건에 Gemini 호출 최소 10회(코디네이터 1 + VisualAssessor 2 + SearchAgent 1(그라운딩 과금 별도) + DesignPlanner 2 + ProjectCoordinator 2 + 렌더링 도구 자체 호출 2) — 렌더링에 쓰는 모델 둘이 이미 서비스 종료라 실제 키로도 그 단계에서 막혀 실측은 못합니다 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ ⚠(모델 서비스 종료) · 예상 소요 76분(Step마다 함수를 직접 호출해 보고, 부모 폴더에서 `--python`으로 가상환경을 직접 가리키는 실행법을 셸별로 맞춰 보고, `adk web`까지 띄워 어디서 멈추는지 확인하는 손 시간이 듭니다) · API 비용 대략 계획 한 건에 Gemini 호출 최소 10회(코디네이터 1 + VisualAssessor 2 + SearchAgent 1(그라운딩 과금 별도) + DesignPlanner 2 + ProjectCoordinator 2 + 렌더링 도구 자체 호출 2) — 렌더링에 쓰는 모델 둘이 이미 서비스 종료라 실제 키로도 그 단계에서 막혀 실측은 못합니다 · 원본 앱: `advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent`
 
 ## 오늘 만들 것
 
@@ -246,9 +246,15 @@ edit_renovation_rendering ValueError: GEMINI_API_KEY or GOOGLE_API_KEY environme
 **할 일.** `ai_home_renovation_agent` 폴더 **안에서** 실행합니다.
 
 ```bash
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="${TMPDIR:-/tmp}/day095-adkhome"; mkdir -p "$HOME"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
 cd ai_home_renovation_agent
-uv run --no-project adk web --no_use_local_storage .
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --no_use_local_storage . < /dev/null
 ```
+
+블록의 앞 세 줄은 홈(`HOME`·`USERPROFILE`)을 임시 폴더로 바꾸고(uv 캐시는 원래 자리를 지킵니다), `adk telemetry disable`과 `< /dev/null`이 같은 일을 따로 한 번씩 더 막습니다. 까닭은 Day 088과 같습니다. 이 문서의 `requirements.txt`는 오늘 google-adk 2.12.0으로 풀리고(직접 확인), 이 판의 `adk` 명령은 `~/.adk/config.json`에 `telemetry: true`가 있으면 명령이 끝날 때 `https://play.googleapis.com/log`로 사용 기록을 보냅니다(`cli/_telemetry/_metrics_reporter.py`, 소스로 확인). 동의는 질문에 Enter만 쳐도 `true`가 되고, 다른 ADK 실습에서 이미 동의했다면 질문 없이 보냅니다. 동의 `true`가 미리 적힌 홈을 흉내 내 위 블록을 돌리면 `play.googleapis.com`으로 가려는 시도가 0이었고, 세 줄(홈 바꾸기, `disable`, `< /dev/null`)을 하나씩 뺀 세 판도 모두 0이었습니다. 방어를 하나도 두지 않고 `adk web`만 돌린 판은 1이었습니다(소켓 감시가 막았을 뿐 실제로는 보내지 않았습니다, 직접 확인). 홈을 바꾸지 않고 `adk telemetry disable`을 부르면 진짜 `~/.adk/config.json`에 `false`를 쓰는 부작용이 있으니 홈 줄과 함께 두세요.
 
 대화형 터미널에서 처음 실행하면 Day 091·092와 같은 텔레메트리 동의 프롬프트(`Enable telemetry? [Y/n]:`)가 먼저 뜹니다 — 비대화형으로 실행하면 프롬프트 텍스트만 찍히고 막히지 않습니다(직접 확인).
 
