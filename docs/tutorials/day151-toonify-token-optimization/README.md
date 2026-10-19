@@ -174,12 +174,19 @@ print(f"sha256 ok; tokens in 'hello world' with {name}:", len(enc.encode("hello 
 uv run --no-project python fetch_encoding.py
 ```
 
-회사 프록시가 있는 환경이면 `requests`가 프록시 환경변수를 따르므로 평소 쓰던 설정 그대로 두면 됩니다. 이 줄이 이 문서에서 인터넷에 닿는 유일한 줄입니다.
+회사 프록시가 있는 환경이면 `requests`가 프록시 환경변수를 따르므로 평소 쓰던 설정 그대로 두면 됩니다. 아래 선택 줄(`o200k_base`)을 빼면, 이 줄이 이 문서에서 인터넷에 닿는 유일한 줄입니다.
 
-**선택: `o200k_base`.** 모델 이름을 `gpt-5.x`나 `gpt-4o`로 바꿀 생각이 있을 때만 같은 방식으로 한 번 더 받습니다. 이 문서는 이 파일을 내려받지 않았고, 크기 3,613,922바이트와 캐시 이름 `fb374d41…`는 Day 150 Step 2가 받은 값, 해시 `446a9538…`은 `tiktoken_ext/openai_public.py`의 `expected_hash`입니다. 스크립트와 가드가 그 해시를 확인합니다(Day 150의 캐시 파일을 복사해 둔 상태에서 가드와 `count_tokens`가 도는 것은 직접 확인했습니다).
+**선택: `o200k_base`.** 모델 이름을 `gpt-5.x`나 `gpt-4o`로 바꿀 생각이 있을 때만 같은 방식으로 한 번 더 받습니다. 해시 `446a9538…`은 `tiktoken_ext/openai_public.py`의 `expected_hash`이고, 스크립트와 가드가 그 해시를 확인합니다.
 
 ```bash
 uv run --no-project python fetch_encoding.py o200k_base
+```
+
+이 줄을 돌렸을 때의 기대 출력입니다(직접 확인). 캐시 파일은 3,613,922바이트입니다.
+
+```text
+cache file: fb374d419588a4632f3f557e76b4b70aebbca790 3613922 bytes
+sha256 ok; tokens in 'hello world' with o200k_base: 2
 ```
 
 ![Step 2까지의 구성](diagrams/step2.svg)
@@ -667,7 +674,7 @@ pipe   safe  [91, 50, 54, 53]
 RuntimeError: offline: tiktoken wanted to download https://openaipublic.blob.core.windows.net/encodings/o200k_base.tiktoken
 ```
 
-**확인.** 읽을 것이 넷입니다. 첫째, 모델 다섯이 모두 221토큰입니다. 모델 이름은 가격표 열쇠일 뿐 토큰 수를 바꾸지 않고, `claude-3-opus`·`claude-3-sonnet` 줄의 221은 Claude의 토큰 수가 아니라 OpenAI `cl100k_base`로 센 값입니다. Anthropic 문서(https://platform.claude.com/docs/en/build-with-claude/token-counting, 2026-10-19 확인)는 토큰 수를 세는 전용 엔드포인트를 따로 두고 그 값을 "an **estimate**"라고 하며, Claude Opus 4.7 이후 모델의 새 토크나이저는 같은 글에 "approximately 30 percent more tokens"를 만든다고 적고, 세는 모델을 정해서 다시 세라고 권합니다. 그러므로 앱의 Claude 행은 어림이고, 실제 입력 토큰은 모델마다 다를 수 있습니다. 둘째, 기준입니다. 앱과 데모는 JSON을 `indent=2`로 찍어 비교합니다(`toonify_app.py:141`, `toonify_demo.py:78`). 이 기준에서 절약은 56.3~61.2%이고, 들여쓰기 없는 JSON(`separators=(",", ":")`)과 비교하면 21.2~30.6%입니다. 모델에 보내는 JSON이 어떤 모양인지에 따라 어느 쪽이 맞는지가 정해지니, 자기 데이터를 자기가 보내는 모양으로 재 봐야 합니다. 셋째, 구분자와 키 접기입니다. 쉼표가 세 표에서 가장 적고 Orders에서만 탭이 하나 적습니다. 파이프는 네 표 모두 쉼표와 같거나 1~4토큰 많습니다. 키 접기는 이 표들에 단일 키 사슬이 없어 아무 효과가 없습니다. 넷째, 앱의 "벤치마크" 숫자(63.9·54.1·73.4%)는 "50 real-world datasets"에서 나왔다고 하지만(`toonify_app.py:267-279`) 화면에서 계산하는 값이 아니라 글자입니다. 같은 숫자가 설치된 `toonify` 패키지의 설명(`METADATA` 602~612행)에도 있고 그쪽은 저장소의 `benchmark/RESULTS.md`를 가리킵니다. 앱은 라이브러리 쪽 주장을 옮겨 적은 것으로 보이며, 그 파일은 패키지에 없어(`RECORD`에는 `toon/` 아홉 파일과 `dist-info`뿐) 재현하지 못했습니다. 또 앱 README 11행은 63.9%를 "average token reduction"이라 부르지만, 앱 화면(`toonify_app.py:275-277`)과 패키지 설명은 63.9%를 크기, 54.1%를 토큰 감소로 적습니다. 박힌 숫자는 메트릭 셋과 표 다섯으로 여덟입니다. 이 문서가 잰 것은 앱 안의 네 표뿐이고 56~61%(들여쓰기 기준)가 그 범위입니다. 참고로 패키지의 명령줄 `toon --stats`는 `o200k_base`로 셉니다(`toon` 패키지의 `cli.py` 32~44행). 같은 글도 어떤 인코딩이냐에 따라 숫자가 달라집니다. `gpt-4o`와 `gpt-5` 계열은 지도에서 `o200k_base`가 되고(`model.py` 12행, 37행) 이 앱의 선택 상자에는 없습니다. `measure.py`의 마지막 구간이 `gpt-5.6-sol`을 세 보게 하는데, `o200k_base`를 받지 않았으면 위 출력처럼 `RuntimeError: offline`으로 멈춥니다(직접 확인). `o200k_base`는 받지 않았고 토큰 수는 재 보지 못했습니다.
+**확인.** 읽을 것이 넷입니다. 첫째, 모델 다섯이 모두 221토큰입니다. 모델 이름은 가격표 열쇠일 뿐 토큰 수를 바꾸지 않고, `claude-3-opus`·`claude-3-sonnet` 줄의 221은 Claude의 토큰 수가 아니라 OpenAI `cl100k_base`로 센 값입니다. Anthropic 문서(https://platform.claude.com/docs/en/build-with-claude/token-counting, 2026-10-19 확인)는 토큰 수를 세는 전용 엔드포인트를 따로 두고 그 값을 "an **estimate**"라고 하며, Claude Opus 4.7 이후 모델의 새 토크나이저는 같은 글에 "approximately 30 percent more tokens"를 만든다고 적고, 세는 모델을 정해서 다시 세라고 권합니다. 그러므로 앱의 Claude 행은 어림이고, 실제 입력 토큰은 모델마다 다를 수 있습니다. 둘째, 기준입니다. 앱과 데모는 JSON을 `indent=2`로 찍어 비교합니다(`toonify_app.py:141`, `toonify_demo.py:78`). 이 기준에서 절약은 56.3~61.2%이고, 들여쓰기 없는 JSON(`separators=(",", ":")`)과 비교하면 21.2~30.6%입니다. 모델에 보내는 JSON이 어떤 모양인지에 따라 어느 쪽이 맞는지가 정해지니, 자기 데이터를 자기가 보내는 모양으로 재 봐야 합니다. 셋째, 구분자와 키 접기입니다. 쉼표가 세 표에서 가장 적고 Orders에서만 탭이 하나 적습니다. 파이프는 네 표 모두 쉼표와 같거나 1~4토큰 많습니다. 키 접기는 이 표들에 단일 키 사슬이 없어 아무 효과가 없습니다. 넷째, 앱의 "벤치마크" 숫자(63.9·54.1·73.4%)는 "50 real-world datasets"에서 나왔다고 하지만(`toonify_app.py:267-279`) 화면에서 계산하는 값이 아니라 글자입니다. 같은 숫자가 설치된 `toonify` 패키지의 설명(`METADATA` 602~612행)에도 있고 그쪽은 저장소의 `benchmark/RESULTS.md`를 가리킵니다. 앱은 라이브러리 쪽 주장을 옮겨 적은 것으로 보이며, 그 파일은 패키지에 없어(`RECORD`에는 `toon/` 아홉 파일과 `dist-info`뿐) 재현하지 못했습니다. 또 앱 README 11행은 63.9%를 "average token reduction"이라 부르지만, 앱 화면(`toonify_app.py:275-277`)과 패키지 설명은 63.9%를 크기, 54.1%를 토큰 감소로 적습니다. 박힌 숫자는 메트릭 셋과 표 다섯으로 여덟입니다. 이 문서가 잰 것은 앱 안의 네 표뿐이고 56~61%(들여쓰기 기준)가 그 범위입니다. 참고로 패키지의 명령줄 `toon --stats`는 `o200k_base`로 셉니다(`toon` 패키지의 `cli.py` 32~44행). 같은 글도 어떤 인코딩이냐에 따라 숫자가 달라집니다. `gpt-4o`와 `gpt-5` 계열은 지도에서 `o200k_base`가 되고(`model.py` 12행, 37행) 이 앱의 선택 상자에는 없습니다. `measure.py`의 마지막 구간이 `gpt-5.6-sol`을 세 보게 하는데, `o200k_base`를 받지 않았으면 위 출력처럼 `RuntimeError: offline`으로 멈춥니다. Step 2의 선택 줄로 받아 두었다면 이 구간은 `gpt-5.6-sol 1`을 찍습니다(`hello` 한 낱말이 1토큰). 두 경우 모두 직접 확인했습니다. 네 표를 `o200k_base`로 센 값은 이 문서가 재지 않았습니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
