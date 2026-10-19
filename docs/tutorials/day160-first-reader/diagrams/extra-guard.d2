@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+client: "feed.py next (urllib)" { class: ours }
+env: "프록시 변수 (http_proxy)" { class: file }
+tap: "기록 서버 (127.0.0.1)" { class: ours }
+feed: "피드 서버 (127.0.0.1)" { class: ours }
+guard: "소켓 가드 (sitecustomize.py)" { class: ours }
+outside: "바깥 호스트" { class: ext }
+
+env -> client: "있으면 따른다"
+client -> tap: "토큰이 든 요청"
+tap -> feed: "그대로 넘김"
+guard -> outside: "연결·이름 조회 거부"

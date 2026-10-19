@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+reader: "독자 흉내" { class: ext }
+feed: "feed.py serve" { class: ours }
+run: "실행 폴더" { class: store }
+
+reader -> feed: "POST /토큰/next {log}"
+feed -> run: "log.jsonl 한 줄 (바로)"
+feed -> reader: "패시지 2 (제한 시간 뒤)"
+reader -> feed: "POST /토큰/quit {log}"
+feed -> run: "모두 끝나면 state.json"

@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "코딩 에이전트" { class: ext }
+recall: "recall.py" { class: ours }
+run: "실행 폴더" { class: store }
+room: "room.py" { class: ours }
+
+agent -> recall: "recall.py 독자 폴더"
+recall -> run: "log.jsonl 읽기"
+agent -> room: "room.py 실행 폴더"
+room -> run: "세션 읽기"
+room -> agent: "room.html"

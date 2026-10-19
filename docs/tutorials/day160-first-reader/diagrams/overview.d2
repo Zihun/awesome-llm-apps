@@ -1,0 +1,25 @@
+...@../../_tools/theme
+direction: down
+
+docs: "스킬 문서 (SKILL.md)" { class: file }
+agent: "코딩 에이전트 (안 띄움)" { class: ext }
+readers: "독자 흉내 (안 띄움)" { class: ext }
+draft: "초안 (tidepool.md)" { class: file }
+skim: "스캐너 화면 (skim.py)" { class: ours }
+signals: "신뢰 신호 (signals.py)" { class: ours }
+feed: "피드 서버 (feed.py)" { class: ours }
+run: "실행 폴더 (log.jsonl)" { class: store }
+recall: "회상·상담 (recall.py)" { class: ours }
+room: "페이지 (room.py)" { class: ours }
+evals: "시험 (test_*.py)" { class: ours }
+
+agent -> docs: "지시 읽기"
+agent -> readers: "주소 한 줄"
+readers -> feed: "log"
+draft -> feed: "메모리에만"
+feed -> run: "로그"
+recall -> run: "로그만 읽기"
+room -> run: "세션 읽기"
+skim -> draft: "읽기"
+signals -> draft: "읽기"
+evals -> feed: "합성 입력"
