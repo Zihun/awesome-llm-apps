@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+refs: "pitfalls.md" { class: file }
+agent: "코딩 에이전트" { class: ext }
+user: "독자" { class: person }
+
+agent -> refs: "설명 전에 읽기"
+agent -> user: "설명 · 수정 제안"
+user -> agent: "수정 승인"

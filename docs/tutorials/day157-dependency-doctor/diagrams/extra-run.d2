@@ -1,0 +1,8 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+agent: "코딩 에이전트" { class: ext }
+script: "dep_doctor.py" { class: ours }
+
+agent -> script: "경로 --json 실행"
+script -> agent: "JSON 보고서"

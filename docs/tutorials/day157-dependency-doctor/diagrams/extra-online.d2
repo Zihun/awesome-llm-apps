@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: down
+
+script: "online_findings()\n(dep_doctor.py)" { class: ours }
+patch: "urlopen 가로채기\n(online_lab.py)" { class: ours }
+opener: "프록시 없는 열기\n(ProxyHandler 빈 값)" { class: ours }
+fake: "가짜 PyPI\n(127.0.0.1:임의 포트)" { class: ours }
+guard: "소켓 가드\n(이름 조회·연결)" { class: ours }
+env: "프록시 변수\n(HTTPS_PROXY 등)" { class: file }
+pypi: "PyPI (pypi.org)" { class: ext }
+
+script -> patch: "Request(https://pypi.org/\npypi/이름/json)"
+patch -> opener: "http://127.0.0.1:포트/\npypi/이름/json"
+opener -> fake: "GET"
+fake -> opener: "릴리스 JSON"
+guard -> pypi: "이름 조회·연결 거부"
+env -> opener: "무시됨"

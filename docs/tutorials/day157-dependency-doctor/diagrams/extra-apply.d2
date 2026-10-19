@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+manifest: "매니페스트" { class: file }
+agent: "코딩 에이전트" { class: ext }
+script: "dep_doctor.py" { class: ours }
+
+agent -> manifest: "승인된 수정"
+agent -> script: "오프라인 재실행"

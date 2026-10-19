@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+main: "main()" { class: ours }
+report: "build_report()" { class: ours }
+pypi: "online_findings()\n(--online만)" { class: ext }
+
+report -> pypi: "정확히 고정한 이름만"
+pypi -> report: "yanked-release · online-check-failed"
+report -> report: "(line, kind, package)로 정렬"
+report -> main: "보고서 dict"
+main -> user: "json.dumps 출력 · 종료 코드 0"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+skill: "SKILL.md" { class: file }
+agent: "코딩 에이전트" { class: ext }
+user: "독자" { class: person }
+
+user -> agent: "check my requirements.txt"
+agent -> skill: "본문 읽기"
+agent -> user: "어느 매니페스트?"
+user -> agent: "점검할 경로"

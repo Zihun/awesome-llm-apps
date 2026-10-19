@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+
+user: 독자 {
+  class: person
+  label.near: outside-top-center
+}
+
+agent: "코딩 에이전트 (띄우지 않음)" { class: ext }
+skillmd: "지시문\n(SKILL.md)" { class: file }
+script: "진단 스크립트\n(dep_doctor.py)" { class: ours }
+refs: "참고 문서\n(dependency-pitfalls.md)" { class: file }
+manifest: "매니페스트\n(requirements.txt 등)" { class: file }
+py: "파이썬 (stdlib 이름표)" { class: ext }
+pypi: "PyPI (부르지 않음)" { class: ext }
+evals: "시험\n(test_dep_doctor.py)" { class: ours }
+
+user -> agent: "점검 요청"
+skillmd -> agent: "지시 읽기"
+refs -> agent: "설명 근거 읽기"
+agent -> script: "실행"
+script -> agent: "JSON 보고서"
+manifest -> script: "읽기 (utf-8)"
+py -> script: "stdlib 이름표"
+pypi -> script: "릴리스 JSON (--online)"
+evals -> script: "합성 입력"

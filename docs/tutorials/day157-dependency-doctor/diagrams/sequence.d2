@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+load: "load_manifest()" { class: ours }
+main: "main()" { class: ours }
+report: "build_report()" { class: ours }
+diag: "offline_findings()" { class: ours }
+file: "매니페스트" { class: file }
+
+
+user -> main: "경로 · --json"
+main -> load: "Path(경로)"
+load -> file: "read_text(utf-8)"
+file -> load: "글"
+load -> main: "항목 목록 (package · spec · line · marker)"
+main -> report: "build_report(use_online=False)"
+report -> report: "marker_applies로 거르기"
+report -> diag: "active_entries"
+diag -> report: "findings"
