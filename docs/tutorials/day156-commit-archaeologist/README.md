@@ -31,7 +31,7 @@
 | 코딩 에이전트 | 필요 없음. 이 문서는 에이전트를 띄우지 않습니다 | 없음 |
 | API 키·네트워크 | 필요 없음. clone 뒤에는 인터넷 없이 모두 돌아갑니다 | 없음 |
 
-한국어 Windows(Git Bash)에서는 시험 도구가 두 가지로 멈춥니다. `run_trigger_evals.py`는 파일을 기본 인코딩(cp949)으로 열어 읽다가, `skill_lint.py`와 `registry_lint.py`는 결과 줄의 `—`를 cp949로 찍지 못해 멈춥니다(문제 해결 표). 아래 변수 블록의 `PYTHONIOENCODING`과 `PYTHONUTF8=1`이 둘 다 막습니다.
+한국어 Windows(Git Bash)에서는 시험 도구가 두 가지로 멈춥니다. `run_trigger_evals.py`는 파일을 기본 인코딩(cp949)으로 열어 읽다가, `skill_lint.py`·`skill_scanner.py`·`registry_lint.py`는 결과 줄의 `—`를 cp949로 찍지 못해 멈춥니다(문제 해결 표). 아래 변수 블록의 `PYTHONIOENCODING`과 `PYTHONUTF8=1`이 둘 다 막습니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -864,7 +864,7 @@ network attempts: 0
 git files: 65 | fingerprint: 8a75271ee35e4624 | changed work-tree files: 0
 ```
 
-일곱 커밋 파일 모드는 git을 18번 부르고, 그 가운데 `show`와 `diff-tree`가 커밋 수에 맞춰 늘어납니다. 커밋마다 `show -s`(메타데이터)와 `diff-tree`(바뀐 파일)를 한 번씩 부르기 때문입니다(2×7=14). 나머지 넷은 고정입니다. `rev-parse`(저장소 맨 위 찾기), `ls-files`(추적 중인지), `log`, `blame`입니다. 줄 모드는 여기에 `show HEAD:<파일>` 한 번(줄 수 검증)이 더해지고 `diff-tree`는 타임라인 커밋 수(6)만큼입니다. 부르는 명령은 모두 읽기 명령입니다. 이 문서의 시험으로 `.git` 안 65개 파일의 지문이 그대로였고 파이썬 쪽 네트워크 시도는 0이었습니다. 다만 이 확인은 파이썬이 시도하는 연결만 봅니다. 완전한 clone에서는 위 여섯 명령이 저장소 안의 객체를 읽을 뿐이지만, **부분 clone**(`git clone --filter=blob:none`처럼 파일 내용을 나중에 받는 clone)에서는 `log -L`과 `blame`이 빠진 파일 내용을 원격에서 받아 옵니다. 직접 확인했습니다. 스크래치에 `uploadpack.allowFilter`를 켠 로컬 원격(`file://` 주소라 바깥 접속은 없습니다)을 만들어 `--filter=blob:none`으로 clone하고 이 스크립트를 줄 범위로 돌리니 `git count-objects -v`의 `in-pack`이 32에서 36으로 늘었습니다. 그 경우에는 스킬의 "No network calls … or repository writes"도, README의 "Nothing leaves your machine"도 맞지 않습니다. GitHub에서 부분 clone한 저장소라면 그 요청은 GitHub로 가고 `.git`에 쓰입니다. 자기 clone이 부분 clone인지는 `git -C "$REPO" config --get remote.origin.partialclonefilter`가 값(`blob:none` 등)을 내는지로 압니다. 이 문서의 마지막 실행(이 저장소의 실제 파일)은 완전한 clone에서 했습니다(`partialclonefilter` 값 없음).
+일곱 커밋 파일 모드는 git을 18번 부르고, 그 가운데 `show`와 `diff-tree`가 커밋 수에 맞춰 늘어납니다. 커밋마다 `show -s`(메타데이터)와 `diff-tree`(바뀐 파일)를 한 번씩 부르기 때문입니다(2×7=14). 나머지 넷은 고정입니다. `rev-parse`(저장소 맨 위 찾기), `ls-files`(추적 중인지), `log`, `blame`입니다. 줄 모드는 여기에 `show HEAD:<파일>` 한 번(줄 수 검증)이 더해지고 `diff-tree`는 타임라인 커밋 수(6)만큼입니다. 부르는 명령은 모두 읽기 명령입니다. 이 문서의 시험으로 `.git` 안 65개 파일의 지문이 그대로였고 파이썬 쪽 네트워크 시도는 0이었습니다. 다만 이 확인은 파이썬이 시도하는 연결만 봅니다. 완전한 clone에서는 위 여섯 명령이 저장소 안의 객체를 읽을 뿐이지만, **부분 clone**(`git clone --filter=blob:none`처럼 파일 내용을 나중에 받는 clone)에서는 `log -L`과 `blame`이 빠진 파일 내용을 원격에서 받아 옵니다. 직접 확인했습니다. 스크래치에 `uploadpack.allowFilter`를 켠 로컬 원격(`file://` 주소라 바깥 접속은 없습니다)을 만들어 `--filter=blob:none`으로 clone하고 이 스크립트를 줄 범위로 돌리니 `git count-objects -v`의 `in-pack`이 늘었습니다. 리뷰에서 잰 값은 `--lines 1-24`에서 32→36, `--lines 22-24`에서 32→35이고, 늘어나는 수는 줄 범위에 따라 다릅니다. 순서는 `git clone --filter=blob:none file://<원격> pc`, `python $SK pc src/pricing_cache.py --lines 1-24`, `git -C pc count-objects -v`입니다. 그 경우에는 스킬의 "No network calls … or repository writes"도, README의 "Nothing leaves your machine"도 맞지 않습니다. GitHub에서 부분 clone한 저장소라면 그 요청은 GitHub로 가고 `.git`에 쓰입니다. 자기 clone이 부분 clone인지는 `git -C "$REPO" config --get remote.origin.partialclonefilter`가 값(`blob:none` 등)을 내는지로 압니다. 이 문서의 마지막 실행(이 저장소의 실제 파일)은 완전한 clone에서 했습니다(`partialclonefilter` 값 없음).
 
 이제 잘못된 입력입니다. 각 명령은 에러 한 줄을 내고 종료 코드 2로 끝납니다. 마지막 `echo $?`는 바로 앞 명령의 종료 코드를 보입니다.
 
@@ -1076,7 +1076,7 @@ python try_prompts.py $REPO "why does this code exist" "who wrote this function 
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-에이전트는 시작할 때 모든 스킬의 `name`과 `description`을 읽어 둡니다(명세의 점진적 불러오기, 소스로 읽은 흐름이고 이 문서는 에이전트를 띄우지 않았습니다). 사용자가 "이 코드는 왜 있나?"를 묻고 에이전트가 이 스킬이 맞다고 판단하면 `SKILL.md` 전체를 읽습니다. 지시문은 대상(저장소와 파일, 줄 범위)을 모으고, 하나라도 빠졌으면 빠진 값만 묻고 형제 저장소를 훑지 말라고 시킵니다. 그다음 `python3 scripts/archaeologist.py /path/to/repo src/cache.py --lines 40-72 --json`을 돌리게 하고, 결과 JSON을 해석하기 전에 `references/reading-git-history.md`를 읽게 합니다. 스크립트가 git과 나누는 대화는 시간 경계에서 나눈 그림 셋에 있습니다. 순서는 코드의 실제 실행 순서입니다(직접 확인: 같은 프로세스에서 `subprocess.run`과 `intent_signals`·`classify_message`·`summarize_co_changes`를 감싸 순서를 기록했습니다).
+에이전트는 시작할 때 모든 스킬의 `name`과 `description`을 읽어 둡니다(명세의 점진적 불러오기, 소스로 읽은 흐름이고 이 문서는 에이전트를 띄우지 않았습니다). 사용자가 "이 코드는 왜 있나?"를 묻고 에이전트가 이 스킬이 맞다고 판단하면 `SKILL.md` 전체를 읽습니다. 지시문은 대상(저장소와 파일, 줄 범위)을 모으고, 하나라도 빠졌으면 빠진 값만 묻고 형제 저장소를 훑지 말라고 시킵니다. 그다음 `python3 scripts/archaeologist.py /path/to/repo src/cache.py --lines 40-72 --json`을 돌리게 하고, 결과 JSON을 해석하기 전에 `references/reading-git-history.md`를 읽게 합니다. 스크립트가 git과 나누는 대화는 시간 경계에서 나눈 그림 셋에 있습니다. 순서는 코드의 실제 실행 순서입니다(소스로 확인: `agent_skills/commit-archaeologist/scripts/archaeologist.py`의 `main`(360-380행)과 `build_report`(298-325행)가 부르는 순서. 리뷰에서 `subprocess.run`과 `intent_signals`·`classify_message`·`summarize_co_changes`를 감싸 기록한 순서도 같았습니다).
 
 ![git과 주고받는 과정 1 — 입력 검증과 이력 목록](diagrams/extra-git.svg)
 
@@ -1127,7 +1127,7 @@ python try_prompts.py $REPO "why does this code exist" "who wrote this function 
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `run_trigger_evals.py`가 `UnicodeDecodeError: 'cp949' codec can't decode byte 0xe2 in position 7280`으로 멈춥니다 | 한국어 Windows에서 이 도구가 `SKILL.md`를 인코딩 지정 없이(`open(...).read()`) 열어 cp949로 읽습니다. 저장소의 어떤 스킬 문서에 UTF-8 문자가 있습니다(직접 겪음) | 변수 블록의 `PYTHONUTF8=1`을 켠 셸에서 돌립니다 |
-| `skill_lint.py`나 `registry_lint.py`가 `UnicodeEncodeError: 'cp949' codec can't encode character '—'`로 멈춥니다 | 한국어 Windows의 Git Bash에서 출력 쪽 인코딩이 cp949라 결과 줄의 `—`를 찍지 못합니다(직접 겪음, 변수를 안 건 셸) | 변수 블록의 `PYTHONIOENCODING=utf-8`(과 `PYTHONUTF8=1`)을 켠 셸에서 돌립니다 |
+| `skill_lint.py`·`skill_scanner.py`·`registry_lint.py`가 `UnicodeEncodeError: 'cp949' codec can't encode character '—'`로 멈춥니다 | 한국어 Windows의 Git Bash에서 출력 쪽 인코딩이 cp949라 결과 줄의 `—`를 찍지 못합니다(직접 겪음, 변수를 안 건 셸) | 변수 블록의 `PYTHONIOENCODING=utf-8`(과 `PYTHONUTF8=1`)을 켠 셸에서 돌립니다 |
 | `error: file is not tracked at HEAD: src/cache.py` | 파일 이름이 바뀐 저장소에서 옛 이름을 줬습니다. HEAD에 그 이름이 없습니다 | 지금 이름(`src/pricing_cache.py`)을 줍니다. 옛 이름의 이력은 `--follow`가 따라갑니다 |
 | `error: file is not tracked at HEAD: pricing_cache.py` | 저장소 자리에 하위 폴더(`shop/src`)를 줬는데 파일 경로를 그 폴더 기준으로 썼습니다. 파일 경로는 저장소 맨 위 기준입니다 | `python $SK shop/src src/pricing_cache.py`처럼 맨 위 기준 경로를 줍니다 |
 | `error: line range ends at 99, but src/pricing_cache.py has 24 lines at HEAD` | 줄 범위는 현재(HEAD) 줄 번호이고 끝 번호가 줄 수보다 큽니다 | `cat -n`으로 지금 줄 번호를 보고 다시 줍니다 |

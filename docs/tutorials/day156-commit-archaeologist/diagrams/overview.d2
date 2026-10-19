@@ -27,14 +27,14 @@ repo: "대상 저장소 (.git)" { class: store }
 agent: "코딩 에이전트\n(이 문서는 띄우지 않음)" { class: ext }
 evals: "스크립트 시험\n(test_archaeologist.py)" { class: ours }
 tools: "시험 도구 넷\n(skill_lint · skill_scanner ·\nrun_trigger_evals · registry_lint)" { class: ours }
-evaldata: "시험 자료" {
+evaldata: "시험 도구의 입력" {
   class: group
   grid-columns: 1
   grid-gap: 20
   cases: "trigger-cases.json" { class: file }
   registry: "registry.json" { class: file }
-  behav: "evals.json (3단계)" { class: file }
 }
+behav: "evals.json\n(3단계)" { class: file }
 
 user -> skill: "폴더 복사"
 user -> script: "저장소 · 파일 · 줄"
@@ -44,4 +44,4 @@ tools -> evaldata: "입력 읽기"
 script -> repo: "git (읽기만)"
 script -> agent: "JSON · 터미널 요약"
 skill -> agent: "지시문을 읽음"
-evaldata -> agent: "기대 항목"
+behav -> agent: "기대 항목"
