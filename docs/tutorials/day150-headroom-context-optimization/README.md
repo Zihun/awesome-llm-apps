@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-Day 151 · 🎯 Toonify Token Optimization — (작성 필요)
+[Day 151 · 🎯 Toonify Token Optimization](../day151-toonify-token-optimization/README.md) — (작성 필요)
