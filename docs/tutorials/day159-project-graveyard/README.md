@@ -1,6 +1,6 @@
 # Day 159 · ⚰️ Project Graveyard
 
-> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 165분(스크립트 하나와 git만 있으면 되지만, 지시문과 명세를 읽고 합성 묘지로 출력을 여덟 단계에 걸쳐 따라 읽는 데 시간이 듭니다) · API 비용 대략 0원(API 키가 필요 없고 모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/project-graveyard`
+> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 190분(스크립트 하나와 git만 있으면 되지만, 지시문과 명세를 읽고 합성 묘지로 출력을 여덟 단계에 걸쳐 따라 읽는 데 시간이 듭니다) · API 비용 대략 0원(API 키가 필요 없고 모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/project-graveyard`
 
 ## 오늘 만들 것
 
@@ -10,18 +10,19 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-이 문서는 에이전트(Claude Code, Codex, Cursor 등)를 한 번도 띄우지 않았고 모델도 부르지 않았으며, 3단계 행동 시험도 돌리지 않았습니다. 이 PC의 진짜 `~/.claude/skills`나 다른 에이전트 설정 폴더에는 아무것도 넣지 않았고 `npx skills add`도 실행하지 않았습니다. **이 스크립트는 인자 없이 돌리면 홈 아래 개발 폴더를 훑기 때문에**, 이 문서의 모든 실행은 홈을 작업 폴더 안으로 바꾼 셸에서 했고, 뿌리 폴더를 명시했으며, 진짜 홈이나 진짜 개발 폴더를 훑는 실행은 한 번도 하지 않았습니다. 독자 명령도 같습니다. 줄 하나를 빼먹어도 진짜 홈이 훑이지 않도록 Step 2에서 거부하는 래퍼를 둡니다. 묘지는 모두 직접 만든 가짜(작성자 `Dana Fixture`, 메일 `example.test`)입니다. 직접 돌려 보거나 소스로 확인한 것이 열입니다.
+이 문서는 에이전트(Claude Code, Codex, Cursor 등)를 한 번도 띄우지 않았고 모델도 부르지 않았으며, 3단계 행동 시험도 돌리지 않았습니다. 이 PC의 진짜 `~/.claude/skills`나 다른 에이전트 설정 폴더에는 아무것도 넣지 않았고 `npx skills add`도 실행하지 않았습니다. **이 스크립트는 인자 없이 돌리면 홈 아래 개발 폴더를 훑기 때문에**, 이 문서의 모든 실행은 홈을 작업 폴더 안으로 바꾼 셸에서 했고, 뿌리 폴더를 명시했으며, 진짜 홈이나 진짜 개발 폴더를 훑는 실행은 한 번도 하지 않았습니다. 독자 명령도 같습니다. 줄 하나를 빼먹어도 진짜 홈이 훑이지 않도록 Step 2에서 거부하는 래퍼를 두고, 파일을 만들거나 목록을 찍는 블록은 목적지를 블록 안에서 정해 진짜 에이전트 설정 폴더 아래이면 멈춥니다. 묘지는 모두 직접 만든 가짜(작성자 `Dana Fixture`, 메일 `example.test`)입니다. 직접 돌려 보거나 소스로 확인한 것이 열하나입니다.
 
 1. 머리말의 이름은 17자, 설명은 590자(한도 1024)이고 `skill_lint.py --strict`는 오류 0·경고 0입니다. 설명의 "Runs entirely locally"는 스크립트에 대해서는 맞고, 부활 단계의 "세계 점검"은 에이전트에게 검색을 시킵니다(Step 2, 8).
 2. 인자 없이 돌리면 `~/dev`·`~/projects`·`~/code`·`~/src`·`~/Desktop`·`~/Documents/GitHub`·`~/Downloads` 일곱 곳을 훑습니다(`graveyard.py:30`). 홈을 바꾼 셸에서 돌리면 그 일곱 곳이 작업 폴더 안을 가리킵니다(Step 3).
 3. 오래된 저장소 다섯 개를 놓아 보니 둘만 찾았습니다. 깊이 5 이상, `go`라는 이름의 폴더, 점으로 시작하는 폴더는 조용히 건너뜁니다(Step 3).
 4. 저장소 13개를 읽는 한 번의 실행이 `git` 프로세스 80개(`config`·`log`·`ls-files`·`remote`·`tag`)를 시작했고, `.git` 파일 676개의 지문이 실행 전후로 같았고, 쓰기로 연 파일과 네트워크 시도는 0이었습니다(Step 4).
-5. 보고서의 "THE DEAD" 표는 펄스 순이 아니라 최근 순이고, 원인은 첫 번째 하나만 보입니다. 나머지는 `--json`에만 있습니다(Step 4, 5).
-6. 원인 아홉 가지를 모두 한 번씩 일으켰고, 같은 저장소에서 둘이 맞으면 먼저 검사하는 쪽이 이깁니다. 새 프로젝트가 14일 안에 태어났다는 것만으로 `shiny_object`가 먼저 붙습니다(Step 5).
-7. 판정이 틀리는 방식을 소스에서 읽고 만들어 확인했습니다. CI 워크플로 파일 하나가 "배포 설정"이고, "add support to …"가 "재작성"이고, `AUTHORS` 파일이 "로그인 벽"이고, `latest.json`이 "테스트가 있음"입니다(Step 5).
-8. 소유 필터는 git 설정의 이메일에 달려 있습니다. 이메일이 아무 데도 없으면 아무것도 걸러지지 않아 죽은 프로젝트가 9개에서 11개로 늡니다. 실행한 폴더가 어떤 저장소 안이면 그 저장소의 로컬 이메일까지 "내 것"에 들어갑니다(Step 6).
-9. `--mark-resurrected`는 경로가 있는지 보지 않고(오타도 기록), 다음 스캔은 "마지막 커밋으로부터" 침묵한 날을 세기 때문에 부활을 기록한 직후 "다시 죽는 중"이라고 말합니다. 따옴표로 막은 `~`는 보고서를 다 찍은 뒤 상태 파일 쓰기에서 죽습니다(Step 7).
-10. `--redact`는 이름을 가리지만 "내 것이 아님으로 건너뜀" 목록에는 진짜 이름이 남고, `--json`의 `remote` 주소에도 진짜 프로젝트 이름과 사용자 이름이 그대로 실립니다. 저장소의 2b 시험은 이 틈을 보지 않습니다(Step 7, 8).
+5. `git ls-files`는 훑은 저장소 자신의 `core.fsmonitor` 설정이 가리키는 명령을 실행합니다. 이 스크립트를 `~/Downloads` 같은 폴더에 그대로 쓰면 받아 온 저장소의 명령이 내 권한으로 돌 수 있고, 래퍼는 환경 변수 셋(`GIT_CONFIG_COUNT`·`KEY_0`·`VALUE_0`)으로 이것을 끕니다(Step 4).
+6. 보고서의 "THE DEAD" 표는 펄스 순이 아니라 최근 순이고, 원인은 첫 번째 하나만 보입니다. 나머지는 `--json`에만 있습니다(Step 4, 5).
+7. 원인 아홉 가지를 모두 한 번씩 일으켰고, 같은 저장소에서 둘이 맞으면 먼저 검사하는 쪽이 이깁니다. 새 프로젝트가 14일 안에 태어났다는 것만으로 `shiny_object`가 먼저 붙습니다(Step 5).
+8. 판정이 틀리는 방식을 소스에서 읽고 만들어 확인했습니다. CI 워크플로 파일 하나가 "배포 설정"이고, "add support to …"가 "재작성"이고, `AUTHORS` 파일이 "로그인 벽"이고, `latest.json`이 "테스트가 있음"입니다(Step 5).
+9. 소유 필터는 git 설정의 이메일에 달려 있습니다. 이메일이 아무 데도 없으면 아무것도 걸러지지 않아 죽은 프로젝트가 9개에서 11개로 늡니다. 실행한 폴더가 어떤 저장소 안이면 그 저장소의 로컬 이메일까지 "내 것"에 들어갑니다(Step 6).
+10. `--mark-resurrected`는 경로가 있는지 보지 않고(오타도 기록), 다음 스캔은 "마지막 커밋으로부터" 침묵한 날을 세기 때문에 부활을 기록한 직후 "다시 죽는 중"이라고 말합니다. 따옴표로 막은 `~`는 보고서를 다 찍은 뒤 상태 파일 쓰기에서 죽습니다(Step 7).
+11. `--redact`는 이름을 가리지만 셋이 남습니다. "내 것이 아님으로 건너뜀" 목록의 진짜 이름, `--json`의 `remote` 주소(진짜 프로젝트 이름과 사용자 이름), `--state`를 같이 주면 재발 감시 줄의 진짜 이름입니다. 저장소의 2b 시험은 이 틈을 보지 않습니다(Step 7, 8).
 
 ## 사전 준비
 
@@ -34,7 +35,7 @@
 | 코딩 에이전트 | 필요 없음. 이 문서는 에이전트를 띄우지 않습니다 | 없음 |
 | API 키·네트워크 | 필요 없음. clone 뒤에는 인터넷 없이 모두 돌아갑니다 | 없음 |
 
-한국어 Windows에서는 시험 도구 하나(`run_trigger_evals.py`)가 파일을 기본 인코딩으로 열다가 멈춘다고 [Day 156](../day156-commit-archaeologist/README.md)의 문제 해결 표가 적었습니다. 아래 환경 파일에 `PYTHONUTF8=1`을 넣어 두었습니다. 이 문서의 출력에 보이는 `...`은 제 작업 폴더의 경로를 줄인 것입니다.
+한국어 Windows에서는 시험 도구가 파일을 기본 인코딩(cp949)으로 열다가 멈추고(`run_trigger_evals.py`), 출력의 `—` 같은 글자에서 `UnicodeEncodeError`로 멈추기도 합니다(`skill_lint.py`는 `PYTHONUTF8=0`·`PYTHONIOENCODING=cp949`로 돌려 `UnicodeEncodeError: 'cp949' codec can't encode character`를 직접 재현했고, [Day 156](../day156-commit-archaeologist/README.md)의 문제 해결 표는 앞의 것을 적었습니다). 아래 환경 파일의 `PYTHONUTF8=1`과 `PYTHONIOENCODING=utf-8`이 둘 다 막습니다. 이 문서의 출력에 보이는 `...`은 제 작업 폴더의 경로를 줄인 것입니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -65,14 +66,12 @@
 
 **목적.** 이 문서의 실습이 이 PC의 진짜 홈을 보지도 쓰지도 못하게 하고, 파이썬이 바깥으로 연결을 열면 막히게 합니다. 이 스킬의 스크립트는 홈을 두 번 읽습니다. 기본 뿌리가 `~`로 시작하고(`graveyard.py:30`), 내 이메일을 `git config --global`에서 읽습니다(`graveyard.py:358`). 둘 다 홈을 바꾸면 작업 폴더 안을 향합니다. 파이썬은 Windows에서 `~`를 `USERPROFILE`로, 그 밖에서는 `HOME`으로 풀고, git은 `GIT_CONFIG_GLOBAL`을 직접 줄 수 있어서 셋을 모두 둡니다. 에이전트 설정 폴더(`CLAUDE_CONFIG_DIR`)와 임시 폴더(`TEMP`·`TMP`·`TMPDIR`)도 같이 돌립니다.
 
-**할 일.** `REPO`를 자기 저장소 경로로 바꿔 아래 블록을 한 번에 붙입니다. 작업 폴더는 어떤 git 저장소 안에도 만들지 않습니다. 블록의 `git rev-parse` 줄이 그것을 확인합니다(저장소 안이면 `git`이 맨 위를 찾아 이 스크립트의 `git config user.email`이 그 저장소의 설정을 읽게 됩니다. Step 6에서 보입니다). 이후 블록은 새 터미널에서 시작한다면 `export REPO=…` 한 줄과 `. ./env.sh`(`lab159` 안에서)로 시작합니다. 원본 저장소에는 아무것도 쓰지 않습니다.
+**할 일.** `REPO`를 자기 저장소 경로로 바꿔 아래 블록을 한 번에 붙입니다. 작업 폴더는 어떤 git 저장소 안에도 만들지 않습니다. 환경 파일이 그것을 확인하고, 저장소 안이거나 `REPO`가 틀렸으면 `return 1`로 환경 파일 불러오기를 멈춥니다. 그러면 `pyrun`이 정의되지 않아 뒤의 스크립트 실행 줄이 하나도 돌지 않습니다(저장소 안이면 `git`이 맨 위를 찾아 이 스크립트의 `git config user.email`이 그 저장소의 설정을 읽게 됩니다. Step 6에서 보입니다). 이후 블록은 새 터미널에서 시작한다면 `export REPO=…` 한 줄과 `. ./env.sh`(`lab159` 안에서)로 시작합니다. 원본 저장소에는 아무것도 쓰지 않습니다.
 
 ```bash
 # --- Step 1: 작업 폴더, 환경 파일, 네트워크 가드 ---
 # REPO는 awesome-llm-apps를 받은 폴더다(자기 경로로 바꾼다). 작업 폴더는 어떤 git 저장소 안에도 두지 않는다.
 export REPO=/path/to/awesome-llm-apps
-test -f "$REPO/agent_skills/registry.json" || { echo "REPO가 저장소 루트가 아닙니다"; false; }
-if git rev-parse --show-toplevel >/dev/null 2>&1; then echo "git 저장소 안입니다. 다른 곳에서 시작하세요"; false; fi
 mkdir lab159
 cd lab159
 cat > env.sh <<'EOT'
@@ -80,6 +79,12 @@ cat > env.sh <<'EOT'
 unset VIRTUAL_ENV
 : "${REPO:?REPO를 먼저 지정하세요}"
 export LAB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if git -C "$LAB" rev-parse --show-toplevel >/dev/null 2>&1; then echo "작업 폴더가 git 저장소 안입니다. 다른 곳에서 다시 시작하세요"; unset LAB; return 1; fi
+test -f "$REPO/agent_skills/registry.json" || { echo "REPO가 저장소 루트가 아닙니다"; unset LAB; return 1; }
+export REAL_HOME="${REAL_HOME:-$HOME}" REAL_CLAUDE_CONFIG_DIR="${REAL_CLAUDE_CONFIG_DIR:-${CLAUDE_CONFIG_DIR:-/none}}"
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$(norm "$LAB")/" in "$(norm "$REAL_HOME")/$d"/*) echo "작업 폴더가 에이전트 설정 폴더 아래입니다: $LAB"; unset LAB; return 1 ;; esac; done
+case "$(norm "$LAB")/" in "$(norm "$REAL_CLAUDE_CONFIG_DIR")"/*) echo "작업 폴더가 CLAUDE_CONFIG_DIR 아래입니다: $LAB"; unset LAB; return 1 ;; esac
 cd "$LAB"
 mkdir -p "$LAB/home/.claude" "$LAB/tmp" "$LAB/sg"
 win() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi; }
@@ -146,9 +151,18 @@ npx skills add https://github.com/Shubhamsaboo/awesome-llm-apps/tree/main/agent_
 
 다른 하나는 폴더 복사입니다. 개인 스킬의 자리 `~/.claude/skills/`는 이 PC의 진짜 Claude Code 설정이라 쓰지 않고, 프로젝트 스킬의 자리 `.claude/skills/<이름>/SKILL.md`로만 복사합니다.
 
+이 블록은 앞 터미널의 변수에 기대지 않습니다. 목적지를 블록 안에서 정하고 정규화(`realpath -m`, Windows에서는 `cygpath -u`를 먼저)한 뒤, 홈 아래 `.claude`·`.agents`·`.codex`·`.cursor`·`.copilot`·`.openclaw`·`.hermes`나 `CLAUDE_CONFIG_DIR` 아래이면 멈춥니다. 여기서 "홈"과 "설정 폴더"는 환경 파일이 바꾸기 전의 값입니다. 환경 파일이 `REAL_HOME`·`REAL_CLAUDE_CONFIG_DIR`에 원래 값을 남겨 두기 때문이고(새 터미널에서는 아직 바뀌지 않았으므로 지금 값이 곧 원래 값입니다), 작업 폴더 자체가 그 아래이면 환경 파일이 `return 1`로 멈춥니다. `LAB`이 비어 있으면(새 터미널에서 `. ./env.sh`를 빠뜨렸으면) `${LAB:?}`가 그 줄에서 멈춥니다. 정규화에 쓰는 `realpath -m`은 GNU 도구라 macOS 기본 `realpath`에는 없어, 거기서는 가드 줄이 `P`를 비우고 블록이 멈춥니다.
+
 ```bash
-mkdir -p project/.claude/skills
-cp -r "$REPO/agent_skills/project-graveyard" project/.claude/skills/project-graveyard
+# 새 터미널이어도, 줄 하나를 빼도 진짜 에이전트 설정 폴더에는 아무것도 쓰지 않게 목적지를 이 블록 안에서 정하고 검사한다.
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+P="$(norm "${LAB:?먼저 . ./env.sh를 불러오세요}/project/.claude/skills")"
+H="$(norm "${REAL_HOME:-$HOME}")"
+for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$P/" in "$H/$d"/*) echo "멈춥니다: $P"; P="" ;; esac; done
+case "$P/" in "$(norm "${REAL_CLAUDE_CONFIG_DIR:-${CLAUDE_CONFIG_DIR:-/none}}")"/*) echo "멈춥니다: $P"; P="" ;; esac
+mkdir -p "${P:?}"
+cp -r "${REPO:?}/agent_skills/project-graveyard" "${P:?}/project-graveyard"
+cd "${LAB:?}"
 find project -type f | sort
 find project -type f -exec wc -l {} +
 ```
@@ -164,6 +178,8 @@ project/.claude/skills/project-graveyard/SKILL.md
   229 project/.claude/skills/project-graveyard/SKILL.md
   951 total
 ```
+
+이 가드를 가짜 홈에서 확인했습니다. 가짜 홈은 `.claude/skills/existing`과 가짜 `.credentials.json`, `.agents`, 가짜 `.gitconfig`를 둔 폴더입니다. 첫째, 환경 파일 없는 새 터미널(홈이 가짜 홈이고 `LAB`이 없음)에서 파일을 만들거나 목록을 찍는 블록 여섯(Step 2의 설치·목록, Step 3의 `home/dev` 복사, Step 4의 전역 설정, Step 6의 `side`, Step 7의 커밋)을 글자 그대로 대화형 bash에 붙여 돌렸고 가짜 홈의 파일 목록과 내용 지문이 그대로였습니다. 둘째, 설치 블록과 목록 블록의 줄을 하나씩 빼서 27판을 돌렸고 지문이 그대로였습니다. 셋째, 작업 폴더를 가짜 `.claude`와 가짜 `.agents` 아래에 두고 환경 파일을 불러온 두 판에서 환경 파일이 멈추고 `LAB`을 비웠으며 이어 붙인 설치 블록도 멈췄습니다. 이 둘째와 셋째는 비대화형 bash라 `${LAB:?}` 실패가 블록 전체를 끝냅니다. 붙여 넣는 터미널에서는 그 줄만 실패하고 다음 줄로 넘어가므로, 그 경우는 첫째 판(대화형)으로 확인했습니다. 줄 빼기는 나머지 네 블록에는 하지 않았는데, 그 블록들의 목적지가 모두 `${LAB:?}`로 시작해서 `LAB`이 정상이면 작업 폴더 안뿐이기 때문입니다. PowerShell 판은 쓰지 않았고 실행하지 못했습니다.
 
 파일 넷, 951줄입니다. `evals/`는 설치되지 않습니다. 에이전트는 시작할 때 `name`과 `description`만 읽고, 스킬을 쓰기로 하면 `SKILL.md` 전체(229줄)를 읽고, `references/`와 `scripts/`는 필요할 때 읽거나 돌립니다. 이것이 agentskills.io 명세(https://agentskills.io/specification, 2026-10-19에 읽음)의 "점진적 불러오기"입니다. Claude Code 문서(https://code.claude.com/docs/en/skills, 같은 날)는 프로젝트 스킬 자리를 `.claude/skills/<skill-name>/SKILL.md`, 개인 스킬 자리를 `~/.claude/skills/<skill-name>/SKILL.md`로 적고, 스크립트를 "executed, not loaded"라고 적습니다. 두 문서는 웹 가져오기 도구를 거쳐 읽었기 때문에 인용은 짧은 낱말에 한정했습니다. 이제 머리말입니다.
 
@@ -198,7 +214,7 @@ metadata:
 | `metadata` | 선택. 문자열 키와 문자열 값의 맵 | `author`·`version`·`source` 셋, 값이 모두 문자열 |
 | `allowed-tools` | 선택, 실험적. 미리 허락해 둘 도구 | 없음 |
 
-`allowed-tools`가 없다는 것은 스크립트를 돌릴 때마다 평소의 권한 규칙이 적용된다는 뜻입니다(Day 156 Step 1이 같은 문서를 근거로 적었습니다). 이 문서는 에이전트를 띄우지 않아서 실제로 허락을 묻는지는 확인하지 못했습니다. 길이는 직접 세 봅니다. 복사본이 린트를 통과하는지, 진짜 `~/.claude`가 아닌 스크래치 `.claude`가 비어 있는지도 봅니다.
+`allowed-tools`가 없다는 것은 스크립트를 돌릴 때마다 평소의 권한 규칙이 적용된다는 뜻입니다(Day 156 Step 1이 같은 문서를 근거로 적었습니다). 이 문서는 에이전트를 띄우지 않아서 실제로 허락을 묻는지는 확인하지 못했습니다. 길이는 직접 세 봅니다. 복사본이 린트를 통과하는지도 보고, 스크래치 프로젝트의 `.claude`만 나열합니다(같은 가드를 블록 안에 둡니다. 진짜 `~/.claude`는 나열하지 않습니다).
 
 ```bash
 pyrun -c "
@@ -209,16 +225,25 @@ desc = ' '.join(l.strip() for l in re.search(r'description: >-\n((?:  .*\n)+)', 
 print('name', len('project-graveyard'), '| description', len(desc), '| SKILL.md lines', t.count(chr(10)))
 "
 pyrun "$REPO/agent_skills/evals/tools/skill_lint.py" project/.claude/skills/project-graveyard --strict
-ls -A "$HOME/.claude"
+# 스크래치 프로젝트의 .claude만 나열한다. 목적지를 이 블록 안에서 정하고 진짜 설정 폴더 아래이면 멈춘다.
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+P="$(norm "${LAB:?먼저 . ./env.sh를 불러오세요}/project/.claude")"
+H="$(norm "${REAL_HOME:-$HOME}")"
+for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$P/" in "$H/$d"/*) echo "멈춥니다: $P"; P="" ;; esac; done
+case "$P/" in "$(norm "${REAL_CLAUDE_CONFIG_DIR:-${CLAUDE_CONFIG_DIR:-/none}}")"/*) echo "멈춥니다: $P"; P="" ;; esac
+ls -A "${P:?}"
+ls -A "${P:?}/skills"
 ```
 
 ```text
 name 17 | description 590 | SKILL.md lines 229
 Linting .../lab159\project\.claude\skills\project-graveyard (strict=on)
   PASS — 0 error(s), 0 warning(s)
+skills
+project-graveyard
 ```
 
-이제 래퍼입니다. 스킬의 스크립트는 건드리지 않고 불러온 뒤, 그 안의 뿌리 찾기 함수 둘을 "뿌리가 작업 폴더 안인지 먼저 보는" 함수로 감쌉니다. 그리고 `~`가 작업 폴더 밖으로 풀리거나, 실행한 폴더가 작업 폴더 밖이거나, `--json`·`--state`가 밖을 가리키면 아무것도 하지 않고 종료 코드 3으로 끝납니다. 작업 폴더의 위치는 환경 변수가 아니라 이 파일 자신의 위치에서 정하므로 `. ./env.sh`를 빠뜨려도 거부합니다. 이 문서의 뒤 명령은 스크립트 실행이면 모두 `gy.py`를 거칩니다(`trace.py`도 안에서 `gy.py`를 실행합니다). 저장소의 시험 도구(Step 8)는 래퍼를 거치지 않습니다. 시험이 스캔마다 뿌리를 명시하고 임시 폴더에 묘지를 만들며, 뿌리 없이 부르는 `--mark-resurrected` 한 번은 스캔 없이 끝나기 때문입니다.
+이제 래퍼입니다. 스킬의 스크립트는 건드리지 않고 불러온 뒤, 그 안의 뿌리 찾기 함수 둘을 "뿌리가 작업 폴더 안인지 먼저 보는" 함수로 감쌉니다. 그리고 `~`가 작업 폴더 밖으로 풀리거나, 실행한 폴더가 작업 폴더 밖이거나, `--json`·`--state`(줄여 쓴 `--js`·`--sta`도)가 밖을 가리키면 아무것도 하지 않고 종료 코드 3으로 끝납니다. 또 스크립트가 시작하는 모든 git에 `core.fsmonitor=false`를 환경 변수로 줍니다(Step 4). 작업 폴더의 위치는 환경 변수가 아니라 이 파일 자신의 위치에서 정하므로 `. ./env.sh`를 빠뜨려도 거부합니다. 이 문서의 뒤 명령은 스크립트 실행이면 모두 `gy.py`를 거칩니다(`trace.py`도 안에서 `gy.py`를 실행합니다). 저장소의 시험 도구(Step 8)는 래퍼를 거치지 않습니다. 시험이 스캔마다 뿌리를 명시하고 임시 폴더에 묘지를 만들며, 뿌리 없이 부르는 `--mark-resurrected` 한 번은 스캔 없이 끝나기 때문입니다.
 
 `lab159/gy.py`
 
@@ -228,8 +253,9 @@ Linting .../lab159\project\.claude\skills\project-graveyard (strict=on)
     python gy.py [graveyard.py flags and roots ...]
 
 Refuses when: "~" expands outside the lab, the working folder is outside the lab,
-a scan root is outside the lab, or --json/--state point outside the lab.
-The scanner's own source is loaded unmodified.
+a scan root is outside the lab, or --json/--state (also abbreviated, such as --js or --sta)
+point outside the lab. It also tells every git the scanner starts to ignore a scanned
+repository's own core.fsmonitor setting. The scanner's own source is loaded unmodified.
 """
 import importlib.util
 import os
@@ -255,10 +281,19 @@ if not inside(os.getcwd()):
     refuse("working folder %s is outside the lab" % os.getcwd())
 args = sys.argv[1:]
 for i, a in enumerate(args):
+    name, has_value, value = a.partition("=")
     for flag in ("--json", "--state"):
-        value = args[i + 1] if a == flag and i + 1 < len(args) else a[len(flag) + 1:] if a.startswith(flag + "=") else None
-        if value is not None and not inside(value):
-            refuse("%s %s points outside the lab" % (flag, value))
+        if len(name) >= 3 and flag.startswith(name):
+            target = value if has_value else args[i + 1] if i + 1 < len(args) else None
+            if target is not None and not inside(target):
+                refuse("%s %s points outside the lab" % (flag, target))
+
+# git runs a repository's core.fsmonitor command during ls-files. Put one more setting on the
+# command-line level (it beats the repository's own config) so the scanned repos cannot run it.
+count = int(os.environ.get("GIT_CONFIG_COUNT") or 0)
+os.environ["GIT_CONFIG_KEY_%d" % count] = "core.fsmonitor"
+os.environ["GIT_CONFIG_VALUE_%d" % count] = "false"
+os.environ["GIT_CONFIG_COUNT"] = str(count + 1)
 
 spec = importlib.util.spec_from_file_location("graveyard", SCRIPT)
 gy = importlib.util.module_from_spec(spec)
@@ -457,8 +492,8 @@ repos scanned: 1   alive: 0   finished: 0   dead: 1   not yours (skipped): 0
 뿌리 자신은 깊이도 이름도 따지지 않기 때문입니다(`os.walk`의 첫 폴더). 마지막으로 기본 뿌리가 실제로 홈 아래를 읽는다는 것을 작업 폴더의 가짜 홈에서 봅니다. `~/dev`에 하나를 복사해 놓고 뿌리 없이 돌립니다.
 
 ```bash
-mkdir -p home/dev
-cp -r blind/plain home/dev/plain
+mkdir -p "${LAB:?먼저 . ./env.sh를 불러오세요}/home/dev"
+cp -r "${LAB:?}/blind/plain" "${LAB:?}/home/dev/plain"
 pyrun gy.py --no-art | grep -E "^repos scanned|^plain|^No git"
 ```
 
@@ -476,7 +511,7 @@ plain                          pulse 30/100
 
 **목적.** 각 원인을 일으킬 프로젝트를 git 이력으로 만들어 두고(정답을 압니다), 보고서의 네 덩이를 읽고, 스크립트가 git을 어떻게 부르는지 기록합니다.
 
-**할 일.** 아래 파일을 `lab159/make_yard.py`로 저장합니다. 커밋 날짜는 모두 "N일 전 오전 10시"라서 언제 만들어도 보고서의 모양이 같습니다(월 이름과 점수의 일부는 오늘 날짜에 달려 있습니다). 모든 git 호출은 전역·시스템 설정을 읽지 않습니다. 열세 개 저장소와 git이 없는 폴더 하나를 만듭니다.
+**할 일.** 아래 파일을 `lab159/make_yard.py`로 저장합니다. 커밋 날짜는 모두 "N일 전 오전 10시"라서 언제 만들어도 보고서의 모양이 같습니다(월 이름과 점수의 일부는 오늘 날짜에 달려 있습니다). 모든 git 호출은 전역·시스템 설정을 읽지 않습니다. 열세 개 저장소와 git이 없는 폴더 하나를 만듭니다. 뒤에서 쓸 `lab159/snapshot.py`(뿌리 아래 모든 `.git` 파일의 지문을 찍는 도우미)도 함께 저장합니다.
 
 `lab159/make_yard.py`
 
@@ -625,6 +660,34 @@ for name, text in [("package.json", "{}\n"), ("app.js", "// big plans\n")]:
 print("built %d repos + 1 folder without git under %s" % (len([n for n in os.listdir(ROOT) if os.path.isdir(os.path.join(ROOT, n, ".git"))]), os.path.basename(ROOT)))
 ```
 
+`lab159/snapshot.py`
+
+```python
+"""Print one fingerprint of every file under every .git below ROOT.
+
+    python snapshot.py ROOT
+"""
+import hashlib
+import os
+import sys
+
+root = os.path.abspath(sys.argv[1])
+digest = hashlib.sha256()
+count = repos = 0
+for folder, dirs, files in os.walk(root):
+    dirs.sort()
+    if os.path.basename(folder) == ".git":
+        repos += 1
+    if ".git" in folder.split(os.sep):
+        for name in sorted(files):
+            path = os.path.join(folder, name)
+            digest.update(os.path.relpath(path, root).encode())
+            with open(path, "rb") as handle:
+                digest.update(handle.read())
+            count += 1
+print("repos:", repos, "| git files:", count, "| fingerprint:", digest.hexdigest()[:16])
+```
+
 만든 프로젝트가 무엇을 보이려는지 표로 적어 둡니다. 정답을 알고 출력을 읽기 위한 것입니다.
 
 | 폴더 | 이력 | 보이려는 것 |
@@ -645,8 +708,9 @@ print("built %d repos + 1 folder without git under %s" % (len([n for n in os.lis
 
 ```bash
 pyrun make_yard.py yard
-git config --global user.name "Dana Fixture"
-git config --global user.email dana@example.test
+# 전역 설정 파일을 이름으로 지정해 쓴다(환경 파일이 없는 터미널에서 진짜 ~/.gitconfig를 건드리지 않게)
+git config --file "${LAB:?먼저 . ./env.sh를 불러오세요}/home/.gitconfig" user.name "Dana Fixture"
+git config --file "${LAB:?}/home/.gitconfig" user.email dana@example.test
 cat home/.gitconfig
 pyrun snapshot.py yard
 ```
@@ -656,10 +720,10 @@ built 13 repos + 1 folder without git under yard
 [user]
 	name = Dana Fixture
 	email = dana@example.test
-repos: 13 | git files: 676 | fingerprint: 33f55509388bbe14
+repos: 13 | git files: 676 | fingerprint: de54e5ec24f17eab
 ```
 
-스캔에 쓸 내 이메일은 방금 쓴 전역 설정(`dana@example.test`)입니다. 지문 줄은 만든 시각에 따라 값이 다릅니다. 이제 처음 훑습니다. 뿌리는 `yard` 하나입니다.
+스캔에 쓸 내 이메일은 방금 쓴 전역 설정(`dana@example.test`)입니다. 이 블록의 `git config`는 환경 변수가 아니라 `--file`로 전역 설정 파일을 이름으로 지정합니다. 환경 파일이 없는 터미널에서 `git config --global`을 돌리면 진짜 `~/.gitconfig`가 바뀌기 때문입니다. 지문 줄은 만든 시각에 따라 값이 다릅니다. 이제 처음 훑습니다. 뿌리는 `yard` 하나입니다.
 
 ```bash
 pyrun gy.py yard
@@ -725,9 +789,9 @@ login-wall                     pulse 37/100
    to ship:  needs deploy config, tests
 ```
 
-보고서는 네 덩이입니다. 센서스(`graveyard.py:434-457`)는 훑은 저장소 13개를 살아 있음 1·끝남 1·죽음 9·내 것 아님 2로 가르고, git이 없는 폴더 하나를 따로 셉니다. 죽은 목록("THE DEAD", 460~464행)의 "lived"는 첫 커밋부터 마지막 커밋까지의 날수이고 정렬은 **마지막 커밋이 최근인 순**입니다. 펄스 순이 아닙니다. `SKILL.md`는 묘비를 "worst-to-best pulse"로 쓰라고 하므로(`SKILL.md:93`) 순서를 바꾸는 것은 에이전트의 몫입니다. "combined lifespan"은 날수의 단순 합이라(455행) 기간이 겹쳐도 그대로 더합니다. 패턴(467~486행)과 펄스 상위 셋(510~519행)은 출력에서 읽으면 됩니다. 펄스 상위 셋은 세 개까지만 찍고, 각각 증거·원인·"needs …"(빠진 것)를 붙입니다. 점수에는 "마지막 커밋이 180일 안"이 들어 있어(292행) 같은 묘지도 며칠 뒤에는 점수가 달라질 수 있습니다. 월 이름("silent since Sep 2025")도 오늘 날짜에 달려 있습니다. 이제 이 한 번이 무엇을 했는지 기록합니다.
+보고서는 네 덩이입니다. 센서스(`graveyard.py:434-457`)는 훑은 저장소 13개를 살아 있음 1·끝남 1·죽음 9·내 것 아님 2로 가르고, git이 없는 폴더 하나를 따로 셉니다. 죽은 목록("THE DEAD", 460~464행)의 "lived"는 첫 커밋부터 마지막 커밋까지의 날수이고 정렬은 **마지막 커밋이 최근인 순**입니다. 펄스 순이 아닙니다. `SKILL.md`는 묘비를 "worst-to-best pulse"로 쓰라고 하므로(`SKILL.md:93`) 순서를 바꾸는 것은 에이전트의 몫입니다. "combined lifespan"은 날수의 단순 합이라(420행에서 더하고 455행에서 찍습니다) 기간이 겹쳐도 그대로 더합니다. 패턴(467~486행)과 펄스 상위 셋(510~519행)은 출력에서 읽으면 됩니다. 펄스 상위 셋은 세 개까지만 찍고, 각각 증거·원인·"needs …"(빠진 것)를 붙입니다. 점수에는 "마지막 커밋이 180일 안"이 들어 있어(292행) 같은 묘지도 며칠 뒤에는 점수가 달라질 수 있습니다. 월 이름("silent since Sep 2025")도 오늘 날짜에 달려 있습니다. 이제 이 한 번이 무엇을 했는지 기록합니다.
 
-`lab159/trace.py`는 `gy.py`를 같은 프로세스 안에서 돌리면서 git 하위 프로세스를 모두 세고, 쓰기로 연 파일과 네트워크 시도를 기록합니다. `lab159/snapshot.py`는 뿌리 아래 모든 `.git` 파일의 지문을 찍습니다.
+`lab159/trace.py`는 `gy.py`를 같은 프로세스 안에서 돌리면서 git 하위 프로세스를 모두 세고, 쓰기로 연 파일과 네트워크 시도를 기록합니다.
 
 `lab159/trace.py`
 
@@ -786,34 +850,6 @@ print("files opened for writing:", sorted(set(writes)) or "none")
 print("network attempts:", len(attempts))
 ```
 
-`lab159/snapshot.py`
-
-```python
-"""Print one fingerprint of every file under every .git below ROOT.
-
-    python snapshot.py ROOT
-"""
-import hashlib
-import os
-import sys
-
-root = os.path.abspath(sys.argv[1])
-digest = hashlib.sha256()
-count = repos = 0
-for folder, dirs, files in os.walk(root):
-    dirs.sort()
-    if os.path.basename(folder) == ".git":
-        repos += 1
-    if ".git" in folder.split(os.sep):
-        for name in sorted(files):
-            path = os.path.join(folder, name)
-            digest.update(os.path.relpath(path, root).encode())
-            with open(path, "rb") as handle:
-                digest.update(handle.read())
-            count += 1
-print("repos:", repos, "| git files:", count, "| fingerprint:", digest.hexdigest()[:16])
-```
-
 ```bash
 pyrun trace.py yard --no-art
 pyrun snapshot.py yard
@@ -833,10 +869,48 @@ git processes: 80 | programs started: ['git']
 repos touched: 13
 files opened for writing: none
 network attempts: 0
-repos: 13 | git files: 676 | fingerprint: 33f55509388bbe14
+repos: 13 | git files: 676 | fingerprint: de54e5ec24f17eab
 ```
 
 저장소 13개에 6개씩, 합쳐 78개와 전역·로컬 설정 읽기 2개로 git 프로세스가 80개입니다. 명령은 `config`·`log`·`ls-files`·`remote get-url`·`tag` 다섯 가지뿐입니다. `show`·`cat-file`·`blame`이 없으므로 스크립트가 읽는 것은 커밋 시각·작성자 이메일·제목, 파일 이름, 원격 주소, 태그 이름이고 파일 내용은 아닙니다. 저장소 README의 "It reads git metadata (commit dates, messages, filenames), never your code's contents"가 맞습니다. 다만 메타데이터에 이메일과 원격 주소가 들어 있다는 점은 Step 7에서 다시 봅니다. `.git` 파일 676개의 지문이 실행 전후로 같았고 쓰기로 연 파일은 없었고(`--json`·`--state`를 주지 않았습니다) 네트워크 시도는 0이었습니다. 이 확인도 파이썬이 시도하는 연결만 봅니다. git 자신이 네트워크를 쓰는지는 이 문서가 막아 보지 못했고, 쓰는 명령이 위 다섯 가지(설정과 저장소 안의 객체를 읽는 명령)라는 것만 인자로 확인했습니다.
+
+그런데 "읽는 명령"이 "아무것도 실행하지 않는 명령"은 아닙니다. `read_repo`는 저장소마다 `git ls-files`를 부르고(`graveyard.py:150`), git은 그때 **그 저장소의 `.git/config`에 적힌 `core.fsmonitor` 명령을 실행합니다.** 인자 없이 돌리면 `~/Downloads`·`~/Desktop`까지 훑으므로(Step 3), 받아 온 저장소의 설정이 내 권한으로 명령을 돌릴 수 있습니다. 무해한 표지 기록 명령으로 확인합니다. 저장소 하나의 설정에 표지 파일에 한 줄 쓰는 스크립트를 걸고 세 가지로 돌립니다. 그 저장소에서 `git ls-files`만, 스킬 스크립트를 래퍼 없이 직접(홈은 가짜이고 뿌리는 이 폴더 하나입니다), 래퍼로입니다.
+
+```bash
+cat > hook.sh <<'EOT'
+#!/bin/sh
+echo "fsmonitor ran" >> "$(dirname "$0")/hook-marker.txt"
+EOT
+chmod +x hook.sh
+mkdir -p evilroot/evil
+git -C evilroot/evil init -q -b main
+echo x > evilroot/evil/a.txt
+git -C evilroot/evil add -A
+git -C evilroot/evil -c user.name=Dana -c user.email=dana@example.test commit -q -m init
+git -C evilroot/evil config core.fsmonitor "$(win "$LAB")/hook.sh"
+: > hook-marker.txt
+echo "--- 1) 그 저장소에서 git ls-files만"
+git -C evilroot/evil ls-files; echo "표지 줄 수: $(wc -l < hook-marker.txt)"; : > hook-marker.txt
+echo "--- 2) 스킬 스크립트를 래퍼 없이 직접"
+pyrun project/.claude/skills/project-graveyard/scripts/graveyard.py evilroot --no-art | grep "^repos scanned"; echo "표지 줄 수: $(wc -l < hook-marker.txt)"; : > hook-marker.txt
+echo "--- 3) 래퍼로"
+pyrun gy.py evilroot --no-art | grep "^repos scanned"; echo "표지 줄 수: $(wc -l < hook-marker.txt)"
+```
+
+```text
+--- 1) 그 저장소에서 git ls-files만
+warning: Empty last update token.
+a.txt
+표지 줄 수: 1
+--- 2) 스킬 스크립트를 래퍼 없이 직접
+repos scanned: 1   alive: 1   finished: 0   dead: 0   not yours (skipped): 0
+표지 줄 수: 1
+--- 3) 래퍼로
+repos scanned: 1   alive: 1   finished: 0   dead: 0   not yours (skipped): 0
+표지 줄 수: 0
+```
+
+`git ls-files`만으로 표지가 한 줄 생겼고 스킬 스크립트를 직접 돌려도 한 줄 생겼습니다(이 숫자는 앞 실행의 표지를 비운 뒤의 줄 수입니다). 래퍼로 돌리면 0줄입니다. 래퍼가 `GIT_CONFIG_COUNT`·`GIT_CONFIG_KEY_n`·`GIT_CONFIG_VALUE_n`을 환경에 더해 명령줄 수준의 `core.fsmonitor=false`를 주기 때문이고, 이 수준은 저장소 자신의 설정을 이깁니다. 스크립트가 git을 `-c` 옵션 없이 부르므로(`graveyard.py:51-61`) 스크립트 쪽에서 `-c core.fsmonitor=false`를 줄 방법은 없었고, 환경 변수가 그 자리를 대신했습니다. `GIT_CONFIG_PARAMETERS`는 따로 써 보지 않았습니다. 이 방어는 `core.fsmonitor`만 막습니다. 스크립트가 쓰는 다른 git 명령(`log`·`remote get-url`·`tag --list`·`config`)은 같은 저장소에서 표지를 만들지 않았지만, 저장소 설정이 실행하는 다른 장치까지 모두 막았다고 확인한 것은 아닙니다. 그래서 받아 온 저장소가 있는 폴더를 훑기 전에는 그 `.git/config`를 먼저 읽어 보는 편이 안전합니다. 스킬의 "The script is read-only"(`SKILL.md:62`)는 스크립트 코드에 대해서는 맞고, 훑은 저장소의 설정이 실행하는 명령까지 말하는 문장은 아닙니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -1075,9 +1149,9 @@ rewrite-loop    pulse  33  deploy=False tests=False  shiny_object > rewrite_spir
 `SKILL.md`의 주의("Ownership filter uses git email … claim yours with `--me that@email.com`", 211~214행)와 같지만, 이메일이 아예 없을 때 필터가 꺼진다는 것은 쓰여 있지 않습니다. 이제 359행이 읽는 곳을 확인합니다. 스크립트를 **어떤 저장소 안에서** 돌리면 그 저장소의 로컬 이메일도 "내 것"에 들어갑니다.
 
 ```bash
-mkdir side
-git -C side init -q -b main
-git -C side config user.email dana@work.example.test
+mkdir "${LAB:?먼저 . ./env.sh를 불러오세요}/side"
+git -C "${LAB:?}/side" init -q -b main
+git -C "${LAB:?}/side" config user.email dana@work.example.test
 echo "--- side/ 안에서 실행 (그 저장소의 로컬 이메일이 work 주소)"
 (cd side && pyrun ../gy.py ../yard --no-art | grep -E "^(repos scanned|skipped)")
 echo "--- 작업 폴더에서 실행"
@@ -1158,6 +1232,8 @@ STRONGEST PULSE --------/\_/\-------- (most resurrectable)
 
 ```bash
 pyrun gy.py yard --no-art --redact --json redacted.json | grep -E "^(skipped|finished|unversioned)"
+echo "--- --redact --state: 재발 감시 줄"
+pyrun gy.py yard --no-art --redact --state state.json | sed -n '/RELAPSE/,/STRONGEST/p'
 grep -o "tab-sensei\|dana\|example.test" redacted.json | sort | uniq -c
 pyrun -c "
 import json
@@ -1172,13 +1248,20 @@ print({k: d[k] for k in ('path', 'remote')})
 finished (shipped, just stable — not corpses): project-3
 skipped as not-yours (by commit email): cloned-lib, work-side
 unversioned (no git — died before their first commit): 1 project folder(s)
+--- --redact --state: 재발 감시 줄
+RELAPSE WATCH
+------------------------------------------------------------
+- tab-sensei: resurrected 2026-10-19, silent for 262 days since. It's dying again — decide: recommit or bury it honestly.
+- recipe-scraper: resurrected 2026-10-19, silent for 100 days since. It's dying again — decide: recommit or bury it honestly.
+
+STRONGEST PULSE --------/\_/\-------- (most resurrectable)
       1 dana
       1 example.test
       1 tab-sensei
 {'path': '.../lab159\\yard\\tab-sensei', 'remote': 'https://example.test/dana/tab-sensei.git'}
 ```
 
-본문의 "project-N" 이름은 가려졌습니다. 그런데 두 곳에서 샙니다. "skipped as not-yours" 줄은 거른 저장소의 진짜 이름(`cloned-lib`, `work-side`)을 그대로 찍습니다(`graveyard.py:439-441`). `skipped` 목록이 가리기(391~399행) 전에 만들어지기 때문입니다. `--json`의 `dead` 항목은 `remote` 키를 그대로 실어서 `https://example.test/dana/tab-sensei.git`처럼 진짜 프로젝트 이름과 사용자 이름이 남습니다(530~531행). `--redact` 없는 JSON의 `path`는 작업 폴더의 절대 경로이고, 실제 PC에서는 사용자 이름이 든 경로입니다. 저장소 2b 시험의 `--redact` 확인은 한 프로젝트 이름이 출력에 없는지와 킬러 이름이 가려졌는지만 보므로(`test_graveyard.py:139-140`) 이 둘은 보지 못합니다. 이제 이 상태 파일 쪽의 모서리입니다.
+본문의 "project-N" 이름은 가려졌습니다. 그런데 세 곳에서 샙니다. "skipped as not-yours" 줄은 거른 저장소의 진짜 이름(`cloned-lib`, `work-side`)을 그대로 찍습니다(`graveyard.py:439-441`). `skipped` 목록이 가리기(391~399행) 전에 만들어지기 때문입니다. `--json`의 `dead` 항목은 `remote` 키를 그대로 실어서 `https://example.test/dana/tab-sensei.git`처럼 진짜 프로젝트 이름과 사용자 이름이 남습니다(530~531행). 셋째는 `--state`를 같이 줄 때의 재발 감시입니다. 위 출력의 마지막 줄들처럼 `RELAPSE WATCH`가 상태 파일의 진짜 이름(`tab-sensei`, `recipe-scraper`)을 그대로 찍습니다(`graveyard.py:489-504`). 상태 파일은 일부러 진짜 이름을 담기 때문입니다(536~537행). `SKILL.md`는 공유용 보고서에 `--redact`를 권하고(136~137행) 부활 기록은 `--state`로 남기라고 하므로 이 둘이 같이 쓰이기 쉽습니다. `--redact` 없는 JSON의 `path`는 작업 폴더의 절대 경로이고, 실제 PC에서는 사용자 이름이 든 경로입니다. 저장소 2b 시험의 `--redact` 확인은 한 프로젝트 이름이 출력에 없는지와 킬러 이름이 가려졌는지만 보므로(`test_graveyard.py:139-140`) 이 셋은 보지 못합니다. 이제 이 상태 파일 쪽의 모서리입니다.
 
 ```bash
 pyrun gy.py --mark-resurrected yard/tab-sensei; echo "종료 코드 $?"
@@ -1207,7 +1290,7 @@ RELAPSE WATCH
 마지막으로 실제로 부활시키면 감시가 무엇을 말하는지 봅니다. 새 커밋을 하나 더하고(이 줄이 이 문서에서 스캔 대상 저장소에 쓰는 유일한 줄입니다) 다시 스캔합니다. 네크로맨서 모드가 하라는 대로 상태 파일에서 이름을 찾아도 봅니다(`SKILL.md:197-199`).
 
 ```bash
-git -C yard/tab-sensei commit --allow-empty -q -m "resume work on tab groups"
+git -C "${LAB:?먼저 . ./env.sh를 불러오세요}/yard/tab-sensei" commit --allow-empty -q -m "resume work on tab groups"
 pyrun gy.py yard --no-art --state state.json | sed -n '/RELAPSE/,/STRONGEST/p'
 grep -n "tab" state.json
 ```
@@ -1285,12 +1368,14 @@ json report:
 
 PASS — 16/16 checks
 
-real	0m5.931s
+real	0m7.459s
 user	0m0.000s
-sys	0m0.031s
+sys	0m0.046s
 ```
 
-시험 다섯이 모두 통과했고 가드 로그(`guard.log`)는 비어 있었습니다. 시험이 무엇을 보고 무엇을 못 보는지 정리합니다.
+시험 다섯이 모두 통과했고 가드 로그(`guard.log`)는 비어 있었습니다. 시험이 무엇을 보고 무엇을 못 보는지 정리합니다. 도구 다섯과 입력의 관계는 아래 그림입니다. 3단계(`evals.json`)는 모델을 부르므로 돌리지 않아 그림에 없습니다.
+
+![시험 도구와 입력](diagrams/extra-tests.svg)
 
 | 단계 | 도구 | 보는 것 | 한계 |
 |---|---|---|---|
@@ -1370,13 +1455,17 @@ behavior evals 4 | expectations per eval [4, 4, 4, 3]
 
 사용자가 에이전트에게 "끝내지 못한 프로젝트 중 뭘 끝낼까?"를 묻습니다. 에이전트는 시작할 때 읽어 둔 설명을 보고 이 스킬이 맞다고 판단해 `SKILL.md` 전체를 읽습니다(소스로 읽은 흐름이고 이 문서는 에이전트를 띄우지 않았습니다). 지시문은 뿌리를 모르면 묻게 합니다("one question beats sweeping someone's home directory uninvited", `SKILL.md:48-49`). 사용자가 폴더를 알려 주면 에이전트가 `graveyard.py 뿌리… --json report.json`을 돌리고 터미널 보고를 받습니다. 스크립트가 git과 나누는 대화는 아래 그림에 따로 있고, 이 문서가 Step 4에서 센 80번 가운데 저장소마다의 여섯 번입니다.
 
+![뿌리 걷기](diagrams/extra-walk.svg)
+
+스크립트는 먼저 뿌리 폴더를 깊이 4까지 걸어 `.git`이 있는 폴더와, git 없이 프로젝트 표지 파일만 있는 폴더를 찾습니다(Step 3). `--json`·`--state`를 줬다면 끝에 그 파일을 씁니다. 그다음 git과의 대화입니다.
+
 ![git과 주고받는 과정 1](diagrams/extra-git.svg)
 
-스크립트는 먼저 내 이메일을 설정에서 받고(전역과 실행한 폴더), 저장소마다 커밋 로그, 원격 주소, 추적 파일을 읽습니다.
+스크립트는 내 이메일을 설정에서 받고(전역과 실행한 폴더), 저장소마다 커밋 로그와 원격 주소를 읽습니다.
 
 ![git과 주고받는 과정 2](diagrams/extra-git2.svg)
 
-이어서 마지막 세 커밋의 파일 이름과 태그, 모든 변경 파일 이름을 읽고, 부검과 펄스 계산은 파이썬 안에서 합니다. 이 두 그림의 메시지가 모두 한 저장소에 대한 것이고, 저장소마다 반복해서 이 문서가 Step 4에서 센 80번이 됩니다. 그다음은 에이전트의 일입니다.
+이어서 추적 파일, 마지막 세 커밋의 파일 이름, 태그, 모든 변경 파일 이름을 읽고, 부검과 펄스 계산은 파이썬 안에서 합니다. 이 두 그림의 메시지가 모두 한 저장소에 대한 것이고, 저장소마다 반복해서 이 문서가 Step 4에서 센 80번이 됩니다. 그다음은 에이전트의 일입니다.
 
 ![원인 읽기와 질문](diagrams/extra-report.svg)
 
@@ -1413,10 +1502,11 @@ behavior evals 4 | expectations per eval [4, 4, 4, 3]
 
 ## 실행 체크리스트
 
-- [ ] 작업 폴더 `lab159`를 어떤 git 저장소 안에도 두지 않고, 환경 파일이 홈·임시 폴더·git 전역 설정을 작업 폴더 안으로 돌렸다
+- [ ] 작업 폴더 `lab159`를 어떤 git 저장소 안에도 두지 않고(환경 파일이 확인합니다), 환경 파일이 홈·임시 폴더·git 전역 설정을 작업 폴더 안으로 돌렸다
 - [ ] `guard loaded`가 나왔고 `~ ->` 줄이 작업 폴더 안의 `home`을 보인다
 - [ ] 스킬 폴더를 `project/.claude/skills/`로 복사했고 파일이 넷(951줄)이며 `evals/`가 없다. 진짜 `~/.claude/skills`에는 아무것도 넣지 않았다
 - [ ] 래퍼의 네 거부(홈, 뿌리, `--json`, 실행 위치)가 모두 종료 코드 3으로 끝난다
+- [ ] 설치·목록 블록이 `LAB`이 비었거나 진짜 설정 폴더 아래이면 멈추는 것을 알고, 스크래치 `.claude`만 나열했다
 - [ ] 뿌리 없는 실행이 일곱 기본 뿌리를 보이고 종료 코드 1로 끝나며, 다섯 저장소 가운데 둘만 찾았다
 - [ ] 묘지 보고서가 `alive: 1   finished: 1   dead: 9   not yours (skipped): 2`를 보인다
 - [ ] `trace.py`가 `git` 프로세스 80개, 쓰기 파일 없음, 네트워크 시도 0을 보이고 `snapshot.py` 지문이 앞뒤로 같다
@@ -1424,7 +1514,8 @@ behavior evals 4 | expectations per eval [4, 4, 4, 3]
 - [ ] 함정 저장소에서 `trap-words`가 `auth_wall > rewrite_spiral`·`tests=True`, `ci-only`가 `deploy=True`·`unknown`이다
 - [ ] 전역 이메일이 없으면 죽은 프로젝트가 11개, `--me`를 주면 10개, `side/` 안에서 돌리면 10개다
 - [ ] 부활 기록 직후 재발 감시가 "dying again", 새 커밋 뒤 `tab-sensei`가 "Holding"이다
-- [ ] `--redact`를 줘도 "skipped" 줄과 JSON `remote`에 진짜 이름이 남는 것을 확인했다
+- [ ] `--redact`를 줘도 "skipped" 줄, JSON `remote`, `--state`를 같이 줄 때의 재발 감시 줄에 진짜 이름이 남는 것을 확인했다
+- [ ] 훑은 저장소의 `core.fsmonitor` 표지가 직접 실행에서는 한 줄, 래퍼 실행에서는 0줄이다
 - [ ] 저장소 맨 위에서 시험 다섯이 모두 통과하고 2b 시험이 16개 확인을 보인다
 - [ ] 이 문서가 에이전트를 띄우지 않았고 `npx skills add`와 진짜 홈 쪽 설치를 실행하지 않았음을 기억한다
 
@@ -1433,7 +1524,7 @@ behavior evals 4 | expectations per eval [4, 4, 4, 3]
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `gy.py: refusing to run: '~' expands to …, outside the lab` | 홈이 작업 폴더 밖을 가리킵니다. 새 터미널에서 `. ./env.sh`를 빠뜨렸거나 `HOME`·`USERPROFILE`을 바꾸지 못했습니다 | `export REPO=…` 후 `lab159`에서 `. ./env.sh`를 불러옵니다. 래퍼가 진짜 홈을 훑는 일을 막은 것입니다 |
-| `gy.py: refusing to run: scan root … is outside the lab` | 뿌리 폴더가 작업 폴더 밖입니다 | 작업 폴더 안에 묘지를 두거나, 밖의 폴더를 정말 훑어야 하면 래퍼를 거치지 않고 스크립트를 직접 부르되 홈을 바꾸고 뿌리를 명시합니다. 이 문서는 하지 않았습니다 |
+| `gy.py: refusing to run: scan root … is outside the lab` | 뿌리 폴더가 작업 폴더 밖입니다 | 작업 폴더 안에 묘지를 두거나, 밖의 폴더를 정말 훑어야 하면 래퍼를 거치지 않고 스크립트를 직접 부르되 홈을 바꾸고 뿌리를 명시하고, 그 폴더의 저장소 설정(`core.fsmonitor`)을 먼저 읽어 봅니다. 이 문서는 하지 않았습니다 |
 | `No git repos found under: ~/dev, ~/projects, …` 후 종료 코드 1 | 뿌리를 안 줘서 기본 일곱 곳을 훑었는데 저장소가 없습니다 | 뿌리를 줍니다. 홈이 가짜라면 정상입니다 |
 | 저장소가 있는데 보고서에 없습니다 | 깊이 5 이상(`MAX_DEPTH`), 이름이 `go`·`build`·`dist`·`vendor`·`Library` 등(`SKIP_DIRS`), 점으로 시작하는 폴더 아래에 있습니다. 스크립트는 건너뛴 것을 알리지 않습니다(직접 확인) | 그 폴더 자체를 뿌리로 줍니다. 뿌리 자신의 이름과 깊이는 따지지 않습니다(직접 확인, Step 3) |
 | `skipped as not-yours`에 내 프로젝트가 있습니다 | 그 저장소를 쓴 이메일이 내 이메일 집합에 없습니다 | `--me 그메일`을 더하거나 `--include-foreign`을 줍니다 |
@@ -1442,13 +1533,14 @@ behavior evals 4 | expectations per eval [4, 4, 4, 3]
 | 보고서 끝에서 `FileNotFoundError: … '~/graveyard.json'` | 셸이 풀어 주지 않은 `~`를 `--state`에 줬습니다. 보고서는 이미 찍힌 뒤입니다(직접 확인) | 절대 경로를 주거나 따옴표 없이 씁니다 |
 | 부활을 기록한 직후인데 "It's dying again" | 침묵 일수가 마지막 커밋 기준입니다(직접 확인) | 새 커밋을 한 뒤 다시 스캔합니다 |
 | "Buried for good, or moved." | 기록한 경로가 없거나 오타입니다. `--mark-resurrected`는 경로를 검사하지 않습니다(직접 확인) | 상태 파일을 열어 잘못된 항목을 지우고 다시 기록합니다 |
-| 공유용 보고서인데 진짜 이름이 보입니다 | `--redact`가 "skipped" 줄과 JSON `remote`를 가리지 않습니다(직접 확인) | 공유 전에 그 줄과 JSON을 직접 손봅니다 |
+| 공유용 보고서인데 진짜 이름이 보입니다 | `--redact`가 "skipped" 줄, JSON `remote`, `--state`를 같이 줄 때의 `RELAPSE WATCH` 줄을 가리지 않습니다(직접 확인) | 공유 전에 그 줄들과 JSON을 직접 손보고, 공유용 실행에는 `--state`를 주지 않습니다 |
+| 받아 온 저장소가 있는 폴더(`~/Downloads` 등)를 훑으려 합니다 | `git ls-files`가 훑은 저장소의 `core.fsmonitor` 명령을 실행합니다(직접 확인, Step 4) | 먼저 그 폴더의 `.git/config`를 읽어 봅니다. 이 문서의 래퍼는 `core.fsmonitor`만 환경 변수로 끕니다 |
 | 2b 시험이 끝났는데 `TEMP` 아래에 `graveyard-eval-…`가 남습니다 | 읽기 전용 git 객체를 `rmtree(ignore_errors=True)`가 지우지 못합니다(직접 확인) | `TEMP`를 작업 폴더로 돌린 셸에서 돌리고, 실습 뒤 `lab159`를 지웁니다 |
 
 ## 더 해보기
 
 - Step 3의 사각지대를 고치는 시험을 스크래치에서 써 보세요. `make_blind.py`의 `go/api-sketch`를 `SKIP_DIRS`에서 `go`를 빼는 사본 스크립트로 찾아지게 만들고, 그러면 `~/go` 같은 진짜 작업 폴더에서 어떤 저장소가 몰려 들어오는지 합성 폴더로 가늠해 보세요. 스킬의 `scripts/` 원본이 아니라 스크래치 사본을 고칩니다.
-- Step 7의 `--redact` 틈을 막는 최소 수정(거른 목록과 `remote`)을 스크래치 사본에 넣고, `test_graveyard.py`를 본떠 그 틈을 잡는 확인 두 개를 써서 사본에서 통과시켜 보세요. 가려진 보고서에 이름이 하나도 남지 않았는지 `grep`으로 세는 확인이면 됩니다.
+- Step 7의 `--redact` 틈을 막는 최소 수정(거른 목록, `remote`, 재발 감시 줄)을 스크래치 사본에 넣고, `test_graveyard.py`를 본떠 그 틈을 잡는 확인 두 개를 써서 사본에서 통과시켜 보세요. 가려진 보고서에 이름이 하나도 남지 않았는지 `grep`으로 세는 확인이면 됩니다.
 - `causes.py`로 받은 후보 목록을 써서, 펄스와 원인을 함께 본 "한 줄 요약표"를 만드는 작은 스크립트를 짜 보세요. 후보가 둘 이상인 프로젝트만 골라 이유를 보이게 하면 Step 5의 `boiler-death`와 `rewrite-loop` 같은 사례를 자동으로 찾습니다.
 
 ## 다음 날 예고

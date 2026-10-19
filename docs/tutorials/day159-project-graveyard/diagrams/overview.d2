@@ -21,12 +21,12 @@ script: "스크립트 쪽 (graveyard.py와 이 문서의 래퍼)" {
 yard: "합성 묘지\n(.git 여럿)" { class: store }
 state: "상태·JSON 파일\n(--state · --json)" { class: file }
 agent: "코딩 에이전트\n(이 문서는 띄우지 않음)" { class: ext }
-evals: "시험\n(test_graveyard.py)" { class: ours }
+evals: "시험 도구 다섯\n(extra-tests)" { class: ours }
 
 user -> skill: "폴더 복사"
 user -> script: "뿌리 폴더 · 플래그"
-evals -> script: "합성 묘지에 실행"
-script -> yard: "git 하위 프로세스 (읽기만)"
+evals -> script: "스크립트를 직접 실행"
+script -> yard: "git 하위 프로세스 (config · log · ls-files · remote · tag)"
 script -> state: "보고서 · 상태 쓰기"
 script -> agent: "터미널 보고"
 skill -> agent: "지시문을 읽음"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+script: "graveyard.py" { class: ours }
+disk: "뿌리 폴더 아래\n(파일 시스템)" { class: store }
+
+script -> disk: "find_repos: 깊이 4까지 걷기 (.git 찾기)"
+disk -> script: "폴더 이름 · .git 유무"
+script -> disk: "find_unversioned: 다시 걷기 (package.json 등 찾기)"
+disk -> script: "폴더·파일 이름"
+script -> disk: "--json · --state 쓰기 (줄 있을 때만)"

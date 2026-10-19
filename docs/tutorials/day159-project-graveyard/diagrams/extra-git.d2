@@ -4,9 +4,11 @@ shape: sequence_diagram
 script: "graveyard.py" { class: ours }
 git: "git (로컬)" { class: ext }
 
-script -> git: "config --global user.email · config user.email"
-git -> script: "내 이메일 (없으면 빈 값)"
-script -> git: "저장소마다 log --format=%at|%ae|%s"
+script -> git: "config --global user.email"
+git -> script: "전역 이메일 (없으면 빈 값)"
+script -> git: "config user.email"
+git -> script: "실행한 폴더의 이메일"
+script -> git: "log --format=%at|%ae|%s --no-merges"
 git -> script: "커밋 시각 · 이메일 · 제목"
-script -> git: "remote get-url origin · ls-files"
-git -> script: "원격 주소 · 추적 파일"
+script -> git: "remote get-url origin"
+git -> script: "원격 주소"

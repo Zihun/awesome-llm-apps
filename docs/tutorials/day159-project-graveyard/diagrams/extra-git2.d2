@@ -4,8 +4,12 @@ shape: sequence_diagram
 script: "graveyard.py" { class: ours }
 git: "git (로컬)" { class: ext }
 
-script -> git: "log -3 --name-only · tag --list"
-git -> script: "마지막 세 커밋의 파일 · 태그"
-script -> git: "log --name-only --format="
+script -> git: "ls-files"
+git -> script: "추적 파일 이름"
+script -> git: "log -3 --name-only --format="
+git -> script: "마지막 세 커밋의 파일 이름"
+script -> git: "tag --list"
+git -> script: "태그 이름"
+script -> git: "log --name-only --format= --no-merges"
 git -> script: "모든 변경 파일 이름"
 script -> script: "부검 · 맥박 계산 (파이썬 안)"
