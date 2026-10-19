@@ -6,26 +6,27 @@ user: 사용자 {
   label.near: outside-top-center
 }
 
-tik: "토큰 세기\n(tiktoken)" { class: ours }
-blob: "OpenAI 공개 저장소\n(BPE 파일)" { class: ext }
-cache: "BPE 순위표\n(cl100k_base)" { class: file }
 screen: "Streamlit 화면\n(toonify_app.py)" { class: ours }
-quick: "빠른 시험\n(quick_test.py)" { class: ours }
 oa: "OpenAI\n(gpt-4)" { class: ext }
-an: "Anthropic\n(claude-3-5-sonnet)" { class: ext }
+cache: "BPE 순위표\n(cl100k_base)" { class: file }
+tik: "토큰 세기\n(tiktoken)" { class: ours }
 toon: "TOON 변환\n(toon 모듈)" { class: ours }
 demo: "데모\n(toonify_demo.py)" { class: ours }
+quick: "빠른 시험\n(quick_test.py)" { class: ours }
+blob: "OpenAI 공개 저장소\n(BPE 파일)" { class: ext }
+an: "Anthropic\n(claude-3-5-sonnet)" { class: ext }
 
-blob -> tik: "최초 1회 내려받기"
+demo -> oa: "TOON 글"
 screen -> toon: "dict · TOON"
 user -> screen: "JSON · 모델"
-screen -> tik: "count_tokens"
-demo -> toon: "dict · TOON"
-quick -> toon: "dict · TOON"
-screen -> user: "감소율 · 비용"
-demo -> tik: "count_tokens"
-demo -> oa: "TOON 글"
-user -> demo: "실행"
 user -> quick: "실행"
+demo -> tik: "count_tokens"
+tik -> cache: "받은 파일 저장"
+screen -> user: "감소율 · 비용"
+quick -> toon: "dict · TOON"
+screen -> tik: "count_tokens"
 demo -> an: "TOON 글"
+user -> demo: "실행"
 cache -> tik: "순위표 읽기"
+demo -> toon: "dict · TOON"
+blob -> tik: "최초 1회 내려받기"

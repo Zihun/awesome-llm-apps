@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+screen: "Streamlit 화면" { class: ours }
+
+screen -> screen: "calculate_cost(\nJSON 토큰 수, 모델)"
+screen -> screen: "calculate_cost(\nTOON 토큰 수, 모델)"
+screen -> user: "메트릭 넷 · 코드 블록 둘 ·\n비용표"

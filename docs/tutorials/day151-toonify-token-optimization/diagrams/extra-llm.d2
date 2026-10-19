@@ -9,5 +9,6 @@ demo -> toon: "decode(TOON 글) — 처음 TOON 글이\n원래 dict와 같은지
 toon -> demo: "dict"
 demo -> toon: "encode(customer_orders)"
 toon -> demo: "TOON 글"
+demo -> demo: "json.dumps(\nindent=2)"
 demo -> oa: "chat.completions.create(gpt-4,\nTOON 프롬프트, max_tokens=200)"
 oa -> demo: "답 · usage.prompt_tokens"

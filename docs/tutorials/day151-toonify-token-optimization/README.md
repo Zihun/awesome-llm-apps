@@ -1,6 +1,6 @@
 # Day 151 · 🎯 Toonify Token Optimization
 
-> 볼륨 14 🎯 LLM Optimization · 난이도 ★☆☆ ⚠ 앱의 데모(`toonify_demo.py`)가 부르는 모델 둘은 오늘 기준으로 곧 끝나거나 이미 끝났습니다. `gpt-4`는 OpenAI 폐기 문서에서 `gpt-4-0613` 행의 별칭으로 올라 2026-10-23에 종료될 예정이고, `claude-3-5-sonnet-20241022`는 Anthropic 문서에서 2025-10-28에 종료됐습니다(사전 준비). 앱 화면은 모델 이름을 가격 계산에만 쓰기 때문에 영향이 없습니다(Step 5·8) · 예상 소요 135분(앱은 세 파일 697줄이지만 스크립트 아홉을 저장하고, 서버 둘과 터미널 둘을 오가며 같은 숫자를 여러 방식으로 재 보는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 실습은 0원(OpenAI·Anthropic을 한 번도 부르지 않았습니다. 데모를 진짜 키로 돌리면 `gpt-4` 호출 한 번이 최대 1.5센트 안팎이라는 계산값이 있는데, 입력 94토큰·출력 최대 200토큰에 `gpt-4` 요금 입력 $30·출력 $60/백만 토큰을 곱한 ⚠ 추정입니다) · 원본 앱: `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization`
+> 볼륨 14 🎯 LLM Optimization · 난이도 ★★☆(앱은 파일 셋에 키 둘, 외부 API 둘이지만 이 문서의 실습은 키 없이 로컬에서 돕니다) ⚠ 앱의 데모(`toonify_demo.py`)가 부르는 모델 둘은 오늘 기준으로 곧 끝나거나 이미 끝났습니다. `gpt-4`는 OpenAI 폐기 문서에서 `gpt-4-0613` 행의 별칭으로 올라 2026-10-23에 종료될 예정이고, `claude-3-5-sonnet-20241022`는 Anthropic 문서에서 2025-10-28에 종료됐습니다(사전 준비). 화면은 지금 이름으로도 돌고 가격표만 낡았습니다. 다만 모델 이름을 `gpt-5.x`로 바꾸면 `tiktoken`이 `o200k_base`를 쓰게 되어 그 파일을 따로 받아야 합니다(사전 준비, Step 2) · 예상 소요 155분(앱은 세 파일 697줄이지만 스크립트 아홉을 저장하고, 서버 둘과 터미널 둘을 오가며 같은 숫자를 여러 방식으로 재 보는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 실습은 0원(OpenAI·Anthropic을 한 번도 부르지 않았습니다. 데모를 진짜 키로 돌리면 `gpt-4` 호출 한 번이 최대 1.5센트 안팎이라는 계산값이 있는데, 입력 94토큰·출력 최대 200토큰에 `gpt-4` 요금 입력 $30·출력 $60/백만 토큰을 곱한 ⚠ 추정입니다) · 원본 앱: `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization`
 
 ## 오늘 만들 것
 
@@ -9,12 +9,12 @@ JSON 데이터를 TOON(Token-Oriented Object Notation)이라는 더 짧은 글 �
 이 문서는 OpenAI와 Anthropic 어디에도 요청을 보내지 않았습니다. 데모의 두 호출은 `127.0.0.1`의 가짜 서버로만 가게 했고, 토큰을 세려면 `tiktoken`이 BPE 인코딩 파일을 한 번 내려받아야 하는데 그것은 Step 2에서 따로 한 단계로 둡니다. 그 한 단계가 이 문서에서 바깥으로 나가는 유일한 요청이고, 그 뒤의 모든 실행은 오프라인입니다. 캐시가 없으면 몰래 받지 않고 멈춥니다(Step 3). 직접 돌려 보거나 소스로 확인한 것이 일곱입니다.
 
 1. 설치 이름은 `toonify`, 불러오는 이름은 `toon`입니다. 앱 README의 예시 `from toonify import encode`는 `ModuleNotFoundError`로 실패하고, PyPI의 `toon`은 신경과학 실험 도구라는 전혀 다른 패키지입니다(Step 1).
-2. "30~60% 절감"은 들여쓰기 2칸으로 찍은 JSON(`json.dumps(indent=2)`)과 비교한 값입니다. 앱의 네 예시에서 59.7·58.8·61.2·56.3%였고, 들여쓰기 없는 JSON과 비교하면 26.4·25.8·30.6·21.2%입니다(Step 5).
+2. 앱과 데모는 JSON을 들여쓰기 2칸(`json.dumps(indent=2)`)으로 찍어 TOON과 비교합니다(`toonify_app.py:141`, `toonify_demo.py:78`). 그 기준에서 59.7·58.8·61.2·56.3%였고, 들여쓰기 없는 JSON과 비교하면 26.4·25.8·30.6·21.2%입니다(Step 5).
 3. 사이드바의 모델 다섯은 토큰 수를 바꾸지 않고 가격만 바꿉니다. 다섯 모두 `cl100k_base`로 세고, 그것은 Claude의 토큰 수가 아닙니다(Step 5).
 4. 같은 키를 가진 표 모양이 아니면 TOON이 들여쓰기 없는 JSON보다 길어질 수 있습니다. 직접 만든 세 경우에서 6.7%에서 50.0% 더 길었습니다(Step 6).
-5. 앱의 "Roundtrip verification" 점검은 값이 달라지는 경우를 실제로 잡아냅니다. `"02134"`는 `2134`로, `"null"`은 `None`으로 되돌아옵니다(Step 6, 8).
-6. 벤치마크 탭의 숫자(63.9·54.1·73.4%)와 앱 README의 "$2,147"은 계산이 아니라 글자로 박혀 있습니다. 패키지에는 그 벤치마크 데이터가 들어 있지 않아 이 문서는 재현하지 못했습니다(Step 5, 8).
-7. 데모의 "Token Savings"는 `tiktoken`으로 센 JSON 프롬프트와 API가 알려 주는 `prompt_tokens`를 비교합니다. 서로 다른 계량이라는 점을 가짜 서버로 확인했습니다(Step 7).
+5. 앱의 "Roundtrip verification" 점검은 값이 달라지는 경우를 실제로 잡아냅니다(변환이 값을 바꾼다는 뜻입니다). `"02134"`는 `2134`로, `"null"`은 `None`으로 되돌아옵니다(Step 6, 8).
+6. 벤치마크 탭의 숫자(63.9·54.1·73.4%)와 앱 README의 "$2,147"은 계산이 아니라 글자로 박혀 있습니다. 같은 글이 `toonify` 패키지 설명에 있고 그쪽은 저장소의 `benchmark/RESULTS.md`를 가리키는데, 그 파일이 패키지에 들어 있지 않아 이 문서는 재현하지 못했습니다(Step 5, 8).
+7. 데모의 "Token Savings"는 `tiktoken`으로 센 JSON 프롬프트(187행)와 API가 돌려준 `usage.prompt_tokens`(188행)를 비교합니다(소스로 확인). 가짜 서버는 `prompt_tokens`를 같은 `cl100k_base`로 세어 돌려주므로 이 실행에서는 두 숫자가 같은 계량이고 50.0%가 나왔습니다. 진짜 API의 `prompt_tokens`가 같은 계량인지는 확인하지 못했습니다(Step 7).
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -28,9 +28,19 @@ JSON 데이터를 TOON(Token-Oriented Object Notation)이라는 더 짧은 글 �
 | OpenAI·Anthropic API 키 | 진짜로 쓸 때 데모의 두 호출이 부른다(`toonify_demo.py:157-158`). 이 문서의 실습은 `fake-`로 시작하는 가짜 값만 쓴다 | https://platform.openai.com/api-keys , https://console.anthropic.com/ |
 | 브라우저 | 필요 없다. 화면은 Streamlit의 `AppTest`로 확인한다 | 없음 |
 
-⚠ **모델.** 데모는 `gpt-4`(`toonify_demo.py:172`)와 `claude-3-5-sonnet-20241022`(203행)를 부르고, 화면의 선택 상자는 `gpt-4`·`gpt-4-turbo`·`gpt-3.5-turbo`·`claude-3-opus`·`claude-3-sonnet`을 가격표 열쇠로 씁니다(`toonify_app.py:26-32`, 55~59행). OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-19 확인)의 2026-04-22 항목에 `gpt-4-0613 | gpt-4, gpt-4-0613-completions, gpt-4-completions`와 `gpt-4-turbo | gpt-4-turbo-2024-04-09, gpt-4-turbo-completions`, `gpt-3.5-turbo-0125 | gpt-3.5-turbo, gpt-3.5-turbo-completions` 행이 있고 셋 모두 종료일이 2026-10-23, 대체 모델은 앞의 둘이 `gpt-5.6-sol`, 마지막이 `gpt-5.6-terra`입니다. 같은 날 확인한 `gpt-4`·`gpt-4-turbo`·`gpt-3.5-turbo` 모델 페이지는 종료일을 적지 않고 `gpt-4-turbo`와 `gpt-3.5-turbo`에 대해 더 새 모델(`gpt-4o`, `gpt-4o-mini`)을 권합니다. 별칭 `gpt-4`가 그 날 이후 어떻게 되는지는 두 문서가 말하지 않아 확인하지 못했습니다. Anthropic의 모델 폐기 문서(https://platform.claude.com/docs/en/about-claude/model-deprecations, 같은 날)에서 `claude-3-5-sonnet-20241022`는 2025-10-28 종료(대체 `claude-sonnet-5-5`), 가격표의 `claude-3-opus`가 가리키는 `claude-3-opus-20240229`는 2026-01-05 종료(대체 `claude-opus-4-8`), `claude-3-sonnet-20240229`는 2025-07-21 종료(대체 `claude-sonnet-5-5`)이고, 문서는 "Requests to retired models will fail."이라고 적습니다. 그러니 진짜 키로 데모를 돌리면 Claude 쪽은 이미 실패할 것이고(코드의 `except`가 `❌ Anthropic Error`를 찍는 자리입니다, 223~224행. 실행해 보지는 못했습니다) 2026-10-23 이후에는 GPT-4 쪽도 같을 수 있습니다. 교체할 자리는 문제 해결 표에 적었습니다.
+⚠ **모델.** 데모는 `gpt-4`(`toonify_demo.py:172`)와 `claude-3-5-sonnet-20241022`(203행)를 부르고, 화면의 선택 상자는 `gpt-4`·`gpt-4-turbo`·`gpt-3.5-turbo`·`claude-3-opus`·`claude-3-sonnet`을 가격표 열쇠로 씁니다(`toonify_app.py:26-32`, 55~59행). OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-19 확인)의 2026-04-22 항목에 `gpt-4-0613 | gpt-4, gpt-4-0613-completions, gpt-4-completions`와 `gpt-4-turbo | gpt-4-turbo-2024-04-09, gpt-4-turbo-completions`, `gpt-3.5-turbo-0125 | gpt-3.5-turbo, gpt-3.5-turbo-completions` 행이 있고 셋 모두 종료일이 2026-10-23, 대체 모델은 앞의 둘이 `gpt-5.6-sol`, 마지막이 `gpt-5.6-terra`입니다. 같은 날 확인한 `gpt-4`·`gpt-4-turbo`·`gpt-3.5-turbo` 모델 페이지는 종료일을 적지 않고 `gpt-4-turbo`와 `gpt-3.5-turbo`에 대해 더 새 모델(`gpt-4o`, `gpt-4o-mini`)을 권합니다. 별칭 `gpt-4`가 그 날 이후 어떻게 되는지는 두 문서가 말하지 않아 확인하지 못했습니다. Anthropic의 모델 폐기 문서(https://platform.claude.com/docs/en/about-claude/model-deprecations, 같은 날)에서 `claude-3-5-sonnet-20241022`는 2025-10-28 종료(대체 `claude-sonnet-5-5`), 가격표의 `claude-3-opus`·`claude-3-sonnet`은 API에 보내지 않는 가격 열쇠이고 이 이름 그대로는 폐기 문서에 없습니다. 해당하는 날짜 붙은 ID로 `claude-3-opus-20240229`는 2026-01-05 종료(대체 `claude-opus-4-8`), `claude-3-sonnet-20240229`는 2025-07-21 종료(대체 `claude-sonnet-5-5`)이고, 문서는 "Requests to retired models will fail."이라고 적습니다. 그러니 진짜 키로 데모를 돌리면 Claude 쪽은 이미 실패할 것이고(코드의 `except`가 `❌ Anthropic Error`를 찍는 자리입니다, 223~224행. 실행해 보지는 못했습니다) 2026-10-23 이후에는 GPT-4 쪽도 같을 수 있습니다. 교체할 자리는 문제 해결 표에 적었습니다.
 
-이 문서의 스크립트는 한글을 출력합니다. 출력을 파이프나 파일로 받는 한국어 Windows에서는 먼저 인코딩을 맞춥니다. Step 3의 변수 블록에 같은 줄이 들어 있어 거기서 한꺼번에 겁니다.
+⚠ **모델 이름을 바꾸면 인코딩도 바뀝니다.** 대체 이름 `gpt-5.6-sol`·`gpt-5.6-terra`는 `tiktoken` 0.14.0의 앞붙임 `gpt-5`(`tiktoken/model.py` 12행)에 걸려 `o200k_base`가 됩니다. 이 문서는 `cl100k_base`만 받으므로, 화면의 선택 상자나 `count_tokens`에 그 이름을 넣으면 가드 아래에서는 `RuntimeError: offline`으로 멈추고(직접 확인, Step 5), 가드 없는 원본 앱에서는 `o200k_base`를 모르는 사이에 내려받습니다. 정말 바꾸려면 Step 2의 둘째 명령으로 `o200k_base`를 따로 한 단계로 받으세요. 토큰 수도 `o200k_base` 기준으로 달라집니다.
+
+이 문서의 스크립트는 한글을 출력합니다. 출력을 파이프나 파일로 받는 한국어 Windows에서는 먼저 인코딩을 맞춥니다. 이 줄은 Step 1부터 필요하므로 지금 겁니다(Step 3의 변수 블록에도 들어 있습니다).
+
+```bash
+export PYTHONIOENCODING=utf-8
+```
+
+```powershell
+$env:PYTHONIOENCODING = "utf-8"
+```
 
 ## 아키텍처 한눈에 보기
 
@@ -39,7 +49,7 @@ JSON 데이터를 TOON(Token-Oriented Object Notation)이라는 더 짧은 글 �
 | 화면: 사이드바 | 모델·구분자·키 접기 선택 | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/toonify_app.py:52-85` |
 | 화면: 비교 탭 | 예시 넷 가운데 하나를 JSON과 TOON으로 바꿔 크기·토큰·비용을 보인다 | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/toonify_app.py:90-203` |
 | 화면: 내 데이터 탭 | 붙여 넣은 JSON을 바꾸고 되돌려 읽어 같은지 본다 | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/toonify_app.py:205-262` |
-| 화면: 벤치마크 탭 | 글자로 박힌 숫자 여섯과 안내 | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/toonify_app.py:264-307` |
+| 화면: 벤치마크 탭 | 글자로 박힌 숫자 여덟(메트릭 셋, 표 다섯)과 안내 | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/toonify_app.py:264-307` |
 | 토큰 세기·가격 | `tiktoken`으로 센 토큰 수와 가격표 곱하기 | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/toonify_app.py:13-33` |
 | 데모 | 비교, 두 모델 호출, 고급 옵션 | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/toonify_demo.py:24-306` |
 | 빠른 시험 | 설치가 되었는지 바이트 수로 확인 | `advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/quick_test.py:10-60` |
@@ -129,13 +139,15 @@ toon_format -> 없음
 
 **목적.** `tiktoken`이 토큰을 세는 데 쓰는 BPE 순위표를 한 번 받아 작업 폴더 안에 둡니다. 이 단계가 지나면 이 문서의 모든 실행은 오프라인입니다.
 
-**할 일.** `tiktoken`은 인코딩을 처음 쓸 때 파일을 내려받습니다. `cl100k_base`의 주소와 기대 해시가 소스에 있습니다(`tiktoken_ext/openai_public.py`의 75~78행: 주소 `https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken`, `expected_hash`는 sha256). 받는 일은 `requests.get`이고(`tiktoken`의 `load.py` 17행) 받은 내용의 해시가 다르면 `ValueError`로 멈춥니다(67~71행). 저장 위치는 환경변수 `TIKTOKEN_CACHE_DIR`이고 없으면 임시 폴더의 `data-gym-cache`입니다(37~48행). 캐시 파일 이름은 주소의 sha1입니다. 이미 있는 캐시 파일의 해시가 다르면 `tiktoken`은 그 파일을 지우고 **다시 내려받습니다**(54~64행). 변수 값이 빈 문자열이면 캐시를 끄고 매번 내려받습니다(13~15행). 이것이 다음 Step에서 가드가 캐시 해시를 직접 보고 빈 값을 거부하는 까닭입니다. 이 앱이 쓰는 인코딩은 `cl100k_base` 하나입니다(Step 5). [Day 150](../day150-headroom-context-optimization/README.md)의 Step 2도 같은 방식으로 `cl100k_base`(1,681,126바이트)와 `o200k_base`를 받았습니다. 그 날의 캐시 폴더가 남아 있다면 해시 이름이 같은 `cl100k_base` 파일을 `toonify-lab/tiktoken_cache/`로 복사해 와도 됩니다. 어느 쪽이든 아래 스크립트와 Step 3의 가드가 해시를 확인합니다. 아래를 `toonify-lab/fetch_encoding.py`로 저장합니다.
+**할 일.** `tiktoken`은 인코딩을 처음 쓸 때 파일을 내려받습니다. `cl100k_base`의 주소와 기대 해시가 소스에 있습니다(`tiktoken_ext/openai_public.py`의 75~78행: 주소 `https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken`, `expected_hash`는 sha256). 받는 일은 `requests.get`이고(`tiktoken`의 `load.py` 17행) 받은 내용의 해시가 다르면 `ValueError`로 멈춥니다(67~71행). 저장 위치는 환경변수 `TIKTOKEN_CACHE_DIR`이고 없으면 임시 폴더의 `data-gym-cache`입니다(37~45행). 캐시 파일 이름은 주소의 sha1입니다. 이미 있는 캐시 파일의 해시가 다르면 `tiktoken`은 그 파일을 지우고 **다시 내려받습니다**(54~64행). 변수 값이 빈 문자열이면 캐시를 끄고 매번 내려받습니다(47~49행). 이것이 다음 Step에서 가드가 캐시 해시를 직접 보고 빈 값을 거부하는 까닭입니다. 이 앱이 쓰는 인코딩은 `cl100k_base` 하나입니다(Step 5). [Day 150](../day150-headroom-context-optimization/README.md)의 Step 2도 같은 `cl100k_base` 파일(1,681,126바이트, 캐시 이름 `9b5ad71b…`)과 `o200k_base`를 받았습니다. 그 날의 `headroom-work/tiktoken-cache/`가 남아 있다면 그 파일을 `toonify-lab/tiktoken_cache/`로 복사해 와도 됩니다. 어느 쪽이든 아래 스크립트와 Step 3의 가드가 해시를 확인합니다. 아래를 `toonify-lab/fetch_encoding.py`로 저장합니다. 인자 없이 돌리면 `cl100k_base`를 받습니다.
 
 ```python
-"""One-time download of the cl100k_base encoding file. This is the only step that goes outside.
+"""One-time download of one tiktoken encoding file. This is the only step that goes outside.
+usage: python fetch_encoding.py [cl100k_base | o200k_base]   (default cl100k_base)
 After this, every other script in this lab runs offline (guard.py enforces it)."""
 import hashlib
 import os
+import sys
 from pathlib import Path
 
 cache = Path(__file__).resolve().parent / "tiktoken_cache"
@@ -143,15 +155,19 @@ os.environ["TIKTOKEN_CACHE_DIR"] = str(cache)
 
 import tiktoken
 
-URL = "https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken"
-SHA256 = "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7"  # tiktoken_ext/openai_public.py
+BASE = "https://openaipublic.blob.core.windows.net/encodings/"
+SHA256 = {  # tiktoken_ext/openai_public.py
+    "cl100k_base": "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7",
+    "o200k_base": "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d",
+}
 
-enc = tiktoken.get_encoding("cl100k_base")  # downloads on first use; tiktoken checks the hash
-path = cache / hashlib.sha1(URL.encode()).hexdigest()
+name = sys.argv[1] if len(sys.argv) > 1 else "cl100k_base"
+enc = tiktoken.get_encoding(name)  # downloads on first use; tiktoken checks the hash
+path = cache / hashlib.sha1((BASE + name + ".tiktoken").encode()).hexdigest()
 data = path.read_bytes()
-assert hashlib.sha256(data).hexdigest() == SHA256
+assert hashlib.sha256(data).hexdigest() == SHA256[name]
 print("cache file:", path.name, len(data), "bytes")
-print("sha256 ok; tokens in 'hello world':", len(enc.encode("hello world")))
+print(f"sha256 ok; tokens in 'hello world' with {name}:", len(enc.encode("hello world")))
 ```
 
 ```bash
@@ -160,13 +176,19 @@ uv run --no-project python fetch_encoding.py
 
 회사 프록시가 있는 환경이면 `requests`가 프록시 환경변수를 따르므로 평소 쓰던 설정 그대로 두면 됩니다. 이 줄이 이 문서에서 인터넷에 닿는 유일한 줄입니다.
 
+**선택: `o200k_base`.** 모델 이름을 `gpt-5.x`나 `gpt-4o`로 바꿀 생각이 있을 때만 같은 방식으로 한 번 더 받습니다. 이 문서는 이 파일을 내려받지 않았고, 크기 3,613,922바이트와 캐시 이름 `fb374d41…`는 Day 150 Step 2가 받은 값, 해시 `446a9538…`은 `tiktoken_ext/openai_public.py`의 `expected_hash`입니다. 스크립트와 가드가 그 해시를 확인합니다(Day 150의 캐시 파일을 복사해 둔 상태에서 가드와 `count_tokens`가 도는 것은 직접 확인했습니다).
+
+```bash
+uv run --no-project python fetch_encoding.py o200k_base
+```
+
 ![Step 2까지의 구성](diagrams/step2.svg)
 
 **확인.** 기대 출력(직접 확인)입니다. 처음 받을 때 내려받기가 끝나는 데 몇 초가 걸립니다.
 
 ```text
 cache file: 9b5ad71b2ce5302211f9c61530b329a4922fc6a4 1681126 bytes
-sha256 ok; tokens in 'hello world': 2
+sha256 ok; tokens in 'hello world' with cl100k_base: 2
 ```
 
 파일은 `toonify-lab/tiktoken_cache/` 아래 해시 이름 하나(1,681,126바이트)입니다. 스크립트가 `sha256`을 소스의 값과 직접 비교한 결과(`assert`)입니다. 다시 돌리면 캐시를 읽으므로 같은 출력이 나오고 요청이 나가지 않습니다(내가 새 폴더에서 받은 파일을 복사해 두고 이 스크립트를 돌렸을 때 감시 프록시에 요청이 0건이었습니다).
@@ -200,7 +222,7 @@ sha256 ok; tokens in 'hello world': 2
 
 그러니 셸에 진짜 `OPENAI_API_KEY`가 있는 독자가 원본 데모를 그대로 돌리면 `api.openai.com`으로 요청이 나가는 구조입니다(소스로 확인. 실행하지 않았습니다). 이 문서는 원본을 그대로 돌리지 않고 가드를 거칩니다. 두 SDK가 주소를 환경변수에서 읽는지는 가짜 서버에 요청이 도착하는 것으로 직접 확인했습니다(`OPENAI_BASE_URL`, `ANTHROPIC_BASE_URL`). 프록시 변수가 있는 환경은 따로 봐야 합니다. 내가 `HTTP_PROXY`·`HTTPS_PROXY`·`ALL_PROXY`를 요청을 기록만 하는 프록시로 두고 `NO_PROXY=127.0.0.1,localhost`를 함께 걸었을 때 가짜 서버가 두 요청을 받았고 프록시에는 0건이었습니다. `NO_PROXY`가 없을 때 localhost 요청이 프록시로 나가는지는 실행해 보지 않았습니다. 가드는 그것을 묻지 않고 멈춥니다.
 
-먼저 가드를 `toonify-lab/guard.py`로 저장합니다. 가드는 모델 주소 둘이 루프백인지, `NO_PROXY`에 루프백이 있는지, 키가 `fake-`로 시작하는지, 인코딩 캐시 파일이 있고 해시가 맞는지를 봅니다. `install_offline()`은 `tiktoken`의 파일 읽기 함수를 바꿔서, 캐시를 지나 내려받기까지 가려는 시도가 있으면 `RuntimeError`로 끝냅니다.
+먼저 가드를 `toonify-lab/guard.py`로 저장합니다. 가드는 모델 주소 둘이 루프백인지, `NO_PROXY`에 루프백이 있는지, 키가 `fake-`로 시작하는지, Streamlit 주소·headless 환경변수가 맞는지(Step 8), 인코딩 캐시 파일이 있고 해시가 맞는지를 봅니다. `o200k_base` 파일은 받았을 때만 해시를 봅니다. `install_offline()`은 `tiktoken`의 파일 읽기 함수를 바꿔서, 캐시를 지나 내려받기까지 가려는 시도가 있으면 `RuntimeError`로 끝냅니다.
 
 ```python
 """Run before anything that can reach a model or the network:  python guard.py  (or: from guard import check; check()).
@@ -208,7 +230,9 @@ Exits with code 1 unless
   - both model addresses are loopback http addresses,
   - NO_PROXY / no_proxy lists a loopback host (otherwise a proxy variable would send even localhost traffic out),
   - both API keys are the fake values from this document,
-  - the cl100k_base file is already in TIKTOKEN_CACHE_DIR with the hash tiktoken expects.
+  - Streamlit is told to listen on a loopback address and to run headless (second layer behind the command-line flags),
+  - the cl100k_base file is already in TIKTOKEN_CACHE_DIR with the hash tiktoken expects
+    (o200k_base is checked too, but only if you chose to download it).
 install_offline() then makes tiktoken refuse any download."""
 import hashlib
 import os
@@ -216,8 +240,11 @@ import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
-URL = "https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken"
-SHA256 = "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7"
+BASE = "https://openaipublic.blob.core.windows.net/encodings/"
+SHA256 = {  # tiktoken_ext/openai_public.py
+    "cl100k_base": "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7",
+    "o200k_base": "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d",
+}
 
 
 def loopback(url):
@@ -235,12 +262,18 @@ def check():
     for name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
         if not os.environ.get(name, "").startswith("fake-"):
             sys.exit(f"{name} is not a fake- value: do not put a real key into this lab")
+    if os.environ.get("STREAMLIT_SERVER_ADDRESS") not in ("127.0.0.1", "localhost"):
+        sys.exit("STREAMLIT_SERVER_ADDRESS is not 127.0.0.1: Streamlit could open on every interface and ask checkip.amazonaws.com for its address")
+    if os.environ.get("STREAMLIT_SERVER_HEADLESS", "").lower() != "true":
+        sys.exit("STREAMLIT_SERVER_HEADLESS is not true")
     cache = os.environ.get("TIKTOKEN_CACHE_DIR")
     if not cache:
         sys.exit("TIKTOKEN_CACHE_DIR is not set (Step 2)")
-    path = Path(cache) / hashlib.sha1(URL.encode()).hexdigest()
-    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != SHA256:
-        sys.exit("the cl100k_base cache file is missing or wrong: run fetch_encoding.py once (Step 2)")
+    for name, sha in SHA256.items():
+        path = Path(cache) / hashlib.sha1((BASE + name + ".tiktoken").encode()).hexdigest()
+        if path.exists() or name == "cl100k_base":
+            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != sha:
+                sys.exit(f"the {name} cache file is missing or wrong: run fetch_encoding.py {name} once (Step 2)")
 
 
 def install_offline():
@@ -350,6 +383,8 @@ runpy.run_path("toonify_demo.py", run_name="__main__")
 ```bash
 export PYTHONIOENCODING=utf-8
 export STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+export STREAMLIT_SERVER_ADDRESS=127.0.0.1
+export STREAMLIT_SERVER_HEADLESS=true
 export TIKTOKEN_CACHE_DIR="$PWD/tiktoken_cache"
 export NO_PROXY=127.0.0.1,localhost
 export OPENAI_API_KEY=fake-openai-key
@@ -361,6 +396,8 @@ export ANTHROPIC_BASE_URL=http://127.0.0.1:57314
 ```powershell
 $env:PYTHONIOENCODING = "utf-8"
 $env:STREAMLIT_BROWSER_GATHER_USAGE_STATS = "false"
+$env:STREAMLIT_SERVER_ADDRESS = "127.0.0.1"
+$env:STREAMLIT_SERVER_HEADLESS = "true"
 $env:TIKTOKEN_CACHE_DIR = "$PWD\tiktoken_cache"
 $env:NO_PROXY = "127.0.0.1,localhost"
 $env:OPENAI_API_KEY = "fake-openai-key"
@@ -387,12 +424,13 @@ uv run --no-project python guard.py
 guard ok
 ```
 
-가드가 정말 멈추는지 네 가지를 일부러 어겨 봅니다. 각 줄은 그 명령 하나에만 값을 바꿉니다. 종료 코드는 모두 1이고 메시지는 아래와 같았습니다(직접 확인).
+가드가 정말 멈추는지 다섯 가지를 일부러 어겨 봅니다. 각 줄은 그 명령 하나에만 값을 바꿉니다. 종료 코드는 모두 1이고 메시지는 아래와 같았습니다(직접 확인).
 
 ```bash
 OPENAI_BASE_URL=https://api.openai.com/v1 uv run --no-project python guard.py
 env -u NO_PROXY -u no_proxy uv run --no-project python guard.py
 OPENAI_API_KEY=sk-proj-example uv run --no-project python guard.py
+env -u STREAMLIT_SERVER_ADDRESS uv run --no-project python guard.py
 TIKTOKEN_CACHE_DIR="$PWD/nocache" uv run --no-project python guard.py
 ```
 
@@ -400,7 +438,18 @@ TIKTOKEN_CACHE_DIR="$PWD/nocache" uv run --no-project python guard.py
 OPENAI_BASE_URL is not a loopback http address: 'https://api.openai.com/v1'
 NO_PROXY/no_proxy does not list 127.0.0.1: a proxy variable could carry even localhost traffic out
 OPENAI_API_KEY is not a fake- value: do not put a real key into this lab
-the cl100k_base cache file is missing or wrong: run fetch_encoding.py once (Step 2)
+STREAMLIT_SERVER_ADDRESS is not 127.0.0.1: Streamlit could open on every interface and ask checkip.amazonaws.com for its address
+the cl100k_base cache file is missing or wrong: run fetch_encoding.py cl100k_base once (Step 2)
+```
+
+위 다섯 줄은 bash 전용입니다. PowerShell에서는 같은 일을 값을 바꿨다 되돌리는 식으로 합니다(실행해 보지 못했습니다).
+
+```powershell
+$env:OPENAI_BASE_URL = "https://api.openai.com/v1"; uv run --no-project python guard.py; $env:OPENAI_BASE_URL = "http://127.0.0.1:57314/v1"
+Remove-Item Env:NO_PROXY; uv run --no-project python guard.py; $env:NO_PROXY = "127.0.0.1,localhost"
+$env:OPENAI_API_KEY = "sk-proj-example"; uv run --no-project python guard.py; $env:OPENAI_API_KEY = "fake-openai-key"
+Remove-Item Env:STREAMLIT_SERVER_ADDRESS; uv run --no-project python guard.py; $env:STREAMLIT_SERVER_ADDRESS = "127.0.0.1"
+$env:TIKTOKEN_CACHE_DIR = "$PWD\nocache"; uv run --no-project python guard.py; $env:TIKTOKEN_CACHE_DIR = "$PWD\tiktoken_cache"
 ```
 
 캐시 가드를 일부러 건너뛴 경우도 봤습니다. 빈 캐시 폴더에서 `install_offline()`만 부르고 인코딩을 얻으려 하면 `RuntimeError: offline: tiktoken wanted to download https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken`으로 끝나고 폴더에는 아무 파일도 생기지 않았습니다(직접 확인). 그래서 Step 2를 빠뜨려도 이 문서의 명령은 몰래 내려받지 않고 멈춥니다.
@@ -577,6 +626,12 @@ for delim in ("comma", "tab", "pipe"):
     for fold in ("off", "safe"):
         row = [count_tokens(encode(d, {"delimiter": delim, "key_folding": fold})) for d in EXAMPLES.values()]
         print(f"{delim:6s} {fold:5s}", row)
+
+print("\n== 4. a name that maps to o200k_base (the replacement models), without that file")
+try:
+    print("gpt-5.6-sol", count_tokens("hello", "gpt-5.6-sol"))
+except RuntimeError as e:
+    print("RuntimeError:", e)
 ```
 
 ```bash
@@ -607,9 +662,12 @@ tab    off   [90, 48, 51, 53]
 tab    safe  [90, 48, 51, 53]
 pipe   off   [91, 50, 54, 53]
 pipe   safe  [91, 50, 54, 53]
+
+== 4. a name that maps to o200k_base (the replacement models), without that file
+RuntimeError: offline: tiktoken wanted to download https://openaipublic.blob.core.windows.net/encodings/o200k_base.tiktoken
 ```
 
-**확인.** 읽을 것이 넷입니다. 첫째, 모델 다섯이 모두 221토큰입니다. 모델 이름은 가격표 열쇠일 뿐 토큰 수를 바꾸지 않고, `claude-3-opus`·`claude-3-sonnet` 줄의 221은 Claude의 토큰 수가 아니라 OpenAI `cl100k_base`로 센 값입니다. Anthropic 문서(https://platform.claude.com/docs/en/build-with-claude/token-counting, 2026-10-19 확인)는 토큰 수를 세는 전용 엔드포인트를 따로 두고 그 값을 "an **estimate**"라고 하며, Claude Opus 4.7 이후 모델의 새 토크나이저는 같은 글에 "approximately 30 percent more tokens"를 만든다고 적고, 세는 모델을 정해서 다시 세라고 권합니다. 그러므로 앱의 Claude 행은 어림이고, 실제 입력 토큰은 모델마다 다를 수 있습니다. 둘째, 기준입니다. 앱과 데모는 JSON을 `indent=2`로 찍어 비교합니다(`toonify_app.py:141`, `toonify_demo.py:78`). 이 기준에서 절약은 56.3~61.2%이고, 들여쓰기 없는 JSON(`separators=(",", ":")`)과 비교하면 21.2~30.6%입니다. 모델에 보내는 JSON이 어떤 모양인지에 따라 어느 쪽이 맞는지가 정해지니, 자기 데이터를 자기가 보내는 모양으로 재 봐야 합니다. 셋째, 구분자와 키 접기입니다. 쉼표가 세 표에서 가장 적고 Orders에서만 탭이 하나 적습니다. 파이프는 네 표 모두 쉼표와 같거나 1~4토큰 많습니다. 키 접기는 이 표들에 단일 키 사슬이 없어 아무 효과가 없습니다. 넷째, 앱의 "벤치마크" 숫자(63.9·54.1·73.4%)는 "50 real-world datasets"에서 나왔다고 하지만(`toonify_app.py:267-279`) 화면에서 계산하는 값이 아니라 글자입니다. 설치된 패키지의 `RECORD`에는 벤치마크 파일이 없어(`toon/` 아홉 파일과 `dist-info`뿐) 재현하지 못했습니다. 이 문서가 잰 것은 앱 안의 네 표뿐이고 56~61%(들여쓰기 기준)가 그 범위입니다. 참고로 패키지의 명령줄 `toon --stats`는 `o200k_base`로 셉니다(`toon` 패키지의 `cli.py` 32~44행). 같은 글도 어떤 인코딩이냐에 따라 숫자가 달라집니다. `gpt-4o`는 지도에서 `o200k_base`가 되고(`model.py` 37행) 이 앱의 선택 상자에는 없습니다. `o200k_base`는 받지 않았고 재 보지 못했습니다.
+**확인.** 읽을 것이 넷입니다. 첫째, 모델 다섯이 모두 221토큰입니다. 모델 이름은 가격표 열쇠일 뿐 토큰 수를 바꾸지 않고, `claude-3-opus`·`claude-3-sonnet` 줄의 221은 Claude의 토큰 수가 아니라 OpenAI `cl100k_base`로 센 값입니다. Anthropic 문서(https://platform.claude.com/docs/en/build-with-claude/token-counting, 2026-10-19 확인)는 토큰 수를 세는 전용 엔드포인트를 따로 두고 그 값을 "an **estimate**"라고 하며, Claude Opus 4.7 이후 모델의 새 토크나이저는 같은 글에 "approximately 30 percent more tokens"를 만든다고 적고, 세는 모델을 정해서 다시 세라고 권합니다. 그러므로 앱의 Claude 행은 어림이고, 실제 입력 토큰은 모델마다 다를 수 있습니다. 둘째, 기준입니다. 앱과 데모는 JSON을 `indent=2`로 찍어 비교합니다(`toonify_app.py:141`, `toonify_demo.py:78`). 이 기준에서 절약은 56.3~61.2%이고, 들여쓰기 없는 JSON(`separators=(",", ":")`)과 비교하면 21.2~30.6%입니다. 모델에 보내는 JSON이 어떤 모양인지에 따라 어느 쪽이 맞는지가 정해지니, 자기 데이터를 자기가 보내는 모양으로 재 봐야 합니다. 셋째, 구분자와 키 접기입니다. 쉼표가 세 표에서 가장 적고 Orders에서만 탭이 하나 적습니다. 파이프는 네 표 모두 쉼표와 같거나 1~4토큰 많습니다. 키 접기는 이 표들에 단일 키 사슬이 없어 아무 효과가 없습니다. 넷째, 앱의 "벤치마크" 숫자(63.9·54.1·73.4%)는 "50 real-world datasets"에서 나왔다고 하지만(`toonify_app.py:267-279`) 화면에서 계산하는 값이 아니라 글자입니다. 같은 숫자가 설치된 `toonify` 패키지의 설명(`METADATA` 602~612행)에도 있고 그쪽은 저장소의 `benchmark/RESULTS.md`를 가리킵니다. 앱은 라이브러리 쪽 주장을 옮겨 적은 것으로 보이며, 그 파일은 패키지에 없어(`RECORD`에는 `toon/` 아홉 파일과 `dist-info`뿐) 재현하지 못했습니다. 또 앱 README 11행은 63.9%를 "average token reduction"이라 부르지만, 앱 화면(`toonify_app.py:275-277`)과 패키지 설명은 63.9%를 크기, 54.1%를 토큰 감소로 적습니다. 박힌 숫자는 메트릭 셋과 표 다섯으로 여덟입니다. 이 문서가 잰 것은 앱 안의 네 표뿐이고 56~61%(들여쓰기 기준)가 그 범위입니다. 참고로 패키지의 명령줄 `toon --stats`는 `o200k_base`로 셉니다(`toon` 패키지의 `cli.py` 32~44행). 같은 글도 어떤 인코딩이냐에 따라 숫자가 달라집니다. `gpt-4o`와 `gpt-5` 계열은 지도에서 `o200k_base`가 되고(`model.py` 12행, 37행) 이 앱의 선택 상자에는 없습니다. `measure.py`의 마지막 구간이 `gpt-5.6-sol`을 세 보게 하는데, `o200k_base`를 받지 않았으면 위 출력처럼 `RuntimeError: offline`으로 멈춥니다(직접 확인). `o200k_base`는 받지 않았고 토큰 수는 재 보지 못했습니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -871,7 +929,7 @@ FAKE CLAUDE ANSWER
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 읽을 것이 넷입니다. 첫째, 요청은 두 건이고 모델 이름은 코드 그대로 `gpt-4`와 `claude-3-5-sonnet-20241022`, `max_tokens`는 둘 다 200, 키 머리는 `Bearer fake-`와 `fake-anthrop`이었습니다. 프롬프트는 297글자이고 `cl100k_base`로 94토큰입니다. 둘째, 출력의 "Input tokens: 94"와 "Token Savings: 50.0%"는 가짜 서버가 만든 숫자입니다. 서버가 요청 글을 `cl100k_base`로 세어 `usage`에 넣었고, 데모는 JSON으로 바꾼 같은 프롬프트를 `tiktoken`으로 센 값(188토큰)과 그 `usage.prompt_tokens`를 비교해 (188−94)/188 = 50.0%를 찍습니다(187~190행). 진짜 OpenAI의 `prompt_tokens`가 메시지 형식에 쓰는 토큰을 더해서 주는지는 이 문서가 확인하지 못했습니다. 더한다면 이 "절약률"은 서로 다른 계량의 비교입니다. 셋째, Claude 쪽은 `usage.input_tokens`를 찍기만 하고(220행) 아무것과도 비교하지 않습니다. 이 앱에서 Claude의 토큰 수가 실제로 등장하는 유일한 자리인데 모델이 종료되어 진짜로는 닿지 않습니다. 넷째, 비용입니다. 앞의 94토큰과 출력 최대 200토큰을 `gpt-4` 요금으로 곱하면 입력 $0.0028, 출력 상한 $0.012로 합쳐 1.5센트 안팎이 최대입니다(⚠ 계산값이고 이 문서는 진짜 호출을 하지 않았습니다). 두 호출의 순서는 아래 두 장이 그립니다. 첫 장의 앞 두 메시지는 `main()`이 비교 구간 직후에 하는 되돌려 읽기 점검(292~294행)이고, 그 아래가 `llm_integration_demo()`입니다.
+**확인.** 읽을 것이 넷입니다. 첫째, 요청은 두 건이고 모델 이름은 코드 그대로 `gpt-4`와 `claude-3-5-sonnet-20241022`, `max_tokens`는 둘 다 200, 키 머리는 `Bearer fake-`와 `fake-anthrop`이었습니다. 프롬프트는 297글자이고 `cl100k_base`로 94토큰입니다. 둘째, 출력의 "Input tokens: 94"와 "Token Savings: 50.0%"는 가짜 서버가 만든 숫자입니다. 서버가 요청 글을 `cl100k_base`로 세어 `usage`에 넣었고, 데모는 JSON으로 바꾼 같은 프롬프트를 `tiktoken`으로 센 값(188토큰)과 그 `usage.prompt_tokens`를 비교해 (188−94)/188 = 50.0%를 찍습니다(187~190행). 그러므로 이 실행에서는 두 숫자가 같은 계량입니다. 진짜 OpenAI의 `prompt_tokens`가 메시지 형식에 쓰는 토큰을 더해서 주는지는 이 문서가 확인하지 못했고, 더한다면 진짜 API에서 이 "절약률"은 서로 다른 계량의 비교가 됩니다. 셋째, Claude 쪽은 `usage.input_tokens`를 찍기만 하고(220행) 아무것과도 비교하지 않습니다. 이 앱에서 Claude의 토큰 수가 실제로 등장하는 유일한 자리인데 모델이 종료되어 진짜로는 닿지 않습니다. 넷째, 비용입니다. 앞의 94토큰과 출력 최대 200토큰을 `gpt-4` 요금으로 곱하면 입력 $0.0028, 출력 상한 $0.012로 합쳐 1.5센트 안팎이 최대입니다(⚠ 계산값이고 이 문서는 진짜 호출을 하지 않았습니다). 두 호출의 순서는 아래 두 장이 그립니다. 첫 장의 앞 두 메시지는 `main()`이 비교 구간 직후에 하는 되돌려 읽기 점검(292~294행)이고, 그 아래가 `llm_integration_demo()`입니다.
 
 ![OpenAI 호출](diagrams/extra-llm.svg)
 
@@ -881,7 +939,7 @@ FAKE CLAUDE ANSWER
 
 **목적.** 화면을 사용 통계 없이 루프백에 띄우고, 브라우저 없이 세 탭을 눌러 보면서 가격표와 모델 목록을 공식 문서와 맞춰 봅니다.
 
-**할 일.** 앱 자체는 네트워크를 쓰지 않지만 세 가지를 막고 시작합니다. Streamlit은 `127.0.0.1`에만 열고(`--server.address 127.0.0.1`), 사용 통계는 끄고(`--browser.gatherUsageStats false`), 앱 안에서는 `tiktoken`이 내려받기를 시도하지 못하게 합니다. 아래 래퍼 `toonify-lab/screen_app.py`는 가드를 먼저 지나고 원본 앱 파일을 그대로 실행합니다. 원본을 고치지 않습니다.
+**할 일.** 앱 자체는 네트워크를 쓰지 않지만 세 가지를 막고 시작합니다. Streamlit은 `127.0.0.1`에만 열고, 사용 통계는 끄고, 앱 안에서는 `tiktoken`이 내려받기를 시도하지 못하게 합니다. 주소와 headless는 겹으로 둡니다. 명령줄 플래그(`--server.address 127.0.0.1`, `--server.headless true`)와 변수 블록의 `STREAMLIT_SERVER_ADDRESS`·`STREAMLIT_SERVER_HEADLESS`이고, 가드가 변수를 확인합니다. 둘 중 하나를 빼도 루프백으로만 열립니다(아래 직접 확인). 이 겹이 필요한 까닭은 주소를 정하지 않은 headless 서버가 시작하며 `checkip.amazonaws.com`에 자기 바깥 주소를 묻고 모든 인터페이스에 열기 때문입니다(streamlit 1.66.0 `web/bootstrap.py` 316~328행, `net_util.py` 24~25행, 소스로 확인. 풀어 놓고 시험해 보지는 않았습니다). 앱 안의 `tiktoken` 막기는 래퍼가 맡습니다. 아래 래퍼 `toonify-lab/screen_app.py`는 가드를 먼저 지나고 원본 앱 파일을 그대로 실행합니다. 원본을 고치지 않습니다.
 
 ```python
 """streamlit run target: guard and offline patch first, then the unchanged app file."""
@@ -918,7 +976,7 @@ curl.exe --noproxy '*' -s -o NUL -w "%{http_code}\n" http://127.0.0.1:58217/_stc
 
 (PowerShell 형태는 실행해 보지 못했습니다. `curl`이라는 이름은 PowerShell 5.1에서 다른 명령의 별칭이라 `curl.exe`를 씁니다.) 확인이 끝나면 터미널 B와 A에서 Ctrl+C로 두 서버를 끕니다.
 
-기대 출력은 `200`이고(직접 확인) 서버 로그의 주소는 `http://127.0.0.1:58217`이었습니다. 이 실행 내내 바깥 접속을 기록하는 프록시에는 0건이었습니다. 브라우저는 열지 않았습니다. 화면은 `toonify-lab/screen_check.py`가 `AppTest`로 사람처럼 누릅니다. 같은 래퍼를 대상으로 하고 첫머리에서 가드를 부릅니다.
+기대 출력은 `200`이고(직접 확인) 서버 로그의 주소는 `http://127.0.0.1:58217`이었습니다. 이 실행 내내 바깥 접속을 기록하는 프록시에는 0건이었습니다. 겹을 하나씩 빼 본 결과도 같았습니다. 플래그 없이 변수만으로(`streamlit run screen_app.py --server.port 59731`), 그리고 변수 둘을 지우고 플래그만으로 띄웠을 때 모두 `127.0.0.1`에만 LISTENING이었고 `/_stcore/health`가 200이었으며 프록시 기록은 0건이었습니다(직접 확인). 브라우저는 열지 않았습니다. 화면은 `toonify-lab/screen_check.py`가 `AppTest`로 사람처럼 누릅니다. 같은 래퍼를 대상으로 하고 첫머리에서 가드를 부릅니다.
 
 ```python
 """Drive the app's screen without a browser (Streamlit AppTest) through screen_app.py. Run behind the guard."""
@@ -987,7 +1045,7 @@ uv run --no-project python screen_check.py 2>/dev/null
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
-**확인.** 기대 출력(직접 확인)입니다. 이모지로 시작하는 문구에서 이모지는 `AppTest`가 떼어 냅니다.
+**확인.** 기대 출력(직접 확인)입니다. `st.success`·`st.warning`은 문구 앞의 이모지를 아이콘으로 떼어 내므로(streamlit 1.66.0 `elements/alert.py`) 출력에 그 이모지가 없습니다.
 
 ```text
 tabs: ['📊 Comparison', '✍️ Custom Data', '📈 Benchmark']
@@ -1020,7 +1078,7 @@ exceptions: []
 
 ## 요청 한 건이 흐르는 과정
 
-비교 탭에서 예시와 모델을 고르면 화면이 한 번 다시 돌며 일어나는 일입니다. 메시지가 길어 둘로 나눴고 메시지는 코드 순서대로 한 장에 하나씩 있습니다. 첫 그림은 선택에서 TOON 글이 만들어지기까지입니다.
+비교 탭에서 예시와 모델을 고르면 화면이 한 번 다시 돌며 일어나는 일입니다. 메시지가 길어 셋으로 나눴고 메시지는 코드 순서대로 한 장에 하나씩 있습니다. 첫 그림은 선택에서 TOON 글이 만들어지기까지입니다.
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
@@ -1028,13 +1086,15 @@ exceptions: []
 
 ![토큰 세기와 비용](diagrams/extra-count.svg)
 
-`count_tokens`는 JSON 글과 TOON 글에 한 번씩 불립니다(151~152행). 인코딩 파일 읽기는 프로세스에서 인코딩을 처음 만들 때 한 번뿐이고(`tiktoken`의 `registry.py` 63~87행, `ENCODINGS` 캐시) 그때 해시를 확인합니다. 두 번째 호출은 캐시된 인코딩을 씁니다. 그 뒤 화면은 크기와 토큰의 감소율을 계산하고(154~155행), 모델 이름으로 가격표를 곱해 비용을 얻으며(157~159행), 메트릭 넷과 코드 블록 둘, 비용 projection 표를 그립니다(162~203행).
+`count_tokens`는 JSON 글과 TOON 글에 한 번씩 불립니다(151~152행). 인코딩 파일 읽기는 프로세스에서 인코딩을 처음 만들 때 한 번뿐이고(`tiktoken`의 `registry.py` 63~87행, `ENCODINGS` 캐시) 그때 해시를 확인합니다. 두 번째 호출은 캐시된 인코딩을 씁니다. 그 뒤 화면은 크기와 토큰의 감소율을 계산하고(154~155행) 마지막 그림이 이어받습니다. `calculate_cost`가 JSON과 TOON에 한 번씩 불려 비용을 얻고(157~158행), 메트릭 넷과 코드 블록 둘, 비용 projection 표를 그립니다(162~203행).
+
+![비용 계산과 화면](diagrams/extra-cost.svg)
 
 ## 실행 체크리스트
 
 - [ ] `uv venv`와 `uv pip install -r requirements.txt`로 51개를 설치하고 `versions.py`에서 `toonify 1.6.0`, `import toon`이 되고 `import toonify`는 없음임을 봤다
 - [ ] `fetch_encoding.py`가 1,681,126바이트 캐시 파일을 받고 `sha256 ok`를 찍는 것을 봤다. 이것이 바깥에 닿은 유일한 단계다
-- [ ] 터미널 A·B 모두 변수 블록을 걸고, `guard.py`가 `guard ok`를 찍고 네 가지 어긴 경우에서 종료 코드 1로 멈추는 것을 봤다
+- [ ] 터미널 A·B 모두 변수 블록을 걸고, `guard.py`가 `guard ok`를 찍고 다섯 가지 어긴 경우에서 종료 코드 1로 멈추는 것을 봤다
 - [ ] 터미널 A에서 `fake_llm.py 57314 llm.log`를 띄웠다
 - [ ] `quick_test.py`에서 474바이트가 125바이트(73.6%)가 되는 것을 봤다
 - [ ] `run_demo.py`의 `demo.out`에서 275토큰이 120토큰(56.4%)이 되는 것을 보고, `llm.log`에 `gpt-4`와 `claude-3-5-sonnet-20241022` 요청이 한 건씩인 것을 봤다
@@ -1050,10 +1110,10 @@ exceptions: []
 | `ModuleNotFoundError: No module named 'toonify'`(직접 확인) | 설치 이름은 `toonify`, 불러오는 이름은 `toon`이다. 앱 README 94행의 예시가 틀렸다 | `from toon import encode, decode`를 쓴다(`toonify_app.py:8`) |
 | `guard.py`가 `... is not a loopback http address` 등으로 종료 코드 1(직접 확인) | 해당 터미널에 변수 블록(Step 3)이 없거나 값이 틀렸다 | 그 터미널에서 블록을 다시 건다. 변수는 터미널마다 따로다 |
 | `the cl100k_base cache file is missing or wrong`(직접 확인) | Step 2를 하지 않았거나 `TIKTOKEN_CACHE_DIR`이 다른 폴더를 가리킨다 | `fetch_encoding.py`를 돌리고 변수가 `toonify-lab/tiktoken_cache`인지 본다 |
-| `RuntimeError: offline: tiktoken wanted to download …`(직접 확인) | 가드를 건너뛰고 `install_offline()`만 거친 프로세스가 캐시에 없는 인코딩을 요청했다 | 인코딩 이름이 `cl100k_base`인지 본다. 이 앱의 모델 다섯은 모두 `cl100k_base`다 |
+| `RuntimeError: offline: tiktoken wanted to download …`(직접 확인) | 캐시에 없는 인코딩을 요청했다. 모델 이름을 `gpt-5.x`처럼 바꾸면 `o200k_base`가 된다(이름을 바꾸지 않았다면 앱의 모델 다섯은 모두 `cl100k_base`다) | 어느 인코딩인지 오류 주소의 파일 이름으로 본다. `o200k_base`가 필요하면 `fetch_encoding.py o200k_base`를 한 번 돌린다(Step 2) |
 | `Roundtrip verification failed` 경고(직접 확인) | 키 접기 결과를 `expand_paths` 없이 읽었거나, 숫자처럼 생긴 문자열이 숫자로 돌아왔다(Step 6) | 키 접기를 끄거나 `decode(text, {"expand_paths": "safe"})`로 읽는다. 문자열 값이 숫자 모양이면 TOON으로 보내기 전에 확인한다 |
 | 실행할 때마다 stderr에 `Please replace use_container_width with width`(직접 확인) | `toonify_app.py:203`, `291`이 옛 인자를 쓴다. 로그에 "after 2025-12-31"이라고 적혀 있지만 1.66.0에서 화면은 그려졌다 | 두 줄의 `use_container_width=True`를 `width="stretch"`로 바꾼다(원본을 고치지 말고 복사본에서). 지금은 경고일 뿐이다 |
-| ⚠ 데모의 `gpt-4`·`claude-3-5-sonnet-20241022` 호출이 진짜 키로 실패할 수 있다(실행하지 않았고 폐기 문서와 코드로 읽은 것) | `gpt-4`는 2026-10-23 종료 예정, Claude 모델은 2025-10-28 종료 | 복사본의 `toonify_demo.py` 172행과 203행의 모델 이름을 폐기 문서가 권하는 `gpt-5.6-sol`, `claude-sonnet-5-5`로 바꾼다. 화면의 가격표(`toonify_app.py:26-32`)와 선택 상자(55~59행)도 같은 이름과 오늘 가격으로 고쳐야 한다 |
+| ⚠ 데모의 `gpt-4`·`claude-3-5-sonnet-20241022` 호출이 진짜 키로 실패할 수 있다(실행하지 않았고 폐기 문서와 코드로 읽은 것) | `gpt-4`는 2026-10-23 종료 예정, Claude 모델은 2025-10-28 종료 | 복사본의 `toonify_demo.py` 172행과 203행의 모델 이름을 폐기 문서가 권하는 `gpt-5.6-sol`, `claude-sonnet-5-5`로 바꾼다(실행해 보지 못했다). `openai` SDK 3.35.1의 `completion_create_params.py` 124~133행은 `max_tokens`가 "not compatible with o-series models"이고 `max_completion_tokens`로 대체되었다고 적는다. `gpt-5.6-sol`이 이에 해당하는지는 공식 문서에서 확인하지 못했다. 화면은 지금 이름으로도 돌고 가격표(`toonify_app.py:26-32`)만 낡았다. 화면의 이름을 `gpt-5.x`로 바꾸면 `o200k_base`가 필요하다(위 행) |
 
 ## 더 해보기
 
