@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+api: "엔드포인트 (app.py)" { class: ours }
+opt: "SkillOptimizer" { class: ours }
+gemini: "Gemini (가짜 서버)" { class: ext }
+
+opt -> gemini: "기준선: 시나리오마다 실행 + 채점"
+gemini -> opt: "출력 · 점수 JSON"
+opt -> gemini: "진단 (실패가 있을 때만)"
+gemini -> opt: "원인 · 전략 JSON"
+opt -> gemini: "SKILL.md 한 군데 수정"
+gemini -> opt: "새 SKILL.md"
+opt -> gemini: "다시 실행 + 채점"
+gemini -> opt: "새 점수"
+opt -> api: "점수가 오르면 유지, 아니면 되돌림"

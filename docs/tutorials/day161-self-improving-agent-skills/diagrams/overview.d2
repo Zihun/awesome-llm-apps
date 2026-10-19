@@ -1,0 +1,25 @@
+...@../../_tools/theme
+direction: down
+
+caller: "호출하는 쪽" {
+  class: group
+  grid-columns: 4
+  user: "독자" { class: person }
+  ui: "Next.js 화면 (frontend/src)" { class: ours }
+  lab: "시험 클라이언트 (lab.py)" { class: ours }
+  tests: "test_app.py (19개)" { class: ours }
+}
+back: "백엔드 (FastAPI + ADK, 127.0.0.1)" {
+  class: group
+  grid-columns: 3
+  api: "엔드포인트 14개 (app.py)" { class: ours }
+  sessions: "세션 사전 (app.py)" { class: store }
+  improved: "개선본 zip (app.py)" { class: file }
+  executor: "executor (adk_optimizer.py)" { class: ours }
+  analyst: "analyst (adk_optimizer.py)" { class: ours }
+  mutator: "mutator (adk_optimizer.py)" { class: ours }
+}
+gemini: "Gemini API (가짜 서버로 대신)" { class: ext }
+
+caller -> back: "HTTP JSON (키는 요청 본문)"
+back -> gemini: "프롬프트 → generateContent"

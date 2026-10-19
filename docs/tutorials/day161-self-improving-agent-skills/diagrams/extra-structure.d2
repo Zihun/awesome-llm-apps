@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+api: "엔드포인트 14개 (app.py)" { class: ours }
+store: "app.py 안의 상태" {
+  class: group
+  grid-columns: 1
+  sessions: "세션 사전" { class: store }
+  improved: "improved_skill.zip" { class: file }
+}
+opt: "SkillOptimizer (adk_optimizer.py) 가 만드는 ADK 에이전트 셋" {
+  class: group
+  grid-columns: 3
+  executor: "executor" { class: ours }
+  analyst: "analyst" { class: ours }
+  mutator: "mutator" { class: ours }
+}
+gemini: "Gemini API (가짜 서버)" { class: ext }
+
+api -> store: "읽기 · 쓰기"
+api -> opt: "optimize() 호출"
+opt -> gemini: "프롬프트"

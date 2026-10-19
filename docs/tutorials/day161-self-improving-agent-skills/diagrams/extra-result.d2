@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+ui: "화면 (Next.js)" { class: ours }
+api: "엔드포인트 (app.py)" { class: ours }
+
+ui -> api: "GET /api/status (3초마다)"
+api -> ui: "experiments (지금까지)"
+ui -> api: "GET /api/status (complete)"
+api -> ui: "final_result"
+ui -> api: "GET /api/download"
+api -> ui: "improved_skill.zip"

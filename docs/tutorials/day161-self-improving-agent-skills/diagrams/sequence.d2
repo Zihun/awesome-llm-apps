@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+ui: "화면 (Next.js)" { class: ours }
+api: "엔드포인트 (app.py)" { class: ours }
+opt: "SkillOptimizer" { class: ours }
+gemini: "Gemini (가짜 서버)" { class: ext }
+
+user -> ui: "zip · API 키 · 모델 이름"
+ui -> api: "POST /api/upload (zip)"
+api -> api: "항목 검사 (이름 · 확장자 · 크기 · 개수)"
+api -> ui: "session_id · 파일 목록"
+ui -> api: "POST /api/analyze (키는 본문)"
+api -> opt: "SkillOptimizer(키, 모델)"
+opt -> gemini: "SKILL.md + references"
+gemini -> opt: "시나리오 · 평가 JSON"
+api -> ui: "scenarios · evals"
+ui -> api: "POST /api/update-config"
+ui -> api: "POST /api/start (max_rounds 20)"
+api -> opt: "optimize() 시작 (백그라운드)"
+api -> ui: "started (바로 돌려줌)"
