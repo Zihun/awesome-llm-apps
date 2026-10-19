@@ -8,6 +8,34 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-19) — 볼륨 14 끝. Day 151까지 작성·리뷰·수정·재확인을 마쳤고, 앞 ADK 날 텔레메트리 점검도 끝내고 푸시함(진도 151/167). 다음(볼륨 15 🔧 LLM Fine-tuning, Day 152~153)은 사용자 지시를 받고 시작한다.**
+- **Task 30(150~151) 전부 complete.** 날마다 커밋(작성 → 수정):
+  - 150: 442cff2 → e2f71c9·afc7da8(내가: 재확인 Minor 넷)
+  - 151: 3086199·7e7ee91 → bca7e20·51ad201(내가: 재확인 Minor 셋)
+  - 골격: 151·152 4fc5f62.
+- **리뷰와 재확인:** 리뷰(opus) 150 / 151, 재확인(sonnet) 150 / 151. 둘 다 재확인에서 ✅, 남은 Minor는 내가 고침.
+- **ADK 텔레메트리 점검(sonnet 둘, 내 추천으로 이 배치에 넣음):**
+  - 오늘 모든 날이 google-adk 2.12.0으로 풀린다. 텔레메트리는 2.6.0부터 있다.
+  - (b) 그대로 따라 해도 나감 — 014 45778ba·015 d719c74·016 2840077·088 f4d5790·091 7c9df84·092 2b84428·095 bf0e370·122 55a24ec(CRLF→LF 포함)·125 30fbb0a.
+  - (a) 줄 하나 빼면 나감 — 017 5b3f165·021 89dd795·022 86ddfbb·023 5d6f318.
+  - (c) 문제없음 — 018~020·024·025·067.
+  - 고친 방법은 Day 148과 같은 세 겹(새 홈, telemetry disable, stdin 닫기)이다.
+- **검사:** npm test 57/57, 전체 check 4건(모두 미작성 골격 152), 150은 19.0·151은 21.1/분.
+- **Ruling(2026-10-19):**
+  - tiktoken 인코딩 파일은 설치처럼 따로 한 단계로 받는다. 그 뒤는 오프라인이고, 캐시가 없으면 멈춘다.
+  - 바깥 접속 시도를 관찰하는 실험은 독자 명령이 아니다. 작성자가 스크래치 홈과 가짜 자격 증명으로 잰 결과를 사실로 적는다.
+  - **서드파티 패키지 프로세스는 HOME·USERPROFILE·CLAUDE_CONFIG_DIR을 스크래치로 둔다.** 진짜 홈의 자격 증명(`~/.claude/.credentials.json`, `~/.cache/huggingface/token` 등)이 보이는 실행은 작업자 실행이든 독자 명령이든 금지다.
+- **근접 사고 (2026-10-19, 사용자에게 보고함):**
+  - 무슨 일이 있었나: 150 작성자가 `headroom proxy --try-defaults`를 진짜 HOME으로 돌렸다.
+  - 무엇이 드러났나: 구독 폴러의 Anthropic 조회 시도가 프록시 로그에 남았다. 진짜 Claude Code OAuth 토큰을 읽었을 가능성이 매우 높다. 같은 실행의 huggingface.co 시도 12건도 진짜 `~/.cache/huggingface/token`을 실었을 수 있다(추정).
+  - 나간 것: 모두 이름 조회에서 가드가 막아 나간 바이트는 0이다.
+  - 내가 확인한 것: 스크래치 전체와 저장소에 `sk-ant-oat`가 들어간 파일이 0이다. `~/.headroom`은 없고, `~/.cache/huggingface`는 오늘 바뀌지 않았다.
+- **그 밖의 사고:**
+  - 151 작성자가 빈 heredoc으로 `python -`를 1회 띄웠다(바로 죽임).
+  - 점검자가 하위 에이전트를 1회 띄웠다(아무 일도 안 함).
+  - 151 작성자는 hand-back 없이 "백그라운드 대기"로 두 번 멈췄다(커밋·보고서는 남김).
+- **아직 남은 것(범위 밖):** CRLF 파일 약 150개(day021·100·112~131). 122는 이번에 LF로 바뀌었다.
+
 **멈춤 지점 (2026-10-17 밤) — 볼륨 13 끝. Day 149까지 작성·리뷰·수정·재확인 끝, 앞 볼륨 검사 23 그림 정리와 PowerShell 점검도 끝, 푸시함(진도 149/167). 다음(볼륨 14 🎯 LLM Optimization, Day 150~151)은 사용자 지시를 받고.**
 - Task 29(148~149) 전부 complete. 날마다 커밋(작성 → 수정):
   - 148: ed4b025 → 2072aa1·2a40e1e
@@ -1536,3 +1564,26 @@ Task 29: 149 다시 열림 — README에 ADK 텔레메트리 언급 없음, 2.12
 Task 29: 148 fix round 2 DONE — 2a40e1e(README만), check 통과, 20.6/분(4,216낱말/205분). N1: envfake.sh·PowerShell 블록이 HOME·USERPROFILE을 hn-lab/adkhome(PS는 %TEMP%\hn-lab-adkhome)로, UV_CACHE_DIR은 원래 자리, check_env.py가 홈 이름 adkhome 확인(가드 시험 9경우). 진짜 홈에서 disable을 부르면 ~/.adk/config.json을 false로 바꾸는 부작용을 본문에 적음. 재현(동의 true 홈 대역 8판): 셋 다 0, 하나씩 뺀 3판 0·0·0, 둘씩 뺀 3판 1·1·0, 셋 다 뺀 판 1(감시가 DNS에서 막음, 실제 전송 0) → 한 줄 규칙 충족. N2·N3·N4 반영. 내가 확인: diff(홈 바꾸기·check_env·status 확인 줄·체크리스트·문제 해결 표), LF, check → 148 complete.
 Task 29: 149 fix round 2 DONE — cd5907a(README만), 20.7/분(5,179낱말/250분). 소스: 2.12.0 adk는 stdin이 TTY이고 동의 기록이 없으면 묻고 Enter=켬(cli_tools_click.py 403~427), 켜져 있으면 끝날 때 하위 프로세스가 play.googleapis.com/log로(_metrics_collector.py:274, _metrics_reporter.py:43) — 하위 프로세스라 가드 안 물려받음. 1.9.0엔 없음. 방어 다섯 겹: 래퍼 옆 새 홈, 그 홈에 telemetry:false, stdin 닫기, read_telemetry_consent=False, guard의 GuardedPopen이 _metrics_reporter 실행 거절(check_env가 설치 확인). 줄 하나씩 뺀 11판 시도 0. client.py는 실행마다 새 세션 이름(409 해소).
 Task 29: 내가 고침 — 문제 해결 표의 409 줄을 새 client.py에 맞춤, check 통과 → 149 complete. Task 29(148~149)와 앞 볼륨 검사 23 정리·PowerShell 점검 전부 complete.
+2026-10-19 사용자 "다음 볼륨 진행해" — 볼륨 14(Day 150~151). 내 추천대로 앞 ADK 날 텔레메트리 점검을 같이 넣음(보고에 밝힐 것).
+Task 30: 골격 151·152 4fc5f62(scaffold, 150 예고 줄이 링크로). 브리프 task-30-write-brief.md·review-30-brief.md·task-30-adk-audit-brief.md 작성. Ruling(2026-10-19): tiktoken 인코딩 파일은 설치처럼 따로 한 단계(TIKTOKEN_CACHE_DIR 작업 폴더 안), 그 뒤 실행은 오프라인·캐시 없으면 멈춤, 작성자는 스크래치에서 한 번 받아도 됨. 출발점: 150 headroom_demo.py는 headroom을 부르지 않고 손으로 흉내(앞 3·FATAL·끝 2, 글자÷4) → 진짜 라이브러리로 실측, [all](llmlingua→torch·HF 모델) 설치 금지. 151 toonify_demo가 gpt-4·claude-3-5-sonnet-20241022를 실제 호출, 가격표·모델 목록 낡음.
+Task 30: 작성 150 (sonnet, a00934f4d12c58a2d)·151 (sonnet, a70cca56856932b99), 점검 ADK ① 014~025 (sonnet, a5b41f2a25e3e50ef)·② 067·088·091·092·095·122·125 (sonnet, a02e02fd73d447e3f) dispatched. 동시 4.
+ADK 점검 ② DONE (a02e02fd73d447e3f) — 오늘 모든 날이 google-adk 2.12.0으로 풀림, 텔레메트리 코드는 2.6.0~2.12.0에 있고 2.5.1 이하엔 없음. 088·091·092·095·122·125 모두 (b)(동의 true 홈 대역에서 옛 명령 그대로 1회 시도, "n이라고 답하세요"는 첫 독자만 지킴) → Day 148 방식 세 겹(새 HOME·USERPROFILE, telemetry disable, < /dev/null; PowerShell은 $null |, 실행 못 함)과 이유 문단: 088 f4d5790·091 7c9df84·092 2b84428·095 bf0e370·122 55a24ec(README 전체 CRLF→LF 포함)·125 30fbb0a. 날마다 5판(방어 없음 1·전부 0·하나씩 뺀 3판 0) 30판. 067은 (c)(adk 명령 없음, import만으로 0). 내가 확인: 여섯 커밋 README만(122는 --ignore-cr-at-eol로 +10 −3), LF, check 통과, 분당 21.5~21.7.
+Task 30: 150 작성 DONE_WITH_CONCERNS — 442cff2, check 통과, 18.7/분(3,555낱말/190분). 주장: 데모 흉내 442토큰(93.8%), 글자/4 어림은 실제보다 낮음. headroom 0.41.0 compress() 기본은 무손실 표 압축 49.1%(7,117→3,623), 손실 경로 강제 86.0%(→998, CCR로 되찾기). INFO인데 장애 내용 있는 줄은 손실 경로에서 사라짐. 프록시 기본값은 시작 30초에 huggingface.co 12·pypi.org 1·api.anthropic.com 1 시도(가드가 막음), 익명 비콘 기본 ON. llmlingua extra 0.41.0엔 없음, [all] 156패키지 ~500MB. gpt-4o ⚠(gpt-4o-2024-08-06 2027-01-14 종료 예정, 요약 경유 인용). 우려: --try-defaults 시험은 소켓 가드 한 겹뿐이었음.
+Task 30: 리뷰 150 dispatched (opus, af0379087154fa0c1) → review-150.md. 동시 3: 작성 151, 점검 ①, 리뷰 150.
+Task 30: 151 작성 DONE_WITH_CONCERNS — 3086199(작성)·7e7ee91(Day 150 가리킴 보강), check 통과, 21.6/분(2,915낱말/135분). tiktoken 내려받기 Step 2 한 번(1,681,126바이트, sha256 일치). 실측: 네 예시 들여쓰기 JSON 대비 56~61%, 들여쓰기 없는 JSON 대비 21~31%, 표가 아니면 TOON이 6.7~50.0% 더 김, "02134"→2134 되돌려 읽기 오류, 앱 README 샘플 247→98 주장 대 실측 182→91, 벤치마크 탭 숫자는 글자로 박힘. 모델 다섯 모두 cl100k_base로 셈. 모델: gpt-4·gpt-4-turbo·gpt-3.5-turbo 2026-10-23 종료 예정, claude-3-5-sonnet-20241022 2025-10-28 종료(리뷰에서 원문 대조). 사고: 빈 heredoc으로 전역 `python -` 1회(바로 죽임, ~/.python_history 그대로). PowerShell -File은 하네스가 거부.
+Task 30: 리뷰 151 dispatched (opus) → review-151.md. 동시 3: 점검 ①, 리뷰 150·151.
+ADK 점검 ① DONE (a5b41f2a25e3e50ef) — 모두 오늘 google-adk 2.12.0. (b) 014 45778ba·015 d719c74·016 2840077(그대로 따라 해도 나감: 동의 있는 홈 1건, 처음 홈에서 Enter 1건), (a) 017 5b3f165·021 89dd795·022 86ddfbb·023 5d6f318(disable 줄 하나뿐, 빼면 1건). 고침: 새 홈(mktemp -d, PS는 %TEMP%\adkhome-dayNNN) + disable + < /dev/null, 014~016·022는 PowerShell 블록 새로(실행 못 함, `<` 없어 stdin 닫기 뺌). 줄 하나씩 뺀 판 전부 0, 고친 bash 블록 그대로 10회 0. (c) 018~020(adk 명령 없음, 텔레메트리는 CLI에만), 024·025(google-adk 없음). Windows에서 NUL은 isatty 참이라 질문 문구는 찍히지만 EOF라 켜지지 않음. 사고: 점검자가 하위 에이전트를 한 번 띄움(아무것도 안 하고 끝남). 내가 확인: 일곱 커밋 README만, LF, check 통과, 분당 20.4~21.8, ~/.adk 없음.
+Task 30: 리뷰 151 DONE (a37d10773133a0c52) — ❌ C0·I2·M11. I1 머리말이 Token Savings를 "서로 다른 계량"이라 확인했다고 함 — 가짜 서버가 cl100k_base로 센 prompt_tokens라 같은 계량, Step 7과 어긋남. I2 문제 해결 표가 가격표·선택 상자를 gpt-5.6-sol로 바꾸라 함 → o200k_base로 바뀌어 가드 아래 RuntimeError, 원본 앱이면 몰래 내려받음(재현). Minor: load.py 줄 번호, PYTHONIOENCODING Step 3에만, Streamlit 루프백·headless가 플래그 한 겹(빼면 checkip.amazonaws.com — 소스로), 난이도, 벤치마크 출처, "숫자 여섯"은 여덟 등. 맞음: 새 폴더 진짜 모양 독자 출력 글자 그대로, tiktoken Ruling 지킴, 줄 하나씩 뺀 판 바깥 0, 수치 전부 일치, 모델 종료 날짜·가격 원문과 같음, Day 152 예고 맞음.
+Task 30: 151 fix round 1 dispatched (resume a70cca56856932b99) — Streamlit 두 번째 겹(STREAMLIT_SERVER_ADDRESS·HEADLESS 변수)도.
+Task 30: 151 fix round 1 DONE — bca7e20(24파일, 그림 다수·새 extra-cost.d2), check 통과, 21.1/분(3,266낱말/155분). 보고서 주장: I1·I2 반영(o200k_base 따로 받는 길, max_tokens는 SDK 설명만), Streamlit 변수 겹(플래그+변수·변수만·플래그만 모두 127.0.0.1 LISTENING, 기록 프록시 0), Minor 11 전부, 새 스크래치 reader2 재현. 작성자 에이전트는 hand-back 없이 "백그라운드 작업 대기"로 멈춤 — 보고서 끝에 프로세스 모두 종료라 적힘.
+Task 30: 재확인 151 dispatched (sonnet) → rereview-151.md. 동시 2: 리뷰 150, 재확인 151.
+Task 30: 리뷰 150 DONE (af0379087154fa0c1) — ❌ C0·I7·M15. **근접 사고(추정):** 작성자 --try-defaults의 api.anthropic.com 1건은 Claude Code 자격 증명이 보일 때만 생기는 headroom 구독 폴러의 조회(Bearer에 OAuth 토큰) — 작성자 프로세스가 진짜 ~/.claude/.credentials.json을 읽고 보내려다 DNS에서 가드에 막혔을 가능성 높음(바깥 0). 이 PC에 그 파일 있음(523바이트), CLAUDE_CODE_OAUTH_TOKEN 환경변수는 없음. 작성자·리뷰어에게 HOME·자격 증명 경로 확인 요청. I: CCR 저장소는 디스크 SQLite(ccr_store.db, 8.4MB)·gpt-4o 인용이 원문과 다름(Deprecated 표시)·기본값 목적지에 GitHub(litellm 가격표) 빠짐·Step 7 실험이 독자 OAuth 토큰을 싣고 가드 한 겹뿐·바늘 시험 100/100은 service 필드 탓(원 줄 안이면 81/100)·LangSmith TRACING_V2 켜져 있으면 lc_run.py가 43KB와 키를 보내려 함(가드 한 겹)·overview 목적지 빠짐. 맞음: 수치 전부, 설치 주장 전부, 진짜 키 독자 바깥 0, 줄 하나 빼기 9가지 0. 리뷰어가 공식 문서 3쪽을 curl로, GitHub HEAD 1회.
+Ruling(2026-10-19): 바깥 접속 시도를 관찰하는 실험은 독자 명령이 아니다(작성자가 스크래치 홈·가짜 자격 증명으로 잰 결과를 사실로). 서드파티 패키지 프로세스는 HOME·USERPROFILE·CLAUDE_CONFIG_DIR을 스크래치로 — 진짜 홈의 자격 증명이 보이는 실행 금지(작성자·리뷰어 모두, 독자 명령도).
+Task 30: 150 fix round 1 dispatched (resume a00934f4d12c58a2d, 자격 증명 질문 먼저). 동시 3: 수정 150, 재확인 151, 리뷰어 150 질문.
+Task 30: 재확인 151 DONE (a86f884b97cdad4c5) — ✅ 13/13 해결. o200k 선택 단계 Ruling 지킴(3,613,922바이트, sha256 일치, 빼면 RuntimeError로 멈추고 받지 않음), Streamlit 두 겹 판 모두 127.0.0.1만, 진짜 모양 독자 Step 1~8 출력 같음. 새 Minor 3: N1 :177 "유일한 줄", N2 step4·step8 oa·an 칠, N3 o200k 받은 독자의 기대 출력 없음.
+Task 30: 내가 고침 — N1·N3 문장, N2는 step4 oa·an을 ext-new(run_demo.py가 처음 가짜 서버에 닿는 곳)·step5·6을 ext로. step8은 평상 유지(검사 19 불변식 3: 마지막 step에 -todo 금지, 재확인자의 step8 -todo 제안은 불가). render 3·check 통과·21.1/분 → 151 complete.
+근접 사고 확정(2026-10-19): 150 작성자의 --try-defaults 실행은 HOME·USERPROFILE이 진짜 값이었고 CLAUDE_CONFIG_DIR·CLAUDE_CODE_OAUTH_TOKEN은 없었음. 프록시 로그에 "Error fetching subscription window ... (api.anthropic.com)" — 폴러는 토큰이 없으면 요청을 만들지 않으므로 진짜 ~/.claude/.credentials.json을 읽었을 가능성 매우 높음. 이름 조회 단계에서 가드가 막아 나간 바이트 0. 리뷰어는 스크래치 홈·가짜 자격 증명만 썼고 진짜 홈으로 돈 서드파티 실행 0. 내가 확인: 스크래치 전체·저장소에 "sk-ant-oat" 담긴 파일 0, ~/.headroom 없음. 사용자에게 보고(토큰 재발급은 사용자 판단).
+Task 30: 150 fix round 1 DONE — e2f71c9(check 통과, 18.8/분, 4,331낱말/230분). I7·M15 전부: Step 7 --try-defaults 독자 명령에서 뺌(작성자 스크래치 홈·가짜 자격 증명 75초 측정 표로), guard.py가 HOME·USERPROFILE·CLAUDE_CONFIG_DIR을 작업 폴더로·OAuth·AUTH 토큰·LangSmith 키 비움·추적 변수 넷 끔·HF_ENDPOINT·위쪽 주소 루프백·check_env 확인, CCR SQLite 8.4MB·지우는 법, 바늘 81/100, gpt-4o 원문, overview 목적지 둘 + extra-egress. 우려: 비콘 페이로드는 실행 안 함.
+Task 30: 재확인 150 dispatched (sonnet) → rereview-150.md(진짜 홈이 보이는 서드파티 실행 금지 명시).
+Task 30: 재확인 150 DONE (a608aef411317de3f) — ✅ 22/22 해결. 줄 하나 빼기 67판(check_env가 멈춤 35·일부 3·그대로 돌고 바깥 0 23·어휘 받기 6), 금지 호스트 시도 0, --host 뺀 판은 HEADROOM_HOST=0.0.0.0에서 프록시가 기동 거절. Step 7 작성자 측정 표 재현(hf 41/41·pypi 1/1·github 3/3·anthropic 1/0). 진짜 홈이 보인 서드파티 실행 0(credentials.json 523바이트·13:26 그대로). 새 Minor 4: sequence proxy ours, CCR 8,437,760 재현 안 됨(8,433,664), :1155 스위치 목록, :18 표현·:3 머리말 길이.
+Task 30: 내가 고침 — sequence proxy를 ext로, CCR 크기를 세 측정 범위로(SQLite 한 쪽 차이), :1155 겹 목록을 guard.py 그대로, :18 "스위치를 모두 끄고"를 무엇을 뺐는지로. :3 머리말은 한 줄 머리말 틀(검사가 예상 소요를 읽음)이라 나누지 않음. render 1·check 통과·19.0/분 → 150 complete. Task 30(150~151)·ADK 점검 전부 complete.
