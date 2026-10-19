@@ -580,11 +580,17 @@ LESSON_PY="$(pwd)/.venv/Scripts/python.exe"
 mkdir -p "$TEMP/day017-adk-web-test"
 cp -r 4_1_builtin_tools 4_2_function_tools 4_3_thirdparty_tools 4_4_mcp_tools "$TEMP/day017-adk-web-test/"
 cd "$TEMP/day017-adk-web-test"
-uv run --no-project --python "$LESSON_PY" adk telemetry disable
-uv run --no-project --python "$LESSON_PY" adk web --port 8993 --no_use_local_storage .
+# adk를 부르는 터미널마다 먼저 실행합니다. 홈을 새 폴더로 바꿔 독자의 텔레메트리 동의가 보이지 않게 합니다
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="$(mktemp -d)"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
+uv run --no-project --python "$LESSON_PY" adk telemetry disable < /dev/null
+uv run --no-project --python "$LESSON_PY" adk web --port 8993 --no_use_local_storage . < /dev/null
 ```
 
-(Windows PowerShell은 `$TEMP` 대신 `$env:TEMP`를 쓰고, 변수 할당은 `$LESSON_PY = "$PWD\.venv\Scripts\python.exe"`처럼 `$`와 공백이 필요합니다. `adk telemetry disable`과 최초 실행 시 동의 프롬프트는 Day 14에서 이미 확인했습니다.)
+(Windows PowerShell은 `$TEMP` 대신 `$env:TEMP`를 쓰고, 변수 할당은 `$LESSON_PY = "$PWD\.venv\Scripts\python.exe"`처럼 `$`와 공백이 필요합니다. `adk telemetry disable`과 최초 실행 시 동의 프롬프트는 Day 14에서 이미 확인했습니다. PowerShell은 Day 14의 PowerShell 홈 블록(`UV_CACHE_DIR`·`USERPROFILE`·`HOME`)을 앞에 붙이고 `< /dev/null`은 뺍니다.)
+
+위 블록의 처음 세 줄은 홈(`HOME`·`USERPROFILE`)을 이 터미널만의 새 임시 폴더로 바꿉니다. ADK 2.12.0은 텔레메트리 동의를 홈의 `.adk/config.json`에서 읽고(`utils/_telemetry_config.py`, `Path.home()`), 켜져 있으면 `adk` 명령이 끝날 때 하위 프로세스가 `play.googleapis.com`으로 사용 기록을 보냅니다(`cli/_telemetry/_metrics_collector.py`의 `shutdown`, `_metrics_reporter.py`). 독자가 다른 ADK 실습에서 이미 동의해 뒀다면 질문 없이 나가고, 처음이라도 `Enable telemetry? [Y/n]`에 그냥 Enter를 누르면 켜집니다(`cli/cli_tools_click.py`). 그래서 서로 독립된 세 줄을 겹쳤습니다. 새 홈, `adk telemetry disable`(진짜 홈에서 부르면 독자의 ADK 설정이 바뀌므로 새 홈에서만 부릅니다), 그리고 `< /dev/null`(입력이 비어 있어 Enter가 오지 않으니 질문이 와도 켜지지 않습니다. Windows의 Python은 NUL을 터미널로 봐서 질문 문구는 찍히지만 답은 파일 끝으로 끝납니다)입니다. 이 문서의 확인에서는 동의(`true`)를 미리 적어 둔 홈으로 독자를 흉내 내고 `adk web`을 띄웠다 멈췄습니다. 원래 문서에는 `adk telemetry disable` 한 줄만 있어서(그것도 진짜 홈에서 독자의 ADK 설정을 바꿨습니다), 그 줄을 빼면 동의가 미리 있던 홈에서 `play.googleapis.com` 요청 시도가 1건 잡혔습니다. 세 줄에서 하나씩 뺀 판 6개는 모두 0건이었습니다(소켓 감시가 막아 실제로는 보내지 않았습니다).
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -602,7 +608,12 @@ curl.exe -s http://127.0.0.1:8993/list-apps
 
 ```bash
 cd "$TEMP/day017-adk-web-test/4_4_mcp_tools"
-uv run --no-project --python "$LESSON_PY" adk web --port 8994 --no_use_local_storage .
+# adk를 부르는 터미널마다 먼저 실행합니다. 홈을 새 폴더로 바꿔 독자의 텔레메트리 동의가 보이지 않게 합니다
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="$(mktemp -d)"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
+uv run --no-project --python "$LESSON_PY" adk telemetry disable < /dev/null
+uv run --no-project --python "$LESSON_PY" adk web --port 8994 --no_use_local_storage . < /dev/null
 ```
 
 ```bash
