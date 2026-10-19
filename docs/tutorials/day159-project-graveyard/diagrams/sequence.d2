@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+agent: "코딩 에이전트\n(실행 안 함)" { class: ext }
+script: "graveyard.py" { class: ours }
+skillmd: "SKILL.md" { class: file }
+
+user -> agent: "끝내지 못한 프로젝트 중 뭘 끝낼까?"
+agent -> skillmd: "지시문 읽기"
+agent -> user: "프로젝트가 어디 있나요? (뿌리 폴더 질문)"
+user -> agent: "~/dev ~/projects"
+agent -> script: "뿌리 폴더 · --json report.json"
+script -> agent: "터미널 보고 (git 대화는 extra-git)"

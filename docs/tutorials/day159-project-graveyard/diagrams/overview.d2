@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: down
+
+user: 독자 {
+  class: person
+  label.near: outside-top-center
+}
+
+skill: "스킬 폴더\n(SKILL.md · causes-of-death.md)" { class: file }
+
+script: "스크립트 쪽 (graveyard.py와 이 문서의 래퍼)" {
+  class: group
+  grid-columns: 3
+  gy: "가드 래퍼\n(gy.py, 이 문서가 만듦)" { class: ours }
+  roots: "뿌리 찾기\n(find_repos)" { class: ours }
+  read: "저장소 읽기\n(read_repo)" { class: ours }
+  autopsy: "부검·맥박\n(autopsy · pulse)" { class: ours }
+  main: "보고·소유 필터\n(main)" { class: ours }
+}
+
+yard: "합성 묘지\n(.git 여럿)" { class: store }
+state: "상태·JSON 파일\n(--state · --json)" { class: file }
+agent: "코딩 에이전트\n(이 문서는 띄우지 않음)" { class: ext }
+evals: "시험\n(test_graveyard.py)" { class: ours }
+
+user -> skill: "폴더 복사"
+user -> script: "뿌리 폴더 · 플래그"
+evals -> script: "합성 묘지에 실행"
+script -> yard: "git 하위 프로세스 (읽기만)"
+script -> state: "보고서 · 상태 쓰기"
+script -> agent: "터미널 보고"
+skill -> agent: "지시문을 읽음"

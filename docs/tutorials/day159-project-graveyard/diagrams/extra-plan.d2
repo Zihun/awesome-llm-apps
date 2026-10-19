@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+agent: "코딩 에이전트\n(실행 안 함)" { class: ext }
+script: "graveyard.py" { class: ours }
+
+agent -> user: "묘비 보고서 · 부활 한 건의 계획"
+user -> agent: "그걸로 하자"
+agent -> script: "--state FILE --mark-resurrected 경로"
+script -> agent: "recorded: 이름 날짜"

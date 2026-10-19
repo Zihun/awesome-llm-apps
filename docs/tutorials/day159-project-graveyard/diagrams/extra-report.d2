@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+agent: "코딩 에이전트\n(실행 안 함)" { class: ext }
+ref: "causes-of-death.md" { class: file }
+
+agent -> ref: "원인별 부활 방향 읽기"
+agent -> user: "원인 불확실한 둘만 질문"
+user -> agent: "기억나는 이유"
