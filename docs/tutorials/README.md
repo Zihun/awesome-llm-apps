@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 149 / 167일 완료
+진도: 151 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -275,14 +275,14 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 150](day150-headroom-context-optimization/README.md) | 🧠 Headroom Context Optimization | [advanced_llm_apps/llm_optimization_tools/headroom_context_optimization](../../advanced_llm_apps/llm_optimization_tools/headroom_context_optimization/) |
-| ⬜ | Day 151 | 🎯 Toonify Token Optimization | [advanced_llm_apps/llm_optimization_tools/toonify_token_optimization](../../advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/) |
+| ✅ | [Day 150](day150-headroom-context-optimization/README.md) | 🧠 Headroom Context Optimization | [advanced_llm_apps/llm_optimization_tools/headroom_context_optimization](../../advanced_llm_apps/llm_optimization_tools/headroom_context_optimization/) |
+| ✅ | [Day 151](day151-toonify-token-optimization/README.md) | 🎯 Toonify Token Optimization | [advanced_llm_apps/llm_optimization_tools/toonify_token_optimization](../../advanced_llm_apps/llm_optimization_tools/toonify_token_optimization/) |
 
 ### 볼륨 15. 🔧 LLM Fine-tuning (Day 152–153, 2일)
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | Day 152 | 🦙 Llama 3.2 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning/) |
+| ⬜ | [Day 152](day152-llama3.2-finetuning/README.md) | 🦙 Llama 3.2 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning/) |
 | ⬜ | Day 153 | 🦥 Gemma 3 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning/) |
 
 ### 볼륨 16. 🧩 Agent Skills (Day 154–161, 8일)
