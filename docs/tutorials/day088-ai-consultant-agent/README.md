@@ -1,6 +1,6 @@
 # Day 088 · 🤝 AI Consultant Agent
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 73분(Step마다 실제로 함수를 호출해 보고 `adk web`까지 띄워 확인하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 상담 1건에 Gemini 호출 여러 회(도구 호출마다 왕복) + Perplexity Sonar 호출 1회, 두 요금표 기준 수백 원 이하로 추정(키가 없어 실제 과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_consultant_agent`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★☆ · 예상 소요 81분(Step마다 실제로 함수를 호출해 보고 `adk web`까지 띄워 확인하는 손 시간이 읽는 시간만큼 듭니다) · API 비용 대략 상담 1건에 Gemini 호출 여러 회(도구 호출마다 왕복) + Perplexity Sonar 호출 1회, 두 요금표 기준 수백 원 이하로 추정(키가 없어 실제 과금은 확인하지 못함) · 원본 앱: `advanced_ai_agents/single_agent_apps/ai_consultant_agent`
 
 ## 오늘 만들 것
 
@@ -405,13 +405,19 @@ Runner | InMemorySessionService
 **할 일.** `ai_consultant_agent` 폴더 **안에서** 실행합니다. Step 2~6을 그대로 이어 왔다면 지금 `single_agent_apps`에 있으므로 한 단계만 더 들어갑니다.
 
 ```bash
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="${TMPDIR:-/tmp}/day088-adkhome"; mkdir -p "$HOME"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
 cd ai_consultant_agent
-uv run --no-project adk web --no_use_local_storage .
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --no_use_local_storage . < /dev/null
 ```
 
 (저장소 루트에서 곧바로 시작한다면 `cd advanced_ai_agents/single_agent_apps/ai_consultant_agent`를 씁니다.)
 
-`adk` 계열 명령을 대화형 터미널(`sys.stdin.isatty()`)에서 처음 실행하면 Day 014에서 이미 본 텔레메트리 동의 프롬프트가 뜨고, 답하면 `~/.adk/config.json`에 동의 여부가 저장됩니다 — 이건 문제가 아니라 정상 설정 파일입니다(`google/adk/utils/_telemetry_config.py`, 프롬프트 문구도 "This is OFF by default"). 이 경로는 `pathlib.Path.home()`인데, 이 함수는 Windows에서 `USERPROFILE`, macOS/Linux에서 `HOME` 환경변수를 그대로 따르므로(소스로 확인) 위치를 스크래치로 돌리고 싶으면 그 변수를 바꾸면 됩니다 — "고정 경로"가 아닙니다. 또한 이 동의 코드 자체가 `sys.stdin.isatty()`일 때만 실행되므로(`cli_tools_click.py`), 이 문서처럼 비대화형으로 `adk web`만 띄우면 아무 파일도 쓰지 않습니다(직접 확인) — 파일이 생기는 것은 프롬프트에 답하거나 `adk telemetry enable`/`disable`을 직접 칠 때뿐입니다. `.`을 `single_agent_apps`가 아니라 이 폴더 자체로 준 것은 `adk web --help`가 밝히는 대로 이 버전의 AGENTS_DIR이 "여러 에이전트가 든 폴더"뿐 아니라 "에이전트 폴더 하나를 직접 가리키는 경로"도 받기 때문입니다(직접 확인 — 저장소에는 없는 가짜 옆 폴더를 스크래치에 만들어 두고 `/list-apps`를 불러도 그 폴더는 목록에 없었습니다).
+블록의 앞 세 줄은 홈(`HOME`·`USERPROFILE`)을 임시 폴더로 바꾸고(uv 캐시는 원래 자리를 지킵니다), `adk telemetry disable`과 `< /dev/null`이 같은 일을 따로 한 번씩 더 막습니다. 까닭은 이렇습니다. google-adk 2.12.0의 `adk` 명령은 `~/.adk/config.json`에 `telemetry: true`가 있으면 명령이 끝날 때 하위 프로세스로 사용 기록(하위 명령·플래그 이름, 실행 시간·종료 상태, OS·Python 판)을 `https://play.googleapis.com/log`로 보냅니다(`cli/cli_tools_click.py`와 `cli/_telemetry/_metrics_reporter.py`, 소스로 확인). 이 문서의 `requirements.txt`는 오늘 2.12.0으로 풀리고(직접 확인), 이 기능은 시험해 본 판 가운데 2.6.0이 처음입니다(2.5.1에는 없음). 동의는 질문에 Enter만 쳐도 `true`가 되고(코드는 빈 입력과 `y`를 동의로 받습니다), 다른 ADK 실습에서 이미 동의했다면 질문 없이 보냅니다. 홈을 바꾸면 그 동의가 보이지 않고, `disable`은 바뀐 홈에 `false`를 쓰고, `< /dev/null`은 질문이 떠도 입력이 EOF로 끝나 아무것도 기록하지 않게 합니다. 동의 `true`가 미리 적힌 홈을 흉내 내 위 블록을 돌리면 `play.googleapis.com`으로 가려는 시도가 0이었고, 세 줄(홈 바꾸기, `disable`, `< /dev/null`)을 하나씩 뺀 세 판도 모두 0이었습니다. 방어를 하나도 두지 않고 `adk web`만 돌린 판은 1이었습니다(소켓 감시가 막았을 뿐 실제로는 보내지 않았습니다, 직접 확인). 홈을 바꾸지 않고 `adk telemetry disable`을 부르면 진짜 `~/.adk/config.json`에 `false`를 쓰는 부작용이 있으니 홈 줄과 함께 두세요.
+
+`adk` 계열 명령을 대화형 터미널(`sys.stdin.isatty()`)에서 처음 실행하면 Day 014에서 이미 본 텔레메트리 동의 프롬프트가 뜨고, 답하면 `~/.adk/config.json`에 동의 여부가 저장됩니다 — 파일 자체는 정상 설정 파일이지만 `true`이면 위에서 본 대로 사용 기록이 나갑니다(`google/adk/utils/_telemetry_config.py`, 프롬프트 문구는 "This is OFF by default"라고 하지만 Enter가 동의입니다). 이 경로는 `pathlib.Path.home()`인데, 이 함수는 Windows에서 `USERPROFILE`, macOS/Linux에서 `HOME` 환경변수를 그대로 따르므로(소스로 확인) 위치를 스크래치로 돌리고 싶으면 그 변수를 바꾸면 됩니다 — "고정 경로"가 아닙니다. 또한 이 동의 코드 자체가 `sys.stdin.isatty()`일 때만 실행되므로(`cli_tools_click.py`), 이 문서처럼 비대화형으로 `adk web`만 띄우면 아무 파일도 쓰지 않습니다(직접 확인) — 파일이 생기는 것은 프롬프트에 답하거나 `adk telemetry enable`/`disable`을 직접 칠 때뿐입니다. `.`을 `single_agent_apps`가 아니라 이 폴더 자체로 준 것은 `adk web --help`가 밝히는 대로 이 버전의 AGENTS_DIR이 "여러 에이전트가 든 폴더"뿐 아니라 "에이전트 폴더 하나를 직접 가리키는 경로"도 받기 때문입니다(직접 확인 — 저장소에는 없는 가짜 옆 폴더를 스크래치에 만들어 두고 `/list-apps`를 불러도 그 폴더는 목록에 없었습니다).
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -474,7 +480,7 @@ Gemini가 이번엔 `analyze_market_data`의 `function_call`을 돌려주고, �
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 앱 자신의 README대로 `cd advanced_ai_agents/single_agent_apps` 후 `pip install -r requirements.txt`를 실행하면 파일을 찾지 못함 | `requirements.txt`가 그보다 한 단계 아래인 `ai_consultant_agent/`에 있다(직접 확인) | `cd ai_consultant_agent`까지 한 단계 더 들어간 뒤 설치 |
-| `adk` 계열 명령을 대화형 터미널에서 실행할 때마다 텔레메트리 동의 프롬프트가 다시 뜬다 | 아직 `~/.adk/config.json`에 동의 여부를 저장하지 않았다(`sys.stdin.isatty()`일 때만 묻는다, 소스로 확인) | 프롬프트에 한 번 답하거나 `adk telemetry disable`을 실행 — 이후로는 조용히 넘어간다 |
+| `adk` 계열 명령을 대화형 터미널에서 실행할 때마다 텔레메트리 동의 프롬프트가 다시 뜬다 | 아직 `~/.adk/config.json`에 동의 여부를 저장하지 않았다(`sys.stdin.isatty()`일 때만 묻는다, 소스로 확인) | Step 7처럼 홈을 바꾼 터미널에서 `adk telemetry disable`을 실행 — 이후로는 조용히 넘어간다(프롬프트에 Enter만 치면 켜집니다) |
 | `/run`에 메시지를 보내면 응답 본문이 `Internal Server Error`뿐이고 원인은 응답에 없음 | `GOOGLE_API_KEY`가 없으면 `google-genai`의 `Client` 생성자가 `ValueError`를 던지고 ADK는 이를 HTTP 500으로만 반환한다(Day 014에서 이미 확인한 것과 같은 지점) | `GOOGLE_API_KEY`를 셸 환경변수로 설정하고 서버 재시작. 원인은 서버 터미널 로그에서 확인 |
 | Windows PowerShell에서 이 문서의 `curl` 명령이 매개변수 오류를 낸다 | PowerShell이 `curl`을 `Invoke-WebRequest`의 별칭으로 미리 정의해 둔다(Day 014에서 이미 확인) | `curl.exe`처럼 확장자를 붙여 호출 |
 
