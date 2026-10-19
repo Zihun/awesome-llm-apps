@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+agent: "코딩 에이전트\n(실행 안 함)" { class: ext }
+script: "archaeologist.py" { class: ours }
+skillmd: "SKILL.md" { class: file }
+
+user -> agent: "이 코드는 왜 있나?"
+agent -> skillmd: "지시문 읽기"
+agent -> script: "저장소 · 파일 · --lines · --json"
+script -> agent: "JSON 여섯 키 (git 대화는 extra-git)"
