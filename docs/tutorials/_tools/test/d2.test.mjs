@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { inlineImports, sourceHash, readSvgHash, embedHash, renderSource } from "../lib/d2.mjs";
+import { tempDir } from "../support/tempdir.mjs";
 
 function fixture() {
-  const root = mkdtempSync(join(tmpdir(), "tut-d2-"));
+  const root = tempDir("tut-d2-");
   mkdirSync(join(root, "_tools"));
   mkdirSync(join(root, "day001-x", "diagrams"), { recursive: true });
   writeFileSync(join(root, "_tools", "theme.d2"), "direction: right\nclasses: {\n  ours: { style.fill: \"#DBEAFE\" }\n  ours-new: { style.fill: \"#DBEAFE\"; style.stroke: \"#F97316\"; style.stroke-width: 4 }\n}\n");
@@ -25,7 +25,7 @@ test("inlineImports replaces import lines recursively", () => {
 });
 
 test("inlineImports throws on cycles", () => {
-  const root = mkdtempSync(join(tmpdir(), "tut-cycle-"));
+  const root = tempDir("tut-cycle-");
   writeFileSync(join(root, "a.d2"), "...@b\n");
   writeFileSync(join(root, "b.d2"), "...@a\n");
   assert.throws(() => inlineImports(join(root, "a.d2")), /import cycle/);

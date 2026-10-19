@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadDays, folderName } from "../lib/days.mjs";
 import { isDayDone, renderRoadmap } from "../roadmap.mjs";
+import { tempDir } from "../support/tempdir.mjs";
 
 test("renderRoadmap lists every day, links only existing days, marks done days", () => {
   const days = loadDays();
-  const root = mkdtempSync(join(tmpdir(), "tut-roadmap-"));
+  const root = tempDir("tut-roadmap-");
   mkdirSync(join(root, folderName(days[0])), { recursive: true });
   writeFileSync(join(root, folderName(days[0]), "README.md"), "# Day 001\n완성");
   mkdirSync(join(root, folderName(days[1])), { recursive: true });

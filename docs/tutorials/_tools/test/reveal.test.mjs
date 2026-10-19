@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { revealProblems } from "../lib/reveal.mjs";
+import { tempDir } from "../support/tempdir.mjs";
 
 // 노드 하나: <g class="BASE64ID CLASS"> (클래스가 없으면 공백 없이 BASE64ID만). shape가
 // 바로 안에 와야 연결선 그룹(안에 shape가 없다)과 구분된다 — check.mjs의 reveal 규격 그대로.
@@ -19,7 +19,7 @@ function svgOfNodes(entries) {
 
 // diagrams/ 폴더 하나를 임시로 만든다. files: { "overview.svg": [[id, cls], ...], "step1.svg": [...] }
 function diagramsDir(files) {
-  const dir = mkdtempSync(join(tmpdir(), "tut-reveal-"));
+  const dir = tempDir("tut-reveal-");
   for (const [name, entries] of Object.entries(files)) {
     writeFileSync(join(dir, name), svgOfNodes(entries));
   }

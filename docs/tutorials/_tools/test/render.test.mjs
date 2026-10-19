@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { listD2Files, renderFile } from "../render.mjs";
 import { readSvgHash } from "../lib/d2.mjs";
+import { tempDir } from "../support/tempdir.mjs";
 
 function fixture() {
-  const root = mkdtempSync(join(tmpdir(), "tut-render-"));
+  const root = tempDir("tut-render-");
   mkdirSync(join(root, "_tools"));
   mkdirSync(join(root, "day001-x", "diagrams"), { recursive: true });
   mkdirSync(join(root, "day002-y", "diagrams"), { recursive: true });

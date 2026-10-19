@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadDays, folderName, pad3, REPO_ROOT } from "../lib/days.mjs";
 import { readmeSkeleton, scaffoldDay } from "../scaffold.mjs";
+import { tempDir } from "../support/tempdir.mjs";
 
 test("days.json is consecutive with unique folders and existing app paths", () => {
   const days = loadDays();
@@ -30,7 +30,7 @@ test("readmeSkeleton contains the nine H2 headings in order and links the next d
 });
 
 test("scaffoldDay creates folder, diagrams dir and README once", () => {
-  const root = mkdtempSync(join(tmpdir(), "tut-scaffold-"));
+  const root = tempDir("tut-scaffold-");
   const dir = scaffoldDay(1, { root });
   assert.equal(dir, join(root, "day001-xai-finance-agent"));
   assert.ok(existsSync(join(dir, "diagrams")));
@@ -40,7 +40,7 @@ test("scaffoldDay creates folder, diagrams dir and README once", () => {
 });
 
 test("scaffolding a day links the previous day's pointer", () => {
-  const root = mkdtempSync(join(tmpdir(), "tut-link-"));
+  const root = tempDir("tut-link-");
   const days = loadDays();
   scaffoldDay(1, { root });
   const day1Readme = join(root, folderName(days[0]), "README.md");

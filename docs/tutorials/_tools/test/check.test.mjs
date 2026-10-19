@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { checkDay, checkRoadmap, REQUIRED_H2 } from "../lib/check.mjs";
 import { inlineImports, sourceHash, embedHash } from "../lib/d2.mjs";
 import { loadDays, folderName } from "../lib/days.mjs";
+import { tempDir } from "../support/tempdir.mjs";
 
 const DEFAULT_D2 = "...@../../_tools/theme\na -> b\n";
 
@@ -19,7 +19,7 @@ ${extra}
 `;
 
 function fixture({ readme = GOOD_README(), svgHash, d2Source = DEFAULT_D2 } = {}) {
-  const repo = mkdtempSync(join(tmpdir(), "tut-check-"));
+  const repo = tempDir("tut-check-");
   mkdirSync(join(repo, "app"));
   writeFileSync(join(repo, "app", "main.py"), "print(1)\nprint(2)\n");
   const tutorials = join(repo, "docs", "tutorials");
@@ -78,7 +78,7 @@ test("broken image link, stale svg, bad code ref, mermaid and placeholder are re
 
 test("checkRoadmap requires one row per day and existing link targets", () => {
   const days = loadDays();
-  const root = mkdtempSync(join(tmpdir(), "tut-roadmap-check-"));
+  const root = tempDir("tut-roadmap-check-");
   mkdirSync(join(root, folderName(days[0])), { recursive: true });
   writeFileSync(join(root, folderName(days[0]), "README.md"), "# ok");
   const rows = days.map((d, i) => `| ⬜ | ${i < 2 ? `[Day ${String(d.day).padStart(3, "0")}](${folderName(d)}/README.md)` : `Day ${String(d.day).padStart(3, "0")}`} | t | p |`).join("\n");
