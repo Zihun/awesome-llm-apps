@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-Day 153 · 🦥 Gemma 3 Fine-tuning — (작성 필요)
+[Day 153 · 🦥 Gemma 3 Fine-tuning](../day153-gemma3-finetuning/README.md) — (작성 필요)
