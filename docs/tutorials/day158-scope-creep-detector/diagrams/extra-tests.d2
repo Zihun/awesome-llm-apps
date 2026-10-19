@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+
+lint: "skill_lint.py" { class: ours }
+scan: "skill_scanner.py" { class: ours }
+trigtool: "run_trigger_evals.py" { class: ours }
+reglint: "registry_lint.py" { class: ours }
+test2b: "test_scope_creep.py" { class: ours }
+folder: "원본 스킬 폴더\n(scope-creep-detector/)" { class: file }
+installed: "스크래치 설치본\n(.claude/skills/)" { class: file }
+seven: "스킬 일곱 개의\nSKILL.md 설명" { class: file }
+cases: "trigger-cases.json" { class: file }
+registry: "registry.json" { class: file }
+tmprepo: "임시 git 저장소\n(시험이 만듦)" { class: store }
+script: "scope_creep.py" { class: ours }
+
+lint -> folder: "구조 검사"
+lint -> installed: "설치본 검사"
+scan -> folder: "보안 검사"
+trigtool -> seven: "설명 읽기"
+trigtool -> cases: "양성 · 음성 점수"
+reglint -> folder: "frontmatter 대조"
+reglint -> registry: "레지스트리 대조"
+test2b -> tmprepo: "저장소 만들기"
+test2b -> script: "--json 실행"
+script -> tmprepo: "git diff 읽기"

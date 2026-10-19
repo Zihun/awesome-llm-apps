@@ -1,6 +1,6 @@
 # Day 158 · 🔭 Scope Creep Detector
 
-> 볼륨 16 🧩 Agent Skills · 난이도 ★★☆ · 예상 소요 140분(스킬은 528줄짜리 스크립트 하나와 지시문 둘뿐이지만, 직접 만든 저장소에서 스크립트를 열 번 넘게 돌리며 출력과 한계를 읽고, 시험 다섯 개의 출력을 해석하고, 판정표를 손으로 쓰는 데 시간이 듭니다) · API 비용 대략 0원(모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/scope-creep-detector`
+> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 165분(블록마다 bash와 PowerShell 두 벌을 읽고 고르고, 스킬은 528줄짜리 스크립트 하나와 지시문 둘뿐이지만, 직접 만든 저장소에서 스크립트를 열 번 넘게 돌리며 출력과 한계를 읽고, 시험 다섯 개의 출력을 해석하고, 판정표를 손으로 쓰는 데 시간이 듭니다) · API 비용 대략 0원(모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/scope-creep-detector`
 
 ## 오늘 만들 것
 
@@ -17,7 +17,7 @@
 5. 작업 트리·스테이징·브랜치·표준 입력의 네 방식은 같은 변경에 같은 JSON을 냅니다. 다만 일부만 스테이징하면 어느 방식도 전체를 보지 못합니다(Step 7).
 6. 새로 만들었지만 `git add`하지 않은 파일은 작업 트리 방식에서 아예 보이지 않습니다(Step 7).
 7. 한국어 의도는 낱말이 모두 버려져 `in_scope`가 0이 되고, 기본 git 설정에서 한국어 파일 경로는 `\353\254\270…` 같은 8진수 이스케이프로 나옵니다(Step 7).
-8. 대상 저장소의 `.git/config`에 `core.fsmonitor`가 있으면, 스크립트의 `--no-ext-diff --no-textconv`를 지켜도 그 명령이 실행됩니다(Step 7).
+8. 대상 저장소의 `.git/config`에 `core.fsmonitor`나 `.gitattributes`의 clean 필터가 있으면, 스크립트의 `--no-ext-diff --no-textconv`를 지켜도 작업 트리·`--staged` 방식에서 그 명령이 실행됩니다(Step 7).
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -55,25 +55,31 @@
 
 ### Step 1. 원본을 읽기만 하고 frontmatter를 명세와 대조한다
 
-**목적.** 원본 폴더에는 아무것도 쓰지 않고, 스킬이 무엇으로 이루어졌는지 확인합니다. 에이전트가 시작할 때 읽는 것은 본문이 아니라 frontmatter의 이름과 설명뿐이므로 그 부분을 명세와 한 줄씩 맞춰 봅니다.
+**목적.** 원본 폴더에는 아무것도 쓰지 않고, 스킬이 무엇으로 이루어졌는지 확인합니다. 에이전트가 시작할 때 읽는 것은 본문이 아니라 frontmatter의 이름과 설명뿐이므로 그 부분을 명세와 맞춰 봅니다. 이 문서에서 파일을 만들거나 복사하거나 목록을 찍는 블록(Step 1, 2, 3, 5, 6, 7)은 앞 터미널의 변수에 기대지 않습니다. 블록마다 첫머리에서 저장소 위치(`REPO`)와 스크래치 폴더(`LAB`)를 다시 정하고, `LAB` 경로는 먼저 정규화한 뒤(Git Bash는 `cygpath -u`와 `realpath -m`, PowerShell은 `GetFullPath`) `~/.claude`·`~/.agents`·`~/.codex`·`~/.cursor`·`~/.copilot`·`~/.openclaw`·`~/.hermes`나 `CLAUDE_CONFIG_DIR` 아래이면 멈춥니다. 모든 목적지는 `${LAB:?}`처럼 비어 있으면 그 줄에서 멈추게 씁니다. 그래서 새 터미널에서 시작해도, 줄 하나를 빼고 붙여 넣어도, `TMPDIR`·`TEMP`가 설정 폴더 아래여도 진짜 설정 폴더에는 아무것도 쓰이지 않습니다. 이 주장을 어떻게 확인했는지와 한계는 Step 2 끝에 적었습니다.
 
 **할 일.** 저장소 루트에서 줄 수와 파이썬 파일 수를 세고 스크래치 폴더를 만듭니다.
 
 ```bash
-cd awesome-llm-apps
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
+cd "${REPO:?}"
 wc -l agent_skills/scope-creep-detector/SKILL.md agent_skills/scope-creep-detector/README.md agent_skills/scope-creep-detector/references/scope-signals.md agent_skills/scope-creep-detector/scripts/scope_creep.py
 find agent_skills/scope-creep-detector -name "*.py" | wc -l
-LAB=$(mktemp -d)
+mkdir -p "${LAB:?}"
 echo "$LAB"
 ```
 
 ```powershell
-Set-Location awesome-llm-apps
+$ErrorActionPreference = "Stop"
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "scd-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
+Set-Location $Repo
 foreach ($f in "SKILL.md","README.md","references/scope-signals.md","scripts/scope_creep.py") { "$f " + (Get-Content "agent_skills/scope-creep-detector/$f").Count }
 (Get-ChildItem agent_skills/scope-creep-detector -Recurse -Filter *.py).Count
-$LAB = Join-Path $env:TEMP "scd-lab"
-New-Item -ItemType Directory $LAB | Out-Null
-$LAB
+New-Item -ItemType Directory -Force $Lab | Out-Null
+$Lab
 ```
 
 (PowerShell 줄은 실행해 보지 못했습니다.) 이어서 `SKILL.md:1-15`를 봅니다. 설명은 원문 그대로입니다.
@@ -96,6 +102,10 @@ metadata:
 ---
 ```
 
+[agentskills.io 명세](https://agentskills.io/specification)와 [Anthropic의 Agent Skills 문서](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)(둘 다 2026-10-19에 읽음)의 필드 규칙과 점진적 불러오기는 [Day 154 Step 2](../day154-advisor-orchestrator-worker/README.md#step-2-스킬이-무엇인지--폴더와-머리말을-명세에-대조한다)가 자세히 다루므로 여기서는 이 스킬의 값만 적습니다. `name`은 `scope-creep-detector`(20자)로 폴더 이름과 같고, `description`은 줄 바꿈을 공백으로 접으면 433자(직접 센 값, 한도 1,024)이며 "Use when …"으로 언제 쓰는지를 말합니다. `license`는 `Apache-2.0`, `metadata`는 문자열 셋(`author`·`version`·`source`)이고 `compatibility`·`allowed-tools`는 없습니다. 이름에 `anthropic`·`claude`는 없습니다.
+
+이 스킬에서 새로 걸리는 것은 스크립트입니다. Anthropic 문서에 따르면 스크립트는 bash로 실행되고 **스크립트 코드는 맥락에 들어가지 않으며 출력만 들어갑니다.** 이 스킬에서 528줄의 코드는 모델에게 읽히지 않고 모델이 보는 것은 JSON 출력이라는 뜻입니다. `allowed-tools`가 없으므로 `git`과 `python3` 실행을 미리 허락받지 않습니다. 실제로 에이전트가 허락을 묻는지는 에이전트마다 다르고, 이 문서는 확인하지 못했습니다.
+
 ![Step 1까지의 구성](diagrams/step1.svg)
 
 **확인.** 직접 확인한 출력입니다(2026-10-19).
@@ -109,18 +119,6 @@ metadata:
 1
 ```
 
-[agentskills.io 명세](https://agentskills.io/specification)와 [Anthropic의 Agent Skills 문서](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)(둘 다 2026-10-19에 읽음)와 이렇게 맞았습니다.
-
-| 필드 | 명세의 규칙 | 이 스킬 |
-|---|---|---|
-| `name` | 1~64자, 소문자·숫자·하이픈, 처음과 끝이 하이픈이 아님, `--` 없음, 폴더 이름과 같음 | `scope-creep-detector`(20자), 폴더 이름과 같음 |
-| `description` | 1~1024자, 무엇을 하고 언제 쓰는지 | 줄 바꿈을 공백으로 접으면 433자(직접 센 값). "Use when …"으로 언제 쓰는지를 말함 |
-| `license` | 선택 | `Apache-2.0` |
-| `metadata` | 선택, 문자열 키와 문자열 값의 맵 | `author`·`version`·`source` 셋, 모두 문자열 |
-| `compatibility`·`allowed-tools` | 선택(`allowed-tools`는 실험적) | 없음 |
-
-Anthropic 문서는 `name`에 `anthropic`·`claude` 낱말을 못 쓰게 하는데 이 이름에는 없습니다. 같은 문서의 점진적 불러오기 설명에 따르면 에이전트는 시작할 때 이름과 설명만 읽고, 요청이 설명에 맞으면 `SKILL.md` 본문을 읽고, `references/`는 필요할 때 읽습니다. 스크립트는 bash로 실행되고 **스크립트 코드는 맥락에 들어가지 않으며 출력만 들어갑니다.** 이 스킬에서 528줄의 코드는 모델에게 읽히지 않고, 모델이 보는 것은 JSON 출력이라는 뜻입니다. 본문 136줄은 명세의 권장(500줄 미만)에 맞습니다. `allowed-tools`가 없으므로 이 스킬은 `git`과 `python3` 실행을 미리 허락받지 않습니다. 실제로 에이전트가 허락을 묻는지는 에이전트마다 다르고, 이 문서는 확인하지 못했습니다.
-
 ### Step 2. 스크래치 프로젝트에 설치하고 폴더에 무엇이 들어갔는지 본다
 
 **목적.** 설치가 폴더 복사라는 것을 실제로 해 보고, 무엇이 따라 들어가는지 봅니다. 이번에는 스크립트가 들어 있으므로 "설치"가 곧 "내 PC에서 돌 코드를 놓는 일"이라는 점이 중요합니다. 진짜 홈의 에이전트 설정 폴더는 건드리지 않습니다.
@@ -128,22 +126,35 @@ Anthropic 문서는 `name`에 `anthropic`·`claude` 낱말을 못 쓰게 하는�
 **할 일.** 스크래치 프로젝트를 만들고 Claude Code가 읽는 프로젝트 위치(`.claude/skills/`)와 여러 에이전트가 읽는 공용 위치(`.agents/skills/`)에 각각 복사합니다.
 
 ```bash
-mkdir -p "$LAB/myproj/.claude/skills" "$LAB/myproj/.agents/skills"
-cd "$LAB/myproj"
-cp -r ~/awesome-llm-apps/agent_skills/scope-creep-detector .claude/skills/scope-creep-detector
-cp -r ~/awesome-llm-apps/agent_skills/scope-creep-detector .agents/skills/scope-creep-detector
-find .claude .agents -type f | sort
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
+PROJ="${LAB:?}/myproj"
+mkdir -p "${PROJ:?}/.claude/skills/scope-creep-detector" "${PROJ:?}/.agents/skills/scope-creep-detector"
+cp -r "${REPO:?}/agent_skills/scope-creep-detector/." "${PROJ:?}/.claude/skills/scope-creep-detector/"
+cp -r "${REPO:?}/agent_skills/scope-creep-detector/." "${PROJ:?}/.agents/skills/scope-creep-detector/"
+cd "${PROJ:?}" && find .claude .agents -type f | sort
 ```
 
 ```powershell
-New-Item -ItemType Directory "$LAB/myproj/.claude/skills","$LAB/myproj/.agents/skills" | Out-Null
-Set-Location "$LAB/myproj"
-Copy-Item -Recurse ~/awesome-llm-apps/agent_skills/scope-creep-detector .claude/skills/scope-creep-detector
-Copy-Item -Recurse ~/awesome-llm-apps/agent_skills/scope-creep-detector .agents/skills/scope-creep-detector
-Get-ChildItem .claude,.agents -Recurse -File | ForEach-Object FullName
+$ErrorActionPreference = "Stop"
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "scd-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
+$Proj = Join-Path $Lab "myproj"
+foreach ($d in ".claude",".agents") {
+  $dest = Join-Path (Join-Path $Proj $d) "skills/scope-creep-detector"
+  New-Item -ItemType Directory -Force $dest | Out-Null
+  Copy-Item -Recurse -Force (Join-Path $Repo "agent_skills/scope-creep-detector/*") $dest
+}
+Get-ChildItem $Proj -Recurse -File | ForEach-Object { $_.FullName.Substring($Proj.Length + 1) }
 ```
 
-(`~/awesome-llm-apps`는 클론한 위치로 바꿉니다. PowerShell 줄은 실행해 보지 못했습니다.)
+(`$HOME/awesome-llm-apps`는 클론한 위치로 바꿉니다. 같은 블록을 다시 돌려도 안쪽에 폴더가 겹쳐 생기지 않게 `/.`와 `/*`로 내용만 복사합니다. PowerShell 줄은 실행해 보지 못했습니다.)
+
+방어선은 셋입니다. 첫째, `LAB`(PowerShell은 `$Lab`)을 정하는 줄이 경로를 정규화한 뒤 진짜 에이전트 설정 폴더 아래이면 `LAB`을 비우거나(bash) 예외를 던집니다(PowerShell). 이 검사는 `LAB`을 정하는 같은 줄(PowerShell은 한 줄짜리 함수)에 있어서 그 줄을 빼면 `LAB`도 정해지지 않습니다. 둘째, 모든 목적지는 `${LAB:?}`처럼 써서 비면 그 줄에서 멈춥니다. 줄 하나를 빼도 상대 경로 파일이 작업 폴더에 생기지 않도록 Step 7까지 모든 출력 경로를 `${LAB:?}`로 시작하는 절대 경로로 썼습니다. 셋째, 블록이 앞 터미널의 변수에 기대지 않으므로 새 터미널에서도 같은 결과입니다. Step 3의 2b 시험은 임시 폴더를 `TMPDIR`(PowerShell은 `TEMP`·`TMP`)에 만들므로 그 한 줄만 `$LAB/tmp`로 돌려 실행합니다.
+
+직접 확인한 것은 이렇습니다. 스크래치에 가짜 홈을 만들고(안에 `.claude`·`.agents`·`.codex`·`.cursor`·`.copilot`·`.openclaw`·`.hermes` 폴더마다 가짜 `skills/existing`과 가짜 `.credentials.json`, 별도의 가짜 `CLAUDE_CONFIG_DIR` 폴더, 저장소 `agent_skills` 사본), README에서 뽑은 bash 블록 열 개를 글자 그대로 블록마다 새 셸로 돌렸습니다. 열 개는 Step 1·2·3·3의 `trig_scores`·4·5의 둘·6·7의 둘이고 읽기만 하는 블록도 넣었습니다. 정상 `TMPDIR`에서 순서대로 한 번, `TMPDIR`가 가짜 `.claude`·`.claude/tmp`·`.agents/tmp`·`.codex`·`.cursor/tmp`·`.copilot/tmp`·`.openclaw/tmp`·`.hermes/tmp` 아래이거나 Windows 형식(`C:\…\.claude\tmpw`)이거나 `CLAUDE_CONFIG_DIR`(Windows 형식 포함) 아래인 열한 가지에서 블록마다, 줄을 하나씩 빼는 판(정상·`.claude/tmp`·Windows 형식·`CLAUDE_CONFIG_DIR`)을 더해 468판입니다. 468판 모두에서 가짜 설정 폴더 일곱과 `CLAUDE_CONFIG_DIR` 폴더의 파일 목록·내용 해시, 가짜 홈 바로 아래의 목록, 저장소 사본의 해시가 그대로였습니다. 첫 시도에서는 줄 빼기 두 판이 가짜 홈 바로 아래에 `modes.sh` 같은 파일을 남겼습니다. `cd` 한 줄이 빠지면 뒤의 상대 경로 파일이 작업 폴더에 생기기 때문이고, 그래서 Step 7 블록을 절대 경로로 고쳤습니다. PowerShell 블록 여섯(Step 1·2·3·`trig_scores`·5의 둘)은 Windows PowerShell 5.1로 정상, `TEMP`가 `.claude/tmp`·`.agents/tmp`·`.codex`·`CLAUDE_CONFIG_DIR` 아래이거나 슬래시 형식일 때, 그리고 줄 빼기로 201판을 돌렸습니다. 설정 폴더 안에 파일은 생기지 않았습니다. 다만 `TEMP`가 가리키는 폴더가 없으면 `powershell.exe`가 스스로 빈 `tmp` 폴더를 만들었습니다(내용 없는 스크립트 한 줄로도 같았습니다. 이 문서가 막을 수 있는 일이 아닙니다). 가드가 없는 같은 모양의 블록은 같은 환경에서 가짜 `.claude`를 실제로 바꿨습니다(`TMPDIR`로 `LAB`을 정하고 검사 없이 복사하는 블록, 변수 없이 새 터미널에서 돌린 옛 Step 2 모양의 블록 네 판 가운데 셋. 나머지 하나는 정상 `TMPDIR`라 바꿀 일이 없는 판이었습니다). 한계도 있습니다. bash 가드는 GNU `realpath`(Git Bash·Linux)에 기대고, macOS 기본 `realpath`에는 `-m`이 없어 `LAB`이 비며 블록이 멈춥니다. PowerShell의 `GetFullPath`는 심볼릭 링크·정션·8.3 짧은 이름을 풀지 않으므로 설정 폴더로 이어지는 링크는 못 잡습니다(링크 판은 돌려 보지 못했습니다). 이 가드는 이 문서가 만드는 `scd-lab` 폴더만 지키고, `TMPDIR`가 비어 있으면 Git Bash의 `/tmp`는 진짜 `%TEMP%`로 풀리므로 터미널의 `TMPDIR`·`TEMP`는 스크래치로 지정해 두는 편이 좋습니다.
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
@@ -165,9 +176,9 @@ Get-ChildItem .claude,.agents -Recurse -File | ForEach-Object FullName
 저장소 README가 안내하는 다른 길 둘은 이 문서에서 실행하지 않았습니다.
 
 - 진짜 홈에 두는 길: `~/.claude/skills/` 등. 저장소 README의 표가 에이전트별 위치를 적습니다. Anthropic 문서도 Claude Code는 개인용 `~/.claude/skills/`와 프로젝트용 `.claude/skills/`를 읽는다고 적습니다.
-- `npx skills add https://github.com/Shubhamsaboo/awesome-llm-apps/tree/main/agent_skills/scope-creep-detector`. CLI의 저장소는 [vercel-labs/skills](https://github.com/vercel-labs/skills)이고, README는 기본이 프로젝트 설치(`-g`를 주면 사용자 폴더), 심볼릭 링크를 권장 방식으로 두고 `--copy`로 복사를 고르게 하며, 익명 사용 통계를 보내고 `DISABLE_TELEMETRY=1`이나 `DO_NOT_TRACK=1`로 끈다고 적습니다. 내려받기 10 MiB·풀면 25 MiB·파일 1,000개 제한은 직접 내려받는 주소에 대한 것이고 GitHub 트리 주소에 대한 제한은 이 README가 말하지 않습니다(2026-10-19에 읽음). CLI를 실행하지 않았으므로 직접 본 것이 아닙니다.
+- `npx skills add https://github.com/Shubhamsaboo/awesome-llm-apps/tree/main/agent_skills/scope-creep-detector`. 이 CLI가 무엇이고 무엇을 받는지는 [Day 154 Step 5](../day154-advisor-orchestrator-worker/README.md#step-5-스크래치-프로젝트에-설치한다--진짜-홈에는-아무것도-넣지-않는다)에 적었고, 이 문서도 CLI를 실행하지 않았습니다.
 
-저장소 README의 "Before you install any skill"은 스킬이 에이전트의 권한(셸, 파일, 자격 증명)으로 돈다며 설치 전에 `SKILL.md`와 모든 스크립트를 읽으라고 합니다. Anthropic 문서의 "Treat like installing software"와 같은 말입니다. 이 스킬은 읽을 코드가 528줄 하나입니다. Step 3과 4가 그 읽기의 일부입니다.
+저장소 README의 "Before you install any skill"은 설치 전에 `SKILL.md`와 모든 스크립트를 읽으라고 합니다. 이 스킬은 읽을 코드가 528줄 하나입니다. Step 3과 4가 그 읽기의 일부입니다.
 
 ### Step 3. 결정적 시험 다섯을 돌린다
 
@@ -176,22 +187,36 @@ Get-ChildItem .claude,.agents -Recurse -File | ForEach-Object FullName
 **할 일.** 저장소 루트에서 다섯 줄입니다. 레지스트리 검사는 `--check`만 쓰고, `--write`는 `registry.json`을 다시 쓰므로 돌리지 않습니다.
 
 ```bash
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
+cd "${REPO:?}"
+mkdir -p "${LAB:?}/tmp"
 python -B -X utf8 agent_skills/evals/tools/skill_lint.py agent_skills/scope-creep-detector --strict
 python -B -X utf8 agent_skills/evals/tools/skill_scanner.py agent_skills/scope-creep-detector
 python -B -X utf8 agent_skills/evals/tools/run_trigger_evals.py
 python -B -X utf8 agent_skills/evals/tools/registry_lint.py --check --root .
-python -B -X utf8 agent_skills/evals/scope-creep-detector/test_scope_creep.py
+TMPDIR="${LAB:?}/tmp" python -B -X utf8 agent_skills/evals/scope-creep-detector/test_scope_creep.py
 ```
 
 ```powershell
+$ErrorActionPreference = "Stop"
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "scd-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
+Set-Location $Repo
 python -B -X utf8 agent_skills/evals/tools/skill_lint.py agent_skills/scope-creep-detector --strict
 python -B -X utf8 agent_skills/evals/tools/skill_scanner.py agent_skills/scope-creep-detector
 python -B -X utf8 agent_skills/evals/tools/run_trigger_evals.py
 python -B -X utf8 agent_skills/evals/tools/registry_lint.py --check --root .
+New-Item -ItemType Directory -Force (Join-Path $Lab "tmp") | Out-Null
+$oldTemp = $env:TEMP; $oldTmp = $env:TMP
+$env:TEMP = Join-Path $Lab "tmp"; $env:TMP = $env:TEMP
 python -B -X utf8 agent_skills/evals/scope-creep-detector/test_scope_creep.py
+$env:TEMP = $oldTemp; $env:TMP = $oldTmp
 ```
 
-(저장소의 README는 `python3`로 적습니다. Windows에서는 `python`이고, 이 저장소의 `.venv`를 집지 않는지 먼저 `python --version`으로 봅니다. PowerShell 줄은 실행해 보지 못했습니다.)
+(저장소의 README는 `python3`로 적습니다. Windows에서는 `python`이고, 이 저장소의 `.venv`를 집지 않는지 먼저 `python --version`으로 봅니다. 앞 네 줄은 저장소를 읽기만 합니다. 2b 시험은 임시 폴더를 만드는데 `tempfile`이 `TMPDIR`·`TEMP`를 따르므로, 그 한 줄만 임시 폴더를 `$LAB/tmp`로 돌려 실행합니다. PowerShell 줄은 실행해 보지 못했습니다.)
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
@@ -221,13 +246,17 @@ scope classification:
 PASS: 15/15 checks
 ```
 
-(트리거 시험은 스킬 일곱 개를 모두 돌려서 줄이 일곱 개 나옵니다. 위에는 이 스킬의 줄만 옮겼습니다.) 소스(`agent_skills/evals/tools/`)의 머리말로 읽은 넷의 역할은 Day 155와 같습니다. 구조 검사는 이름·설명 길이·본문 줄 수·본문이 가리키는 파일이 있는지를, 보안 검사는 "원격 스크립트를 셸로 넘기는 줄" 같은 패턴을 정규식으로 찾고, 레지스트리 검사는 `registry.json`이 frontmatter와 같은지 봅니다. 보안 검사가 스스로 "자연어 공격은 패턴 스캐너를 피한다"고 적는 만큼 깨끗하다는 것은 위험한 줄이 없다는 뜻이지 안전하다는 보증이 아닙니다.
+(트리거 시험은 스킬 일곱 개를 모두 돌려서 줄이 일곱 개 나옵니다. 위에는 이 스킬의 줄만 옮겼습니다.) 네 검사 도구가 무엇을 보는지는 [Day 154 Step 3](../day154-advisor-orchestrator-worker/README.md#step-3-1단계-구조-시험-1b단계-보안-시험-레지스트리-시험)이 다룹니다. 이 스킬에서 덧붙일 것은 하나입니다. 보안 검사가 스스로 "자연어 공격은 패턴 스캐너를 피한다"고 적는 만큼 깨끗하다는 것은 위험한 줄이 없다는 뜻이지 안전하다는 보증이 아닙니다.
+
+![시험 도구 넷과 입력](diagrams/extra-tests.svg)
+
+위 그림은 시험 도구 넷이 무엇을 읽는지를 보입니다. 구조·보안 검사는 스킬 폴더(과 Step 2의 설치본)를, 트리거 검사는 스킬 일곱 개의 설명과 `trigger-cases.json`을, 레지스트리 검사는 스킬 폴더와 `registry.json`을 읽고, 2b 시험은 임시 저장소를 만들어 스크립트를 실행합니다.
 
 **스크립트 시험(2b)이 하는 일.** 임시 폴더에 git 저장소를 만들고 기준 커밋 뒤에 섞인 변경을 만듭니다. 파이썬 파서 수정(범위 안), CI 편집, 의존성 셋(`requirements.txt`·`package.json`·`pyproject.toml`), 공개 함수 이름 변경, 비공개 `_` 함수 이름 변경, 공백만 바꾼 파일, 45줄을 바꾼 큰 덩어리, 그리고 `.gitattributes`로 연결한 textconv 명령입니다. 이 명령이 실행되면 표지 파일이 생기게 해 두고 스크립트가 그것을 실행하지 않는지(`--no-textconv`의 효과)를 봅니다. 열다섯 확인 가운데 열넷은 작업 트리 방식의 `--json` 한 번이고, 하나는 git 머리글이 없는 평범한 diff를 `--diff`로 읽는 것입니다. 소스로 보면 이 시험은 `--staged`·`--base`·`--hunk-threshold`·의도 생략·인용된 경로를 한 번도 부르지 않습니다. 그 부분은 Step 7에서 직접 합니다.
 
-이 시험을 소켓 가드와 하위 프로세스 기록 아래서 돌렸을 때 막힌 연결은 없었고, 파이썬이 부른 것은 `git`(init·config·add·commit)과 스크립트 자신(파이썬)뿐이었습니다. 시험은 임시 폴더를 `tempfile.mkdtemp`로 만들고 `finally`에서 지웁니다.
+이 시험을 소켓 가드와 하위 프로세스 기록 아래서 돌렸을 때 막힌 연결은 없었고, 파이썬이 부른 것은 `git`(init·config·add·commit)과 스크립트 자신(파이썬)뿐이었습니다. 시험은 임시 폴더를 `tempfile.mkdtemp`로 만들고 `finally`에서 `shutil.rmtree(..., ignore_errors=True)`로 지우려 하지만(`test_scope_creep.py:179-302`), Windows에서는 git 객체 파일이 읽기 전용이라 지워지지 않았습니다. 세 번 돌릴 때마다 임시 폴더에 `scope-creep-eval-*` 폴더가 하나씩 남았습니다(직접 확인). 위 블록이 임시 폴더를 `$LAB/tmp`로 돌리는 까닭입니다. 남은 폴더는 거기에 쌓이므로 진짜 `%TEMP%`는 더러워지지 않습니다.
 
-**트리거 시험이 모델이 아니라는 점.** `run_trigger_evals.py`의 머리말은 "Deterministic, CI-safe, no model."입니다. 점수는 프롬프트의 낱말(불용어와 세 글자 미만을 빼고 어미 `ing`·`ed`·`es`·`s`를 한 번 잘라 낸 것) 가운데 설명의 낱말과 겹치는 개수를 프롬프트 낱말 수의 제곱근으로 나눈 값이고, 양성의 최저점이 음성의 최고점의 1.15배를 넘어야 통과합니다. 사례별 점수는 저장소의 함수를 불러 쓰는 짧은 스크립트로 뽑았습니다. 아래 `trig_scores.py`를 `$LAB`에 저장합니다.
+**트리거 시험이 모델이 아니라는 점.** `run_trigger_evals.py`의 머리말은 "Deterministic, CI-safe, no model."입니다. 점수 식(제곱근, 1.15배 문턱, 낱말 정리)은 [Day 154 Step 4](../day154-advisor-orchestrator-worker/README.md#step-4-2단계-트리거-시험-2b단계-3단계-읽기)에 있고 이 스킬의 사례별 점수는 저장소의 함수를 불러 쓰는 짧은 스크립트로 뽑았습니다. 아래 `trig_scores.py`를 `$LAB`에 저장합니다.
 
 `trig_scores.py`
 
@@ -250,8 +279,23 @@ for p in ["formatting my code", "review the formatting changes", "is this pull r
 ```
 
 ```bash
-python -B -X utf8 "$LAB/trig_scores.py" agent_skills/evals/tools
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
+cd "${REPO:?}"
+python -B -X utf8 "${LAB:?}/trig_scores.py" agent_skills/evals/tools
 ```
+
+```powershell
+$ErrorActionPreference = "Stop"
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "scd-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
+Set-Location $Repo
+python -B -X utf8 (Join-Path $Lab "trig_scores.py") agent_skills/evals/tools
+```
+
+(PowerShell 줄은 실행해 보지 못했습니다.)
 
 직접 확인한 출력입니다.
 
@@ -304,8 +348,10 @@ is this pull request too broad     score=1.73 ['broad', 'pull', 'request']
 **확인.** 두 가지를 직접 확인했습니다. 하나, 스크립트의 가져오기와 문법입니다.
 
 ```bash
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+cd "${REPO:?}"
 grep -nE "^(import|from) " agent_skills/scope-creep-detector/scripts/scope_creep.py
-python -B -c "import ast,sys; ast.parse(open(sys.argv[1],encoding='utf-8').read(), feature_version=(3,8)); print('3.8 문법으로 읽힘')" agent_skills/scope-creep-detector/scripts/scope_creep.py
+python -B -X utf8 -c "import ast,sys; ast.parse(open(sys.argv[1],encoding='utf-8').read(), feature_version=(3,8)); print('3.8 문법으로 읽힘')" agent_skills/scope-creep-detector/scripts/scope_creep.py
 ```
 
 여덟 줄의 `import`가 나오고 "3.8 문법으로 읽힘"이 찍혔습니다. 머리말의 "Python 3.11 stdlib only"에서 "표준 라이브러리만"은 맞고, 3.11이라는 숫자는 문법 면에서는 필수가 아니었습니다(실행은 3.14.2로만 했고 3.8~3.10에서는 돌려 보지 못했습니다). 둘, 본문에 네트워크를 가리키는 말이 없다는 것입니다. `SKILL.md`에서 `http`·`curl`·`fetch`·`network`를 찾으면 `source:` URL 한 줄(`14`)과 설명의 "Operates locally and offline"·본문의 "makes no network calls" 같은 선언뿐입니다.
@@ -400,30 +446,48 @@ print("lab ready:", root)
 ```
 
 ```bash
-python -B -X utf8 "$LAB/make_lab.py" "$LAB/shop"
-cd "$LAB/shop"
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
+python -B -X utf8 "${LAB:?}/make_lab.py" "${LAB:?}/shop"
+cd "${LAB:?}/shop"
 git status --short
 git diff --stat | tail -1
 ```
 
 ```powershell
-python -B -X utf8 "$LAB/make_lab.py" "$LAB/shop"
-Set-Location "$LAB/shop"
+$ErrorActionPreference = "Stop"
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "scd-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
+python -B -X utf8 (Join-Path $Lab "make_lab.py") (Join-Path $Lab "shop")
+Set-Location (Join-Path $Lab "shop")
 git status --short
 git diff --stat | Select-Object -Last 1
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다.) 마지막 `git add -N`(intent-to-add)이 왜 있는지는 Step 7에서 봅니다. 이제 스크립트를 돌립니다. 저장소 루트에서 시작하는 경로입니다. `~/awesome-llm-apps`는 클론한 위치로 바꿉니다.
+(`shop`이 이미 있으면 `make_lab.py`가 두 번째 기준 커밋에서 멈추므로, 다시 만들려면 `shop` 폴더를 이름으로 지우고 시작합니다. PowerShell 줄은 실행해 보지 못했습니다.) 마지막 `git add -N`(intent-to-add)이 왜 있는지는 Step 7에서 봅니다. 이제 스크립트를 돌립니다.
 
 ```bash
-python -B -X utf8 ~/awesome-llm-apps/agent_skills/scope-creep-detector/scripts/scope_creep.py --repo "$LAB/shop" --intent "fix tax rounding on invoice total"
-python -B -X utf8 ~/awesome-llm-apps/agent_skills/scope-creep-detector/scripts/scope_creep.py --repo "$LAB/shop" --intent "fix tax rounding on invoice total" --json > "$LAB/report.json"
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
+S="${REPO:?}/agent_skills/scope-creep-detector/scripts/scope_creep.py"
+python -B -X utf8 "$S" --repo "${LAB:?}/shop" --intent "fix tax rounding on invoice total"
+python -B -X utf8 "$S" --repo "${LAB:?}/shop" --intent "fix tax rounding on invoice total" --json > "${LAB:?}/report.json"
 ```
 
 ```powershell
-python -B -X utf8 ~/awesome-llm-apps/agent_skills/scope-creep-detector/scripts/scope_creep.py --repo "$LAB/shop" --intent "fix tax rounding on invoice total"
-python -B -X utf8 ~/awesome-llm-apps/agent_skills/scope-creep-detector/scripts/scope_creep.py --repo "$LAB/shop" --intent "fix tax rounding on invoice total" --json > "$LAB/report.json"
+$ErrorActionPreference = "Stop"
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+function Get-SafeLab { $l = [System.IO.Path]::GetFullPath((Join-Path $env:TEMP "scd-lab")); $cfg = @(".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes" | ForEach-Object { Join-Path $HOME $_ }); if ($env:CLAUDE_CONFIG_DIR) { $cfg += $env:CLAUDE_CONFIG_DIR }; foreach ($c in $cfg) { if (($l + "\").StartsWith(([System.IO.Path]::GetFullPath($c) + "\"), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $l" } }; $l }
+$Lab = Get-SafeLab
+$S = Join-Path $Repo "agent_skills/scope-creep-detector/scripts/scope_creep.py"
+python -B -X utf8 $S --repo (Join-Path $Lab "shop") --intent "fix tax rounding on invoice total"
+python -B -X utf8 $S --repo (Join-Path $Lab "shop") --intent "fix tax rounding on invoice total" --json | Out-File -Encoding ascii (Join-Path $Lab "report.json")
 ```
+
+(Windows PowerShell 5.1의 `>`는 UTF-16으로 쓰기 때문에 Step 6의 `utf-8` 읽기가 첫 바이트에서 멈춥니다. 스크립트의 JSON은 ASCII뿐이므로(`json.dump` 기본값) `Out-File -Encoding ascii`로 쓰면 5.1과 7 모두 같은 바이트가 됩니다. 이 PowerShell 줄은 실행해 보지 못했습니다.)
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -458,14 +522,19 @@ likely creep: 6
 **할 일.** `report.json`에서 필드를 봅니다.
 
 ```bash
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
 python -B -X utf8 -c "
 import json,sys
 r=json.load(open(sys.argv[1],encoding='utf-8'))
 for k in ('in_scope','likely_creep'):
     for i in r[k]: print(k, i['path'], i['relatedness'], i['signals'], '+%d -%d' % (i['additions'], i['deletions']))
 print(r['new_deps']); print(r['api_renames']); print(r['stats']['oversized_hunks'])
-" "$LAB/report.json"
+" "${LAB:?}/report.json"
 ```
+
+Step 6의 파이썬은 여러 줄 `python -c`라서 PowerShell의 따옴표 규칙이 달라 PowerShell 줄을 적지 않았습니다. PowerShell 5.1에서는 같은 코드를 `.py` 파일로 저장해 `python 파일.py (Join-Path $Lab "report.json")`로 돌립니다(이 줄도 실행해 보지 못했습니다).
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -484,7 +553,7 @@ likely_creep utils/helpers.py 0.0 ['formatting_only'] +1 -1
 likely_creep web/report.py 0.0 ['oversized_hunk'] +45 -45
 likely_creep web/views.py 0.0 ['public_api_rename'] +1 -1
 [{'line': 'httpx==0.27.0', 'name': 'httpx', 'path': 'requirements.txt'}]
-[{'from': 'render_invoice_page', 'hunk': '@@ -1,2 +1,2 @@', 'kind': 'function', 'path': 'web/views.py'}]
+[{'from': 'render_invoice_page', 'hunk': '@@ -1,2 +1,2 @@', 'kind': 'function', 'path': 'web/views.py', 'to': 'render_invoice_html'}]
 [{'churn': 90, 'hunk': '@@ -1,45 +1,45 @@', 'path': 'web/report.py'}]
 ```
 
@@ -519,26 +588,29 @@ Justify는 하나도 없습니다. 이 합성 변경 안에는 "안전하게 떼
 **할 일.** 먼저 네 입력 방식이 같은 변경에 같은 보고서를 내는지 봅니다. `shop2`에서 작업 트리 → `git add -A` → `--staged` → 커밋 → `--base main` → 표준 입력 순서로 돌립니다.
 
 ```bash
-cd "$LAB" && cp -r shop shop2 && cp -r shop shop5
-S=~/awesome-llm-apps/agent_skills/scope-creep-detector/scripts/scope_creep.py
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
+S="${REPO:?}/agent_skills/scope-creep-detector/scripts/scope_creep.py"
 I="fix tax rounding on invoice total"
-cat > modes.sh <<'EOF'
+cp -r "${LAB:?}/shop" "${LAB:?}/shop2" && cp -r "${LAB:?}/shop" "${LAB:?}/shop5"
+cat > "${LAB:?}/modes.sh" <<'EOF'
 n() { python -B -X utf8 "$S" --repo "$1" --intent "$I" --json "${@:2}" | python -B -X utf8 -c "import json,sys; print(json.load(sys.stdin)['stats']['files_touched'])"; }
 echo "작업 트리 $(n $1)  --staged $(n $1 --staged)  --base main $(n $1 --base main)"
 EOF
 export S I
-python -B -X utf8 $S --repo shop2 --intent "$I" --json > m_work.json
-bash modes.sh shop2                                  # 스테이징 전
-git -C shop2 add -A && bash modes.sh shop2           # 전부 add한 뒤
-python -B -X utf8 $S --repo shop2 --intent "$I" --json --staged > m_staged.json
-git -C shop2 commit -q -m "tax rounding" && bash modes.sh shop2   # 커밋한 뒤
-python -B -X utf8 $S --repo shop2 --intent "$I" --json --base main > m_base.json
-git -C shop2 diff main...HEAD | python -B -X utf8 $S --diff - --intent "$I" --json > m_stdin.json
-cmp m_work.json m_staged.json && cmp m_work.json m_base.json && cmp m_work.json m_stdin.json && echo "같은 JSON"
-git -C shop5 add billing/tax.py tests/test_tax.py && bash modes.sh shop5   # 둘만 add한 뒤
+python -B -X utf8 "$S" --repo "${LAB:?}/shop2" --intent "$I" --json > "${LAB:?}/m_work.json"
+bash "${LAB:?}/modes.sh" "${LAB:?}/shop2"                                  # 스테이징 전
+git -C "${LAB:?}/shop2" add -A && bash "${LAB:?}/modes.sh" "${LAB:?}/shop2"           # 전부 add한 뒤
+python -B -X utf8 "$S" --repo "${LAB:?}/shop2" --intent "$I" --json --staged > "${LAB:?}/m_staged.json"
+git -C "${LAB:?}/shop2" commit -q -m "tax rounding" && bash "${LAB:?}/modes.sh" "${LAB:?}/shop2"   # 커밋한 뒤
+python -B -X utf8 "$S" --repo "${LAB:?}/shop2" --intent "$I" --json --base main > "${LAB:?}/m_base.json"
+git -C "${LAB:?}/shop2" diff main...HEAD | python -B -X utf8 "$S" --diff - --intent "$I" --json > "${LAB:?}/m_stdin.json"
+cmp "${LAB:?}/m_work.json" "${LAB:?}/m_staged.json" && cmp "${LAB:?}/m_work.json" "${LAB:?}/m_base.json" && cmp "${LAB:?}/m_work.json" "${LAB:?}/m_stdin.json" && echo "같은 JSON"
+git -C "${LAB:?}/shop5" add billing/tax.py tests/test_tax.py && bash "${LAB:?}/modes.sh" "${LAB:?}/shop5"   # 둘만 add한 뒤
 ```
 
-PowerShell 줄은 적지 않았습니다. 나머지 실험은 같은 방식으로 새 사본(`e1`·`e2`·…)에서 했고 핵심 명령만 적습니다.
+(`shop2`·`shop5`가 이미 있으면 치우고 시작합니다. PowerShell 줄은 적지 않았습니다.) 나머지 실험은 같은 방식으로 새 사본(`e1`·`e2`·…)에서 했고 핵심 명령만 적습니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -573,14 +645,18 @@ PowerShell 줄은 적지 않았습니다. 나머지 실험은 같은 방식으�
 **관찰 실험: 대상 저장소의 설정이 실행되는가.** 스크립트는 `git diff`를 부르면서 `--no-ext-diff --no-textconv`를 줍니다. 2b 시험이 textconv가 실행되지 않음을 확인합니다. 그런데 git은 저장소의 `.git/config`가 정한 명령을 다른 길로도 실행할 수 있습니다. 가장 알려진 것이 `core.fsmonitor`입니다. 합성 저장소의 사본에 표지 파일만 쓰는 명령을 걸고 스크립트를 돌렸습니다. 이 실험은 독자가 따라 할 명령이 아니라, 제 저장소에서 제 명령이 실행되는지 본 관찰입니다.
 
 ```bash
-cd "$LAB" && cp -r shop e4
-printf 'import pathlib,sys\npathlib.Path(sys.argv[1]).write_text("fsmonitor ran")\n' > hook.py
-git -C e4 config core.fsmonitor "python $LAB/hook.py $LAB/marker.txt"
-python -B -X utf8 $S --repo e4 --intent "fix tax" | head -3
-ls "$LAB/marker.txt" && cat "$LAB/marker.txt"
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+norm() { realpath -m "$(cygpath -u "$1" 2>/dev/null || echo "$1")"; }
+LAB=$(norm "${TMPDIR:-/tmp}/scd-lab"); H=$(norm "$HOME"); for d in .claude .agents .codex .cursor .copilot .openclaw .hermes; do case "$LAB/" in "$H/$d"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac; done; case "$LAB/" in "$(norm "${CLAUDE_CONFIG_DIR:-/none}")"/*) echo "멈춥니다: $LAB"; LAB="" ;; esac
+S="${REPO:?}/agent_skills/scope-creep-detector/scripts/scope_creep.py"
+cp -r "${LAB:?}/shop" "${LAB:?}/e4"
+printf 'import pathlib,sys\npathlib.Path(sys.argv[1]).write_text("fsmonitor ran")\n' > "${LAB:?}/hook.py"
+git -C "${LAB:?}/e4" config core.fsmonitor "python ${LAB:?}/hook.py ${LAB:?}/marker.txt"
+python -B -X utf8 "$S" --repo "${LAB:?}/e4" --intent "fix tax" | head -3
+ls "${LAB:?}/marker.txt" && cat "${LAB:?}/marker.txt"
 ```
 
-표지 파일이 생기고 `fsmonitor ran`이 찍혔습니다. 같은 저장소에서 `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.fsmonitor GIT_CONFIG_VALUE_0=false`를 환경에 주거나 `git -c core.fsmonitor=false diff`로 부르면 표지 파일이 생기지 않았습니다. 그래서 "모든 것이 로컬로 돌고 네트워크를 쓰지 않는다"는 스킬의 문장은 스크립트 코드에 대해서는 맞지만, **다른 사람의 저장소를 가리키면 그 저장소의 git 설정이 내 권한으로 돈다**는 점은 문서에 없습니다. 이 스킬이 쓰기 좋은 대상은 내가 만든 저장소입니다. 받아 온 저장소에는 먼저 `.git/config`를 읽습니다.
+표지 파일이 생기고 `fsmonitor ran`이 찍혔습니다. 실행되는 범위는 입력 방식에 따라 달랐습니다. 작업 트리 방식, `--staged`, 의도를 생략한 실행에서는 한 번씩 실행됐고, `--base main`에서는 실행되지 않았습니다. 같은 저장소에서 `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.fsmonitor GIT_CONFIG_VALUE_0=false`를 환경에 주거나 `git -c core.fsmonitor=false diff`로 부르면 표지 파일이 생기지 않았습니다. 그러나 이 변수가 끄는 것은 `core.fsmonitor` 하나입니다. 같은 사본에 `.gitattributes`로 `filter=rv`를 걸고 `filter.rv.clean`에 표지 파일을 쓰는 명령을 두면 작업 트리 방식에서 그 명령이 여러 번(제 실행에서 22번) 실행됐고, `core.fsmonitor=false`를 환경에 줘도 그대로였습니다(`--base main`에서는 0번). 그래서 "모든 것이 로컬로 돌고 네트워크를 쓰지 않는다"는 스킬의 문장은 스크립트 코드에 대해서는 맞지만, **다른 사람의 저장소를 작업 트리나 스테이징 방식으로 가리키면 그 저장소의 git 설정이 내 권한으로 돌 수 있다**는 점은 문서에 없습니다. 이 스킬이 쓰기 좋은 대상은 내가 만든 저장소입니다. 받아 온 저장소에는 먼저 `.git/config`와 `.gitattributes`를 읽습니다. 이 문서의 독자 명령은 모두 위에서 만든 합성 저장소에만 돌립니다.
 
 ### Step 8. 3단계 시험과 저장소 README의 주장을 대조한다
 
@@ -599,9 +675,9 @@ ls "$LAB/marker.txt" && cat "$LAB/marker.txt"
 저장소 `agent_skills/README.md`와 스킬 `README.md`의 문장도 대조했습니다.
 
 - "Real scripts. Deterministic work runs as code" — 이 스킬은 만족합니다. 분류는 코드(528줄)이고 같은 입력에는 같은 출력을 냅니다(Step 7의 네 방식이 바이트 단위로 같았음).
-- "Local and private by default. No network calls unless declared." — 스크립트는 소켓·HTTP 모듈을 가져오지 않고 하위 프로세스는 `git` 둘뿐이며, 소켓 가드 아래에서 막힌 연결이 없었습니다. 다만 Step 7의 `core.fsmonitor` 관찰이 보여 주듯 `git`이 읽는 저장소의 설정까지 이 약속에 들어가지는 않습니다.
+- "Local and private by default. No network calls unless declared." — 스크립트는 소켓·HTTP 모듈을 가져오지 않고 하위 프로세스는 `git` 둘뿐이며, 소켓 가드 아래에서 막힌 연결이 없었습니다. 다만 Step 7의 관찰이 보여 주듯 `git`이 읽는 저장소의 설정(`core.fsmonitor`, clean 필터)까지 이 약속에 들어가지는 않습니다.
 - "Tested before shipped. On real inputs, not just happy-path fixtures." — 2b 시험은 합성 저장소 하나이고 작업 트리 방식뿐입니다. "real inputs"로 돌린 결과는 저장소에 남아 있지 않고, 이 문서도 진짜 저장소에는 돌리지 않았습니다.
-- 스킬 `README.md`는 데모 GIF를 GitHub 릴리스 주소로 링크합니다(`README.md:5`). 이 문서는 그 주소를 열어 보지 않았습니다.
+- 스킬 `README.md`는 데모 GIF를 GitHub 릴리스 주소로 링크합니다(`README.md:8`, 주소의 소유자는 `mvanhorn/awesome-llm-apps`로, 이 저장소의 원 소유자 `Shubhamsaboo`와 다릅니다). 이 문서는 그 주소를 열어 보지 않았습니다.
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
@@ -611,7 +687,7 @@ ls "$LAB/marker.txt" && cat "$LAB/marker.txt"
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 에이전트를 띄워 관찰한 것이 아니라 Anthropic 문서의 점진적 불러오기와 `SKILL.md`의 지시, 스크립트 소스를 이어 붙인 것입니다. 시작할 때 에이전트는 설치된 모든 스킬의 이름과 설명만 읽습니다(첫 메시지). 사용자가 변경이 번졌는지 묻고 의도 한 줄을 주면, 설명에 맞는다고 판단한 에이전트가 `SKILL.md` 본문을 읽습니다(셋째·넷째 메시지). 본문은 판정 전에 `scope-signals.md`를 읽으라고 하므로(`SKILL.md:89-91`) 에이전트는 그 파일도 읽습니다(다섯째·여섯째). 문서는 가리킨 파일이 필요할 때 읽힌다고 하므로 읽을지는 에이전트 몫입니다. 그다음 에이전트가 `--repo`와 `--intent`와 `--json`으로 스크립트를 실행하면 스크립트는 `git diff`를 하위 프로세스로 부르고, 받은 통합 diff를 분류해 JSON을 표준 출력으로 돌려줍니다. 에이전트는 JSON을 읽고 판정표를 포함한 보고서를 보내고, 분리나 되돌리기 같은 변경은 사용자의 승인을 먼저 묻습니다. 여기에 모델 호출이 몇 번 있는지, 에이전트가 어떤 방식(`--staged` 등)을 고르는지는 이 문서가 확인하지 못했습니다. 스크립트 코드는 맥락에 들어가지 않는다는 Anthropic 문서의 설명대로라면 모델이 보는 것은 출력(JSON) 뿐입니다.
+이 그림은 에이전트를 띄워 관찰한 것이 아니라 Anthropic 문서의 점진적 불러오기와 `SKILL.md`의 지시, 스크립트 소스를 이어 붙인 것입니다. 시작할 때 에이전트는 설치된 모든 스킬의 이름과 설명만 읽습니다(첫 메시지). 사용자가 변경이 번졌는지 묻고 의도 한 줄을 주면, 설명에 맞는다고 판단한 에이전트가 `SKILL.md` 본문을 읽습니다(셋째·넷째 메시지). 그다음 에이전트가 `--repo`와 `--intent`와 `--json`으로 스크립트를 실행하면 스크립트는 `git diff`를 하위 프로세스로 부르고, 받은 통합 diff를 분류해 JSON을 표준 출력으로 돌려줍니다(다섯째~여덟째). `SKILL.md`는 `scope-signals.md`를 "Interpret the JSON" 절에서, 곧 JSON을 받은 뒤 판정 전에 읽으라고 하므로(`SKILL.md:87-91`) 그 읽기는 스크립트 실행 뒤에 둡니다(아홉째·열째). 문서는 가리킨 파일이 필요할 때 읽힌다고 하므로 읽을지는 에이전트 몫입니다. 에이전트는 JSON을 읽고 판정표를 포함한 보고서를 보내고, 분리나 되돌리기 같은 변경은 사용자의 승인을 먼저 묻습니다. 여기에 모델 호출이 몇 번 있는지, 에이전트가 어떤 방식(`--staged` 등)을 고르는지는 이 문서가 확인하지 못했습니다. 스크립트 코드는 맥락에 들어가지 않는다는 Anthropic 문서의 설명대로라면 모델이 보는 것은 출력(JSON)뿐입니다.
 
 ## 실행 체크리스트
 
@@ -622,6 +698,7 @@ ls "$LAB/marker.txt" && cat "$LAB/marker.txt"
 - [ ] 범위 안으로 분류된 파일 중 번짐이 둘, 번짐 후보 중 필요한 파일이 하나 있음을 찾았다
 - [ ] 한국어 의도와 `git add`하지 않은 새 파일이 보고서에서 어떻게 사라지는지 봤다
 - [ ] 진짜 `~/.claude`나 다른 에이전트 설정 폴더를 건드리지 않았고, 저장소에 `__pycache__`가 새로 생기지 않았다
+- [ ] 2b 시험을 임시 폴더를 `$LAB/tmp`로 돌려 실행했고, 진짜 `%TEMP%`에 `scope-creep-eval-*`가 남지 않았다
 
 ## 문제 해결
 
@@ -635,6 +712,8 @@ ls "$LAB/marker.txt" && cat "$LAB/marker.txt"
 | 파일 경로가 `\353\254\270…`로 나온다 | git이 한국어 경로를 인용하며 8진수로 쓰고 스크립트가 되돌리지 않는다 | `git -c core.quotepath=false diff \| python scope_creep.py --diff - …`로 넘기거나 `core.quotepath=false`를 설정한다 |
 | `scope_creep.py: error: warning: Not a git repository…`와 긴 사용법 | `--repo`가 git 저장소가 아니면 `git diff`가 `--no-index` 모드로 빠진다. 종료 코드 2 | 저장소 안에서 돌리거나 `--repo`를 고친다 |
 | 진짜 고침 파일이 `likely_creep`에 있다 | 경로 낱말에 의도 낱말이 정확히 없다(`round`·`rounding`). 어간 처리가 없다 | 의도 낱말과 경로가 겹치게 의도를 고치지 말고, Step 6처럼 연결을 확인해 Keep으로 정한다 |
+| 2b 시험 뒤 `scope-creep-eval-*` 폴더가 남는다 | 시험의 정리(`shutil.rmtree(..., ignore_errors=True)`)가 Windows의 읽기 전용 git 객체를 지우지 못한다. 직접 확인했다 | Step 3의 블록은 이 폴더가 `$LAB/tmp`에 남게 한다. `TMPDIR` 없이 직접 돌렸다면 `%TEMP%`에 남으므로 이름을 확인한 뒤 그 폴더만 지운다. 와일드카드로 지우지 않는다. Git Bash의 `rm -r <폴더>`는 읽기 전용 객체까지 지웠다(직접 확인). PowerShell의 `Remove-Item -Recurse -Force <폴더>`는 실행해 보지 못했다 |
+| PowerShell 5.1에서 Step 6이 `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff`로 멈춘다 | `>`가 `report.json`을 UTF-16으로 썼다. Microsoft 문서가 5.1의 `>`를 UTF-16LE라고 적는다 | `Out-File -Encoding ascii`로 쓴다(Step 5). 이 줄은 실행해 보지 못했다 |
 | 설치했는데 에이전트가 스킬을 켜지 않는 것 같음 | 이 문서는 에이전트를 띄우지 않아 원인을 확인하지 못했다. 트리거 시험은 낱말 겹침이라 실제 켜짐을 보장하지 않는다(Step 3) | 설명(`description`)의 낱말이 실제 질문과 겹치는지 보고, 에이전트가 스킬 폴더를 읽는 위치(Step 2)에 설치했는지 확인한다 |
 
 ## 더 해보기
