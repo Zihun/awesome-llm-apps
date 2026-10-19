@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+host: "오케스트레이터" { class: ours }
+tmp: "임시 파일" { class: file }
+workers: "작업자 (agy)" { class: ext }
+
+host -> tmp: "브리프 파일 쓰기 (SUBTASK · INPUTS · 기준 · 형식)"
+host -> workers: "웨이브 발송 (3개씩)"
+workers -> tmp: "결과 파일"
+host -> tmp: "결과 읽기 (발송 순서) · PASS · FIX · ESCALATE"

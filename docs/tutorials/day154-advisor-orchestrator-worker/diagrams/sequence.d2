@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+host: "오케스트레이터" { class: ours }
+advisor: "조언자 (claude CLI)" { class: ext }
+tmp: "임시 파일" { class: file }
+
+user -> host: "큰 작업 요청"
+host -> user: "성공 기준 · 예산 선언"
+host -> tmp: "상담글 쓰기"
+host -> advisor: "상담 1: 계획 검토 (advisor-consult.md 형식, 표준입력)"
+advisor -> host: "판정 · 위험 1~3개 · 수정안 (300단어 이하)"
