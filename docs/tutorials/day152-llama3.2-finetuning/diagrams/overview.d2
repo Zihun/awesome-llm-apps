@@ -6,28 +6,28 @@ user: 사용자 {
   label.near: outside-top-center
 }
 
-unsloth: "Unsloth\n(FastLanguageModel)" { class: ours }
-hub: "Hugging Face Hub\n(모델 · 데이터셋)" { class: ext }
-script: "원본 스크립트\n(finetune_llama3.2.py)" { class: ours }
-toy: "장난감 대역\n(무작위 모델 · 대화 25개)" { class: ours }
 data: "데이터 준비\n(datasets · 채팅 틀)" { class: ours }
-cache: "HF_HOME 캐시" { class: store }
+toy: "장난감 대역 (무작위 모델 · 대화 25개)" { class: ours }
 out: "finetuned_model/\n(어댑터 · 토크나이저)" { class: file }
-trainer: "학습기\n(trl SFTTrainer)" { class: ours }
 guard: "가드\n(guard.py)" { class: ours }
-gpu: "CUDA GPU\n(4비트 학습)" { class: ext }
 lora: "LoRA 어댑터\n(peft)" { class: ours }
+unsloth: "Unsloth\n(FastLanguageModel)" { class: ours }
+gpu: "CUDA GPU\n(4비트 학습)" { class: ext }
+cache: "HF_HOME 캐시" { class: store }
+trainer: "학습기\n(trl SFTTrainer)" { class: ours }
+script: "원본 스크립트 (finetune_llama3.2.py)" { class: ours }
+hub: "Hugging Face Hub\n(모델 · 데이터셋)" { class: ext }
 
-script -> unsloth: "모델 · LoRA ·\n채팅 틀"
-script -> trainer: "SFTTrainer 60걸음"
-user -> script: "실행"
-unsloth -> lora: "어댑터 붙이기"
-toy -> data: "대화 25개"
-trainer -> out: "save_pretrained"
-toy -> lora: "무작위 모델"
-script -> data: "load_dataset"
-guard -> hub: "바깥 접속 거부"
-data -> hub: "데이터셋 요청"
-unsloth -> hub: "모델 요청 (4비트)"
 unsloth -> cache: "받은 파일 저장"
+data -> hub: "데이터셋 요청"
+script -> data: "load_dataset"
+script -> trainer: "SFTTrainer 60걸음"
 trainer -> gpu: "손실 · 기울기"
+guard -> hub: "바깥 접속 거부"
+toy -> lora: "무작위 모델"
+user -> script: "실행"
+unsloth -> hub: "모델 요청 (4비트)"
+unsloth -> lora: "어댑터 붙이기"
+script -> unsloth: "모델·LoRA·채팅 틀"
+script -> out: "save_pretrained"
+toy -> data: "대화 25개"

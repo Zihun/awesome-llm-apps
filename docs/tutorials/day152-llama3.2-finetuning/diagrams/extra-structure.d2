@@ -1,0 +1,22 @@
+...@../../_tools/theme
+direction: down
+
+gpu: "CUDA GPU\n(4비트 학습)" { class: ext }
+ckpt: "outputs/checkpoint-60/\n(어댑터 · 옵티마이저 상태)" { class: file }
+cache: "HF_HOME 캐시" { class: store }
+out: "finetuned_model/\n(어댑터 · 토크나이저)" { class: file }
+data: "데이터 준비\n(datasets · 채팅 틀)" { class: ours }
+trainer: "학습기\n(trl SFTTrainer)" { class: ours }
+lora: "LoRA 어댑터\n(peft)" { class: ours }
+script: "원본 스크립트\n(finetune_llama3.2.py)" { class: ours }
+unsloth: "Unsloth\n(FastLanguageModel)" { class: ours }
+
+data -> trainer: "text 열"
+unsloth -> trainer: "trl 패치"
+script -> out: "save_pretrained"
+data -> cache: "parquet · Arrow 저장"
+unsloth -> cache: "받은 파일 저장"
+trainer -> ckpt: "60걸음째 저장"
+script -> trainer: "model · train_dataset"
+trainer -> gpu: "손실 · 기울기"
+trainer -> lora: "LoRA만 갱신"

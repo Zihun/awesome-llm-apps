@@ -5,9 +5,12 @@ script: "원본 스크립트" { class: ours }
 trainer: "SFTTrainer" { class: ours }
 gpu: "CUDA GPU" { class: ext }
 out: "finetuned_model/" { class: file }
+ckpt: "outputs/" { class: file }
 
-script -> trainer: "SFTTrainer.train()"
+script -> trainer: "SFTTrainer(...) 토큰화"
+script -> trainer: "train()"
 trainer -> gpu: "60걸음 (손실 · 기울기)"
 gpu -> trainer: "손실 기록"
+trainer -> ckpt: "checkpoint-60"
 script -> out: "model.save_pretrained"
 script -> out: "tokenizer.save_pretrained"

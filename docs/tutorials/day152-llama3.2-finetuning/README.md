@@ -1,10 +1,10 @@
 # Day 152 · 🦙 Llama 3.2 Fine-tuning
 
-> 볼륨 15 🔧 LLM Fine-tuning · 난이도 ★★☆(원본은 파일 하나 62줄이지만 CUDA GPU가 있어야 돕니다. 이 문서의 실습은 GPU 없이 CPU에서 도는 장난감 축소판이고, 원본 스크립트는 실행하지 않았습니다) ⚠ 원본이 쓰는 라이브러리 조합은 오늘 설치하면 그대로 돌지 않습니다. 이 PC에서는 `unsloth`를 불러오는 두 번째 줄에서 멈추고(Step 4), 멈추지 않은 환경에서도 `SFTTrainer`에 넘기는 인자 셋은 오늘 설치되는 `trl` 1.15.0이 받지 않습니다(Step 7) · 예상 소요 165분(스크립트 스물을 저장하고 돌리며 같은 숫자를 여러 방식으로 재 보는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 0원(모델 API를 한 번도 부르지 않았습니다. 원본을 GPU에서 돌릴 때의 비용은 Colab 무료 등급이나 자기 GPU 전기료이고 이 문서가 재 보지 않았습니다) · 원본 앱: `advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning`
+> 볼륨 15 🔧 LLM Fine-tuning · 난이도 ★★☆(원본은 파일 하나 63줄이지만 CUDA GPU가 있어야 돕니다. 이 문서의 실습은 GPU 없이 CPU에서 도는 장난감 축소판이고, 원본 스크립트는 실행하지 않았습니다) ⚠ 이 PC에서는 원본이 `unsloth`를 불러오는 두 번째 줄에서 멈춥니다(CPU판 `torch`, Step 4). 또 앱의 `SFTTrainer` 인자 셋은 순수한 `trl` 1.15.0이 받지 않아서 앱은 Unsloth의 `trl` 패치에 기대는데, 그 패치는 `unsloth`가 불러와질 때만 적용됩니다(Step 7). 앱이 GPU에서 끝까지 도는지는 이 문서가 확인하지 않았습니다 · 예상 소요 195분(스크립트 스물하나를 저장하고 돌리며(설치만 해도 내려받기가 335MiB입니다) 같은 숫자를 여러 방식으로 재 보는 손 시간이 읽는 시간보다 큽니다) · API 비용 대략 0원(모델 API를 한 번도 부르지 않았습니다. 원본을 GPU에서 돌릴 때의 비용은 Colab 무료 등급이나 자기 GPU 전기료이고 이 문서가 재 보지 않았습니다) · 원본 앱: `advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning`
 
 ## 오늘 만들 것
 
-볼륨 14까지의 앱은 모델을 호출해서 쓰기만 했습니다. 바로 앞 [Day 151](../day151-toonify-token-optimization/README.md)도 모델에 보낼 글을 줄이는 도구였습니다. 볼륨 15 "🔧 LLM Fine-tuning"은 모델 자체를 바꾸는 쪽입니다. 사전 학습된 모델의 가중치 대부분은 얼려 두고, 층마다 작은 행렬 두 개(LoRA 어댑터)만 붙여 그것만 학습한 다음 저장합니다. 첫날의 앱은 `finetune_llama3.2.py`(마지막 줄에 개행이 없어 `wc -l`은 62, 편집기에서는 63줄), 앱 README(88줄), 항목 다섯에 버전이 없는 `requirements.txt`(`torch`·`unsloth`·`transformers`·`datasets`·`trl`, 개행이 없어 `wc -l`은 4)로 이루어집니다. 흐름은 하나입니다. Unsloth로 `unsloth/Llama-3.2-3B-Instruct`를 4비트로 불러오고, LoRA를 붙이고, `mlabonne/FineTome-100k` 대화를 "llama-3.1" 채팅 틀로 글로 바꾸고, `SFTTrainer`로 60걸음 학습하고, `finetuned_model/`에 저장합니다. Day 151의 예고가 말한 대로 GPU가 필요한 날입니다.
+볼륨 14까지의 앱은 모델을 호출해서 쓰기만 했습니다. 바로 앞 [Day 151](../day151-toonify-token-optimization/README.md)도 모델에 보낼 글을 줄이는 도구였습니다. 볼륨 15 "🔧 LLM Fine-tuning"은 모델 자체를 바꾸는 쪽입니다. 사전 학습된 모델의 가중치 대부분은 얼려 두고, 선택한 투영(이 앱은 층마다 일곱 개)마다 작은 행렬 두 개(LoRA 어댑터)만 붙여 그것만 학습한 다음 저장합니다. 첫날의 앱은 `finetune_llama3.2.py`(마지막 줄에 개행이 없어 `wc -l`은 62, 편집기에서는 63줄), 앱 README(88줄), 항목 다섯에 버전이 없는 `requirements.txt`(`torch`·`unsloth`·`transformers`·`datasets`·`trl`, 개행이 없어 `wc -l`은 4)로 이루어집니다. 흐름은 하나입니다. Unsloth로 `unsloth/Llama-3.2-3B-Instruct`를 4비트로 불러오고, LoRA를 붙이고, `mlabonne/FineTome-100k` 대화를 "llama-3.1" 채팅 틀로 글로 바꾸고, `SFTTrainer`로 60걸음 학습하고, `finetuned_model/`에 저장합니다. Day 151의 예고가 말한 대로 GPU가 필요한 날입니다.
 
 **이 문서는 원본을 실행하지 않았습니다.** 이 PC에는 NVIDIA GPU(RTX 5060 Laptop)가 있지만, 모델(4비트판이 2.37GB)과 데이터셋(116MB)을 내려받고 학습하는 일은 하지 않았습니다. 대신 같은 흐름을 **장난감**으로 돌렸습니다. 모델은 `transformers`의 `LlamaConfig`로 만든 층 2개·폭 64의 무작위 가중치 모델이고(106,816개 매개변수), 토크나이저는 `tokenizers`로 그 자리에서 학습한 어휘 512개짜리이며, 데이터는 손으로 쓴 대화 25개입니다. **Llama도 Llama의 어휘도 아니고, 같은 모양의 장난감입니다.** 그 위에서 `peft`의 LoRA(같은 일곱 투영, `r=16`)와 `trl`의 `SFTTrainer`를 같은 숫자(배치 2, 누적 4, 워밍업 5, 60걸음, 학습률 2e-4)로 CPU에서 돌렸습니다. 그래서 학습되는 매개변수 비율과 저장되는 파일은 장난감의 값이고, 진짜 모델의 값은 공개 카드와 `config.json`에서 계산한 것이거나 어림입니다. 어느 쪽인지 줄마다 밝힙니다.
 
@@ -12,10 +12,10 @@ Hugging Face 라이브러리를 불러오는 모든 프로세스는 **오프라�
 
 1. 오늘 `requirements.txt`를 설치하면 86개 패키지가 깔리고 `torch`는 CPU판(`2.14.1+cpu`)입니다. 이 PC에 GPU가 있어도 `from unsloth import FastLanguageModel`(2행)은 `NotImplementedError`로 멈춥니다(Step 1, 4).
 2. `load_in_4bit=True`는 이름에 적힌 저장소가 아니라 `unsloth/Llama-3.2-3B-Instruct-unsloth-bnb-4bit`를 요청합니다. Unsloth 소스의 이름 변환 함수를 직접 돌려 확인했습니다(Step 3).
-3. Unsloth는 모델을 불러올 때 Hugging Face에 사용 통계용 저장소를 받고, 8.8.8.8:53으로 TCP 접속을 시험하며, 모르는 모델 이름이면 GitHub에서 표를 새로 읽습니다. 오프라인 변수나 `UNSLOTH_DISABLE_STATISTICS`로 끕니다(Step 4, 소스로 확인).
-4. 오늘 설치되는 `trl` 1.15.0은 앱이 쓰는 `tokenizer=`·`dataset_text_field=`·`max_seq_length=`를 `SFTTrainer`에서 거부합니다. 앱이 도는 것은 Unsloth가 `trl`을 패치하기 때문인 것으로 소스에서 읽었지만 이 PC에서는 패치를 돌려 보지 못했습니다(Step 7).
+3. Unsloth는 모델을 불러올 때 Hugging Face에 사용 통계용 저장소를 받고, 8.8.8.8:53으로 TCP 접속을 시험하며, 모르는 모델 이름이면 GitHub에서 표를 새로 읽습니다. 통계와 접속 시험은 오프라인 변수나 `UNSLOTH_DISABLE_STATISTICS` 어느 쪽으로도 꺼지고, 표 읽기는 오프라인 변수(`HF_HUB_OFFLINE`·`TRANSFORMERS_OFFLINE`)로만 꺼집니다(Step 4, 소스로 확인).
+4. 오늘 설치되는 `trl` 1.15.0은 앱이 쓰는 `tokenizer=`·`dataset_text_field=`·`max_seq_length=`를 `SFTTrainer`에서 거부합니다. 앱이 도는 것은 `unsloth`를 불러올 때 설치되는 `trl` 패치 덕분이고, 이 PC에서는 시험용 스위치로 그 패치를 설치해 세 인자가 받아지고 앱이 실제로 쓰는 설정이 순수 `trl`과 다른 것(8비트 AdamW, `weight_decay` 0.001, `seed` 3407)까지 직접 확인했습니다(Step 7).
 5. 학습되는 LoRA 매개변수는 24,313,856개, 전체의 0.757%입니다. 유효 배치는 2×4=8이고 60걸음은 480개 시퀀스로 데이터셋의 0.48%입니다(Step 6, 계산이고 장난감으로 공식을 확인했습니다).
-6. 앱은 `train_on_responses_only`를 쓰지 않으므로 질문 토큰까지 손실에 들어갑니다. 장난감에서 모든 행의 `labels`가 `input_ids`와 같았습니다(Step 7).
+6. 앱은 `train_on_responses_only`를 쓰지 않으므로 질문 토큰까지 손실에 들어갑니다. 장난감에서 모든 행의 `labels`가 `input_ids`와 같았고, 패치된 앱 경로에서도 패딩을 빼면 같았습니다(Step 7).
 7. "llama-3.1" 채팅 틀은 대화에 시스템 글이 없어도 모든 샘플에 `Cutting Knowledge Date: December 2023`과 `Today Date: 26 July 2024`를 붙입니다. 틀의 `<|begin_of_text|>`와 토크나이저가 더하는 것이 겹쳐 시작 토큰이 둘이 되는데, Unsloth가 이를 하나로 줄이는 코드는 소스에서 읽었습니다(Step 5, 7).
 8. `save_pretrained`는 LoRA 어댑터만 저장합니다. 장난감에서 134,616바이트였고 기본 모델 가중치는 한 개도 들어 있지 않았습니다(Step 8).
 
@@ -27,7 +27,7 @@ Hugging Face 라이브러리를 불러오는 모든 프로세스는 **오프라�
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 | Python | 이 문서는 3.13.3으로 확인했다. `unsloth` 2026.10.6은 3.9 이상 3.15 미만을 요구한다 | 공통 사전 준비와 같음 |
-| 인터넷 | 패키지 설치(약 1.3GB)와 Step 3의 공개 카드 읽기. 그 밖의 줄은 오프라인이다 | 없음 |
+| 인터넷 | 패키지 설치(큰 바퀴 44개 약 335MiB를 내려받고, 설치 뒤 가상환경은 1.3GB)와 Step 3의 공개 카드 읽기. 그 밖의 줄은 오프라인이다 | 없음 |
 | CUDA GPU | **원본을 진짜로 돌릴 때만** 필요하다. 이 문서의 실습은 필요 없다 | Colab 무료 GPU 또는 자기 PC(NVIDIA) |
 | Hugging Face 계정·토큰 | 필요 없다. `unsloth/` 저장소는 로그인 없이 받을 수 있다(`gated: False`, Step 3) | 없음 |
 | 디스크 | 이 문서의 가상환경이 1.3GB다(`du -sh`로 직접 확인) | 없음 |
@@ -36,7 +36,7 @@ Hugging Face 라이브러리를 불러오는 모든 프로세스는 **오프라�
 
 **모델.** 이 앱의 모델은 API로 부르는 것이 아니라 가중치를 내려받아 학습하는 것이라 OpenAI·Anthropic의 폐기 문서 대상이 아닙니다. 대신 **라이선스와 접근 조건**이 있습니다(2026-10-19에 카드 원문으로 확인).
 
-- **Llama 3.2 Community License.** `unsloth/Llama-3.2-3B-Instruct`의 카드는 "Use of Llama 3.2 is governed by the Llama 3.2 Community License"라고 적고, `license: llama3.2`입니다. 라이선스 원문(https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/LICENSE)의 요점은 다음과 같습니다. 파생물을 배포하면 라이선스 사본을 주고 "Built with Llama"를 눈에 띄게 적어야 하고, 결과물로 다른 AI 모델을 학습하거나 개선해 배포하면 그 모델 이름이 "Llama"로 시작해야 합니다. 배포본에는 `Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.`라는 고지를 남기고, 사용은 Acceptable Use Policy(https://www.llama.com/llama3_2/use-policy)를 따라야 합니다. 출시일 기준 월간 활성 사용자가 7억 명을 넘는 곳은 Meta에 따로 허가를 받아야 합니다. 이 문서가 만든 장난감은 Llama의 가중치를 한 개도 담지 않아 이 조건의 대상이 아니지만, 원본 스크립트의 `finetuned_model/`은 Llama 3.2의 파생물입니다.
+- **Llama 3.2 Community License.** `unsloth/Llama-3.2-3B-Instruct`의 카드는 "Use of Llama 3.2 is governed by the Llama 3.2 Community License"라고 적고, `license: llama3.2`입니다. 라이선스 원문(https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/LICENSE, `curl`로 2026-10-19에 읽음)의 요점은 다음과 같습니다. 파생물을 배포하면 라이선스 사본을 주고 "Built with Llama"를 눈에 띄게 적어야 합니다. 35행의 이름 규칙은 "If you use the Llama Materials or any outputs or results of the Llama Materials to create, train, fine tune, or otherwise improve an AI model, which is distributed or made available, you shall also include \"Llama\" at the beginning of any such AI model name"입니다. Llama Materials 자체를 **미세조정**해 배포하는 이 앱의 `finetuned_model/`도 이 문장에 해당하니, 배포하면 모델 이름이 "Llama"로 시작해야 합니다. 배포본에는 `Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.`라는 고지를 남기고(41행), 사용은 Acceptable Use Policy를 따라야 합니다(44행). 라이선스가 적은 주소 https://www.llama.com/llama3_2/use-policy는 같은 날 따라가 보니 두 번 넘어간 뒤 `404`였고, 사본은 https://raw.githubusercontent.com/meta-llama/llama-models/main/models/llama3_2/USE_POLICY.md(`200`)에 있습니다. 출시일 기준 월간 활성 사용자가 7억 명을 넘는 곳은 Meta에 따로 허가를 받아야 합니다(46행). 이 문서가 만든 장난감은 Llama의 가중치를 한 개도 담지 않아 이 조건의 대상이 아니지만, 원본 스크립트의 `finetuned_model/`은 Llama 3.2의 파생물입니다.
 - **접근 신청과 미러의 차이.** 원본 저장소 `meta-llama/Llama-3.2-3B-Instruct`는 `gated: manual`이라 로그인하고 접근을 신청해야 합니다. 로그인 없이 `curl`로 `config.json`을 읽으면 `401`과 "Access to model meta-llama/Llama-3.2-3B-Instruct is restricted"가 돌아옵니다(직접 확인). 앱이 쓰는 `unsloth/` 미러는 `gated: False`라 신청 없이 내려받아지지만 카드는 같은 라이선스를 적습니다. 미러에서 받는다고 조건이 사라지는 것은 아닙니다.
 - **FineTome-100k.** 카드(https://huggingface.co/datasets/mlabonne/FineTome-100k)는 `arcee-ai/The-Tome`에서 `arcee-ai/qwen2-72b-magpie-en`을 뺀 부분집합을 `fineweb-edu-classifier`로 다시 걸러 만들었다고 적고, 머리의 메타데이터에 **`license` 줄이 없습니다**(Step 3에서 직접 확인). 부모 `The-Tome` 카드는 `license: mit`이고 아홉 개 공개 데이터셋(`BAAI/Infinity-Instruct` 등)을 모았다고 적지만, 그 아홉 개 각각의 라이선스는 확인하지 못했습니다. 사업에 쓰려면 직접 확인하세요.
 
@@ -93,42 +93,7 @@ trl
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
-**확인.** 아래를 `finetune-lab/versions.py`로 저장하고 돌립니다. 패키지를 불러오지 않고 설치 기록만 읽습니다.
-
-```python
-import importlib.metadata as m
-
-for name in ["torch", "unsloth", "unsloth_zoo", "transformers", "datasets", "trl", "peft", "tokenizers", "huggingface_hub",
-             "bitsandbytes", "triton-windows", "xformers", "accelerate", "hf-xet"]:
-    print(f"{name:16s}", m.version(name))
-print("distributions installed:", len(list(m.distributions())))
-```
-
-```bash
-uv run --no-project python versions.py
-```
-
-기대 출력(오늘 기준, 직접 확인)입니다.
-
-```text
-torch            2.14.1
-unsloth          2026.10.6
-unsloth_zoo      2026.10.6
-transformers     5.17.0
-datasets         4.8.5
-trl              1.15.0
-peft             0.21.2
-tokenizers       0.23.3
-huggingface_hub  1.33.0
-bitsandbytes     0.50.2
-triton-windows   3.8.0.post29
-xformers         0.0.35
-accelerate       1.15.0
-hf-xet           1.7.0
-distributions installed: 86
-```
-
-요구 다섯 줄이 86개가 됩니다. 눈여겨볼 것이 넷입니다. 첫째, `peft`는 requirements에 없지만 `unsloth`가 끌어옵니다(`Requires-Dist: peft>=0.18.0`). LoRA를 붙이는 라이브러리가 `peft`입니다. 둘째, `torch` 2.14.1은 이 Windows PC에서 CPU판입니다. 파이썬에서 `torch.__version__`을 찍으면 `2.14.1+cpu`이고(Step 4) PyPI의 Windows용 `torch` 바퀴가 CPU판이라서 그렇습니다. 리눅스의 PyPI `torch`가 CUDA판을 끌어오는지는 확인하지 못했습니다. 셋째, `trl` 1.15.0과 `transformers` 5.17.0은 앱이 만들어진 때의 판이 아닙니다. 앱의 `SFTTrainer` 호출이 오늘 판과 맞지 않는 까닭이 이것입니다(Step 7). 넷째, `unsloth`는 Apache-2.0, `unsloth_zoo`는 LGPL-3.0-or-later입니다(패키지 메타데이터로 확인).
+**확인.** `uv pip install`의 앞쪽에 `Resolved 86 packages`가 있고 마지막 줄이 `+ zipp==4.1.1`로 끝나면 됩니다. 큰 바퀴 44개를 받았고 내려받은 양의 합은 335.3MiB입니다(uv 로그의 `Downloading` 줄을 더한 값, 직접 확인). 모두 바퀴라 빌드 코드는 돌지 않았습니다(로그에 `Built` 0줄). 설치된 판은 `versions.py`로 보는데, 이 스크립트도 가상환경의 파이썬을 띄우므로 Step 2의 변수 블록으로 홈을 돌린 **뒤에** Step 2의 끝에서 돌립니다.
 
 ### Step 2. 가드 — 홈·토큰·소켓을 닫고 시작하기
 
@@ -287,7 +252,7 @@ if __name__ == "__main__":
     print("guard ok")
 ```
 
-`sitecustomize.py`는 같은 폴더를 `PYTHONPATH`에 두면 이 터미널에서 뜨는 **모든** 파이썬 프로세스(자식 프로세스 포함)가 시작할 때 `install()`을 부르게 합니다. 스크립트마다 첫 줄이 `guard.check()`이니 변수가 빠진 터미널에서는 어떤 스크립트도 라이브러리를 불러오기 전에 멈춥니다.
+아래를 `finetune-lab/sitecustomize.py`로 저장합니다. 이 파일은 같은 폴더를 `PYTHONPATH`에 두면 이 터미널에서 뜨는 **모든** 파이썬 프로세스(자식 프로세스 포함)가 시작할 때 `install()`을 부르게 합니다. 스크립트마다 첫 줄이 `guard.check()`이니 변수가 빠진 터미널에서는 어떤 스크립트도 라이브러리를 불러오기 전에 멈춥니다.
 
 ```python
 import guard
@@ -336,7 +301,7 @@ guard ok
 guard: HF_HUB_OFFLINE is not 1; HF_DATASETS_OFFLINE is not 1; TRANSFORMERS_OFFLINE is not 1; HOME is not inside …\finetune-lab\home: the real home (token, credentials) would be visible; USERPROFILE is not inside …; CLAUDE_CONFIG_DIR is not inside the lab home; HF_HOME is not inside the lab folder; Path.home() is …, not inside the lab home; HF_TOKEN is set; ALL_PROXY is set: unset every proxy variable in this terminal (the lab needs no network at all); HTTPS_PROXY is set: …; HTTP_PROXY is set: …; UNSLOTH_DISABLE_STATISTICS is not set
 ```
 
-`unset` 줄만 빼면 `HF_TOKEN is set; HTTPS_PROXY is set: …`로, `UNSLOTH_DISABLE_STATISTICS` 줄만 빼면 그 한 줄로, 홈을 돌리는 줄만 빼면 `HOME is not inside …: the real home (token, credentials) would be visible`로 종료 코드 1입니다(모두 직접 확인). 블록을 모두 건 뒤 이 문서의 모든 스크립트를 돌렸을 때 `guard.log`는 비어 있었고(차단된 시도 0건), 상위 `.env`와 셸의 키·토큰은 한 번도 쓰이지 않았으며, 기록 프록시에 들어온 요청은 0건이었습니다(프록시가 작동함은 `curl -x`로 확인했습니다). 같은 가드의 마지막 점검으로 앱의 내려받기 줄이 오프라인에서 어떻게 끝나는지 봅니다. 아래를 `offline_probe.py`로 저장합니다.
+`PYTHONPATH`(`sitecustomize.py`)만 빼면 가드가 `guard ok`로 돌지만 스크립트의 `guard.check()`가 같은 소켓 가드를 직접 깝니다(직접 확인). `unset` 줄만 빼면 `HF_TOKEN is set; HTTPS_PROXY is set: …`로, `UNSLOTH_DISABLE_STATISTICS` 줄만 빼면 그 한 줄로, 홈을 돌리는 줄만 빼면 `HOME is not inside …: the real home (token, credentials) would be visible`로 종료 코드 1입니다(모두 직접 확인). 블록을 모두 건 뒤 이 문서의 모든 스크립트를 돌렸을 때 `guard.log`는 비어 있었고(차단된 시도 0건), 상위 `.env`와 셸의 키·토큰은 한 번도 쓰이지 않았으며, 기록 프록시에 들어온 요청은 0건이었습니다(프록시가 작동함은 `curl -x`로 확인했습니다). 같은 가드의 마지막 점검으로 앱의 내려받기 줄이 오프라인에서 어떻게 끝나는지 봅니다. 아래를 `offline_probe.py`로 저장합니다.
 
 ```python
 """What happens when the app's download lines run inside the lab: they fail closed. Nothing is downloaded.
@@ -378,6 +343,7 @@ uv run --no-project python offline_probe.py
 
 ```text
 HF_HUB_CACHE      -> …/finetune-lab/hf_home\hub
+HF_DATASETS_CACHE -> …\finetune-lab\hf_home\datasets
 token file        -> …/finetune-lab/hf_home\token
 get_token()       -> None
 [load_dataset FineTome] ConnectionError: Couldn't reach 'mlabonne/FineTome-100k' on the Hub (OfflineModeIsEnabled)
@@ -386,6 +352,43 @@ get_token()       -> None
 ```
 
 토큰 경로가 이 폴더 안이고 `get_token()`이 `None`이며, 앱의 내려받기 줄(`load_dataset`)과 이름으로 모델 받기가 소켓을 열지 않고 닫힌 채로 실패합니다. 캐시가 비어 있으면 몰래 받지 않고 멈춘다는 뜻입니다. 이 문서는 진짜 모델을 받지 않으므로 이것이 정상입니다.
+
+**설치 확인.** Step 1에서 미룬 확인입니다. 아래를 `finetune-lab/versions.py`로 저장하고 블록을 건 터미널에서 돌립니다. 패키지를 불러오지 않고 설치 기록만 읽습니다.
+
+```python
+import importlib.metadata as m
+
+for name in ["torch", "unsloth", "unsloth_zoo", "transformers", "datasets", "trl", "peft", "tokenizers", "huggingface_hub",
+             "bitsandbytes", "triton-windows", "xformers", "accelerate", "hf-xet"]:
+    print(f"{name:16s}", m.version(name))
+print("distributions installed:", len(list(m.distributions())))
+```
+
+```bash
+uv run --no-project python versions.py
+```
+
+기대 출력(오늘 기준, 직접 확인)입니다.
+
+```text
+torch            2.14.1
+unsloth          2026.10.6
+unsloth_zoo      2026.10.6
+transformers     5.17.0
+datasets         4.8.5
+trl              1.15.0
+peft             0.21.2
+tokenizers       0.23.3
+huggingface_hub  1.33.0
+bitsandbytes     0.50.2
+triton-windows   3.8.0.post29
+xformers         0.0.35
+accelerate       1.15.0
+hf-xet           1.7.0
+distributions installed: 86
+```
+
+요구 다섯 줄이 86개가 됩니다. 눈여겨볼 것이 넷입니다. 첫째, `peft`는 requirements에 없지만 `unsloth`가 끌어옵니다(`Requires-Dist: peft>=0.18.0`). LoRA를 붙이는 라이브러리가 `peft`입니다. 둘째, `torch` 2.14.1은 이 Windows PC에서 CPU판입니다. 파이썬에서 `torch.__version__`을 찍으면 `2.14.1+cpu`이고(Step 4) PyPI의 Windows용 `torch` 바퀴가 CPU판이라서 그렇습니다. 리눅스의 PyPI `torch`가 CUDA판을 끌어오는지는 확인하지 못했습니다. 셋째, `trl`이 오늘 최신(1.16.0)이 아니라 1.15.0인 것은 `unsloth`와 `unsloth_zoo`가 `trl<=1.15.0`, `transformers<=5.17.0`으로 막아 두었기 때문입니다(`Requires-Dist`로 확인). 앱의 `SFTTrainer` 호출이 순수 `trl`과 맞지 않는 까닭은 판 차이가 아니라 처음부터 Unsloth 패치에 기댄 것입니다(Step 7). 넷째, `unsloth`는 Apache-2.0, `unsloth_zoo`는 LGPL-3.0-or-later입니다(패키지 메타데이터로 확인).
 
 ### Step 3. 앱이 받는 것 — 공개 카드로만 읽기
 
@@ -403,7 +406,7 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 )
 ```
 
-`unsloth/Llama-3.2-3B-Instruct`는 16비트(bf16) 저장소입니다. 그런데 `load_in_4bit=True`일 때 Unsloth는 이름을 표(`models/mapper.py`)로 바꿉니다. `unsloth`를 불러올 수 없으므로(Step 4) 그 표와 변환 함수 `__get_model_name`의 소스 글자(`models/loader_utils.py` 965행)를 파일에서 꺼내 그대로 돌리는 스크립트를 씁니다. 아래를 `route.py`로 저장합니다. `unsloth`를 불러오지 않고 파일 위치만 찾습니다.
+`unsloth/Llama-3.2-3B-Instruct`는 16비트(bf16) 저장소입니다. 그런데 `load_in_4bit=True`일 때 Unsloth는 이름을 표(`models/mapper.py`)로 바꿉니다. 보통의 import로는 `unsloth`를 불러올 수 없으므로(Step 4) 그 표와 변환 함수 `__get_model_name`의 소스 글자(`models/loader_utils.py` 965행)를 파일에서 꺼내 그대로 돌리는 스크립트를 씁니다. 아래를 `route.py`로 저장합니다. `unsloth`를 불러오지 않고 파일 위치만 찾습니다.
 
 ```python
 """Which repo does FastLanguageModel.from_pretrained(model_name, load_in_4bit=True) really ask for?
@@ -484,6 +487,8 @@ bash fetch_cards.sh
 4bit_tree.json  1329 bytes
 4bit_model.json  10372 bytes
 meta_model.json  23776 bytes
+4bit_config.json  1494 bytes
+bf16_tree.json  1778 bytes
 config.json  890 bytes
 ds_tree.json  319 bytes
 ds_card.md  982 bytes
@@ -540,6 +545,8 @@ unsloth/Llama-3.2-3B-Instruct-unsloth-bnb-4bit:
          54,669  tokenizer_config.json
   2,372,084,511  total
   gated: False | license: llama3.2 | last modified: 2025-06-02T21:41:30.000Z
+  16-bit repo unsloth/Llama-3.2-3B-Instruct, safetensors files: ['4,965,799,096', '1,459,729,952']
+  quantization_config: {'quant_method': 'bitsandbytes', 'bnb_4bit_quant_type': 'nf4', 'bnb_4bit_use_double_quant': True, 'llm_int8_skip_modules': ['lm_head', 'multi_modal_projector', 'merger', 'modality_projection', 'model.layers.1.mlp']}
   config.json (bf16 repo): {'hidden_size': 3072, 'intermediate_size': 8192, 'num_hidden_layers': 28, 'num_attention_heads': 24, 'num_key_value_heads': 8, 'head_dim': 128, 'vocab_size': 128256}
 meta-llama/Llama-3.2-3B-Instruct: gated: manual | license: llama3.2
 mlabonne/FineTome-100k data/: [('data/train-00000-of-00001.parquet', '116,531,415')]
@@ -658,7 +665,9 @@ unsloth_zoo/dataset_utils.py:2821         We found double BOS tokens
 unsloth_zoo/device_type.py:416          You need a GPU.
 ```
 
-(소스로 읽은 것이고 불러 보지는 못했습니다.) `from_pretrained`가 일으키는 바깥 요청은 셋입니다. 첫째, **사용 통계.** `FastLanguageModel.from_pretrained`(`models/llama.py` 2980행)가 `get_statistics`를 부릅니다. 그 함수는 환경 이름(`colab`·`kaggle`·`aws`·`other` 등), `repeat`, `vram-8` 같은 VRAM 구간, GPU 개수를 이름으로 한 Hugging Face 저장소 `unslothai/<이름>`을 `snapshot_download`로 받습니다(`models/_utils.py` 4350행 등, 주석은 "all data public"이라 적습니다). 받는 요청 자체가 통계이고, 위에서 본 대로 이 요청은 기본으로 저장된 Hugging Face 토큰을 싣습니다. 요청 전에 `has_internet()`이 **8.8.8.8의 53번 포트로 TCP 접속**을 시험합니다(4254~4270행). 이 함수는 `UNSLOTH_DISABLE_STATISTICS`가 환경에 **있거나** `UNSLOTH_USE_MODELSCOPE=1`이거나 `local_files_only`이거나 `TRANSFORMERS_OFFLINE`·`HF_HUB_OFFLINE`이 참이면 아무것도 하지 않고 돌아옵니다(4376~4398행). 둘째, **이름 표 새로 읽기.** 모델 이름이 설치된 표에 없고 오프라인이 아니면 GitHub의 `raw.githubusercontent.com/unslothai/unsloth/main/unsloth/models/mapper.py`를 읽습니다(`loader_utils.py` 1026~1041행, 오프라인이면 건너뜀, 1634행). 이 앱의 모델 이름은 표에 있으므로 이 길은 타지 않습니다. 셋째, **모델과 데이터셋 내려받기**(Step 3). `ROCm` 경로의 `download.pytorch.org` 확인(`device_type.py` 41~108행)은 AMD GPU에서만 쓰입니다. 오늘 `pip`나 업데이트를 확인하는 호출은 찾지 못했습니다(`requests`·`urlopen`·`httpx`·`socket.connect`를 부르는 곳을 두 패키지에서 훑었습니다). 그러니 끄는 변수는 `UNSLOTH_DISABLE_STATISTICS=1`이고, 오프라인 변수 둘 중 하나만 있어도 같은 효과이며 이 문서의 블록에는 둘 다 들어 있습니다. 원본을 진짜로 돌릴 때는 모델을 받아야 하니 오프라인 변수는 걸 수 없고, 그때는 통계 변수만 걸고 토큰을 `hf auth login` 없이 두는 것이 줄 수 있는 최소입니다.
+(소스로 읽은 것이고 불러 보지는 못했습니다.) `from_pretrained`가 일으키는 바깥 요청은 셋입니다. 첫째, **사용 통계.** `FastLanguageModel.from_pretrained`(`models/llama.py` 2980행)가 `get_statistics`를 부릅니다. 그 함수는 환경 이름(`colab`·`kaggle`·`aws`·`other` 등), `repeat`, `vram-8` 같은 VRAM 구간, GPU 개수를 이름으로 한 Hugging Face 저장소 `unslothai/<이름>`을 `snapshot_download`로 받습니다(`models/_utils.py` 4350행 등, 주석은 "all data public"이라 적습니다). 받는 요청 자체가 통계이고, 위에서 본 대로 이 요청은 기본으로 저장된 Hugging Face 토큰을 싣습니다. 요청 전에 `has_internet()`이 **8.8.8.8의 53번 포트로 TCP 접속**을 시험합니다(4254~4270행). 이 함수는 `UNSLOTH_DISABLE_STATISTICS`가 환경에 **있거나** `UNSLOTH_USE_MODELSCOPE=1`이거나 `local_files_only`이거나 `TRANSFORMERS_OFFLINE`·`HF_HUB_OFFLINE`이 참이면 아무것도 하지 않고 돌아옵니다(4376~4398행). 둘째, **이름 표 새로 읽기.** 모델 이름이 설치된 표에 없고 오프라인이 아니면 GitHub의 `raw.githubusercontent.com/unslothai/unsloth/main/unsloth/models/mapper.py`를 읽습니다(`loader_utils.py` 1026~1041행, 오프라인이면 건너뜀, 1634행). 이 앱의 모델 이름은 표에 있으므로 이 길은 타지 않습니다. 셋째, **모델과 데이터셋 내려받기**(Step 3). `ROCm` 경로의 `download.pytorch.org` 확인(`device_type.py` 41~108행)은 AMD GPU에서만 쓰입니다. 오늘 `pip`나 업데이트를 확인하는 호출은 찾지 못했습니다(`requests`·`urlopen`·`httpx`·`socket.connect`를 부르는 곳을 두 패키지에서 훑었습니다). 그러니 통계와 8.8.8.8 시험을 끄는 변수는 `UNSLOTH_DISABLE_STATISTICS=1`이고, 오프라인 변수(`HF_HUB_OFFLINE`·`TRANSFORMERS_OFFLINE`) 하나만 있어도 같은 효과입니다. 그러나 GitHub 표 읽기는 `UNSLOTH_DISABLE_STATISTICS`로는 꺼지지 않고 오프라인 변수로만 꺼집니다(`loader_utils.py` 1634행이 `_env_says_offline()`을 보고, 그 함수는 3666~3673행에서 두 변수만 봅니다). 이 문서의 블록에는 둘 다 들어 있고, 어느 줄을 빼도 가드가 먼저 멈춥니다(Step 2).
+
+보통의 import로는 위처럼 멈추지만, Unsloth에는 시험용 스위치 `UNSLOTH_ALLOW_CPU=1`이 있습니다. CPU `torch`에서도 import가 되게 장치 종류를 "cuda"라고 답하게 하는 스위치이고(`unsloth_zoo/device_type.py` 374~383행, `unsloth/device_type.py` 94행), 그 대가로 `trl` 패치 설치를 일부러 건너뜁니다(`unsloth/_gpu_init.py` 770~773행, `models/rl.py` 4898~4900행). 독자에게 권하는 해결책이 아니라, 이 문서가 소스로만 읽은 주장을 Step 7에서 실행해 보려고 쓴 스위치입니다. 스위치로 불러왔을 때 `import unsloth`는 16초쯤 걸렸고 가드 로그는 비어 있었습니다(직접 확인). 원본을 진짜로 돌릴 때는 모델을 받아야 하니 오프라인 변수는 걸 수 없고, 그때는 통계 변수만 걸고 토큰을 `hf auth login` 없이 두는 것이 줄 수 있는 최소입니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -761,7 +770,7 @@ if __name__ == "__main__":
     print(len(rows), "rows;", sum(len(r["conversations"]) for r in rows), "messages")
 ```
 
-다음으로 "llama-3.1" 틀을 소스에서 꺼냅니다. 이 틀은 `unsloth/chat_templates.py`의 `llama31_template` 문자열이고(455행~), `DEFAULT_SYSTEM_MESSAGE["llama-3.1"] = ""`라서 `{system_message}` 자리가 빈 글로 바뀝니다(572행, `_change_system_message`). `unsloth`를 불러올 수 없으니 파일을 읽어 문자열만 꺼내는 `template.py`를 씁니다.
+다음으로 "llama-3.1" 틀을 소스에서 꺼냅니다. 이 틀은 `unsloth/chat_templates.py`의 `llama31_template` 문자열이고(455행~), `DEFAULT_SYSTEM_MESSAGE["llama-3.1"] = ""`라서 `{system_message}` 자리가 빈 글로 바뀝니다(572행, `_change_system_message`). 보통의 import로는 `unsloth`를 불러올 수 없으니 파일을 읽어 문자열만 꺼내는 `template.py`를 씁니다.
 
 ```python
 """Read unsloth's "llama-3.1" chat template out of the installed source WITHOUT importing unsloth.
@@ -805,7 +814,7 @@ uv run --no-project python template.py
 4568 characters; 140 lines
 ```
 
-이제 장난감 토크나이저와 모델을 만듭니다. `make_toy.py`입니다. 어휘 512개의 바이트 단위 BPE를 대화 글에서 학습하고, Llama 3.2와 같은 특수 토큰 이름(`<|begin_of_text|>`, `<|eot_id|>`, 패딩 `<|finetune_right_pad_id|>` 등)과 같은 후처리(입력 앞에 시작 토큰 하나)를 두고, 위의 틀을 붙입니다. 모델은 층 2개, 폭 64, 머리 4개에 키·값 머리 2개(Llama 3.2 3B는 층 28개, 폭 3072, 머리 24개에 키·값 머리 8개)인 `LlamaForCausalLM`이고 무작위 가중치입니다.
+이제 장난감 토크나이저와 모델을 만듭니다. `make_toy.py`입니다. 어휘 512개의 바이트 단위 BPE를 대화 글에서 학습하고, Llama 3.2와 같은 특수 토큰 이름(`<|begin_of_text|>`, `<|eot_id|>`, 패딩 `<|finetune_right_pad_id|>` 등)과 같은 후처리(입력 앞에 시작 토큰 하나. 진짜 토크나이저의 `tokenizer.json`도 `post_processor`에 `TemplateProcessing`으로 `<|begin_of_text|>` + `$A`를 둡니다. `curl`의 범위 요청으로 앞 15만 바이트만 읽어 확인했습니다)를 두고, 위의 틀을 붙입니다. 모델은 층 2개, 폭 64, 머리 4개에 키·값 머리 2개(Llama 3.2 3B는 층 28개, 폭 3072, 머리 24개에 키·값 머리 8개)인 `LlamaForCausalLM`이고 무작위 가중치입니다.
 
 ```python
 """Build the toy stand-in: a tokenizer trained on the toy conversations and a RANDOM-weight Llama-shaped model.
@@ -861,7 +870,7 @@ uv run --no-project python make_toy.py
 vocab 512; model 106,816 parameters; special ids [0, 1, 2, 3, 4, 5]
 ```
 
-(앞뒤로 `SyntaxWarning`과 `Writing model shards` 진행 줄이 나옵니다.) 이제 앱의 23~35행을 장난감에 돌립니다. `render.py`입니다. `standardize_sharegpt`(=`unsloth_zoo.dataset_utils.standardize_data_formats`, `chat_templates.py` 87행)는 `unsloth_zoo`를 불러올 수 없어 그대로 돌리지 못했습니다. 소스(`dataset_utils.py` 2482~2614행)를 읽고 같은 일을 하는 짧은 함수를 손으로 썼고, 하는 일은 역할을 담은 열(`from`)을 `role`로, 글 열(`value`)을 `content`로 바꾸고 `human`·`input`을 `user`로, `gpt`·`output`을 `assistant`로 맞추는 것입니다.
+(앞뒤로 `SyntaxWarning`과 `Writing model shards` 진행 줄이 나옵니다.) 이제 앱의 23~35행을 장난감에 돌립니다. `render.py`입니다. `standardize_sharegpt`(=`unsloth_zoo.dataset_utils.standardize_data_formats`, `chat_templates.py` 87행)는 보통의 import로는 돌릴 수 없어서 소스(`dataset_utils.py` 2482~2614행)를 읽고 같은 일을 하는 짧은 함수를 손으로 썼습니다. 하는 일은 역할을 담은 열(`from`)을 `role`로, 글 열(`value`)을 `content`로 바꾸고 `human`·`input`을 `user`로, `gpt`·`output`을 `assistant`로 맞추는 것입니다. 이 손 함수가 진짜와 같은지는 Step 7의 시험 스위치 실행에서 25행 모두 같은 것으로 확인했습니다.
 
 ```python
 """The data half of the app (finetune_llama3.2.py:23-35) on the toy data:
@@ -1031,7 +1040,7 @@ rest = params_total - embed - mlp_l1
 guess = embed * 2 + mlp_l1 * 2 + rest * 0.5
 print(f"4-bit guess       : {guess / GB:.2f} GB  (embedding 16-bit + layer-1 mlp 16-bit + the rest at 0.5 byte)")
 print(f"4-bit repo file   : {2_354_805_470 / GB:.2f} GB  (model.safetensors of unsloth/Llama-3.2-3B-Instruct-unsloth-bnb-4bit, Hub API)")
-print(f"LoRA fp32 + grads + Adam moments: {lora * 4 * 4 / GB:.2f} GB   (4 bytes x 4 copies)")
+print(f"LoRA fp32 + grads + 8-bit Adam moments: {lora * (4 + 4 + 2) / GB:.2f} GB   (4 + 4 + 2 bytes; unsloth's default optim is adamw_8bit)")
 print(f"adapter file      : {lora * 2 / 1e6:.0f} MB if saved as 16-bit, {lora * 4 / 1e6:.0f} MB if saved as 32-bit")
 print(f"full fp32 logits for one micro-batch: {batch * 2048 * vocab * 4 / GB:.2f} GB  ({batch} x 2048 x {vocab:,} x 4 bytes)")
 ```
@@ -1049,12 +1058,12 @@ effective batch   : 2 x 4 = 8; 60 steps see 480 sequences = 0.48% of 100,000 row
 bf16 weights      : 6.43 GB
 4-bit guess       : 2.31 GB  (embedding 16-bit + layer-1 mlp 16-bit + the rest at 0.5 byte)
 4-bit repo file   : 2.35 GB  (model.safetensors of unsloth/Llama-3.2-3B-Instruct-unsloth-bnb-4bit, Hub API)
-LoRA fp32 + grads + Adam moments: 0.39 GB   (4 bytes x 4 copies)
+LoRA fp32 + grads + 8-bit Adam moments: 0.24 GB   (4 + 4 + 2 bytes; unsloth's default optim is adamw_8bit)
 adapter file      : 49 MB if saved as 16-bit, 97 MB if saved as 32-bit
 full fp32 logits for one micro-batch: 2.10 GB  (2 x 2048 x 128,256 x 4 bytes)
 ```
 
-계산한 것이 셋입니다. **학습되는 매개변수는 24,313,856개**로 전체(3,212,749,824개)의 0.757%입니다. 3B 모델에서 2천4백만 개만 학습합니다. **유효 배치는 2×4=8**입니다. 한 번에 2개씩 4번 모아 한 걸음을 가므로 **60걸음은 480개 시퀀스**이고 100,000행의 **0.48%**입니다. 한 에폭은 12,500걸음입니다. 이 앱은 데이터를 한 번도 다 보지 않습니다. 60걸음은 학습이라기보다 흐름을 확인해 보는 정도의 길이입니다(⚠ 판단입니다). 메모리는 어림입니다. 4비트판 가중치는 2.31GB로 어림한 값이 실제 파일 크기 2.35GB와 가깝습니다(임베딩을 16비트로 두고 나머지를 0.5바이트로 센 것). 16비트로 올리면 6.43GB라 8GB GPU에 활성값 자리가 거의 남지 않으니 4비트가 이 GPU급을 위한 선택입니다. 어댑터와 옵티마이저 상태는 0.39GB 정도이고, 한 번에 2×2048개 토큰의 로짓을 32비트로 모두 만든다면 2.10GB라서 손실 계산을 쪼개 하는 구현이 중요합니다(Step 7). 활성값은 재지 않았습니다. 이 PC의 GPU에서 이 앱이 실제로 얼마를 쓰는지는 확인하지 못했습니다.
+계산한 것이 셋입니다. **학습되는 매개변수는 24,313,856개**로 전체(3,212,749,824개)의 0.757%입니다. 3B 모델에서 2천4백만 개만 학습합니다. **유효 배치는 2×4=8**입니다. 한 번에 2개씩 4번 모아 한 걸음을 가므로 **60걸음은 480개 시퀀스**이고 100,000행의 **0.48%**입니다. 한 에폭은 12,500걸음입니다. 이 앱은 데이터를 한 번도 다 보지 않습니다. 60걸음은 학습이라기보다 흐름을 확인해 보는 정도의 길이입니다(⚠ 판단입니다). 메모리는 어림입니다. 4비트판 가중치는 2.31GB로 어림한 값이 실제 파일 크기 2.35GB와 가깝습니다(임베딩을 16비트로 두고 나머지를 0.5바이트로 센 것). 16비트로 올리면 6.43GB라 8GB GPU에 활성값 자리가 거의 남지 않으니 4비트가 이 GPU급을 위한 선택입니다. 어댑터 가중치(32비트), 기울기, 8비트 AdamW의 두 모멘트(앱 경로의 기본 옵티마이저, Step 7)를 합쳐 0.24GB 정도이고, 한 번에 2×2048개 토큰의 로짓을 32비트로 모두 만든다면 2.10GB라서 손실 계산을 쪼개 하는 구현이 중요합니다(Step 7). 활성값은 재지 않았습니다. 이 PC의 GPU에서 이 앱이 실제로 얼마를 쓰는지는 확인하지 못했습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -1094,7 +1103,7 @@ trainer = SFTTrainer(
 trainer.train()
 ```
 
-먼저 오늘 판 `trl` 1.15.0이 이 줄을 받는지 봅니다. 아래를 `trl_as_written.py`로 저장합니다. Unsloth를 불러올 수 없으니 순수한 `trl`입니다.
+먼저 오늘 판 `trl` 1.15.0이 이 줄을 받는지 봅니다. 아래를 `trl_as_written.py`로 저장합니다. 보통의 import로는 Unsloth를 불러올 수 없으니 순수한 `trl`입니다.
 
 ```python
 """Run the app's trainer lines (finetune_llama3.2.py:37-56) as written, on the toy model, against the trl that installs today.
@@ -1166,12 +1175,110 @@ uv run --no-project python trl_as_written.py
 [max_length= on SFTConfig] accepted
 ```
 
-세 인자가 모두 거부됩니다. `tokenizer=`는 `processing_class=`로, `dataset_text_field=`는 `SFTConfig`로, `max_seq_length=`는 `SFTConfig(max_length=)`로 옮겨 갔습니다. 순수한 `trl` 1.15.0에서는 이 앱의 38~44행이 `TypeError`로 끝납니다. 그런데도 앱이 돌아야 한다면 Unsloth가 `trl`을 고쳐 주는 수밖에 없고, 소스에는 그 코드가 있습니다. `unsloth/trainer.py`의 `_backwards_compatible_trainer`(1677행)가 `tokenizer`를 `processing_class`로 바꾸고(1686행) 설정에 속하는 인자를 `SFTConfig`로 옮깁니다. `max_seq_length`는 `models/rl.py`가 만드는 설정 클래스에 필드를 더하고 `args.max_length`로 복사합니다(3194~3204행, 2603~2605행). 이 패치를 **직접 돌려 보지는 못했습니다.** `unsloth`를 불러올 수 없었기 때문입니다. "Unsloth가 고쳐 준다"는 소스를 읽은 결론이고 이 PC에서 실행한 증거는 없습니다.
+세 인자가 모두 거부됩니다. `tokenizer=`는 `processing_class=`로, `dataset_text_field=`는 `SFTConfig`로, `max_seq_length=`는 `SFTConfig(max_length=)`로 옮겨 갔습니다. 순수한 `trl` 1.15.0에서는 이 앱의 38~44행이 `TypeError`로 끝납니다.
 
-fp16 줄도 짚습니다. CPU `torch`에서 `torch.cuda.is_bf16_supported()`는 `False`라서 앱의 51~52행은 `fp16=True`가 되고 CPU에서는 쓸 수 없는 설정입니다. `SFTConfig` 객체를 만드는 것만으로는 에러가 나지 않았습니다(위 첫 줄). 장난감에서는 둘 다 끕니다. 앱이 건드리지 않은 기본값도 `defaults.py`로 봅니다.
+이것은 오늘 판이 바뀌어서 생긴 문제가 아닙니다. 앱의 학습 줄(`tokenizer=`, `SFTConfig`, `DataCollatorForSeq2Seq`)은 2026-08-02의 커밋 `779e9f9b`에서 들어갔고(`git log`), 그날의 최신 `trl`은 1.9.2(PyPI 업로드 2026-07-28)였습니다. 그 바퀴를 받아 압축을 풀지 않고 읽으니 `SFTTrainer.__init__`에 세 인자가 이미 없었고 `SFTConfig`에도 `max_seq_length` 필드가 없었습니다(직접 확인). 앱은 처음부터 Unsloth의 `trl` 패치에 기대 쓰인 것입니다. 패치는 `unsloth`가 정상으로 불러와질 때 이 순서로 설치됩니다(소스). `unsloth/_gpu_init.py` 752행의 `from .models import *` → `models/llama.py` 4933행 `PatchFastRL` → `models/rl.py`가 `trl.SFTTrainer`·`trl.SFTConfig`를 Unsloth판으로 바꿈(3675~3700행의 `exec`들) → `_gpu_init.py` 773행 `_patch_trl_trainer()` → `trainer.py`의 `_backwards_compatible_trainer`(1677행)가 `tokenizer`를 `processing_class`로 바꾸고(1686행) 설정에 속하는 인자를 `SFTConfig`로 옮깁니다. `max_seq_length`는 `models/rl.py`가 만드는 설정 클래스에 필드를 더해 `max_length`로 복사합니다(3194~3204행, 2603~2605행).
+
+**선택: 패치를 실행해 보기.** 이 PC에서는 보통의 import가 멈추니 Step 4의 시험 스위치를 씁니다. 스위치는 패치 설치를 건너뛰므로, 아래 스크립트는 `unsloth`를 스위치로 불러온 뒤 스위치를 지우고 GPU 환경과 같은 순서로 설치 함수 둘(`PatchFastRL`, `_patch_trl_trainer`)을 직접 부릅니다. 독자 해결책이 아니라 읽은 소스를 확인하는 시험이므로 건너뛰어도 됩니다. 가드와 소켓 가드가 설치되었다는 단언이 통과한 **뒤에만** `unsloth`를 불러옵니다. 실행하면 작업 폴더에 `unsloth_compiled_cache/`와 `outputs_probe/`가 생깁니다. `unsloth_probe.py`로 저장합니다.
 
 ```python
-"""Fields the app leaves at their default (finetune_llama3.2.py:45-55 sets only eight things)."""
+"""OPTIONAL (Step 7): load unsloth on this CPU-only torch through its CPU test switch
+UNSLOTH_ALLOW_CPU=1, install the trl patch the way a GPU machine does, and run the app's trainer lines on the toy model."""
+import os, sys, socket
+os.environ["UNSLOTH_ALLOW_CPU"] = "1"
+import guard
+guard.check()
+# assert the socket guard is really installed before anything else runs (no packet, no log line)
+assert guard._installed and socket.getaddrinfo.__module__ == "guard", "socket guard NOT active"
+print("socket guard active")
+import io, contextlib, torch
+import unsloth
+from unsloth.models.llama import FastLlamaModel
+from unsloth import FastLanguageModel
+from unsloth.models.rl import PatchFastRL
+from unsloth.trainer import _patch_trl_trainer
+# the switch makes both installers return early; a GPU machine has no switch, so drop it and run them in the GPU order
+os.environ.pop("UNSLOTH_ALLOW_CPU")
+PatchFastRL(FastLanguageModel=FastLlamaModel)
+_patch_trl_trainer()
+from datasets import load_from_disk
+from transformers import AutoTokenizer, DataCollatorForSeq2Seq, AutoModelForCausalLM
+from trl import SFTTrainer, SFTConfig
+print("trl.SFTTrainer is now:", SFTTrainer.__name__, "| SFTConfig:", SFTConfig.__name__)
+from unsloth.chat_templates import get_chat_template, standardize_sharegpt
+from toy_data import conversations
+from datasets import Dataset
+from peft import LoraConfig, get_peft_model
+
+tok = AutoTokenizer.from_pretrained("toy_tok")
+raw = Dataset.from_list(conversations())
+# real standardize_sharegpt vs the hand-written one in render.py
+real = standardize_sharegpt(raw)
+ALIASES = {"human": "user", "gpt": "assistant", "system": "system"}
+mine = raw.map(lambda b: {"conversations": [[{"role": ALIASES[m["from"]], "content": m["value"]} for m in c] for c in b["conversations"]]}, batched=True)
+print("real standardize_sharegpt == hand-written:", all(a["conversations"] == b["conversations"] for a, b in zip(real, mine)))
+tok2 = get_chat_template(tok, chat_template="llama-3.1")
+texts_real = [tok2.apply_chat_template(r["conversations"], tokenize=False) for r in real]
+old = load_from_disk("toy_text_ds")
+print("real get_chat_template render == template.py render (25 rows):", texts_real == [r["text"] for r in old])
+ds = real.map(lambda ex: {"text": [tok2.apply_chat_template(c, tokenize=False) for c in ex["conversations"]]}, batched=True)
+
+model = AutoModelForCausalLM.from_pretrained("toy_base", dtype=torch.float32)
+model = get_peft_model(model, LoraConfig(r=16, lora_alpha=16, lora_dropout=0.0, bias="none", target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"], task_type="CAUSAL_LM"))
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    trainer = SFTTrainer(
+        model=model, tokenizer=tok2, train_dataset=ds, dataset_text_field="text", max_seq_length=2048,
+        data_collator=DataCollatorForSeq2Seq(tokenizer=tok2),
+        args=SFTConfig(per_device_train_batch_size=2, gradient_accumulation_steps=4, warmup_steps=5, max_steps=60, learning_rate=2e-4,
+                       fp16=False, bf16=False, logging_steps=1, output_dir="outputs_probe", use_cpu=True),
+    )
+print("app's SFTTrainer call accepted ->", type(trainer).__name__)
+print("printed by unsloth:", [l for l in buf.getvalue().splitlines() if "Unsloth" in l][:4])
+a = trainer.args
+print("optim", a.optim, "| weight_decay", a.weight_decay, "| seed", a.seed, "| lr_scheduler", a.lr_scheduler_type, "| warmup_steps", a.warmup_steps,
+      "| loss_type", getattr(a, "loss_type", None), "| max_length", getattr(a, "max_length", None), "| report_to", a.report_to)
+print("processing_class is tok2:", trainer.processing_class is tok2, "| collator:", type(trainer.data_collator).__name__)
+print("dataset columns:", trainer.train_dataset.column_names)
+b = next(iter(trainer.get_train_dataloader()))
+ids, lab = b["input_ids"], b["labels"]
+print("first token ids of row 0:", ids[0][:4].tolist(), "| labels==input_ids where not padding:", bool(((lab == ids) | (lab == -100)).all()))
+print("packing", a.packing, "| padding_free", getattr(a, "padding_free", None))
+```
+
+```bash
+uv run --no-project python unsloth_probe.py
+```
+
+기대 출력(직접 확인)입니다. `torchao`·`xformers` 경고와 진행 막대 줄, 그리고 GRPO 트레이너를 만들 수 없다는 `unsloth_zoo.log` WARNING 한 줄(CPU `torch`라서)은 뺐습니다. 값이 아닌 모양을 보는 시험이라 장난감 모델과 CPU에서 돌았습니다.
+
+```text
+socket guard active
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+trl.SFTTrainer is now: UnslothSFTTrainer | SFTConfig: SFTConfig
+real standardize_sharegpt == hand-written: True
+real get_chat_template render == template.py render (25 rows): True
+app's SFTTrainer call accepted -> UnslothSFTTrainer
+printed by unsloth: ['Unsloth: We found double BOS tokens - we shall remove one automatically.']
+optim OptimizerNames.ADAMW_8BIT | weight_decay 0.001 | seed 3407 | lr_scheduler SchedulerType.LINEAR | warmup_steps 5 | loss_type nll | max_length 2048 | report_to []
+processing_class is tok2: True | collator: DataCollatorForLanguageModeling
+dataset columns: ['input_ids', 'attention_mask']
+first token ids of row 0: [0, 2, 401, 474] | labels==input_ids where not padding: True
+packing False | padding_free False
+```
+
+읽을 것이 다섯입니다. 첫째, `from trl import SFTTrainer`가 `UnslothSFTTrainer`를 주고, 앱의 38~45행 인자(`tokenizer=`·`dataset_text_field=`·`max_seq_length=` 포함)가 그대로 받아집니다. 둘째, **앱이 실제로 쓰는 설정은 순수 `trl`의 기본값과 다릅니다.** Unsloth의 설정 클래스가 기본값을 바꿉니다(`models/rl.py` 3076~3107행). 옵티마이저는 bitsandbytes의 8비트 AdamW(`adamw_8bit`), `weight_decay`는 0.001, `seed`는 3407, `report_to`는 none이고, SFT의 손실은 `loss_type='nll'`로 고정됩니다(3141~3149행). 앱이 직접 준 값(배치 2, 누적 4, 워밍업 5, 60걸음, 2e-4)은 그대로입니다. 학습률은 선형으로 줄어듭니다. 셋째, `max_seq_length=2048`이 `max_length`로 들어갔습니다. 넷째, 글의 `<|begin_of_text|>`와 토크나이저가 더하는 시작 토큰이 겹치는 것을 Unsloth가 알아채고 `add_special_tokens=False`로 토큰화해 첫 토큰이 `[0, 2, 401, 474]`로 하나입니다(`unsloth_zoo/dataset_utils.py` 2812~2821행, `models/rl_replacements.py` 835행). 다섯째, 앱이 준 `DataCollatorForSeq2Seq`는 데이터셋에 `labels` 열이 없으면 `DataCollatorForLanguageModeling`으로 바뀌고(`models/rl.py` 2932~2938행), 데이터 열은 `input_ids`·`attention_mask`뿐이며 배치의 `labels`는 패딩을 빼면 `input_ids`와 같습니다. 질문 토큰까지 손실에 들어간다는 결론이 앱 경로에서도 같다는 뜻입니다. 같은 실행에서 진짜 `standardize_sharegpt`와 `get_chat_template`의 결과가 Step 5의 손 함수·`template.py`와 25행 모두 같았고, 자동 packing·padding-free는 앱이 콜레이터를 주므로 꺼진 채라(`trainer.py` 1858~1875행) 한 걸음이 8개 시퀀스입니다. 이 시험은 GPU 학습을 돌린 것이 아니므로 앱이 GPU에서 끝까지 도는지는 여전히 확인하지 못했습니다.
+
+![학습 구조](diagrams/extra-structure.svg)
+
+위 그림은 학습기 둘레의 관계입니다. `SFTTrainer`가 스크립트에서 모델(LoRA가 붙은)과 `train_dataset`을, 데이터 준비에서 `text` 열을 받고, Unsloth가 `trl`을 패치하며, 학습기는 LoRA 행렬만 갱신하고 GPU에서 손실과 기울기를 계산하고 60걸음째에 `outputs/checkpoint-60/`을 씁니다. `finetuned_model/`은 학습기가 아니라 스크립트가 씁니다(Step 8).
+
+이제 순수 `trl` 쪽을 봅니다. fp16 줄입니다. CPU `torch`에서 `torch.cuda.is_bf16_supported()`는 `False`라서 앱의 51~52행은 `fp16=True`가 되는데, CPU에서도 오류 없이 돕니다. `use_cpu` 없이 앱의 두 줄 그대로 2걸음을 돌려 손실 6.189와 6.191이 기록되는 것을 직접 확인했습니다. 장난감에서는 GPU 설정과 헷갈리지 않게 둘 다 끕니다. 아래 `defaults.py`는 **순수 `trl` 1.15.0**의 `SFTConfig` 기본값입니다. 장난감은 순수 `trl`이라 이 값(`adamw_torch_fused`, `weight_decay` 0.0, `seed` 42)으로 돌고, 앱은 위의 Unsloth 값으로 돕니다.
+
+```python
+"""Defaults of the PLAIN trl 1.15.0 SFTConfig for the fields the app does not set (finetune_llama3.2.py:45-55 sets nine things).
+The app does not get these values: unsloth replaces SFTConfig and changes several defaults (Step 7)."""
 import guard
 
 guard.check()
@@ -1208,9 +1315,9 @@ report_to                []
 dataset_num_proc         None
 ```
 
-(직접 확인, 오늘 설치한 `trl` 1.15.0·`transformers` 5.17.0 기준입니다.) `report_to`가 비어 있어 기본으로 `wandb` 같은 곳에 기록을 보내지 않습니다. 이 문서의 `transformers` 판의 사실이고 다른 판은 확인하지 않았습니다. 학습률은 선형으로 줄고(워밍업 5걸음 뒤 2e-4에서 0으로), 앱이 `max_steps=60`을 주었으므로 `num_train_epochs`는 무시됩니다. 옵티마이저는 AdamW입니다. `trl` 1.15.0의 `SFTConfig` 기본 `max_length`는 1024이고 앱은 `max_seq_length=2048`로 올립니다.
+(직접 확인, 오늘 설치한 `trl` 1.15.0·`transformers` 5.17.0 기준입니다.) `report_to`가 비어 있어 기본으로 `wandb` 같은 곳에 기록을 보내지 않습니다. 이 문서의 `transformers` 판의 사실이고 다른 판은 확인하지 않았습니다. 앱이 `max_steps=60`을 주었으므로 `num_train_epochs`는 무시됩니다.
 
-이제 장난감을 앱의 숫자로 돌립니다. 한 가지를 바꿔야 했습니다. `trl` 1.15.0의 `SFTTrainer.compute_loss`는 손실을 Triton 커널로 계산합니다(`sft_trainer.py` 1558~1600행에서 `trainer/utils.py` 1638행, `kernels/chunked_logprob.py`). 로짓 전체를 만들지 않으려는 구현인데 GPU 드라이버가 필요하고, CPU에서는 그대로 `RuntimeError: 0 active drivers ([]). There should only be one.`로 끝났습니다(직접 확인). 그래서 `SFTTrainer`를 상속해 `compute_loss` 한 줄만 `transformers`의 평범한 손실로 바꾸고 나머지(데이터 준비, 라벨 만들기, 콜레이터, 옵티마이저, 스케줄러, 학습 루프)는 `SFTTrainer` 그대로 둡니다. 아래를 `train_toy.py`로 저장합니다. 앱의 `tokenizer=`는 `processing_class=`로, 앱의 `SFTTrainer` 인자 둘은 `SFTConfig`로 옮겨 적었습니다.
+이제 장난감을 앱의 숫자로 돌립니다. 바꾼 것이 셋입니다. 첫째, `trl` 1.15.0의 `SFTTrainer.compute_loss`는 손실을 Triton 커널로 계산합니다(`sft_trainer.py` 1558~1600행에서 `trainer/utils.py` 1638행, `kernels/chunked_logprob.py`). 로짓 전체를 만들지 않으려는 구현인데 GPU 드라이버가 필요하고, CPU에서는 그대로 `RuntimeError: 0 active drivers ([]). There should only be one.`로 끝났습니다(직접 확인). 그래서 `SFTTrainer`를 상속해 `compute_loss` 한 줄만 `transformers`의 평범한 손실로 바꾸고 나머지(데이터 준비, 라벨 만들기, 콜레이터, 옵티마이저, 스케줄러, 학습 루프)는 `SFTTrainer` 그대로 둡니다. 둘째, fp16·bf16을 끄고 `use_cpu=True`를 줍니다. 셋째, `report_to="none"`과 `save_strategy="no"`를 줍니다. 앱 설정 그대로면 `save_steps` 기본값 500에 `max_steps=60`이라 학습 끝에 `outputs/checkpoint-60/`을 쓰는데(`transformers/trainer_callback.py` 603~604행 근처), 장난감에서 `save_strategy="no"`만 빼고 돌리니 그 폴더에 어댑터(134,616바이트) 말고도 `optimizer.pt` 285,723바이트, `scheduler.pt`, `rng_state.pth`, `trainer_state.json`, `training_args.bin`과 토크나이저 파일이 남았습니다(직접 확인). 앱의 `tokenizer=`는 `processing_class=`로, 앱의 `SFTTrainer` 인자 둘은 `SFTConfig`로 옮겨 적었습니다. 아래를 `train_toy.py`로 저장합니다.
 
 ```python
 """The training half of the app (finetune_llama3.2.py:37-63) on the toy model, CPU, with the argument spelling today's trl accepts.
@@ -1313,7 +1420,7 @@ loss at step 1, 10, 30, 60: [6.1888, 6.1871, 6.1384, 6.1143]
 learning rate at step 1, 5, 6, 60: [0.0, 0.00016, 0.0002, 3.636363636363636e-06]
 ```
 
-읽을 것이 다섯입니다. 첫째, **60걸음이 60개의 손실 기록**으로 남고 학습률이 앱의 설정대로 움직입니다. 0에서 시작해 걸음마다 4e-5씩 올라 여섯째 기록에서 2e-4에 이르고, 60걸음째는 3.64e-6으로 거의 0입니다(`2e-4 × 1/55`). 둘째, 손실은 6.19에서 6.11로 조금만 내려갑니다. 무작위 모델의 어림 손실 `ln(512)=6.24`에서 거의 움직이지 않은 것이고, 이것은 학습이 잘 되었다는 증거가 아닙니다. 학습 과정이 이렇게 흐른다는 모양을 보인 것뿐입니다. 셋째, **`labels == input_ids`가 모든 행에서 참**입니다. `SFTTrainer`가 만든 `labels` 열이 입력과 같으니 시스템 머리글·질문·`<|start_header_id|>` 같은 틀 토큰까지 전부 손실에 들어갑니다. 앱이 응답만 학습하는 `train_on_responses_only`(Unsloth에 있는 함수, `chat_templates.py` 59행)를 부르지 않기 때문입니다. 이것이 틀린 것은 아니지만, 모델이 질문을 흉내 내는 데에도 용량을 씁니다. 넷째, **시작 토큰이 둘**입니다(`[0, 0, 2, …]`, 0이 `<|begin_of_text|>`). Step 5의 글이 이미 그 토큰으로 시작하는데 토크나이저가 입력 앞에 또 붙이기 때문이고, `bos_check.py`로 확인합니다.
+읽을 것이 다섯입니다. 첫째, **60걸음이 60개의 손실 기록**으로 남고 학습률이 앱의 설정대로 움직입니다. 0에서 시작해 걸음마다 4e-5씩 올라 여섯째 기록에서 2e-4에 이르고, 60걸음째는 3.64e-6으로 거의 0입니다(`2e-4 × 1/55`). 둘째, 손실은 6.19에서 6.11로 조금만 내려갑니다. 무작위 모델의 어림 손실 `ln(512)=6.24`에서 거의 움직이지 않은 것이고, 이것은 학습이 잘 되었다는 증거가 아닙니다. 학습 과정이 이렇게 흐른다는 모양을 보인 것뿐입니다. 셋째, **`labels == input_ids`가 모든 행에서 참**입니다. 순수 `trl`에서는 `SFTTrainer`가 만든 `labels` 열이 입력과 같으니 시스템 머리글·질문·`<|start_header_id|>` 같은 틀 토큰까지 전부 손실에 들어갑니다. 앱이 응답만 학습하는 `train_on_responses_only`(Unsloth에 있는 함수, `chat_templates.py` 59행)를 부르지 않기 때문입니다. 위 시험에서 보았듯 앱 경로에서는 콜레이터가 바뀌어 같은 결과가 됩니다. 이것이 틀린 것은 아니지만, 모델이 질문을 흉내 내는 데에도 용량을 씁니다. 넷째, **시작 토큰이 둘**입니다(`[0, 0, 2, …]`, 0이 `<|begin_of_text|>`). Step 5의 글이 이미 그 토큰으로 시작하는데 토크나이저가 입력 앞에 또 붙이기 때문이고, 순수 `trl` 1.15.0은 이것을 그대로 둡니다. `bos_check.py`로 확인합니다.
 
 ```python
 """The chat template already writes <|begin_of_text|>; a Llama tokenizer prepends another one when it encodes."""
@@ -1341,7 +1448,7 @@ tokenizer(text)[:4]                      -> [0, 0, 2, 401]
 tokenizer(text, add_special_tokens=False) -> [0, 2, 401, 474] | bos id = 0
 ```
 
-`trl` 1.15.0은 이것을 그대로 둡니다. Unsloth는 같은 문제를 알고 있습니다. 설정 때 글이 시작 토큰으로 시작하거나 틀에 `bos_token`이 있으면 `add_special_tokens=False`로 토큰화하고 "Unsloth: We found double BOS tokens - we shall remove one automatically."를 찍습니다(`unsloth_zoo/dataset_utils.py` 2812~2821행, `models/rl_replacements.py` 835행). 이것도 소스로 읽은 것이고 실행해 보지는 못했습니다. 다섯째, 이 단계의 결론입니다. 앱의 학습 줄은 순수한 `trl` 1.15.0에서는 돌지 않고(인자), 돌더라도 시작 토큰이 둘이 되며(Unsloth가 줄이는 코드를 읽음), 손실 커널은 GPU가 있어야 합니다. 그 세 가지를 모두 맡는 것이 Unsloth의 패치이고, 그 패치는 CUDA `torch`가 있어야 불러와집니다.
+다섯째, 이 단계의 결론입니다. 앱의 학습 줄은 순수한 `trl` 1.15.0에서는 돌지 않습니다. Unsloth 패치가 적용되면 인자가 받아지고, 시작 토큰 중복도 그 패치가 줄이며, 설정 기본값(8비트 AdamW 등)과 손실 계산도 Unsloth의 것입니다(위 시험으로 확인한 부분과 소스로 읽은 부분이 섞여 있습니다). 그 패치는 CUDA `torch`가 있어야 보통의 import로 불러와집니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -1417,7 +1524,7 @@ every tensor is a LoRA tensor (no base weights saved)? True
 max |logit(base) - logit(base + adapter)| = 0.30142
 ```
 
-읽을 것이 넷입니다. 첫째, `adapter_model.safetensors`가 134,616바이트이고 안의 원소는 32,768개(위에서 센 학습 매개변수 수 그대로) 32비트라 `32,768 × 4 = 131,072`바이트에 머리글이 붙은 값입니다. 안에는 `lora_A`·`lora_B` 14쌍만 있고 기본 모델 가중치는 한 개도 없습니다. 둘째, 같은 일이 진짜 모델에서 일어나면 어댑터는 24,313,856개이므로 16비트로 저장하면 약 49MB, 32비트면 약 97MB입니다(⚠ 어림이고 Unsloth가 어떤 정밀도로 저장하는지는 확인하지 못했습니다). 3B 모델 전체(수 GB)가 아니라 이만큼입니다. 이 어댑터는 반드시 같은 기본 모델 위에 얹어야 쓸 수 있고, `adapter_config.json`의 `base_model_name_or_path`가 그 모델을 가리킵니다. 셋째, `lora_B`는 `False`로 0이 아닙니다. LoRA는 `B`를 0으로 시작해서 학습 전에는 모델이 기본 모델과 같은데, 60걸음 뒤 0이 아니게 되었고 저장된 어댑터를 얹으면 같은 입력의 로짓이 최대 0.30 달라집니다. 어댑터가 모델을 바꾼다는 뜻입니다(값은 무작위 모델이라 의미 없습니다). 넷째, 토크나이저 파일(`tokenizer.json`, `tokenizer_config.json`, `chat_template.jinja`)이 함께 저장됩니다. 앱 63행이 그것을 부르기 때문이고, 저장소 이력에서 이 줄은 "Added tokenizer and saved the model at the end"라는 변경(`779e9f9b`)으로 들어왔습니다.
+읽을 것이 넷입니다. 첫째, `adapter_model.safetensors`가 134,616바이트이고 안의 원소는 32,768개(위에서 센 학습 매개변수 수 그대로) 32비트라 `32,768 × 4 = 131,072`바이트에 머리글이 붙은 값입니다. 안에는 `lora_A`·`lora_B` 14쌍만 있고 기본 모델 가중치는 한 개도 없습니다. 둘째, 같은 일이 진짜 모델에서 일어나면 어댑터는 24,313,856개이므로 16비트로 저장하면 약 49MB, 32비트면 약 97MB입니다(⚠ 어림이고 Unsloth가 어떤 정밀도로 저장하는지는 확인하지 못했습니다). 3B 모델 전체(수 GB)가 아니라 이만큼입니다. 이 어댑터는 반드시 같은 기본 모델 위에 얹어야 쓸 수 있고, `adapter_config.json`의 `base_model_name_or_path`가 그 모델을 가리킵니다. 셋째, `lora_B`는 `False`로 0이 아닙니다. LoRA는 `B`를 0으로 시작해서 학습 전에는 모델이 기본 모델과 같은데, 60걸음 뒤 0이 아니게 되었고 저장된 어댑터를 얹으면 같은 입력의 로짓이 최대 0.30 달라집니다. 어댑터가 모델을 바꾼다는 뜻입니다(값은 무작위 모델이라 의미 없습니다). 넷째, 토크나이저 파일(`tokenizer.json`, `tokenizer_config.json`, `chat_template.jinja`)이 함께 저장됩니다. 한편 앱은 `finetuned_model/` 말고도 학습기가 쓰는 `outputs/checkpoint-60/`(옵티마이저 상태 포함, Step 7)을 남깁니다. 장난감은 `save_strategy="no"`로 그것을 막았습니다. 앱 63행이 그것을 부르기 때문이고, 저장소 이력에서 이 줄은 "Added tokenizer and saved the model at the end"라는 변경(`779e9f9b`)으로 들어왔습니다.
 
 ![Step 8까지의 구성](diagrams/step8.svg)
 
@@ -1429,19 +1536,19 @@ max |logit(base) - logit(base + adapter)| = 0.30142
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 스크립트를 돌리면 `FastLanguageModel.from_pretrained`가 이름을 `…-unsloth-bnb-4bit`로 바꿔 Hub에 요청하고(Step 3), 받은 `model.safetensors` 2.35GB를 4비트로 적재해 모델과 토크나이저를 돌려줍니다. `get_peft_model(r=16)`이 LoRA를 붙이고 `get_chat_template`이 토크나이저에 "llama-3.1" 틀을 붙입니다(Step 6, 5).
+사용자가 스크립트를 돌리면 `FastLanguageModel.from_pretrained`가 먼저 8.8.8.8:53 접속 시험과 통계 저장소 받기를 하고(`UNSLOTH_DISABLE_STATISTICS`나 오프라인 변수가 없을 때, Step 4), 이름을 `…-unsloth-bnb-4bit`로 바꿔 Hub에 요청하고(Step 3), 받은 `model.safetensors` 2.35GB를 4비트로 적재해 모델과 토크나이저를 돌려줍니다. `get_peft_model(r=16)`이 LoRA를 붙이고 `get_chat_template`이 토크나이저에 "llama-3.1" 틀을 붙입니다(Step 6, 5).
 
 ![데이터 준비](diagrams/extra-data.svg)
 
-`load_dataset`이 parquet 111MiB를 받고, `standardize_sharegpt`가 키를 바꾸고, `map(apply_chat_template)`가 `text` 열을 만듭니다(Step 5). 이 단계에서 이미 데이터가 100,000행 전부 메모리와 디스크 캐시에 올라오지만 학습은 그중 480개 시퀀스만 봅니다(Step 6).
+`load_dataset`이 parquet 111MiB를 받고, `standardize_sharegpt`가 키를 바꾸고, `map(apply_chat_template)`가 `text` 열을 만듭니다(Step 5). 이 단계에서 이미 10만 행 전부에 채팅 틀이 적용되고, 트레이너를 만들 때 10만 행 전부가 토큰화됩니다. 학습이 쓰는 것은 그중 480개 시퀀스뿐입니다(Step 6). Arrow 파일은 메모리 매핑이라 전부가 메모리에 올라오는 것은 아닙니다.
 
 ![학습과 저장](diagrams/extra-train.svg)
 
-`SFTTrainer.train()`이 GPU에서 60걸음을 돌리고(Step 7) 모델과 토크나이저를 `finetuned_model/`에 저장합니다(Step 8).
+`SFTTrainer(...)`를 만들 때 토큰화·시작 토큰 정리·콜레이터 교체가 일어나고, `train()`이 GPU에서 60걸음을 돌리며 `outputs/checkpoint-60/`을 쓰고(Step 7), 스크립트가 모델과 토크나이저를 `finetuned_model/`에 저장합니다(Step 8).
 
 ## 실행 체크리스트
 
-- [ ] 작업 폴더 `finetune-lab`에 `uv venv`와 `uv pip install -r requirements.txt`를 했고 `versions.py`가 `distributions installed: 86`을 찍었다
+- [ ] 작업 폴더 `finetune-lab`에 `uv venv`와 `uv pip install -r requirements.txt`를 했고, Step 2에서 블록을 건 뒤 `versions.py`가 `distributions installed: 86`을 찍었다
 - [ ] 터미널마다 변수 블록을 걸었고, `guard.py`가 `guard ok`를 찍었다
 - [ ] 블록을 빼거나 프록시·토큰 변수를 남겼을 때 `guard.py`가 종료 코드 1로 멈추는 것을 봤다
 - [ ] `offline_probe.py`에서 세 내려받기가 모두 닫힌 채 실패하고 `get_token()`이 `None`인 것을 봤다
@@ -1451,6 +1558,7 @@ max |logit(base) - logit(base + adapter)| = 0.30142
 - [ ] `render.py`에서 `Cutting Knowledge Date`·`Today Date` 두 줄과 `text` 열을 봤다
 - [ ] `lora.py`의 학습 매개변수 32,768이 공식과 같고, `sizes.py`가 24,313,856과 0.48%를 찍었다
 - [ ] `trl_as_written.py`에서 세 인자가 `TypeError`가 되는 것을 봤다
+- [ ] (선택) `unsloth_probe.py`에서 앱의 세 인자가 `UnslothSFTTrainer`에 받아지고 옵티마이저가 `adamw_8bit`인 것을 봤다
 - [ ] `train_toy.py`가 60걸음을 마치고 `labels == input_ids … True`를 찍었다
 - [ ] `check_saved.py`에서 어댑터 134,616바이트와 `every tensor is a LoRA tensor … True`를 봤다
 - [ ] `guard.log`가 비어 있고 원본 앱 폴더가 바뀌지 않았다
@@ -1466,7 +1574,8 @@ max |logit(base) - logit(base + adapter)| = 0.30142
 | `ConnectionError: Couldn't reach … (OfflineModeIsEnabled)`, `LocalEntryNotFoundError`(직접 확인) | 가드 아래에서 내려받기 줄이 돌았다. 캐시가 비어 있으면 닫힌 채 실패한다 | 정상이다. 진짜 모델을 받으려면 가드가 없는 다른 터미널에서 원본을 돌린다(이 문서는 하지 않았다) |
 | `TypeError: SFTTrainer.__init__() got an unexpected keyword argument 'tokenizer'`(직접 확인) | 오늘 `trl` 1.15.0은 `tokenizer=`·`dataset_text_field=`·`max_seq_length=`를 받지 않는다 | Unsloth가 패치된 환경(소스로 읽음)이거나, `processing_class=`·`SFTConfig(dataset_text_field=, max_length=)`로 옮겨 쓴다 |
 | `RuntimeError: 0 active drivers ([]). There should only be one.`(직접 확인) | `trl` 1.15.0의 `SFTTrainer` 손실 커널이 Triton과 GPU를 요구한다 | CPU에서는 `train_toy.py`처럼 `compute_loss`를 평범한 손실로 바꾼다. GPU에서는 그대로 쓴다 |
-| `ValueError`로 fp16을 거부할 수 있다(확인 못 함) | 원본 51~52행이 CPU `torch`에서 `fp16=True`가 된다. `SFTConfig` 생성은 통과했고 학습까지 돌려 보지는 않았다 | CPU에서는 `fp16=False`, `bf16=False`, `use_cpu=True`로 둔다 |
+| 원본 51~52행이 CPU `torch`에서 `fp16=True`가 되어도 오류가 없다(직접 확인, 2걸음) | CPU에서도 fp16 설정이 거부되지 않았다 | 장난감에서는 GPU 설정과 헷갈리지 않게 `fp16=False`, `bf16=False`, `use_cpu=True`로 둔다 |
+| `unsloth_zoo.log`의 WARNING `Could not build the patched trl.trainer.grpo_trainer … Torch not compiled with CUDA enabled`(직접 확인, `unsloth_probe.py`) | 시험 스위치로 불러온 CPU `torch`에서 GRPO 트레이너 패치를 만들 수 없다 | 무시해도 된다. SFT 패치와 무관하다 |
 | 모든 실행의 `SyntaxWarning`·`W1019 … Enum subclass` 경고(직접 확인) | `torchao`와 `torch`가 내는 경고다 | 무시해도 된다 |
 | 앱 README 21행의 `cd awesome-llm-apps/llm_finetuning_tutorials/…`가 없는 폴더(경로를 `ls`로 확인) | `advanced_llm_apps/`가 빠진 경로다 | 리포 루트에서 `advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning`로 간다 |
 | 앱 README 61행의 `unsloth/Llama-3.1-1B-Instruct`가 없다(`curl`로 `401`, 직접 확인) | Llama 3.1에는 1B가 없다. 1B는 Llama 3.2다 | `unsloth/Llama-3.2-1B-Instruct`(같은 날 공개 API로 `200`)를 쓴다. 이 이름의 4비트 변환은 확인하지 않았다 |
