@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "사용자" { class: person }
+script: "원본 스크립트" { class: ours }
+unsloth: "Unsloth" { class: ours }
+hub: "Hugging Face Hub" { class: ext }
+
+user -> script: "python finetune_llama3.2.py"
+script -> unsloth: "from_pretrained(3B, 4비트)"
+unsloth -> hub: "모델 요청 (bnb-4bit)"
+hub -> unsloth: "model.safetensors 2.35GB"
+unsloth -> script: "model, tokenizer"
+script -> unsloth: "get_peft_model(r=16)"
+unsloth -> script: "LoRA 붙은 모델"
+script -> unsloth: "get_chat_template(llama-3.1)"
+unsloth -> script: "tokenizer (llama-3.1 틀)"

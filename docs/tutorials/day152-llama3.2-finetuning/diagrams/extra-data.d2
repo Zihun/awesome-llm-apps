@@ -1,0 +1,14 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+script: "원본 스크립트" { class: ours }
+unsloth: "Unsloth" { class: ours }
+hub: "Hugging Face Hub" { class: ext }
+data: "datasets" { class: ours }
+
+script -> data: "load_dataset(FineTome)"
+data -> hub: "데이터셋 요청"
+hub -> data: "parquet 111MiB"
+script -> unsloth: "standardize_sharegpt"
+script -> data: "map(apply_chat_template)"
+data -> script: "text 열"
