@@ -1,6 +1,6 @@
 # Day 092 · 📊 AI VC Due Diligence Agent Team
 
-> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 85분(도구 3개를 가짜 `ToolContext`로, 파이프라인 전체를 스텁 콜백으로 직접 실행해 실제 호출 순서·횟수와 `/run_sse`가 어떤 이벤트를 스트리밍하는지 확인하고, `google_search`가 클라이언트 왕복이 아님을 실제 요청 없이 안전하게 확인하고, 서비스 종료된 모델을 공식 문서로 재확인하고, `adk web`을 격리 환경에서 띄워 확인하는 손 작업이 읽는 시간보다 깁니다) · API 비용 대략 분석 1건에 Gemini 호출 최소 13회(코디네이터 1 + 1·2·4·5단계 각 1 + 3·6·7단계 각 2 + 도구 안 직접 `Client()` 호출 2, 스텁 실행으로 직접 확인 — 3~5단계·인포그래픽 도구 모델은 이미 서비스 종료라 실제 키로도 3단계에서 막힘) — 키가 없어 원화 실측은 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team`
+> 볼륨 7 🚀 Advanced AI Agents · 난이도 ★★★ · 예상 소요 90분(도구 3개를 가짜 `ToolContext`로, 파이프라인 전체를 스텁 콜백으로 직접 실행해 실제 호출 순서·횟수와 `/run_sse`가 어떤 이벤트를 스트리밍하는지 확인하고, `google_search`가 클라이언트 왕복이 아님을 실제 요청 없이 안전하게 확인하고, 서비스 종료된 모델을 공식 문서로 재확인하고, `adk web`을 격리 환경에서 띄워 확인하는 손 작업이 읽는 시간보다 깁니다) · API 비용 대략 분석 1건에 Gemini 호출 최소 13회(코디네이터 1 + 1·2·4·5단계 각 1 + 3·6·7단계 각 2 + 도구 안 직접 `Client()` 호출 2, 스텁 실행으로 직접 확인 — 3~5단계·인포그래픽 도구 모델은 이미 서비스 종료라 실제 키로도 3단계에서 막힘) — 키가 없어 원화 실측은 못함(대략치) · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_vc_due_diligence_agent_team`
 
 ## 오늘 만들 것
 
@@ -438,8 +438,14 @@ AttributeError: 'BaseApiClient' object has no attribute '_async_httpx_client'
 **할 일.** 앱 폴더 **안에서** 실행합니다.
 
 ```bash
-uv run --no-project adk web --no_use_local_storage .
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="${TMPDIR:-/tmp}/day092-adkhome"; mkdir -p "$HOME"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --no_use_local_storage . < /dev/null
 ```
+
+블록의 앞 세 줄은 홈(`HOME`·`USERPROFILE`)을 임시 폴더로 바꾸고(uv 캐시는 원래 자리를 지킵니다), `adk telemetry disable`과 `< /dev/null`이 같은 일을 따로 한 번씩 더 막습니다. 까닭은 Day 088과 같습니다. 이 문서의 `requirements.txt`는 오늘 google-adk 2.12.0으로 풀리고(직접 확인), 이 판의 `adk` 명령은 `~/.adk/config.json`에 `telemetry: true`가 있으면 명령이 끝날 때 `https://play.googleapis.com/log`로 사용 기록을 보냅니다(`cli/_telemetry/_metrics_reporter.py`, 소스로 확인). 동의는 질문에 Enter만 쳐도 `true`가 되고, 다른 ADK 실습에서 이미 동의했다면 질문 없이 보냅니다. 동의 `true`가 미리 적힌 홈을 흉내 내 위 블록을 돌리면 `play.googleapis.com`으로 가려는 시도가 0이었고, 세 줄(홈 바꾸기, `disable`, `< /dev/null`)을 하나씩 뺀 세 판도 모두 0이었습니다. 방어를 하나도 두지 않고 `adk web`만 돌린 판은 1이었습니다(소켓 감시가 막았을 뿐 실제로는 보내지 않았습니다, 직접 확인). 홈을 바꾸지 않고 `adk telemetry disable`을 부르면 진짜 `~/.adk/config.json`에 `false`를 쓰는 부작용이 있으니 홈 줄과 함께 두세요.
 
 `adk web`을 대화형 터미널에서 처음 실행하면 텔레메트리 동의를 묻는데, 이 프롬프트와 `~/.adk/config.json`의 관계는 Day 088이 이미 소스로 확인했습니다(`sys.stdin.isatty()`일 때만 묻고 저장하며, 비대화형 실행은 아무것도 쓰지 않습니다). `--no_use_local_storage`를 주면 서버 로그에 "Local artifact storage is disabled; using in-memory artifact service"가 찍힙니다(직접 확인) — Step 4에서 확인한 `save_artifact`가 실제로 어디에 쌓이는지의 답입니다.
 
