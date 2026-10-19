@@ -1,6 +1,6 @@
 # Day 159 · ⚰️ Project Graveyard
 
-> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 190분(스크립트 하나와 git만 있으면 되지만, 지시문과 명세를 읽고 합성 묘지로 출력을 여덟 단계에 걸쳐 따라 읽는 데 시간이 듭니다) · API 비용 대략 0원(API 키가 필요 없고 모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/project-graveyard`
+> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 195분(스크립트 하나와 git만 있으면 되지만, 지시문과 명세를 읽고 합성 묘지로 출력을 여덟 단계에 걸쳐 따라 읽는 데 시간이 듭니다) · API 비용 대략 0원(API 키가 필요 없고 모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/project-graveyard`
 
 ## 오늘 만들 것
 
