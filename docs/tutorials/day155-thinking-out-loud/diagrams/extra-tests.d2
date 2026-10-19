@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: right
+
+lint: "skill_lint.py" { class: ours }
+scan: "skill_scanner.py" { class: ours }
+trigtool: "run_trigger_evals.py" { class: ours }
+reglint: "registry_lint.py" { class: ours }
+repo: "원본 스킬 폴더\n(agent_skills/\nthinking-out-loud)" { class: file }
+copy: "스크래치 설치본\n(.claude/skills/\nthinking-out-loud)" { class: file }
+seven: "스킬 일곱 개의\nSKILL.md 설명" { class: file }
+trig: "trigger-cases.json" { class: file }
+registry: "registry.json\n(+ README 목록 둘)" { class: file }
+
+lint -> repo: "구조 검사"
+lint -> copy: "설치본 검사"
+scan -> repo: "보안 검사"
+trigtool -> seven: "설명 읽기"
+trigtool -> trig: "양성 · 음성 점수"
+reglint -> repo: "frontmatter 대조"
+reglint -> registry: "레지스트리 대조"

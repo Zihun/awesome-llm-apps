@@ -13,20 +13,25 @@ folder: "설치 폴더 (thinking-out-loud/)" {
   ref: "references/\necho-format.md" { class: file }
 }
 brief: "승인된 브리프\n(CLAUDE.md 또는\ndocs/rambles/)" { class: file }
-tools: "시험 도구\n(skill_lint ·\nskill_scanner ·\nrun_trigger_evals ·\nregistry_lint)" { class: ours }
-trig: "trigger-cases\n.json" { class: file }
+tools: "시험 도구 (agent_skills/evals/tools/)" {
+  class: group
+  grid-columns: 2
+  lint: "skill_lint.py" { class: ours }
+  scan: "skill_scanner.py" { class: ours }
+  trigtool: "run_trigger_evals.py" { class: ours }
+  reglint: "registry_lint.py" { class: ours }
+}
 evalsj: "evals.json\n(3단계)" { class: file }
 ramble: "손으로 쓴 램블\n(ramble.txt)" { class: file }
 handecho: "손으로 쓴 에코\n(echo-good.md)" { class: file }
 echocheck: "모양 검사기\n(echo_check.py)" { class: ours }
 
-user -> agent: "램블"
+user -> agent: "램블 (한 메시지)"
 agent -> folder: "읽기: 설명, SKILL.md, 참고 문서"
 agent -> user: "에코 · 저장 제안"
 agent -> brief: "고른 곳에 저장"
 repo -> folder: "복사 (cp -r)"
-tools -> folder: "구조 · 보안 검사"
-tools -> trig: "양성 · 음성 점수"
+tools -> repo: "검사 넷"
 evalsj -> agent: "프롬프트 붙여 넣기"
 ramble -> handecho: "손으로 변환"
 echocheck -> handecho: "모양 검사"

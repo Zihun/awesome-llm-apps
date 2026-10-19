@@ -1,6 +1,6 @@
 # Day 155 · 🎙️ Thinking Out Loud
 
-> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 125분(스크립트가 없는 스킬이라 돌릴 것은 적지만, 지시문 158줄과 명세 두 쪽을 읽고 시험 네 개의 출력을 해석하고 램블을 손으로 에코로 바꾸는 데 시간이 듭니다) · API 비용 대략 0원(모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/thinking-out-loud`
+> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 150분(스크립트가 없는 스킬이라 돌릴 것은 적지만, 지시문 158줄과 명세 두 쪽을 읽고 시험 다섯 줄의 출력을 해석하고 램블을 손으로 에코로 바꾸고, 블록마다 bash와 PowerShell 두 벌을 읽고 고르는 데 시간이 듭니다) · API 비용 대략 0원(모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/thinking-out-loud`
 
 ## 오늘 만들 것
 
@@ -9,12 +9,12 @@
 이 문서는 에이전트(Claude Code, Codex, Cursor 등)를 한 번도 띄우지 않았고 모델도 부르지 않았으며, 3단계 행동 시험도 돌리지 않았습니다. 이 PC의 진짜 `~/.claude/skills`나 다른 에이전트 설정 폴더에는 아무것도 넣지 않았고 `npx skills add`도 실행하지 않았습니다. 그래서 "에이전트가 실제로 이렇게 답한다"는 문장은 이 문서에 없습니다. 있는 것은 세 가지입니다. 첫째, `SKILL.md`가 에이전트에게 시키는 것을 읽어 정리한 내용입니다. 둘째, 저장소의 결정적 시험(구조·보안·트리거·레지스트리) 네 개를 직접 돌린 출력입니다. 셋째, 램블 하나를 제가 손으로 에코로 바꿔 보고 작은 검사기로 모양을 잰 결과입니다. 손으로 쓴 에코는 모델의 출력이 아니라 "이 형식을 지키면 이런 모양이어야 한다"는 견본입니다. 직접 돌려 보거나 소스로 확인한 것은 일곱입니다.
 
 1. `SKILL.md`의 frontmatter는 agentskills.io 명세의 필수·선택 필드 규칙을 모두 지키고, `skill_lint.py --strict`는 오류 0·경고 0입니다(Step 2, 4).
-2. 이 스킬 폴더에는 파이썬 파일이 0개입니다. 저장소 README의 "Real scripts" 기준은 이 스킬에는 적용되지 않습니다(Step 1, 8).
+2. 이 스킬 폴더에는 파이썬 파일이 0개입니다. 저장소 README의 "Real scripts" 기준과 시험 README의 "`test_<skill>.py`는 최소한" 문장을 이 스킬은 충족하지 않습니다(Step 1, 4).
 3. 보안 스캐너는 "no findings", 레지스트리 검사는 오류 0입니다. 시험 도구 넷은 네트워크 모듈을 불러오지 않고, 소켓 가드 아래에서도 막힌 연결이 없었습니다(Step 4).
 4. 트리거 시험은 모델이 아니라 낱말 겹침 점수입니다. 양성 넷의 가장 낮은 점수는 1.15, 음성 셋의 가장 높은 점수는 0.32입니다(Step 4).
-5. 한국어 Windows에서 이 도구들은 옵션 없이 돌리면 출력 줄(`—`)이나 다른 스킬의 `SKILL.md` 읽기에서 `cp949` 오류로 멈춥니다(Step 4).
+5. 한국어 Windows에서 이 도구들은 옵션 없이 돌리면, 출력이 파이프일 때 출력 줄(`—`)에서(`skill_lint`·`skill_scanner`·`registry_lint`), 그리고 다른 스킬의 `SKILL.md` 읽기에서(`run_trigger_evals`) `cp949` 오류로 멈춥니다(Step 4).
 6. 손으로 만든 에코는 검사기를 통과하고, 일부러 망가뜨린 에코는 8건을 받습니다. 원본 참고 문서의 예시 에코도 1건을 받습니다(Step 7).
-7. 3단계 `evals.json`은 스킬 본문과 말이 어긋난 곳이 있습니다. 예를 들어 에코가 "네 부분"이라고 적는데 `SKILL.md`는 다섯 부분입니다(Step 8).
+7. 3단계 `evals.json`은 스킬 본문과 말이 어긋난 곳이 있고, 처음 들어온 커밋부터 그랬습니다. 예를 들어 에코가 "네 부분"이라고 적는데 `SKILL.md`는 다섯 부분입니다(Step 8).
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -49,30 +49,25 @@
 
 ## 단계별 진행
 
-### Step 1. 원본을 읽기만 하고 스크래치 폴더를 만든다
+### Step 1. 원본을 읽기만 한다
 
-**목적.** 원본 폴더에는 아무것도 쓰지 않고, 스킬이 무엇으로 이루어졌는지 파일과 줄 수로 확인합니다.
+**목적.** 원본 폴더에는 아무것도 쓰지 않고, 스킬이 무엇으로 이루어졌는지 파일과 줄 수로 확인합니다. 이 문서에서 파일을 만들거나 복사하는 블록(Step 3, 6, 7)은 앞 터미널의 변수에 기대지 않습니다. 블록마다 첫머리에서 저장소 위치와 스크래치 폴더를 다시 정하고, 목적지는 `${LAB:?}`처럼 비어 있으면 그 줄에서 멈추게 쓰며, 목적지가 `~/.claude`·`~/.agents`·`~/.codex` 같은 진짜 에이전트 설정 폴더 아래로 풀리면 멈춥니다. 새 터미널에서 Step 3부터 시작해도, 줄 하나를 빼고 붙여 넣어도 진짜 설정 폴더에는 아무것도 쓰이지 않습니다. 이것은 가짜 홈(안에 `.claude/skills/existing`과 가짜 자격 증명 파일을 둔 폴더)에서 블록을 글자 그대로 돌리고 줄을 하나씩 빼 보며 직접 확인했습니다(Step 3).
 
 **할 일.** 저장소 루트에서 줄 수와 파이썬 파일 수를 셉니다. `wc -l`은 끝에 개행이 없는 파일을 한 줄 적게 세므로 편집기의 줄 수와 다를 수 있는데, 이 세 파일은 모두 개행으로 끝나서 같습니다.
 
 ```bash
-cd awesome-llm-apps
+cd awesome-llm-apps          # 저장소 루트로 간다
 wc -l agent_skills/thinking-out-loud/SKILL.md agent_skills/thinking-out-loud/README.md agent_skills/thinking-out-loud/references/echo-format.md
 find agent_skills/thinking-out-loud -name "*.py" | wc -l
-LAB=$(mktemp -d)
-echo "$LAB"
 ```
 
 ```powershell
 Set-Location awesome-llm-apps
 foreach ($f in "SKILL.md","README.md","references/echo-format.md") { "$f " + (Get-Content "agent_skills/thinking-out-loud/$f").Count }
 (Get-ChildItem agent_skills/thinking-out-loud -Recurse -Filter *.py).Count
-$LAB = Join-Path $env:TEMP "tol-lab"
-New-Item -ItemType Directory $LAB | Out-Null
-$LAB
 ```
 
-(PowerShell 줄은 실행해 보지 못했습니다. `Measure-Object -Line`은 빈 줄을 세지 않으므로 쓰지 않았습니다.)
+(이 PowerShell 블록은 실행해 보지 못했습니다. `Measure-Object -Line`은 빈 줄을 세지 않으므로 쓰지 않았습니다.)
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -86,7 +81,7 @@ $LAB
 0
 ```
 
-글 297줄이고 파이썬 파일은 0개입니다. 저장소 `agent_skills/README.md`의 "The bar"는 첫 항목으로 "Real scripts. Deterministic work runs as code, not as token generation."을 듭니다. 이 스킬은 그 항목에 해당하지 않습니다. 하는 일이 "계산"이 아니라 "에이전트가 어떻게 답할지"의 약속이기 때문입니다. 이것이 오늘 스킬의 핵심 한계이기도 합니다. 약속이 지켜졌는지는 결정적 시험으로 확인할 수 없고, 모델을 돌려 봐야 압니다(Step 8).
+글 297줄이고 파이썬 파일은 0개입니다. 저장소 `agent_skills/README.md`의 "The bar"는 첫 항목으로 "Real scripts. Deterministic work runs as code, not as token generation."을 듭니다. 이 스킬은 그 항목을 충족하지 않습니다. 시험 README(`agent_skills/evals/README.md:48-50`)도 새 스킬에 "at minimum a deterministic `test_<skill>.py`"를 요구하는데 이 스킬에는 그 파일이 없습니다. `skill_lint.py`가 글만 있는 스킬을 경고하지 않는 것은 `references/` 폴더가 있기 때문입니다(`skill_lint.py:21-22`의 머리말: 스크립트와 참고 문서가 둘 다 없을 때 경고). 하는 일이 "계산"이 아니라 "에이전트가 어떻게 답할지"의 약속이라서 생긴 일이고, 이것이 오늘 스킬의 핵심 한계이기도 합니다. 약속이 지켜졌는지는 결정적 시험으로 확인할 수 없고, 모델을 돌려 봐야 압니다(Step 8).
 
 ### Step 2. frontmatter를 명세와 한 줄씩 대조한다
 
@@ -133,7 +128,13 @@ Anthropic 문서는 `name`에 `anthropic`·`claude` 낱말과 XML 태그를 못 
 
 ![Step 2까지의 구성](diagrams/step2.svg)
 
-**확인.** 명세의 규칙이 이 문서와 같은지는 위 두 페이지의 원문으로 다시 볼 수 있습니다. 이 스킬이 규칙을 지키는지는 Step 4의 `skill_lint.py`가 기계로 확인합니다.
+**확인.** 명세의 규칙이 이 문서와 같은지는 위 두 페이지의 원문으로 다시 볼 수 있습니다. 이 스킬의 값은 저장소 루트에서 한 줄로 셀 수 있습니다. 설명은 `>-` 블록이라 줄 바꿈을 공백 하나로 접은 값이 문서의 964자입니다.
+
+```bash
+python -B -X utf8 -c "import re; t=open('agent_skills/thinking-out-loud/SKILL.md',encoding='utf-8').read(); d=re.search(r'^description:\s*>-\n(.*?)^license:',t,re.S|re.M).group(1); print(len(' '.join(l.strip() for l in d.strip().split('\n'))), len('thinking-out-loud'))"
+```
+
+기대 출력은 `964 17`입니다(직접 확인). 이 스킬이 규칙 전체를 지키는지는 Step 4의 `skill_lint.py`가 기계로 확인합니다.
 
 ### Step 3. 스크래치 프로젝트에 설치하고 폴더에 무엇이 들어갔는지 본다
 
@@ -142,26 +143,38 @@ Anthropic 문서는 `name`에 `anthropic`·`claude` 낱말과 XML 태그를 못 
 **할 일.** 스크래치 프로젝트를 만들고 Claude Code가 읽는 프로젝트 위치(`.claude/skills/`)와 여러 에이전트가 읽는 공용 위치(`.agents/skills/`)에 각각 복사합니다.
 
 ```bash
-mkdir -p "$LAB/myproj/.claude/skills" "$LAB/myproj/.agents/skills"
-cd "$LAB/myproj"
-cp -r ~/awesome-llm-apps/agent_skills/thinking-out-loud .claude/skills/thinking-out-loud
-cp -r ~/awesome-llm-apps/agent_skills/thinking-out-loud .agents/skills/thinking-out-loud
-find .claude .agents -type f | sort
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+LAB="${TMPDIR:-/tmp}/tol-lab"
+PROJ="${LAB:?LAB이 비었습니다}/myproj"
+case "$PROJ" in "$HOME/.claude"*|"$HOME/.agents"*|"$HOME/.codex"*|"$HOME/.cursor"*|"$HOME/.copilot"*|"$HOME/.openclaw"*|"$HOME/.hermes"*) echo "멈춥니다: $PROJ"; PROJ="" ;; esac
+mkdir -p "${PROJ:?}/.claude/skills/thinking-out-loud" "${PROJ:?}/.agents/skills/thinking-out-loud"
+cp -r "${REPO:?}/agent_skills/thinking-out-loud/." "${PROJ:?}/.claude/skills/thinking-out-loud/"
+cp -r "${REPO:?}/agent_skills/thinking-out-loud/." "${PROJ:?}/.agents/skills/thinking-out-loud/"
+find "${PROJ:?}/.claude" "${PROJ:?}/.agents" -type f | sort
+diff -r "${REPO:?}/agent_skills/thinking-out-loud" "${PROJ:?}/.claude/skills/thinking-out-loud" && echo "원본과 같음"
 ```
 
 ```powershell
-New-Item -ItemType Directory "$LAB/myproj/.claude/skills","$LAB/myproj/.agents/skills" | Out-Null
-Set-Location "$LAB/myproj"
-Copy-Item -Recurse ~/awesome-llm-apps/agent_skills/thinking-out-loud .claude/skills/thinking-out-loud
-Copy-Item -Recurse ~/awesome-llm-apps/agent_skills/thinking-out-loud .agents/skills/thinking-out-loud
-Get-ChildItem .claude,.agents -Recurse -File | ForEach-Object FullName
+$ErrorActionPreference = "Stop"
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+$Lab  = Join-Path $env:TEMP "tol-lab"
+$Proj = Join-Path $Lab "myproj"
+foreach ($bad in ".claude",".agents",".codex",".cursor",".copilot",".openclaw",".hermes") {
+  if ($Proj.StartsWith((Join-Path $HOME $bad), [System.StringComparison]::OrdinalIgnoreCase)) { throw "멈춥니다: $Proj" }
+}
+foreach ($d in ".claude",".agents") {
+  $dest = Join-Path (Join-Path $Proj $d) "skills/thinking-out-loud"
+  New-Item -ItemType Directory -Force $dest | Out-Null
+  Copy-Item -Recurse -Force (Join-Path $Repo "agent_skills/thinking-out-loud/*") $dest
+}
+Get-ChildItem $Proj -Recurse -File | ForEach-Object { $_.FullName.Substring($Proj.Length + 1) }
 ```
 
-(`~/awesome-llm-apps`는 클론한 위치로 바꿉니다. PowerShell 줄은 실행해 보지 못했습니다.)
+(`$HOME/awesome-llm-apps`는 클론한 위치로 바꿉니다. 같은 블록을 다시 돌려도 안쪽에 폴더가 겹쳐 생기지 않게 `/.`와 `/*`로 내용만 복사합니다.) 세 가지 방어선이 있습니다. 첫째, `LAB`이나 `PROJ`가 비면 `${LAB:?}`·`${PROJ:?}`(PowerShell은 `Join-Path`가 빈 값에 내는 오류와 `$ErrorActionPreference = "Stop"`)가 그 줄에서 멈춥니다. 둘째, 목적지가 진짜 에이전트 설정 폴더 아래로 풀리면(예를 들어 `TMPDIR`가 `~/.claude/...`를 가리키는 경우) 그 줄이 `PROJ`를 비워 뒤의 모든 줄을 멈춥니다. 셋째, 설치·목록 블록이 앞 터미널의 변수를 쓰지 않으므로 새 터미널에서도 같은 결과가 납니다. 직접 확인한 것은 이렇습니다. 홈을 스크래치의 가짜 홈(`.claude/skills/existing`과 가짜 `.credentials.json`이 있음)으로 바꾸고 Git Bash에서 블록을 글자 그대로 돌렸고, 앞 줄 여덟 개를 하나씩 빼 보았으며, `TMPDIR`를 가짜 `.claude` 아래로 돌린 판도 돌렸습니다. 모든 판에서 가짜 `.claude`와 `.agents`의 파일 목록 해시는 그대로였습니다. PowerShell 블록은 Windows PowerShell 5.1에서 같은 가짜 홈으로 같은 식으로(줄을 하나씩 빼고, `TEMP`를 가짜 `.claude` 아래로 돌려) 돌렸고 같았습니다.
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 직접 확인한 출력입니다(Git Bash, 스크래치 폴더).
+**확인.** 직접 확인한 출력입니다(Git Bash, 스크래치 폴더). `find`는 앞에 `<LAB>/myproj/`가 붙은 전체 경로를 찍고 `diff -r`는 마지막에 `원본과 같음`을 찍습니다. 아래는 앞부분을 뗀 목록입니다.
 
 ```text
 .agents/skills/thinking-out-loud/README.md
@@ -172,12 +185,12 @@ Get-ChildItem .claude,.agents -Recurse -File | ForEach-Object FullName
 .claude/skills/thinking-out-loud/SKILL.md
 ```
 
-폴더에는 파일 셋뿐입니다(`SKILL.md` 7,478바이트, `README.md` 2,840바이트, `echo-format.md` 2,427바이트). `diff -r`로 원본과 비교하면 같습니다. `evals/`는 따라오지 않습니다. `agent_skills/evals/README.md`가 "These files never ship in an install"이라고 적은 대로입니다. 설치된 사본에도 `skill_lint.py --strict`를 돌리면 통과합니다. 이름이 폴더 이름과 같아야 한다는 규칙이 복사한 폴더에서도 지켜진 것입니다.
+폴더에는 파일 셋뿐입니다(`SKILL.md` 7,478바이트, `README.md` 2,840바이트, `echo-format.md` 2,427바이트). `diff -r`의 결과는 같음입니다. `evals/`는 따라오지 않습니다. `agent_skills/evals/README.md`가 "These files never ship in an install"이라고 적은 대로입니다. 설치된 사본에도 `skill_lint.py --strict`를 돌리면 통과합니다(Step 4의 다섯째 줄). 이름이 폴더 이름과 같아야 한다는 규칙이 복사한 폴더에서도 지켜진 것입니다.
 
 저장소 README가 안내하는 다른 길 둘은 이 문서에서 실행하지 않았습니다.
 
 - 진짜 홈에 두는 길: `~/.claude/skills/` 등. 저장소 README의 표가 에이전트별 위치를 적습니다. Anthropic 문서도 Claude Code는 개인용 `~/.claude/skills/`와 프로젝트용 `.claude/skills/`를 읽는다고 적습니다.
-- `npx skills add https://github.com/Shubhamsaboo/awesome-llm-apps/tree/main/agent_skills/thinking-out-loud`. 이 명령의 CLI는 [skills.sh](https://skills.sh)에 안내되어 있고 저장소는 [vercel-labs/skills](https://github.com/vercel-labs/skills)입니다(skills.sh 쪽에는 "Made with care by Vercel"과 그 저장소 링크가 있습니다. 2026-10-19에 읽음). 그 README는 GitHub 트리 URL을 받을 수 있다고 하고, 기본은 프로젝트의 `.claude/skills/`, `-g`를 주면 사용자 폴더이고, 기본 동작은 각 에이전트 폴더에 심볼릭 링크를 만드는 것(`--copy`면 복사)이며, 익명 사용 통계를 기본으로 보내고 `DISABLE_TELEMETRY=1`이나 `DO_NOT_TRACK=1`로 끈다고 적습니다. 내려받기는 10 MiB, 풀면 25 MiB, 파일 1,000개로 제한된다고 합니다. 이 문서는 CLI를 실행하지 않았으므로 위 내용은 공개 README를 읽은 것이고 직접 본 것이 아닙니다.
+- `npx skills add https://github.com/Shubhamsaboo/awesome-llm-apps/tree/main/agent_skills/thinking-out-loud`. 이 명령의 CLI는 [skills.sh](https://skills.sh)에 안내되어 있고 저장소는 [vercel-labs/skills](https://github.com/vercel-labs/skills)입니다(skills.sh 쪽에는 "Made with care by Vercel"과 그 저장소 링크가 있습니다. 2026-10-19에 읽음). 그 README는 GitHub 트리 URL을 받을 수 있다고 하고, 설치 범위는 기본이 프로젝트 안(Claude Code는 `.claude/skills/`, 에이전트마다 위치가 다릅니다)이며 `-g`를 주면 사용자 폴더이고, 기본 동작은 각 에이전트 폴더에 심볼릭 링크를 만드는 것(`--copy`면 복사)이며, 익명 사용 통계를 기본으로 보내고 `DISABLE_TELEMETRY=1`이나 `DO_NOT_TRACK=1`로 끈다고 적습니다. 직접 내려받는 주소(SKILL.md나 압축 파일 주소)에는 10 MiB, 풀면 25 MiB, 파일 1,000개라는 기본 제한이 있다고 하는데, 이것이 이 문서가 쓰는 GitHub 트리 주소에도 같은 모양으로 적용되는지는 읽은 범위에서 확인하지 못했습니다. 이 문서는 CLI를 실행하지 않았으므로 위 내용은 공개 README를 읽은 것이고 직접 본 것이 아닙니다.
 
 설치 전에 읽어야 한다는 점은 Day 154가 다루고, Anthropic 문서의 "Treat like installing software"도 같은 말입니다. 이 스킬은 스크립트가 없으니 읽을 것이 글 세 파일뿐입니다.
 
@@ -185,25 +198,35 @@ Get-ChildItem .claude,.agents -Recurse -File | ForEach-Object FullName
 
 **목적.** 저장소가 CI에서 돌리는 무료 시험 가운데 이 스킬에 걸리는 것을 직접 돌립니다. 모델은 부르지 않습니다.
 
-**할 일.** 저장소 루트에서 다음 네 줄입니다. 모두 파일을 읽기만 합니다.
+**할 일.** 저장소 루트에서 다음 다섯 줄입니다(다섯째는 Step 3에서 만든 설치본에 lint를 한 번 더 돌립니다). 모두 파일을 읽기만 합니다.
 
 ```bash
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+cd "${REPO:?}"
 python -B -X utf8 agent_skills/evals/tools/skill_lint.py agent_skills/thinking-out-loud --strict
 python -B -X utf8 agent_skills/evals/tools/skill_scanner.py agent_skills/thinking-out-loud
 python -B -X utf8 agent_skills/evals/tools/run_trigger_evals.py
 python -B -X utf8 agent_skills/evals/tools/registry_lint.py --check --root .
+python -B -X utf8 agent_skills/evals/tools/skill_lint.py "${TMPDIR:-/tmp}/tol-lab/myproj/.claude/skills/thinking-out-loud" --strict
 ```
 
 ```powershell
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+Set-Location $Repo
 python -B -X utf8 agent_skills/evals/tools/skill_lint.py agent_skills/thinking-out-loud --strict
 python -B -X utf8 agent_skills/evals/tools/skill_scanner.py agent_skills/thinking-out-loud
 python -B -X utf8 agent_skills/evals/tools/run_trigger_evals.py
 python -B -X utf8 agent_skills/evals/tools/registry_lint.py --check --root .
+python -B -X utf8 agent_skills/evals/tools/skill_lint.py (Join-Path $env:TEMP "tol-lab/myproj/.claude/skills/thinking-out-loud") --strict
 ```
 
-(`agent_skills/evals/README.md`는 `python3`로 적습니다. Windows에서는 `python`입니다. 이 PC의 `python`이 이 저장소의 `.venv`를 집지 않는지 먼저 `python --version`으로 봅니다.)
+(`agent_skills/evals/README.md`는 `python3`로 적습니다. Windows에서는 `python`입니다. `python`이 가상환경의 것인지 시스템의 것인지는 `python -c "import sys; print(sys.executable)"`로 봅니다. 이 도구들은 표준 라이브러리만 쓰므로 어느 쪽이어도 해가 없습니다. PowerShell 블록은 실행해 보지 못했습니다.)
 
 ![Step 4까지의 구성](diagrams/step4.svg)
+
+네 도구가 각각 무엇을 읽는지는 보조 그림이 따로 보입니다. 한 노드로 묶으면 입력이 서로 다르다는 점이 사라집니다.
+
+![시험 도구 넷과 입력](diagrams/extra-tests.svg)
 
 **확인.** 직접 확인한 출력입니다. 이 PC에서는 `HOME`·`USERPROFILE`·`CLAUDE_CONFIG_DIR`·`TEMP`을 스크래치로 돌렸고, `192.0.2.1` 연결이 막히는 것을 먼저 단언하는 소켓 가드(루프백이 아닌 이름 조회와 연결을 거부) 아래서 돌렸습니다. 독자 명령에는 이 가드가 없습니다. 대신 네 파일 모두에서 줄 머리의 `import`를 grep해 `socket`·`urllib`·`http`·`requests`·`subprocess`·`ssl`이 0건임을 확인했습니다.
 
@@ -226,7 +249,7 @@ Checking registry at ... (mode=check)
 
 (트리거 시험은 스킬 일곱 개를 모두 돌려서 줄이 일곱 개 나옵니다. 위에는 이 스킬의 줄만 옮겼습니다.)
 
-넷이 무엇을 보는지는 소스(`agent_skills/evals/tools/`)의 머리말로 읽었습니다. `skill_lint.py`는 이름·설명 길이·본문 줄 수(500줄부터 `--strict`에서 오류)·본문이 가리키는 상대 경로가 실제로 있는지를 봅니다. `skill_scanner.py`는 원격 스크립트를 셸로 넘기는 줄, 인코딩된 실행, 자격 증명 접근 같은 패턴을 정규식으로 찾고, 스스로 "자연어 공격은 패턴 스캐너를 피한다"고 적습니다. 이 스킬은 지시문이 전부인 스킬이라서 이 말이 오히려 핵심입니다. 스캐너가 깨끗하다는 것은 위험한 줄이 없다는 뜻이지 지시가 안전하다는 보증이 아닙니다. 지시가 안전한지는 읽어서 봅니다(Step 5). `registry_lint.py`는 `registry.json`의 항목이 `SKILL.md` frontmatter와 같은지 봅니다. 이 스킬의 항목(`registry.json:79-`)에는 위 frontmatter의 설명·라이선스·메타데이터에 더해 `install`(`npx skills add …`)과 `evals_dir`(`agent_skills/evals/thinking-out-loud`)가 있습니다.
+넷이 무엇을 보는지는 소스(`agent_skills/evals/tools/`)의 머리말로 읽었습니다. `skill_lint.py`는 이름·설명 길이·본문 줄 수(500줄부터 `--strict`에서 오류)·본문이 가리키는 상대 경로가 실제로 있는지를 봅니다. `skill_scanner.py`는 원격 스크립트를 셸로 넘기는 줄, 인코딩된 실행, 자격 증명 접근 같은 패턴을 정규식으로 찾고, 스스로 "자연어 공격은 패턴 스캐너를 피한다"고 적습니다. 이 스킬은 지시문이 전부인 스킬이라서 이 말이 오히려 핵심입니다. 스캐너가 깨끗하다는 것은 위험한 줄이 없다는 뜻이지 지시가 안전하다는 보증이 아닙니다. 지시가 안전한지는 읽어서 봅니다(Step 5). `registry_lint.py`는 `registry.json`의 항목과 README의 목록이 `SKILL.md` frontmatter와 같은지 봅니다. 이 스킬의 항목(`registry.json:79-`)에는 위 frontmatter의 설명·라이선스·메타데이터에 더해 `install`(`npx skills add …`)과 `evals_dir`(`agent_skills/evals/thinking-out-loud`)가 있습니다.
 
 트리거 시험이 모델이 아니라는 점은 소스가 말합니다(`run_trigger_evals.py`의 머리말: "Deterministic, CI-safe, no model."). 점수는 프롬프트의 낱말(불용어를 빼고 어미를 거칠게 자른 것)이 설명의 낱말과 겹치는 개수를 프롬프트 낱말 수의 제곱근으로 나눈 값이고, 양성의 최저점이 음성의 최고점의 1.15배를 넘어야 통과합니다. 이 스킬의 사례별 점수를 저장소의 함수로 직접 뽑으면 다음과 같습니다(`score_cases.py`는 같은 함수를 불러 쓰는 열 줄짜리 스크립트로, 이 문서에는 싣지 않았습니다).
 
@@ -240,7 +263,7 @@ Checking registry at ... (mode=check)
 | `near-miss-structured-doc` | 아니오 | 0.00 | 없음 |
 | `near-miss-clear-request` | 아니오 | 0.00 | 없음 |
 
-가장 아슬아슬한 쪽은 음성 서두(`voice-preamble`) 사례입니다. 1.15는 0.32의 3.6배로 한도(1.15배)를 한참 넘지만, 이 사례가 4개 낱말에만 기댄다는 점은 보입니다. 이 시험은 "에이전트가 실제로 스킬을 켠다"를 증명하지 않습니다. 설명에 사람들이 실제로 쓰는 낱말이 들어 있는지만 봅니다. 이 한계는 `agent_skills/evals/README.md`도 "lexical approximation"이라고 밝힙니다. `2b`단계(스크립트 시험, `<skill>/test_*.py`)는 이 스킬에 해당하지 않습니다. `agent_skills/evals/thinking-out-loud/`에는 `evals.json`과 `trigger-cases.json` 둘뿐이고 `test_*.py`가 없습니다.
+가장 아슬아슬한 쪽은 음성 서두(`voice-preamble`) 사례입니다. 1.15는 0.32의 3.6배로 한도(1.15배)를 한참 넘지만, 이 사례가 4개 낱말에만 기댄다는 점은 보입니다. 이 시험은 "에이전트가 실제로 스킬을 켠다"를 증명하지 않습니다. 설명에 사람들이 실제로 쓰는 낱말이 들어 있는지만 봅니다. 이 한계는 `run_trigger_evals.py:11`의 머리말도 "a lexical approximation of routing"이라고 밝힙니다. `2b`단계(스크립트 시험, `<skill>/test_*.py`)는 이 스킬에 없습니다. `agent_skills/evals/thinking-out-loud/`에는 `evals.json`과 `trigger-cases.json` 둘뿐이고 `test_*.py`가 없습니다.
 
 ### Step 5. 계약을 읽는다 — 에이전트에게 무엇을 시키는가
 
@@ -278,25 +301,31 @@ Checking registry at ... (mode=check)
 **할 일.** 램블 하나를 `ramble.txt`로 저장합니다. 음성 서두, 번복(Slack에서 email로, 이슈에서 커밋만으로), 곁가지, 모호한 낱말("the usual cutoff"), 나중에 한 말로 바뀌는 것, 최우선 조건을 일부러 넣었습니다. 129낱말입니다.
 
 ```bash
-cd "$LAB"
-cat > ramble.txt <<'EOF'
+LAB="${TMPDIR:-/tmp}/tol-lab"
+mkdir -p "${LAB:?}"
+cat > "${LAB:?}/ramble.txt" <<'EOF'
 ok switching to voice sorry for typos. so i want a small tool that tells me when my side projects go quiet, like a weekly nudge, maybe a slack message no wait email is better i never open slack. it should look at git activity, not just commits but open issues too i guess. the usual cutoff for quiet, whatever, we can pick that later. oh and my friend dana wants one too so it has to work for more than one person. actually forget issues, just commits, issues are a rabbit hole. random thought, this could be a menu bar app someday but not now. and it has to run by itself on sunday evening, if i have to remember to run it that defeats the whole purpose.
 EOF
 ```
 
 ```powershell
-Set-Location $LAB
-@'
+$ErrorActionPreference = "Stop"
+$Lab = Join-Path $env:TEMP "tol-lab"
+New-Item -ItemType Directory -Force $Lab | Out-Null
+$utf8 = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText((Join-Path $Lab "ramble.txt"), @'
 ok switching to voice sorry for typos. so i want a small tool that tells me when my side projects go quiet, like a weekly nudge, maybe a slack message no wait email is better i never open slack. it should look at git activity, not just commits but open issues too i guess. the usual cutoff for quiet, whatever, we can pick that later. oh and my friend dana wants one too so it has to work for more than one person. actually forget issues, just commits, issues are a rabbit hole. random thought, this could be a menu bar app someday but not now. and it has to run by itself on sunday evening, if i have to remember to run it that defeats the whole purpose.
-'@ | Set-Content -Encoding utf8 ramble.txt
+'@, $utf8)
 ```
 
-(여기의 heredoc은 내용이 있는 파일 저장용입니다. PowerShell 줄은 실행해 보지 못했습니다.) 이제 `SKILL.md`의 다섯 부분과 압축 규칙을 따라 손으로 바꿉니다. 판단 하나하나는 이렇습니다. 번복 둘은 Ledger에 "앞 입장, 뒤 입장, 뒤를 채택"으로 한 줄씩 넣습니다. "the usual cutoff"는 모호한 수량 낱말이므로 Locked에 넣지 않고 Open에 넣습니다. 최우선 조건("그러지 않으면 목적이 사라진다")은 Locked에 `**Top priority**`로 표시합니다. 곁가지(menu bar app)는 Parked 한 줄입니다. Dana의 이메일이 "그녀 몫으로 따로 나가는가"는 램블에 없는 추론이라 Inferred에, 일요일 저녁의 시간대는 Guessed에 둡니다. 번복의 채택된 입장(email, commits only)은 Ledger에만 두고 Locked에 되풀이하지 않습니다. "Nothing appears twice"를 이 문서는 Locked와 Ledger 사이에 이렇게 읽었습니다. 원본 참고 문서의 예시는 "Email delivery"를 Locked에도 적고 "Slack, then email"을 Ledger에도 적어서 같은 읽기를 따르지 않습니다. 규칙이 번복의 채택 결과를 어디에 둘지 말하지 않기 때문입니다. `echo-good.md`로 저장합니다.
+(heredoc과 here-string은 내용이 있는 파일 저장용입니다. PowerShell 블록은 Windows PowerShell 5.1에서 가짜 홈과 스크래치 `TEMP`로 돌렸고, 저장된 파일의 첫 바이트가 BOM(`ef bb bf`)이 아님을 확인했습니다. 5.1의 `Set-Content -Encoding utf8`은 BOM을 붙이므로 쓰지 않고 .NET으로 씁니다.) 이제 `SKILL.md`의 다섯 부분과 압축 규칙을 따라 손으로 바꿉니다. 판단 하나하나는 이렇습니다. 번복 둘은 Ledger에 "앞 입장, 뒤 입장, 뒤를 채택"으로 한 줄씩 넣습니다. "the usual cutoff"는 모호한 수량 낱말이므로 Locked에 넣지 않고 Open에 넣습니다. 최우선 조건("그러지 않으면 목적이 사라진다")은 Locked에 `**Top priority**`로 표시합니다. 곁가지(menu bar app)는 Parked 한 줄입니다. Dana의 이메일이 "그녀 몫으로 따로 나가는가"는 램블에 없는 추론이라 Inferred에, 일요일 저녁의 시간대는 Guessed에 둡니다. 번복의 채택된 입장(email, commits only)은 Ledger에만 두고 Locked에 되풀이하지 않습니다. "Nothing appears twice"(`SKILL.md:110`, "Every fact lives in exactly one section")를 이 문서는 Mission을 요약으로 보고 뺀 채 Locked와 Ledger 사이에서 지키는 쪽으로 읽었습니다. 원본 참고 문서의 예시는 email을 Mission·Locked·Ledger 세 곳에 적습니다. 규칙이 요약과 채택 결과를 어디까지 한 곳으로 치는지 말하지 않으므로 어느 읽기가 맞는지는 이 문서가 정하지 않습니다. Mission은 2인칭("your side projects")으로 씁니다. 틀이 Mission을 "what you are actually trying to achieve"(`echo-format.md:15`)로 적기 때문입니다. `echo-good.md`로 저장합니다.
 
 ```bash
-cat > echo-good.md <<'EOF'
+LAB="${TMPDIR:-/tmp}/tol-lab"
+mkdir -p "${LAB:?}"
+cat > "${LAB:?}/echo-good.md" <<'EOF'
 ## Mission
-A self-running weekly email that tells me which of my side projects have gone quiet, judged by commit activity.
+A weekly nudge, run by itself, about which of your side projects have gone quiet.
 
 ## Locked (your decisions and constraints)
 - Works for more than one person (you and Dana)
@@ -321,9 +350,13 @@ EOF
 ```
 
 ```powershell
-@'
+$ErrorActionPreference = "Stop"
+$Lab = Join-Path $env:TEMP "tol-lab"
+New-Item -ItemType Directory -Force $Lab | Out-Null
+$utf8 = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText((Join-Path $Lab "echo-good.md"), @'
 ## Mission
-A self-running weekly email that tells me which of my side projects have gone quiet, judged by commit activity.
+A weekly nudge, run by itself, about which of your side projects have gone quiet.
 
 ## Locked (your decisions and constraints)
 - Works for more than one person (you and Dana)
@@ -344,28 +377,28 @@ A self-running weekly email that tells me which of my side projects have gone qu
 - Guessed: "Sunday evening" is in your local timezone
 
 Correct anything that's off, especially My additions. Want the interview for the Open items?
-'@ | Set-Content -Encoding utf8 echo-good.md
+'@, $utf8)
 ```
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 이 에코는 161낱말이고 램블(129낱말)보다 깁니다. 참고 문서는 "ten minute ramble"에 대해 250낱말 미만을 겨냥하라고 적습니다. 열 분 분량 램블이 몇 낱말인지는 원문이 말하지 않으므로, 이 견본은 형식을 보이는 용도일 뿐 "에코가 입력보다 짧다"는 주장의 근거가 아닙니다. 사용자의 말이 한 곳에서만 나오고(램블에서 "email is better"는 Ledger의 한 줄로), 모델이 보탠 것은 My additions의 두 줄뿐이라는 것이 이 형식의 효과입니다. 모델이 이 형식대로 실제로 답하는지는 확인하지 못했습니다.
+**확인.** 이 에코는 157낱말이고 램블(129낱말)보다 깁니다. 참고 문서는 "ten minute ramble"에 대해 250낱말 미만을 겨냥하라고 적습니다. 열 분 분량 램블이 몇 낱말인지는 원문이 말하지 않으므로, 이 견본은 형식을 보이는 용도일 뿐 "에코가 입력보다 짧다"는 주장의 근거가 아닙니다. 번복의 결과가 Ledger의 한 줄로만 나오고(Mission은 요약이라 뺀 읽기), 모델이 보탠 것은 My additions의 두 줄뿐이라는 것이 이 형식의 효과입니다. 모델이 이 형식대로 실제로 답하는지는 확인하지 못했습니다.
 
 ### Step 7. 모양 검사기로 견본과 망가진 견본을 잰다
 
 **목적.** 형식의 규칙 가운데 프로그램이 볼 수 있는 것만 기계로 확인합니다. 의미(추측이 Locked에 숨었는가)는 못 봅니다.
 
-**할 일.** 다음 `echo_check.py`를 `$LAB`에 저장합니다. 마크다운 하나를 읽어 다섯 제목의 순서, 불릿 한 줄 규칙(들여 쓴 이어짐 줄이 있으면 문제), 같은 줄의 되풀이, My additions와 Ledger의 접두어, 250낱말 미만, 끝맺음 문장, 금지된 말(`you said`, `typo`, `I'll start`)을 봅니다.
+**할 일.** 다음 `echo_check.py`를 Step 6의 스크래치 폴더(bash는 `${TMPDIR:-/tmp}/tol-lab`, PowerShell은 `$env:TEMP\tol-lab`)에 편집기로 저장합니다. 마크다운 하나를 읽어 다섯 제목의 순서, 불릿 한 줄 규칙(들여 쓴 이어짐 줄이 있으면 문제), 같은 줄의 되풀이, My additions와 Ledger의 접두어, 250낱말 미만, 끝맺음 문장, 금지된 말(`you said`, `typo`, `I'll start`)을 봅니다. 파일은 `utf-8-sig`로 엽니다. BOM이 붙은 파일을 `utf-8`로 열면 첫 제목이 `\ufeff## Mission`이 되어 Mission을 놓치기 때문입니다(Windows PowerShell 5.1의 `Set-Content -Encoding utf8`이 그런 파일을 만듭니다).
 
 `echo_check.py`
 
 ```python
 """Mechanical shape check for an echo brief. It reads one markdown file and checks only
 what a program can see. It cannot tell whether a guess is hiding in Locked."""
-import re, sys
+import os, re, sys
 
 SECTIONS = ["Mission", "Locked", "Open", "Ledger", "My additions"]
-text = open(sys.argv[1], encoding="utf-8").read()
+text = open(sys.argv[1], encoding="utf-8-sig").read()
 problems = []
 
 parts = re.split(r"^## (.+)$", text, flags=re.M)          # [pre, title, body, title, body, ...]
@@ -406,7 +439,7 @@ for pat in (r"\byou said\b", r"\btypo", r"\bI'll start\b"):
     if re.search(pat, text, flags=re.I):
         problems.append("forbidden phrase matched: %s" % pat)
 
-print("%s: %d words, %d problem(s)" % (sys.argv[1], words, len(problems)))
+print("%s: %d words, %d problem(s)" % (os.path.basename(sys.argv[1]), words, len(problems)))
 for p in problems:
     print("  -", p)
 sys.exit(1 if problems else 0)
@@ -414,7 +447,10 @@ sys.exit(1 if problems else 0)
 
 일부러 망가뜨린 견본 `echo-bad.md`도 만듭니다. 규칙을 어긴 곳이 여럿입니다(제목 하나 빠짐, 되풀이, 두 줄 불릿, 접두어 없는 추가, 인사말, 군말 언급).
 
-```text
+```bash
+LAB="${TMPDIR:-/tmp}/tol-lab"
+mkdir -p "${LAB:?}"
+cat > "${LAB:?}/echo-bad.md" <<'EOF'
 ## Mission
 You said you want a tool for quiet projects. Sounds like a great idea! I'll start building it now.
 
@@ -429,22 +465,74 @@ You said you want a tool for quiet projects. Sounds like a great idea! I'll star
 
 ## My additions
 - Dana wants one too
+EOF
 ```
 
-그리고 원본 참고 문서 `echo-format.md`의 "Worked example" 에코(`:48-` 이후)를 `ref-echo.md`로 잘라 저장해 같이 잽니다. 자르는 줄은 저장소 루트에서 Git Bash로 `awk '/^\*\*Echo:\*\*/{f=1;next} f' agent_skills/thinking-out-loud/references/echo-format.md > "$LAB/ref-echo.md"`입니다(PowerShell로는 해 보지 못했으니 그 부분을 편집기로 복사해도 됩니다).
+```powershell
+$ErrorActionPreference = "Stop"
+$Lab = Join-Path $env:TEMP "tol-lab"
+New-Item -ItemType Directory -Force $Lab | Out-Null
+$utf8 = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText((Join-Path $Lab "echo-bad.md"), @'
+## Mission
+You said you want a tool for quiet projects. Sounds like a great idea! I'll start building it now.
+
+## Locked
+- Email delivery
+- Quiet means 14 days without a commit
+- Email delivery
+
+## Ledger
+- Flipped: Slack, then email. Going with email.
+  That was a typo-prone part of the dictation.
+
+## My additions
+- Dana wants one too
+'@, $utf8)
+```
+
+그리고 원본 참고 문서 `echo-format.md`의 "Worked example" 에코(`:48-` 이후)를 `ref-echo.md`로 잘라 저장해 같이 잽니다.
 
 ```bash
-python -B -X utf8 echo_check.py echo-good.md
-python -B -X utf8 echo_check.py echo-bad.md
-python -B -X utf8 echo_check.py ref-echo.md
+REPO="$HOME/awesome-llm-apps"          # 클론한 위치로 바꿉니다
+LAB="${TMPDIR:-/tmp}/tol-lab"
+mkdir -p "${LAB:?}"
+awk '/^\*\*Echo:\*\*/{f=1;next} f' "${REPO:?}/agent_skills/thinking-out-loud/references/echo-format.md" > "${LAB:?}/ref-echo.md"
 ```
+
+```powershell
+$ErrorActionPreference = "Stop"
+$Lab = Join-Path $env:TEMP "tol-lab"
+New-Item -ItemType Directory -Force $Lab | Out-Null
+$utf8 = New-Object System.Text.UTF8Encoding $false
+$Repo = Join-Path $HOME "awesome-llm-apps"     # 클론한 위치로 바꿉니다
+$lines = [System.IO.File]::ReadAllLines((Join-Path $Repo "agent_skills/thinking-out-loud/references/echo-format.md"))
+$i = [array]::IndexOf($lines, "**Echo:**")
+[System.IO.File]::WriteAllText((Join-Path $Lab "ref-echo.md"), (($lines[($i + 1)..($lines.Count - 1)]) -join "`n") + "`n", $utf8)
+```
+
+세 견본을 잽니다.
+
+```bash
+LAB="${TMPDIR:-/tmp}/tol-lab"
+for f in echo-good.md echo-bad.md ref-echo.md; do python -B -X utf8 "${LAB:?}/echo_check.py" "${LAB:?}/$f"; done
+```
+
+```powershell
+$Lab = Join-Path $env:TEMP "tol-lab"
+foreach ($f in "echo-good.md","echo-bad.md","ref-echo.md") { python -B -X utf8 (Join-Path $Lab "echo_check.py") (Join-Path $Lab $f) }
+```
+
+(PowerShell의 `ref-echo.md` 자르기와 `echo-good.md` 검사는 5.1에서 돌려 보았고, 나머지 PowerShell 줄은 실행해 보지 못했습니다.)
+
+![원본 예시와 견본 셋을 재는 관계](diagrams/extra-echo.svg)
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
 **확인.** 직접 확인한 출력입니다.
 
 ```text
-echo-good.md: 161 words, 0 problem(s)
+echo-good.md: 157 words, 0 problem(s)
 echo-bad.md: 63 words, 8 problem(s)
   - sections are ['Mission', 'Locked', 'Ledger', 'My additions'], expected ['Mission', 'Locked', 'Open', 'Ledger', 'My additions'] in this order
   - 'Email delivery' appears in Locked and again in Locked
@@ -455,7 +543,7 @@ echo-bad.md: 63 words, 8 problem(s)
   - forbidden phrase matched: \btypo
   - forbidden phrase matched: \bI'll start\b
 ref-echo.md: 137 words, 1 problem(s)
-  - Open: bullet spans 2 lines: 'What defines "relevance to what I\'m building": a written interest
+  - Open: bullet spans 2 lines: 'What defines "relevance to what I\'m buil'
 ```
 
 세 가지를 읽습니다. 첫째, 규칙 가운데 모양으로 보이는 것(검사 항목 일곱)은 기계가 잡습니다. 둘째, 기계가 못 잡는 것이 더 중요합니다. `echo-bad.md`에서 "Quiet means 14 days"는 램블에 없던 숫자가 Locked에 들어간 것인데 검사기는 이것을 못 봅니다. 이것이 이 스킬이 막으려는 바로 그 실패입니다("vague quantifiers are never silently resolved"). 그것을 잡는 것은 사람 눈이나 3단계 시험뿐입니다. 셋째, 원본 참고 문서의 예시 에코도 "한 줄 한 불릿" 규칙에서 걸립니다. 예시의 Open 불릿은 문서 폭 때문에 줄이 접혀 있을 뿐이고 화면에서는 한 줄로 이어지는 글일 수 있습니다. 규칙의 "한 줄"이 화면 줄인지 글 단위인지 원문이 정하지 않았고, 이 검사기는 접힌 줄을 문제로 셉니다. 그 한 건을 빼면 원본 예시는 다섯 부분, 접두어, 낱말 수, 끝맺음을 모두 통과합니다.
@@ -473,14 +561,14 @@ ref-echo.md: 137 words, 1 problem(s)
 | 3 | 에코 뒤의 "yes interview me" | 5 | 플래그된 항목만, 한 메시지에 질문 하나, 이유 한 절, 다섯 개 이하, 바뀐 부분만 다시 씀 |
 | 4 | 수정 뒤의 "yes that's exactly it, locked" | 3 | 저장 선택지 정확히 셋, 고르기 전에 쓰지 않음, 뒤에 다시 묻지 않음 |
 
-이 사례를 Step 6의 견본에 대고, 글만 보고 판단할 수 있는 사례 1의 항목을 제가 손으로 채점해 보았습니다. 열한 항목 가운데 첫째("에코만 내고 행동하지 않음")는 에이전트의 행동이라 글만으로는 판단할 수 없고, 나머지 열은 견본이 만족합니다(Mission 한 문장, 번복 둘이 양쪽 입장으로 Ledger에, 곁가지 Parked, 최우선 조건 Locked, My additions는 Inferred·Guessed뿐, 모호한 낱말은 Open·Guessed, 한 사실은 한 곳, 한 줄 불릿, 오타 언급 없음, 끝맺음). 그러나 이 채점은 제가 쓴 글을 제가 채점한 것이라 순환입니다. 실제 에이전트가 이 열 항목을 지키는지는 이 문서가 확인하지 못했습니다.
+이 사례를 Step 6의 견본에 대고, 글만 보고 판단할 수 있는 사례 1의 항목을 제가 손으로 채점해 보았습니다. 열한 항목 가운데 첫째("에코만 내고 행동하지 않음")는 에이전트의 행동이라 글만으로는 판단할 수 없고, 나머지 열은 견본이 만족합니다(Mission 한 문장, 번복 둘이 양쪽 입장으로 Ledger에, 곁가지 Parked, 최우선 조건 Locked, My additions는 Inferred·Guessed뿐, 모호한 낱말은 Open·Guessed, 한 사실은 한 곳(Mission은 요약이라 뺀 읽기), 한 줄 불릿, 오타 언급 없음, 끝맺음). 그러나 이 채점은 제가 쓴 글을 제가 채점한 것이라 순환입니다. 실제 에이전트가 이 열 항목을 지키는지는 이 문서가 확인하지 못했습니다.
 
 대조에서 본문과 어긋난 곳이 넷 나왔습니다.
 
 - 사례 2의 마지막 기대는 "all four sections"를 말하지만 `SKILL.md:91-119`의 에코는 다섯 부분입니다.
-- 사례 1의 `expected_output`은 "brief with goals, constraints, made decisions and open questions"와 "an assumption diff separating said, inferred, and guessed"를 말합니다. 본문은 Locked 하나(결정과 제약을 합침)와 My additions(Inferred·Guessed만)이고, 같은 사례의 기대 항목은 "there is no you-said recap section"을 요구해서 `expected_output`과 서로 어긋납니다. 이는 본문이 버전 1.3.0으로 바뀌고 시험 자료의 서술은 따라가지 못한 흔적으로 보이지만, 이력은 확인하지 않았습니다.
+- 사례 1의 `expected_output`은 "brief with goals, constraints, made decisions and open questions"와 "an assumption diff separating said, inferred, and guessed"를 말합니다. 본문은 Locked 하나(결정과 제약을 합침)와 My additions(Inferred·Guessed만)이고, 같은 사례의 기대 항목은 "there is no you-said recap section"을 요구해서 `expected_output`과 서로 어긋납니다. 이 저장소의 이력으로 보면 `SKILL.md`와 `evals.json`은 같은 커밋(`de309b13`, 2026-07-21)으로 함께 들어왔고 그때 이미 `version: "1.3.0"`과 다섯 부분이었으므로, 어긋남은 처음 들어온 때부터입니다(`git log -- agent_skills/evals/thinking-out-loud/evals.json`).
 - 사례 1의 기대 하나는 곁가지가 "goals"에 섞이지 않아야 한다고 적습니다. 본문에는 goals라는 부분이 없습니다.
-- 저장소 `README.md`(67줄)는 캡처 모드의 응답을 "listening..."이라고 적지만 `SKILL.md`는 "Listening."처럼 조금씩 바꾸라고 적습니다. 의미는 같고 낱말이 다릅니다.
+- 스킬의 `README.md`(67줄)는 캡처 모드의 응답을 "listening..."이라고 적지만 `SKILL.md`는 "Listening."처럼 조금씩 바꾸라고 적습니다. 의미는 같고 낱말이 다릅니다.
 
 저장소 `agent_skills/README.md`의 두 문장도 대조했습니다. 하나, "Every skill also has an executable eval in evals/. Run it from the clone before installing." 이 스킬에서 "executable"은 `test_*.py`가 아니라 위 사례들을 사람이 에이전트에 붙여 넣는 일이고, 그렇게 돌린 결과는 저장소에 남아 있지 않습니다(이 문서는 돌리지 않았습니다). 둘, "Local and private by default. No network calls unless declared." 이 스킬에는 스크립트가 없고 본문에 네트워크를 가리키는 말이 없으며 스캐너도 깨끗하므로 이 주장과 부딪히는 곳이 없습니다. 다만 이것은 스킬 파일의 내용이지, 에이전트가 램블을 모델에 보내는 일 자체(어차피 일어나는 일)의 이야기가 아닙니다. 원본 `README.md`가 쓴 "no scripts, no network calls, and it never saves anything without asking"에서 앞 둘은 이 문서가 확인했고 셋째는 본문이 그렇게 시킨다는 것까지입니다.
 
@@ -492,12 +580,16 @@ ref-echo.md: 137 words, 1 problem(s)
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 에이전트를 띄워 관찰한 것이 아니라 Anthropic 문서의 점진적 불러오기와 `SKILL.md`의 지시를 이어 붙인 것입니다. 시작할 때 에이전트는 설치된 모든 스킬의 이름과 설명만 읽습니다(첫 메시지). 사용자가 램블을 한 메시지로 보내면, 설명에 맞는다고 판단한 에이전트가 `SKILL.md` 본문을 읽고(셋째 메시지) 계약 여섯 줄과 에코 틀을 얻습니다. 본문이 `references/echo-format.md`를 가리키므로 에이전트는 그 파일도 읽을 수 있습니다(다섯째 메시지). 문서는 가리킨 파일이 "필요할 때" 읽힌다고 하므로 읽을지는 에이전트 몫입니다. 그 뒤 에이전트는 파일 수정이나 코드 없이 에코만 보내고, 사용자가 고치고 승인하면 저장 위치 셋을 제안하며, 사용자가 고른 뒤에야 `CLAUDE.md`나 `docs/rambles/`에 씁니다. 여기에 모델 호출이 몇 번 있는지, 에코가 한 번에 만들어지는지는 이 문서가 확인하지 못했습니다. 캡처 모드와 인터뷰는 이 그림에 넣지 않았습니다. 같은 사용자와 에이전트 사이에서 메시지 수가 늘어나는 선택 경로입니다(Step 5).
+이 그림은 에이전트를 띄워 관찰한 것이 아니라 Anthropic 문서의 점진적 불러오기와 `SKILL.md`의 지시를 이어 붙인 것입니다. 시작할 때 에이전트는 설치된 모든 스킬의 이름과 설명만 읽습니다(첫 메시지). 사용자가 램블을 한 메시지로 보내면, 설명에 맞는다고 판단한 에이전트가 `SKILL.md` 본문을 읽고(셋째 메시지) 계약 여섯 줄과 에코 틀을 얻습니다. 본문이 `references/echo-format.md`를 가리키므로 에이전트는 그 파일도 읽을 수 있습니다(다섯째 메시지). 문서는 가리킨 파일이 "필요할 때" 읽힌다고 하므로 읽을지는 에이전트 몫입니다. 그 뒤 에이전트는 파일 수정이나 코드 없이 에코만 보내고, 사용자가 고치고 승인하면 저장 위치 셋을 제안합니다. 사용자가 고른 뒤에야 `CLAUDE.md`나 `docs/rambles/`에 쓰는 마지막 두 메시지는 폭을 지키려고 보조 그림으로 나눴습니다(메시지는 코드 순서 그대로입니다).
+
+![저장 선택과 저장](diagrams/extra-save.svg)
+
+첫 그림의 마지막 메시지 다음에 이 그림의 첫 메시지가 옵니다. 1번이나 2번을 골랐을 때만 파일에 씁니다. 3번(대화 안에만 두기)이면 쓰지 않습니다. 여기에 모델 호출이 몇 번 있는지, 에코가 한 번에 만들어지는지는 이 문서가 확인하지 못했습니다. 캡처 모드와 인터뷰는 이 그림에 넣지 않았습니다. 같은 사용자와 에이전트 사이에서 메시지 수가 늘어나는 선택 경로입니다(Step 5).
 
 ## 실행 체크리스트
 
 - [ ] `wc -l`로 세 파일이 158·67·72줄이고 파이썬 파일이 0개임을 확인했다
-- [ ] 스크래치 프로젝트의 `.claude/skills/`에 복사하고 파일 셋만 들어간 것을 봤다
+- [ ] Step 3 블록으로 스크래치 프로젝트의 `.claude/skills/`에 복사하고 파일 셋만 들어간 것을 봤다(새 터미널이면 블록 첫머리의 변수 줄부터 그대로)
 - [ ] `skill_lint.py --strict`, `skill_scanner.py`, `run_trigger_evals.py`, `registry_lint.py --check`가 통과했다
 - [ ] `echo_check.py`가 견본은 통과시키고 망가진 견본은 거절했다
 - [ ] 진짜 `~/.claude`나 다른 에이전트 설정 폴더를 건드리지 않았고, 저장소에 `__pycache__`가 새로 생기지 않았다
@@ -506,7 +598,7 @@ ref-echo.md: 137 words, 1 problem(s)
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `UnicodeEncodeError: 'cp949' codec can't encode character '\u2014'`(`skill_lint.py`·`skill_scanner.py`의 마지막 출력 줄) | 한국어 Windows의 기본 출력 인코딩이 `cp949`이고 도구가 `—`를 찍는다. 직접 확인했다 | 명령에 `-X utf8`을 붙인다. `-I`와 함께 쓰는 `PYTHONIOENCODING`은 듣지 않는다 |
+| `UnicodeEncodeError: 'cp949' codec can't encode character '\u2014'`(`skill_lint.py`·`skill_scanner.py`·`registry_lint.py`의 출력 줄) | 한국어 Windows에서 출력이 콘솔이 아니라 파이프일 때(Git Bash 등) 기본 출력 인코딩이 `cp949`이고 도구가 `—`를 찍는다. 직접 확인했다. 콘솔 창에서는 나지 않는 것으로 알지만 재현하지 못했다 | 명령에 `-X utf8`을 붙인다. `-I`와 함께 쓰는 `PYTHONIOENCODING`은 듣지 않는다 |
 | `UnicodeDecodeError: 'cp949' codec can't decode byte 0xe2`(`run_trigger_evals.py`의 `open(...).read()`) | 도구가 스킬 일곱 개의 `SKILL.md`를 인코딩 지정 없이 연다. 이 스킬의 `SKILL.md`는 ASCII뿐이지만 다른 스킬(`advisor-orchestrator-worker`·`project-graveyard`)에 UTF-8 글자가 있다. 직접 확인했다 | `-X utf8`. `PYTHONIOENCODING=utf-8`만으로는 읽기에서 계속 멈춘다 |
 | `agent_skills/evals/tools/__pycache__`가 생김 | 파이썬이 도구 파일을 바이트코드로 저장한다. 저장소 `.gitignore`가 무시하지만 클론이 더러워진다. 이 문서의 작업 중에 한 번 직접 봤다 | `-B`를 붙이고, 이미 생겼다면 그 폴더만 이름으로 지운다(와일드카드 없이) |
 | `-I`를 쓰면 `PYTHONDONTWRITEBYTECODE=1`·`PYTHONUTF8=1`이 듣지 않음 | `-I`는 `PYTHON*` 환경변수를 모두 무시한다. 직접 확인했다 | 환경변수 대신 `-B`·`-X utf8` 옵션을 쓴다 |

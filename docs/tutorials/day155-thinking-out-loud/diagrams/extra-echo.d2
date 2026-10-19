@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+ramble: "손으로 쓴 램블\n(ramble.txt)" { class: file }
+good: "손으로 쓴 에코\n(echo-good.md)" { class: file }
+bad: "망가뜨린 에코\n(echo-bad.md)" { class: file }
+fmt: "원본 참고 문서\n(echo-format.md)" { class: file }
+refex: "원본 예시 에코\n(ref-echo.md)" { class: file }
+check: "모양 검사기\n(echo_check.py)" { class: ours }
+
+ramble -> good: "손으로 변환"
+fmt -> refex: "awk로 잘라 냄"
+check -> good: "통과 (0건)"
+check -> bad: "거절 (8건)"
+check -> refex: "1건"
