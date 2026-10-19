@@ -1,0 +1,32 @@
+...@../../_tools/theme
+direction: down
+
+user: 독자 {
+  class: person
+  label.near: outside-top-center
+}
+agent: "코딩 에이전트\n(Claude Code 등, 로컬)" { class: ext }
+repo: "원본 스킬 폴더\n(agent_skills/\nthinking-out-loud)" { class: file }
+folder: "설치 폴더 (thinking-out-loud/)" {
+  class: group
+  skillmd: "SKILL.md" { class: file }
+  ref: "references/\necho-format.md" { class: file }
+}
+brief: "승인된 브리프\n(CLAUDE.md 또는\ndocs/rambles/)" { class: file }
+tools: "시험 도구\n(skill_lint ·\nskill_scanner ·\nrun_trigger_evals ·\nregistry_lint)" { class: ours }
+trig: "trigger-cases\n.json" { class: file }
+evalsj: "evals.json\n(3단계)" { class: file }
+ramble: "손으로 쓴 램블\n(ramble.txt)" { class: file }
+handecho: "손으로 쓴 에코\n(echo-good.md)" { class: file }
+echocheck: "모양 검사기\n(echo_check.py)" { class: ours }
+
+user -> agent: "램블"
+agent -> folder: "읽기: 설명, SKILL.md, 참고 문서"
+agent -> user: "에코 · 저장 제안"
+agent -> brief: "고른 곳에 저장"
+repo -> folder: "복사 (cp -r)"
+tools -> folder: "구조 · 보안 검사"
+tools -> trig: "양성 · 음성 점수"
+evalsj -> agent: "프롬프트 붙여 넣기"
+ramble -> handecho: "손으로 변환"
+echocheck -> handecho: "모양 검사"

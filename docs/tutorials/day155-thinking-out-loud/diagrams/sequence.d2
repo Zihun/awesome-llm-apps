@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+agent: "코딩 에이전트" { class: ext }
+folder: "설치 폴더" { class: file }
+
+agent -> folder: "시작 때 name · description"
+user -> agent: "램블 (한 메시지)"
+agent -> folder: "SKILL.md 본문 읽기"
+folder -> agent: "계약 여섯 줄 · 에코 틀"
+agent -> folder: "echo-format.md 읽기"
+folder -> agent: "에코 틀 · 보기"
+agent -> user: "에코 (행동 없음)"
+user -> agent: "수정 · 승인"
+agent -> user: "저장 위치 셋 제안"
+user -> agent: "고른 번호"
