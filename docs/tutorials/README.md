@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 151 / 167일 완료
+진도: 153 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -282,14 +282,14 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 152](day152-llama3.2-finetuning/README.md) | 🦙 Llama 3.2 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning/) |
-| ⬜ | Day 153 | 🦥 Gemma 3 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning/) |
+| ✅ | [Day 152](day152-llama3.2-finetuning/README.md) | 🦙 Llama 3.2 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/llama3.2_finetuning/) |
+| ✅ | [Day 153](day153-gemma3-finetuning/README.md) | 🦥 Gemma 3 Fine-tuning | [advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning](../../advanced_llm_apps/llm_finetuning_tutorials/gemma3_finetuning/) |
 
 ### 볼륨 16. 🧩 Agent Skills (Day 154–161, 8일)
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | Day 154 | 🧠 Advisor Orchestrator Worker | [agent_skills/advisor-orchestrator-worker](../../agent_skills/advisor-orchestrator-worker/) |
+| ⬜ | [Day 154](day154-advisor-orchestrator-worker/README.md) | 🧠 Advisor Orchestrator Worker | [agent_skills/advisor-orchestrator-worker](../../agent_skills/advisor-orchestrator-worker/) |
 | ⬜ | Day 155 | 🎙️ Thinking Out Loud | [agent_skills/thinking-out-loud](../../agent_skills/thinking-out-loud/) |
 | ⬜ | Day 156 | 🏺 Commit Archaeologist | [agent_skills/commit-archaeologist](../../agent_skills/commit-archaeologist/) |
 | ⬜ | Day 157 | 🩺 Dependency Doctor | [agent_skills/dependency-doctor](../../agent_skills/dependency-doctor/) |
