@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+agent: "코딩 에이전트" { class: ext }
+script: "scope_creep.py" { class: ours }
+git: "git (로컬)" { class: ext }
+folder: "스킬 폴더" { class: file }
+
+agent -> folder: "시작 때 name · description"
+user -> agent: "범위를 넘었나? + 의도 한 줄"
+agent -> folder: "SKILL.md 읽기"
+folder -> agent: "지시문"
+agent -> folder: "scope-signals.md 읽기"
+folder -> agent: "신호 정의 · 판정 행렬"
+agent -> script: "--repo --intent --json 실행"
+script -> git: "git diff --no-ext-diff --no-textconv"
+git -> script: "통합 diff 텍스트"
+script -> agent: "JSON 보고서"
+agent -> user: "범위 보고서 · keep/split/justify 표"
+agent -> user: "나누기 · 되돌리기는 승인을 먼저 묻기"

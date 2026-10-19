@@ -1,0 +1,33 @@
+...@../../_tools/theme
+direction: down
+
+user: 독자 {
+  class: person
+  label.near: outside-top-center
+}
+agent: "코딩 에이전트" { class: ext }
+installed: "설치된 사본" { class: file }
+folder: "원본 스킬 폴더" {
+  class: group
+  skillmd: "SKILL.md" { class: file }
+  ref: "scope-signals.md" { class: file }
+  script: "scope_creep.py" { class: ours }
+}
+git: "git (로컬 프로그램)" { class: ext }
+repo: "합성 git 저장소" { class: store }
+tools: "시험 도구 넷" { class: ours }
+test2b: "test_scope_creep.py" { class: ours }
+cases: "trigger-cases.json" { class: file }
+evalsj: "evals.json" { class: file }
+
+user -> agent: "의도 · 질문"
+agent -> user: "보고서"
+folder -> installed: "복사"
+agent -> installed: "읽기 · 실행"
+folder.script -> git: "git diff"
+git -> repo: "읽기"
+folder.script -> agent: "JSON"
+folder -> tools: "검사 대상"
+tools -> cases: "점수"
+folder.script -> test2b: "시험 대상"
+evalsj -> agent: "프롬프트"
