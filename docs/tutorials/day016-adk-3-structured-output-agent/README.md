@@ -1,6 +1,6 @@
 # Day 016 · Google ADK Crash Course · 3_structured_output_agent
 
-> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ · 예상 소요 60분 · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent`
+> 볼륨 2 🧑‍🏫 Crash Courses · 난이도 ★★☆ · 예상 소요 65분 · API 비용 $0 (API 키 없이 진행 — 실제 모델 호출은 하지 않습니다) · 원본 앱: `ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent`
 
 ## 오늘 만들 것
 
@@ -297,14 +297,30 @@ print(t_schema(None, SupportTicket).model_dump_json(indent=2, exclude_none=True)
 
 **목적.** 각 하위 레슨 폴더 **안에서** `adk web`을 띄우면 어떤 이름으로 에이전트가 인식되는지, 키 없이 요청을 보내면 Day 14·15와 같은 지점에서 멈추는지 실제 HTTP 요청으로 확인합니다.
 
-**할 일.** 최초 실행 시 텔레메트리 동의 절차는 Day 14에서 이미 확인했으므로 그대로 적용됩니다. 각 하위 레슨 폴더 **안에서** 서버를 띄웁니다.
+**할 일.** 최초 실행 시 텔레메트리 동의 절차는 Day 14에서 이미 확인했고, 아래 블록이 그 질문이 뜨지 않게 합니다. 각 하위 레슨 폴더 **안에서** 서버를 띄웁니다.
 
 ```bash
+# adk를 부르는 터미널마다 먼저 실행합니다. 홈을 새 폴더로 바꿔 독자의 텔레메트리 동의가 보이지 않게 합니다
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="$(mktemp -d)"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
 cd ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent/3_1_customer_support_ticket_agent
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --port 8990 --no_use_local_storage . < /dev/null
+```
+
+```powershell
+# PowerShell(실행해 보지 못했습니다). adk를 부르는 터미널마다 먼저 실행합니다. `<` 리다이렉션이 없어 `< /dev/null`은 뺐습니다
+$env:UV_CACHE_DIR = (uv cache dir)
+$env:USERPROFILE = "$env:TEMP\adkhome-day016"; $env:HOME = $env:USERPROFILE; New-Item -ItemType Directory -Force $env:USERPROFILE | Out-Null
+cd ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent/3_1_customer_support_ticket_agent
+uv run --no-project adk telemetry disable
 uv run --no-project adk web --port 8990 --no_use_local_storage .
 ```
 
-이 폴더 이름(`3_1_customer_support_ticket_agent`) 자체는 숫자로 시작하지만, `adk web`에게 넘긴 경로가 바로 이 폴더이므로 스캔 대상은 그 **안**의 하위 폴더 하나, 즉 `customer_support_agent/`뿐입니다 — 유효한 식별자입니다. `3_2_email_agent`도 같은 방식으로 자신의 폴더 안에서 띄우면 `email_generator_agent`만 스캔됩니다.
+위 블록의 처음 세 줄은 홈(`HOME`·`USERPROFILE`)을 이 터미널만의 새 임시 폴더로 바꿉니다. ADK 2.12.0은 텔레메트리 동의를 홈의 `.adk/config.json`에서 읽고(`utils/_telemetry_config.py`, `Path.home()`), 켜져 있으면 `adk` 명령이 끝날 때 하위 프로세스가 `play.googleapis.com`으로 사용 기록을 보냅니다(`cli/_telemetry/_metrics_collector.py`의 `shutdown`, `_metrics_reporter.py`). 독자가 다른 ADK 실습에서 이미 동의해 뒀다면 질문 없이 나가고, 처음이라도 `Enable telemetry? [Y/n]`에 그냥 Enter를 누르면 켜집니다(`cli/cli_tools_click.py`). 그래서 서로 독립된 세 줄을 겹쳤습니다. 새 홈, `adk telemetry disable`(진짜 홈에서 부르면 독자의 ADK 설정이 바뀌므로 새 홈에서만 부릅니다), 그리고 `< /dev/null`(입력이 비어 있어 Enter가 오지 않으니 질문이 와도 켜지지 않습니다. Windows의 Python은 NUL을 터미널로 봐서 질문 문구는 찍히지만 답은 파일 끝으로 끝납니다)입니다. 이 문서의 확인에서는 동의(`true`)를 미리 적어 둔 홈으로 독자를 흉내 내고 `adk web`을 띄웠다 멈췄습니다. 원래 명령 그대로는 `play.googleapis.com` 요청 시도가 1건 잡혔고, 세 줄에서 하나씩 뺀 판 9개는 모두 0건이었습니다(소켓 감시가 막아 실제로는 보내지 않았습니다).
+
+이 폴더 이름(`3_1_customer_support_ticket_agent`) 자체는 숫자로 시작하지만, `adk web`에게 넘긴 경로가 바로 이 폴더이므로 스캔 대상은 그 **안**의 하위 폴더 하나, 즉 `customer_support_agent/`뿐입니다 — 유효한 식별자입니다. `3_2_email_agent`도 같은 방식으로(홈 블록과 `adk telemetry disable`, `< /dev/null`을 그대로 붙여) 자신의 폴더 안에서 띄우면 `email_generator_agent`만 스캔됩니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -354,7 +370,12 @@ ValueError: No API key was provided. Please pass a valid API key. Learn how to c
 
 ```bash
 cd ai_agent_framework_crash_course/google_adk_crash_course/3_structured_output_agent
-uv run --no-project adk web --port 8992 --no_use_local_storage .
+# adk를 부르는 터미널마다 먼저 실행합니다. 홈을 새 폴더로 바꿔 독자의 텔레메트리 동의가 보이지 않게 합니다
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$(uv cache dir 2>/dev/null)}"
+export HOME="$(mktemp -d)"
+if command -v cygpath >/dev/null 2>&1; then export USERPROFILE="$(cygpath -w "$HOME")"; else export USERPROFILE="$HOME"; fi
+uv run --no-project adk telemetry disable < /dev/null
+uv run --no-project adk web --port 8992 --no_use_local_storage . < /dev/null
 ```
 
 `adk web`은 `web=True`일 때 `NestedAgentLoader`라는 로더를 쓰는데(소스로 확인, google-adk 2.9.2의 `google/adk/cli/fast_api.py`), 이 로더는 하위 폴더를 최대 5단계까지 재귀적으로 훑어 `agent.py`가 있는 폴더를 모두 찾고 상대 경로 구분자를 점(`.`)으로 바꿔 이름 짓습니다(소스로 확인, `google/adk/cli/utils/_nested_agent_loader.py`). 그 결과 두 에이전트는 각각 `3_1_customer_support_ticket_agent.customer_support_agent`, `3_2_email_agent.email_generator_agent`라는 점 포함 이름으로 잡힙니다.
