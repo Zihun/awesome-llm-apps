@@ -45,9 +45,10 @@
 | 매니페스트 읽기 | 이름으로 파서를 고르고 `requirements.txt`·`pyproject.toml`·`package.json`을 공통 항목으로 바꾼다 | `agent_skills/dependency-doctor/scripts/dep_doctor.py:61-194` |
 | 오프라인 검사 | 백포트, 표준 라이브러리 이름, 고정 없음, 중복·충돌 | `agent_skills/dependency-doctor/scripts/dep_doctor.py:278-373` |
 | 표지 걸러내기 | `python_version` 표지를 돌린 파이썬으로 판정 | `agent_skills/dependency-doctor/scripts/dep_doctor.py:205-230` |
-| PyPI 조회(선택) | `--online`일 때 정확히 고정한 이름마다 한 번 | `agent_skills/dependency-doctor/scripts/dep_doctor.py:376-420` |
+| PyPI 조회(선택) | `--online`일 때 정확히 고정한 (이름, 버전)마다 한 번 | `agent_skills/dependency-doctor/scripts/dep_doctor.py:376-420` |
 | 보고서 조립과 출력 | 정렬, 요약, JSON 또는 사람용 글 | `agent_skills/dependency-doctor/scripts/dep_doctor.py:423-481` |
 | 참고 문서 | 에이전트가 설명하기 전에 읽는 판단 기준 | `agent_skills/dependency-doctor/references/dependency-pitfalls.md:1-74` |
+| 시험 1~2단계 | 구조(`skill_lint`)·보안(`skill_scanner`)·트리거 낱말 점수(`run_trigger_evals`). 모델 없이 돈다 | `agent_skills/evals/tools/skill_lint.py:1-385`, `skill_scanner.py:1-423`, `run_trigger_evals.py:1-132` |
 | 시험 | 합성 매니페스트로 66개 단언, 트리거 여섯 사례, 3단계 기대 | `agent_skills/evals/dependency-doctor/test_dep_doctor.py:1-222` |
 | 이 문서의 도구 | 복사한 스킬 폴더, 랩 환경, 가짜 PyPI 래퍼 | 코드 없음 (Step 1, 7에서 직접 만듦) |
 
@@ -269,12 +270,12 @@ typing_extensions==4.12.2
 # a comment is not a dependency
 EOF
 DD=.claude/skills/dependency-doctor/scripts/dep_doctor.py
-py -B $DD manifests/a-shadow.txt
+py -B $DD manifests/a-shadow.txt; echo "exit=$?"
 ```
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 세 건이 나옵니다.
+**확인.** 세 건이 나오고 종료 코드는 0입니다.
 
 ```text
 Dependency Doctor: manifests\a-shadow.txt
@@ -292,6 +293,7 @@ HIGH [abandoned-backport] enum34 (line 3)
   Fix: Remove enum34 on supported Python versions. If an older runtime is required, guard the backport with a Python-version marker.
 
 Summary: 3 finding(s)
+exit=0
 ```
 
 `typing_extensions`는 이름이 표준 라이브러리 모듈이 아니라서 걸리지 않았고, `-r …`과 주석은 읽지 않았습니다(`-`나 `#`로 시작하는 줄은 건너뛰므로 `-r`이 가리키는 파일은 따라가지도 않습니다). 같은 "빼야 할 줄"이 둘로 갈린 이유는 코드 순서입니다.
@@ -881,7 +883,7 @@ py -B "$REPO/agent_skills/evals/dependency-doctor/test_dep_doctor.py" | tail -3
 ## 더 해보기
 
 - `agent_skills/dependency-doctor/scripts/dep_doctor.py:404-411`의 `yanked_reason` 읽기를 복사본에서 `null`을 견디게 고치고 `g-noreason.txt`를 다시 돌려, 사유 없이 야크 처리된 항목이 보고되는지 보세요. 원본은 고치지 않습니다.
-- `[dependency-groups]`의 항목도 읽도록 복사본의 `load_pyproject`(`agent_skills/dependency-doctor/scripts/dep_doctor.py:117-153`)를 고치고 `manifests/py/pyproject.toml`에서 `typing==3.7.4.3`이 높음으로 나오는지 확인한 뒤, 시험 66개가 여전히 통과하는지 보세요.
+- `[dependency-groups]`의 항목도 읽도록 복사본의 `load_pyproject`(`agent_skills/dependency-doctor/scripts/dep_doctor.py:117-153`)를 고치고 `manifests/py/pyproject.toml`에서 `typing==3.7.4.3`이 높음으로 나오는지 확인한 뒤, 시험 66개가 여전히 통과하는지 보세요. 시험 파일은 자기 위치에서 `parents[2]/dependency-doctor/scripts/dep_doctor.py`를 고르므로(`agent_skills/evals/dependency-doctor/test_dep_doctor.py:18-23`) 그대로 돌리면 저장소 원본을 시험합니다. 고친 복사본을 시험하려면 시험 파일도 같은 상대 배치(`<x>/evals/dependency-doctor/test_dep_doctor.py`와 `<x>/dependency-doctor/scripts/dep_doctor.py`)로 복사해 돌리세요.
 - `agent_skills/evals/dependency-doctor/trigger-cases.json`에 음성 사례 하나("update my lockfile" 같은 것)를 복사본에 넣고 `trig.py`의 점수와 통과선(1.15배)을 계산해, 설명의 어떤 낱말이 점수를 끌어올리는지 찾아보세요.
 
 ## 다음 날 예고

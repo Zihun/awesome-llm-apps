@@ -11,9 +11,10 @@ skillmd: "지시문\n(SKILL.md)" { class: file }
 script: "진단 스크립트\n(dep_doctor.py)" { class: ours }
 refs: "참고 문서\n(dependency-pitfalls.md)" { class: file }
 manifest: "매니페스트\n(requirements.txt 등)" { class: file }
-py: "파이썬 (stdlib 이름표)" { class: ext }
-pypi: "PyPI (부르지 않음)" { class: ext }
+py: "파이썬\n(stdlib 이름표)" { class: ext }
+pypi: "PyPI\n(부르지 않음)" { class: ext }
 evals: "시험\n(test_dep_doctor.py)" { class: ours }
+tools: "시험 1~2단계\n(lint·scanner·트리거)" { class: ours }
 
 user -> agent: "점검 요청"
 skillmd -> agent: "지시 읽기"
@@ -24,3 +25,5 @@ manifest -> script: "읽기 (utf-8)"
 py -> script: "stdlib 이름표"
 pypi -> script: "릴리스 JSON (--online)"
 evals -> script: "합성 입력"
+tools -> skillmd: "구조 · 설명"
+tools -> script: "보안"
