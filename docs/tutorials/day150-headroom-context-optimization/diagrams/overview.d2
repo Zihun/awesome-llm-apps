@@ -4,20 +4,22 @@ direction: right
 reader: "독자 (터미널)" { class: person }
 
 demo: "데모 스크립트\n(headroom_demo.py)" { class: ours }
-lib: "headroom 라이브러리\n(compress)" { class: ours }
-proxy: "headroom proxy\n(127.0.0.1)" { class: ours }
+lib: "headroom\n라이브러리" { class: ours }
+proxy: "headroom proxy\n(127.0.0.1)" { class: ext }
 
 tok: "tiktoken 어휘" { class: store }
 ccr: "CCR 저장소" { class: store }
-model: "OpenAI · Anthropic\n(대역 서버)" { class: ext }
+model: "OpenAI·Anthropic\n(대역 서버)" { class: ext }
 
 outside: "닿으려는 곳 (막음)" {
   class: group
   grid-columns: 1
   grid-gap: 6
-  labs: "Headroom Labs\n(비콘)" { class: ext }
-  hf: "Hugging Face\n(Kompress 모델)" { class: ext }
-  pypi: "PyPI\n(업데이트 확인)" { class: ext }
+  labs: "Headroom Labs (비콘)" { class: ext }
+  hf: "Hugging Face (모델)" { class: ext }
+  pypi: "PyPI (업데이트)" { class: ext }
+  quota: "Anthropic (구독)" { class: ext }
+  gh: "GitHub (가격표)" { class: ext }
 }
 
 reader -> demo: "실행"
@@ -30,4 +32,6 @@ reader -> proxy: "SDK 요청"
 proxy -> model: "압축 요청"
 model -> proxy: "대본 답"
 proxy -> reader: "답"
+proxy -> tok: "토큰 세기"
+proxy -> ccr: "원문 보관"
 proxy -> outside: "막힌 시도"

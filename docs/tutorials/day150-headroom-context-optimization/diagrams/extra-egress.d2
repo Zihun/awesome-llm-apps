@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: right
+
+proxy: "headroom proxy\n(run_proxy.py)" { class: ext }
+guard: "소켓 가드\n(guard.py)" { class: ours }
+model: "OpenAI · Anthropic ·\nGemini 등\n(대역 서버, 루프백)" { class: ext }
+log: "blocked.log\n(막은 시도 기록)" { class: file }
+
+proxy -> guard: "연결 · 이름 조회"
+guard -> model: "루프백이면 통과"
+guard -> log: "그 밖은 거절·기록\n(진짜 위쪽 주소 포함)"

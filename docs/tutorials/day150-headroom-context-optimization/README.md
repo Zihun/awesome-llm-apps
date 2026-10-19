@@ -1,6 +1,6 @@
 # Day 150 · 🧠 Headroom Context Optimization
 
-> 볼륨 14 🎯 LLM Optimization · 난이도 ★★☆ ⚠ 앱의 데모(`headroom_demo.py`)는 headroom 라이브러리를 부르지 않고 결과를 손으로 흉내 냅니다(Step 3). 앱이 내세우는 "50-90%"는 데모 로그에서 진짜 라이브러리가 낸 수치와 다릅니다(Step 4). 데모 예시의 `gpt-4o`는 모델 페이지의 기본 스냅숏(`gpt-4o-2024-08-06`)이 2027-01-14 종료 예정입니다. 앱의 `headroom-ai[all]>=0.2.14`는 오늘 156개 패키지(휠 합계 약 500MB)로 풀리고, `headroom proxy`는 기본값에서 Hugging Face·PyPI·Anthropic으로 나가려 합니다(Step 7) · 예상 소요 190분(파일 아홉 개를 저장하고 터미널 셋을 오가며 대역 서버·프록시·클라이언트의 기록을 맞대 읽는 손 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(OpenAI·Anthropic·Hugging Face 어디에도 요청을 보내지 않았고, 바깥으로 나간 것은 패키지 설치와 어휘 파일 하나뿐입니다) · 원본 앱: `advanced_llm_apps/llm_optimization_tools/headroom_context_optimization`
+> 볼륨 14 🎯 LLM Optimization · 난이도 ★★☆ ⚠ 앱의 데모(`headroom_demo.py`)는 headroom 라이브러리를 부르지 않고 결과를 손으로 흉내 냅니다(Step 3). 앱이 내세우는 "50-90%"에 대해, 같은 로그의 진짜 기본 경로는 49.1%로 그 범위 바로 아래이고 줄을 버리는 경로를 강제해야 86.0%가 됩니다(Step 4). 데모 예시의 `gpt-4o`는 모델 페이지의 기본 스냅숏(`gpt-4o-2024-08-06`)이 2027-01-14 종료 예정입니다. 앱의 `headroom-ai[all]>=0.2.14`는 오늘 156개 패키지(휠 합계 약 500MB)로 풀리고, `headroom proxy`는 기본값에서 Hugging Face·PyPI·GitHub(litellm 가격표)·Anthropic(구독 사용량 조회)으로 나가려 하고 익명 비콘이 기본으로 켜져 있습니다(Step 7) · 예상 소요 230분(파일 아홉 개를 저장하고 터미널 셋을 오가며 대역 서버·프록시·클라이언트의 기록을 맞대 읽는 손 시간과, 진짜 모양 독자로 한 번 더 따라 하는 시간이 본문 읽는 시간보다 큽니다) · API 비용 대략 이 문서의 따라 하기는 $0(OpenAI·Anthropic·Hugging Face 어디에도 요청을 보내지 않았고, 바깥으로 나간 것은 패키지 설치·해석과 한 호스트에서 받은 어휘 파일 둘뿐입니다) · 원본 앱: `advanced_llm_apps/llm_optimization_tools/headroom_context_optimization`
 
 ## 오늘 만들 것
 
@@ -10,15 +10,15 @@
 
 **먼저 밝힐 사실.** 앱의 데모는 headroom을 가져오지도 않습니다. `import`하는 모듈은 `json`과 `datetime`뿐이고(Step 3), "Headroom이 남긴 것"은 앞 3줄·FATAL 한 줄·끝 2줄을 손으로 골라 붙인 것이며, 토큰 수는 글자 수를 4로 나눈 어림입니다. LangChain 연동과 프록시 부분은 코드 글자를 `print`할 뿐입니다. 그래서 이 문서는 데모를 돌려 그 사실을 확인한 다음, 같은 100줄 로그를 진짜 `headroom-ai`(오늘 최신 0.41.0)로 줄여 실제 토큰 수로 맞대 봅니다. 직접 돌려 알게 된 것은 일곱입니다.
 
-1. 데모의 흉내는 93.8%(실제 토큰 7,117 → 442)를 줄였다고 하지만, 진짜 `compress()`의 기본 경로는 **100줄을 모두 남기고** 49.1%(7,117 → 3,623)를 줄입니다. 줄 모양을 표로 바꿀 뿐 버리지 않는 무손실 압축입니다(Step 4).
+1. 데모의 흉내를 실제 토큰으로 재면 93.8%(7,117 → 442)를 줄인 셈이지만(데모 자신은 글자 ÷ 4로 93.7%를 찍습니다), 진짜 `compress()`의 기본 경로는 **100줄을 모두 남기고** 49.1%(7,117 → 3,623)를 줄입니다. 줄 모양을 표로 바꿀 뿐 버리지 않는 무손실 압축입니다(Step 4).
 2. 줄을 버리는 손실 경로를 강제하면 20줄을 남기고 80줄은 저장소로 옮겨 86.0%(→ 998)를 줄입니다. 남기는 줄은 "앞 3 + 끝 2"가 아니라 간격을 둔 표본에 이상 줄을 더한 것이고, 버린 줄은 표지(`<<ccr:…>>`)로 되찾을 수 있습니다(Step 4).
-3. 이상 줄을 남기는 기준은 `FATAL`·`error_code`·`status_code: 503` 같은 표지입니다. `level`이 `INFO`인데 `latency=90000ms`이거나 메시지에만 장애 내용이 있는 줄은 손실 경로에서 100곳 모두 사라집니다(Step 5).
+3. 이상 줄을 남기는 기준은 `FATAL`·`error_code`·`status_code: 503` 같은 표지입니다. `level`이 `INFO`인데 `latency=90000ms`이거나 메시지에만 장애 내용이 있는 줄은 손실 경로에서 100곳 중 81곳에서 사라집니다. 남는 19곳은 표본이 우연히 그 자리를 짚은 곳입니다(Step 5).
 4. 앱 README의 "Zero code changes" 프록시는 직접 돌려 보니 OpenAI와 Anthropic 요청을 모두 같은 압축으로 줄여 위로 보냅니다. 다만 클라이언트가 보낸 키 헤더도 그대로 위로 갑니다(Step 6).
 5. 데모가 보여 준 LangChain 줄(`llm.invoke("Analyze these 100 logs and find the error")`)은 문자열 한 줄이라 절약이 0토큰입니다. 로그를 도구 결과로 싣자 3,494토큰이 줄었습니다(Step 6).
-6. 기본값의 `headroom proxy`는 시작 25초 안에 `huggingface.co`(Kompress 모델 내려받기)·`pypi.org`(업데이트 확인)·`api.anthropic.com`(구독 사용량 조회)에 닿으려 했고, 익명 비콘은 기본으로 켜져 있습니다(Step 7).
+6. 기본값의 `headroom proxy`는 스위치를 모두 끄고 소켓 가드만 남긴 작성자의 측정에서 `huggingface.co`(Kompress 모델 내려받기)·`pypi.org`(업데이트 확인)·`raw.githubusercontent.com`(litellm 가격표)에 닿으려 했고, Claude Code 자격 증명이 보이면 `api.anthropic.com`(구독 사용량 조회, Bearer에 OAuth 토큰)에도 닿으려 합니다. 익명 비콘은 기본으로 켜져 있습니다. 독자는 이 시험을 따라 하지 않습니다(Step 7).
 7. 앱 README의 `[llmlingua]` extra와 "LLMLingua-2" 항목은 0.41.0의 extra 목록에도 소스에도 없습니다(Step 1).
 
-이 문서는 OpenAI·Anthropic·Hugging Face·Headroom Labs 어디에도 요청을 보내지 않았습니다. 그 자리에는 `127.0.0.1`의 대역 서버(`fakes.py`)를 두었고, 키는 모두 `fake-` 값이며, 파이썬을 띄우는 모든 줄 앞에 루프백 가드(`guard.py`)를 두었습니다. 바깥으로 나간 것은 PyPI의 패키지 설치와, Step 2에서 일부러 따로 둔 tiktoken 어휘 파일 하나(`openaipublic.blob.core.windows.net`)뿐입니다. 대역 서버의 답은 모델이 아니라 제가 쓴 대본이라 "같은 답이 나온다"는 앱의 주장은 이 문서가 확인하지 못했습니다(Step 5). 아래는 완성된 아키텍처입니다.
+이 문서는 OpenAI·Anthropic·Hugging Face·Headroom Labs 어디에도 요청을 보내지 않았습니다. 그 자리에는 `127.0.0.1`의 대역 서버(`fakes.py`)를 두었고, 키는 모두 `fake-` 값이며, 파이썬을 띄우는 모든 줄 앞에 루프백 가드(`guard.py`)를 두었습니다. 바깥으로 나간 것은 PyPI의 패키지 설치·해석(Step 1·6)과, Step 2에서 일부러 따로 둔 tiktoken 어휘 파일 둘(한 호스트 `openaipublic.blob.core.windows.net`에서)뿐입니다. 파이썬 프로세스는 진짜 홈이 보이지 않게 HOME·USERPROFILE·`CLAUDE_CONFIG_DIR`을 작업 폴더 안의 새 폴더로 돌려 돌렸습니다(진짜 Claude Code·클라우드 자격 증명을 읽지 않으려는 것입니다). 대역 서버의 답은 모델이 아니라 제가 쓴 대본이라 "같은 답이 나온다"는 앱의 주장은 이 문서가 확인하지 못했습니다(Step 5). 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -28,14 +28,14 @@
 |---|---|---|
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 참고 |
 | Python | 이 문서는 3.12.10으로 돌렸습니다. `headroom-ai` 0.41.0은 `Requires-Python >=3.10`입니다(PyPI 메타데이터) | 공통 사전 준비와 같음 |
-| 인터넷 | **두 번만 씁니다.** Step 1·6의 패키지 설치(PyPI)와 Step 2의 tiktoken 어휘 파일(약 5MB). 그 뒤의 모든 실행은 가드 아래에서 오프라인입니다 | 별도 설치 없음 |
+| 인터넷 | 패키지 설치·해석(Step 1의 `uv pip install`·`uv pip compile`, Step 6의 설치)과 Step 2의 tiktoken 어휘 파일(한 호스트에서 둘, 약 5MB)에만 씁니다. 그 뒤의 모든 실행은 가드 아래에서 오프라인입니다 | 별도 설치 없음 |
 | OpenAI·Anthropic 키 | **필요 없습니다. 쓰지 마세요.** 가드가 키를 가짜 값으로 덮어씁니다 | 없음 |
 | 새 작업 폴더 `headroom-work` | 데모 복사본, 가상환경, 가드·대역 서버·시험 파일을 둡니다 | Step 1에서 만듭니다 |
 | 터미널 셋 | Step 6에서 대역 서버(A)·프록시(B)·클라이언트(C)를 따로 띄웁니다 | 별도 설치 없음 |
 
-명령은 Git Bash 기준이고 포트 `52651`(대역 서버)·`52653`(프록시)·`52655`·`52657`은 제 PC에서 비어 있던 값입니다. 다른 번호(49152~65535)를 써도 됩니다. 한국어 Windows에서 파이썬 출력이 cp949로 깨지지 않도록 터미널마다 환경변수를 다시 줍니다. 파일을 저장하는 `cat > 파일 <<'EOF'` 줄(heredoc)과 `export`·`curl`·`netstat | grep`은 Git Bash 문법입니다. PowerShell이라면 파일 내용을 편집기로 같은 이름에 저장하고, 파이썬 줄은 `& $PY 파일.py`처럼 씁니다. PowerShell 줄은 실행해 보지 못했습니다(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다).
+명령은 Git Bash 기준이고 포트 `52651`(대역 서버)·`52653`(프록시)·`52655`·`52657`은 제 PC에서 비어 있던 값입니다. 다른 번호(49152~65535)를 써도 됩니다. 한국어 Windows에서 파이썬 출력이 cp949로 깨지지 않도록 터미널마다 환경변수를 다시 줍니다. 파일을 저장하는 `cat > 파일 <<'EOF'` 줄(heredoc)과 `export`·`curl`·`netstat | grep`은 Git Bash 문법입니다. PowerShell이라면 파일 내용을 편집기로 같은 이름에 저장하고, 파이썬 줄은 `& $PY 파일.py`처럼 씁니다. PowerShell 줄은 실행해 보지 못했습니다.
 
-**이 앱의 모델이 아직 살아 있는지.** 앱에서 모델 이름이 나오는 곳은 `gpt-4o`뿐입니다. 데모가 출력하는 LangChain 예시(`advanced_llm_apps/llm_optimization_tools/headroom_context_optimization/headroom_demo.py:152`)와 앱 README의 두 예시(`README.md`의 72·84행)입니다. 데모는 이 모델을 실제로 부르지 않습니다. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-19에 받아 읽음)는 "2026-10-14: GPT-4 series model deprecations" 항목에서 `gpt-4o-2024-08-06`·`gpt-4o-2024-11-20`의 종료일을 January 14, 2027로, 권장 대체를 `gpt-6-luna`로 적고, `gpt-4o-2024-05-13`은 October 23, 2026에 종료한다고 적습니다. 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o)의 기본 스냅숏은 `gpt-4o-2024-08-06`이고 페이지에 폐기 안내는 없습니다. `gpt-4o`라는 별칭이 어떻게 동작할지는 폐기 문서가 말하지 않습니다. 그래서 ⚠를 달았고, 문제 해결 표에 바꾸는 법 한 줄을 두었습니다. 또 `headroom.compress()`의 `model` 기본값은 `claude-sonnet-4-5-20250929`인데 Anthropic 폐기 문서(https://platform.claude.com/docs/en/about-claude/model-deprecations, 같은 날)는 이 모델을 Deprecated(2026-09-30 공지), 종료일 November 30, 2026, 권장 대체 `claude-sonnet-5-5`로 적습니다. 이 문서는 `model`을 항상 직접 적고, Anthropic 예시에는 Active인 `claude-sonnet-5-5`를 씁니다.
+**이 앱의 모델이 아직 살아 있는지.** 앱에서 모델 이름이 나오는 곳은 `gpt-4o`뿐입니다. 데모가 출력하는 LangChain 예시(`advanced_llm_apps/llm_optimization_tools/headroom_context_optimization/headroom_demo.py:152`)와 앱 README의 두 예시(`README.md`의 72·84행)입니다. 데모는 이 모델을 실제로 부르지 않습니다. OpenAI 폐기 문서(https://developers.openai.com/api/docs/deprecations, 2026-10-19에 받아 읽음)는 "2026-10-14: GPT-4 series model deprecations" 항목에서 "On October 14, 2026, we notified developers using certain GPT-4 series models of their deprecation and removal from the API on January 14, 2027."라고 하며, 표에 January 14, 2027 · GPT-4o (`gpt-4o-2024-08-06`, `gpt-4o-2024-11-20`) · `gpt-6-luna`를 적습니다. 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o, 같은 날 받아 읽음)는 제목 옆에 "Deprecated" 표시를 달고, 스냅숏 목록에서 별칭 `gpt-4o`가 `gpt-4o-2024-08-06`을 가리키며 `gpt-4o-2024-08-06`·`gpt-4o-2024-11-20`·`gpt-4o-2024-05-13` 모두에 "Deprecated"를 붙입니다. (`gpt-4o-2024-05-13`은 폐기 문서의 "2026-04-22: Legacy GPT model snapshots" 표에서 October 23, 2026 종료, 대체 `gpt-5.6-sol`입니다.) 폐기 문서는 별칭 `gpt-4o`의 동작을 따로 말하지 않습니다. 그래서 ⚠를 달았고, 문제 해결 표에 바꾸는 법 한 줄을 두었습니다. 또 `headroom.compress()`의 `model` 기본값은 `claude-sonnet-4-5-20250929`인데 Anthropic 폐기 문서(https://platform.claude.com/docs/en/about-claude/model-deprecations, 같은 날)는 이 모델을 Deprecated(2026-09-30 공지), 종료일 November 30, 2026, 권장 대체 `claude-sonnet-5-5`로 적습니다. 이 문서는 `model`을 항상 직접 적고, Anthropic 예시에는 Active인 `claude-sonnet-5-5`를 씁니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -112,7 +112,7 @@ $PY -c "from importlib.metadata import version as v; print(' | '.join(f'{n} {v(n
 headroom-ai 0.41.0 | litellm 1.106.0 | tiktoken 0.14.0 | pydantic 2.14.1 | openai 2.54.0
 ```
 
-기본 설치는 패키지 68개이고 가상환경이 약 360MB입니다(`uv pip list`·`du`로 직접 확인). `headroom-ai` 0.41.0은 2026-10-14에 올라온 최신판이고 라이선스는 Apache-2.0, 저장소는 `github.com/headroomlabs-ai/headroom`입니다(PyPI 메타데이터). 윈도우용 휠 하나가 15.6MB인 까닭은 압축 본체가 파이썬이 아니라 Rust 확장(`headroom/_core.pyd`)이기 때문입니다(소스 머리말이 "Rust-backed via PyO3"라고 밝힙니다). 기본 의존성에 `litellm`·`tiktoken`·`ast-grep-cli`가 들어 있는 것도 메타데이터로 확인했습니다. 데모의 마지막 줄이 가리키는 `github.com/chopratejas/headroom`은 2026-10-19에 열어 보니 `headroomlabs-ai/headroom` 저장소 페이지의 내용이었고(리다이렉트라고 직접 확인하지는 못했습니다), 앱 README의 링크는 처음부터 `headroomlabs-ai`입니다.
+기본 설치는 패키지 68개이고 가상환경이 약 360MB입니다(`uv pip list`·`du`로 직접 확인). `headroom-ai` 0.41.0은 2026-10-14에 올라온 최신판이고 라이선스는 Apache-2.0, 저장소는 `github.com/headroomlabs-ai/headroom`입니다(PyPI 메타데이터). 윈도우용 휠 하나가 15.6MB인 까닭은 압축 본체가 파이썬이 아니라 Rust 확장(`headroom/_core.pyd`)이기 때문입니다(소스 머리말이 "Rust-backed via PyO3"라고 밝힙니다). 기본 의존성에 `litellm`·`tiktoken`·`ast-grep-cli`가 들어 있는 것도 메타데이터로 확인했습니다. 데모의 마지막 줄이 가리키는 `github.com/chopratejas/headroom`은 2026-10-19에 열어 보니 `headroomlabs-ai/headroom` 저장소 페이지의 내용이었고(`curl -I`로 보면 301로 `headroomlabs-ai/headroom`에 넘겨집니다), 앱 README의 링크는 처음부터 `headroomlabs-ai`입니다.
 
 이제 앱의 `headroom-ai[all]>=0.2.14`가 무엇으로 풀리는지 **설치하지 않고** 봅니다. `uv pip compile`은 의존성을 풀기만 하고 아무것도 설치하지 않습니다.
 
@@ -143,7 +143,7 @@ transformers==5.20.1
 
 ### Step 2. 바깥을 막고, tiktoken 어휘 파일을 따로 받습니다
 
-**목적.** 이 문서의 모든 실행이 루프백 밖으로 나가지 못하게 가드를 먼저 저장하고, 토큰을 세는 데 필요한 어휘 파일 하나를 **일부러 따로, 허용 호스트 하나로만** 받습니다.
+**목적.** 이 문서의 모든 실행이 루프백 밖으로 나가지 못하게 가드를 먼저 저장하고, 토큰을 세는 데 필요한 어휘 파일 둘을 **일부러 따로, 허용 호스트 하나에서만** 받습니다.
 
 **할 일.** 먼저 왜 따로 받는지입니다. `headroom-ai`는 기본 의존성으로 `tiktoken`을 끌어오고, `gpt-4o` 같은 이름의 토큰을 세려면 tiktoken이 인코딩 어휘 파일(`o200k_base`)을 **처음 쓸 때** `https://openaipublic.blob.core.windows.net/encodings/`에서 내려받습니다(tiktoken 0.14.0 소스). 파일이 없을 때 Headroom은 멈추지 않고 글자 수 어림으로 물러납니다(소스로 확인). 소스의 안내문이 "falling back to token estimation"이고, 내려받기가 10초(`HEADROOM_TIKTOKEN_LOAD_TIMEOUT_SECONDS`) 안에 안 끝나도 같습니다. 그러면 이 문서의 모든 토큰 수가 조용히 어림으로 바뀝니다. 그래서 (1) 내려받기를 설치처럼 한 단계로 떼어 허용 목록 하나로만 하고, (2) 이후의 모든 실행은 가드가 캐시 파일이 있는지 시작 전에 확인해 없으면 멈추게 했습니다. Claude 이름(`claude-*`)을 넘기면 Headroom은 같은 `o200k_base`를 대용으로 씁니다(소스의 설명이 "Claude's tokenizer is private … a stable, monotone proxy"). 따라서 `claude-*`로 센 숫자는 Claude의 실제 토큰 수가 아닙니다.
 
@@ -166,6 +166,9 @@ HERE = Path(__file__).resolve().parent
 CACHE = HERE / "tiktoken-cache"
 CACHE.mkdir(exist_ok=True)
 os.environ["TIKTOKEN_CACHE_DIR"] = str(CACHE)
+HOME = HERE / "fake-home"                      # requests가 ~/.netrc 같은 진짜 홈의 파일을 읽지 않게
+HOME.mkdir(exist_ok=True)
+os.environ["HOME"] = os.environ["USERPROFILE"] = str(HOME)
 for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"):
     os.environ[name] = ""          # unset이 아니라 빈 값: 나중에 다른 코드가 다시 채우지 못하게
 os.environ["NO_PROXY"] = os.environ["no_proxy"] = "127.0.0.1,localhost"
@@ -212,16 +215,19 @@ fb374d419588a4632f3f557e76b4b70aebbca790  3,613,922바이트  sha256=446a9538cb6
 허용 호스트에서 받은 주소: ['57.150.192.193']
 ```
 
-받은 파일은 두 개(`o200k_base` 3,613,922바이트, `cl100k_base` 1,681,126바이트)입니다. `cl100k_base`는 `gpt-4`·`gpt-3.5` 계열 이름이 쓰는 인코딩이라 함께 받았고, 이 문서의 숫자는 `o200k_base`만 씁니다. tiktoken은 받은 파일의 sha256을 코드에 박아 둔 값과 비교하고 다르면 `ValueError`를 냅니다(`tiktoken/load.py`의 `check_hash`, 소스로 확인). 위 해시 둘은 `tiktoken_ext/openai_public.py`에 적힌 기대값과 같았습니다. 이 단계가 바깥으로 나간 유일한 연결입니다. 허용 호스트에서 받은 주소는 하나(`57.150.192.193`)였고, 스크립트가 그 밖의 이름 조회와 연결을 모두 거절했습니다.
+받은 파일은 두 개(`o200k_base` 3,613,922바이트, `cl100k_base` 1,681,126바이트)입니다. `cl100k_base`는 `gpt-4`·`gpt-3.5` 계열 이름이 쓰는 인코딩이라 함께 받았고, 이 문서의 숫자는 `o200k_base`만 씁니다. tiktoken은 받은 파일의 sha256을 코드에 박아 둔 값과 비교하고 다르면 `ValueError`를 냅니다(`tiktoken/load.py`의 `check_hash`, 소스로 확인). 위 해시 둘은 `tiktoken_ext/openai_public.py`에 적힌 기대값과 같았습니다. 이 단계가 패키지 설치 말고 바깥으로 나간 유일한 연결입니다. 스크립트도 `requests`가 진짜 홈의 `~/.netrc` 같은 파일을 읽지 않게 HOME·USERPROFILE을 작업 폴더 안으로 돌립니다. 허용 호스트에서 받은 주소는 하나(`57.150.192.193`)였고, 스크립트가 그 밖의 이름 조회와 연결을 모두 거절했습니다.
 
-이제 가드입니다. 가드는 네 가지를 합니다. (1) 환경변수를 **스크립트 안에서 직접** 덮어씁니다. OpenAI·Anthropic 키는 `fake-` 값, 주소는 `127.0.0.1`의 대역 서버, Headroom의 스위치(`HEADROOM_OFFLINE=1`, `HEADROOM_BEACON=off`, `HEADROOM_TELEMETRY=off`, `HEADROOM_UPDATE_CHECK=off`, `DO_NOT_TRACK=1`)와 상태 폴더(`HEADROOM_WORKSPACE_DIR`)를 이 폴더 안으로 둡니다. (2) 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로는 막고, 셸의 프록시 변수는 빈 값으로 덮은 채(`unset`이 아니라 빈 값이어야 나중에 다른 코드가 채우지 못합니다) `NO_PROXY`에 루프백을 걸고, 프록시 포트로의 연결도 막습니다. (3) `check_env`가 위가 모두 맞는지, 그리고 tiktoken 캐시 파일이 있는지 확인하고 하나라도 어긋나면 멈춥니다. (4) 막은 시도는 `blocked.log`에 남습니다. 두 겹으로 둔 까닭은 Headroom 쪽 스위치와 소켓 가드가 서로 독립이어야 한 줄을 빠뜨려도 바깥에 닿지 않기 때문입니다. `point_at_fakes`가 소켓 가드를 스스로 설치하므로 그 줄을 지우면 `check_env`가 "가드가 설치되어 있지 않습니다"로 멈춥니다.
+이제 가드입니다. 가드는 네 가지를 합니다. (1) 환경변수를 **스크립트 안에서 직접** 덮어씁니다. 홈(`HOME`·`USERPROFILE`)과 `CLAUDE_CONFIG_DIR`은 이 폴더 안의 새 폴더로 돌리고(진짜 홈의 `~/.claude` 자격 증명이 이 프로세스에 보이지 않게 합니다), `CLAUDE_CODE_OAUTH_TOKEN`·`ANTHROPIC_AUTH_TOKEN`은 비웁니다. OpenAI·Anthropic 키는 `fake-` 값, 주소는 모두 `127.0.0.1`의 대역 서버(Hugging Face용 `HF_ENDPOINT`와 프록시의 Gemini·Cloud Code·Vertex·Bedrock 위쪽 주소 포함), Headroom의 스위치(`HEADROOM_OFFLINE=1`, `HEADROOM_BEACON=off`, `HEADROOM_TELEMETRY=off`, `HEADROOM_UPDATE_CHECK=off`, `DO_NOT_TRACK=1`)와 상태 폴더(`HEADROOM_WORKSPACE_DIR`)를 이 폴더 안으로 둡니다. LangSmith 추적 변수 넷(`LANGSMITH_TRACING`·`LANGSMITH_TRACING_V2`·`LANGCHAIN_TRACING`·`LANGCHAIN_TRACING_V2`)은 `false`, 두 API 키는 빈 값으로 둡니다(langsmith는 `_V2` 변수를 먼저 보므로 하나만 끄면 셸의 `LANGSMITH_TRACING_V2=true`가 이깁니다). Hugging Face는 `HF_HUB_OFFLINE=1`, litellm은 불러올 때 GitHub에서 모델 가격표를 받으려 하므로 `LITELLM_LOCAL_MODEL_COST_MAP=True`(번들판 사용)로 둡니다. (2) 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로는 막고, 셸의 프록시 변수는 빈 값으로 덮은 채(`unset`이 아니라 빈 값이어야 나중에 다른 코드가 채우지 못합니다) `NO_PROXY`에 루프백을 걸고, 프록시 포트로의 연결도 막습니다. (3) `check_env`가 주소·키·오프라인 스위치·비콘·프록시 변수·홈 가리기·LangSmith 변수·litellm 변수와 tiktoken 캐시 파일을 확인하고 하나라도 어긋나면 멈춥니다(`HEADROOM_TELEMETRY`·`HEADROOM_UPDATE_CHECK`·`HEADROOM_WORKSPACE_DIR`은 값을 확인하지 않고 정해 두기만 합니다). (4) 막은 시도는 `blocked.log`에 남습니다. 두 겹으로 둔 까닭은 Headroom 쪽 스위치와 소켓 가드가 서로 독립이어야 한 줄을 빠뜨려도 바깥에 닿지 않기 때문입니다. `point_at_fakes`가 소켓 가드를 스스로 설치하므로 그 줄을 지우면 `check_env`가 "가드가 설치되어 있지 않습니다"로 멈춥니다.
 
 ```bash
 cat > guard.py <<'EOF'
 """루프백 가드. 이 폴더의 모든 파이썬 파일이 가장 먼저 불러온다.
 
 1) 환경변수를 스크립트 안에서 직접 정한다(셸이나 .env의 진짜 값이 이기지 못하게).
+   - 홈: HOME·USERPROFILE·CLAUDE_CONFIG_DIR을 이 폴더 안의 새 폴더로 돌려, 진짜 홈의 자격 증명(~/.claude 등)이
+     이 프로세스에 보이지 않게 한다. CLAUDE_CODE_OAUTH_TOKEN·ANTHROPIC_AUTH_TOKEN은 비운다.
    - Headroom: 오프라인 스위치, 익명 비콘·텔레메트리·업데이트 확인 끄기, 상태 폴더를 이 폴더 안으로.
+   - 추적·내려받기: LangSmith 추적 변수 끄기와 키 비우기, Hugging Face는 오프라인+대역 서버, litellm 가격표는 번들판.
    - 모델: OpenAI·Anthropic 키는 가짜 값, 주소는 127.0.0.1의 대역 서버.
    - tiktoken 캐시는 이 폴더 안. 캐시가 없으면 몰래 내려받지 않고 멈춘다.
 2) 소켓 연결·이름 조회·asyncio 연결을 루프백 밖으로는 못 나가게 막는다.
@@ -269,6 +275,17 @@ def point_at_fakes(port: int) -> None:
         os.environ[name] = ""                       # unset이 아니라 빈 값
     os.environ["NO_PROXY"] = os.environ["no_proxy"] = "127.0.0.1,localhost,::1"
     base = f"http://127.0.0.1:{port}"
+    home = HERE / "fake-home"
+    (home / ".claude").mkdir(parents=True, exist_ok=True)
+    os.environ.update({
+        "HOME": str(home), "USERPROFILE": str(home), "CLAUDE_CONFIG_DIR": str(home / ".claude"),
+        "CLAUDE_CODE_OAUTH_TOKEN": "", "ANTHROPIC_AUTH_TOKEN": "",
+        "LANGSMITH_TRACING": "false", "LANGSMITH_TRACING_V2": "false", "LANGCHAIN_TRACING": "false",
+        "LANGCHAIN_TRACING_V2": "false", "LANGSMITH_API_KEY": "", "LANGCHAIN_API_KEY": "",
+        "HF_ENDPOINT": base, "HF_HOME": str(HERE / "hf-home"),
+        "GEMINI_TARGET_API_URL": base, "CLOUDCODE_TARGET_API_URL": base, "VERTEX_TARGET_API_URL": base,
+        "BEDROCK_TARGET_API_URL": base,
+    })
     os.environ.update({
         "OPENAI_API_KEY": "fake-openai-key", "OPENAI_BASE_URL": f"{base}/v1",
         "ANTHROPIC_API_KEY": "fake-anthropic-key", "ANTHROPIC_BASE_URL": base,
@@ -278,7 +295,6 @@ def point_at_fakes(port: int) -> None:
         "HEADROOM_OFFLINE": "1", "HEADROOM_BEACON": "off", "HEADROOM_TELEMETRY": "off",
         "HEADROOM_UPDATE_CHECK": "off", "DO_NOT_TRACK": "1",
         "HEADROOM_WORKSPACE_DIR": str(HERE / "headroom-home"),
-        "LANGSMITH_TRACING": "false", "LANGCHAIN_TRACING_V2": "false",
         "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "LITELLM_LOCAL_MODEL_COST_MAP": "True",
         "TIKTOKEN_CACHE_DIR": str(HERE / "tiktoken-cache"),
     })
@@ -289,10 +305,23 @@ def check_env() -> None:
     if not (INSTALLED and socket.getaddrinfo.__name__ == "guarded_getaddrinfo"
             and be.BaseEventLoop.create_connection.__name__ == "guarded_create_connection"):
         sys.exit("가드: 소켓 가드가 설치되어 있지 않습니다. 중단합니다.")
-    for name in ("OPENAI_BASE_URL", "ANTHROPIC_BASE_URL", "ANTHROPIC_TARGET_API_URL", "OPENAI_TARGET_API_URL"):
+    for name in ("OPENAI_BASE_URL", "ANTHROPIC_BASE_URL", "ANTHROPIC_TARGET_API_URL", "OPENAI_TARGET_API_URL",
+                 "GEMINI_TARGET_API_URL", "CLOUDCODE_TARGET_API_URL", "VERTEX_TARGET_API_URL",
+                 "BEDROCK_TARGET_API_URL", "HF_ENDPOINT"):
         host = urlparse(os.environ.get(name, "")).hostname or ""
         if not is_loopback_host(host):
             sys.exit(f"가드: {name} 호스트가 루프백이 아닙니다 ({host or '비어 있음'}). 중단합니다.")
+    for name in ("HOME", "USERPROFILE", "CLAUDE_CONFIG_DIR"):          # 진짜 홈이 보이지 않아야 한다
+        if HERE not in Path(os.environ.get(name, "")).resolve().parents:
+            sys.exit(f"가드: {name}이 이 폴더 안이 아닙니다. 중단합니다.")
+    for name in ("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_AUTH_TOKEN", "LANGSMITH_API_KEY", "LANGCHAIN_API_KEY"):
+        if os.environ.get(name):
+            sys.exit(f"가드: {name}이 비어 있지 않습니다. 중단합니다.")
+    for name in ("LANGSMITH_TRACING", "LANGSMITH_TRACING_V2", "LANGCHAIN_TRACING", "LANGCHAIN_TRACING_V2"):
+        if os.environ.get(name, "").lower() != "false":
+            sys.exit(f"가드: {name}이 false가 아닙니다. 중단합니다.")
+    if os.environ.get("HF_HUB_OFFLINE") != "1" or os.environ.get("LITELLM_LOCAL_MODEL_COST_MAP") != "True":
+        sys.exit("가드: HF_HUB_OFFLINE=1 또는 LITELLM_LOCAL_MODEL_COST_MAP=True가 아닙니다. 중단합니다.")
     for name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
         if not os.environ.get(name, "").startswith("fake-"):
             sys.exit(f"가드: {name}이 가짜 값이 아닙니다. 중단합니다.")
@@ -638,9 +667,9 @@ compress() 결과의 메시지 전체 세기: before 7158 after 3664 (48.8%)
 
 표를 읽습니다. **글자/4 어림은 실제보다 낮습니다.** 원문은 5,510이라 했지만 실제 토큰은 7,117이고(글자 3.1개가 토큰 하나), 데모의 흉내는 347이라 했지만 442입니다. 두 어림이 비슷하게 낮아 비율(93.7% 대 93.8%)은 거의 같습니다. 문제는 비율이 아니라 **흉내라는 것**입니다. 진짜 `compress()` 기본 경로는 49.1%를 줄이고, 줄 수는 100줄 그대로입니다. 출력 첫 줄이 스키마(`[100]{level:string,message:string,…}`)이고 다음부터 한 줄이 한 레코드인 쉼표 표로, 반복되는 키 이름을 한 번만 적었을 뿐입니다. `expand_compacted`로 되돌려 보니 원문과 같았습니다(출력 "원문과 같음: True"). `densify()`는 같은 일을 "무손실이 아니면 원래대로 되돌린다"는 검증을 붙여 하고(`lossless=True`, 되돌린 메시지 0) 49.8%입니다. 줄을 버리지 않는다는 점에서 앱 README의 안전 보장 목록("Compression is reversible" 등)과 같은 쪽이지만, 데모가 보여 준 6줄 압축과는 다른 물건입니다.
 
-손실 경로를 강제하면 `smart_sample(100->20)`이 나옵니다. 100줄 가운데 20줄을 남기고, 남긴 줄의 번호는 2, 7, 12, … 처럼 다섯 줄 간격에 FATAL(67번)이 끼어 있습니다. 앞 3줄·끝 2줄을 남기는 규칙이 아닙니다(0번도 99번도 없습니다). 버린 80줄은 `<<ccr:e233d83726e3 80_rows_offloaded>>`라는 표지 한 줄로 바뀌고, 프로세스 안의 압축 저장소(CCR, Compress-Cache-Retrieve)에 원문이 보관됩니다. `get_compression_store().retrieve(해시)`로 되찾은 내용은 원문과 같았고, 보관 시간 기본값은 1,800초입니다(소스 `DEFAULT_CCR_TTL_SECONDS`). 모델이 모자란 줄을 달라고 할 길(`headroom_retrieve` 도구)이 있다는 것이 "reversible"의 실체이고, 프록시의 `--no-ccr` 도움말은 이 도구를 요청에 끼워 넣는다고 설명합니다(이 문서는 손실 경로를 프록시로 돌려 보지 않았습니다).
+손실 경로를 강제하면 `smart_sample(100->20)`이 나옵니다. 100줄 가운데 20줄을 남기고, 남긴 줄의 번호는 2, 7, 12, … 처럼 다섯 줄 간격에 FATAL(67번)이 끼어 있습니다. 앞 3줄·끝 2줄을 남기는 규칙이 아닙니다(0번도 99번도 없습니다). 버린 80줄은 `<<ccr:e233d83726e3 80_rows_offloaded>>`라는 표지 한 줄로 바뀌고, 압축 저장소(CCR, Compress-Cache-Retrieve)에 원문이 보관됩니다. 기본 저장소는 메모리가 아니라 **디스크의 SQLite 파일** `<HEADROOM_WORKSPACE_DIR>/ccr_store.db`입니다(이 문서에서는 `headroom-home/ccr_store.db`, 변수가 없으면 `~/.headroom/ccr_store.db`. headroom-ai 0.41.0 `cache/compression_store.py`의 `_create_default_ccr_backend`, 소스로 확인). 도구 결과 원문이 보관 시간 동안 파일로 남고, Step 4~6을 돌린 제 작업 폴더에서는 이 파일이 약 8.4MB(8,437,760바이트)였습니다. 메모리에만 두려면 `HEADROOM_CCR_BACKEND=memory`입니다. 이 문서의 모든 명령은 가드가 `headroom-home/`을 작업 폴더 안에 두므로 진짜 홈에는 아무것도 남지 않습니다. 끝낸 뒤 지울 때는 프로세스를 모두 멈추고 정해진 이름만 지웁니다. `rm -f headroom-home/ccr_store.db headroom-home/ccr_store.db-shm headroom-home/ccr_store.db-wal`. `get_compression_store().retrieve(해시)`로 되찾은 내용은 원문과 같았고, 보관 시간 기본값은 1,800초입니다(소스 `DEFAULT_CCR_TTL_SECONDS`). 모델이 모자란 줄을 달라고 할 길(`headroom_retrieve` 도구)이 있다는 것이 "reversible"의 실체이고, 프록시의 `--no-ccr` 도움말은 이 도구를 요청에 끼워 넣는다고 설명합니다(이 문서는 손실 경로를 프록시로 돌려 보지 않았습니다).
 
-세 가지를 짚습니다. 첫째, 앱 README의 "10,144 tokens → 1,260 tokens (87.6%)"는 이 데모 로그에서 나오지 않습니다. 같은 100줄이 제 계산에서는 7,117토큰이고 가장 많이 줄인 경로가 998토큰(86.0%)입니다. 비율은 비슷해도 절대값이 다르니, README의 숫자는 다른 로그나 다른 설정에서 나온 것이라고 읽는 것이 맞습니다(어느 쪽인지는 알 수 없습니다). 둘째, `compress()` 기본값 `protect_recent=4`는 "마지막 4개 메시지는 압축하지 않는다"는 뜻이라고 소스가 설명하는데, 위 호출에서 마지막 메시지인 도구 결과가 압축되었습니다. 설명과 어긋나 보이지만 왜인지는 확인하지 못했습니다. 셋째, `compress()`가 센 메시지 전체 토큰은 7,158 → 3,664(48.8%)로 표의 도구 결과만의 수치보다 메시지 틀 몫이 더해져 있습니다.
+세 가지를 짚습니다. 첫째, 앱 README의 "10,144 tokens → 1,260 tokens (87.6%)"는 이 데모 로그에서 나오지 않습니다. 같은 100줄이 제 계산에서는 7,117토큰이고 가장 많이 줄인 경로가 998토큰(86.0%)입니다. 비율은 비슷해도 절대값이 다르니, README의 숫자는 다른 로그나 다른 설정에서 나온 것이라고 읽는 것이 맞습니다(어느 쪽인지는 알 수 없습니다). 둘째, `compress()` 기본값 `protect_recent=4`는 "마지막 4개 메시지는 압축하지 않는다"는 뜻이라고 소스가 설명하는데, 위 호출에서 마지막 메시지인 도구 결과가 압축되었습니다. 이유는 소스에서 찾았습니다. `compress()`가 넘긴 `protect_recent`는 ContentRouter에서 코드로 감지된 내용만 보호하고(`transforms/content_router.py`의 `protect_recent_code`와 "Don't compress recent CODE" 조건, 소스로 확인), 이 로그는 JSON 배열로 감지되어 보호 대상이 아닙니다. 독스트링("Don't compress the last N messages")이 실제 동작보다 넓게 쓰여 있습니다. 셋째, `compress()`가 센 메시지 전체 토큰은 7,158 → 3,664(48.8%)로 표의 도구 결과만의 수치보다 메시지 틀 몫이 더해져 있습니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
@@ -650,11 +679,15 @@ compress() 결과의 메시지 전체 세기: before 7158 after 3664 (48.8%)
 
 **목적.** 데모는 바늘을 67번에 한 번만 놓았습니다. 위치와 모양을 바꿔 가며 압축이 바늘을 남기는지 셉니다.
 
-**할 일.** `needle.py`는 건초 100줄에 바늘을 0번부터 99번까지 번갈아 놓고, 두 경로(기본, 손실 강제)가 바늘을 남기는지 셉니다. 바늘은 네 모양입니다. 데모의 바늘(`FATAL`+`error_code`), `INFO`이지만 `status_code: 503`, `INFO`이지만 메시지에만 장애 내용이 있는 줄, `INFO`이면서 `latency=90000ms`인 줄입니다. 질문은 데모와 같은 글을 `crush`의 `query`로 넘깁니다.
+**할 일.** `needle.py`는 건초 100줄 가운데 한 줄을 0번부터 99번까지 번갈아 **그 자리 줄을 고쳐서** 바늘로 만들고(다른 필드는 이웃과 같게 둡니다. 새 줄을 끼우면 `service`·`request_id`가 이웃과 달라져, 이상한 값 때문에 사라진 것인지 모양이 달라서 사라진 것인지 가를 수 없습니다), 두 경로(기본, 손실 강제)가 바늘을 남기는지 셉니다. 바늘은 네 모양입니다. 데모의 바늘(`FATAL`+`error_code`), `INFO`이지만 `status_code`만 503인 줄, `INFO`이지만 메시지에만 장애 내용이 있는 줄, `INFO`이면서 `latency=90000ms`인 줄입니다. 질문은 데모와 같은 글을 `crush`의 `query`로 넘깁니다.
 
 ```bash
 cat > needle.py <<'EOF'
-"""바늘(이상한 줄)을 100곳에 번갈아 숨기고, SmartCrusher의 두 경로가 그 줄을 남기는지 센다."""
+"""바늘(이상한 줄)을 100곳에 번갈아 숨기고, SmartCrusher의 두 경로가 그 줄을 남기는지 센다.
+
+바늘은 그 자리에 있던 줄을 고쳐서 만든다(다른 필드는 이웃과 같다). 새 줄을 끼우면 service·request_id가
+이웃과 달라져, 이상한 값 때문에 사라진 것인지 모양이 달라서 사라진 것인지 가를 수 없다.
+"""
 import guard
 
 guard.point_at_fakes(53201)
@@ -671,34 +704,26 @@ plain = [dict(x) for x in base]
 plain[67] = {"timestamp": base[66]["timestamp"], "level": "INFO", "service": "auth",
              "message": "Request processed successfully - latency=117ms", "request_id": "req-000067", "status_code": 200}
 
-
-def info(**over):
-    row = {"timestamp": "2024-12-15T03:47:23Z", "level": "INFO", "service": "payment-gateway",
-           "message": "Request processed successfully - latency=90ms", "request_id": "req-009999", "status_code": 200}
-    row.update(over)
-    return row
-
-
+# (이름, 그 자리 줄을 바꾸는 함수, 압축 결과에서 바늘을 알아보는 글: 둘 중 하나만 있어도 남은 것)
 needles = [
-    ("FATAL + error_code (데모의 바늘)", base[67], "PG-5523"),
-    ("INFO인데 status_code가 503", info(status_code=503), "req-009999"),
-    ("INFO인데 message에만 장애 내용", info(message="Connection pool exhausted, set max_connections=500"), "req-009999"),
-    ("INFO인데 latency=90000ms", info(message="Request processed successfully - latency=90000ms"), "req-009999"),
+    ("FATAL + error_code (데모의 바늘)", lambda r: dict(base[67]), ("PG-5523",)),
+    ("INFO인데 status_code가 503", lambda r: dict(r, status_code=503), ('"status_code":503', ",503")),
+    ("INFO인데 message에만 장애 내용", lambda r: dict(r, message="Connection pool exhausted, set max_connections=500"), ("max_connections=500",)),
+    ("INFO인데 latency=90000ms", lambda r: dict(r, message="Request processed successfully - latency=90000ms"), ("latency=90000ms",)),
 ]
 default = SmartCrusher()                                              # compress()가 쓰는 기본 설정
 lossy = SmartCrusher(SmartCrusherConfig(lossless_min_savings_ratio=0.99))   # 손실 경로 강제
 
 print(f"{'바늘':34} {'기본 경로에서 사라진 위치':>24} {'손실 경로에서 사라진 위치':>24}")
-for label, needle, marker in needles:
+for label, make, markers in needles:
     lost = {"기본": 0, "손실": 0}
     for pos in range(100):
         rows = [dict(r) for r in plain]
-        rows[pos] = needle
+        rows[pos] = make(rows[pos])
         text = json.dumps(rows, indent=2)
-        if marker not in default.crush(text, QUESTION).compressed:
-            lost["기본"] += 1
-        if marker not in lossy.crush(text, QUESTION).compressed:
-            lost["손실"] += 1
+        for key, crusher in (("기본", default), ("손실", lossy)):
+            if not any(m in crusher.crush(text, QUESTION).compressed for m in markers):
+                lost[key] += 1
     print(f"{label:34} {lost['기본']:>20}/100 {lost['손실']:>20}/100")
 guard.report()
 EOF
@@ -709,17 +734,18 @@ $PY needle.py
 바늘                                           기본 경로에서 사라진 위치           손실 경로에서 사라진 위치
 FATAL + error_code (데모의 바늘)                           0/100                    0/100
 INFO인데 status_code가 503                               0/100                    0/100
-INFO인데 message에만 장애 내용                                0/100                  100/100
-INFO인데 latency=90000ms                                0/100                  100/100
+INFO인데 message에만 장애 내용                                0/100                   81/100
+INFO인데 latency=90000ms                                0/100                   81/100
+가드: 루프백 밖으로 나가려던 시도 0건 []
 ```
 
-기본 경로(무손실)는 줄을 버리지 않으니 어느 바늘도 사라지지 않습니다. 손실 경로에서는 `FATAL`·`error_code`가 있는 줄과 `status_code`가 503인 줄은 100곳 모두 남았고, `level`이 `INFO`인 줄은 **이상한 값이 메시지나 지연 시간에만 있으면 100곳 모두 사라졌습니다.** 소스 머리말이 "keeps errors, anomalies"라고 하는 이상 판정이 오류 표지나 상태 코드 같은 필드를 보는 것으로 읽힙니다. "다른 줄과 낯선 값"을 가려내는 일은 아니라는 뜻이고, 이 문서가 시험한 네 모양에 한해서입니다. 데모의 바늘은 하필 가장 잘 남는 모양입니다. 질문을 빈 문자열로 넘긴 경우도 FATAL 바늘은 100곳 모두 남았습니다(처음 시험에서 확인).
+기본 경로(무손실)는 줄을 버리지 않으니 어느 바늘도 사라지지 않습니다. 손실 경로에서는 `FATAL`·`error_code`가 있는 줄과 `status_code`가 503인 줄은 100곳 모두 남았고, `level`이 `INFO`인 줄은 **이상한 값이 메시지나 지연 시간에만 있으면 100곳 중 81곳에서 사라졌습니다.** 남은 19곳은 손실 경로가 다섯 줄 간격(2, 7, 12, …)으로 남기는 표본 자리에 바늘이 놓인 경우입니다. 곧 남느냐가 이상 판정이 아니라 표본 위치에 달려 있습니다. 소스 머리말이 "keeps errors, anomalies"라고 하는 이상 판정이 오류 표지나 상태 코드 같은 필드를 보는 것으로 읽힙니다. "다른 줄과 낯선 값"을 가려내는 일은 아니라는 뜻이고, 이 문서가 시험한 네 모양에 한해서입니다. 데모의 바늘은 하필 가장 잘 남는 모양입니다. `QUESTION`을 빈 문자열로 바꿔 다시 돌려도 표가 같았습니다(직접 확인). 이 시험의 손실 경로는 질문을 보지 않는다는 뜻이 아니라, 이 네 바늘에서는 질문이 결과를 바꾸지 않았다는 뜻입니다.
 
-이것이 "손실 압축을 어디에 써도 되는가"의 답입니다. 로그에서 오류 줄을 찾는 일에는 잘 맞고, "느린 요청 하나"를 찾는 일에는 손실 경로가 맞지 않습니다. 기본 경로가 무손실이라는 것(Step 4)이 안전한 쪽이고, 손실 경로를 쓰려면 바늘이 오류 표지를 달고 있는지 먼저 확인해야 합니다. 그리고 이 문서는 모델을 부르지 않았으므로 데모의 "Same answer"(압축 뒤에도 모델이 같은 답을 한다)는 **확인하지 못했습니다.** 이 시험이 확인한 것은 압축 결과 안에 바늘이 있느냐까지입니다.
+이것이 "손실 압축을 어디에 써도 되는가"의 답입니다. 로그에서 오류 줄을 찾는 일에는 잘 맞고, "느린 요청 하나"를 찾는 일에는 손실 경로가 맞지 않습니다(표본 자리에 걸린 19곳은 운입니다). 기본 경로가 무손실이라는 것(Step 4)이 안전한 쪽이고, 손실 경로를 쓰려면 바늘이 오류 표지를 달고 있는지 먼저 확인해야 합니다. 그리고 이 문서는 모델을 부르지 않았으므로 데모의 "Same answer"(압축 뒤에도 모델이 같은 답을 한다)는 **확인하지 못했습니다.** 이 시험이 확인한 것은 압축 결과 안에 바늘이 있느냐까지입니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.** 표 네 줄의 "기본 경로" 칸이 모두 `0/100`이고, 첫째·둘째 줄의 "손실 경로" 칸이 `0/100`이면 됩니다.
+**확인.** 표 네 줄의 "기본 경로" 칸이 모두 `0/100`이고, 첫째·둘째 줄의 "손실 경로" 칸이 `0/100`, 셋째·넷째 줄이 `81/100`이면 됩니다.
 
 ### Step 6. 프록시와 LangChain — 대역 서버 앞에서 돌립니다
 
@@ -733,12 +759,12 @@ $PY -c "from importlib.metadata import version as v; print(' | '.join(f'{n} {v(n
 ```
 
 ```text
-Resolved 109 packages in 64ms
-Installed 41 packages in 3.49s
+Resolved 109 packages
+Installed 41 packages
 headroom-ai 0.41.0 | fastapi 0.146.0 | uvicorn 0.54.0 | transformers 5.20.1 | onnxruntime 1.31.0 | anthropic 1.15.0 | openai 2.54.0 | langchain-core 1.6.12 | langchain-openai 1.7.2
 ```
 
-앱 README의 `headroom proxy --port 8787`을 그대로 쓰지 않는 까닭을 소스로 확인한 만큼 적습니다. (1) 바인딩 주소의 기본값은 `127.0.0.1`입니다(CLI 도움말 "Host to bind to (default: 127.0.0.1, env: HEADROOM_HOST)"). `proxy/bind_policy.py`의 머리말은 0.40까지는 경고만 하던 "토큰 없는 비루프백 바인딩"을 이제 거절한다고 적습니다(실행해 보지는 않았습니다). (2) 위로 보내는 곳의 기본값은 진짜 `https://api.anthropic.com`과 `https://api.openai.com`입니다(`--anthropic-api-url`·`--openai-api-url`, 또는 `ANTHROPIC_TARGET_API_URL`·`OPENAI_TARGET_API_URL`로 바꿉니다). (3) 구독 사용량 조회·비콘·모델 내려받기가 기본으로 켜져 있어(Step 7) 끄는 줄이 필요합니다. 그래서 프록시는 항상 아래 `run_proxy.py`로 띄웁니다. 이 파일은 가드를 먼저 걸고, 호스트를 `127.0.0.1`로 못 박고, 위로 보내는 곳을 대역 서버로 정하고, 구독 조회와 텔레메트리를 끕니다. **`headroom proxy`를 직접 부르지 마세요.** 그러면 위로 보내는 곳이 진짜 API입니다.
+앱 README의 `headroom proxy --port 8787`을 그대로 쓰지 않는 까닭을 소스로 확인한 만큼 적습니다. (1) 바인딩 주소의 기본값은 `127.0.0.1`입니다(CLI 도움말 "Host to bind to (default: 127.0.0.1, env: HEADROOM_HOST)"). `proxy/bind_policy.py`의 머리말은 0.40까지는 경고만 하던 "토큰 없는 비루프백 바인딩"을 이제 거절한다고 적습니다(실행해 보지는 않았습니다). (2) 위로 보내는 곳의 기본값은 진짜 `https://api.anthropic.com`과 `https://api.openai.com`입니다(`--anthropic-api-url`·`--openai-api-url`, 또는 `ANTHROPIC_TARGET_API_URL`·`OPENAI_TARGET_API_URL`로 바꿉니다). 시작 화면의 경로 표에는 Gemini·Cloud Code(`cloudcode-pa.googleapis.com`)·Vertex(`us-central1-aiplatform.googleapis.com`)·Bedrock용 기본 주소도 있어서, `run_proxy.py`는 그 넷도 같은 대역 서버로 돌립니다. (3) 구독 사용량 조회·비콘·모델 내려받기·litellm 가격표 받기가 기본으로 켜져 있어(Step 7) 끄는 줄이 필요합니다. 그래서 프록시는 항상 아래 `run_proxy.py`로 띄웁니다. 이 파일은 가드를 먼저 걸고(진짜 홈을 가리는 것 포함), 호스트를 `127.0.0.1`로 못 박고, 위로 보내는 곳을 모두 대역 서버로 정하고, 구독 조회와 텔레메트리를 끕니다. **`headroom proxy`를 직접 부르지 마세요.** 그러면 위로 보내는 곳이 진짜 API입니다.
 
 ```bash
 cat > fakes.py <<'EOF'
@@ -837,11 +863,10 @@ if __name__ == "__main__":
         pass
 EOF
 cat > run_proxy.py <<'EOF'
-"""가드를 건 `headroom proxy`. 사용법: python run_proxy.py <프록시 포트> <대역 서버 포트> [--try-defaults | --no-upstream]
+"""가드를 건 `headroom proxy`. 사용법: python run_proxy.py <프록시 포트> <대역 서버 포트> [--no-upstream]
 
 headroom proxy를 직접 부르지 말고 항상 이 파일로 띄운다. 직접 부르면 위로 보내는 곳이 진짜 api.anthropic.com과
-api.openai.com이다. 두 옵션은 시험용이다. --try-defaults(Step 7)는 Headroom 쪽 스위치를 끄고 소켓 가드만 남기고,
---no-upstream(Step 6)은 위로 보내는 곳을 알리는 줄을 모두 빼고 소켓 가드만 남긴다.
+api.openai.com이다. --no-upstream(Step 6)은 시험용이다: 위로 보내는 곳을 알리는 줄을 모두 빼고 홈 가리기·오프라인 스위치·소켓 가드만 남긴다.
 """
 import os
 import sys
@@ -849,7 +874,6 @@ import sys
 import guard
 
 proxy_port, fake_port = int(sys.argv[1]), int(sys.argv[2])
-try_defaults = "--try-defaults" in sys.argv[3:]
 no_upstream = "--no-upstream" in sys.argv[3:]
 assert 49152 <= proxy_port <= 65535 and 49152 <= fake_port <= 65535, "49152~65535 사이의 포트를 쓰세요"
 guard.point_at_fakes(fake_port)
@@ -861,17 +885,17 @@ args = [
     "--port", str(proxy_port),
     "--anthropic-api-url", os.environ["ANTHROPIC_TARGET_API_URL"],   # 위로 보내는 곳: 대역 서버
     "--openai-api-url", os.environ["OPENAI_TARGET_API_URL"],
+    "--gemini-api-url", os.environ["GEMINI_TARGET_API_URL"],         # 나머지 위쪽 기본값도 대역 서버로
+    "--cloudcode-api-url", os.environ["CLOUDCODE_TARGET_API_URL"],
+    "--vertex-api-url", os.environ["VERTEX_TARGET_API_URL"],
+    "--bedrock-api-url", os.environ["BEDROCK_TARGET_API_URL"],
 ]
 if no_upstream:
-    args = args[:5]                                          # proxy --host .. --port ..: 위쪽 주소 줄 둘을 뺀다
-    os.environ.pop("ANTHROPIC_TARGET_API_URL")               # 같은 뜻의 환경변수도 뺀다
-    os.environ.pop("OPENAI_TARGET_API_URL")
-if try_defaults:
-    for name in ("HEADROOM_OFFLINE", "HEADROOM_BEACON", "HEADROOM_TELEMETRY", "HEADROOM_UPDATE_CHECK",
-                 "DO_NOT_TRACK", "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE"):
-        os.environ.pop(name, None)
-else:
-    args += ["--no-subscription-tracking", "--no-telemetry"]
+    args = args[:5]                                          # proxy --host .. --port ..: 위쪽 주소 줄들을 뺀다
+    for name in ("ANTHROPIC_TARGET_API_URL", "OPENAI_TARGET_API_URL", "GEMINI_TARGET_API_URL",
+                 "CLOUDCODE_TARGET_API_URL", "VERTEX_TARGET_API_URL", "BEDROCK_TARGET_API_URL"):
+        os.environ.pop(name)                                 # 같은 뜻의 환경변수도 뺀다
+args += ["--no-subscription-tracking", "--no-telemetry"]
 
 from headroom.cli import main
 
@@ -1001,12 +1025,11 @@ print('tokens before', c['total_tokens_before'], 'removed', c['total_tokens_remo
 ```text
 mode cache | 요청 2 | 압축한 요청 2
 tokens before 14307 removed 6988 avg% 48.8
-cost {'without_headroom_usd': 0.03, 'with_headroom_usd': 0.02, 'savings_pct': 62.1}
 ```
 
 `/stats`는 달러 환산도 내놓지만 Headroom이 스스로 지닌 가격표로 어림한 값이라(`without_headroom_usd` 등) 이 문서는 옮기지 않았습니다. 대역 서버가 받은 `key_prefix` 칸이 `Bearer fake-op`·`fake-anthropic`이라는 것도 봐 둘 일입니다. **클라이언트가 보낸 키 헤더는 프록시가 그대로 위로 전달합니다.** 진짜 키로 쓰면 프록시는 키가 지나는 자리이고, 앱 README의 `ANTHROPIC_BASE_URL=http://localhost:8787 claude` 줄은 Claude Code가 보내는 대화 전체(시스템 프롬프트·도구 정의·읽은 파일 내용·질문)를 이 프록시로 보내게 됩니다. 프록시의 기본 설정은 요청을 파일로 남기지 않지만(`--log-messages`는 꺼짐) 지나가는 곳이라는 사실은 같습니다. 이 문서는 `claude`도 `cursor`도 실행하지 않았습니다. 특히 Cursor가 `OPENAI_BASE_URL` 환경변수로 모델을 부르는지는 확인하지 못했으니 README의 그 줄은 이 문서가 보증하지 않습니다.
 
-이제 줄 하나를 빼도 바깥으로 가지 않는지 봅니다. `--no-upstream` 옵션은 위로 보내는 곳을 알리는 줄 둘과 같은 뜻의 환경변수 둘을 모두 뺀 채 소켓 가드만 남깁니다. 진짜 주소로 가려 하는지, 가면 막히는지를 봅니다. 터미널 B에서 프록시를 멈추고 다시 띄웁니다.
+이제 줄 하나를 빼도 바깥으로 가지 않는지 봅니다. `--no-upstream` 옵션은 위로 보내는 곳을 알리는 줄 여섯과 같은 뜻의 환경변수 여섯을 모두 뺀 채, 홈 가리기·오프라인 스위치·소켓 가드만 남깁니다. 진짜 주소로 가려 하는지, 가면 막히는지를 봅니다. 아래 그림이 이 길입니다. 터미널 B에서 프록시를 멈추고 다시 띄웁니다.
 
 ```bash
 # 터미널 B (앞 프록시를 Ctrl+C로 멈춘 뒤)
@@ -1029,6 +1052,10 @@ Anthropic SDK -> 오류 502 {'type': 'error', 'error': {'type': 'api_error', 'me
 ```
 
 프록시는 기본 위쪽 주소인 `api.openai.com`과 `api.anthropic.com`으로 가려 했고(재시도 때문에 세 번씩), 가드가 이름 조회를 막아 클라이언트는 502를 받았습니다. 위로 보내는 곳을 빼 먹으면 "조용히 진짜 API로 간다"가 아니라 "502로 멈추고 기록이 남는다"는 뜻입니다. (클라이언트 줄의 "시도 0건"은 클라이언트 프로세스의 가드 숫자입니다. 막은 것은 프록시 프로세스이고 기록은 `blocked.log`에 있습니다.)
+
+![소켓 가드가 막는 길](diagrams/extra-egress.svg)
+
+구독 조회 줄도 하나 빼 봤습니다. `run_proxy.py`에서 `args += ["--no-subscription-tracking", "--no-telemetry"]` 줄을 지운 복사본으로 프록시를 50초 돌렸더니 시작 로그가 "Subscription tracking: ENABLED"였는데도 `blocked.log`는 비어 있었습니다(직접 확인). 홈이 작업 폴더 안의 새 폴더로 돌려져 있고 `CLAUDE_CODE_OAUTH_TOKEN`이 비어 있어서 폴러가 보낼 토큰이 없기 때문입니다(Step 7). 한 겹이 빠져도 다른 겹이 막는 것을 이렇게 확인했습니다.
 
 다음은 LangChain 줄입니다. 데모 148~155행이 `print`만 하던 코드를 대역 서버(터미널 A가 아직 떠 있습니다)로 돌립니다. `lc_run.py`는 데모의 줄(문자열 한 줄)을 그대로 한 번, 같은 로그를 도구 결과로 실은 대화를 한 번 부릅니다.
 
@@ -1075,60 +1102,69 @@ $PY lc_run.py 52651
 가드: 루프백 밖으로 나가려던 시도 0건 []
 ```
 
-데모가 보여 준 줄 그대로(`"Analyze these 100 logs and find the error"`)는 **0토큰을 절약합니다.** 그 문자열에는 로그가 들어 있지 않기 때문입니다. 로그가 도구 결과로 실린 대화에서는 3,494토큰이 줄었습니다(앞 프록시와 같은 수치입니다). 헤드룸이 압축하는 것은 도구 결과 같은 큰 덩어리이고, "compression is automatic"이라는 주석은 그런 덩어리가 있을 때의 말입니다. `lc_run.py`에는 `LANGSMITH_TRACING`을 `false`로 두는 가드 줄이 이미 들어 있습니다(설치된 `langsmith`가 추적을 켜지 않도록 한 것입니다).
+데모가 보여 준 줄 그대로(`"Analyze these 100 logs and find the error"`)는 **0토큰을 절약합니다.** 그 문자열에는 로그가 들어 있지 않기 때문입니다. 로그가 도구 결과로 실린 대화에서는 3,494토큰이 줄었습니다(앞 프록시와 같은 수치입니다). 헤드룸이 압축하는 것은 도구 결과 같은 큰 덩어리이고, "compression is automatic"이라는 주석은 그런 덩어리가 있을 때의 말입니다. `langchain`을 설치하면 `langsmith`도 함께 설치되고, 셸에 `LANGSMITH_TRACING_V2=true`와 LangSmith 키가 있으면 프롬프트 전체(여기서는 로그 100줄)를 `api.smith.langchain.com`으로 보내려 합니다. 가드가 추적 변수 넷을 `false`로, 키 둘을 빈 값으로 두고 `check_env`가 그것을 확인하므로(Step 2) 셸에 그 변수가 켜져 있어도 이 문서의 `lc_run.py`는 보내려 하지 않았습니다(Step 7의 진짜 모양 독자 실행에서 확인).
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 클라이언트 출력의 두 줄이 모두 `payment-gateway service, error PG-5523, …`로 시작하고, `fake-requests.jsonl`의 두 요청에서 도구 결과가 10,479·10,583글자(원문 22,042)로 줄어 있으며, `--no-upstream` 시험의 두 줄이 502이면 됩니다. 확인이 끝나면 터미널 B·A에서 Ctrl+C로 프록시와 대역 서버를 멈추고, `netstat -ano | grep -E ":5265[0-9] "`가 `LISTENING` 줄을 하나도 내놓지 않는지 봅니다.
+**확인.** 클라이언트 출력의 두 줄이 모두 `payment-gateway service, error PG-5523, …`로 시작하고, `fake-requests.jsonl`의 두 요청에서 도구 결과가 10,479·10,583글자(원문 22,042)로 줄어 있으며, `--no-upstream` 시험의 두 줄이 502이면 됩니다. 확인이 끝나면 터미널 B·A에서 Ctrl+C로 프록시와 대역 서버를 멈추고, `netstat -ano | grep -E ":5265[0-9] "`가 `LISTENING` 줄을 하나도 내놓지 않는지 봅니다. 구독 조회 줄을 뺀 시험을 해 보았다면 그 프록시(52657)도 멈춥니다.
 
-### Step 7. 기본값이 닿으려는 곳, 그리고 앱 README의 줄을 그대로 따르면
+### Step 7. 기본값이 닿으려는 곳 — 작성자가 잰 결과와, 독자가 지킬 것
 
-**목적.** Headroom 쪽 스위치를 끄고 소켓 가드만 남겨 프록시가 기본값으로 어디에 닿으려 하는지 직접 보고, 그것이 무엇인지 소스로 읽습니다.
+**목적.** `headroom proxy`를 기본값으로 띄우면 어디에 닿으려 하는지를 작성자가 격리된 환경에서 잰 사실로 읽고, 독자가 자기 PC에서 지킬 것을 정합니다. **이 Step의 측정은 독자 명령이 아닙니다. 따라 하지 마세요.**
 
-**할 일.** `--try-defaults`는 `HEADROOM_OFFLINE`·`HEADROOM_BEACON`·`HEADROOM_TELEMETRY`·`HEADROOM_UPDATE_CHECK`·`DO_NOT_TRACK`과 Hugging Face 오프라인 변수를 지우고, 구독 조회·텔레메트리 끄기 인자도 뺍니다. 가드는 그대로 두므로 **닿으려는 시도만 기록되고 나가지는 않습니다.** 시험은 30초만 돌립니다. 터미널 A의 대역 서버를 다시 띄우고, B에서 아래를 돌리고 30초 뒤 멈춥니다.
-
-```bash
-# 터미널 B
-: > blocked.log
-$PY run_proxy.py 52657 52651 --try-defaults
-```
+**할 일.** 왜 따라 하지 않는지부터입니다. 측정은 Headroom 쪽 스위치(`HEADROOM_OFFLINE` 등)와 구독 조회 끄기 인자를 모두 뺀 채 파이썬 소켓 가드 한 겹에만 기대는 시험입니다. 그 상태의 프록시는 진짜 Claude Code 자격 증명이 보이는 환경에서 그 토큰을 읽어 Bearer 헤더에 싣습니다(아래 (4)). 작성자는 HOME·USERPROFILE·`CLAUDE_CONFIG_DIR`을 작업 폴더 안의 새 폴더로 돌리고, 그 폴더에 **가짜** `.credentials.json`(`{"claudeAiOauth":{"accessToken":"fake-oauth-…","expiresAt":…}}`)을 둔 채, 소켓 가드를 건 프록시를 75초씩 두 번(가짜 자격 증명이 있을 때와 없을 때) 돌려 `blocked.log`를 셌습니다. 위쪽 주소는 대역 서버였고, 프록시 프로세스의 연결은 `netstat`으로 보아 모두 루프백이었습니다. 독자에게 남기는 명령은 하나, 가드가 진짜 홈을 가리는지 보는 것입니다.
 
 ```bash
-# 터미널 C (30초 뒤)
-sort blocked.log | uniq -c
+$PY -c "
+import os
+from pathlib import Path
+import guard
+guard.point_at_fakes(52651)
+guard.check_env()
+for name in ('USERPROFILE', 'CLAUDE_CONFIG_DIR'):
+    print(name, '=', Path(os.environ[name]).relative_to(Path.cwd()))
+print('CLAUDE_CODE_OAUTH_TOKEN =', repr(os.environ['CLAUDE_CODE_OAUTH_TOKEN']), '| LANGSMITH_TRACING_V2 =', os.environ['LANGSMITH_TRACING_V2'])
+"
 ```
 
 ```text
-      1 dns api.anthropic.com
-     12 dns huggingface.co
-      1 dns pypi.org
+USERPROFILE = fake-home
+CLAUDE_CONFIG_DIR = fake-home\.claude
+CLAUDE_CODE_OAUTH_TOKEN = '' | LANGSMITH_TRACING_V2 = false
 ```
 
-시작 로그에서 같은 줄을 찾으면 이렇습니다.
+셸에 무엇이 걸려 있든 이 프로세스의 홈은 작업 폴더 안의 `fake-home`이고 OAuth 토큰은 비어 있습니다. 작성자의 측정 결과는 이렇습니다(75초, 횟수는 기다린 시간에 따라 늘어납니다. 같은 시험이 30초에는 `huggingface.co` 12건이었습니다).
 
-```text
-Anthropic Claude Code quota tracking: ENABLED
-OpenAI Codex quota tracking: ENABLED
-Subscription tracking: ENABLED (poll_interval=300s, active_window=60s)
-Anonymous upload beacon: ENABLED (default — session summaries are sent to Headroom Labs). Opt out: HEADROOM_BEACON=off or DO_NOT_TRACK=1
-Downloading Kompress ONNX model from chopratejas/kompress-v2-base ...
-```
+| 닿으려는 곳 | 시도 횟수(가짜 자격 증명 있음 / 없음) | 무엇인가 |
+|---|---|---|
+| `huggingface.co` | 41 / 41 | Kompress ONNX 모델 내려받기와 `huggingface_hub`의 에이전트 목록 조회 |
+| `pypi.org` | 1 / 1 | `headroom-ai` 업데이트 확인 |
+| `raw.githubusercontent.com` | 3 / 3 | litellm의 모델 가격표(재시도 3회) |
+| `api.anthropic.com` | 1 / 0 | 구독 사용량 조회. 토큰이 있을 때만 생김 |
 
-네 가지가 보입니다. (1) `huggingface.co` 12건: Kompress의 ONNX 모델(`chopratejas/kompress-v2-base`)을 내려받으려는 시도입니다. 그 저장소는 합계 1.5GB이고(Step 1), 어떤 파일을 받는지는 소스의 로그가 "Downloading Kompress ONNX model"이라고 합니다. 프록시가 이 모델을 서버 시작과 함께 미리 내려받는 것은 `HEADROOM_OFFLINE`이 꺼졌을 때의 기본 동작입니다. (2) `pypi.org` 1건: 업데이트 확인입니다(소스의 `update_check.py`가 `https://pypi.org/pypi/headroom-ai/json`을 부릅니다. CI 환경변수나 `HEADROOM_UPDATE_CHECK=off`면 끕니다). (3) `api.anthropic.com` 1건: "Anthropic Claude Code quota tracking: ENABLED"가 시작에 구독 사용량을 조회하는 것입니다. `--no-subscription-tracking`이 끕니다. (4) 익명 비콘은 "ENABLED (default — session summaries are sent to Headroom Labs)"입니다. 이 30초 안에는 비콘 전송 시도가 기록되지 않았습니다. 소스(`telemetry/session.py`)는 살아 있는 세션을 300초마다 보고하고 15분 쉬면 닫는다고 적으니 첫 전송이 더 뒤에 오는 구조로 읽히지만, 그 구간까지 돌려 보지는 않았습니다. 받는 곳의 기본 주소는 소스에서 `https://headroom-beacon.headroom-beacon.workers.dev/v1/logs`(Cloudflare workers.dev 주소, 소스 주석이 "TEMPORARY"라고 적습니다)이고, 소스 머리말은 내용 없는 요약(토큰·전략별 절약량·설정 이름 등)이고 프롬프트나 파일 내용 파생값은 싣지 않는다고 설명합니다. 이 문서는 그 설명이 맞는지 페이로드를 확인하지 않았습니다(`headroom telemetry --show`가 보여 준다고 소스가 적습니다). 끄는 법은 `HEADROOM_BEACON=off`, `DO_NOT_TRACK=1`, `HEADROOM_OFFLINE=1`이고, 소스 안의 설명이 서로 어긋나는 곳이 있습니다. `telemetry/session.py` 머리말은 "Everything here is off unless HEADROOM_TELEMETRY is explicitly on"이라 하지만 `telemetry/beacon.py`와 프록시 시작 로그는 비콘이 기본으로 켜져 있다고 말합니다. 이 문서는 시작 로그의 ENABLED를 따랐습니다.
+다섯 가지를 소스로 읽었습니다. 아래 줄 번호는 설치된 `headroom-ai` 0.41.0 등의 파일입니다.
 
-라이브러리(`compress()`)는 어땠을까요. 같은 스위치를 끄고 소켓 가드만 남긴 채 Step 4와 같은 `compress()`를 돌리고 6초를 기다려 종료까지 보았을 때 닿으려는 시도는 0건이었습니다(직접 확인, 그 시험 파일은 문서에 싣지 않았습니다). 프록시와 달리 라이브러리만 쓰면 바깥으로 나가는 길을 이 6초 안에서는 만나지 못했습니다. 압축 본체(`_core.pyd`)에는 URL 문자열도 `reqwest`·`hyper`·`rustls`·`tokio` 같은 네트워크 라이브러리의 흔적도 없었습니다(바이트 문자열 검색, 증명은 아닙니다). 소켓 가드가 파이썬 쪽 연결만 막기 때문에 이 확인이 필요했고, 프록시 프로세스가 가진 연결은 `netstat`으로 보아 모두 루프백이었습니다(직접 확인).
+1. **Hugging Face.** 프록시는 시작할 때 Kompress 모델을 미리 받으려 합니다(`transforms/kompress_compressor.py`의 `HF_MODEL_ID = "chopratejas/kompress-v2-base"`). 받으려는 파일은 저장소 전체(합계 1.5GB)가 아니라 `onnx/kompress-int8-wo.onnx`이고, 받지 못하면 `kompress-fp32.onnx`, `kompress-int8.onnx` 순으로 시도합니다. 소스 주석(158~171행)은 int8-wo가 261MB, fp32가 601MB라고 적습니다. 목록 조회는 `huggingface_hub` 1.33.0이 하루에 한 번 `{HF_ENDPOINT}/api/agent-harnesses`를 받는 것입니다(`utils/_detect_agent.py`). `HEADROOM_OFFLINE=1`이 모델 내려받기를 거절합니다.
+2. **PyPI.** `update_check.py`의 `fetch_latest_version`(210~237행)이 `https://pypi.org/pypi/headroom-ai/json`을 부릅니다. `HEADROOM_UPDATE_CHECK=off`, `CI` 환경변수, 오프라인 스위치가 끕니다.
+3. **GitHub.** 프록시와 LangChain 연동은 `litellm`을 불러오고, litellm은 불러올 때 `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`에서 모델 가격표를 받으려 합니다(litellm 1.106.0 `litellm_core_utils/get_model_cost_map.py`의 머리말 1~8행, 383행). `LITELLM_LOCAL_MODEL_COST_MAP=True`가 끕니다. `compress()`만 쓰는 경로는 litellm을 불러오지 않습니다.
+4. **Anthropic 구독 조회.** 폴러는 `CLAUDE_CODE_OAUTH_TOKEN` 환경변수, 없으면 `~/.claude/.credentials.json`(`CLAUDE_CONFIG_DIR`이 있으면 그쪽)의 `claudeAiOauth.accessToken`을 읽고, 있으면 `Authorization: Bearer <토큰>`으로 `GET https://api.anthropic.com/api/oauth/usage`를 보냅니다(`subscription/client.py`의 머리말 1~12행, `read_cached_oauth_token` 52~79행, `fetch` 100~112행). 토큰이 없으면 요청이 아예 없습니다. 그래서 위 표의 1/0이 나왔습니다. Claude Code를 쓰는 독자의 PC에서는 진짜 토큰이 보이는 곳이므로, 이 폴러는 `--no-subscription-tracking`으로 끄고 홈을 가려야 합니다. 이 문서의 `run_proxy.py`가 두 가지를 모두 합니다.
+5. **익명 비콘.** 시작 로그가 "ENABLED (default — session summaries are sent to Headroom Labs)"라고 합니다(`HEADROOM_BEACON=off`, `DO_NOT_TRACK=1`, `HEADROOM_OFFLINE=1`이 끕니다). 받는 곳의 기본 주소는 `https://headroom-beacon.headroom-beacon.workers.dev/v1/logs`이고(`telemetry/session.py` 131행, 소스 주석이 "TEMPORARY"라고 적은 Cloudflare workers.dev 주소) `HEADROOM_TELEMETRY_ENDPOINT`로 바뀝니다. 함께 실리는 것은 소스 설명에 따르면 카운터·비율·닫힌 어휘의 이름이고 프롬프트나 파일 내용에서 나온 값은 아니지만, 리소스 속성으로 `service.version`·`os.type`·`host.arch`와, 설치마다 한 번 만들어 `<config_dir>/install_id`에 저장하는 무작위 `headroom.install_id`, 에이전트 이름(`headroom.stack`, `clients` 목록)이 있습니다(556~652행, 1127~1129행). 보내는 때는 5분 주기와 15분 무활동 닫기(136·140행)에 더해 **정상 종료할 때 바로 보냅니다**(`atexit`의 `_flush_at_exit`, 1791·1800~1818행). 요청이 한 번이라도 지나간 프록시를 Ctrl+C로 끝내면 곧바로 전송하는 구조입니다. 이 문서의 측정(요청 없음)과 문서 명령(비콘 꺼짐)에서는 보내는 자리에 이르지 못해, 실제 페이로드는 확인하지 못했습니다(소스는 `headroom telemetry --show`가 정확한 페이로드를 보여 준다고 적습니다). 소스 안의 설명이 서로 어긋나는 곳도 있습니다. `telemetry/session.py` 머리말은 "Everything here is off unless HEADROOM_TELEMETRY is explicitly on"이라 하지만 `telemetry/beacon.py`와 프록시 시작 로그는 비콘이 기본으로 켜져 있다고 말합니다. 이 문서는 시작 로그를 따랐습니다.
 
-마지막으로 **진짜 키가 있는 독자로 따라 해 본 결과**입니다. 셸에 진짜처럼 생긴 `OPENAI_API_KEY`·`ANTHROPIC_API_KEY`(가짜 값)와 `HTTPS_PROXY`가 가리키는 감시용 루프백 포트, 진짜 주소를 가리키는 `OPENAI_BASE_URL`·`ANTHROPIC_BASE_URL`, `HEADROOM_OFFLINE=0`, `HEADROOM_BEACON=on`, `HEADROOM_HOST=0.0.0.0`을 걸고, 상위 폴더에 같은 내용의 `.env`를 둔 채 이 문서의 `measure.py`·`guard_selftest.py`·프록시·클라이언트를 돌렸습니다. 가드가 값을 먼저 덮어써서 모두 대역 서버로만 갔고, 감시용 포트는 연결을 한 번도 받지 않았으며, 프록시는 셸의 `HEADROOM_HOST=0.0.0.0`을 무시하고 `127.0.0.1`에만 열렸습니다(직접 확인). `litellm`이 불러올 때 `.env`를 읽지만(`litellm/__init__.py`의 `load_dotenv`, 소스로 확인) `load_dotenv`는 이미 있는 변수를 덮어쓰지 않기 때문입니다.
+라이브러리 `compress()`만 쓸 때는 어땠을까요. 같은 조건(스위치를 모두 끄고 소켓 가드만, 스크래치 홈에 가짜 자격 증명)으로 Step 4와 같은 호출을 한 뒤 8초를 기다려 프로세스가 끝날 때까지 보았을 때 닿으려는 시도는 0건이었습니다(직접 확인). 압축 본체(`_core.pyd`)에는 URL 문자열도 `reqwest`·`hyper`·`rustls`·`tokio` 같은 네트워크 라이브러리의 흔적도 없었습니다(바이트 문자열 검색, 증명은 아닙니다). 소켓 가드가 파이썬 쪽 연결만 막기 때문에 필요했던 확인입니다.
+
+**독자가 지킬 것.** 위 시도들을 막는 독립된 겹은 이 문서의 `guard.py`와 `run_proxy.py`에 모두 들어 있습니다. 홈 가리기(HOME·USERPROFILE·`CLAUDE_CONFIG_DIR`), `CLAUDE_CODE_OAUTH_TOKEN` 비우기, `--no-subscription-tracking`, 오프라인 스위치 네 개(`HEADROOM_OFFLINE`, `HF_HUB_OFFLINE`, `HF_ENDPOINT`, `LITELLM_LOCAL_MODEL_COST_MAP`), 비콘 끄기, 소켓 가드입니다. 앱 README의 `headroom proxy --port 8787`을 직접 부르면 이 중 어느 것도 걸리지 않습니다.
+
+마지막으로 **진짜 모양 독자로 따라 해 본 결과**입니다. 새 폴더에서 이 문서를 위에서부터 따라 하되, 셸에 진짜처럼 생긴 가짜 `OPENAI_API_KEY`·`ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, 진짜 주소를 가리키는 `OPENAI_BASE_URL`·`ANTHROPIC_BASE_URL`, `HTTPS_PROXY`가 가리키는 감시용 루프백 포트, `HEADROOM_OFFLINE=0`·`HEADROOM_BEACON=on`·`HEADROOM_TELEMETRY=on`·`HEADROOM_UPDATE_CHECK=on`·`HEADROOM_HOST=0.0.0.0`, `HF_HUB_OFFLINE=0`과 진짜 Hugging Face 주소, `LITELLM_LOCAL_MODEL_COST_MAP=False`, LangSmith 추적·키 변수(`LANGSMITH_TRACING_V2=true` 등)를 걸었습니다. 이 독자의 **홈에는 가짜 Claude Code 자격 증명 파일**(`~/.claude/.credentials.json`)을 두었고 `CLAUDE_CONFIG_DIR`도 그곳을 가리켰으며, 상위 폴더에는 같은 종류의 `.env`를 두었습니다. 결과는 이렇습니다(직접 확인). 모든 요청이 대역 서버로만 갔고, 감시용 포트는 연결을 한 번도 받지 않았고, 프록시는 셸의 `HEADROOM_HOST=0.0.0.0`을 무시하고 `127.0.0.1`에만 열렸고, `blocked.log`는 가드 시험 파일이 일부러 만든 여섯 줄을 빼면 비어 있었고(LangSmith 주소도 없었습니다), 독자의 가짜 홈의 파일은 그대로였고 `~/.headroom`은 생기지 않았습니다. `litellm`이 불러올 때 `.env`를 읽지만(`litellm/__init__.py`의 `load_dotenv`, 소스로 확인) `load_dotenv`는 이미 있는 변수를 덮어쓰지 않기 때문입니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** `blocked.log`에 `huggingface.co`·`pypi.org`·`api.anthropic.com` 줄이 보이고 `netstat -ano | grep -E ":52657 "`에서 `LISTENING`이 `127.0.0.1:52657` 하나이며, 프록시를 멈춘 뒤 `netstat -ano | grep -E ":526[5-9][0-9] " | grep LISTENING`이 비어 있으면 됩니다.
+**확인.** 위 `python -c` 출력이 `USERPROFILE = fake-home`, `CLAUDE_CONFIG_DIR = fake-home\.claude`, 빈 `CLAUDE_CODE_OAUTH_TOKEN`, `LANGSMITH_TRACING_V2 = false`(macOS·Linux는 `/`)이면 됩니다. 이 Step에서 따로 띄울 서버는 없습니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-프록시를 거치는 요청 한 건입니다. 클라이언트가 `/v1/chat/completions`로 세 메시지(질문, 도구 호출, 로그 100줄이 실린 도구 결과)를 보내면, 프록시는 앞 메시지 두 개를 고정(`Pipeline: freezing first 2/3 messages`)하고 마지막 도구 결과를 압축 단계에 넘겨 표 모양으로 줄입니다(`7,158 → 3,664` 토큰, 프록시 기록). 그다음 줄어든 본문 10,785바이트를 위쪽 서버(여기서는 대역 서버)로 보내고, 답을 받아 클라이언트에 돌려줍니다. 대역 서버가 받은 본문에 `PG-5523`이 들어 있었기 때문에 대본이 사실을 읽어 주었고, 모델이 그 줄을 읽고 같은 답을 하는지는 이 문서가 확인하지 못했습니다. 프록시가 그 사이에 쓰는 것은 `HEADROOM_WORKSPACE_DIR`(이 문서에서는 `headroom-home/`)의 파일들(압축 저장소 `ccr_store.db`, `savings_events.jsonl`, 로그)입니다. 이 문서에서는 그 폴더가 작업 폴더 안에 생겼고 `~/.headroom`은 생기지 않았습니다(직접 확인). 위쪽 주소가 진짜 API라면 같은 자리에서 클라이언트의 키 헤더가 그대로 전달됩니다(Step 6).
+프록시를 거치는 요청 한 건입니다. 클라이언트가 `/v1/chat/completions`로 세 메시지(질문, 도구 호출, 로그 100줄이 실린 도구 결과)를 보내면, 프록시는 앞 메시지 두 개를 고정(`Pipeline: freezing first 2/3 messages`)하고 마지막 도구 결과를 압축 단계에 넘겨 표 모양으로 줄입니다(`7,158 → 3,664` 토큰, 프록시 기록). 그다음 줄어든 본문 10,785바이트를 위쪽 서버(여기서는 대역 서버)로 보내고, 답을 받아 클라이언트에 돌려줍니다. 대역 서버가 받은 본문에 `PG-5523`이 들어 있었기 때문에 대본이 사실을 읽어 주었고, 모델이 그 줄을 읽고 같은 답을 하는지는 이 문서가 확인하지 못했습니다. 프록시가 그 사이에 쓰는 것은 `HEADROOM_WORKSPACE_DIR`(이 문서에서는 `headroom-home/`)의 파일들(압축 저장소 `ccr_store.db` — 도구 결과 원문이 SQLite 파일로 남습니다 — 와 `savings_events.jsonl`, 로그)입니다. 이 문서에서는 그 폴더가 작업 폴더 안에 생겼고 `~/.headroom`은 생기지 않았습니다(직접 확인). 위쪽 주소가 진짜 API라면 같은 자리에서 클라이언트의 키 헤더가 그대로 전달됩니다(Step 6).
 
 ## 실행 체크리스트
 
@@ -1136,11 +1172,12 @@ Downloading Kompress ONNX model from chopratejas/kompress-v2-base ...
 - [ ] `fetch_vocab.py`로 어휘 파일 둘을 받았고 `guard_selftest.py`가 여섯 길을 모두 막았다(Step 2)
 - [ ] 데모가 `json`·`datetime`만 가져오고 "6 entries (from 100)"를 찍는다(Step 3)
 - [ ] `measure.py`의 표에서 기본 경로가 100줄을 남기고 49.1%를 줄인다(Step 4)
-- [ ] `needle.py`에서 `INFO`인데 느린 줄이 손실 경로에서 100곳 모두 사라진다(Step 5)
+- [ ] `needle.py`에서 `INFO`인데 느린 줄이 손실 경로에서 81/100곳 사라진다(Step 5)
 - [ ] 프록시를 거친 두 요청의 도구 결과가 22,042 → 10,479·10,583글자로 줄어 있다(Step 6)
 - [ ] `--no-upstream` 시험이 502로 끝나고 `blocked.log`에 `api.openai.com`·`api.anthropic.com`이 남는다(Step 6)
-- [ ] `--try-defaults`에서 `huggingface.co`·`pypi.org`·`api.anthropic.com` 시도가 기록되고 나가지는 않았다(Step 7)
+- [ ] Step 7의 `python -c`가 홈이 `fake-home`이고 OAuth 토큰이 빈 값이라고 보여 준다(이 Step에서 `--try-defaults` 같은 시험은 하지 않는다)
 - [ ] 프록시·대역 서버를 멈췄고 `~/.headroom`이 없다
+- [ ] 작업 폴더를 지우면 `headroom-home/`(CCR 원문 포함)도 함께 지워진다. 작업 폴더를 남기려면 프로세스를 멈춘 뒤 `rm -f headroom-home/ccr_store.db headroom-home/ccr_store.db-shm headroom-home/ccr_store.db-wal`만 지운다
 
 ## 문제 해결
 
@@ -1151,7 +1188,7 @@ Downloading Kompress ONNX model from chopratejas/kompress-v2-base ...
 | 표준 오류에 `Content detection using pure-Python backend …` | Windows에서는 Magika 기본 감지기를 쓰지 않는다는 안내 | 정상입니다 |
 | 프록시 시작 로그에 `Kompress: artifact prefetch refused … (HEADROOM_OFFLINE is set)` 경고와 `/health`의 `kompress … degraded` | 오프라인 스위치가 모델 내려받기를 거절했습니다 | 정상입니다. 텍스트 ML 압축기(Kompress)만 빠지고 JSON 표 압축은 그대로입니다 |
 | SDK에서 `502 proxy_error` | 프록시의 위쪽 주소가 대역 서버가 아니거나(`--no-upstream`), 대역 서버가 꺼져 있음 | `run_proxy.py`의 두 `--*-api-url` 줄과 터미널 A를 확인합니다. 어디로 가려 했는지는 `blocked.log`에 남습니다 |
-| `DeprecationWarning: The model 'claude-sonnet-4-5-20250929' is deprecated` | Headroom `compress()`의 `model` 기본값이 종료 예정 모델입니다 | `model=`을 직접 적습니다. Anthropic 예시는 `claude-sonnet-5-5`(Active)입니다(폐기 문서) |
+| `DeprecationWarning: The model 'claude-sonnet-4-5-20250929' is deprecated` | Anthropic SDK의 `messages.create(model=...)`에 종료 예정 모델을 넘겼습니다(예: Headroom 독스트링 예시를 그대로 씀). `compress()`를 기본 모델로 부르는 것만으로는 이 경고가 나오지 않았습니다 | `model=`을 `claude-sonnet-5-5`(Active)로 바꿉니다(폐기 문서) |
 | `ImportError: LangChain is required for this integration` | `headroom.integrations`는 가져와지지만 생성할 때 langchain이 필요함 | `uv pip install --python venv/Scripts/python.exe "headroom-ai[langchain]==0.41.0"` (Step 6) |
 | 앱 README의 `pip install "headroom-ai[llmlingua]"`가 기대한 일을 하지 않음 | 0.41.0에 `llmlingua` extra가 없음 | 텍스트 압축은 `[ml]`·`[proxy]`가 끌어오는 `transformers`와 Kompress 모델이 맡습니다. 어느 쪽도 이 문서는 설치하지 않았습니다 |
 | ⚠ 데모 예시의 `gpt-4o`가 종료 예정 | 모델 페이지의 기본 스냅숏 `gpt-4o-2024-08-06`이 2027-01-14 종료(폐기 문서) | 예시의 `ChatOpenAI(model="gpt-4o")`(데모 152행)를 폐기 문서가 권하는 `gpt-6-luna` 등 Active 모델로 바꿉니다. 이 문서는 모델을 부르지 않았습니다 |
