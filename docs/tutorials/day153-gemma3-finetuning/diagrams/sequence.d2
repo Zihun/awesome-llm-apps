@@ -1,0 +1,20 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+script: "train_toy.py" { class: ours }
+trainer: "SFTTrainer" { class: ours }
+model: "LoRA 모델" { class: ours }
+disk: "디스크" { class: file }
+
+user -> script: "python train_toy.py"
+script -> script: "text 열 만들기"
+script -> model: "get_peft_model"
+script -> trainer: "SFTTrainer(...)"
+trainer -> trainer: "토크나이저 재로드"
+trainer -> model: "배치 2개 × 4번 · 손실 계산"
+model -> trainer: "손실 값"
+trainer -> trainer: "AdamW · 60걸음"
+trainer -> disk: "checkpoint-60"
+script -> disk: "save_pretrained"
+script -> user: "손실 기록"
