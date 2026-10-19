@@ -6,30 +6,42 @@ user: 독자 {
   label.near: outside-top-center
 }
 
-skill: "스킬 폴더\n(.claude/skills/commit-archaeologist)" {
+skill: "스킬 폴더\n(.claude/skills/)" {
   class: group
   grid-columns: 1
   skillmd: "SKILL.md\n(에이전트용 지시문)" { class: file }
-  ref: "reading-git-history.md\n(해석 안내)" { class: file }
+  ref: "reading-git-history.md\n(해석)" { class: file }
 }
 
-script: "scripts/archaeologist.py" {
+script: "scripts/archaeologist.py\n(스킬 폴더 안)" {
   class: group
-  grid-columns: 3
+  grid-columns: 2
   check: "입력 검증\n(normalize_inputs)" { class: ours }
-  hist: "이력 수집\n(read_commit)" { class: ours }
+  hist: "이력 수집\n(history_hashes)" { class: ours }
   who: "현재 작성자\n(blame_authors)" { class: ours }
   co: "함께 바뀐 파일\n(summarize_co_changes)" { class: ours }
-  intent: "의도 단서\n(intent_signals)" { class: ours }
+  intent: "의도 단서\n(classify_message)" { class: ours }
 }
 
 repo: "대상 저장소 (.git)" { class: store }
 agent: "코딩 에이전트\n(이 문서는 띄우지 않음)" { class: ext }
-evals: "시험\n(test_archaeologist.py)" { class: ours }
+evals: "스크립트 시험\n(test_archaeologist.py)" { class: ours }
+tools: "시험 도구 넷\n(skill_lint · skill_scanner ·\nrun_trigger_evals · registry_lint)" { class: ours }
+evaldata: "시험 자료" {
+  class: group
+  grid-columns: 1
+  grid-gap: 20
+  cases: "trigger-cases.json" { class: file }
+  registry: "registry.json" { class: file }
+  behav: "evals.json (3단계)" { class: file }
+}
 
 user -> skill: "폴더 복사"
-user -> script: "저장소 · 파일 · --lines"
-evals -> script: "합성 저장소에 실행"
-script -> repo: "git 하위 프로세스 (읽기만)"
+user -> script: "저장소 · 파일 · 줄"
+evals -> script: "합성 저장소"
+tools -> skill: "구조 · 보안"
+tools -> evaldata: "입력 읽기"
+script -> repo: "git (읽기만)"
 script -> agent: "JSON · 터미널 요약"
 skill -> agent: "지시문을 읽음"
+evaldata -> agent: "기대 항목"

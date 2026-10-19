@@ -4,12 +4,11 @@ shape: sequence_diagram
 script: "archaeologist.py" { class: ours }
 git: "git (로컬)" { class: ext }
 
-script -> git: "rev-parse · ls-files · show"
-git -> script: "경로 · 줄 수"
+script -> git: "rev-parse --show-toplevel"
+git -> script: "저장소 맨 위"
+script -> git: "ls-files --error-unmatch"
+git -> script: "추적 여부"
+script -> git: "show HEAD:파일 (줄 모드만)"
+git -> script: "현재 내용 (줄 수)"
 script -> git: "log -L 또는 --follow"
 git -> script: "커밋 해시 목록"
-script -> git: "커밋마다 show -s · diff-tree"
-git -> script: "메시지 · 바뀐 파일"
-script -> git: "blame --line-porcelain"
-git -> script: "줄별 작성자"
-script -> script: "문턱 · 분류 · 신호"

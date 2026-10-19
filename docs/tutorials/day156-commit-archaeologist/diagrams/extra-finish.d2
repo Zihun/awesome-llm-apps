@@ -1,0 +1,9 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+script: "archaeologist.py" { class: ours }
+git: "git (로컬)" { class: ext }
+
+script -> script: "summarize_co_changes"
+script -> git: "blame --line-porcelain"
+git -> script: "줄별 작성자"

@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+script: "archaeologist.py" { class: ours }
+git: "git (로컬)" { class: ext }
+
+script -> git: "show -s (커밋마다)"
+git -> script: "작성자 · 날짜 · 메시지"
+script -> script: "intent_signals"
+script -> git: "diff-tree (커밋마다)"
+git -> script: "바뀐 파일 · 이름 변경"
+script -> script: "classify_message"

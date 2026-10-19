@@ -2,11 +2,12 @@
 shape: sequence_diagram
 
 user: "독자" { class: person }
-agent: "코딩 에이전트\n(실행 안 함)" { class: ext }
 script: "archaeologist.py" { class: ours }
+agent: "코딩 에이전트\n(실행 안 함)" { class: ext }
 skillmd: "SKILL.md" { class: file }
 
+agent -> skillmd: "시작 때 name · description 읽기"
 user -> agent: "이 코드는 왜 있나?"
-agent -> skillmd: "지시문 읽기"
+agent -> skillmd: "지시문 전체 읽기"
 agent -> script: "저장소 · 파일 · --lines · --json"
-script -> agent: "JSON 여섯 키 (git 대화는 extra-git)"
+script -> agent: "JSON 여섯 키 (git 대화는 extra-git 셋)"

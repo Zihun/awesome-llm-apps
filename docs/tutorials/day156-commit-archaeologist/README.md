@@ -1,6 +1,6 @@
 # Day 156 · 🏺 Commit Archaeologist
 
-> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 150분(스크립트 하나와 git만 있으면 되지만, 지시문·명세를 읽고 합성 저장소로 출력 여덟 가지를 한 걸음씩 따라 읽는 데 시간이 듭니다) · API 비용 대략 0원(API 키가 필요 없고 모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/commit-archaeologist`
+> 볼륨 16 🧩 Agent Skills · 난이도 ★☆☆ · 예상 소요 170분(스크립트 하나와 git만 있으면 되지만, 지시문·명세를 읽고 합성 저장소로 출력 여덟 가지를 한 걸음씩 따라 읽는 데 시간이 듭니다) · API 비용 대략 0원(API 키가 필요 없고 모델을 한 번도 부르지 않았습니다) · 원본 앱: `agent_skills/commit-archaeologist`
 
 ## 오늘 만들 것
 
@@ -11,9 +11,9 @@
 이 문서는 에이전트(Claude Code, Codex, Cursor 등)를 한 번도 띄우지 않았고 모델도 부르지 않았으며, 3단계 행동 시험도 돌리지 않았습니다. 이 PC의 진짜 `~/.claude/skills`나 다른 에이전트 설정 폴더에는 아무것도 넣지 않았고 `npx skills add`도 실행하지 않았습니다. 대신 스킬 폴더를 스크래치 프로젝트의 `.claude/skills/` 아래로 복사해 설치 모양을 보이고, 이력이 있는 가짜 저장소를 직접 만들어 스크립트를 돌립니다. 저장소의 가짜 작성자는 `Ada Fixture`와 `Ben Fixture`, 메일은 `example.test`입니다. 직접 돌려 보거나 소스로 확인한 것이 여덟입니다.
 
 1. `SKILL.md`의 frontmatter는 agentskills.io 명세의 필드 규칙을 지키고, `skill_lint.py --strict`는 오류 0·경고 0입니다. 설명(`description`)은 360자이고 `compatibility`·`allowed-tools`는 없습니다(Step 1, 8).
-2. 스크립트 한 번은 `git` 하위 프로세스 6~18개를 시작하고, 모두 `rev-parse`·`ls-files`·`show`·`log`·`diff-tree`·`blame`입니다. 실행 전후 `.git` 폴더 파일 65개의 지문이 같았고 네트워크 시도는 0이었습니다(Step 7).
+2. 이 문서의 합성 저장소에서 스크립트 한 번은 `git` 하위 프로세스 6~18개를 시작하고, 모두 `rev-parse`·`ls-files`·`show`·`log`·`diff-tree`·`blame`입니다. 실행 전후 `.git` 폴더 파일 65개의 지문이 같았고 파이썬 쪽 네트워크 시도는 0이었습니다. 다만 부분 clone(`--filter=blob:none`)이면 git이 빠진 파일 내용을 원격에서 받아 `.git`에 쓰므로 "네트워크 없음·쓰기 없음"이 맞지 않습니다(Step 7).
 3. 줄 범위를 주면 "처음 들어온 사람"과 "지금 그 줄의 주인"이 갈릴 수 있습니다. 합성 저장소에서 `invalidate` 함수를 Ben이 넣었지만 마지막 줄은 이름 바꾸기 커밋 때문에 blame이 Ada를 가리킵니다(Step 4).
-4. "함께 바뀐 파일"의 문턱은 `max(2, (커밋 수 + 2) // 3)`입니다. 같은 파일이라도 파일 모드에서는 문턱이 3, 줄 모드에서는 2라서 목록이 달라지고, 줄 모드는 파일의 옛 이름을 동반 파일로 적을 수 있습니다(Step 5).
+4. "함께 바뀐 파일"의 문턱 공식은 `max(2, (커밋 수 + 2) // 3)` 하나입니다. 달라지는 것은 선택된 타임라인의 길이입니다. 같은 파일이 파일 모드에서는 7개(문턱 3), 줄 모드에서는 6개(문턱 2)라서 목록이 달라지고, 줄 모드는 파일의 옛 이름을 동반 파일로 적을 수 있습니다(Step 5).
 5. 커밋 분류는 키워드 판정이고 먼저 맞는 규칙이 이깁니다. `Fix typo in the refactor guide`는 `refactor`이고, "workaround"를 이름에 단 커밋은 `other`입니다. 되돌림(revert) 커밋은 되돌린 커밋의 제목 낱말을 그대로 물려받아 의도 단서가 되풀이됩니다(Step 6).
 6. 이 저장소의 실제 파일 둘에 읽기만으로 돌려 봤습니다. 스쿼시 병합 본문 속 "fix(...)" 때문에 새 스킬을 추가한 커밋이 `fix`로 분류됐고, `docs/tutorials/_tools/theme.d2`의 줄 범위에는 SVG 그림 157개가 "함께 바뀐 파일"로 나왔습니다(Step 7).
 7. 저장소 README의 "Local and private by default"는 스크립트에 대해서는 맞습니다. 다만 JSON에는 작성자 이름·메일과 저장소의 절대 경로가 들어 있어서, 에이전트가 그것을 읽으면 모델 쪽 대화에 실립니다(Step 7).
@@ -31,7 +31,7 @@
 | 코딩 에이전트 | 필요 없음. 이 문서는 에이전트를 띄우지 않습니다 | 없음 |
 | API 키·네트워크 | 필요 없음. clone 뒤에는 인터넷 없이 모두 돌아갑니다 | 없음 |
 
-한국어 Windows에서는 시험 도구 하나(`run_trigger_evals.py`)가 파일을 기본 인코딩(cp949)으로 열어 멈춥니다(문제 해결 표). 아래 변수 블록에 `PYTHONUTF8=1`을 넣어 두었습니다.
+한국어 Windows(Git Bash)에서는 시험 도구가 두 가지로 멈춥니다. `run_trigger_evals.py`는 파일을 기본 인코딩(cp949)으로 열어 읽다가, `skill_lint.py`와 `registry_lint.py`는 결과 줄의 `—`를 cp949로 찍지 못해 멈춥니다(문제 해결 표). 아래 변수 블록의 `PYTHONIOENCODING`과 `PYTHONUTF8=1`이 둘 다 막습니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -115,7 +115,7 @@ agentskills.io의 명세 쪽(https://agentskills.io/specification, 2026-10-19에
 | `metadata` | 선택. 문자열 키와 문자열 값의 맵 | `author`·`version`·`source` 셋, 값이 모두 문자열 |
 | `allowed-tools` | 선택. 실험적. 미리 허락해 둘 도구 목록 | 없음 |
 
-`allowed-tools`가 없다는 것의 뜻은 Claude Code 문서(https://code.claude.com/docs/en/skills, 같은 날 읽음)에 있습니다. 스크립트는 에이전트가 Bash 도구로 돌리므로 "normal permission rules apply", 곧 평소의 권한 규칙이 적용되고, 미리 허락하려면 `allowed-tools`에 적습니다. 이 스킬은 적지 않아서, 설정에 따라 스크립트를 돌릴 때마다 허락을 물을 수 있습니다. 이 문서는 에이전트를 띄우지 않아서 실제로 묻는지는 확인하지 못했습니다.
+`allowed-tools`가 없다는 것의 뜻은 Claude Code 문서(https://code.claude.com/docs/en/skills, 원문을 2026-10-19에 읽음)에 있습니다. 필드 표는 이 필드를 "Tools Claude can use without asking permission during the turn that invokes this skill. The grant clears when you send your next message."라고 설명하고, 본문은 "your permission settings still govern tools that are not listed"라고 덧붙입니다. 곧 이 필드는 스킬이 불린 그 차례에만 도구를 미리 허락하고, 적지 않은 도구는 평소의 권한 설정을 따릅니다. 이 스킬은 필드가 없어서 스크립트를 돌릴 때 평소의 권한 설정이 그대로 적용되고, 설정에 따라 허락을 물을 수 있습니다. 이 문서는 에이전트를 띄우지 않아서 실제로 묻는지는 확인하지 못했습니다.
 
 이제 폴더를 프로젝트 안으로 복사합니다. 같은 문서가 프로젝트 스킬의 자리를 `.claude/skills/<skill-name>/SKILL.md`, 개인 스킬의 자리를 `~/.claude/skills/<skill-name>/SKILL.md`라고 적습니다. 개인 자리가 이 PC의 진짜 홈 아래이므로 쓰지 않고 프로젝트 자리로만 복사합니다.
 
@@ -129,7 +129,7 @@ New-Item -ItemType Directory -Force project\.claude\skills | Out-Null
 Copy-Item -Recurse "$REPO\agent_skills\commit-archaeologist" project\.claude\skills\commit-archaeologist
 ```
 
-저장소 README의 설치 명령 `npx skills add https://github.com/Shubhamsaboo/awesome-llm-apps/tree/main/agent_skills/commit-archaeologist`(`agent_skills/commit-archaeologist/README.md`의 17행)와 진짜 홈 쪽 복사(`~/.claude/skills/`)는 이 문서가 실행하지 않았습니다. 그 CLI가 무엇을 내려받는지는 확인하지 못했습니다. README는 그 CLI를 https://skills.sh라고만 소개합니다. 복사한 폴더에 무엇이 들어갔는지 봅니다.
+저장소 README의 설치 명령 `npx skills add https://github.com/Shubhamsaboo/awesome-llm-apps/tree/main/agent_skills/commit-archaeologist`(`agent_skills/commit-archaeologist/README.md`의 17행)와 진짜 홈 쪽 복사(`~/.claude/skills/`)는 이 문서가 실행하지 않았습니다. 그 CLI는 README가 https://skills.sh로 안내하고 저장소는 [vercel-labs/skills](https://github.com/vercel-labs/skills)입니다([Day 155](../day155-thinking-out-loud/README.md)도 같은 CLI를 읽었습니다). 그 저장소의 README(2026-10-19에 읽음)는 설치 원본으로 "Direct path to a skill in a repo"를 들고, 설치 범위는 프로젝트가 기본이라 `./<agent>/skills/`(여러 에이전트는 `.agents/skills/`)이며 `-g`를 주면 `~/<agent>/skills/`, 방식은 "Creates symlinks from each agent to a canonical copy"가 권장이고 `--copy`면 복사, 익명 사용 통계는 `DISABLE_TELEMETRY=1`이나 `DO_NOT_TRACK=1`로 끈다고 적습니다. 직접 내려받는 주소(SKILL.md나 압축 파일)에는 "Downloads are limited to 10 MiB, extracted content to 25 MiB, and archives to 1000 files by default"라는 한도가 따로 있습니다. 이 문서는 CLI를 실행하지 않았으므로 위는 공개 README를 읽은 것이고 직접 본 것이 아닙니다. 복사한 폴더에 무엇이 들어갔는지 봅니다.
 
 ```bash
 find project -type f | sort
@@ -514,7 +514,7 @@ def blame_authors(repo, path, line_range):
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-### Step 5. 함께 바뀐 파일 — 문턱은 모드마다 다르다
+### Step 5. 함께 바뀐 파일 — 문턱은 타임라인 길이를 따른다
 
 **목적.** "반복되는 동반 변경"이 어떤 문턱으로 정해지는지 코드에서 읽고, 같은 파일을 파일 모드와 줄 모드로 돌려 결과가 어떻게 달라지는지 봅니다.
 
@@ -556,7 +556,7 @@ def summarize_co_changes(path, timeline):
     )
 ```
 
-문턱은 `max(2, (타임라인 커밋 수 + 2) // 3)`입니다. 대략 커밋의 3분의 1 이상에서 같이 바뀐 파일을 "반복"으로 칩니다. 커밋 수 1~5개에서는 2, 7개에서는 3, 10개에서는 4입니다. 대상 파일 자신의 옛 이름은 `historical_paths`로 빼고 나머지 파일만 셉니다. 이름 바꾸기는 타임라인 안의 커밋이 `diff-tree -M`로 보고한 것만 알 수 있습니다. 파일 모드와 줄 모드를 비교합니다.
+문턱은 `max(2, (타임라인 커밋 수 + 2) // 3)`입니다. 대략 커밋의 3분의 1 이상에서 같이 바뀐 파일을 "반복"으로 칩니다. 커밋 수 1~6개에서는 2, 7개에서는 3, 10개에서는 4입니다. 공식은 모드와 상관없이 하나이고, 모드에 따라 달라지는 것은 타임라인의 길이입니다. 대상 파일 자신의 옛 이름은 `historical_paths`로 빼고 나머지 파일만 셉니다. 이름 바꾸기는 타임라인 안의 커밋이 `diff-tree -M`로 보고한 것만 알 수 있습니다. 파일 모드와 줄 모드를 비교합니다.
 
 ```bash
 python dig.py shop src/pricing_cache.py region.co_change_threshold region.historical_paths
@@ -864,7 +864,7 @@ network attempts: 0
 git files: 65 | fingerprint: 8a75271ee35e4624 | changed work-tree files: 0
 ```
 
-일곱 커밋 파일 모드는 git을 18번 부르고, 그 가운데 `show`와 `diff-tree`가 커밋 수에 맞춰 늘어납니다. 커밋마다 `show -s`(메타데이터)와 `diff-tree`(바뀐 파일)를 한 번씩 부르기 때문입니다(2×7=14). 나머지 넷은 고정입니다. `rev-parse`(저장소 맨 위 찾기), `ls-files`(추적 중인지), `log`, `blame`입니다. 줄 모드는 여기에 `show HEAD:<파일>` 한 번(줄 수 검증)이 더해지고 `diff-tree`는 타임라인 커밋 수(6)만큼입니다. 부르는 명령은 모두 읽기 명령입니다. 이 문서의 시험으로 `.git` 안 65개 파일의 지문이 그대로였고 파이썬 쪽 네트워크 시도는 0이었습니다. 다만 이 확인은 파이썬이 시도하는 연결만 봅니다. git 자신이 네트워크를 쓰는지는 이 문서가 막아 보지 못했고, 쓰는 명령이 위 여섯 가지(저장소 안의 객체와 색인을 읽는 명령)라는 것만 인자로 확인했습니다.
+일곱 커밋 파일 모드는 git을 18번 부르고, 그 가운데 `show`와 `diff-tree`가 커밋 수에 맞춰 늘어납니다. 커밋마다 `show -s`(메타데이터)와 `diff-tree`(바뀐 파일)를 한 번씩 부르기 때문입니다(2×7=14). 나머지 넷은 고정입니다. `rev-parse`(저장소 맨 위 찾기), `ls-files`(추적 중인지), `log`, `blame`입니다. 줄 모드는 여기에 `show HEAD:<파일>` 한 번(줄 수 검증)이 더해지고 `diff-tree`는 타임라인 커밋 수(6)만큼입니다. 부르는 명령은 모두 읽기 명령입니다. 이 문서의 시험으로 `.git` 안 65개 파일의 지문이 그대로였고 파이썬 쪽 네트워크 시도는 0이었습니다. 다만 이 확인은 파이썬이 시도하는 연결만 봅니다. 완전한 clone에서는 위 여섯 명령이 저장소 안의 객체를 읽을 뿐이지만, **부분 clone**(`git clone --filter=blob:none`처럼 파일 내용을 나중에 받는 clone)에서는 `log -L`과 `blame`이 빠진 파일 내용을 원격에서 받아 옵니다. 직접 확인했습니다. 스크래치에 `uploadpack.allowFilter`를 켠 로컬 원격(`file://` 주소라 바깥 접속은 없습니다)을 만들어 `--filter=blob:none`으로 clone하고 이 스크립트를 줄 범위로 돌리니 `git count-objects -v`의 `in-pack`이 32에서 36으로 늘었습니다. 그 경우에는 스킬의 "No network calls … or repository writes"도, README의 "Nothing leaves your machine"도 맞지 않습니다. GitHub에서 부분 clone한 저장소라면 그 요청은 GitHub로 가고 `.git`에 쓰입니다. 자기 clone이 부분 clone인지는 `git -C "$REPO" config --get remote.origin.partialclonefilter`가 값(`blob:none` 등)을 내는지로 압니다. 이 문서의 마지막 실행(이 저장소의 실제 파일)은 완전한 clone에서 했습니다(`partialclonefilter` 값 없음).
 
 이제 잘못된 입력입니다. 각 명령은 에러 한 줄을 내고 종료 코드 2로 끝납니다. 마지막 `echo $?`는 바로 앞 명령의 종료 코드를 보입니다.
 
@@ -904,7 +904,7 @@ error: fatal: not a git repository (or any of the parent directories): .git
 2
 ```
 
-네 번째 줄 `src/cache.py`는 합성 저장소의 옛 이름입니다. 이름이 바뀌어 HEAD에는 없으므로 추적 중이 아니라고 거절합니다(옛 이름으로는 물을 수 없습니다). 일곱 번째 줄은 저장소 자리에 하위 폴더를 주면 git이 맨 위를 찾지만 파일 경로는 그 맨 위 기준이라는 것을 보입니다(`shop/src pricing_cache.py`가 아니라 `shop/src src/pricing_cache.py`). 마지막 줄은 저장소가 아닌 폴더에서 git 자신의 메시지가 그대로 나옵니다. `lab156`가 다른 git 저장소 안에 있으면 `home` 대신 그 바깥 저장소가 잡히므로 이 줄의 출력이 다를 수 있습니다. 작업 폴더를 어떤 저장소 안에도 두지 않는 것이 안전합니다. 입력이 잘못되면 JSON을 내지 않고 종료 코드 2로 끝납니다. `SKILL.md`는 에이전트에게 "report that error and ask for a corrected target"이라고 시킵니다.
+두 번째 줄 `src/cache.py`는 합성 저장소의 옛 이름입니다. 이름이 바뀌어 HEAD에는 없으므로 추적 중이 아니라고 거절합니다(옛 이름으로는 물을 수 없습니다). 일곱 번째 줄은 저장소 자리에 하위 폴더를 주면 git이 맨 위를 찾지만 파일 경로는 그 맨 위 기준이라는 것을 보입니다(`shop/src pricing_cache.py`가 아니라 `shop/src src/pricing_cache.py`). 마지막 줄은 저장소가 아닌 폴더에서 git 자신의 메시지가 그대로 나옵니다. `lab156`가 다른 git 저장소 안에 있으면 `home` 대신 그 바깥 저장소가 잡히므로 이 줄의 출력이 다를 수 있습니다. 작업 폴더를 어떤 저장소 안에도 두지 않는 것이 안전합니다. 입력이 잘못되면 JSON을 내지 않고 종료 코드 2로 끝납니다. `SKILL.md`는 에이전트에게 "report that error and ask for a corrected target"이라고 시킵니다.
 
 마지막으로 이 저장소의 실제 파일입니다. 저장소를 읽기만 합니다. 실행 앞뒤로 `git -C "$REPO" status --short`가 같은지 보면 됩니다. 이 PC에서는 `.git` 파일 4,650개의 같은 지문 도우미(`python snapshot.py "$REPO"`, 30초 남짓)도 앞뒤가 같았습니다. 출력의 사람 이름 두 개는 `<작성자 A>`·`<작성자 B>`로 가렸습니다. 첫 명령은 스킬의 스크립트 자신입니다.
 
@@ -918,7 +918,7 @@ python $SK $REPO agent_skills/commit-archaeologist/scripts/archaeologist.py
 python $SK $REPO docs/tutorials/_tools/theme.d2 --lines 20-52
 ```
 
-내 출력의 앞부분입니다(2026-10-19의 clone. 이후의 커밋이 쌓이면 다를 수 있고, 얕은 clone이면 이력이 짧습니다).
+내 출력의 앞부분입니다(2026-10-19의 clone. 이후의 커밋이 쌓이면 다를 수 있고, 얕은 clone이면 이력이 짧으며, 부분 clone이면 git이 원격에서 객체를 받아 옵니다. 아래 확인 참고).
 
 ```text
 COMMIT ARCHAEOLOGIST: agent_skills/commit-archaeologist/scripts/archaeologist.py
@@ -967,7 +967,7 @@ region.repo = "/…/lab156/shop"
 introduced_by.email = "ada.fixture@example.test"
 ```
 
-(첫 줄의 경로는 가렸습니다. Windows에서는 `C:\\Users\\...`처럼 사용자 이름이 든 경로가 그대로 나옵니다.) 이 JSON을 에이전트가 읽으면 그 내용은 에이전트가 쓰는 모델과의 대화에 들어갑니다. Claude Code 문서는 스크립트의 "Only the script's output enters the conversation"이라고 적습니다. 모델 제공자로 무엇이 얼마나 가는지는 쓰는 에이전트의 설정에 달려 있고 이 문서는 확인하지 못했습니다. 스크립트가 아무것도 내보내지 않는다는 것과, 스크립트의 출력이 어디까지 가는지는 다른 질문입니다.
+(첫 줄의 경로는 가렸습니다. Windows에서는 `C:\\Users\\...`처럼 사용자 이름이 든 경로가 그대로 나옵니다.) 이 JSON을 에이전트가 읽으면 그 내용은 에이전트가 쓰는 모델과의 대화에 들어갑니다. platform 문서(https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview.md, 2026-10-19에 읽음)는 "Scripts run through bash, and only their output enters context"라고 적습니다. 모델 제공자로 무엇이 얼마나 가는지는 쓰는 에이전트의 설정에 달려 있고 이 문서는 확인하지 못했습니다. 스크립트가 아무것도 내보내지 않는다는 것과, 스크립트의 출력이 어디까지 가는지는 다른 질문입니다.
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
@@ -975,7 +975,7 @@ introduced_by.email = "ada.fixture@example.test"
 
 **목적.** 저장소가 스킬에 대해 돌리는 구조·보안·트리거·레지스트리·스크립트 시험을 직접 돌려 출력을 읽고, 그 시험이 보지 못하는 것을 구분합니다. 행동 시험(3단계)은 모델을 부르므로 돌리지 않고 읽기만 합니다.
 
-**할 일.** 시험 도구는 저장소 안 파일을 읽으므로 저장소 맨 위에서 돌립니다. 레지스트리 검사는 현재 폴더를 저장소 맨 위로 보므로 반드시 그 자리에서 돌려야 합니다(다른 폴더에서 돌리면 "no SKILL.md files found"로 실패합니다). 앞 Step의 변수 블록이 `PYTHONDONTWRITEBYTECODE=1`을 걸어 저장소 안에 `__pycache__`가 생기지 않게 합니다.
+**할 일.** 시험 도구는 저장소 안 파일을 읽으므로 저장소 맨 위에서 돌립니다. 레지스트리 검사는 현재 폴더를 저장소 맨 위로 보는 것이 기본값이라(`--root .`) 다른 폴더에서 돌리면 "no SKILL.md files found" 같은 오류로 실패합니다. 다른 폴더에서는 `--root "$REPO"`를 주면 됩니다(직접 확인: 작업 폴더에서 `--root`를 주면 `PASS`, 안 주면 오류 넷). 앞 Step의 변수 블록이 `PYTHONDONTWRITEBYTECODE=1`을 걸어 저장소 안에 `__pycache__`가 생기지 않게 합니다.
 
 ```bash
 cd "$REPO"
@@ -1076,15 +1076,23 @@ python try_prompts.py $REPO "why does this code exist" "who wrote this function 
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-사용자가 에이전트에게 "이 코드는 왜 있나?"를 묻습니다. 에이전트는 시작할 때 읽어 둔 설명을 보고 이 스킬이 맞다고 판단해 `SKILL.md` 전체를 읽습니다(소스로 읽은 흐름이고 이 문서는 에이전트를 띄우지 않았습니다). 지시문은 대상(저장소와 파일, 줄 범위)을 모으고, 하나라도 빠졌으면 빠진 값만 묻고 형제 저장소를 훑지 말라고 시킵니다. 그다음 `python3 scripts/archaeologist.py /path/to/repo src/cache.py --lines 40-72 --json`을 돌리게 하고, 결과 JSON을 해석하기 전에 `references/reading-git-history.md`를 읽게 합니다. 스크립트가 git과 나누는 대화는 아래 그림에 따로 있습니다.
+에이전트는 시작할 때 모든 스킬의 `name`과 `description`을 읽어 둡니다(명세의 점진적 불러오기, 소스로 읽은 흐름이고 이 문서는 에이전트를 띄우지 않았습니다). 사용자가 "이 코드는 왜 있나?"를 묻고 에이전트가 이 스킬이 맞다고 판단하면 `SKILL.md` 전체를 읽습니다. 지시문은 대상(저장소와 파일, 줄 범위)을 모으고, 하나라도 빠졌으면 빠진 값만 묻고 형제 저장소를 훑지 말라고 시킵니다. 그다음 `python3 scripts/archaeologist.py /path/to/repo src/cache.py --lines 40-72 --json`을 돌리게 하고, 결과 JSON을 해석하기 전에 `references/reading-git-history.md`를 읽게 합니다. 스크립트가 git과 나누는 대화는 시간 경계에서 나눈 그림 셋에 있습니다. 순서는 코드의 실제 실행 순서입니다(직접 확인: 같은 프로세스에서 `subprocess.run`과 `intent_signals`·`classify_message`·`summarize_co_changes`를 감싸 순서를 기록했습니다).
 
-![git과 주고받는 과정](diagrams/extra-git.svg)
+![git과 주고받는 과정 1 — 입력 검증과 이력 목록](diagrams/extra-git.svg)
 
-스크립트는 `rev-parse`로 저장소 맨 위를 찾고 `ls-files`로 추적 중인지 보고, 줄 범위면 `show HEAD:<파일>`로 줄 수를 확인합니다. `log`로 해시 목록을 받아 커밋마다 `show -s`와 `diff-tree`를 부르고, `blame`으로 현재 작성자를 셉니다. 마지막으로 문턱·분류·단서 계산은 파이썬 안에서 합니다. 에이전트는 JSON을 받아 해석 규칙을 읽고 보고서를 씁니다.
+스크립트는 `rev-parse --show-toplevel`로 저장소 맨 위를 찾고, `ls-files --error-unmatch`로 추적 중인지 보고, 줄 범위일 때만 `show HEAD:<파일>`로 줄 수를 확인합니다. 그다음 `log`로 해시 목록을 받습니다.
+
+![git과 주고받는 과정 2 — 커밋마다 되풀이](diagrams/extra-commit.svg)
+
+해시마다 `show -s`로 메타데이터를 받아 의도 단서를 만들고(`intent_signals`), `diff-tree`로 바뀐 파일과 이름 바꾸기를 받은 뒤 분류합니다(`classify_message`). 이 여섯 걸음이 타임라인 커밋 수만큼 되풀이됩니다. 단서와 분류가 `blame`보다 먼저입니다.
+
+![git과 주고받는 과정 3 — 문턱과 blame](diagrams/extra-finish.svg)
+
+모든 커밋을 읽은 뒤에 동반 변경의 문턱을 계산하고(`summarize_co_changes`), 그 뒤에 `blame`으로 현재 작성자를 셉니다. 에이전트는 JSON을 받아 해석 규칙을 읽고 보고서를 씁니다.
 
 ![보고서 쪽 과정](diagrams/extra-report.svg)
 
-`SKILL.md`는 보고서를 여섯 부분(결론과 신뢰도, 도입, 타임라인, 동반 파일, 의도 근거, 변경 위험)으로 쓰고 후속 제안 하나로 끝내라고 합니다. 아래는 Step 3의 파일 모드 결과로 제가 손으로 쓴 견본이고, 모델의 출력이 아닙니다. 이 형식을 지키면 이런 모양이어야 한다는 예입니다.
+`SKILL.md`는 보고서를 여섯 부분(결론과 신뢰도, 도입, 타임라인, 동반 파일, 의도 근거, 변경 위험)으로 쓰고 후속 제안 하나로 끝내라고 합니다(견본은 그 하나만 묻습니다). 아래는 Step 3의 파일 모드 결과로 제가 손으로 쓴 견본이고, 모델의 출력이 아닙니다. 이 형식을 지키면 이런 모양이어야 한다는 예입니다.
 
 > **결론.** 이 가격 캐시는 요청마다 가격을 다시 조회하지 않으려고 들어왔고(`a758aca`, 메모 `docs/notes.md`가 "Prices are looked up on every request"), 이후 만료 시간(`204ccae`)과 환불 뒤 낡은 가격을 지우는 `invalidate`(`1b820cd`, 제목 "stale price after refund")가 붙었습니다. 신뢰도는 중간입니다. 제목들이 무엇을 했는지는 말하지만 캐시를 둔 이유를 직접 적은 메시지는 없습니다.
 >
@@ -1098,7 +1106,7 @@ python try_prompts.py $REPO "why does this code exist" "who wrote this function 
 >
 > **변경 위험.** 환불 뒤에는 `invalidate`가 호출되어야 한다는 제약(테스트와 함께 바뀜), 만료 시간(설정 파일과 함께 바뀜), 한 번 되돌려진 EU 우회를 다시 넣으려는 변경이 위험입니다. `invalidate`의 마지막 줄은 이름 정리 커밋 때문에 blame이 Ada를 가리키지만 그 줄을 처음 넣은 사람은 Ben입니다.
 >
-> 이 변경이 의도적이었는지 평가해 드릴까요, 아니면 이 영역을 바꾸면 무엇이 깨질지 지도를 그려 드릴까요?
+> 이 변경이 의도적이었는지 평가해 드릴까요?
 
 ## 실행 체크리스트
 
@@ -1118,18 +1126,19 @@ python try_prompts.py $REPO "why does this code exist" "who wrote this function 
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `run_trigger_evals.py`가 `UnicodeDecodeError: 'cp949' codec can't decode byte 0xe2 in position 7280`으로 멈춥니다 | 한국어 Windows에서 이 도구가 `SKILL.md`를 인코딩 지정 없이(`open(...).read()`) 열어 cp949로 읽습니다. 저장소의 어떤 스킬 문서에 UTF-8 문자가 있습니다(직접 겪음, 위치 7280은 한 스킬의 `SKILL.md`) | 변수 블록의 `PYTHONUTF8=1`을 켠 셸에서 돌립니다 |
+| `run_trigger_evals.py`가 `UnicodeDecodeError: 'cp949' codec can't decode byte 0xe2 in position 7280`으로 멈춥니다 | 한국어 Windows에서 이 도구가 `SKILL.md`를 인코딩 지정 없이(`open(...).read()`) 열어 cp949로 읽습니다. 저장소의 어떤 스킬 문서에 UTF-8 문자가 있습니다(직접 겪음) | 변수 블록의 `PYTHONUTF8=1`을 켠 셸에서 돌립니다 |
+| `skill_lint.py`나 `registry_lint.py`가 `UnicodeEncodeError: 'cp949' codec can't encode character '—'`로 멈춥니다 | 한국어 Windows의 Git Bash에서 출력 쪽 인코딩이 cp949라 결과 줄의 `—`를 찍지 못합니다(직접 겪음, 변수를 안 건 셸) | 변수 블록의 `PYTHONIOENCODING=utf-8`(과 `PYTHONUTF8=1`)을 켠 셸에서 돌립니다 |
 | `error: file is not tracked at HEAD: src/cache.py` | 파일 이름이 바뀐 저장소에서 옛 이름을 줬습니다. HEAD에 그 이름이 없습니다 | 지금 이름(`src/pricing_cache.py`)을 줍니다. 옛 이름의 이력은 `--follow`가 따라갑니다 |
 | `error: file is not tracked at HEAD: pricing_cache.py` | 저장소 자리에 하위 폴더(`shop/src`)를 줬는데 파일 경로를 그 폴더 기준으로 썼습니다. 파일 경로는 저장소 맨 위 기준입니다 | `python $SK shop/src src/pricing_cache.py`처럼 맨 위 기준 경로를 줍니다 |
 | `error: line range ends at 99, but src/pricing_cache.py has 24 lines at HEAD` | 줄 범위는 현재(HEAD) 줄 번호이고 끝 번호가 줄 수보다 큽니다 | `cat -n`으로 지금 줄 번호를 보고 다시 줍니다 |
 | 줄 모드 동반 변경 맨 위에 옛 파일 이름이 `비율 1.0`으로 나옵니다 | 줄 로그에 내용이 안 바뀐 이름 바꾸기 커밋이 들어오지 않아 옛 이름을 모릅니다 | 파일 모드를 같이 돌려 `region.historical_paths`를 비교하고, 목록에서 그 이름을 빼고 읽습니다 |
 | `error: fatal: not a git repository (or any of the parent directories): .git` | 저장소가 아닌 폴더를 줬습니다. 작업 폴더가 다른 저장소 안이면 그 바깥 저장소가 잡힐 수 있습니다 | 저장소 경로를 확인하고 작업 폴더를 저장소 밖에 둡니다 |
 | 2b 시험이 끝났는데 `TEMP` 아래에 `commit-archaeologist-eval-…` 폴더가 남습니다 | Windows에서 읽기 전용 git 객체 파일을 `rmtree(ignore_errors=True)`가 지우지 못합니다(직접 확인) | `TEMP`를 작업 폴더로 돌린 셸에서 돌리고, 실습 뒤 `lab156`를 지웁니다 |
-| `registry_lint.py`가 `no SKILL.md files found under agent_skills/*/SKILL.md`로 실패합니다 | 이 도구는 현재 폴더를 저장소 맨 위로 봅니다 | `cd "$REPO"` 한 뒤 돌립니다 |
+| `registry_lint.py`가 `no SKILL.md files found under agent_skills/*/SKILL.md`로 실패합니다 | 이 도구는 현재 폴더를 저장소 맨 위로 보는 것이 기본입니다(`--root .`) | `cd "$REPO"` 한 뒤 돌리거나 `--root "$REPO"`를 줍니다 |
 
 ## 더 해보기
 
-- 합성 저장소에 두 번째 이름 바꾸기와 줄 내용 수정을 한 커밋으로 더해 줄 로그가 이름 바꾸기를 타임라인에 싣게 만들어 보세요. `historical_paths`가 채워지는 순간과 옛 이름이 동반 파일에서 사라지는 것을 확인하고, 이 틈을 잡는 시험 한 개를 `agent_skills/evals/commit-archaeologist/test_archaeologist.py`를 본떠 스크래치에 써 보세요.
+- 합성 저장소에 이름을 한 번 더 바꾸면서 줄 내용도 고치는 커밋(예: `git mv src/pricing_cache.py src/price_cache.py` 뒤 TTL 상수 값 수정)을 더해 줄 모드로 돌려 보세요. 줄 로그가 그 커밋을 타임라인에 싣고 `historical_paths`에 바로 앞 이름이 더해지지만, 가장 오래된 이름 `src/cache.py`는 그대로 남아 동반 변경 맨 위에 `6x`로 있습니다(직접 확인). 첫 이름 바꾸기 커밋에 줄 수정도 섞인 저장소를 새로 만들면 어떻게 달라지는지 확인하고, 이 틈을 잡는 시험 한 개를 `agent_skills/evals/commit-archaeologist/test_archaeologist.py`를 본떠 스크래치에 써 보세요.
 - `probe.py`의 예시에 팀의 실제 커밋 메시지 습관(예: `chore:`, `WIP`, 한글 제목)을 넣어 `classify_message`가 어떻게 가르는지 보세요. 한글 제목이 모두 `other`가 되는 것(Step 6에서 직접 확인)이 한국어로 커밋 메시지를 쓰는 저장소에서 보고서에 무엇을 뜻하는지 정리하고, 어떤 낱말을 더하면 나아질지 스크래치 사본에서 고쳐 보세요.
 - 합성 저장소에 파일을 건드리는 커밋을 100개 더하고 `trace_git.py`를 다시 돌려, git 호출 수가 파일 모드에서 `4 + 2n`(n은 타임라인 커밋 수)으로 늘어나는지 확인하세요. Step 7의 18개는 n=7일 때 4+14입니다. 스크립트의 `timeout=30`은 git 호출 하나마다의 제한이고, 이력이 아주 긴 파일의 `log -L` 한 호출이 얼마나 걸리는지는 이 문서가 재 보지 않았습니다.
 
