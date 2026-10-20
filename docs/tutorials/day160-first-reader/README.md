@@ -157,7 +157,7 @@ if not os.environ.get("GUARD_KEEP_PROXY"):
 EOF
 ```
 
-랩 환경 파일은 다시 한 번 `labsafe`로 검사하고, 홈과 임시 폴더를 모두 랩으로 돌립니다(HOME·USERPROFILE·CLAUDE_CONFIG_DIR·TEMP·TMP·TMPDIR). 파이썬을 가드와 함께만 부르는 함수 `py`도 정의합니다. `py`는 부를 때마다 먼저 이름 조회 넷(`getaddrinfo` 등)과 `connect`·`connect_ex`가 모두 가드 함수인지 확인하고, 아니면 돌지 않습니다. 가드 폴더나 가드 파일이 빠지거나 가드 파일의 줄이 하나 빠져 오류가 나도 가드 없는 실행이 되지 않게 하려는 것입니다. 또 `py`는 부를 때마다 홈·임시 폴더를 랩으로 다시 정해 주므로 위의 변수 줄 하나를 빼도 파이썬의 임시 파일이 진짜 `%TEMP%`로 가지 않습니다. `W`는 랩 안의 경로를 만드는 함수이고, 루프백 주소만 받는 `lcurl`, 독자 한 명의 셸을 흉내 내는 `rd`, 출력에서 토큰을 가리는 `mask`도 정의합니다.
+랩 환경 파일은 다시 한 번 `labsafe`로 검사하고, 홈과 임시 폴더를 모두 랩으로 돌립니다(HOME·USERPROFILE·CLAUDE_CONFIG_DIR·TEMP·TMP·TMPDIR). 파이썬을 가드와 함께만 부르는 함수 `py`도 정의합니다. `py`는 부를 때마다 먼저 이름 조회 넷(`getaddrinfo` 등)과 `connect`·`connect_ex`가 모두 가드 함수인지 확인하고, 아니면 돌지 않습니다. 가드 폴더나 가드 파일이 빠지거나 가드 파일의 줄이 하나 빠져 오류가 나도 가드 없는 실행이 되지 않게 하려는 것입니다. 또 `py`는 부를 때마다 홈·임시 폴더를 랩으로 다시 정해 주므로 위의 변수 줄 하나를 빼도 파이썬의 임시 파일이 진짜 `%TEMP%`로 가지 않습니다. `NO_PROXY`도 이 파일과 가드 파일 두 곳에서 루프백으로 겁니다. 가드 파일의 그 줄을 빼고 Windows 시스템 프록시가 켜져 있으면 루프백 피드 요청이 그 프록시로 가는 것을 리뷰에서 재현했고(로컬 기록 프록시가 토큰 주소와 기록 본문 7건을 받음), 이 줄을 더한 뒤에는 0건이었습니다. `W`는 랩 안의 경로를 만드는 함수이고, 루프백 주소만 받는 `lcurl`, 독자 한 명의 셸을 흉내 내는 `rd`, 출력에서 토큰을 가리는 `mask`도 정의합니다.
 
 ```bash
 cat > "${LAB:?}/lab-env.sh" <<'EOF'
@@ -195,6 +195,7 @@ export USERPROFILE="$(win "$LAB/fake-home")"
 export TMPDIR="$LAB/tmp" TEMP="$(win "$LAB/tmp")" TMP="$(win "$LAB/tmp")"
 export UV_CACHE_DIR="$LAB/uvcache" GUARD_LOG="$LAB/guard.log"
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8 PYTHONDONTWRITEBYTECODE=1
+export NO_PROXY=127.0.0.1,localhost,::1 no_proxy=127.0.0.1,localhost,::1  # 가드 파일의 같은 줄과 두 겹
 export FR="$LAB/.claude/skills/first-reader/scripts"
 # 랩 안의 경로: 쓰는 모든 목적지는 "$(W 상대경로)"로 쓴다. LAB이 비면 빈 문자열이 되어 명령이 실패한다.
 W() { printf '%s' "${LAB:?}/$1"; }
