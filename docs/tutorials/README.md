@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 153 / 167일 완료
+진도: 161 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -289,20 +289,20 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 154](day154-advisor-orchestrator-worker/README.md) | 🧠 Advisor Orchestrator Worker | [agent_skills/advisor-orchestrator-worker](../../agent_skills/advisor-orchestrator-worker/) |
-| ⬜ | Day 155 | 🎙️ Thinking Out Loud | [agent_skills/thinking-out-loud](../../agent_skills/thinking-out-loud/) |
-| ⬜ | Day 156 | 🏺 Commit Archaeologist | [agent_skills/commit-archaeologist](../../agent_skills/commit-archaeologist/) |
-| ⬜ | Day 157 | 🩺 Dependency Doctor | [agent_skills/dependency-doctor](../../agent_skills/dependency-doctor/) |
-| ⬜ | Day 158 | 🔭 Scope Creep Detector | [agent_skills/scope-creep-detector](../../agent_skills/scope-creep-detector/) |
-| ⬜ | Day 159 | ⚰️ Project Graveyard | [agent_skills/project-graveyard](../../agent_skills/project-graveyard/) |
-| ⬜ | Day 160 | 👁️ First Reader | [agent_skills/first-reader](../../agent_skills/first-reader/) |
-| ⬜ | Day 161 | ♾️ Self-Improving Agent Skills | [agent_skills/self-improving-agent-skills](../../agent_skills/self-improving-agent-skills/) |
+| ✅ | [Day 154](day154-advisor-orchestrator-worker/README.md) | 🧠 Advisor Orchestrator Worker | [agent_skills/advisor-orchestrator-worker](../../agent_skills/advisor-orchestrator-worker/) |
+| ✅ | [Day 155](day155-thinking-out-loud/README.md) | 🎙️ Thinking Out Loud | [agent_skills/thinking-out-loud](../../agent_skills/thinking-out-loud/) |
+| ✅ | [Day 156](day156-commit-archaeologist/README.md) | 🏺 Commit Archaeologist | [agent_skills/commit-archaeologist](../../agent_skills/commit-archaeologist/) |
+| ✅ | [Day 157](day157-dependency-doctor/README.md) | 🩺 Dependency Doctor | [agent_skills/dependency-doctor](../../agent_skills/dependency-doctor/) |
+| ✅ | [Day 158](day158-scope-creep-detector/README.md) | 🔭 Scope Creep Detector | [agent_skills/scope-creep-detector](../../agent_skills/scope-creep-detector/) |
+| ✅ | [Day 159](day159-project-graveyard/README.md) | ⚰️ Project Graveyard | [agent_skills/project-graveyard](../../agent_skills/project-graveyard/) |
+| ✅ | [Day 160](day160-first-reader/README.md) | 👁️ First Reader | [agent_skills/first-reader](../../agent_skills/first-reader/) |
+| ✅ | [Day 161](day161-self-improving-agent-skills/README.md) | ♾️ Self-Improving Agent Skills | [agent_skills/self-improving-agent-skills](../../agent_skills/self-improving-agent-skills/) |
 
 ### 볼륨 17. 🔎 AI 브라우저 도구 (Day 162–163, 2일)
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | Day 162 | 🪡 Needle - A New Way to Find | [advanced_llm_apps/needle](../../advanced_llm_apps/needle/) |
+| ⬜ | [Day 162](day162-needle/README.md) | 🪡 Needle - A New Way to Find | [advanced_llm_apps/needle](../../advanced_llm_apps/needle/) |
 | ⬜ | Day 163 | 🌀 Ripple - Change One Thing, Find What Else Needs to Change | [advanced_llm_apps/ripple](../../advanced_llm_apps/ripple/) |
 
 ### 볼륨 18. 🧪 기타 LLM 앱 (Day 164–167, 4일)
