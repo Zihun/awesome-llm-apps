@@ -5,6 +5,7 @@ user: "독자" { class: person }
 ui: "화면 (Next.js)" { class: ours }
 api: "엔드포인트 (app.py)" { class: ours }
 opt: "SkillOptimizer" { class: ours }
+exe: "executor (분석 모드)" { class: ours }
 gemini: "Gemini (가짜 서버)" { class: ext }
 
 user -> ui: "zip · API 키 · 모델 이름"
@@ -14,7 +15,9 @@ api -> ui: "session_id · 파일 목록"
 ui -> api: "POST /api/analyze (키는 본문)"
 api -> opt: "SkillOptimizer(키, 모델)"
 api -> opt: "analyze_skill(skill_files)"
-opt -> gemini: "SKILL.md (+ 이름에 references/가 든 파일)"
-gemini -> opt: "시나리오 · 평가 JSON"
+opt -> exe: "분석 프롬프트"
+exe -> gemini: "SKILL.md (+ 이름에 references/가 든 파일)"
+gemini -> exe: "시나리오 · 평가 JSON"
+exe -> opt: "JSON"
 opt -> api: "scenarios · evals"
 api -> ui: "scenarios · evals"

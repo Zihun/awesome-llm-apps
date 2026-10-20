@@ -62,24 +62,35 @@
 
 **목적.** 원본에는 아무것도 쓰지 않고, 앱이 무엇으로 이루어졌고 오늘 어떤 판으로 설치되는지 확인합니다. 그리고 이 폴더가 저장소의 스킬 시험 도구에 어떻게 보이는지 봅니다.
 
-**할 일.** 저장소 루트에서 시작합니다. 먼저 작업 폴더와 환경 파일을 만듭니다. `LAB`은 저장소 밖의 새 폴더로 자기 경로로 바꿉니다. 환경 파일은 HOME·USERPROFILE·CLAUDE_CONFIG_DIR·TEMP와 gcloud 설정 폴더(`CLOUDSDK_CONFIG`)를 이 폴더로 돌려서, 이 문서가 부르는 프로세스가 진짜 홈의 설정과 gcloud 자격 증명을 보지 않게 합니다. Windows의 `APPDATA`는 돌리지 않습니다. 돌리면 uv가 관리하는 Python을 찾지 못하고 새로 내려받으려 하기 때문입니다. 대신 google-auth가 `CLOUDSDK_CONFIG`를 `%APPDATA%\gcloud`보다 먼저 보는 점에 기댑니다(Step 4에서 시험합니다). 환경 파일의 첫 줄들은 `LAB`이 비었거나 `.claude`·`.agents` 같은 에이전트 설정 폴더(또는 `CLAUDE_CONFIG_DIR`) 아래이면 멈춥니다. 마지막 세 줄은 이 셸에서 따로 `adk`를 치는 경우를 위한 준비입니다. 새 홈에 `{"telemetry": false}`를 미리 쓰고, `adk`를 칠 때는 `adk telemetry disable`을 먼저 한 번(이 홈의 설정만 바뀝니다) 하고 `adk … < /dev/null`처럼 stdin을 닫습니다. 첫 질문의 Enter가 텔레메트리를 켜기 때문입니다([Day 149](../day149-release-radar-agent/README.md)).
+**할 일.** 저장소 루트에서 시작합니다. 먼저 작업 폴더와 환경 파일을 만듭니다. `LAB`은 저장소 밖의 새 폴더로 자기 경로로 바꿉니다. 환경 파일은 HOME·USERPROFILE·CLAUDE_CONFIG_DIR·TEMP와 gcloud 설정 폴더(`CLOUDSDK_CONFIG`)를 이 폴더로 돌려서, 이 문서가 부르는 프로세스가 진짜 홈의 설정과 gcloud 자격 증명을 보지 않게 합니다. Windows의 `APPDATA`는 돌리지 않습니다. 돌리면 uv가 관리하는 Python을 찾지 못하고 새로 내려받으려 하기 때문입니다. 대신 google-auth가 `CLOUDSDK_CONFIG`를 `%APPDATA%\gcloud`보다 먼저 보는 점에 기댑니다(Step 4에서 시험합니다). 블록은 `LAB`이 비었거나, 자리 표시 값 그대로이거나, 절대 경로가 아니거나, `.claude`·`.agents` 같은 에이전트 설정 폴더(또는 `CLAUDE_CONFIG_DIR`) 아래이면 폴더를 하나도 만들지 않고 멈춥니다(대소문자는 가리지 않습니다). 환경 파일의 첫 줄들도 같은 점검을 한 번 더 합니다. 이후 블록에서 파일을 만드는 줄은 모두 `"${LAB:?}/work/…"`처럼 절대 경로로 씁니다. 환경 블록을 건너뛰고 대화식 터미널에 붙여 넣어도 지금 폴더에 파일이 생기지 않게 하려는 것입니다. 마지막 세 줄은 이 셸에서 따로 `adk`를 치는 경우를 위한 준비입니다. 새 홈에 `{"telemetry": false}`를 미리 쓰고, `adk`를 칠 때는 `adk telemetry disable`을 먼저 한 번(이 홈의 설정만 바뀝니다) 하고 `adk … < /dev/null`처럼 stdin을 닫습니다. 첫 질문의 Enter가 텔레메트리를 켜기 때문입니다([Day 149](../day149-release-radar-agent/README.md)).
 
 ```bash
 cd awesome-llm-apps
 export REPO="$PWD"
-export LAB=/path/to/d161-lab          # 저장소 밖의 새 폴더(자기 경로로 바꾼다)
-mkdir -p "$LAB/home" "$LAB/tmp" "$LAB/uvcache" "$LAB/work"
-cat > "$LAB/env.sh" <<'EOF'
+export LAB=/path/to/d161-lab          # 저장소 밖의 새 폴더(자기 절대 경로로 바꾼다)
+_ok=1; _n() { { cygpath -m "$1" 2>/dev/null || printf '%s' "$1"; } | tr 'A-Z\\' 'a-z/'; }
+case "$LAB" in ""|/path/to/*) echo "LAB을 자기 경로로 바꾸세요"; _ok=0 ;; esac
+case "$LAB" in /*|[A-Za-z]:[/\\]*) ;; *) echo "LAB은 절대 경로여야 합니다: $LAB"; _ok=0 ;; esac
+case "$(_n "$LAB")/" in
+  */.claude/*|*/.agents/*|*/.codex/*|*/.cursor/*|*/.copilot/*|*/.openclaw/*|*/.hermes/*)
+    echo "LAB이 에이전트 설정 폴더 아래입니다: $LAB"; _ok=0 ;;
+esac
+if [ -n "${CLAUDE_CONFIG_DIR:-}" ]; then
+  _c=$(_n "$CLAUDE_CONFIG_DIR")
+  case "$(_n "$LAB")/" in "${_c%/}"/*) echo "LAB이 CLAUDE_CONFIG_DIR 아래입니다"; _ok=0 ;; esac
+fi
+[ "$_ok" = 1 ] && mkdir -p "$LAB/home" "$LAB/tmp" "$LAB/uvcache" "$LAB/work" && cat > "$LAB/env.sh" <<'EOF'
 # Day 161 작업 셸의 환경. 이 문서의 모든 명령은 이 파일을 불러온 셸에서 돌린다.
 : "${REPO:?REPO를 먼저 정하세요}" "${LAB:?LAB을 먼저 정하세요}"
+_n() { { cygpath -m "$1" 2>/dev/null || printf '%s' "$1"; } | tr 'A-Z\\' 'a-z/'; }
 _lab=$(cd "$LAB" 2>/dev/null && pwd -P) || { echo "LAB 폴더가 없습니다: $LAB"; return 1; }
-_low=$(printf '%s/' "$_lab" | tr 'A-Z' 'a-z')
+_low="$(_n "$_lab")/"
 case "$_low" in
   */.claude/*|*/.agents/*|*/.codex/*|*/.cursor/*|*/.copilot/*|*/.openclaw/*|*/.hermes/*)
     echo "LAB이 에이전트 설정 폴더 아래입니다: $_lab"; return 1 ;;
 esac
 if [ -n "${CLAUDE_CONFIG_DIR:-}" ] && _cfg=$(cd "$CLAUDE_CONFIG_DIR" 2>/dev/null && pwd -P); then
-  _cfg=$(printf '%s/' "$_cfg" | tr 'A-Z' 'a-z')
+  _cfg="$(_n "$_cfg")/"
   case "$_low" in "$_cfg"*) echo "LAB이 CLAUDE_CONFIG_DIR 아래입니다"; return 1 ;; esac
 fi
 export HOME="$LAB/home" USERPROFILE="$LAB/home" CLAUDE_CONFIG_DIR="$LAB/home/.claude"
@@ -94,7 +105,7 @@ case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) VBIN=Scripts/python.exe ;; *) VBIN=b
 export PY="$LAB/venv/$VBIN"
 unset VIRTUAL_ENV
 EOF
-source "$LAB/env.sh" && {
+[ "$_ok" = 1 ] && source "$LAB/env.sh" && {
   mkdir -p "$LAB/home/.adk" "$LAB/home/gcloud"
   printf '{"telemetry": false}\n' > "$LAB/home/.adk/config.json"
   cd "$LAB/work"
@@ -104,16 +115,19 @@ source "$LAB/env.sh" && {
 ```powershell
 Set-Location awesome-llm-apps
 $env:REPO = (Get-Location).Path
-$env:LAB = "C:\d161-lab"              # 저장소 밖의 새 폴더(자기 경로로 바꾼다)
+$env:LAB = "C:\path\to\d161-lab"      # 저장소 밖의 새 폴더(자기 절대 경로로 바꾼다)
 $ok = $true
-if (-not (Test-Path $env:LAB)) { New-Item -ItemType Directory -Force $env:LAB | Out-Null }
-$low = ((Resolve-Path $env:LAB).Path.TrimEnd('\') + '\').ToLower()
-foreach ($d in '.claude','.agents','.codex','.cursor','.copilot','.openclaw','.hermes') {
-  if ($low.Contains("\$d\")) { Write-Host "LAB이 에이전트 설정 폴더($d) 아래입니다"; $ok = $false }
-}
-if ($env:CLAUDE_CONFIG_DIR -and (Test-Path $env:CLAUDE_CONFIG_DIR)) {
-  $cfg = ((Resolve-Path $env:CLAUDE_CONFIG_DIR).Path.TrimEnd('\') + '\').ToLower()
-  if ($low.StartsWith($cfg)) { Write-Host "LAB이 CLAUDE_CONFIG_DIR 아래입니다"; $ok = $false }
+if (-not $env:LAB -or $env:LAB -like "C:\path\to\*") { Write-Host "LAB을 자기 경로로 바꾸세요"; $ok = $false }
+if ($ok -and $env:LAB -notmatch '^[A-Za-z]:[\\/]') { Write-Host "LAB은 C:\로 시작하는 절대 경로여야 합니다"; $ok = $false }
+if ($ok) {
+  $low = ([IO.Path]::GetFullPath($env:LAB).TrimEnd('\') + '\').ToLower()
+  foreach ($d in '.claude','.agents','.codex','.cursor','.copilot','.openclaw','.hermes') {
+    if ($low.Contains("\$d\")) { Write-Host "LAB이 에이전트 설정 폴더($d) 아래입니다"; $ok = $false }
+  }
+  if ($env:CLAUDE_CONFIG_DIR) {
+    $cfg = ([IO.Path]::GetFullPath($env:CLAUDE_CONFIG_DIR).TrimEnd('\') + '\').ToLower()
+    if ($low.StartsWith($cfg)) { Write-Host "LAB이 CLAUDE_CONFIG_DIR 아래입니다"; $ok = $false }
+  }
 }
 if ($ok) {
   New-Item -ItemType Directory -Force "$env:LAB\home","$env:LAB\tmp","$env:LAB\uvcache","$env:LAB\work","$env:LAB\home\.adk","$env:LAB\home\gcloud" | Out-Null
@@ -131,7 +145,7 @@ if ($ok) {
 }
 ```
 
-(PowerShell 줄은 이 문서에서 Windows PowerShell 5.1로 환경 블록의 점검 부분과 환경변수 앞붙임·로그 인코딩만 시험했고, 나머지는 실행해 보지 못했습니다. 이 문서의 명령은 모두 Git Bash로 돌렸습니다. 파일을 만드는 `cat > x.py <<'EOF'` 블록과 `grep`·`sed`·`head`·`cut`·`for` 같은 셸 도구가 든 블록은 Git Bash에서 치는 것이 가장 안전합니다. 서버를 띄우는 터미널 A·B·B2와 파이썬만 부르는 줄은 PowerShell에서 `"$PY" x.py`를 `& $PY x.py`로, `$APP_PORT`를 `$env:APP_PORT`로, `curl`을 `curl.exe`로 바꿔 씁니다. `VAR=값 명령`꼴의 앞붙임은 PowerShell에서는 세션에 남으므로 위 블록처럼 `try { … } finally { Remove-Item Env:… }`로 감쌉니다. 새 터미널마다 위 블록을 다시 실행합니다.) 이어서 줄 수와 `.env` 흔적을 세고, 가상환경을 만들어 앱의 `requirements.txt`를 그대로 설치합니다. `psutil`은 Step 3의 메모리 재기, `pytest`와 `coverage`는 Step 8에 씁니다.
+(PowerShell 줄 가운데 Windows PowerShell 5.1로 돌려 본 것은 위 환경 블록(자리 표시 값·`.CLAUDE` 아래 거부와 정상 경로)과 `try { … } finally { … }` 블록뿐이고 출력은 싣지 않았습니다. 서버 실행과 Ctrl+C로 멈추기는 시험하지 않았습니다. 이 문서의 출력은 모두 Git Bash에서 얻은 것입니다. 파일을 만드는 `cat > x.py <<'EOF'` 블록과 `grep`·`sed`·`head`·`cut`·`for` 같은 셸 도구가 든 블록은 Git Bash에서 치는 것이 가장 안전합니다. 서버를 띄우는 터미널 A·B·B2와 파이썬만 부르는 줄은 PowerShell에서 `"$PY" x.py`를 `& $PY x.py`로, `$APP_PORT`를 `$env:APP_PORT`로, `curl`을 `curl.exe`로 바꿔 씁니다. `VAR=값 명령`꼴의 앞붙임은 PowerShell에서는 세션에 남으므로 위 블록처럼 `try { … } finally { Remove-Item Env:… }`로 감쌉니다. 새 터미널마다 위 블록을 다시 실행합니다.) 이어서 줄 수와 `.env` 흔적을 세고, 가상환경을 만들어 앱의 `requirements.txt`를 그대로 설치합니다. `psutil`은 Step 3의 메모리 재기, `pytest`와 `coverage`는 Step 8에 씁니다.
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
@@ -141,12 +155,12 @@ cat frontend/src/app/*.tsx frontend/src/components/*.tsx | wc -l
 git ls-files . | wc -l
 git ls-files . | grep -i "\.env" || echo "(.env 로 시작하는 추적 파일 없음)"
 grep -rn -i "dotenv" backend || echo "(백엔드에 dotenv 줄 없음)"
-cd "$LAB/work"
+cd "${LAB:?}/work"
 ```
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-uv venv --python 3.12 "$LAB/venv"
+uv venv --python 3.12 "${LAB:?}/venv"
 uv pip install --python "$PY" -r "$BACKEND/requirements.txt" psutil pytest coverage 2>&1 | grep -E "^(Resolved|Prepared|Installed)"
 uv pip list --python "$PY" | grep -E -i "^(fastapi|uvicorn|starlette|pydantic|python-multipart|google-adk|google-genai|httpx|opentelemetry-sdk) "
 uv pip list --python "$PY" | tail -n +3 | wc -l
@@ -208,7 +222,7 @@ cd "$REPO"
 "$PY" -B -X utf8 agent_skills/evals/tools/skill_scanner.py agent_skills/self-improving-agent-skills
 "$PY" -B -X utf8 agent_skills/evals/tools/registry_lint.py --check
 grep -c '"name"' agent_skills/registry.json
-cd "$LAB/work"
+cd "${LAB:?}/work"
 ```
 
 ```text
@@ -232,7 +246,7 @@ Checking registry at <REPO> (mode=check)
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > guard.py <<'EOF'
+cat > "${LAB:?}/work/guard.py" <<'EOF'
 """루프백 가드. 서버를 띄우는 파일이 가장 먼저 불러온다.
 
 1) 환경변수를 이 프로세스 안에서 직접 정한다(셸이나 .env의 진짜 값이 이기지 못하게).
@@ -377,7 +391,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > fake_gemini.py <<'EOF'
+cat > "${LAB:?}/work/fake_gemini.py" <<'EOF'
 """가짜 Gemini 서버. 127.0.0.1의 한 포트에서 generateContent 요청에 대본대로 답한다(실제 모델이 아니다).
 
 사용: python fake_gemini.py <포트> <기록 파일>
@@ -528,7 +542,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > serve_backend.py <<'EOF'
+cat > "${LAB:?}/work/serve_backend.py" <<'EOF'
 """백엔드를 가드 아래에서 127.0.0.1로만 연다. 모델은 가짜 서버가 대신한다.
 
 사용: BACKEND=<backend 폴더> python serve_backend.py <가짜 Gemini 포트> <앱 포트> [로그 파일]
@@ -600,7 +614,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_main.py <<'EOF'
+cat > "${LAB:?}/work/probe_main.py" <<'EOF'
 """`python app.py`가 서버를 어디에 여는지 연다 하지 않고 본다: uvicorn.run을 가로채 인자만 찍는다.
 사용: BACKEND=<backend 폴더> python probe_main.py"""
 import os
@@ -613,6 +627,7 @@ import guard  # noqa: E402
 guard.install()  # 가로채기 줄이 빠져도 0.0.0.0에서 듣는 것(bind)은 가드가 막는다
 guard.require_installed()
 backend = os.environ["BACKEND"]
+sys.dont_write_bytecode = True  # 원본 폴더에 __pycache__를 만들지 않는다(환경 줄이 빠져도)
 sys.path.insert(0, backend)
 import uvicorn  # noqa: E402
 
@@ -628,7 +643,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > adk_library_check.py <<'EOF'
+cat > "${LAB:?}/work/adk_library_check.py" <<'EOF'
 """이 앱이 ADK를 라이브러리로만 쓰는지 본다. 모델은 부르지 않는다.
 사용: BACKEND=<backend 폴더> python adk_library_check.py
 """
@@ -641,6 +656,7 @@ import guard  # noqa: E402
 
 guard.install()  # 소켓 가드(모델 주소는 정하지 않는다: 부르지 않으므로)
 backend = os.environ["BACKEND"]
+sys.dont_write_bytecode = True  # 원본 폴더에 __pycache__를 만들지 않는다(환경 줄이 빠져도)
 sys.path.insert(0, backend)
 
 # 1) 소스: 백엔드 두 파일이 adk 명령이나 하위 프로세스를 쓰는지
@@ -694,13 +710,13 @@ cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 
 ```bash
 # 터미널 A
-cd "$LAB/work"
+cd "${LAB:?}/work"
 "$PY" fake_gemini.py "$FAKE_PORT" fake.log
 ```
 
 ```bash
 # 터미널 B
-cd "$LAB/work"
+cd "${LAB:?}/work"
 "$PY" serve_backend.py "$FAKE_PORT" "$APP_PORT" app.log
 ```
 
@@ -745,7 +761,7 @@ OTEL_* 환경변수: ['OTEL_EXPORTER_OTLP_ENDPOINT']
 
 `app.py`를 `__main__`으로 돌리되 `uvicorn.run`만 가로채 보면 원본은 `host='0.0.0.0'`, 포트 8891입니다. 이 문서의 서버는 `127.0.0.1:51877`에만 듭니다(`netstat`의 마지막 줄. 다른 OS는 `lsof -nP -iTCP:$APP_PORT -sTCP:LISTEN`). 두 백엔드 파일에는 `adk` 명령이나 하위 프로세스 줄이 0개이고, `google`에서 가져오는 것은 `google.adk.agents`·`runners`·`sessions`와 `google.genai`뿐입니다. `app`을 불러온 뒤 `google.adk.cli` 모듈은 하나도 올라오지 않았습니다. 사용 통계를 보내는 코드는 설치된 ADK에서 `cli/` 아래 파일 넷과 `utils/_telemetry_config.py`에만 있습니다. 올라온 `google.adk.telemetry` 모듈 둘은 OpenTelemetry 추적용인데, 추적 제공자가 SDK의 `TracerProvider`가 아니라 `ProxyTracerProvider`이고 내보낼 곳이 없습니다. 이 확인은 `OTEL_EXPORTER_OTLP_ENDPOINT`가 셸에 있는 상태에서 했습니다. 막힌 연결은 0건입니다. 그래서 이 앱을 라이브러리로 쓰는 한 텔레메트리 질문과 전송 하위 프로세스는 나오지 않습니다. 같은 셸에서 `adk web` 같은 명령을 직접 치면 사정이 달라집니다. 별개 프로세스라서 서버 파일의 줄은 하나도 닿지 않고, stdin이 터미널이면 ADK 2.12.0은 텔레메트리를 켤지 묻고 Enter가 켭니다(Day 149가 소스로 확인한 `cli_tools_click.py`의 동작입니다). 이 문서의 환경 파일은 그 셸의 HOME을 새 폴더로 돌리고 거기에 거절을 미리 써 두었습니다.
 
-독자 명령에서 줄 하나를 빠뜨려도 안전한지 줄을 하나씩 뺀 판으로 시험했습니다. 셸에는 진짜 모양의 키(`AIzaSy…` 꼴의 가짜), Vertex 설정, 프록시 변수(감시용 가짜 프록시를 가리킴), `OTEL_EXPORTER_OTLP_ENDPOINT`를 두었고, Windows의 `APPDATA`는 가짜 폴더에 가짜 gcloud 자격 증명 파일(가짜 갱신 토큰)을 두어 독자의 모양을 흉내 냈습니다. `serve_backend.py`는 38판입니다. 20판은 `NameError`·`ModuleNotFoundError`·`IndentationError`나 가드의 "소켓 가드가 설치되어 있지 않습니다"(`point_at_fake` 줄을 뺀 판)로 서버가 뜨기 전에 멈췄고(한 판은 `uvicorn.run`이 없어 서버가 열리지 않음), 18판은 줄이 빠진 채 서버가 떠서 모델 호출이 있는 한 라운드까지 끝냈습니다. `probe_main.py` 14판에서는 `uvicorn.run = fake_run` 줄을 뺀 판이 원본의 `0.0.0.0:8891` 열기를 시도했지만 가드의 bind 막기가 거절했습니다(8891에 듣는 프로세스 0). `probe_vertex.py`는 `GOOGLE_APPLICATION_CREDENTIALS`가 없는 셸과 있는 셸에서 각각 23판, 환경 파일은 줄을 하나씩 뺀 16판을 `probe_vertex.py`와 함께 돌렸습니다. 환경 파일에서 `CLOUDSDK_CONFIG` 줄(이나 그 앞의 점검 줄)을 뺀 판은 탐침이 아무것도 하지 않고 "멈춤:"으로 끝났고, 가드 줄을 뺀 판은 `require_installed()`가 멈췄습니다. 모든 판에서 루프백 밖으로 나가려던 시도, 감시 프록시에 닿은 연결, 파이썬 하위 프로세스(gcloud 포함) 실행이 0이었고 가드 기록에는 의도한 Vertex 관찰의 메타데이터 서버 줄과 그 bind 거절 한 줄뿐이었습니다. 원본의 `__pycache__`와 진짜 TEMP는 환경 파일의 해당 줄을 빼도 `serve_backend.py`가 스스로 바이트코드를 끄고 임시 폴더를 `work/tmp`로 돌려 지켜졌습니다(원본 대신 복사본으로 확인했습니다).
+독자 명령에서 줄 하나를 빠뜨려도 안전한지 줄을 하나씩 뺀 판으로 시험했습니다(작성 과정에서 돌린 것이고 판마다의 출력은 이 문서에 싣지 않았습니다. 리뷰에서 다른 판 목록으로 다시 돌려 같은 결론을 얻었습니다). 셸에는 진짜 모양의 키(`AIzaSy…` 꼴의 가짜), Vertex 설정, 프록시 변수(감시용 가짜 프록시를 가리킴), `OTEL_EXPORTER_OTLP_ENDPOINT`를 두었고, Windows의 `APPDATA`는 가짜 폴더에 가짜 gcloud 자격 증명 파일(가짜 갱신 토큰)을 두어 독자의 모양을 흉내 냈습니다. `serve_backend.py`는 38판입니다. 20판은 `NameError`·`ModuleNotFoundError`·`IndentationError`나 가드의 "소켓 가드가 설치되어 있지 않습니다"(`point_at_fake` 줄을 뺀 판)로 서버가 뜨기 전에 멈췄고(한 판은 `uvicorn.run`이 없어 서버가 열리지 않음), 18판은 줄이 빠진 채 서버가 떠서 모델 호출이 있는 한 라운드까지 끝냈습니다. `probe_main.py` 14판에서는 `uvicorn.run = fake_run` 줄을 뺀 판이 원본의 `0.0.0.0:8891` 열기를 시도했지만 가드의 bind 막기가 거절했습니다(8891에 듣는 프로세스 0). `probe_vertex.py`는 `GOOGLE_APPLICATION_CREDENTIALS`가 없는 셸과 있는 셸에서 각각 23판, 환경 파일은 줄을 하나씩 뺀 16판을 `probe_vertex.py`와 함께 돌렸습니다. 환경 파일에서 `CLOUDSDK_CONFIG` 줄(이나 그 앞의 점검 줄)을 뺀 판은 탐침이 아무것도 하지 않고 "멈춤:"으로 끝났고, 가드 줄을 뺀 판은 `require_installed()`가 멈췄습니다. 모든 판에서 루프백 밖으로 나가려던 시도, 감시 프록시에 닿은 연결, 파이썬 하위 프로세스(gcloud 포함) 실행이 0이었고 가드 기록에는 의도한 Vertex 관찰의 메타데이터 서버 줄과 그 bind 거절 한 줄뿐이었습니다. 원본의 `__pycache__`와 진짜 TEMP는 환경 파일의 해당 줄을 빼도 `serve_backend.py`가 스스로 바이트코드를 끄고 임시 폴더를 `work/tmp`로 돌려 지켜졌습니다(원본 대신 복사본으로 확인했습니다). 원본을 import하는 탐침(`probe_main.py`·`adk_library_check.py`·`probe_vertex.py`)도 import하기 전에 바이트코드를 끕니다.
 
 ### Step 3. zip 올리기 — 위험한 이름과 크기 제한
 
@@ -755,7 +771,7 @@ OTEL_* 환경변수: ['OTEL_EXPORTER_OTLP_ENDPOINT']
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > mkzips.py <<'EOF'
+cat > "${LAB:?}/work/mkzips.py" <<'EOF'
 """합성 zip을 만든다. 모두 직접 지은 가짜 스킬이고, 위험한 항목은 이름만 위험하다(내용은 한 줄 글).
 
 사용: python mkzips.py <출력 폴더>
@@ -866,7 +882,7 @@ over60mb.zip   62,934,084 bytes
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > lab.py <<'EOF'
+cat > "${LAB:?}/work/lab.py" <<'EOF'
 """화면(Next.js) 대신 백엔드를 부르는 시험용 클라이언트. 요청 모양은 frontend/src/components/*.tsx에서 읽은 그대로다.
 
 사용: python lab.py <명령> ...   (포트는 APP_PORT 환경변수, 기본 51877)
@@ -949,7 +965,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_zip.py <<'EOF'
+cat > "${LAB:?}/work/probe_zip.py" <<'EOF'
 """zip 올리기 시험. 사용: python probe_zip.py <zip 폴더> [서버 PID]
 서버 PID를 주면 올릴 때마다 서버 프로세스의 최대 작업 집합(MB)도 적는다(psutil 필요)."""
 import os
@@ -1063,7 +1079,7 @@ Skipping non-text file: pile/logo.png
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > paths.py <<'EOF'
+cat > "${LAB:?}/work/paths.py" <<'EOF'
 """app.py의 경로 검사가 쓰는 함수가 Windows(ntpath)와 POSIX(posixpath)에서 어떻게 다른지 본다. 서버를 띄우지 않는다."""
 import ntpath
 import posixpath
@@ -1104,7 +1120,7 @@ python 3.14.2
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > up314.py <<'EOF'
+cat > "${LAB:?}/work/up314.py" <<'EOF'
 """파이썬 판이 달라지면 업로드 검사가 어떻게 달라지는지 본다(서버 없이 TestClient, 모델·네트워크 없음).
 사용: BACKEND=<backend 폴더> python up314.py <hostile.zip 이 든 폴더>"""
 import io
@@ -1140,9 +1156,9 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-uv venv --python 3.14 "$LAB/venv314"
-uv pip install --python "$LAB/venv314/$VBIN" -r "$BACKEND/requirements.txt" httpx 2>&1 | grep -E "^(Resolved|Installed)"
-for v in venv venv314; do "$LAB/$v/$VBIN" up314.py zips 2>&1 | grep -E "^(python|  (hostile|rooted))"; done
+uv venv --python 3.14 "${LAB:?}/venv314"
+uv pip install --python "${LAB:?}/venv314/$VBIN" -r "$BACKEND/requirements.txt" httpx 2>&1 | grep -E "^(Resolved|Installed)"
+for v in venv venv314; do "${LAB:?}/$v/$VBIN" up314.py zips 2>&1 | grep -E "^(python|  (hostile|rooted))"; done
 ```
 
 ```text
@@ -1169,7 +1185,7 @@ python 3.14.2
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > showlog.py <<'EOF'
+cat > "${LAB:?}/work/showlog.py" <<'EOF'
 """가짜 Gemini 서버의 기록(fake.log)을 요약한다. 사용: python showlog.py <기록 파일>"""
 import collections
 import json
@@ -1192,11 +1208,11 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-: > fake.log
-"$PY" lab.py flow zips/good.zip 1 > flow1.txt; head -2 flow1.txt | cut -c1-150
+: > "${LAB:?}/work/fake.log"
+"$PY" lab.py flow zips/good.zip 1 > "${LAB:?}/work/flow1.txt"; head -2 flow1.txt | cut -c1-150
 "$PY" showlog.py fake.log | tail -1
-: > fake.log
-"$PY" lab.py flow zips/flat.zip 1 > flow1.txt; head -2 flow1.txt | cut -c1-150
+: > "${LAB:?}/work/fake.log"
+"$PY" lab.py flow zips/flat.zip 1 > "${LAB:?}/work/flow1.txt"; head -2 flow1.txt | cut -c1-150
 "$PY" showlog.py fake.log | tail -1
 ```
 
@@ -1231,7 +1247,7 @@ try {
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_keys.py <<'EOF'
+cat > "${LAB:?}/work/probe_keys.py" <<'EOF'
 """API 키를 요청 본문으로 받는 설계가 무엇을 뜻하는지 가짜 키로 시험한다.
 
 사용: python probe_keys.py single | race <fake 기록 파일>
@@ -1307,7 +1323,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-: > fake.log
+: > "${LAB:?}/work/fake.log"
 APP_PORT="$APP2_PORT" "$PY" probe_keys.py single fake.log
 ```
 
@@ -1333,7 +1349,7 @@ try { $env:D161_DELAY = "0.03"; & $PY fake_gemini.py $env:FAKE_PORT fake.log } f
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-for i in 1 2 3; do : > fake.log; APP_PORT="$APP2_PORT" "$PY" probe_keys.py race fake.log; echo; done
+for i in 1 2 3; do : > "${LAB:?}/work/fake.log"; APP_PORT="$APP2_PORT" "$PY" probe_keys.py race fake.log; echo; done
 ```
 
 ![Step 4까지의 구성](diagrams/step4.svg)
@@ -1359,7 +1375,7 @@ skill-b: 보낸 키 'fake-keyB-bbbb' / 모델 서버가 받은 키별 요청 수
 
 - **빈 키는 서버 셸의 다른 키로 이어집니다.** 첫 요청의 키는 그대로 모델 서버에 닿습니다(`fake-req-key-1`). 둘째는 빈 문자열인데 `HTTP 200`이고 모델 서버가 받은 키는 서버 셸에 있던 **`GEMINI_API_KEY`**(`fake-shell-gem…`)입니다. 첫 요청이 `GOOGLE_API_KEY`를 덮어썼고, 빈 문자열은 거짓이라 `google-genai`가 `GOOGLE_API_KEY or GEMINI_API_KEY`(설치된 `google/genai/_api_client.py`의 `get_env_api_key`)의 뒤쪽으로 넘어간 것입니다. 키 필드를 빼면 422이지만 빈 문자열은 통과합니다. 서버를 띄운 셸에 `GEMINI_API_KEY`가 있으면 **키 없는 요청이 서버 주인의 키로 모델을 부른다**는 뜻입니다.
 - **셸이나 `.env`의 `GOOGLE_API_KEY`는 첫 요청이 덮어씁니다.** 앱 README는 `.env`의 `GOOGLE_API_KEY`가 "로컬 개발용 선택 사항"이라고 하지만, 요청이 키를 보내면 그 값이, 빈 값을 보내도 빈 값이 이깁니다. 앞 단계의 확인대로 코드는 `.env`를 읽지도 않습니다.
-- **동시에 돌면 키가 섞입니다.** 환경변수가 하나이고 ADK의 클라이언트는 첫 호출 때 만들어지므로 먼저 시작한 세션의 요청에 나중에 시작한 세션의 키가 실립니다. 세 번 돌린 결과가 위와 같습니다. 세 번 모두 스킬 A의 요청 16·17·15건 가운데 A의 키는 1·2·2건뿐이고 나머지는 B의 키였습니다. 문서를 쓰며 앞서 탐색한 실행에서는 방향이 반대인 판도 있었으니, 누구의 키로 나가는지는 타이밍이 정합니다. 쓴 사람의 키로 남의 스킬 글이 나가고, 남의 계정에 요금이 붙습니다. 방향과 건수는 실행마다 다릅니다.
+- **동시에 돌면 키가 섞입니다.** 환경변수가 하나이고 ADK의 클라이언트는 첫 호출 때 만들어지므로, 두 세션이 겹치면 한쪽 세션의 요청에 다른 쪽의 키가 실립니다. 세 번 돌린 결과가 위와 같습니다. 첫 두 판은 스킬 B의 요청 19·18건 가운데 18·16건에 A의 키가 실렸고, 셋째 판은 거꾸로 스킬 A의 요청 16건 가운데 14건에 B의 키가 실렸습니다. 누구의 키로 나가는지는 타이밍이 정하고, 방향과 건수는 실행마다 다릅니다. 쓴 사람의 키로 남의 스킬 글이 나가고, 남의 계정에 요금이 붙습니다.
 - **서버를 여럿이 쓰면 안 되는 설계입니다.** 인증이 없고(`app.py`에서 `authorization`·`Depends`·`request.headers`를 찾으면 0줄) 세션 아이디가 유일한 비밀입니다.
 
 다음은 Vertex 설정이 셸에 있는 경우, CORS, 키가 남는 곳입니다.
@@ -1368,7 +1384,7 @@ skill-b: 보낸 키 'fake-keyB-bbbb' / 모델 서버가 받은 키별 요청 수
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_vertex.py <<'EOF'
+cat > "${LAB:?}/work/probe_vertex.py" <<'EOF'
 """독자의 셸에 Vertex AI 설정이 있으면 키를 요청 본문으로 줘도 어디로 가는지 본다(가짜 값, 소켓 가드 아래).
 사용: BACKEND=<backend 폴더> python probe_vertex.py
 이 탐침은 일부러 Vertex 모드를 켠다. 그러면 google-auth가 독자의 진짜 자격 증명(gcloud 로그인)을 찾는다.
@@ -1383,6 +1399,7 @@ if not (gcloud + os.sep).startswith(lab + os.sep):
     sys.exit("멈춤: CLOUDSDK_CONFIG가 LAB 아래가 아닙니다. 환경 파일을 불러오세요(진짜 gcloud 자격 증명을 읽을 수 있습니다).")
 if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
     sys.exit("멈춤: GOOGLE_APPLICATION_CREDENTIALS가 설정돼 있습니다. 이 탐침은 그 파일을 읽게 됩니다. 지우고 다시 하세요.")
+os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)  # 위 단언이 빠져도 그 파일을 읽지 않게 한 겹 더
 
 import asyncio  # noqa: E402
 
@@ -1393,6 +1410,7 @@ guard.install()  # 루프백 밖으로는 나가지 못하고(시도는 BLOCKED�
 guard.require_installed()  # 위 줄이 빠졌으면 여기서 멈춘다
 os.environ.update(GOOGLE_GENAI_USE_VERTEXAI="true", GOOGLE_CLOUD_PROJECT="fake-project", GOOGLE_CLOUD_LOCATION="us-central1")
 os.environ["GOOGLE_GEMINI_BASE_URL"] = ""
+sys.dont_write_bytecode = True  # 원본 폴더에 __pycache__를 만들지 않는다(환경 줄이 빠져도)
 sys.path.insert(0, os.environ["BACKEND"])
 from adk_optimizer import SkillOptimizer  # noqa: E402
 
@@ -1424,7 +1442,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/some-credentials.json "$PY" probe_vertex
 멈춤: GOOGLE_APPLICATION_CREDENTIALS가 설정돼 있습니다. 이 탐침은 그 파일을 읽게 됩니다. 지우고 다시 하세요.
 ```
 
-서버 셸에 `GOOGLE_GENAI_USE_VERTEXAI=true`와 프로젝트가 있으면 요청 본문의 키는 **무시됩니다**. 프로세스가 환경변수의 `GOOGLE_API_KEY`만 고치기 때문에 `google-genai`는 Vertex 모드로 가고, 빈 `gcloud` 폴더에서는 응용 프로그램 기본 자격 증명을 찾느라 메타데이터 서버 주소(`169.254.169.254`)로 세 번 연결을 시도했습니다(가드가 막았습니다). 둘째 블록은 `GOOGLE_APPLICATION_CREDENTIALS`가 있으면 멈추는 것을 보입니다. 이 설정을 서버를 띄우는 셸에 둔 독자나, 환경 파일 없이 Windows에서 gcloud 로그인이 있는 독자의 서버는 진짜 자격 증명으로 Vertex AI를 부릅니다. 이 문서는 그 길을 시험하지 않았습니다. 작성 과정에서 가짜 `APPDATA`(가짜 갱신 토큰 파일)와 감시 프록시로 같은 탐침을 돌려, `CLOUDSDK_CONFIG` 없이 돌리면 그 파일을 읽고 `oauth2.googleapis.com`으로 토큰 갱신을 시도하는 것을 봤습니다. 이어서 CORS와 인증, 키가 남는 곳을 봅니다.
+서버 셸에 `GOOGLE_GENAI_USE_VERTEXAI=true`와 프로젝트가 있으면 요청 본문의 키는 **무시됩니다**. 프로세스가 환경변수의 `GOOGLE_API_KEY`만 고치기 때문에 `google-genai`는 Vertex 모드로 가고, 빈 `gcloud` 폴더에서는 응용 프로그램 기본 자격 증명을 찾느라 메타데이터 서버 주소(`169.254.169.254`)로 세 번 연결을 시도했습니다(가드가 막았습니다). 둘째 블록은 `GOOGLE_APPLICATION_CREDENTIALS`가 있으면 멈추는 것을 보입니다. 그 단언 줄이 빠져도 바로 다음 줄이 이 변수를 지워서 탐침은 그 파일을 열지 않습니다. 이 설정을 서버를 띄우는 셸에 둔 독자나, 환경 파일 없이 Windows에서 gcloud 로그인이 있는 독자의 서버는 진짜 자격 증명으로 Vertex AI를 부릅니다. 이 문서는 그 길을 시험하지 않았습니다. 작성 과정과 리뷰에서 가짜 `APPDATA`(가짜 갱신 토큰 파일)와 감시 프록시로 같은 탐침을 돌려, `CLOUDSDK_CONFIG` 없이 돌리면 그 파일을 읽고 `oauth2.googleapis.com`으로 토큰 갱신을 시도하는 것을 봤습니다(관찰 실험이라 독자 명령으로 싣지 않았고 출력도 싣지 않았습니다). 이어서 CORS와 인증, 키가 남는 곳을 봅니다.
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
@@ -1440,7 +1458,7 @@ grep -n "allow_origins\|allow_credentials" "$BACKEND/app.py"
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_keyleak.py <<'EOF'
+cat > "${LAB:?}/work/probe_keyleak.py" <<'EOF'
 """요청 본문으로 보낸 키가 응답·내려받기·서버 로그에 남는지 센다. 사용: python probe_keyleak.py <zip> <서버 로그>..."""
 import contextlib
 import io
@@ -1477,7 +1495,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-: > fake.log
+: > "${LAB:?}/work/fake.log"
 "$PY" probe_keyleak.py zips/good.zip app.log app2.log
 ```
 
@@ -1503,13 +1521,13 @@ access-control-allow-credentials: true
   서버 로그 app2.log: 0
 ```
 
-검사가 로그 인코딩에 속지 않는지도 봅니다. 서버 로그를 Windows PowerShell 5.1의 `Tee-Object`로 남기면 파일이 UTF-16LE(BOM 있음)라서 바이트로 ASCII 키를 세는 검사는 키가 있어도 0을 냅니다(Microsoft 문서: "Tee-Object uses "Unicode" (UTF-16LE) encoding when it writes to files", PowerShell 6부터는 BOM 없는 UTF-8). 이 문서의 서버는 로그를 스스로 UTF-8로 쓰지만, 검사 쪽(`probe_keyleak.py`의 `count_in_log`)도 BOM을 보고 글로 바꿔 셉니다. 아래는 그런 UTF-16 파일을 파이썬으로 만들어 시험한 것입니다. PowerShell 5.1 자체는 이 문서에서 실행해 보지 못했습니다.
+검사가 로그 인코딩에 속지 않는지도 봅니다. 서버 로그를 Windows PowerShell 5.1의 `Tee-Object`로 남기면 파일이 UTF-16LE(BOM 있음)라서 바이트로 ASCII 키를 세는 검사는 키가 있어도 0을 냅니다(Microsoft 문서: "Tee-Object uses "Unicode" (UTF-16LE) encoding when it writes to files", PowerShell 6부터는 BOM 없는 UTF-8). 이 문서의 서버는 로그를 스스로 UTF-8로 쓰지만, 검사 쪽(`probe_keyleak.py`의 `count_in_log`)도 BOM을 보고 글로 바꿔 셉니다. 아래는 그런 UTF-16 파일을 파이썬으로 만들어 시험한 것입니다. `Tee-Object`가 UTF-16LE로 쓰는 것은 리뷰에서 PowerShell 5.1로 재현했고 그 출력은 싣지 않았습니다.
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" -c "open('app_utf16.log', 'w', encoding='utf-16').write('server log line with fake-key-' + 'A' * 12 + '\n')"
 "$PY" -c "print('바이트로 센 값:', open('app_utf16.log', 'rb').read().count(b'fake-key-' + b'A' * 12))"
-: > fake.log
+: > "${LAB:?}/work/fake.log"
 "$PY" probe_keyleak.py zips/good.zip app.log app_utf16.log
 ```
 
@@ -1530,7 +1548,7 @@ cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > zipdir.py <<'EOF'
+cat > "${LAB:?}/work/zipdir.py" <<'EOF'
 """폴더 하나를 zip으로 묶는다(README의 `zip -r project-graveyard.zip project-graveyard/` 대신). 사용: python zipdir.py <폴더> <출력 zip>"""
 import os
 import sys
@@ -1551,8 +1569,8 @@ EOF
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 "$PY" zipdir.py "$REPO/agent_skills/project-graveyard" zips/project-graveyard.zip
-: > fake.log
-"$PY" lab.py flow zips/project-graveyard.zip 20 > flow20.txt
+: > "${LAB:?}/work/fake.log"
+"$PY" lab.py flow zips/project-graveyard.zip 20 > "${LAB:?}/work/flow20.txt"
 head -1 flow20.txt | cut -c1-200
 sed -n '5,9p;24,29p' flow20.txt
 "$PY" showlog.py fake.log
@@ -1610,7 +1628,7 @@ finally { Remove-Item Env:D161_MUTATOR,Env:D161_NOISE -ErrorAction SilentlyConti
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_noise.py <<'EOF'
+cat > "${LAB:?}/work/probe_noise.py" <<'EOF'
 """아무것도 바꾸지 않는 변경도 '개선'으로 남는지 본다. 사용: python probe_noise.py <zip> [라운드]
 가짜 모델 서버를 D161_MUTATOR=noop D161_NOISE=0.25로 띄워 둔다(판정의 25%가 거꾸로 나온다)."""
 import io
@@ -1630,7 +1648,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-"$PY" probe_noise.py zips/good.zip 12 > noise.txt
+"$PY" probe_noise.py zips/good.zip 12 > "${LAB:?}/work/noise.txt"
 sed -n '5,17p' noise.txt
 grep -E "^(기준선|개선된)" noise.txt
 ```
@@ -1671,7 +1689,7 @@ try { $env:D161_MUTATOR = "break"; & $PY fake_gemini.py $env:FAKE_PORT fake.log 
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_break.py <<'EOF'
+cat > "${LAB:?}/work/probe_break.py" <<'EOF'
 """점수가 오르면 구조를 깨는 변경도 남는지 본다. 사용: python probe_break.py <zip> <풀어 둘 폴더>
 가짜 모델 서버를 D161_MUTATOR=break로 띄워 둔다(두 번째 변경이 머리말 전체를 지운다)."""
 import io
@@ -1767,7 +1785,7 @@ try { $env:D161_DELAY = "0.1"; & $PY fake_gemini.py $env:FAKE_PORT fake.log } fi
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_stop.py <<'EOF'
+cat > "${LAB:?}/work/probe_stop.py" <<'EOF'
 """멈춤 버튼이 하는 일을 본다. 사용: python probe_stop.py <zip> <fake 기록 파일>
 가짜 모델 서버를 느리게(D161_DELAY=0.1) 띄워 두고 돌린다."""
 import os
@@ -1814,7 +1832,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-: > fake.log
+: > "${LAB:?}/work/fake.log"
 "$PY" probe_stop.py zips/good.zip fake.log
 ```
 
@@ -1830,7 +1848,7 @@ cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_sse.py <<'EOF'
+cat > "${LAB:?}/work/probe_sse.py" <<'EOF'
 """/api/stream 이 보내는 이벤트를 본다(화면은 이 주소를 부르지 않는다). 사용: python probe_sse.py <zip>"""
 import json
 import os
@@ -1857,7 +1875,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_names.py <<'EOF'
+cat > "${LAB:?}/work/probe_names.py" <<'EOF'
 """두 SKILL.md가 든 zip을 한 번 개선해 내려받고, 어느 파일의 내용이 바뀌었는지 본다."""
 import io
 import os
@@ -1887,7 +1905,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_errors.py <<'EOF'
+cat > "${LAB:?}/work/probe_errors.py" <<'EOF'
 """오류가 화면까지 어떻게 올라오는지 본다. 사용: python probe_errors.py <zip>"""
 import os
 import sys
@@ -1913,7 +1931,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > probe_examples.py <<'EOF'
+cat > "${LAB:?}/work/probe_examples.py" <<'EOF'
 """/api/examples 목록과 각 예제 불러오기, 그리고 화면이 쓰는 두 이름을 시험한다."""
 import os
 import sys
@@ -2021,7 +2039,7 @@ load self-improving-agent-skills  HTTP 400 {"detail":"No SKILL.md found"}
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > cp949_check.py <<'EOF'
+cat > "${LAB:?}/work/cp949_check.py" <<'EOF'
 """UTF-8 모드가 아닐 때(한국어 Windows 기본 cp949) 예제 목록이 어떻게 되는지 본다. 사용: BACKEND=<backend 폴더> python -X utf8=0 cp949_check.py"""
 import locale
 import os
@@ -2076,12 +2094,12 @@ grep -n "max_rounds\|3000" src/components/RunningStep.tsx
 grep -rn "localStorage" src | cut -c1-90
 grep -rn "dangerouslySetInnerHTML" src | cut -c1-90
 sed -n 53,64p src/components/UploadStep.tsx
-cd "$LAB/work"
+cd "${LAB:?}/work"
 ```
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > lockscan.py <<'EOF'
+cat > "${LAB:?}/work/lockscan.py" <<'EOF'
 """package-lock.json을 읽기만 한다(설치하지 않는다). 사용: python lockscan.py <package-lock.json>"""
 import collections
 import json
@@ -2188,17 +2206,17 @@ npm run dev        # 이 문서는 실행하지 않았다
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cp -r "$BACKEND" "$LAB/tcopy"
-cd "$LAB/tcopy"
+cp -r "$BACKEND" "${LAB:?}/tcopy"
+cd "${LAB:?}/tcopy"
 "$PY" -B -m pytest -p no:cacheprovider -q 2>&1 | tail -2
-COVERAGE_FILE="$LAB/tcopy.cov" "$PY" -B -m coverage run --include="app.py,adk_optimizer.py" -m pytest -p no:cacheprovider -q 2>&1 | tail -1
-COVERAGE_FILE="$LAB/tcopy.cov" "$PY" -B -m coverage report | cut -c1-72
-cd "$LAB/work"
+COVERAGE_FILE="${LAB:?}/tcopy.cov" "$PY" -B -m coverage run --include="app.py,adk_optimizer.py" -m pytest -p no:cacheprovider -q 2>&1 | tail -1
+COVERAGE_FILE="${LAB:?}/tcopy.cov" "$PY" -B -m coverage report | cut -c1-72
+cd "${LAB:?}/work"
 ```
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > htmltext.py <<'EOF'
+cat > "${LAB:?}/work/htmltext.py" <<'EOF'
 import re, sys, html
 t = open(sys.argv[1], encoding="utf-8", errors="replace").read()
 t = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", t)
@@ -2214,7 +2232,7 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-cat > modelrows.py <<'EOF'
+cat > "${LAB:?}/work/modelrows.py" <<'EOF'
 """htmltext.py가 만든 문서 글에서 모델 셋의 폐기 표 행과 요금표 행을 뽑는다. 사용: python modelrows.py <docs 폴더>"""
 import os
 import sys
@@ -2243,9 +2261,9 @@ EOF
 
 ```bash
 cd "${LAB:?먼저 Step 1의 환경 블록을 실행하세요}/work" || return
-mkdir -p docs
+mkdir -p "${LAB:?}/work/docs"
 for p in models deprecations pricing; do
-  curl -sL "https://ai.google.dev/gemini-api/docs/$p" -o "docs/$p.html"
+  curl -sL "https://ai.google.dev/gemini-api/docs/$p" -o "${LAB:?}/work/docs/$p.html"
   "$PY" htmltext.py "docs/$p.html" "docs/$p.txt"
 done
 "$PY" modelrows.py docs

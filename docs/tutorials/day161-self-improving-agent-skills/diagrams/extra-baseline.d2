@@ -6,12 +6,12 @@ opt: "SkillOptimizer" { class: ours }
 exe: "executor" { class: ours }
 gemini: "Gemini (가짜 서버)" { class: ext }
 
-opt -> exe: "기준선: 시나리오마다 실행 요청 (되풀이)"
+opt -> exe: "기준선: 시나리오 하나 실행 요청"
 exe -> gemini: "Execute this skill: SKILL.md 전문"
 gemini -> exe: "출력 글"
 exe -> opt: "출력"
-opt -> exe: "시나리오마다 채점 요청 (되풀이)"
+opt -> exe: "같은 시나리오 채점 요청"
 exe -> gemini: "Evaluate this output: 기준 JSON"
 gemini -> exe: "점수 JSON"
-exe -> opt: "results"
+exe -> opt: "results (다음 시나리오로 가서 실행 · 채점 되풀이)"
 opt -> api: "baseline 이벤트 (점수 · per_eval)"
