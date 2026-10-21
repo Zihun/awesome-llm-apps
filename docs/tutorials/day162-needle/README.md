@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-Day 163 · 🌀 Ripple - Change One Thing, Find What Else Needs to Change — (작성 필요)
+[Day 163 · 🌀 Ripple - Change One Thing, Find What Else Needs to Change](../day163-ripple/README.md) — (작성 필요)
