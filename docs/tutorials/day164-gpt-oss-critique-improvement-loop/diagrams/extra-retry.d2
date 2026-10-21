@@ -1,0 +1,9 @@
+...@../../_tools/theme
+direction: down
+
+one: "한 번의 호출 (_one_completion, 최대 3번 시도)" { class: ours }
+sdk: "Groq 라이브러리 (이 PC에서 돈다, 시도마다 최대 3번 요청)" { class: ext }
+groq: "Groq (이 문서는 가짜 서버)" { class: ext }
+
+one -> sdk: "create 한 번"
+sdk -> groq: "POST /openai/v1/chat/completions"

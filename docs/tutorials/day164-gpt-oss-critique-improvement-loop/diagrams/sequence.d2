@@ -1,0 +1,21 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+ui: "화면 (streamlit_app.py)" { class: ours }
+loop: "고리 (critique_improvement_loop)" { class: ours }
+groq: "Groq (가짜 서버)" { class: ext }
+
+user -> ui: "질문과 시작 버튼"
+ui -> loop: "prompt · max_iterations · api_key"
+loop -> groq: "후보 요청 ×3 (스레드 셋, 동시, 온도 0.9)"
+groq -> loop: "후보 글 ×3 (끝난 순서)"
+loop -> groq: "합성 요청 (온도 0.2)"
+groq -> loop: "초기 답"
+loop -> groq: "비평 요청 (질문 + 현재 답)"
+groq -> loop: "비평 글"
+loop -> groq: "수정 요청 (질문 + 답 + 비평)"
+groq -> loop: "고친 답"
+loop -> loop: "비평 · 수정을 max_iterations번"
+loop -> ui: "results (iterations · final_answer)"
+ui -> user: "최종 답 · 기록 · 합계"

@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+cands: "후보 셋 (온도 0.9, 동시)" {
+  class: group
+  grid-columns: 3
+  c1: "후보 1" { class: ext }
+  c2: "후보 2" { class: ext }
+  c3: "후보 3" { class: ext }
+}
+synth: "합성 (온도 0.2)" { class: ext }
+crit: "비평 (온도 0.3)" { class: ext }
+rev: "수정 (온도 0.2)" { class: ext }
+
+cands -> synth: "후보 글 셋"
+synth -> crit: "초기 답"
+crit -> rev: "비평 글"
+rev -> crit: "고친 답 (max_iterations번)"

@@ -1,0 +1,28 @@
+...@../../_tools/theme
+direction: down
+
+ui: "독자와 화면" {
+  class: group
+  grid-columns: 4
+  user: "독자" { class: person }
+  side: "사이드바\n(키 · 반복 수)" { class: ours }
+  prompt: "질문 입력" { class: ours }
+  result: "결과 화면" { class: ours }
+}
+loop: "고리" {
+  class: group
+  grid-columns: 4
+  init: "초기 답\n(generate_initial_answer)" { class: ours }
+  crit: "비평\n(critique_answer)" { class: ours }
+  rev: "수정\n(revise_answer)" { class: ours }
+  one: "한 번의 호출\n(_one_completion)" { class: ours }
+}
+srv: "Groq 자리 (가짜 서버)" {
+  class: group
+  grid-columns: 2
+  groq: "Groq\n(fake_groq.py)" { class: ext }
+  log: "요청 기록\n(log.jsonl)" { class: file }
+}
+
+ui -> loop: "질문 · 설정"
+loop -> srv: "요청 JSON"
