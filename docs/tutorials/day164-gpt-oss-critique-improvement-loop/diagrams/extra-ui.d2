@@ -1,0 +1,20 @@
+...@../../_tools/theme
+direction: down
+
+user: "독자" { class: person }
+side: "사이드바 (키 · 반복 수)" { class: ours }
+prompt: "질문 입력" { class: ours }
+fn: "고리 (critique_improvement_loop)" { class: ours }
+init: "초기 답 (generate_initial_answer)" { class: ours }
+crit: "비평 (critique_answer)" { class: ours }
+rev: "수정 (revise_answer)" { class: ours }
+result: "결과 화면" { class: ours }
+
+user -> side: "키 · 반복 수"
+user -> prompt: "질문"
+side -> fn: "api_key · max_iterations"
+prompt -> fn: "prompt"
+fn -> init: "prompt"
+fn -> crit: "prompt · 현재 답"
+fn -> rev: "현재 답 · 비평"
+fn -> result: "results"

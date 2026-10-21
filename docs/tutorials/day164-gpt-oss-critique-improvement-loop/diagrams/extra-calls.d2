@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+init: "초기 답 (generate_initial_answer)" { class: ours }
+crit: "비평 (critique_answer)" { class: ours }
+rev: "수정 (revise_answer)" { class: ours }
+one: "한 번의 호출 (_one_completion)" { class: ours }
+groq: "Groq (이 문서는 fake_groq.py)" { class: ext }
+log: "요청 기록 (log.jsonl)" { class: file }
+
+init -> one: "메시지 · 온도 0.9 / 0.2"
+crit -> one: "메시지 · 온도 0.3"
+rev -> one: "메시지 · 온도 0.2"
+one -> groq: "POST (JSON)"
+groq -> log: "요청마다 한 줄"

@@ -17,7 +17,11 @@
 
 ![완성 아키텍처](diagrams/overview.svg)
 
-위 그림은 묶음 사이의 관계만 보입니다. 호출 순서는 [`extra-loop`](diagrams/extra-loop.svg)에, 호출 하나의 재시도 구조는 Step 2의 [`extra-retry`](diagrams/extra-retry.svg)에, 요청 한 건의 흐름은 아래 "요청 한 건이 흐르는 과정"에 그렸습니다.
+위 그림은 묶음 사이의 관계만 보입니다. 묶음 안의 관계는 보조 그림에 화살표로 그렸습니다. 독자·사이드바·질문 칸·고리·결과 화면의 관계는 [`extra-ui`](diagrams/extra-ui.svg), 초기 답·비평·수정이 모두 `_one_completion` 하나를 거쳐 Groq와 요청 기록으로 가는 관계는 [`extra-calls`](diagrams/extra-calls.svg), 호출 순서는 [`extra-loop`](diagrams/extra-loop.svg), 호출 하나의 재시도 구조는 Step 2의 [`extra-retry`](diagrams/extra-retry.svg), 요청 한 건의 흐름은 아래 "요청 한 건이 흐르는 과정"에 있습니다.
+
+![화면과 고리](diagrams/extra-ui.svg)
+
+![호출의 길](diagrams/extra-calls.svg)
 
 ![호출 순서](diagrams/extra-loop.svg)
 
@@ -217,6 +221,7 @@ class H(BaseHTTPRequestHandler):
         self.wfile.write(out)
 
 
+ThreadingHTTPServer.allow_reuse_address = False   # Windows에서는 같은 포트에 서버 둘이 함께 떠 버린다
 ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
 EOF
 ```
@@ -228,7 +233,7 @@ EOF
 ```bash
 # 터미널 A: 가짜 Groq 서버(끝날 때까지 열어 둔다)
 source "${LAB:?}/env.sh" && cd "${LAB:?}/lab" || return
-"$PY" fake_groq.py 47110 log.jsonl
+"$PY" fake_groq.py 47110 "${LAB:?}/lab/log.jsonl"
 ```
 
 ```bash
@@ -276,7 +281,7 @@ def _one_completion(client: Groq, messages: List[Dict[str, str]], temperature: f
             delay *= 2
 ```
 
-`GroqError`만 잡으므로 연결 실패·시간 초과·상태 코드 오류(라이브러리가 모두 `GroqError`의 자손으로 던진다, 설치된 `_exceptions.py`의 21·25·57·69·74줄) 모두 3번까지 다시 합니다. 그런데 라이브러리 자신도 요청을 다시 보냅니다. 설치된 groq 1.7.0의 `_constants.py` 10줄에 `DEFAULT_MAX_RETRIES = 2`가 있습니다. 그러므로 서버가 늘 실패하면 앱의 시도 하나가 요청 3번이고 앱은 3번 시도하니 **호출 하나에 최대 9번**입니다(Step 5에서 셉니다).
+`GroqError`만 잡으므로 연결 실패·시간 초과·상태 코드 오류(라이브러리가 모두 `GroqError`의 자손으로 던진다, 설치된 `_exceptions.py`의 21·25·57·69·74줄) 모두 3번까지 다시 합니다. 그런데 라이브러리 자신도 요청을 다시 보냅니다. 설치된 groq 1.7.0의 `_constants.py` 10줄에 `DEFAULT_MAX_RETRIES = 2`가 있고, 다시 보내는 경우는 연결 오류·시간 초과와 응답 408·409·429·5xx(또는 `x-should-retry: true` 머리)입니다(`_base_client.py`, 소스로 확인). 그러므로 서버가 늘 5xx를 주면 앱의 시도 하나가 요청 3번이고 앱은 3번 시도하니 **호출 하나에 최대 9번**입니다(Step 5에서 셉니다). 키가 틀려 401이 오면 라이브러리는 다시 보내지 않아 앱의 3번만 나갑니다(소스로 읽었을 뿐 시험하지 않았습니다).
 
 ![재시도 구조](diagrams/extra-retry.svg)
 
@@ -349,7 +354,7 @@ EOF
 
 ```bash
 source "${LAB:?}/env.sh" && cd "${LAB:?}/lab" || return
-"$PY" calls.py one 2>err.txt
+"$PY" calls.py one 2>"${LAB:?}/lab/err.txt"
 "$PY" show.py log.jsonl text
 ```
 
@@ -374,6 +379,12 @@ hello
     candidates = []
     with cf.ThreadPoolExecutor(max_workers=3) as ex:
         futures = [
+            ex.submit(_one_completion, client, 
+                     [{"role": "user", "content": prompt}], 0.9)
+            for _ in range(3)
+        ]
+        for fut in cf.as_completed(futures):
+            candidates.append(fut.result())
 ```
 
 `as_completed`는 **끝나는 순서**로 돌려주므로 후보 번호는 만든 순서가 아닙니다. 그리고 세 후보는 입력이 같은 요청 셋입니다. 서로 다른 글이 나오는 것은 온도 0.9라는 무작위성 때문입니다. 스레드에서 Streamlit 함수는 부르지 않습니다(스레드가 부르는 것은 `_one_completion`뿐, `st.spinner`는 바깥의 주 스레드가 씁니다, `:120,132,135`).
@@ -384,8 +395,8 @@ hello
 
 ```bash
 source "${LAB:?}/env.sh" && cd "${LAB:?}/lab" || return
-: > log.jsonl
-"$PY" calls.py init 2>err.txt
+: > "${LAB:?}/lab/log.jsonl"
+"$PY" calls.py init 2>"${LAB:?}/lab/err.txt"
 "$PY" show.py log.jsonl text
 ```
 
@@ -406,9 +417,9 @@ Explain recursion.
 You are given 3 candidate answers. Synthesize them into ONE best answer, eliminating repetition and ensuring coherence:
 
 --- Candidate 1 ---
-CAND2
---- Candidate 2 ---
 CAND1
+--- Candidate 2 ---
+CAND2
 --- Candidate 3 ---
 CAND3
 
@@ -448,11 +459,11 @@ Return the single best final answer.
 
 ```bash
 source "${LAB:?}/env.sh" && cd "${LAB:?}/lab" || return
-: > log.jsonl
-"$PY" calls.py crit 2>err.txt
+: > "${LAB:?}/lab/log.jsonl"
+"$PY" calls.py crit 2>"${LAB:?}/lab/err.txt"
 "$PY" show.py log.jsonl text
-: > log.jsonl
-"$PY" calls.py rev 2>err.txt
+: > "${LAB:?}/lab/log.jsonl"
+"$PY" calls.py rev 2>"${LAB:?}/lab/err.txt"
 "$PY" show.py log.jsonl text
 ```
 
@@ -531,9 +542,10 @@ EOF
 
 ```bash
 source "${LAB:?}/env.sh" && cd "${LAB:?}/lab" || return
-: > log.jsonl
-"$PY" drive.py 47110 2 "Explain recursion." 2>err.txt
+: > "${LAB:?}/lab/log.jsonl"
+"$PY" drive.py 47110 2 "Explain recursion." 2>"${LAB:?}/lab/err.txt"
 "$PY" show.py log.jsonl
+"$PY" show.py log.jsonl text | grep -A1 "^Answer to critique"
 ```
 
 ```text
@@ -547,26 +559,31 @@ metric: [('Total Iterations', '3'), ('Improvement Rounds', '2'), ('Final Answer 
  0.0s cand     #2 temp=0.9 max=1024 top_p=1 stream=False roles=['user'] 18자
  0.0s cand     #3 temp=0.9 max=1024 top_p=1 stream=False roles=['user'] 18자
  0.4s synth    #1 temp=0.2 max=1024 top_p=1 stream=False roles=['user'] 236자
- 0.9s critique #1 temp=0.3 max=1024 top_p=1 stream=False roles=['user'] 265자
+ 0.8s critique #1 temp=0.3 max=1024 top_p=1 stream=False roles=['user'] 265자
  1.3s revise   #1 temp=0.2 max=1024 top_p=1 stream=False roles=['user'] 256자
  1.7s critique #2 temp=0.3 max=1024 top_p=1 stream=False roles=['user'] 267자
  2.1s revise   #2 temp=0.2 max=1024 top_p=1 stream=False roles=['user'] 258자
 /openai/v1/chat/completions Bearer fake- openai/gpt-oss-120b
+Answer to critique:
+SYNTH1
+--
+Answer to critique:
+REVISED1
 ```
 
-호출은 후보 3·합성 1·비평 2·수정 2로 8번이고 `4 + 2n`(n=2)과 맞습니다. 비평 #2의 요청은 265자가 아니라 267자입니다. 첫 바퀴의 **수정 결과**(`REVISED1`, 8자)가 합성 결과(`SYNTH1`, 6자)를 대신해 들어갔기 때문입니다. 지표의 `Total Iterations`는 3, `Improvement Rounds`는 2, `Final Answer Length`는 `REVISED2`의 글자 수 8입니다. 본문 목록의 첫 항목 `REVISED2`가 최종 답이고, 그 뒤가 기록입니다.
+호출은 후보 3·합성 1·비평 2·수정 2로 8번이고 `4 + 2n`(n=2)과 맞습니다. 비평 #2의 요청은 265자가 아니라 267자입니다. 첫 바퀴의 **수정 결과**(`REVISED1`, 8자)가 합성 결과(`SYNTH1`, 6자)를 대신해 들어갔기 때문입니다. 블록의 마지막 줄이 그것을 글로 보입니다. 두 비평 요청의 `Answer to critique:` 아래가 `SYNTH1`, `REVISED1`이고, 요청 어디에도 첫 바퀴의 `CRITIQUE1`은 없습니다(Step 4의 둘째 사실). 지표의 `Total Iterations`는 3, `Improvement Rounds`는 2, `Final Answer Length`는 `REVISED2`의 글자 수 8입니다. 본문 목록의 첫 항목 `REVISED2`가 최종 답이고, 그 뒤가 기록입니다.
 
 이제 비평 요청에만 늘 500을 돌려주는 서버(포트 47113, 터미널 C)를 하나 더 띄우고 그쪽으로 돌립니다. 슬라이더는 1로 둡니다. 세는 것은 서버 기록의 비평 요청 수입니다.
 
 ```bash
 # 터미널 C: 비평 요청에만 늘 500을 돌려주는 가짜 서버(끝날 때까지 열어 둔다)
 source "${LAB:?}/env.sh" && cd "${LAB:?}/lab" || return
-FAKE_FAIL_KIND=critique "$PY" fake_groq.py 47113 fail.jsonl
+FAKE_FAIL_KIND=critique "$PY" fake_groq.py 47113 "${LAB:?}/lab/fail.jsonl"
 ```
 
 ```bash
 source "${LAB:?}/env.sh" && cd "${LAB:?}/lab" || return
-"$PY" drive.py 47113 1 "Explain recursion." 2>err.txt
+"$PY" drive.py 47113 1 "Explain recursion." 2>"${LAB:?}/lab/err.txt"
 grep -c '"kind": "critique"' fail.jsonl
 "$PY" show.py fail.jsonl | cut -c1-32
 ```
@@ -578,7 +595,7 @@ grep -c '"kind": "critique"' fail.jsonl
 markdown: []
 metric: []
 본문(write): ['Generate high-quality answers through iterative critique and improvement using GPT-OSS.']
-9
+18
  0.0s cand     #1 temp=0.9 max=1
  0.0s cand     #2 temp=0.9 max=1
  0.0s cand     #3 temp=0.9 max=1
@@ -592,10 +609,23 @@ metric: []
  4.8s critique #7 temp=0.3 max=1
  5.2s critique #8 temp=0.3 max=1
  5.6s critique #9 temp=0.3 max=1
+1389.2s cand     #1 temp=0.9 max
+1389.2s cand     #2 temp=0.9 max
+1389.2s cand     #3 temp=0.9 max
+1389.6s synth    #1 temp=0.2 max
+1390.1s critique #1 temp=0.3 max
+1390.5s critique #2 temp=0.3 max
+1390.9s critique #3 temp=0.3 max
+1391.8s critique #4 temp=0.3 max
+1392.2s critique #5 temp=0.3 max
+1392.6s critique #6 temp=0.3 max
+1394.0s critique #7 temp=0.3 max
+1394.5s critique #8 temp=0.3 max
+1394.9s critique #9 temp=0.3 max
 /openai/v1/chat/completions Bear
 ```
 
-비평 요청이 **아홉 번** 나갔습니다(`3 × 3`, 앱 시도 3번에 라이브러리 재시도가 시도마다 두 번 더). 라이브러리는 응답 머리 `retry-after-ms`가 있으면 그 시간만 쉬는데 가짜 서버가 1ms를 보내서 빨리 끝납니다. 진짜 서버가 `429`와 `retry-after`를 주면 그만큼 기다립니다(이 문서는 시험하지 않았습니다). 화면에는 예외 한 줄(`Error code: 500 …`)만 있고, 후보 셋·합성에 쓴 4번의 호출 결과는 **버려집니다**. 지표도, 기록 확장기도 없고 `results`가 만들어지기 전에 예외가 났기 때문입니다. 진짜 키에서 429가 자주 나면 호출 4번의 비용이 날아가고 다시 처음부터 시작해야 합니다.
+비평 요청이 **아홉 번** 나갔습니다(`3 × 3`, 앱 시도 3번에 라이브러리 재시도가 시도마다 두 번 더). 라이브러리는 응답 머리 `retry-after-ms`가 있으면 그 시간만 쉬는데 가짜 서버가 1ms를 보내서 빨리 끝납니다. 진짜 서버가 `429`와 `retry-after`를 주면 60초까지는 그만큼 기다리고, 그보다 길거나 머리가 없으면 0.5초에서 8초까지 늘려 가며 쉽니다(소스 `_base_client.py`·`_constants.py`로 읽었을 뿐 이 문서는 시험하지 않았습니다). 화면에는 예외 한 줄(`Error code: 500 …`)만 있고, 후보 셋·합성에 쓴 4번의 호출 결과는 **버려집니다**. 지표도, 기록 확장기도 없고 `results`가 만들어지기 전에 예외가 났기 때문입니다. 진짜 키에서 429가 자주 나면 호출 4번의 비용이 날아가고 다시 처음부터 시작해야 합니다.
 
 마지막으로 서버로 띄운 화면이 뜨는지만 봅니다. `streamlit run` 대신 가드를 불러오는 `serve.py`를 씁니다. 주소는 `127.0.0.1`, 헤드리스, 사용 통계 끔이고 브라우저는 열지 않습니다. 터미널 D에서 띄우고 터미널 B에서 `/_stcore/health`만 봅니다. 화면을 눈으로 누르는 일은 하지 않았습니다.
 
@@ -637,23 +667,26 @@ ok
 
 **목적.** 진짜 키로 돌릴 때 달라지는 것과 한도를 정리합니다. 이 단계의 숫자는 공식 문서를 읽어 계산한 것이고 청구서로 확인하지 못했습니다.
 
-**할 일.** 앱 README는 `cd critique_improvement_streamlit_demo`로 시작하지만 그 폴더는 이 저장소에 없습니다(폴더 이름은 `gpt_oss_critique_improvement_loop`입니다). 독자의 진짜 환경에서는 가짜 서버·가드 없이 이렇게 돌립니다.
+**할 일.** 앱 README는 `cd critique_improvement_streamlit_demo`로 시작하지만 그 폴더는 이 저장소에 없습니다(폴더 이름은 `gpt_oss_critique_improvement_loop`입니다). 독자의 진짜 환경에서는 가짜 서버·가드 없이 이렇게 돌립니다. `unset VIRTUAL_ENV`와 `--python`은 다른 가상환경이 켜진 셸에서 그쪽에 설치되는 것을 막고(Step 1과 같은 까닭), `--server.address 127.0.0.1`은 필수입니다. 앱이 사이드바 키 칸의 기본값을 환경변수 `GROQ_API_KEY`로 채우고(`streamlit_app.py:163`) 그 값이 브라우저로 실려 가므로, 주소를 정하지 않으면 같은 네트워크의 누구나 열어 진짜 키를 읽고 그 키로 고리를 돌릴 수 있습니다(Streamlit은 주소가 비면 모든 인터페이스에 엽니다, 설치된 1.66.0 소스로 확인).
 
 ```bash
 cd awesome-llm-apps/advanced_llm_apps/gpt_oss_critique_improvement_loop
+unset VIRTUAL_ENV
 uv venv
-uv pip install -r requirements.txt
+PY=.venv/Scripts/python.exe; [ -x "$PY" ] || PY=.venv/bin/python
+uv pip install --python "$PY" -r requirements.txt
 export GROQ_API_KEY=발급받은_키        # 또는 사이드바 입력칸에 붙여 넣기
-uv run --no-project streamlit run streamlit_app.py
+uv run --no-project --python "$PY" streamlit run streamlit_app.py \
+  --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
 ```
 
-`pip`를 쓰면 `pip install -r requirements.txt`입니다. Streamlit에는 사용 통계 설정(`browser.gatherUsageStats`)이 있으므로 끄려면 `--browser.gatherUsageStats false`를 붙이십시오. 이 문서의 `serve.py`는 그 설정을 끈 채로 띄웠고, 통계가 실제로 나가는지는 시험하지 않았습니다.
+`pip`를 쓰면 `pip install -r requirements.txt`입니다(가상환경을 켠 뒤). 마지막 두 플래그는 이 문서의 `serve.py`가 쓴 값과 같습니다. 사용 통계가 실제로 나가는지는 시험하지 않았습니다. 이 블록은 이 문서가 **실행하지 않았습니다**(진짜 Groq를 부르므로).
 
-**한도와 비용.** 상한은 호출마다 1,024토큰입니다(`:22`). Groq의 추론 문서(<https://console.groq.com/docs/reasoning>, 2026-10-21에 읽음)는 gpt-oss에서 이 값의 기본이 1,024이고 "복잡한 추론에는 너무 낮을 수 있다"고 경고합니다. 추론에 쓴 토큰이 이 한도에 드는지는 그 문서가 적지 않아 **확인하지 못했습니다.** 들어간다면 추론이 길어진 호출은 본문이 짧게 잘리거나 비어 돌아올 수 있고, 앱은 `resp.choices[0].message.content`를 그대로 돌려주므로(`:46`) 빈 글이 합성·비평 프롬프트에 들어갑니다. 값은 공식 요금표(모델 문서, 2026-10-21에 읽음) 입력 $0.15·출력 $0.60(100만 토큰당)로 계산했습니다. 호출 하나의 출력이 1,024토큰을 넘을 수 없다고 보면(추론 토큰까지 이 한도에 드는지는 위에서 확인하지 못했습니다) `n=2`의 8번은 출력 8,192토큰 이하(약 $0.005), 입력은 가장 긴 호출(합성, 후보 셋 3,072토큰 남짓)을 넣어 합쳐도 1만 토큰 안팎(약 $0.0015)이라 **한 번에 1센트 미만**이 상한입니다. 429나 5xx가 되풀이되면 호출마다 최대 9번 요청이 나가고(Step 2), 거부된 요청이 요금으로 잡히는지는 확인하지 못했습니다.
+**한도와 비용.** 상한은 호출마다 1,024토큰입니다(`:22`). Groq의 추론 문서(<https://console.groq.com/docs/reasoning>, 2026-10-21에 읽음)는 추론 모델 전반에 대해 `max_completion_tokens`의 기본이 1,024이고 복잡한 문제에는 더 높은 값이 필요할 수 있다고 안내합니다. 이 앱은 기본값에 맡기지 않고 1,024를 직접 넘기므로(`:22,42`) 요점은 "1,024가 낮을 수 있다"입니다. 추론에 쓴 토큰이 이 한도에 드는지는 그 문서가 적지 않아 **확인하지 못했습니다.** 들어간다면 추론이 길어진 호출은 본문이 짧게 잘리거나 비어 돌아올 수 있고, 앱은 `resp.choices[0].message.content`를 그대로 돌려주므로(`:46`) 빈 글이 합성·비평 프롬프트에 들어갑니다. 값은 공식 요금표(모델 문서, 2026-10-21에 읽음) 입력 $0.15·출력 $0.60(100만 토큰당)로 계산했습니다. 호출 하나의 출력이 1,024토큰을 넘을 수 없다고 보면(추론 토큰까지 이 한도에 드는지는 위에서 확인하지 못했습니다) `n=2`의 8번은 출력 8,192토큰 이하(약 $0.005), 입력은 가장 긴 호출(합성, 후보 셋 3,072토큰 남짓)을 넣어 합쳐도 1만 토큰 안팎(약 $0.0015)이라 **한 번에 1센트 미만**이 상한입니다. 429나 5xx가 되풀이되면 호출마다 최대 9번 요청이 나가고(Step 2), 거부된 요청이 요금으로 잡히는지는 확인하지 못했습니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 이 단계의 명령은 위의 실행입니다. 가짜 서버 자리에 진짜 Groq가 들어가는 것 말고 이 문서의 어떤 단계와도 달라지는 줄이 없습니다. 사이드바에 키를 넣고, 슬라이더를 1로 두고, 버튼을 한 번 눌러 보십시오. 호출이 6번 나갑니다.
+**확인.** 이 단계의 명령은 위의 실행입니다. 이 문서의 단계와 달라지는 것은 넷입니다. 가짜 서버 자리에 진짜 Groq가 들어가고, 가드(`guard.py`)가 없고(바깥으로 나가도 막는 것이 없습니다), 키는 환경변수의 진짜 값이고, 가상환경은 앱 폴더의 `.venv`입니다. 서버 주소·헤드리스·통계 플래그는 이 문서와 같습니다. 사이드바에 키를 넣고, 슬라이더를 1로 두고, 버튼을 한 번 눌러 보십시오. 호출이 6번 나갑니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -670,7 +703,7 @@ uv run --no-project streamlit run streamlit_app.py
 - [ ] 비평·수정 요청의 글을 읽고 첫 바퀴의 비평이 둘째 바퀴 비평 요청에 없음을 확인했다(Step 4)
 - [ ] 슬라이더 2의 8번 호출, `Total Iterations` 3을 확인했다(Step 5)
 - [ ] 실패하는 서버로 비평 요청 9번과 결과가 사라지는 것을 확인했다(Step 5)
-- [ ] 가짜 서버 셋(47110·47113)과 Streamlit(47120)을 모두 끄고 포트가 비었다
+- [ ] 서버 셋(가짜 47110·47113, Streamlit 47120)을 모두 끄고 포트가 비었다
 
 ## 문제 해결
 
@@ -680,7 +713,7 @@ uv run --no-project streamlit run streamlit_app.py
 | `guard: blocked lookup 'api.groq.com'` | 앱이 가짜 서버가 아니라 진짜 Groq 주소로 가려 했다(`GROQ_BASE_URL`을 정하는 줄이 빠졌다). 가드가 막았으므로 정상이다 | `common.py`의 `GROQ_BASE_URL` 줄을 되돌린다 |
 | `가드가 일하지 않는다` | `guard.py`가 `192.0.2.1` 연결을 막지 못했다. 가드가 불러와지지 않았거나 어떤 프록시가 연결을 가로챘다 | 멈추고 원인을 찾는다. 이 상태로 앱을 돌리지 않는다 |
 | `KeyError: 'FAKE_PORT'`나 `KeyError: 'APP'` | 환경 파일(`env.sh`)을 불러오지 않은 터미널이다 | `source "$LAB/env.sh"` |
-| 서버 시작 때 `Address already in use` | 47110(또는 47113·47120)을 다른 프로그램이나 이전 서버가 쓰는 중 | 이전 서버를 끄거나 포트를 바꾼다(`FAKE_PORT`와 서버 인자를 같게) |
+| 서버 시작 때 `Address already in use`(Windows는 `WinError 10048`) | 47110(또는 47113·47120)을 다른 프로그램이나 이전 서버가 쓰는 중. 가짜 서버는 `allow_reuse_address = False`로 이 오류를 일부러 낸다 | 이전 서버를 끄거나 포트를 바꾼다(`FAKE_PORT`와 서버 인자를 같게) |
 | `Error code: 500 …`가 화면에 나오고 결과가 없다 | Groq(여기서는 47113 가짜 서버)가 5xx를 주었다. 앱이 3번 시도하고 포기했다 | Step 5. 진짜 서버라면 잠시 뒤에 다시 한다 |
 | 진짜 앱에서 `The api_key client option must be set …` | 키가 환경변수에도 사이드바에도 없다(groq 1.7.0 `_client.py` 78~84줄) | `GROQ_API_KEY`를 넣거나 입력칸에 붙여 넣는다 |
 | 진짜 앱에서 429(`rate_limit_exceeded`) | Groq의 요청·토큰 한도에 걸렸다. 앱은 모른 채 다시 시도한다(Step 2). 한도 값은 이 문서가 확인하지 못했다 | 잠시 뒤에 다시 하거나 반복 수를 1로 줄인다 |
