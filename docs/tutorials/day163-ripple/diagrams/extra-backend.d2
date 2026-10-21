@@ -12,6 +12,7 @@ gemini: "Gemini (가짜 서버로 대신)" { class: ext }
 bg -> server: "POST /check · /suggest"
 server -> jev: "evaluate(input)"
 server -> sug: "suggest(input)"
+server -> env: "/health: 키가 있는가"
 jev -> env: "TYPESAFE_API_KEY"
 sug -> env: "GEMINI_API_KEY"
 jev -> typesafe: "질문 묶음 12개씩"

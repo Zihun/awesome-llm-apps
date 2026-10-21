@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+gemini: "Gemini (가짜)" { class: ext }
+sug: "수정안 (suggestions.mjs)" { class: ours }
+server: "문지기 (server.mjs)" { class: ours }
+bg: "중계 (background.js)" { class: ours }
+content: "조정 (content.js)" { class: ours }
+user: "독자" { class: person }
+
+gemini -> sug: "suggestions JSON"
+sug -> server: "검사한 suggestions"
+server -> bg: "200 suggestions"
+bg -> content: "replace · delete · keep · needs_info"
+content -> user: "수정안 카드"

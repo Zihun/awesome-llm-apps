@@ -1,0 +1,15 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+typesafe: "TypeSafe Jev (가짜)" { class: ext }
+jev: "충돌 판정 (jev.mjs)" { class: ours }
+server: "문지기 (server.mjs)" { class: ours }
+bg: "중계 (background.js)" { class: ours }
+content: "조정 (content.js)" { class: ours }
+user: "독자" { class: person }
+
+typesafe -> jev: "문장마다 choice · 확률"
+jev -> server: "results (status)"
+server -> bg: "200 results"
+bg -> content: "results"
+content -> user: "밑줄 (마커)"

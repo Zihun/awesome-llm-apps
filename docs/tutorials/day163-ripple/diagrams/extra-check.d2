@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+content: "조정 (content.js)" { class: ours }
+bg: "중계 (background.js)" { class: ours }
+server: "문지기 (server.mjs)" { class: ours }
+jev: "충돌 판정 (jev.mjs)" { class: ours }
+typesafe: "TypeSafe Jev (가짜)" { class: ext }
+
+content -> bg: "check (source, sentences)"
+bg -> server: "POST /check"
+server -> jev: "evaluate(input)"
+jev -> typesafe: "POST /v1/systemone"
