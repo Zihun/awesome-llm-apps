@@ -1,0 +1,26 @@
+...@../../_tools/theme
+direction: down
+
+caller: "호출하는 쪽 (크롬 확장 · 웹 앱)" {
+  class: group
+  grid-columns: 4
+  content: "모으기·강조 (content.js)" { class: ours }
+  bg: "워커 (background.js)" { class: ours }
+  range: "범위 변환 (text-range.js)" { class: ours }
+  user: "독자" { class: person }
+  app: "화면 (App.jsx)" { class: ours }
+  docs: "내장 문서 (documents.js)" { class: file }
+  settings: "주소·토큰 (storage)" { class: store }
+}
+back: "백엔드 (127.0.0.1)" {
+  class: group
+  grid-columns: 4
+  dev: "로컬 서버 (dev.mjs)" { class: ours }
+  api: "검색 함수 (api/search.js)" { class: ours }
+  search: "검증·점수 (search.mjs)" { class: ours }
+  sentences: "문장 분리 (sentences.mjs)" { class: ours }
+}
+gateway: "AI Gateway·Jev (가짜 서버)" { class: ext }
+
+caller -> back: "POST /api/search"
+back -> gateway: "POST /v1/evaluate"

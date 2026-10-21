@@ -1,0 +1,11 @@
+...@../../_tools/theme
+direction: right
+
+user: "독자" { class: person }
+docs: "내장 문서 (documents.js)" { class: file }
+app: "화면 (App.jsx)" { class: ours }
+server: "백엔드 (127.0.0.1)" { class: group }
+
+user -> app: "문서 선택 · 질문"
+docs -> app: "문단 블록"
+app -> server: "POST /api/search"

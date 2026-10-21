@@ -1,0 +1,16 @@
+...@../../_tools/theme
+direction: down
+
+user: "독자" { class: person }
+content: "모으기·강조 (content.js)" { class: ours }
+bg: "워커 (background.js)" { class: ours }
+range: "범위 변환 (text-range.js)" { class: ours }
+settings: "주소·토큰 (storage)" { class: store }
+server: "백엔드 (127.0.0.1)" { class: group }
+
+user -> content: "질문"
+content -> bg: "NEEDLE_SEARCH 메시지"
+bg -> settings: "주소·토큰 읽기"
+bg -> server: "POST /api/search"
+server -> content: "scores · matches"
+content -> range: "서버가 준 문장 범위"
