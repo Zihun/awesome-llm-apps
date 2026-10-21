@@ -74,7 +74,7 @@ export LAB=/path/to/d162-lab          # 저장소 밖의 새 폴더(자기 절�
 _ok=1; _n() { { cygpath -m "$1" 2>/dev/null || printf '%s' "$1"; } | tr 'A-Z' 'a-z' | tr '\134' '/'; }
 [ -d "$REPO/advanced_llm_apps/needle/server" ] || { echo "저장소 루트(awesome-llm-apps)에서 시작하세요"; _ok=0; }
 case "$LAB" in ""|/path/to/*) echo "LAB을 자기 경로로 바꾸세요"; _ok=0 ;; esac
-case "$LAB" in /*|[A-Za-z]:*) ;; *) echo "LAB은 절대 경로여야 합니다: $LAB"; _ok=0 ;; esac
+case "$LAB" in /*|[A-Za-z]:[/\\]*) ;; *) echo "LAB은 절대 경로여야 합니다: $LAB"; _ok=0 ;; esac
 case "$(_n "$LAB")/" in
   */.claude/*|*/.agents/*|*/.codex/*|*/.cursor/*|*/.copilot/*|*/.openclaw/*|*/.hermes/*)
     echo "LAB이 에이전트 설정 폴더 아래입니다: $LAB"; _ok=0 ;; esac
