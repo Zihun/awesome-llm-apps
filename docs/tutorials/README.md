@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 161 / 167일 완료
+진도: 163 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -302,14 +302,14 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 162](day162-needle/README.md) | 🪡 Needle - A New Way to Find | [advanced_llm_apps/needle](../../advanced_llm_apps/needle/) |
-| ⬜ | Day 163 | 🌀 Ripple - Change One Thing, Find What Else Needs to Change | [advanced_llm_apps/ripple](../../advanced_llm_apps/ripple/) |
+| ✅ | [Day 162](day162-needle/README.md) | 🪡 Needle - A New Way to Find | [advanced_llm_apps/needle](../../advanced_llm_apps/needle/) |
+| ✅ | [Day 163](day163-ripple/README.md) | 🌀 Ripple - Change One Thing, Find What Else Needs to Change | [advanced_llm_apps/ripple](../../advanced_llm_apps/ripple/) |
 
 ### 볼륨 18. 🧪 기타 LLM 앱 (Day 164–167, 4일)
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | Day 164 | 🔄 GPT-OSS Advanced Critique & Improvement Loop | [advanced_llm_apps/gpt_oss_critique_improvement_loop](../../advanced_llm_apps/gpt_oss_critique_improvement_loop/) |
+| ⬜ | [Day 164](day164-gpt-oss-critique-improvement-loop/README.md) | 🔄 GPT-OSS Advanced Critique & Improvement Loop | [advanced_llm_apps/gpt_oss_critique_improvement_loop](../../advanced_llm_apps/gpt_oss_critique_improvement_loop/) |
 | ⬜ | Day 165 | 📄 Resume & Job Matcher | [advanced_llm_apps/resume_job_matcher](../../advanced_llm_apps/resume_job_matcher/) |
 | ⬜ | Day 166 | ThinkPath Chatbot  🧠 | [advanced_llm_apps/thinkpath_chatbot_app](../../advanced_llm_apps/thinkpath_chatbot_app/) |
 | ⬜ | Day 167 | Cursor Ai Experiments | [advanced_llm_apps/cursor_ai_experiments](../../advanced_llm_apps/cursor_ai_experiments/) |

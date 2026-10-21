@@ -8,6 +8,23 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-21) — 볼륨 17 끝. Day 163까지 작성·리뷰·수정·확인 끝, 푸시함(진도 163/167). 다음(볼륨 18 🧪 기타 LLM 앱, Day 164~167, 4일 — Day 164 GPT-OSS Critique & Improvement Loop부터)은 사용자 지시를 받고.**
+- Task 33(162~163) 전부 complete. 날마다 커밋(작성 → 수정):
+  - 162: 7e1c477 → 0926ed2·fb6a1d9(내가: C:lab 거부)
+  - 163: 500b73e → b4468bf(4a5e55b·9ebfb07은 내가 넣었다 되돌린 것, 결과는 b4468bf와 같음)
+  - 골격 163·164 fcc3bde.
+- 진행 방식(이번 볼륨부터, 사용자 불만 뒤 내가 정함 · 보고함): 리뷰(opus) 한 번 → 작성자 고침 한 번 → 재확인은 에이전트 없이 내가 표적 확인(붙여 넣기 시험, Step 1 경로 18판, PNG, 문자열) → Minor는 내가. 하위 에이전트 토큰 합계 약 172만(작성 26만·28만, 리뷰 26만·26만, 고침 30만·35만).
+- 작업자 공용 래퍼 `scratchpad/v17/safe.sh` + `nodeguard.mjs`: env -i로 홈·임시·APPDATA·설정을 상자 안에, 모든 node에 루프백 전용 가드, npm·npx·claude·agy 등 거부, curl은 루프백만(옵션 값은 주소로 보지 않고, 다른 호스트는 죽은 프록시로), git 네트워크 명령 거부, 상자 밖 cwd 거부. 시작할 때 --selftest. 다음 볼륨도 이것을 쓴다(상자 이름만 바꿈).
+- 검사: npm test 58/58, 전체 check 4건(모두 미작성 골격 164, 001~163 문제 0), 162 20.1·163 21.0/분.
+- Ruling(2026-10-21, 브리프마다):
+  - Node 앱은 설치(npm install·ci·npx) 없이 node로 직접 돌릴 수 있는 것만 돌린다. React·Vite·확장 묶기·브라우저 확장은 소스로 읽고 그렇다고 밝힌다.
+  - 앱에 박힌 바깥 API는 루프백 가짜 서버로 대신하고, 독자용 가드(node --import)는 192.0.2.1로 단언한다. 원본 폴더에서 앱을 돌리지 않는다(.env를 읽으므로 사본에서, 사본의 .env는 정확한 경로로 지운다).
+  - Bash 도구는 heredoc·명령 속 `\\`를 `\`로 줄인다. 역슬래시가 든 줄은 Edit·Write 도구로 쓰고 od로 바이트를 확인한다(Day 163의 `[/\]`·`tr 'A-Z\'`가 이렇게 생겼고, 리뷰어가 Day 161을 틀리게 지적한 것도 이 때문).
+- 사고:
+  - 163 작성자: safe.sh 밖에서 빈 heredoc `python3 -` 1회(진짜 HOME, REPL 120초 → TaskStop). ~/.python_history(10-15)·~/.bash_history(40줄) 그대로 확인.
+  - 나: 163 그림 한 줄을 고치고 check 실패를 `| tail`로 이어 그대로 커밋함 → 바로 되돌림. check 결과는 이어 붙이지 말고 따로 본다.
+  - 그 밖에 진짜 홈·설정·원본 앱에 남은 것 없음. 상자 guard.log는 selftest와 의도한 192.0.2.1·https.request 시험뿐.
+
 **멈춤 지점 (2026-10-20) — 볼륨 16 끝. Day 161까지 작성·리뷰·수정·재확인 끝, 푸시함(진도 161/167). 다음(볼륨 17, Day 162 Needle `advanced_llm_apps/needle`부터)은 사용자 지시를 받고.**
 - Task 32(154~161) 전부 complete. 날마다 커밋(작성 → 수정):
   - 154: 21b198f → b113f03·03f5653(내가: Minor)
@@ -1722,3 +1739,22 @@ Task 32: 재확인 161 DONE — 해결 14·일부 2(M3 탐침 __pycache__가 환
 Task 32: 161 fix round 2 dispatched (SendMessage a2bed61) — N1 + M4(쓰기 경로 전부 "${LAB:?}/work/…" 절대 경로, 대화식 붙여 넣기 시험) + N3(점검을 mkdir 앞, 자리 표시 값·절대 경로·설정 폴더 거부, PS if ($ok)) + M3(sys.dont_write_bytecode) + N5 + N2·N6(리뷰에서 재현, 출력 싣지 않음) + N4 + words. powershell.exe 띄우지 않기. 동시 2: 재확인 160, 수정 161.
 Task 32: 10-20 재확인 160(a7ee3cf)·수정 161 2회차(a2bed61) 둘 다 "Login expired"로 중단. 160 재확인은 결과 파일 없이 끝남(다시 해야 함). 161 2회차는 커밋 없이 README 등 7개 파일을 반쯤 고친 상태였음 → 패치를 스크래치 day161-round2-partial.patch로 남기고 786b23c 상태로 되돌림. 재확인자 일탈 추가 발견: 진짜 ~/.bash_history 41~47줄(07:43, M4 붙여 넣기 시험)을 에이전트가 더함. 지우기는 자동 모드 안전 검사가 거절 → 사용자에게 명령을 안내함. 오늘 진짜 홈·C:\·D:\ws-llm에 에이전트가 남긴 파일은 없음(C:\d161-lab은 사용자가 지움). 사용자 지시 전까지 멈춤.
 Task 32: 161 fix round 2 — 내가 직접(에이전트 없이) ddd940a. N1 경합 문장, M4 이후 블록의 쓰기 전부 "${LAB:?}/work/…"(새 대화식 bash 붙여 넣기 72블록 새 파일 0, 옛 블록 대조군은 probe_keys.py 생김·uv venv /venv 호출), N3 Step 1이 mkdir 전에 자리 표시·절대 경로·설정 폴더·CLAUDE_CONFIG_DIR 점검(cygpath -m으로 한 꼴, %TEMP% 아래 /tmp 꼴 차이 때문; bash 7경우×붙여 넣기/스크립트, PS 5.1 5경우 Invoke-Expression으로), M3 탐침 셋 sys.dont_write_bytecode(환경 없이 __pycache__ 0, 대조군 1), N5 GAC pop(단언 뺀 판 OPEN-CRED 0, 대조군 1·oauth2 조회는 가드가 막음), N2·N6 문장, N4 그림 셋. check 통과, 20.3/분(5,274/260). 161 완료.
+Task 33(볼륨 17 🔎 AI 브라우저 도구, 162~163) 시작 2026-10-21 — 사용자 "볼륨 17 시작해". 골격 163·164 fcc3bde. 브리프 task-33-write-brief.md·review-33-brief.md.
+  제가 정한 진행(비용·사고 줄이기, 사용자에게 보고): (1) 작업자 공용 래퍼 scratchpad/v17/safe.sh + nodeguard.mjs — env -i로 홈·임시·APPDATA·설정을 상자 안으로, 모든 node에 루프백 전용 가드, npm·npx·claude·agy 거부, curl 루프백만, git 네트워크 명령 거부, 상자 밖 cwd 거부(자체 시험: 192.0.2.1·example.com·소켓 모두 blocked, 루프백 fetch·http.get 정상). (2) 재현은 작게(걷기 한 번, 쓰기 블록 붙여 넣기 한 번, 안전 장치 줄만 줄 빼기). (3) 리뷰(opus) 한 번 → 작성자 고침 → 재확인은 sonnet 에이전트 대신 내가 직접 표적 확인, Minor는 내가 고침.
+  Ruling(2026-10-21): Node 앱은 설치 없이 node로 직접(Ripple 전부, Needle 서버·api·시험 셋), React·Vite·확장 묶기·브라우저 확장은 소스로. 바깥 API 셋(ai-gateway.vercel.sh, api.typesafe.ai, generativelanguage.googleapis.com)은 가짜 루프백 서버로, 독자용 가드는 192.0.2.1 단언, 줄 하나 빼도 바깥 0. 원본 폴더에서 돌리지 않음(.env 읽기). NODE_USE_ENV_PROXY 확인.
+Task 33: 작성 162 (sonnet, a1bb26d, 상자 d162)·163 (sonnet, a20fd42, 상자 d163) dispatched. 동시 2.
+Task 33: 163 작성 DONE_WITH_CONCERNS — 500b73e, check 통과, 19.8/분(2,376/120, 이유절). 시험 53 통과, 가짜 TypeSafe·Gemini + 독자용 가드로 /check·/suggest 재현, 127.0.0.1 bind, 문지기 검사, 가드 줄 빼면 서버 안 뜸. evaluate-suggestions.mjs(진짜 Gemini 4회)·package.mjs(zip 없음)는 소스로. 상자 guard.log 3줄(selftest뿐). 일탈: 빈 heredoc `python3 -` 1회(safe.sh 밖, 진짜 HOME, REPL 120초 → TaskStop, ~/.python_history 10-15 그대로 확인), powershell 명령줄 조회는 하네스 거부(우회 안 함).
+Task 33: 리뷰 163 (opus, a3bb7e5, 상자 rv163) dispatched → review-163.md. 동시 2: 작성 162, 리뷰 163.
+Task 33: 162 작성 DONE_WITH_CONCERNS — 7e1c477, check 통과, 20.1/분(2,607/130, 이유절). 앱·node·curl·서버 모두 safe.sh d162. 상자 guard.log 6줄(selftest 3 + 독자 가드 단언 실행 2회의 192.0.2.1뿐). 발견: Needle 서버 Origin·CORS 검사 없음(text/plain POST 200, 토큰 두면 막힘), README 단축키 Ctrl+F vs manifest Ctrl+Shift+F. 확장의 크롬 동작은 소스로. 시퀀스 15→13 메시지(자기 메시지 둘을 라벨로, 본문에 밝힘 — 리뷰에서 §5 확인 필요).
+  safe.sh 한계(내 도구): curl 대역이 `://` 든 인자를 모두 막아 `-H 'Origin: http://…'`도 거부(작성자는 node http.request로). 또 scheme 없는 `curl example.com`은 못 잡는 구멍 — 리뷰어가 쓰는 동안 safe.sh를 바꾸지 않고, 두 리뷰가 끝난 뒤 고친다.
+Task 33: 리뷰 162 (opus, a797897, 상자 rv162) dispatched → review-162.md. 동시 2: 리뷰 162·163.
+Task 33: 리뷰 163 DONE — ❌ I3·M7. I1 Step 1 절대 경로 패턴 `[A-Za-z]:[/\]*`(역슬래시 하나)가 C:/·C:\ 모두 거부, I2 "사본에는 .env 없음" 틀림(cp -r가 원본 .env 복사, 키는 env 우선·가드로 바깥 안 감), I3 extra-suggest 순서(밑줄 먼저→/suggest, content.js:232-235)·jev/suggestions를 server 하나로 합침·sequence에 Docs·core.js 빠짐. M1 NODE_USE_ENV_PROXY 서술 Day 162와 어긋남, M2 tr 'A-Z\' 경고, M3 401·403 줄, M4 재시도 수, M5 인용, M6 문구, M7 그림 클래스·빠진 관계. 상자 guard.log 3줄. 리뷰어 일탈: 쓰기 블록 붙여 넣기 2판(I1 때문), diff 출력 한 번 길게.
+  내가 확인: 리뷰어의 "Day 161 `[/\]`도 같은 bash에서 거부"는 틀림 — Write 도구로 정확한 바이트 시험에서 `[/\]`는 C:/·C:\·/c/ 받고 lab-rel·C:lab 거부, `[/\]`만 거부. 원인은 Bash 도구가 heredoc의 `\`를 `\`로 줄이는 것(내 첫 시험도 그래서 틀렸음). Day 163의 `[/\]`·`tr 'A-Z\'`도 같은 원인 추정.
+Task 33: 163 fix round 1 dispatched (SendMessage a20fd42) — I1~I3·M1~M7 전부, 역슬래시 줄은 Edit/Write + od로 확인, 재현은 고친 블록만.
+Task 33: 163 fix round 1 DONE — b4468bf, check 통과, 21.0/분(2,519/120). I1 `[/\]` 바이트 확인, I2 사본 .env를 정확한 경로로 지움, I3 시퀀스 다섯으로 나눔(sequence·extra-check·judge·suggest·result, 메시지 삭제 0), M1~M7. 일탈 없음, guard.log 3줄.
+Task 33: 리뷰 162 DONE — ❌ I4·M9. I1 뒤 블록 쓰기가 `:?` 없는 "$LABDIR/…"·"$LAB/logs/…"(새 터미널이면 `/` = C:\Program Files\Git\에 씀, echo 시험), I2 6.9배 원인 설명 틀림(지시문 5,481·기준 1,480바이트), I3 extra-extension server→content 화살표(실제는 워커 sendResponse), I4 그림이 dev.mjs·api 합침, http.mjs·options.js 노드 없음, 토큰 검사·collect·storage 빠짐. M1 기대 출력 두 곳, M2 독자 가드가 tls·dns 안 감쌈, M3 "단언 빼도 안 돎" 틀림, M4 text/plain·Chrome LNA, M5 v24.5.0·Vercel 인용, M6 netstat Windows 전용, M7 가짜 게이트웨이가 Authorization 통째 기록, M8 백틱, M9 그림. 상자 guard.log 4줄(selftest 3 + 일부러 보낸 https.request 1). WebFetch 7회.
+  safe.sh curl 대역 고침(아무도 안 쓸 때): 옵션 값(-H 등)은 주소로 보지 않음, 프록시·--resolve·--connect-to 옵션 버림, 다른 호스트는 죽은 프록시(127.0.0.1:9)로 → scheme 없는 example.com rc=7, 루프백 + Origin 머리 허용. selftest 다시 통과.
+Task 33: 162 fix round 1 dispatched (SendMessage a1bb26d) — I1~I4·M1~M9, I1은 진짜 블록 붙여 넣기 시험(새 파일 0), 역슬래시 Edit/Write+od.
+Task 33: 163 컨트롤러 확인(재확인 에이전트 대신) — I1 바이트 `[/\]`·`tr 'A-Z\'`, Step 1 블록을 9경우×(붙여 넣기·스크립트) 18판: 자리 표시·.CLAUDE·Windows꼴 .Claude·상대·CLAUDE_CONFIG_DIR(두 꼴) 거부 시 새 파일 0, 정상 /c/·C:/·C:\ 세 꼴은 랩 만들고 HOME 바뀜. I2 `rm -f "${LAB:?}/work/ripple/.env"`. I3 PNG로 extra-judge(밑줄 먼저 → content.js:232-235와 같음)·sequence 확인. M1~M7 문자열 확인. check 통과, 21.0/분. sequence의 bg 배우에 넘김 메시지를 더했다가(4a5e55b) 라벨이 수명선에 걸려 되돌림(9ebfb07, b4468bf와 같음 — 내 실수: check 실패를 `| tail`로 이어 커밋함). 163 완료.
+Task 33: 162 fix round 1 DONE — 0926ed2, check 통과, 20.1/분(2,810/140). I1 뒤 블록 쓰기·실행 전부 `${LABDIR:?}`·`${LAB:?}`·`${FAKE_LOG:?}`, I2 6.9배 원인 sizes.mjs로 다시 잼, I3 bg→content sendResponse, I4 시퀀스 여섯 그림(메시지 삭제·배우 합침 없음), http.mjs·options.js 노드, M1~M9(M9 아이콘 늘어남은 남김). 일탈 없음.
+Task 33: 162 컨트롤러 확인 — 붙여 넣기 시험 14블록(Step 1 포함, 환경 없음) 새 파일 0. Step 1 18판(9경우×2): 거부 경우 새 파일 0, 정상 세 꼴 랩 만들고 HOME 바뀜, 원본 앱 git status 비어 있음. PNG overview·extra-sequence-search·확인, 가짜 게이트웨이 Authorization 가림 확인. 내가 고침: 절대 경로 패턴 `[A-Za-z]:*`(C:lab 받아들임) → `[A-Za-z]:[/\]*`(Edit + od 확인, 18판 다시 같음). 162 완료.
