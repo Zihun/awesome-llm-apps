@@ -1,6 +1,6 @@
 # Day 166 · ThinkPath Chatbot  🧠
 
-> 볼륨 18 🧪 기타 LLM 앱 · 난이도 ★★☆ · 예상 소요 100분(손으로 하는 일이 많습니다. 파일 넷을 만들고, 터미널 둘에서 가짜 서버와 명령을 돌리고, 소스 1,230줄 가운데 IPC 손잡이와 화면 함수를 따라 읽습니다) · API 비용 대략 0원(이 문서는 진짜 Ollama를 한 번도 부르지 않았습니다. 진짜로 쓰면 로컬 모델이라 토큰 값은 없고 내 PC의 시간과 메모리를 씁니다) · 원본 앱: `advanced_llm_apps/thinkpath_chatbot_app`
+> 볼륨 18 🧪 기타 LLM 앱 · 난이도 ★★☆ ⚠ Electron 27(지원 종료) · 예상 소요 100분(손으로 하는 일이 많습니다. 파일 넷을 만들고, 터미널 둘에서 가짜 서버와 명령을 돌리고, 소스 1,232줄 가운데 IPC 손잡이와 화면 함수를 따라 읽습니다) · API 비용 대략 0원(이 문서는 진짜 Ollama를 한 번도 부르지 않았습니다. 진짜로 쓰면 로컬 모델이라 토큰 값은 없고 내 PC의 시간과 메모리를 씁니다) · 원본 앱: `advanced_llm_apps/thinkpath_chatbot_app`
 
 ## 오늘 만들 것
 
@@ -34,7 +34,7 @@
 
 | 컴포넌트 | 역할 | 코드 위치 |
 |---|---|---|
-| 창 | 800×600 이상, 프레임 없는 Electron 창. `nodeIntegration: true`, `contextIsolation: false` | `advanced_llm_apps/thinkpath_chatbot_app/main.js:7-28` |
+| 창 | 1200×800(최소 800×600), 프레임 없는 Electron 창. `nodeIntegration: true`, `contextIsolation: false` | `advanced_llm_apps/thinkpath_chatbot_app/main.js:7-28` |
 | 창 제어 손잡이 | 최소화·최대화·닫기·최대화 여부. 화면의 신호등 버튼이 부른다 | `main.js:31-51` |
 | 연결 확인 | `'test'`를 생성시켜 성공이면 "Connected" | `main.js:54-72`, `index.html:450-459` |
 | 경로 만들기 | 질문 → 경로 넷 JSON → 정규식으로 꺼냄 → 실패하면 키워드 폴백 | `main.js:162-215`, `266-334` |
@@ -133,9 +133,9 @@ grep -n "model:" main.js
 45:ipcMain.handle('window-close', () => {
 49:ipcMain.handle('window-is-maximized', () => {
 54:ipcMain.handle('send-to-llm', async (event, message) => {
-75:ipcMain.handle('generate-updated-paths', async (event, { originalQuery, lastResponse, conv
-162:ipcMain.handle('generate-thinking-paths', async (event, query) => {
-218:ipcMain.handle('execute-thinking-path', async (event, { query, pathName, steps, executeUp
+75:ipcMain.handle('generate-updated-paths', async (event, { 
+162:ipcMain.handle('generate-thinking-paths', async (event, 
+218:ipcMain.handle('execute-thinking-path', async (event, { 
 452: ipcRenderer.invoke('send-to-llm', 'test');
 495: ipcRenderer.invoke('window-close');
 499: ipcRenderer.invoke('window-minimize');
@@ -150,7 +150,7 @@ grep -n "model:" main.js
 247:      model: 'gemma3:1b',
 ```
 
-읽을 것은 셋입니다. 첫째, `window-is-maximized`는 받는 쪽만 있고 부르는 쪽이 없습니다. 둘째, `generate-updated-paths`는 두 곳에서 부릅니다. 하나는 답이 나온 1초 뒤 자동(`index.html:678-680`, 위 621줄), 하나는 "🔄 Generate New Approaches" 버튼(위 798줄)입니다. 셋째, 모델 이름이 네 곳이라 앱 README의 "line 45 한 줄만 바꾸라"는 안내로는 모델이 바뀌지 않습니다. 하나만 바꾸면 경로는 새 모델이 만들고 단계 답은 옛 모델이 쓰는 앱이 됩니다. 주소(`localhost:11434`)도 네 곳에 박혀 있어 다른 컴퓨터의 Ollama를 쓰려면 네 곳을 모두 고쳐야 합니다.
+읽을 것은 셋입니다. 첫째, `window-is-maximized`는 받는 쪽만 있고 부르는 쪽이 없습니다. 둘째, `generate-updated-paths`는 두 곳에서 부릅니다. 하나는 답이 나온 1초 뒤 자동(`index.html:678-680`, 위 621줄), 하나는 "🔄 Generate New Approaches Based on Conversation" 버튼(위 798줄, `Ctrl/Cmd+R`도 같은 함수를 부릅니다. `index.html:877-879`)입니다. 셋째, 모델 이름이 네 곳이라 앱 README의 "line 45 한 줄만 바꾸라"는 안내로는 모델이 바뀌지 않습니다. 앱 README를 따라 첫 `model:`을 찾으면 57줄인데, 거기만 바꾸면 연결 확인(`'test'`)만 새 모델로 가고 경로 만들기·단계 실행·이어 갈 경로는 옛 모델을 씁니다. 어느 한 곳만 바꾸면 호출마다 모델이 갈립니다(예: 184줄만 바꾸면 경로만 새 모델이 만듭니다). 주소(`localhost:11434`)도 네 곳에 박혀 있어 다른 컴퓨터의 Ollama를 쓰려면 네 곳을 모두 고쳐야 합니다.
 
 ### Step 3. 가짜 Ollama와 연결 제한 가드를 만든다
 
@@ -260,7 +260,7 @@ curl -s --noproxy '*' -X POST "http://127.0.0.1:${FAKE_PORT:?}/mode" -d '{"mode"
 
 ### Step 4. 손잡이를 부른다: 경로 만들기와 그 실패들
 
-**목적.** 화면이 하듯 `send-to-llm`과 `generate-thinking-paths`를 부르고, 모델 응답이 여러 꼴일 때 무엇이 돌아오는지 봅니다. 구동기 `drive.mjs`는 가드를 먼저 불러온 뒤(`armed`가 없으면 `ReferenceError`로 멈춥니다), `electron`·`axios`를 가짜로 바꿔 끼우고 사본 `main.js`를 `require`합니다. 가짜 `axios.post`는 주소가 정확히 `http://localhost:11434/api/generate`일 때만 `127.0.0.1:47301`로 보냅니다. 그러므로 `main.js`는 자기가 11434에 말한다고 믿지만 실제 연결은 47301로만 나가고, 그 밖의 연결은 가드가 막습니다. 가짜 `axios`는 진짜 `axios`가 아닙니다. 상태 코드 오류의 글(`Request failed with status code 404`)은 내가 기억하는 꼴로 정한 것이고, [axios 문서](https://axios.rest/pages/advanced/request-config)는 200~299 밖이면 약속을 거부한다고만 적고 글은 적지 않습니다. 연결 거부 같은 다른 오류의 글도 이 문서는 보증하지 않습니다.
+**목적.** 화면이 하듯 `send-to-llm`과 `generate-thinking-paths`를 부르고, 모델 응답이 여러 꼴일 때 무엇이 돌아오는지 봅니다. 구동기 `drive.mjs`는 가드를 먼저 불러온 뒤(`armed`가 없으면 `ReferenceError`로 멈춥니다), `electron`·`axios`를 가짜로 바꿔 끼우고 사본 `main.js`를 `require`합니다. 가짜 `axios.post`는 주소가 정확히 `http://localhost:11434/api/generate`일 때만 `127.0.0.1:47301`로 보냅니다. 그러므로 `main.js`는 자기가 11434에 말한다고 믿지만 실제 연결은 47301로만 나가고, 그 밖의 연결은 가드가 막습니다. 가짜 `axios`는 진짜 `axios`가 아닙니다. 상태 코드 오류의 글(`Request failed with status code 404`)은 잠금 판 axios 1.11.0(`package-lock.json:229-230`)의 소스 `lib/core/settle.js`가 거부할 때 만드는 글(`'Request failed with status code ' + response.status`)을 따라 한 것입니다([v1.11.0 소스](https://raw.githubusercontent.com/axios/axios/v1.11.0/lib/core/settle.js)에서 읽어 확인함). 연결 거부 같은 다른 오류의 글은 이 문서가 보증하지 않습니다.
 
 **할 일.** 구동기와 요약기를 만듭니다. 화면 쪽에서 `main.js`에 건네는 값은 `index.html`을 읽고 같은 모양으로 맞췄습니다(`execute`·`updated`의 인자 이름은 `main.js:75`·`218`의 구조 분해와 같습니다).
 
@@ -381,7 +381,7 @@ paths, model missing (404)     {"success":false,"error":"Request failed with sta
 - `prose + fence`에서 경로가 정상으로 나온 것은 정규식(`main.js:115`·`193`)이 코드 울타리와 앞뒤 말을 건너뛰기 때문입니다.
 - `JSON then '}'`는 같은 JSON인데 뒤에 `}` 하나가 붙어 "첫 `{`부터 마지막 `}`"가 JSON이 아니게 되었고, 앱은 오류 없이 기성 경로(Analytical 등)를 냈습니다. `success`는 여전히 `true`입니다. 독자는 모델이 만든 경로인지 기성품인지 화면에서 알 수 없습니다.
 - 기성 경로는 질문에 `code`·`program`·`function`이 있으면 코드용, `analyz`·`data`·`research`가 있으면 분석용입니다(`main.js:267-268`). `includes`라서 "Which data matters?"도 분석용이 되고, `database`나 `metadata`도 걸립니다.
-- 404 줄이 중요합니다. 모델이 없으면(진짜 Ollama가 어떤 상태·본문을 주는지는 [API 문서](https://github.com/ollama/ollama/blob/main/docs/api.md)가 `/api/generate`에 대해 적지 않아 이 문서는 확인하지 못했고, 위 404와 본문은 **내 가짜 서버의 선택**입니다) `axios`가 던진 오류가 `catch`(`main.js:208-213`)로 가서 `success: false`와 함께 기성 경로를 담습니다. 그런데 그 값은 `generateFallbackPaths`의 반환 그대로라 `{paths: […]}` 객체이고, 화면(`index.html:528-541`)은 `success`가 거짓이면 경로를 쓰지 않고 오류 글만 보입니다. 이 기성 경로는 어느 화면에서도 쓰이지 않습니다.
+- 404 줄이 중요합니다. 모델이 없으면(Ollama의 [오류 문서](https://docs.ollama.com/api/errors)는 `404`를 "Not Found (model doesn't exist, etc.)"로, 본문을 `{"error": "…"}` 꼴의 JSON으로 적습니다. 가짜 서버의 404는 이 꼴을 따랐고 본문 글자는 **내 가짜 서버의 선택**이며 진짜 글자는 확인하지 못했습니다) `axios`가 던진 오류가 `catch`(`main.js:208-213`)로 가서 `success: false`와 함께 기성 경로를 담습니다. 그런데 그 값은 `generateFallbackPaths`의 반환 그대로라 `{paths: […]}` 객체이고, 화면(`index.html:528-541`)은 `success`가 거짓이면 경로를 쓰지 않고 오류 글만 보입니다. 이 기성 경로는 어느 화면에서도 쓰이지 않습니다.
 - 첫 줄이 연결 표시등의 정체입니다. 시작할 때 `'test'`를 정말 생성시켜(`index.html:452`) 성공하면 "Connected to Llama", 아니면 "Disconnected"입니다. 이 호출은 모델을 메모리에 올리는 일이기도 합니다.
 
 요청 본문은 셋뿐입니다. 터미널 B에서 확인합니다.
@@ -401,7 +401,7 @@ cd "${LAB:?}" && node logsum.mjs
  8 model,prompt,stream gemma3:1b stream=false   620자 "You are a strategic thinking assistant. For the following qu"
 ```
 
-줄 2~8이 `generate-thinking-paths` 일곱 번입니다(`'code'` 질문이 5자 짧아 615자입니다). 모델, 프롬프트, `stream: false`뿐이고 `format: "json"`도 `options`도 시간 제한도 없습니다. Ollama API 문서는 `format`에 `json`이나 JSON 스키마를 줄 수 있다고 하며, 이 앱은 쓰지 않습니다. `main.js`가 `timeout`을 주지 않습니다(소스로 확인). axios 문서는 `timeout`의 기본값을 적지 않아서 이 문서는 기본이 무제한인지 확인하지 못했습니다. 기본이 무제한이면 모델이 느릴 때 화면은 "Analyzing…"에서 계속 기다립니다.
+줄 2~8이 `generate-thinking-paths` 일곱 번입니다(`'code'` 질문이 5자 짧아 615자입니다). 모델, 프롬프트, `stream: false`뿐이고 `format: "json"`도 `options`도 시간 제한도 없습니다. Ollama API 문서는 `format`에 `json`이나 JSON 스키마를 줄 수 있다고 하며, 이 앱은 쓰지 않습니다. `main.js`가 `timeout`을 주지 않습니다(소스로 확인). 잠금 판 axios 1.11.0의 소스 `lib/defaults/index.js`는 `timeout: 0,`이고 그 위 주석이 "If set to 0 (default) a timeout is not created."입니다([v1.11.0 소스](https://raw.githubusercontent.com/axios/axios/v1.11.0/lib/defaults/index.js)에서 읽어 확인함). 기본이 제한 없음이므로 모델이 느리면 화면은 "Analyzing…"에서 계속 기다립니다.
 
 ### Step 5. 단계 실행과 이어 갈 경로를 부른다
 
@@ -418,10 +418,10 @@ cd "${LAB:?}" && : > fake.log && node drive.mjs run | cut -c1-120 && node logsum
 **확인.** 출력은 다음과 같습니다.
 
 ```text
-handlers: window-minimize, window-maximize, window-close, window-is-maximized, send-to-llm, generate-updated-paths, generate-thinking-paths, execute-thinking-path
-execute up to step 1           {"success":true,"stepsExecuted":1,"response":"**Following \"fake\" Approach:**\n\n**Step 1: Identify
-execute up to step 2           {"success":true,"stepsExecuted":2,"response":"**Following \"fake\" Approach:**\n\n**Step 1: Identify
-execute up to step 3           {"success":true,"stepsExecuted":3,"response":"**Following \"fake\" Approach:**\n\n**Step 1: Identify
+handlers: window-minimize, window-maximize, window-close, window-is-maximized, send-to-llm, generate-updated-paths, gene
+execute up to step 1           {"success":true,"stepsExecuted":1,"response":"**Following \"fake\" Approach:**\n\n**Step 
+execute up to step 2           {"success":true,"stepsExecuted":2,"response":"**Following \"fake\" Approach:**\n\n**Step 
+execute up to step 3           {"success":true,"stepsExecuted":3,"response":"**Following \"fake\" Approach:**\n\n**Step 
 updated paths                  {"success":true,"names":["Root Cause","Quick Win","Compare Options","Big Picture"]}
 updated paths, no JSON         {"success":true,"names":["Continue Deep","New Angle","Apply Practical","Expand Context"]}
  1 model,prompt,stream gemma3:1b stream=false   966자 "Original question: \"How do I cut churn?\""
@@ -437,7 +437,7 @@ updated paths, no JSON         {"success":true,"names":["Continue Deep","New Ang
 
 ### Step 6. 화면의 답 서식 함수를 돌려 보고 보안 설정을 읽는다
 
-**목적.** 모델의 답이 화면에 들어가기 전에 지나는 함수 `formatThinkingResponse`(`index.html:736-788`)를 문자열로 돌려, 어떤 HTML이 나오는지 봅니다. DOM도 Electron도 쓰지 않습니다. 파일에서 함수 본문만 잘라 `new Function`으로 만듭니다.
+**목적.** 모델의 답이 화면에 들어가기 전에 지나는 함수 `formatThinkingResponse`(`index.html:736-788`)를 문자열로 돌려, 어떤 HTML이 나오는지 봅니다. DOM도 Electron도 쓰지 않습니다. **이 Step은 IPC도 `main.js`도 가짜 Ollama도 거치지 않습니다**(그림의 화살표는 앱의 평상 배선이고, 오늘 돌리는 것은 `index.html`의 함수 하나입니다). 파일에서 함수 본문만 잘라 `new Function`으로 만듭니다.
 
 **할 일.**
 
@@ -472,7 +472,7 @@ cd "${LAB:?}" && node render.mjs
 
 두 가지를 읽습니다.
 
-첫째, 서식 함수는 정규식 열 몇 개를 차례로 겁니다. 정상 응답에서도 `<h4>`가 겹치고 `</p>`가 짝 없이 남습니다(Chromium은 이런 HTML을 너그럽게 고쳐 읽습니다). `**Following "…" Approach:**`를 `<h3>🎯`로 바꾸는 규칙은 앞선 일반 굵은 글씨 규칙(`**…**` → `<strong>`)이 먼저 지나가서 **한 번도 걸리지 않습니다**(일반 굵은 글씨 규칙은 `index.html:745`, 머리글 규칙은 `766`이고, 출력에는 `<strong>Following…`이 보입니다). 모델이 조금만 다른 모양으로 답해도 서식이 무너지는 구조입니다.
+첫째, 서식 함수는 정규식 열 몇 개를 차례로 겁니다. 정상 응답에서도 `<h4>`가 겹치고 `</p>`가 짝 없이 남습니다(Chromium은 이런 HTML을 너그럽게 고쳐 읽습니다). `**Following "…" Approach:**`를 `<h3>🎯`로 바꾸는 규칙은 앞선 일반 굵은 글씨 규칙(`**…**` → `<strong>`)이 먼저 지나가서 **한 번도 걸리지 않습니다**(일반 굵은 글씨 규칙은 `index.html:745`, 머리글 규칙은 `765`이고, 출력에는 `<strong>Following…`이 보입니다). 모델이 조금만 다른 모양으로 답해도 서식이 무너지는 구조입니다.
 
 둘째, 모델이 낸 `<img … onerror=…>`는 **걸러지지 않고 그대로 남았습니다.** 이 함수의 결과는 `messageEl.innerHTML = …`(`index.html:723-731`)에 들어가고, 경로 카드의 `path.name`·단계 글도 `innerHTML`(`561-616`)로 들어갑니다. 반면 독자가 쓴 질문은 `textContent`(`480`)입니다. `main.js:12-13`은 `nodeIntegration: true`, `contextIsolation: false`입니다. [Electron 보안 문서](https://www.electronjs.org/docs/latest/tutorial/security)는 "It is paramount that you do not enable Node.js integration in any renderer."라고 하고, XSS가 "더 위험해지는" 이유를 "A cross-site-scripting (XSS) attack is more dangerous if an attacker can jump out of the renderer process."로 설명합니다. 그래서 읽은 결론은 이렇습니다. 이 화면에서 모델이 낸 태그가 실행되면 그 코드는 `require`로 `child_process`·`fs`를 쓸 수 있습니다. 이 결론은 문서와 소스로 읽은 것이고 Electron을 띄워 실행해 보지는 않았습니다. 위험의 크기도 가려 읽어야 합니다. 이 앱은 로컬 모델과 혼자 쓰는 창이고 `loadFile('index.html')`로 자기 파일만 엽니다. 공격이 성립하려면 모델의 답에 태그가 실려야 하며, 독자가 HTML에 대해 묻거나(모델이 코드 예시를 내면 그 태그가 말풍선에 풀립니다), 질문에 남이 쓴 글을 붙여 넣을 때입니다. 고치는 길은 `contextIsolation: true`와 `nodeIntegration: false`에 `preload.js`로 필요한 손잡이만 여는 것, 그리고 모델의 글을 `textContent`나 이스케이프를 거쳐 넣는 것입니다.
 
@@ -493,16 +493,16 @@ npm start                                             # electron .
 
 **확인.** 창이 뜨면 위쪽에 "● Connecting…"이 "● Connected to Llama"로 바뀌어야 합니다. 바뀌지 않으면 아래 문제 해결 표를 봅니다. 알아 둘 것은 넷입니다.
 
-- `npm install`이 받는 `electron`은 27.3.11입니다. [Electron 문서](https://www.electronjs.org/docs/latest/tutorial/electron-timelines)는 최신 안정 주 버전 셋만 지원한다고 적고 27이 Chromium 118을 쓴다고 하는데, 27의 지원 종료일은 그 페이지에 없어 이 문서가 확인하지 못했습니다. 지원 대상이 아닐 수 있다는 점은 알고 쓰세요.
+- `npm install`이 받는 `electron`은 27.3.11입니다. [Electron 문서](https://www.electronjs.org/docs/latest/tutorial/electron-timelines)는 최신 안정 주 버전 셋만 지원한다고 적습니다. 공식 [Release Schedule](https://releases.electronjs.org/schedule)의 27.0.0 행은 Stable 2023-10-09, **End of Life 2024-04-16**, Chromium M118, Node v18.17.1입니다(읽어 확인함). 곧 `npm install`이 잠금 파일대로 받는 27.3.11은 **이미 지원이 끝난 런타임**입니다. 이 앱처럼 `nodeIntegration: true`로 모델의 글을 `innerHTML`에 넣는 구조(Step 6)에서는 더 무겁게 받아들일 일입니다. 더 새 Electron으로 올려도 이 앱의 `nodeIntegration`·`contextIsolation` 설정이 그대로 도는지는 이 문서가 확인하지 않았습니다.
 - 앱 README의 `git clone … && cd thinkpath-ai`는 폴더 이름이 어긋납니다. 클론하면 `ThinkPath-Chatbot`이 생기는데 `cd`는 `thinkpath-ai`로 갑니다. 이 저장소에서는 `advanced_llm_apps/thinkpath_chatbot_app`으로 들어가세요.
-- `npm run dev`는 `concurrently`와 `nodemon`이 `npm start`를 파일이 바뀔 때마다 다시 띄웁니다. 개발 도구(DevTools)는 `NODE_ENV=development`일 때만 열리는데(`main.js:25`) `dev` 스크립트는 그 값을 정하지 않습니다.
+- `npm run dev`는 `concurrently "npm run start" "npm run watch"`(`package.json:8-9`)라서 `npm start`가 하나, `watch`(`nodemon --exec npm run start`) 아래 `npm start`가 하나, 곧 **Electron 창이 둘** 뜹니다(소스로 읽음, 실행 안 함). `nodemon`은 파일이 바뀔 때마다 그쪽을 다시 띄웁니다. 개발 도구(DevTools)는 `NODE_ENV=development`일 때만 열리는데(`main.js:25`) `dev` 스크립트는 그 값을 정하지 않습니다.
 - `icon: path.join(__dirname, 'assets/icon.png')`(`main.js:19`)의 `assets/` 폴더는 저장소에 없습니다. 이것이 Windows에서 창을 막는지는 실행하지 않아 모릅니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-독자가 질문을 쓰고 Send를 누르면 화면은 질문을 `textContent`로 말풍선에 붙이고, `generate-thinking-paths`를 부릅니다(`index.html:506-547`). 주 프로세스는 질문을 "strategic thinking assistant" 프롬프트에 넣어 `/api/generate`로 보내고, 응답에서 첫 `{`~마지막 `}`를 `JSON.parse`합니다. 성공하면 모델의 경로 넷이, 실패하면 키워드로 고른 기성 경로 넷이 같은 `success: true`로 화면에 갑니다. 화면은 경로 카드를 `innerHTML`로 만듭니다. 카드의 단계를 누르면 `execute-thinking-path`가 그 경로의 1~N단계 프롬프트로 한 번 더 부르고, 답을 서식 함수에 통과시켜 말풍선에 넣습니다. 1초 뒤 화면이 `generate-updated-paths`를 자동으로 부르고, 이어 갈 경로 넷이 카드를 바꿉니다. 이때 카드 아래 입력창이 `innerHTML`로 새로 만들어지므로, 그 사이에 쓰던 글자는 사라질 수 있습니다(`index.html:561-616`이 입력창을 다시 그림, 실행해 보지는 않았습니다). 모델 호출은 질문 한 번에 최대 세 번(경로, 단계, 이어 갈 경로)이고 매번 앞 호출과 독립입니다.
+독자가 질문을 쓰고 Send를 누르면 화면은 질문을 `textContent`로 말풍선에 붙이고, `generate-thinking-paths`를 부릅니다(`index.html:506-547`). 주 프로세스는 질문을 "strategic thinking assistant" 프롬프트에 넣어 `/api/generate`로 보내고, 응답에서 첫 `{`~마지막 `}`를 `JSON.parse`합니다. 성공하면 모델의 경로 넷이, 실패하면 키워드로 고른 기성 경로 넷이 같은 `success: true`로 화면에 갑니다. 화면은 경로 카드를 `innerHTML`로 만듭니다. 카드의 단계를 누르면 `execute-thinking-path`가 그 경로의 1~N단계 프롬프트로 한 번 더 부르고, 답을 서식 함수에 통과시켜 말풍선에 넣습니다. 1초 뒤 화면이 `generate-updated-paths`를 자동으로 부르고, 이어 갈 경로 넷이 카드를 바꿉니다. 이때 카드 아래 입력창이 `innerHTML`로 새로 만들어지므로, 그 사이에 쓰던 글자는 사라질 수 있습니다(`index.html:561-616`이 입력창을 다시 그림, 실행해 보지는 않았습니다). 모델 호출은 시작할 때 `'test'` 한 번, 질문 하나에 경로 만들기 한 번이고, 단계를 누를 때마다 단계 실행과 1초 뒤 이어 갈 경로가 두 번씩 더 나갑니다(`index.html:452`·`654`·`678-680`). 매번 앞 호출과 독립입니다.
 
 ## 실행 체크리스트
 
@@ -525,16 +525,16 @@ npm start                                             # electron .
 | `ECONNREFUSED 127.0.0.1:47301` | 터미널 A의 가짜 서버가 꺼졌다 | 다시 띄운다 |
 | `EADDRINUSE` 47301 | 이전 가짜 서버가 남았거나 다른 프로그램이 쓰는 중 | 이전 터미널에서 `Ctrl+C`. 다른 프로그램이면 `env.sh`의 `FAKE_PORT`를 바꾼다 |
 | 진짜 앱의 표시등이 "Disconnected" | Ollama가 꺼졌거나, `gemma3:1b`가 없거나, 11434가 다른 프로그램의 것(`send-to-llm`이 오류면 모두 같은 표시) | `ollama list`로 모델을 확인하고 `ollama pull gemma3:1b` |
-| 진짜 앱에서 모델을 바꿨는데 경로만 바뀐다 | 모델 이름이 네 곳이다(`main.js:57·107·184·247`). 앱 README의 "line 45"는 틀렸다 | 네 곳 모두 바꾼다 |
+| 진짜 앱에서 모델을 바꿨는데 일부 호출만 새 모델로 간다(예: 57줄만 바꾸면 연결 확인만) | 모델 이름이 네 곳이다(`main.js:57·107·184·247`). 앱 README의 "line 45"는 틀렸다 | 네 곳 모두 바꾼다 |
 | 경로가 늘 Analytical·Creative·Practical·Comprehensive다 | 모델 응답이 JSON이 아니거나 `}`가 뒤에 더 붙어 기성 경로로 떨어지고 있다 | 더 큰 모델을 쓰거나 `format: "json"`을 추가해 본다(Step 4) |
 | 진짜 앱에서 입력창에 쓰던 글이 사라진다 | 경로 카드를 다시 그리며 입력창도 새로 만든다(소스로 읽음) | 질문을 보낸 뒤에 다음 글을 쓴다 |
 
 ## 더 해보기
 
-- `drive.mjs`에 `format: "json"`을 흉내 내는 모드를 더해 보세요. Ollama API 문서대로 `format`을 주면 응답이 JSON만 되는지 가짜 서버에서 모양만 맞추고, `main.js`의 네 곳 가운데 두 곳(`106`·`183`)에 그 필드를 더했을 때 `greedy` 모드의 실패가 사라지는지 사본에서 확인해 보세요. 원본은 고치지 않습니다.
+- `fake.mjs`의 `reply()`와 `/mode`에 `format: "json"`을 흉내 내는 모드를 더하고 `drive.mjs`에서 불러 보세요. Ollama API 문서대로 `format`을 주면 응답이 JSON만 되는지 가짜 서버에서 모양만 맞추고, `main.js`의 네 곳 가운데 두 곳(`106`·`183`)에 그 필드를 더했을 때 `greedy` 모드의 실패가 사라지는지 사본에서 확인해 보세요. 원본은 고치지 않습니다.
 - `index.html`의 `displayThinkingPaths`와 `addMessageWithPath`가 `innerHTML`로 넣는 값(`path.name`, `step`, `pathName`, 서식 결과)을 `textContent`나 이스케이프 함수로 바꾸는 패치를 사본에 만들고, `render.mjs`의 `태그가 그대로 남았나`가 `false`가 되는지 보세요. 서식(굵은 글씨, 목록)을 지키려면 어디서 이스케이프하는 것이 맞는지 생각해 보세요.
 - 단계 N을 누를 때마다 1~N단계를 다시 쓰는 구조를 바꿔 보세요. 앞 단계의 답을 `conversationContext`로 프롬프트에 넣고 "N번째 단계만 하라"고 시키면 프롬프트 길이가 어떻게 달라지는지 `logsum.mjs`로 재 봅니다. 앱 README의 절감 표가 말하는 "partial analysis"와 무엇이 같고 다른지 따져 보세요.
 
 ## 다음 날 예고
 
-[Day 167 · Cursor Ai Experiments](../day167-cursor-ai-experiments/README.md) — 시리즈의 마지막 날입니다. `advanced_llm_apps/cursor_ai_experiments`에는 서로 이어지지 않는 실험 다섯이 있습니다. CrewAI 다중 에이전트 연구자(`multi_agent_researcher.py` 145줄), ScrapeGraphAI 웹 스크레이퍼(`ai_web_scrapper.py` 48줄), 오늘처럼 로컬 Ollama를 쓰는 ChatGPT 흉내(`chatgpt_clone_llama3.py` 39줄)와 LM Studio 판(`local_chatgpt_clone/` 36줄), RouteLLM 라우터(`llm_router_app/llm_router.py` 52줄)입니다. 오늘 본 "로컬 모델 서버에 주소가 박혀 있다"가 거기서도 나오고, 167일 전체를 돌아보는 "시리즈 마무리" 절이 있습니다.
+[Day 167 · Cursor Ai Experiments](../day167-cursor-ai-experiments/README.md) — 시리즈의 마지막 날입니다. `advanced_llm_apps/cursor_ai_experiments`에는 서로 이어지지 않는 실험 다섯이 있습니다. CrewAI 다중 에이전트 연구자(`multi_agent_researcher.py` 146줄), ScrapeGraphAI 웹 스크레이퍼(`ai_web_scrapper.py` 49줄), 오늘처럼 로컬 Ollama를 쓰는 ChatGPT 흉내(`chatgpt_clone_llama3.py` 40줄)와 LM Studio 판(`local_chatgpt_clone/` 36줄), RouteLLM 라우터(`llm_router_app/llm_router.py` 52줄)입니다. 오늘 본 "로컬 모델 서버에 주소가 박혀 있다"가 거기서도 나오고, 167일 전체를 돌아보는 "시리즈 마무리" 절이 있습니다.
