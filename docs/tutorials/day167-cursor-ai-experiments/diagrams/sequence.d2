@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+app: "앱 대본 (chatgpt_clone_llama3.py)" { class: ours }
+client: "클라이언트 (ollama.Client)" { class: ours }
+srv: "Ollama 서버 (이 문서는 가짜)" { class: ext }
+
+user -> app: "질문을 쓴다 (chat_input)"
+app -> app: "기록에 user 추가 (22행)"
+app -> client: "chat(model, messages, stream=True)"
+client -> srv: "POST /api/chat (기록 전부)"
+srv -> client: "NDJSON 조각 (message.content)"
+client -> app: "조각마다 하나씩 내준다"
+app -> app: "이어 붙이며 커서 표시 (31-32행)"
+app -> user: "완성된 답 (33행)"
+app -> app: "기록에 assistant 추가 (34행)"

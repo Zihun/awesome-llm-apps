@@ -1,0 +1,35 @@
+...@../../_tools/theme
+direction: right
+
+user: "독자" { class: person }
+
+apps: "Streamlit 대본 다섯" {
+  class: group
+  a_ollama: "Ollama 대화" { class: ours }
+  a_lms: "LM Studio 대화" { class: ours }
+  a_crew: "연구 팀" { class: ours }
+  a_scrape: "웹 긁기" { class: ours }
+  a_route: "라우터" { class: ours }
+}
+local: "이 PC" {
+  class: group
+  t_ollama: "Ollama" { class: ext }
+  t_lms: "LM Studio" { class: ext }
+}
+remote: "바깥" {
+  class: group
+  t_openai: "OpenAI" { class: ext }
+  t_together: "Together" { class: ext }
+  t_web: "웹 페이지" { class: ext }
+  t_hf: "Hugging Face" { class: ext }
+}
+
+user -> apps: "질문"
+
+apps.a_ollama -> local.t_ollama: "기록"
+apps.a_lms -> local.t_lms: "기록"
+apps.a_crew -> remote.t_openai: "질문"
+apps.a_scrape -> remote.t_web: "열기"
+apps.a_scrape -> remote.t_openai: "글"
+apps.a_route -> remote.t_together: "모델"
+apps.a_route -> remote.t_hf: "가중치"
