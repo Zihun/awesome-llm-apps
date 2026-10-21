@@ -1,0 +1,16 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+content: "조정 (content.js)" { class: ours }
+bootstrap: "문서 입출력 (bootstrap.js)" { class: ours }
+docs: "Google Docs 편집기" { class: ext }
+
+content -> bootstrap: "apply (baseText, quote, replacement)"
+bootstrap -> bootstrap: "탭 · 길이 · 한 줄 검사"
+bootstrap -> docs: "getText()"
+docs -> bootstrap: "글 (baseText와 같아야)"
+bootstrap -> docs: "setSelection(시작, 끝)"
+bootstrap -> docs: "붙여넣기 · Backspace 이벤트"
+bootstrap -> docs: "getText() (80ms, 최대 20번)"
+docs -> bootstrap: "바뀐 글 (matches로 대조)"
+bootstrap -> content: "apply-result (ok, text)"

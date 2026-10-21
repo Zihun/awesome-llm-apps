@@ -1,0 +1,30 @@
+...@../../_tools/theme
+direction: down
+
+ext: "독자의 Chrome (Google Docs 탭 + 확장 extension/)" {
+  class: group
+  grid-columns: 6
+  user: "독자" { class: person }
+  bootstrap: "문서 입출력 (bootstrap.js)" { class: ours }
+  content: "조정 (content.js)" { class: ours }
+  core: "문장·차이 (core.js)" { class: ours }
+  ui: "카드 (ui.js)" { class: ours }
+  bg: "중계 (background.js)" { class: ours }
+}
+back: "로컬 백엔드 (127.0.0.1:4212)" {
+  class: group
+  grid-columns: 4
+  server: "문지기 (server.mjs)" { class: ours }
+  jev: "충돌 판정 (jev.mjs)" { class: ours }
+  sug: "수정안 (suggestions.mjs)" { class: ours }
+  env: "키 (config.mjs, .env)" { class: file }
+}
+apis: "외부 API (이 문서는 가짜 서버로 대신)" {
+  class: group
+  grid-columns: 2
+  typesafe: "TypeSafe Jev" { class: ext }
+  gemini: "Gemini 3.5 Flash-Lite" { class: ext }
+}
+
+ext -> back: "check · suggest (HTTP JSON)"
+back -> apis: "질문 묶음 · 수정 요청"

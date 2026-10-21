@@ -1,0 +1,17 @@
+...@../../_tools/theme
+direction: down
+
+docs: "Google Docs 편집기 (문서 모델)" { class: ext }
+bootstrap: "문서 입출력 (bootstrap.js, MAIN 세계)" { class: ours }
+content: "조정 (content.js)" { class: ours }
+ui: "카드 (ui.js)" { class: ours }
+core: "문장·차이 (core.js)" { class: ours }
+bg: "중계 (background.js)" { class: ours }
+
+bootstrap -> docs: "getText · 붙여넣기"
+bootstrap -> content: "snapshot"
+content -> bootstrap: "apply · navigate"
+content -> ui: "results · draw"
+ui -> content: "apply"
+content -> core: "sentences · reconcile"
+content -> bg: "check · suggest"

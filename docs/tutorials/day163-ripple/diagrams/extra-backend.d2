@@ -1,0 +1,18 @@
+...@../../_tools/theme
+direction: down
+
+bg: "중계 (background.js)" { class: ours }
+server: "문지기 (server.mjs)" { class: ours }
+jev: "충돌 판정 (jev.mjs)" { class: ours }
+sug: "수정안 (suggestions.mjs)" { class: ours }
+env: "키 (config.mjs, .env)" { class: file }
+typesafe: "TypeSafe Jev (가짜 서버로 대신)" { class: ext }
+gemini: "Gemini (가짜 서버로 대신)" { class: ext }
+
+bg -> server: "POST /check · /suggest"
+server -> jev: "evaluate(input)"
+server -> sug: "suggest(input)"
+jev -> env: "TYPESAFE_API_KEY"
+sug -> env: "GEMINI_API_KEY"
+jev -> typesafe: "질문 묶음 12개씩"
+sug -> gemini: "generateContent"

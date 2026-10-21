@@ -1,0 +1,17 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+content: "조정 (content.js)" { class: ours }
+bg: "중계 (background.js)" { class: ours }
+server: "문지기 (server.mjs)" { class: ours }
+gemini: "Gemini (가짜)" { class: ext }
+user: "독자" { class: person }
+
+content -> content: "likely_conflict만 남김"
+content -> bg: "suggest (source, passages)"
+bg -> server: "POST /suggest"
+server -> gemini: "generateContent"
+gemini -> server: "suggestions JSON"
+server -> bg: "suggestions"
+bg -> content: "replace · delete · keep · needs_info"
+content -> user: "밑줄 · 카드"

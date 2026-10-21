@@ -1,0 +1,19 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+boot: "입출력 (bootstrap.js)" { class: ours }
+content: "조정 (content.js)" { class: ours }
+bg: "중계 (background.js)" { class: ours }
+server: "문지기 (server.mjs)" { class: ours }
+jev: "TypeSafe Jev (가짜)" { class: ext }
+
+user -> boot: "한 문장을 고친다"
+boot -> content: "snapshot (600ms마다)"
+content -> content: "1.9초 쉬면 check"
+content -> bg: "check (source, sentences)"
+bg -> server: "POST /check"
+server -> jev: "POST /v1/systemone"
+jev -> server: "문장마다 choice · 확률"
+server -> bg: "results (status)"
+bg -> content: "results"
