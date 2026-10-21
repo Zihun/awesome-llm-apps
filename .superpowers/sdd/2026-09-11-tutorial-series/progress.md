@@ -8,6 +8,21 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-21) — 시리즈 완료. 볼륨 18(Day 164~167)까지 작성·리뷰·수정·확인 끝, 푸시함(진도 167/167). 전체 check 문제 0건. 남은 일 없음 — 새 일은 사용자 지시를 받고.**
+- Task 34(164~167) 전부 complete. 날마다 커밋(작성 → 수정):
+  - 164: 5886fac → 0606724
+  - 165: f318b71 → a802367
+  - 166: 308134f → 6fadb5a
+  - 167: 8dea3ea → 846c9e2·83893b8(내가: 마무리의 확인 못 하는 문장)
+  - 골격 165~167 0433e96. 로드맵 머리말 056c2e0(내가: "하루 60~90분"·"볼륨 안에서는 작은 앱부터"가 사실과 달라 잰 값으로).
+- 진행: 리뷰(opus) 한 번 → 작성자 고침 한 번 → 내가 표적 확인(블록 붙여 넣기 시험, Step 6 명령, PNG, 출력 폭). 하위 에이전트 토큰 약 314만(작성 89만, 리뷰 115만, 고침 109만).
+- 검사: npm test 58/58, 전체 check 통과(001~167 문제 0), 164 20.7·165 20.8·166 20.4·167 21.6/분.
+- safe.sh 보강(이번 볼륨): 모든 python에 pyguard, 이미 LISTENING인 포트 전부와 11434·1234 거부(진짜 Ollama가 127.0.0.1:11434에 떠 있음), 작업자 포트 대역, uv 대역(파이썬 내려받기·uv tool 거부), 텔레메트리·HF 끔.
+- 사고:
+  - 작성자 넷 모두 알림 전 safe.sh 밖에서 빈 heredoc `python3 -`(진짜 HOME REPL, TaskStop). 166 작성자는 내용 있는 python heredoc도 6~7회. 네 번 모두 ~/.python_history(10-15)·~/.bash_history(40줄) 그대로, 남은 python 0. 원인: 작성자들이 `python3 - <<'EOF'`를 습관처럼 씀. 앞으로 브리프에 처음부터 "python·node heredoc 금지, safe.sh 밖 python 금지"를 넣는다.
+  - 164 리뷰어: check 출력을 진짜 %TEMP%에 한 번 썼다가 그 이름으로 지움. 167 리뷰어: safe.sh 밖 `node -e` 1회(days.json 읽기만).
+  - 진짜 Ollama·클라우드 API·바깥에 닿은 실행 0. 상자 guard.log는 selftest와 의도한 단언 시험뿐.
+
 **멈춤 지점 (2026-10-21) — 볼륨 17 끝. Day 163까지 작성·리뷰·수정·확인 끝, 푸시함(진도 163/167). 다음(볼륨 18 🧪 기타 LLM 앱, Day 164~167, 4일 — Day 164 GPT-OSS Critique & Improvement Loop부터)은 사용자 지시를 받고.**
 - Task 33(162~163) 전부 complete. 날마다 커밋(작성 → 수정):
   - 162: 7e1c477 → 0926ed2·fb6a1d9(내가: C:lab 거부)
@@ -1758,3 +1773,31 @@ Task 33: 162 fix round 1 dispatched (SendMessage a1bb26d) — I1~I4·M1~M9, I1�
 Task 33: 163 컨트롤러 확인(재확인 에이전트 대신) — I1 바이트 `[/\]`·`tr 'A-Z\'`, Step 1 블록을 9경우×(붙여 넣기·스크립트) 18판: 자리 표시·.CLAUDE·Windows꼴 .Claude·상대·CLAUDE_CONFIG_DIR(두 꼴) 거부 시 새 파일 0, 정상 /c/·C:/·C:\ 세 꼴은 랩 만들고 HOME 바뀜. I2 `rm -f "${LAB:?}/work/ripple/.env"`. I3 PNG로 extra-judge(밑줄 먼저 → content.js:232-235와 같음)·sequence 확인. M1~M7 문자열 확인. check 통과, 21.0/분. sequence의 bg 배우에 넘김 메시지를 더했다가(4a5e55b) 라벨이 수명선에 걸려 되돌림(9ebfb07, b4468bf와 같음 — 내 실수: check 실패를 `| tail`로 이어 커밋함). 163 완료.
 Task 33: 162 fix round 1 DONE — 0926ed2, check 통과, 20.1/분(2,810/140). I1 뒤 블록 쓰기·실행 전부 `${LABDIR:?}`·`${LAB:?}`·`${FAKE_LOG:?}`, I2 6.9배 원인 sizes.mjs로 다시 잼, I3 bg→content sendResponse, I4 시퀀스 여섯 그림(메시지 삭제·배우 합침 없음), http.mjs·options.js 노드, M1~M9(M9 아이콘 늘어남은 남김). 일탈 없음.
 Task 33: 162 컨트롤러 확인 — 붙여 넣기 시험 14블록(Step 1 포함, 환경 없음) 새 파일 0. Step 1 18판(9경우×2): 거부 경우 새 파일 0, 정상 세 꼴 랩 만들고 HOME 바뀜, 원본 앱 git status 비어 있음. PNG overview·extra-sequence-search·확인, 가짜 게이트웨이 Authorization 가림 확인. 내가 고침: 절대 경로 패턴 `[A-Za-z]:*`(C:lab 받아들임) → `[A-Za-z]:[/\]*`(Edit + od 확인, 18판 다시 같음). 162 완료.
+Task 34(볼륨 18 🧪 기타 LLM 앱, 164~167, 마지막 볼륨) 시작 2026-10-21 — 사용자 "마지막 볼륨도 진행해". 골격 165~167 0433e96. 브리프 task-34-write-brief.md·review-34-brief.md.
+  safe.sh 보강(내가, 아무도 안 쓸 때): pyguard/sitecustomize.py(모든 python 루프백만), 진짜 Ollama가 127.0.0.1:11434에 떠 있음을 발견 → 11434·1234와 safe.sh 실행 때 이미 LISTENING인 포트 전부(51개, 47000~48999 제외)를 node·python 가드가 거부, 작업자 포트 대역 상자별 100칸(d164 47100~ … rv167 47800~), uv 대역(uv tool·python install 거부, UV_PYTHON_INSTALL_DIR=진짜 uv python 폴더 읽기, UV_PYTHON_DOWNLOADS=never, 캐시 v17/uvcache 공유), HF 오프라인·CrewAI·ScrapeGraphAI·Streamlit 텔레메트리 끔·Playwright 브라우저 안 받음. nodeguard fetch는 막을 때 Promise.reject. selftest 10줄(guard.log 8) 통과.
+  Ruling(2026-10-21, 볼륨 18): 진짜 로컬 모델 서버(Ollama 11434·LM Studio 1234)에 안 닿음, 가짜 Ollama·가짜 OpenAI 호환(Groq) 서버는 자기 대역 포트, Streamlit은 AppTest 우선, Electron 안 띄움, 무거운 라이브러리(crewai·scrapegraphai·playwright·routellm·torch) 설치 안 함, 루트 .venv는 소스 읽기만, 가짜 이력서. 167은 "다음 날 예고" 대신 "시리즈 마무리"(check는 마지막 날 그 제목 생략 허용).
+Task 34: 작성 164 (sonnet, a0e8bdc, d164, 47100~)·165 (aeeeb94, d165, 47200~)·166 (a184cc7, d166, 47300~)·167 (a1fae70, d167, 47400~) dispatched. 동시 4.
+Task 34: 165 작성 DONE_WITH_CONCERNS — f318b71, check 통과, 18.3/분(1,651/90, 이유절). 가짜 Ollama 47201, AppTest, /_stcore/health ok, 블록 전부 새 LAB에서. 상자 guard.log 8줄(selftest뿐). 일탈: safe.sh 밖 빈 heredoc `python3 -` 1회(진짜 HOME REPL 120초 → TaskStop) — 163에 이어 두 번째. 내가 확인: ~/.python_history 10-15 그대로, ~/.bash_history 40줄, 홈 맨 위 오늘 바뀐 것은 다른 프로그램(.aitk·.cargo·.claude·.claude.json·.docker)뿐.
+  대책: 돌고 있는 작성자 셋(164·166·167)에 "python·node heredoc 금지, Write로 파일 만들고 safe.sh 안에서 경로로" 알림. 리뷰 dispatch에도 넣음.
+Task 34: 리뷰 165 (opus, a583afb, rv165, 47600~) dispatched → review-165.md. 동시 4: 작성 164·166·167, 리뷰 165.
+Task 34: 166 작성 DONE_WITH_CONCERNS — 308134f, check 통과, 19.0/분(1,902/100, 이유절). 가짜 Ollama 47301, 가짜 axios, main.js를 고치지 않고 불러 IPC 손잡이 8개 호출, index.html의 formatThinkingResponse만 잘라 돌림. Electron·npm·mp4 안 씀. 상자 guard.log 22줄(selftest 8 + 독자 가드 단언 192.0.2.1·11434). 발견: 모델·주소 네 번씩 박힘, conversationContext 안 쓰임, 단계 N 누르면 1~N 다시 생성(프롬프트 966→1,357자), 탐욕 JSON 정규식, nodeIntegration+contextIsolation false+innerHTML.
+  일탈: 알림 전 safe.sh 밖에서 내용 있는 `python3 - <<'EOF'` 6~7회(문자열 치환·블록 추출·상자 파일 수정), safe.sh 밖 `find / -path …axios` 1회(120초 → TaskStop, 읽기만), 남은 가짜 서버 둘을 tasklist로 자기 대역 확인 뒤 종료. 내가 확인: ~/.python_history 그대로, 홈에서 오늘 바뀐 것은 .aitk 로그뿐, 원본 앱 깨끗, 473xx 리스너 없음.
+Task 34: 리뷰 166 (opus, adf7112, rv166, 47700~) dispatched → review-166.md. 동시 4: 작성 164·167, 리뷰 165·166.
+Task 34: 167 작성 DONE — 8dea3ea, check 통과, 20.7/분(1,862/90, 이유절). "시리즈 마무리" 절(18개 볼륨 표, 시작점 Day 1·14·47). 실험 ①②만 가짜 Ollama·가짜 OpenAI 호환(47401~47403) + AppTest, ③CrewAI·④ScrapeGraphAI·⑤RouteLLM은 루트 .venv 소스(crewai 1.15.21, scrapegraphai 2.2.4)·GitHub WebFetch로만. 상자 guard.log 8줄. 일탈: 알림 전 safe.sh 밖 빈 heredoc `python3 -` 1회(세 번째, TaskStop), 실행기 옵션 파싱 버그로 첫 실행이 11434로 가려다 실행기 자체 가드가 거부. 내가 확인: ~/.python_history 그대로, python3.exe 남은 것 없음, 원본 앱 깨끗.
+Task 34: 리뷰 167 (opus, a6250eb, rv167, 47800~) dispatched → review-167.md. 동시 4: 작성 164, 리뷰 165·166·167.
+Task 34: 164 작성 DONE_WITH_CONCERNS — 5886fac, check 통과, 18.9/분(1,885/100, 이유절). 가짜 Groq로 고리 끝까지: 모델 호출 4+2n(기본 8), 병렬은 후보 셋, 둘째 비평은 첫 비평 모름, 실패 시 최대 9요청(앱 3 × groq 재시도 3)·초기 답까지 사라짐, gpt-oss-120b 폐기 대상 아님(2026-10-21). 블록 19개 새 LAB에서. 상자 guard.log 8줄. 일탈: 알림 전 safe.sh 밖 빈 heredoc `python3 -` 1회(네 번째 — 이번 볼륨 작성자 넷 모두), TaskStop. 내가 확인: ~/.python_history 그대로, python3.exe 0개.
+  원인 추정: 작성자들이 소스 읽기·문자열 처리에 `python3 - <<'EOF'`를 습관처럼 쓰고, 하네스를 거치며 빈 입력이 되는 경우가 있음. 다음 브리프에는 "python·node heredoc 금지"를 처음부터 넣는다.
+Task 34: 리뷰 164 (opus, a14f539, rv164, 47500~) dispatched → review-164.md. 동시 4: 리뷰 164~167.
+Task 34: 리뷰 165 DONE — ❌ I4·M6. 기대 출력은 걷기와 글자 그대로 같음, 줄 하나 빼도 진짜 Ollama·바깥 0. I1 터미널 A에서 REPO·LAB 다시 정하라는 안내 없음, I2 overview `ui <-> ollama` 병합(§5)·결과 보이는 화살표 빠짐, I3 step 클래스가 실행과 다름(Llama 3 -new, 가짜 Ollama·lab_guard 없음), I4 streamlit run 보호가 --server.address 옵션 한 겹(빠지면 streamlit 1.66.0이 시작 배너에서 8.8.8.8 UDP·checkip.amazonaws.com, 소스로 판정 — Day 164 serve.py 방식으로). M1~M6. 상자 guard.log 8줄. powershell CIM 거부(우회 안 함).
+Task 34: 165 fix round 1 dispatched (SendMessage aeeeb94).
+Task 34: 리뷰 166 DONE — ❌ I2·M11. 독자 안전 문제 없음(위치 점검 7판, 붙여 넣기 2판, 안전 줄 빼기 3판). I1 Step 2·5 기대 출력이 cut 폭과 다름, I2 Electron 27 EOL(2024-04-16) 확인 가능했음. M1~M11(줄 수, axios 기본값, Ollama errors 문서, npm run dev 창 둘, 창 크기, 호출 수 등). 상자 guard.log 18줄(selftest 8 + guard.mjs 자기 단언 5회 × 192.0.2.1·11434 — 바깥 감시가 소켓 전에 막음).
+Task 34: 166 fix round 1 dispatched (SendMessage a184cc7). 동시 4: 리뷰 164·167, 고침 165·166.
+Task 34: 166 fix round 1 DONE — 6fadb5a, I1·I2·M1~M11, 일탈 없음(heredoc 안 씀). 내가 확인: 바뀐 코드 블록은 출력 두 곳뿐(Step 1 블록 그대로 → 리뷰의 위치 점검·붙여 넣기 결과 유효), Step 2 출력 ≤60자·Step 5 출력 ≤120자로 cut 폭과 맞음, EOL 2024-04-16 인용, check 통과. 166 완료.
+Task 34: 리뷰 164 DONE — ❌ I4·M8. 블록 1~19 걷기 출력이 문서와 줄마다 같음, GROQ_BASE_URL 줄 빼도 가드가 막음, LAB 점검 6경우 정상. I1 Step 2~5 쓰기가 상대 경로(붙여 넣기로 log.jsonl·err.txt 생김), I2 Step 6 진짜 실행 명령에 --server.address 없음(streamlit 1.66.0은 `::`에 열림, 사이드바 기본값이 진짜 GROQ_API_KEY), I3 uv pip install·uv run에 --python·unset VIRTUAL_ENV 없음, I4 overview 관계 화살표 빠짐(§5). M1~M8. 상자 guard.log 8줄. 일탈: check 출력을 진짜 %TEMP%(/tmp/rv164-check.txt)에 한 번 썼다가 그 이름으로 지움, M3 실험 서버 둘(자기 대역) 종료.
+Task 34: 164 fix round 1 dispatched (SendMessage a0e8bdc). 동시 3: 리뷰 167, 고침 164·165.
+Task 34: 리뷰 167 DONE — ❌ I7·M8. 시리즈 마무리 표는 days.json과 정확히 맞음, Step 2·4·5·6 출력은 시간·포트 말고 같음. I1 머리말 ③④ 번호 뒤바뀜, I2 netstat 줄에 포트 박힘, I3 실행기 가드 확인이 OSError 전부를 통과로 침(가드 뺀 판이 끝까지 돎 — 상자 가드가 192.0.2.1 조회를 잡음), I4 문제 해결 첫 줄 오류 글 틀림(httpx.ConnectError), I5 진짜 Ollama·LM Studio로 원래대로 띄우는 길 없음, I6 overview 라우터→OpenAI 화살표 빠짐, I7 "볼륨 16~18만 다르게" 틀림. M1~M8(M8 "볼륨 안에서는 작은 앱부터"는 로드맵 머리말에도 — 볼륨 끝에 내가 고침). 범위 밖 Day 166 줄 수는 6fadb5a에서 이미 146·49·40. 상자 guard.log 9줄. 일탈: safe.sh 밖 `node -e` 1회(days.json 읽기만).
+Task 34: 167 fix round 1 dispatched (SendMessage a1fae70). 동시 3: 고침 164·165·167.
+Task 34: 165 fix round 1 DONE — a802367, I1~I4·M1~M6, 일탈 없음. I4 serve.py가 lab_guard.install()·check() 뒤 sys.argv에 127.0.0.1·포트·헤드리스·통계 끔을 박고 같은 프로세스에서 streamlit.web.cli.main() — install 줄 빼면 check가 멈춤(작성자 시험). 내가 확인: 블록 11개 환경 없이 붙여 넣기 새 파일 0, serve.py 소스, check 통과, 20.8/분. 165 완료.
+Task 34: 164 fix round 1 DONE — 0606724, I1~I4·M1~M8, 일탈 없음. 내가 확인: 블록 20개 환경 없이 붙여 넣기 새 파일 0, Step 6 명령에 --server.address 127.0.0.1·헤드리스·통계 끔·unset VIRTUAL_ENV·--python "$PY", extra-calls PNG(초기 답·비평·수정 → _one_completion → Groq → 기록), check 통과, 20.7/분. 164 완료.
+Task 34: 로드맵 머리말 고침(review-167 M8, 내가) — "하루 60~90분"·"볼륨 안에서는 작은 앱부터"가 사실과 다름(예상 소요 40~260분·가운데 100, 지금 줄 수로 18볼륨 중 12개가 오름차순 아님) → 실제 범위와 "볼륨 순서는 학습 난이도 기준"으로. npm test 58/58.
+Task 34: 167 fix round 1 DONE — 846c9e2, I1~I7·M1~M8, 예상 100분으로 올림(21.5/분), 일탈 없음. I3 실행기 가드 확인이 '가드:'로 시작하는 거부만 통과, 가드 줄 뺀 사본은 앱을 한 줄도 안 돌리고 멈춤(작성자 시험, 상자 가드가 먼저 막음도 밝힘). 내가 확인: 블록 10개 붙여 넣기 새 파일 0, check 통과. 내가 고침: 마무리의 '나중에 더한 앱은 볼륨 끝에 붙었다'(확인 못 하는 주장) → 잰 사실(18볼륨 중 12개가 지금 줄 수 순서 아님)로. 21.6/분. 167 완료.
