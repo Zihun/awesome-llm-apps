@@ -3,17 +3,25 @@ direction: down
 
 front: "사용자 쪽" {
   class: group
-  user: 사용자 { class: person }
-  docs: "이력서·공고 (PDF·TXT)" { class: file }
+  user: "사용자 (AppTest)" { class: person }
+  docs: "이력서·공고" { class: file }
 }
 
-
 ui: "화면·프롬프트 (app.py)" { class: ours }
-extract: "글 뽑기 (PyMuPDF)" { class: ours }
-ollama: "Llama 3 (Ollama, 로컬)" { class: ext }
-report: "resume_match_report.md" { class: file }
+extract: "글 뽑기 (extract_pdf_text)" { class: ours }
+report: "내려받기 버튼" { class: file }
 
-front -> ui: 파일 업로드 · 버튼 클릭
+lab: "Ollama 자리 (가짜 서버)" {
+  class: group
+  guard: "가드 (lab_guard.py)" { class: ours }
+  fake: "가짜 Ollama (fake_ollama.py)" { class: ext }
+}
+
+front.docs -> ui: 업로드
+front.user -> ui: 버튼 클릭
 ui -> extract: PDF 바이트
-ui <-> ollama: 프롬프트 / 응답
+ui -> front.user: "분석 결과"
 ui -> report: 내려받기
+ui -> lab.fake: 프롬프트 JSON
+lab.fake -> ui: 응답 JSON
+lab.guard -> ui: "주소 바꿔치기 · 바깥 차단"

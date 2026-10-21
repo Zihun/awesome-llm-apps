@@ -15,7 +15,7 @@
 5. 글 뽑기는 `try` 바깥에 있어서, 깨진 PDF·0바이트 PDF·UTF-8이 아닌 TXT는 앱의 `st.error`가 아니라 Streamlit의 예외 화면이 됩니다(Step 5).
 6. 모델 쪽 오류는 조용히 "성공"이 됩니다. 응답 JSON에 `response`가 없으면 `⚠️ No response from model.`가 결과로 보이고, 세션에 저장되어 내려받는 보고서에도 그 문장이 들어갑니다(Step 5).
 7. 결과는 버튼을 누른 그 실행에서만 그려집니다. 이어지는 아무 조작(내려받기 포함)은 스크립트를 다시 돌려 분석 화면을 지우고 내려받기 버튼만 남깁니다(Step 4).
-8. `pymupdf`는 이제 설치 한 줄에 패키지를 여럿 끌고 오고, `import fitz`는 경고를 냅니다(Step 1·2). 그리고 Streamlit은 설정을 건드리지 않으면 사용 통계를 보내는 쪽이 기본입니다(Step 1).
+8. `pymupdf`는 이제 설치 한 줄에 패키지를 여럿 끌고 오고, `import fitz`는 경고를 냅니다(Step 2). 그리고 Streamlit은 설정을 건드리지 않으면 사용 통계를 보내는 쪽이 기본입니다(Step 1).
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -29,7 +29,7 @@
 | Ollama와 `llama3` | **진짜로 쓸 때만.** 이 문서는 쓰지 않았습니다 | [ollama.ai](https://ollama.ai) 설치 후 `ollama pull llama3` |
 | 인터넷 | 패키지 설치 한 번(PyPI). 그 뒤의 모든 명령은 루프백만 씁니다 | |
 
-터미널은 둘입니다. 터미널 A에서 가짜 Ollama를 띄워 두고, 나머지 명령은 터미널 B에서 칩니다. 두 터미널 모두 Step 1의 환경 파일을 불러옵니다. 포트는 `47201`(가짜 Ollama), `47202`(앱 서버), `47299`(아무도 듣지 않는 포트)를 썼습니다. 이미 쓰는 포트면 `env.sh`에서 바꿉니다.
+터미널은 둘이고, Step 6에서 하나가 늘어 셋입니다. Step 1과 나머지 명령은 터미널 B에서 치고, 터미널 A는 가짜 Ollama를 띄워 두는 새 터미널이며, 터미널 C는 Step 6의 앱 서버입니다. 새 터미널에서는 `cd awesome-llm-apps`, `export REPO="$PWD"`, `export LAB=…`(Step 1과 같은 값)을 먼저 하고 Step 1의 환경 파일을 불러옵니다. 포트는 `47201`(가짜 Ollama), `47202`(앱 서버), `47299`(아무도 듣지 않는 포트)를 썼습니다. 이미 쓰는 포트면 `env.sh`에서 바꿉니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -41,7 +41,7 @@
 | 모델 호출 | Ollama `/api/generate`에 `stream: False`로 POST하고 `response`를 꺼낸다 | `advanced_llm_apps/resume_job_matcher/app.py:64-71` |
 | 결과·내려받기 | 마크다운으로 보이고, 세션에 두었다가 `.md`로 내려받게 한다 | `advanced_llm_apps/resume_job_matcher/app.py:73-93` |
 | 사이드바 안내 | Ollama 설치와 실행 순서(영어) | `advanced_llm_apps/resume_job_matcher/app.py:9-18` |
-| 이 문서의 가드·가짜 서버·시험 대본 | 루프백 가드, 가짜 Ollama, `AppTest` 대본 | 코드 없음(Step 1~3, 6에서 직접 만듦) |
+| 이 문서의 가드·가짜 서버·시험 대본 | 루프백 가드, 가짜 Ollama, `AppTest` 대본 | 코드 없음(Step 1~4, 6에서 직접 만듦) |
 
 ## 단계별 진행
 
@@ -49,7 +49,7 @@
 
 **목적.** 원본에는 아무것도 쓰지 않고, 새 폴더에서 앱 사본을 돌릴 준비를 합니다. 이력서와 공고는 내가 지어낸 가짜(이름과 메일은 `example.invalid`)로 PDF까지 직접 만듭니다.
 
-**할 일.** 저장소 루트에서 시작합니다. `LAB`은 저장소 밖의 새 폴더로, 자기 절대 경로로 바꿉니다. 블록은 `LAB`이 비었거나 자리 표시 값 그대로이거나 절대 경로가 아니거나 `.claude`·`.agents` 같은 에이전트 설정 폴더(또는 `CLAUDE_CONFIG_DIR`) 아래이면 폴더를 하나도 만들지 않고 멈춥니다(대소문자는 가리지 않습니다). 환경 파일은 HOME·USERPROFILE·TEMP를 이 폴더로 돌리고, 프록시 변수를 지우고 `NO_PROXY`를 루프백으로 두고, Streamlit의 사용 통계를 끕니다. 이후 블록에서 파일을 만드는 줄은 모두 `"${LAB:?}/…"` 절대 경로로 씁니다.
+**할 일.** 저장소를 클론한 폴더(저장소의 부모 폴더)에서 시작합니다. `LAB`은 저장소 밖의 새 폴더로, 자기 절대 경로로 바꿉니다. 블록은 `LAB`이 비었거나 자리 표시 값 그대로이거나 절대 경로가 아니거나 `.claude`·`.agents` 같은 에이전트 설정 폴더(또는 `CLAUDE_CONFIG_DIR`) 아래이면 폴더를 하나도 만들지 않고 멈춥니다(대소문자는 가리지 않습니다). 환경 파일은 HOME·USERPROFILE·TEMP를 이 폴더로 돌리고, 프록시 변수를 지우고 `NO_PROXY`를 루프백으로 두고, Streamlit의 사용 통계를 끕니다. 이후 블록에서 파일을 만드는 줄은 모두 `"${LAB:?}/…"` 절대 경로로 씁니다.
 
 ```bash
 cd awesome-llm-apps
@@ -171,7 +171,7 @@ streamlit                 1.66.0
 ['bad.pdf', 'blank.pdf', 'empty.pdf', 'job.pdf', 'job.txt', 'latin1.txt', 'resume.pdf', 'resume.txt', 'scan.pdf']
 ```
 
-`requirements.txt`는 세 줄인데 `pymupdf` 2.0이 `pymupdf-layout`·`pymupdf4llm`·`onnxruntime` 등을 요구해서(`importlib.metadata`로 확인) 설치된 패키지는 44개입니다. 이 앱은 그 가운데 `fitz`만 씁니다. 그리고 Streamlit의 `browser.gatherUsageStats`는 환경 변수 없이 읽으면 `True`입니다(`streamlit.config.get_option`으로 확인). 이 문서의 환경 파일과 서버 명령은 그 값을 꺼 둡니다. 앱 README는 "로컬 LLM"을 내세우지만 이 스위치는 말하지 않습니다.
+`requirements.txt`는 세 줄인데 `pymupdf` 2.0이 `pymupdf-layout`·`pymupdf4llm`·`onnxruntime` 등을 요구합니다(`importlib.metadata`로 확인). 설치된 패키지 44개 가운데 9개(`pymupdf-layout`·`pymupdf4llm`·`onnxruntime`·`networkx`·`flatbuffers`·`psutil`·`pyyaml`·`tabulate`와 `pymupdf` 자신)가 이쪽에서 오고, 나머지는 Streamlit 쪽입니다(설치 메타데이터로 의존 관계를 세었습니다). 이 앱은 그 가운데 `fitz`만 씁니다. 그리고 Streamlit의 `browser.gatherUsageStats`는 환경 변수 없이 읽으면 `True`입니다(`streamlit.config.get_option`으로 확인). 이 문서의 환경 파일과 서버 명령은 그 값을 꺼 둡니다. 앱 사이드바(`app.py:10`)는 "local LLM"을 내세우지만 이 스위치는 말하지 않습니다.
 
 ### Step 2. PDF에서 글을 뽑는 길을 따라간다
 
@@ -222,7 +222,7 @@ empty.pdf   EmptyFileError: Cannot open empty stream.
 
 **목적.** 앱이 진짜 Ollama로 가지 못하게 하면서, 같은 요청을 받아 줄 서버를 둡니다.
 
-**읽기.** 앱은 `app.py:67`에서 `http://localhost:11434/api/generate`로 `{"model": "llama3", "prompt": …, "stream": False}`를 보냅니다. [Ollama의 `/api/generate` 문서](https://docs.ollama.com/api/generate)는 요청 필드로 `model`·`prompt`·`stream`(기본 `true`)을, 비스트리밍 응답 필드로 `response`(생성된 글)·`done` 등을 적습니다. 그 문서는 **오류 응답의 모양을 적지 않습니다.** 그래서 가짜 서버의 "모델 없음" 응답(`404`과 `{"error": …}`)은 내가 정한 모양이고, 진짜 Ollama가 같다고 이 문서가 확인한 것이 아닙니다. 확실한 것은 그 응답에 `response` 키가 없으면 앱이 어떻게 되는가입니다(`app.py:71`).
+**읽기.** 앱은 `app.py:67`에서 `http://localhost:11434/api/generate`로 `{"model": "llama3", "prompt": …, "stream": False}`를 보냅니다. [Ollama의 `/api/generate` 문서](https://docs.ollama.com/api/generate)는 요청 필드로 `model`·`prompt`·`stream`(기본 `true`)을, 비스트리밍 응답 필드로 `response`(생성된 글)·`done` 등을 적습니다. 그 페이지는 오류 응답을 적지 않지만, [Ollama의 Errors 페이지](https://docs.ollama.com/api/errors)는 오류가 `application/json`이고 메시지가 `error` 속성에 있으며(예: `{"error": "the model failed to generate a response"}`) 모델이 없을 때를 포함해 `404 Not Found`를 쓴다고 적습니다. 가짜 서버의 "모델 없음" 응답(`404`과 `{"error": …}`)은 그 꼴을 따랐고 오류 문구는 내가 정한 것입니다. 진짜 Ollama가 같게 답하는지는 이 문서가 확인하지 않았습니다. 확실한 것은 그 응답에 `response` 키가 없으면 앱이 어떻게 되는가입니다(`app.py:71`).
 
 **할 일.** 두 파일을 씁니다. `fake_ollama.py`는 `127.0.0.1`의 지정 포트에서만 듣고, 받은 요청 본문을 `rec/requests.jsonl`에 한 줄씩 남깁니다. `lab_guard.py`는 앱 프로세스 안에서 (1) 루프백 밖 연결과 이름 조회, 그리고 포트 11434로의 연결을 막고, (2) `requests.post`를 바꿔치기해 앱이 부르는 `localhost:11434/api/generate`를 가짜 서버 포트로 돌립니다. 바꿔치기한 함수는 그 주소 외의 URL을 받으면 예외를 내고, 프록시 설정을 읽지 않는 세션으로 보냅니다. `check()`는 가드가 정말 설치됐는지를 함수 비교로 확인하고, 문서용 예약 주소 `192.0.2.1`을 가드 함수에 직접 넣어 거부되는지 봅니다(실제로 연결하지 않습니다).
 
@@ -263,7 +263,7 @@ class H(BaseHTTPRequestHandler):
             mode = open(os.path.join(DIR, "mode"), encoding="utf-8").read().strip()
         except OSError:
             mode = "ok"
-        if mode == "missing":      # 모델이 없을 때의 모양(응답 형식은 Ollama 문서에 없어 내가 정한 것)
+        if mode == "missing":      # 모델이 없을 때: 공식 Errors 페이지의 꼴(404, {"error": …}). 문구는 내가 정한 것
             return self.send(404, json.dumps({"error": "model 'llama3' not found"}))
         if mode == "html502":
             return self.send(502, "<html><body>Bad Gateway</body></html>", "text/html")
@@ -344,15 +344,18 @@ def check():
 EOF
 ```
 
-터미널 A에서 가짜 서버를 띄워 둡니다(`Ctrl+C`로 끕니다). 환경 파일을 먼저 불러온 터미널이어야 합니다.
+새 터미널 A에서 가짜 서버를 띄워 둡니다(`Ctrl+C`로 끕니다). 새 터미널에는 `REPO`와 `LAB`이 없으므로 먼저 정합니다. 그 둘은 Step 1과 같은 값이어야 합니다.
 
 ```bash
+cd awesome-llm-apps
+export REPO="$PWD"
+export LAB=/path/to/d165-lab          # Step 1과 같은 값
 source "${LAB:?}/env.sh" && "$VPY" "$LAB/fake_ollama.py" "$FAKE_PORT" "$LABW/rec"
 ```
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 터미널 B(환경 파일을 불러온 새 터미널)에서 다음을 칩니다.
+**확인.** 터미널 B(Step 1을 친 터미널)에서 다음을 칩니다.
 
 ```bash
 curl -s --noproxy '*' "http://127.0.0.1:${FAKE_PORT:?}/api/tags"
@@ -578,25 +581,37 @@ rm -f "${LAB:?}/rec/requests.jsonl" "${LAB:?}/rec/mode"
 
 **목적.** 독자가 브라우저로 열어 볼 수 있는 길과, 진짜 Ollama를 쓰는 원래의 길을 구분합니다.
 
-**할 일.** `serve.py`는 가드를 설치·점검한 뒤 `runpy`로 앱을 실행하는 다섯 줄짜리 진입점입니다. `streamlit run`은 이것을 가리킵니다. 터미널 A의 가짜 서버가 떠 있어야 합니다.
+**할 일.** `serve.py`는 **Streamlit이 시작하기 전에** 가드를 설치·점검하고, 같은 프로세스에서 주소(`127.0.0.1`)·포트·헤드리스·사용 통계 끔을 박은 `streamlit run`을 부르는 진입점입니다. 그래서 서버가 시작하는 동안과 대본이 도는 동안 가드가 이미 켜져 있고, 주소가 독자의 명령줄 타이핑에 기대지 않습니다. 터미널 A의 가짜 서버가 떠 있어야 합니다. 파일은 터미널 B에서 만들고, 서버는 새 터미널 C에서 띄웁니다(터미널 A와 같은 방식으로 `REPO`·`LAB`을 정하고 환경 파일을 불러옵니다).
 
 ```bash
 cat > "${LAB:?}/serve.py" <<'EOF'
-import os
-import runpy
+"""가드를 먼저 설치하고, 같은 프로세스에서 streamlit을 띄운다. 사용: serve.py <앱 파일> <앱 포트>"""
+import sys
 
 import lab_guard
 
 lab_guard.install()
 lab_guard.check()
-runpy.run_path(os.environ["APP"], run_name="__main__")
+
+app, port = sys.argv[1], sys.argv[2]
+sys.argv = ["streamlit", "run", app, "--server.address", "127.0.0.1", "--server.port", port,
+            "--server.headless", "true", "--browser.gatherUsageStats", "false"]
+from streamlit.web import cli
+
+cli.main()
 EOF
-"$VPY" -m streamlit run "${LAB:?}/serve.py" --server.address 127.0.0.1 --server.port "$SERVE_PORT" --server.headless true --browser.gatherUsageStats false
+```
+
+```bash
+cd awesome-llm-apps
+export REPO="$PWD"
+export LAB=/path/to/d165-lab          # Step 1과 같은 값
+source "${LAB:?}/env.sh" && "$VPY" "$LAB/serve.py" "$APP" "$SERVE_PORT"
 ```
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 터미널 B에서 다음을 칩니다. 서버가 `ok`를 돌려주면 됩니다. 브라우저로 `http://127.0.0.1:47202`를 열면 화면을 직접 볼 수 있는데, 이 문서는 브라우저를 열지 않았습니다. 이 문서가 서버로 확인한 것은 이 한 줄뿐이고, 같은 `serve.py`를 `AppTest`로 돌려 앱 제목과 업로더 둘이 나오는지는 따로 보았습니다.
+**확인.** 터미널 B에서 다음을 칩니다. 서버가 `ok`를 돌려주면 됩니다. 브라우저로 `http://127.0.0.1:47202`를 열면 화면을 직접 볼 수 있는데, 이 문서는 브라우저를 열지 않았습니다. 이 문서가 서버로 확인한 것은 이 한 줄뿐입니다. 서버가 `127.0.0.1:47202`에서만 듣는 것은 `netstat`으로 보았습니다(`TCP 127.0.0.1:47202 LISTENING` 한 줄).
 
 ```bash
 curl -s --noproxy '*' "http://127.0.0.1:${SERVE_PORT:?}/_stcore/health"
@@ -608,7 +623,11 @@ ok
 
 **진짜 Ollama로 쓰는 길(이 문서는 실행하지 않았습니다).** 가드 없이 앱 폴더에서 `ollama pull llama3`를 한 뒤 `streamlit run app.py`를 하는 것이 앱 README의 길이고, 요청은 독자의 `localhost:11434`로 갑니다. 이 문서는 그 길을 돌리지 않았으므로 `llama3`가 실제로 어떤 글을 쓰는지, 몇 초 걸리는지는 모릅니다.
 
-**줄 하나를 빼면.** 가드가 정말 줄 하나에 기대지 않는지는 독자 명령이 아니라 작성자의 관찰로 쟀습니다. `scenarios.py`와 `lab_guard.py`에서 안전 장치 줄을 하나씩 뺀 판 일곱을 `one` 시나리오로 돌렸습니다. 가짜 서버에 새로 쌓인 요청은 모두 0이었습니다. `lab_guard.install()`·`requests.post = …`·`socket.socket.connect = …`·`socket.getaddrinfo = …` 줄을 뺀 넷은 `check()`가 "guard가 설치되지 않았습니다"로 멈췄고, `import lab_guard`를 뺀 판은 `NameError`로 멈췄습니다. `check()` 줄이나 `s.trust_env = False` 줄을 뺀 둘은 그대로 돌았습니다. 앞의 것은 다른 줄이 이미 가드를 설치하기 때문이고, 뒤의 것은 환경 파일이 프록시 변수를 지우고 루프백 주소를 쓰기 때문입니다. 다만 Windows의 **시스템 프록시**(레지스트리 설정)가 켜진 PC에서 `trust_env` 줄이 빠지면 루프백 요청이 프록시를 거칠 수 있고, 이 문서는 그것을 시험하지 않았습니다.
+**줄 하나를 빼면.** 가드가 정말 줄 하나에 기대지 않는지는 독자 명령이 아니라 작성자의 관찰로 쟀습니다.
+
+- **스크립트와 가드의 줄.** `scenarios.py`와 `lab_guard.py`에서 안전 장치 줄을 하나씩 뺀 판 일곱을 돌렸습니다. `lab_guard.install()`·`requests.post = …`·`socket.socket.connect = …`·`socket.getaddrinfo = …` 줄을 뺀 넷은 `check()`가 "guard가 설치되지 않았습니다"로 멈췄고, `import lab_guard`를 뺀 판은 `NameError`로 멈췄습니다. 모두 모델 호출 전에 멈췄습니다. `check()` 줄이나 `s.trust_env = False` 줄을 뺀 둘은 `ok` 시나리오를 그대로 돌렸고, 가짜 서버에 요청이 1건 쌓이고 바깥 시도 기록(`guard.log`)은 늘지 않았습니다. 앞의 것은 다른 줄이 이미 가드를 설치하기 때문입니다. 뒤의 것은 `requests` 2.34.2 소스상 `NO_PROXY`에 `127.0.0.1`이 있으면 `get_environ_proxies`가 `{}`를 돌려주고 시스템 프록시(Windows에서는 레지스트리)를 아예 읽지 않기 때문입니다(`utils.py`의 `should_bypass_proxies`). 환경 파일이 그 `NO_PROXY`를 겁니다. 두 줄을 함께 빼면 어떻게 되는지는 시험하지 않았습니다.
+- **서버 시작.** `serve.py`에서 `lab_guard.install()` 줄을 뺀 판은 `check()`가 "guard가 설치되지 않았습니다"로 멈췄고, 47202를 듣는 프로세스가 생기지 않았습니다(`netstat`). Streamlit이 시작하기 전에 멈추는 구조라서 서버가 뜬 뒤에야 가드가 켜지는 일이 없습니다.
+- **Streamlit이 시작할 때 바깥을 부르는 길.** 이 판의 소스(`web/bootstrap.py`, `net_util.py`)는 `--server.address`가 없고 헤드리스이면 시작 안내가 `net_util.get_internal_ip()`(UDP로 `8.8.8.8`에 연결)와 `net_util.get_external_ip()`(`checkip.amazonaws.com`에 GET)를 부르고, 서버가 모든 인터페이스에 열린다고 적습니다. 주소 옵션을 뺀 판은 방화벽 창이 뜰 수 있어 **돌리지 않았고**, 소스로만 확인했습니다. 대신 가드를 설치한 프로세스에서 그 두 함수를 직접 불렀습니다. `get_internal_ip`은 `127.0.0.1`을 돌려주었고(`8.8.8.8` 연결이 거부되어 Streamlit이 대체값을 쓴 것) `get_external_ip`은 `None`(`Did not auto detect external IP` 경고)이었습니다. 바깥으로 나간 것은 없고 `guard.log`도 늘지 않았습니다.
 
 ## 요청 한 건이 흐르는 과정
 
@@ -631,12 +650,14 @@ ok
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `LAB을 자기 경로로 바꾸세요` | `LAB`이 자리 표시 값 그대로 | 저장소 밖의 새 폴더 절대 경로로 바꿔 다시 |
-| `guard가 설치되지 않았습니다` | 가드 줄이 빠졌거나 `lab_guard.py`가 다른 곳에 있음 | 스크립트와 `lab_guard.py`를 `$LAB`에 함께 둔다 |
+| `guard가 설치되지 않았습니다` | `install()` 줄이 빠졌음 | 줄을 되살린다 |
+| `ModuleNotFoundError: No module named 'lab_guard'` | `lab_guard.py`가 스크립트와 다른 폴더에 있음 | 스크립트와 `lab_guard.py`를 `$LAB`에 함께 둔다 |
+| 새 터미널에서 `LAB: parameter null or not set` | 새 터미널에는 `REPO`·`LAB`이 없음 | `cd awesome-llm-apps`, `export REPO="$PWD"`, `export LAB=…`를 먼저 한다 |
 | `scenarios.py`가 `exit=1`로 끝남 | `FAKE_PORT` 등 환경 변수가 없음, 또는 포트가 이미 사용 중 | 환경 파일을 불러왔는지, `err.txt`의 마지막 줄 |
 | `import fitz`에서 `FutureWarning` | PyMuPDF 2.0이 `fitz` 이름을 deprecated로 둠 | 경고일 뿐이다. 고치려면 `app.py`의 import를 `import pymupdf as fitz`로(원본은 건드리지 않았다) |
 | 앱 화면에 분석이 나왔다가 내려받기를 누르면 사라짐 | 결과가 버튼 분기 안에서만 그려짐(Step 4) | 앱의 구조. 보이게 하려면 출력을 `session_state`로 그리도록 고쳐야 한다 |
 | 진짜 Ollama가 꺼져 있을 때 `An error occurred: HTTPConnectionPool(...)` | 연결 거부가 `st.error`로 나옴 | `ollama serve`를 켜고 `ollama list`에 `llama3`가 있는지 본다 |
-| 결과가 `⚠️ No response from model.` | 응답에 `response`가 없음. 모델 이름이 없는 경우가 흔한 후보(이 문서는 진짜 Ollama로 확인하지 않음) | `ollama pull llama3`, 서버 쪽 로그 |
+| 결과가 `⚠️ No response from model.` | 응답에 `response`가 없음. 모델이 없을 때 `404`와 `{"error": …}`가 온다고 [Errors 페이지](https://docs.ollama.com/api/errors)가 적음(이 문서는 진짜 Ollama로 확인하지 않음) | `ollama pull llama3`, 서버 쪽 로그 |
 | 빨간 예외 화면(`FileDataError`·`UnicodeDecodeError`) | 깨진 PDF, 0바이트 파일, UTF-8이 아닌 TXT | 파일을 UTF-8 TXT나 정상 PDF로 다시 저장 |
 
 ## 더 해보기
