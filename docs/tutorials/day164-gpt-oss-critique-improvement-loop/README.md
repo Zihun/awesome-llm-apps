@@ -54,4 +54,4 @@
 
 ## 다음 날 예고
 
-Day 165 · 📄 Resume & Job Matcher — (작성 필요)
+[Day 165 · 📄 Resume & Job Matcher](../day165-resume-job-matcher/README.md) — (작성 필요)
