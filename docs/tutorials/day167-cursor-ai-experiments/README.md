@@ -1,6 +1,6 @@
 # Day 167 · Cursor Ai Experiments
 
-> 볼륨 18 🧪 기타 LLM 앱 · 난이도 ★★☆ · 예상 소요 90분(파일 셋을 만들고 서버 셋을 띄워 두 실험을 돌린 뒤, 설치하지 않은 세 앱의 소스와 공식 문서를 읽는 데 시간이 듭니다) · API 비용 대략 0원(이 문서는 OpenAI도 Together도 한 번도 부르지 않았습니다. 진짜 키로 쓸 때의 호출 수는 Step 6에 셉니다) · 원본 앱: `advanced_llm_apps/cursor_ai_experiments`
+> 볼륨 18 🧪 기타 LLM 앱 · 난이도 ★★☆ · 예상 소요 100분(파일 셋을 만들고 서버 셋을 띄워 두 실험과 가드를 뺀 판을 돌린 뒤, 설치하지 않은 세 앱의 소스와 공식 문서를 읽는 데 시간이 듭니다) · API 비용 대략 0원(이 문서는 OpenAI도 Together도 한 번도 부르지 않았습니다. 진짜 키로 쓸 때의 호출 수는 Step 6에 셉니다) · 원본 앱: `advanced_llm_apps/cursor_ai_experiments`
 
 ## 오늘 만들 것
 
@@ -9,13 +9,15 @@
 이 문서는 실험 가운데 **가벼운 둘(①②)만 돌렸습니다.** 진짜 Ollama도 LM Studio도 부르지 않았고, 그 자리에 **내가 쓴 가짜 서버**를 세웠습니다. 가짜 서버는 모델이 아니라 받은 메시지 수를 세어 말하는 쉰일곱 줄입니다. 그래서 아래 "응답"은 배선과 요청 모양을 보이는 것이지 모델 품질을 보이는 것이 아닙니다. 나머지 셋(③④⑤)은 무겁습니다. 설치하지 않았고, 한 번도 실행하지 않았고, **소스와 공식 문서만 읽었습니다.** 알게 된 것은 여섯입니다.
 
 1. ①②는 질문 하나에 요청 하나입니다. 그리고 매번 **대화 기록 전부**를 보냅니다. 두 번째 질문의 요청에는 메시지가 셋(user, assistant, user) 들어 있었습니다(Step 4·5). 기억은 모델이 아니라 `st.session_state`가 가집니다.
-2. 두 앱이 서버 주소를 정하는 방식이 다릅니다. ①은 `Client()`가 환경변수 `OLLAMA_HOST`를 읽고 없으면 `127.0.0.1:11434`로 갑니다. ②는 `base_url`을 소스에 박았습니다. 그래서 이 문서는 ①은 환경변수로, ②는 실행기가 SDK 생성자를 감싸서 가짜 서버로 보냈습니다. **줄 하나를 빼면 독자의 진짜 서버로 갑니다**(Step 3).
+2. 두 앱이 서버 주소를 정하는 방식이 다릅니다. ①은 `Client()`가 환경변수 `OLLAMA_HOST`를 읽고 없으면 `127.0.0.1:11434`로 갑니다. ②는 `base_url`을 소스에 박았습니다. 그래서 이 문서는 ①은 환경변수로, ②는 실행기가 SDK 생성자를 감싸서 가짜 서버로 보냈습니다. **실행기 없이 `streamlit run`으로 띄우면 요청이 독자의 진짜 서버로 갑니다.** 실행기 안에서는 소켓 가드가 허용한 포트 말고는 막으므로, 주소를 돌리는 줄 하나를 빼도 진짜 서버에 닿지 않고 가드 오류로 끝납니다(Step 3).
 3. 서버가 없거나 모델이 없으면 앱이 죽지 않고 화면에 예외를 띄웁니다. 그런데 사용자 메시지는 이미 기록에 들어간 뒤입니다. 오류 뒤의 다음 질문은 user 메시지를 두 개 연속으로 보냅니다(소스로 확인, Step 4).
 4. ⑤ 라우터는 질문마다 OpenAI 임베딩을 **한 번 더** 부르고, 임계값 `0.11593`은 앱의 모델 쌍이 아닌 다른 쌍에서 맞춘 값이며, 약한 모델은 Together가 2026-02-25에 서버리스에서 내렸다고 적은 모델입니다(Step 6).
-5. ③ 웹 긁기는 `headless: False`라서 브라우저 창을 띄우고, `pip install playwright`만으로는 브라우저가 내려오지 않습니다. ScrapeGraphAI 2.2.4의 텔레메트리는 이 앱의 쓰임(스키마 없음)에서는 보내지 않는 쪽으로 소스에 적혀 있습니다(Step 6).
-6. ④ 연구 팀과 ③이 키를 받는 방식이 다릅니다. ④는 키를 **프로세스 전체의 환경변수**로 넣습니다(Step 6).
+5. ④ 웹 긁기는 `headless: False`라서 브라우저 창을 띄우고, `pip install playwright`만으로는 브라우저가 내려오지 않습니다. ScrapeGraphAI 2.2.4의 텔레메트리는 이 앱의 쓰임(스키마 없음)에서는 보내지 않는 쪽으로 소스에 적혀 있습니다(Step 6).
+6. ③ 연구 팀과 ④가 키를 받는 방식이 다릅니다. ③은 키를 **프로세스 전체의 환경변수**로 넣습니다(Step 6).
 
 ![완성 아키텍처](diagrams/overview.svg)
+
+라우터에서 OpenAI로 가는 화살표 하나(라벨 "임베딩")는 임베딩 호출과 강한 모델 `gpt-4o-mini`의 답 호출을 함께 뜻합니다(Step 6).
 
 ## 사전 준비
 
@@ -30,7 +32,7 @@
 | `crewai`, `scrapegraphai`, `playwright`, `routellm`(+ torch) | ③④⑤. **이 문서는 설치하지 않았습니다**(무겁습니다). 소스는 읽기만 했습니다 | 필요할 때만 |
 | OpenAI·Together 키 | ③④⑤를 진짜로 쓸 때만. 이 문서는 키를 쓰지 않았습니다 | [OpenAI](https://platform.openai.com/api-keys), [Together](https://api.together.ai/) |
 
-터미널은 둘을 씁니다. 하나는 가짜 서버를 띄워 두고, 다른 하나에서 명령을 칩니다. 두 터미널 모두 Step 1의 환경 파일을 불러옵니다.
+터미널 하나로 충분합니다. 가짜 서버는 같은 터미널에서 백그라운드로 띄우고 같은 터미널에서 끕니다. 터미널을 새로 열었다면 `export REPO=… LAB=…; source "$LAB/env.sh"`로 환경을 다시 불러옵니다.
 
 ## 아키텍처 한눈에 보기
 
@@ -174,7 +176,7 @@ README는 둘뿐이고(⑤와 ②), 둘 다 `cd awesome-llm-apps/advanced_tools_
 
 **목적.** 진짜 Ollama와 LM Studio를 부르지 않고 ①②를 돌릴 배선을 만듭니다. 이 배선의 요점은 "줄 하나를 빼도 인터넷에 닿지 않는다"입니다.
 
-**할 일.** 파일 셋을 만듭니다. `fake.py`는 `/api/chat`(Ollama 꼴, 줄마다 JSON인 NDJSON), `/api/tags`, `/v1/chat/completions`(OpenAI 꼴)에 답하고 받은 요청을 한 줄씩 기록합니다. `run_app.py`는 Streamlit의 `AppTest`로 대본을 브라우저 없이 돌립니다. 먼저 **소켓 가드**를 세웁니다. 허용한 `127.0.0.1` 포트 말고는 연결도 이름 조회도 막고, 예약 주소 `192.0.2.1`(문서용으로 비워 둔 주소라 아무도 듣지 않습니다)에 닿지 않는지 먼저 시험해 막히지 않으면 멈춥니다. 그다음 앱이 가리키는 곳을 돌립니다. ①은 `OLLAMA_HOST`를 가짜 서버로 맞추고, ②는 `openai.OpenAI.__init__`을 감싸 박힌 `base_url`이 정확히 `http://localhost:1234/v1`일 때만 가짜 서버로 바꿉니다(다르면 멈춥니다). `show.py`는 기록을 읽기 좋게 찍습니다.
+**할 일.** 파일 셋을 만듭니다. `fake.py`는 `/api/chat`(Ollama 꼴, 줄마다 JSON인 NDJSON), `/api/tags`, `/v1/chat/completions`(OpenAI 꼴)에 답하고 받은 요청을 한 줄씩 기록합니다. `run_app.py`는 Streamlit의 `AppTest`로 대본을 브라우저 없이 돌립니다. 먼저 **소켓 가드**를 세웁니다. 허용한 `127.0.0.1` 포트 말고는 연결도 이름 조회도 막고, 예약 주소 `192.0.2.1`(문서용으로 비워 둔 주소라 아무도 듣지 않습니다)에 닿지 않는지 먼저 시험합니다. 이 가드가 낸 거부(메시지가 `가드:`로 시작)일 때만 통과로 치고, 시간 초과처럼 다른 오류가 나면 가드가 서지 않은 것으로 보고 멈춥니다. 거는 줄을 빼면 정말 멈추는지는 아래 Step 3 끝에서 보입니다. 그다음 앱이 가리키는 곳을 돌립니다. ①은 `OLLAMA_HOST`를 가짜 서버로 맞추고, ②는 `openai.OpenAI.__init__`을 감싸 박힌 `base_url`이 정확히 `http://localhost:1234/v1`일 때만 가짜 서버로 바꿉니다(다르면 멈춥니다). `show.py`는 기록을 읽기 좋게 찍습니다.
 
 ```bash
 cat > "${LAB:?}/fake.py" <<'EOF'
@@ -273,14 +275,16 @@ def guarded_lookup(host, *a, **k):
 
 
 socket.socket.connect, socket.getaddrinfo = guarded_connect, guarded_lookup
-try:  # 예약 주소(192.0.2.1)로 가드가 서 있는지 먼저 확인한다. 막히지 않으면 멈춘다.
+try:  # 예약 주소(192.0.2.1)로 가드가 서 있는지 먼저 확인한다. 이 가드가 낸 거부("가드:")가 아니면 멈춘다.
     socket.create_connection(("192.0.2.1", 80), 1)
     sys.exit("가드가 서지 않았습니다")
 except OSError as e:
+    if not str(e).startswith("가드:"):  # 시간 초과 같은 다른 오류는 통과로 치지 않는다
+        sys.exit(f"가드가 서지 않았습니다: {e}")
     print("가드 확인:", e)
 
 # 2) 앱이 가리키는 곳을 가짜 서버로 돌린다.
-if "ollama" in opts:  # ollama.Client()가 읽는 OLLAMA_HOST. 지우면 진짜 Ollama(11434)로 간다.
+if "ollama" in opts:  # ollama.Client()가 읽는 OLLAMA_HOST. 이 줄이 없으면 Client가 11434로 가려 하고, 위 가드가 막는다.
     os.environ["OLLAMA_HOST"] = f"127.0.0.1:{opts['ollama']}"
 if "lmstudio" in opts:  # 앱이 base_url을 박아 두어서 실행기가 SDK 생성자를 감싼다.
     import openai
@@ -330,19 +334,33 @@ ls "${LAB:?}"
 "$(pyexe)" "$LABW/fake.py" "$PORT_NOMODEL" "$LABW/requests-nomodel.jsonl" other:latest & echo $! >> "${LAB:?}/pids"
 sleep 3
 curl -s --noproxy '*' "http://127.0.0.1:$PORT_OLLAMA/api/tags"; echo
-netstat -ano | grep -E "127.0.0.1:(47401|47402|47403) .*LISTENING"
+netstat -ano | grep -E "127.0.0.1:($PORT_OLLAMA|$PORT_LMS|$PORT_NOMODEL) .*LISTENING"
 ```
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** `/api/tags`가 가짜 모델 이름을 돌려주고, `netstat`에서 세 포트가 `127.0.0.1`에서만 듣고 있어야 합니다(`0.0.0.0`이면 안 됩니다).
+**확인.** `/api/tags`가 가짜 모델 이름을 돌려주고, `netstat`에서 세 포트가 `127.0.0.1`에서만 듣고 있어야 합니다(`0.0.0.0`이면 안 됩니다). 줄 끝의 PID는 실행마다 다르므로 `<PID>`로 가렸습니다.
 
 ```text
 {"models": [{"name": "llama3.1:latest", "model": "llama3.1:latest"}]}
-  TCP    127.0.0.1:47401        0.0.0.0:0              LISTENING       37276
-  TCP    127.0.0.1:47402        0.0.0.0:0              LISTENING       38240
-  TCP    127.0.0.1:47403        0.0.0.0:0              LISTENING       29468
+  TCP    127.0.0.1:47401        0.0.0.0:0              LISTENING       <PID>
+  TCP    127.0.0.1:47402        0.0.0.0:0              LISTENING       <PID>
+  TCP    127.0.0.1:47403        0.0.0.0:0              LISTENING       <PID>
 ```
+
+이제 가드 확인이 정말 멈추는지 봅니다. 가드를 거는 줄(`socket.socket.connect, socket.getaddrinfo = …`)만 뺀 사본을 만들어 돌립니다. 이 시험은 일부러 가드를 빼므로, 독자 PC에서는 예약 주소 `192.0.2.1`의 80번으로 연결을 한 번 시도합니다(문서용으로 비워 둔 주소라 아무도 듣지 않지만 네트워크에 한 번 닿는다는 뜻입니다). 걱정되면 이 블록은 건너뛰어도 됩니다.
+
+```bash
+grep -v '^socket.socket.connect, socket.getaddrinfo = ' "${LAB:?}/run_app.py" > "${LAB:?}/run_app_noguard.py"
+cd "${LAB:?}" && py run_app_noguard.py "$APPW/chatgpt_clone_llama3.py" --ollama "$PORT_OLLAMA" "안녕"; echo "종료 코드 $?"
+```
+
+```text
+가드가 서지 않았습니다: blocked by safety guard: getaddrinfo '192.0.2.1'
+종료 코드 1
+```
+
+실행기는 앱을 한 줄도 돌리지 않고 멈춥니다(질문 줄이 없습니다). 이 문서를 쓴 상자에는 상자 자체의 가드가 따로 있어서 연결은 그쪽이 먼저 막았고, 그 거부 글은 `가드:`로 시작하지 않으므로 같은 결과가 났습니다. 상자 가드가 없는 PC에서는 같은 자리에 `timed out`이나 `unreachable` 같은 글이 찍힙니다.
 
 ### Step 4. 실험 ①: Ollama 대화를 돌린다
 
@@ -355,24 +373,26 @@ netstat -ano | grep -E "127.0.0.1:(47401|47402|47403) .*LISTENING"
 ```bash
 cd "${LAB:?}" && py run_app.py "$APPW/chatgpt_clone_llama3.py" --ollama "$PORT_OLLAMA" "안녕" "방금 뭐라고 했어?"
 py show.py "$LABW/requests-ollama.jsonl"
-echo "--- 모델을 모르는 서버(47403)"
+echo "--- 모델을 모르는 서버($PORT_NOMODEL)"
 py run_app.py "$APPW/chatgpt_clone_llama3.py" --ollama "$PORT_NOMODEL" "안녕" 2>/dev/null
+echo "--- 아무도 듣지 않는 포트($PORT_DEAD)"
+py run_app.py "$APPW/chatgpt_clone_llama3.py" --ollama "$PORT_DEAD" "안녕" 2>/dev/null
 ```
 
-두 번째 실행의 `2>/dev/null`은 Streamlit이 stderr로 찍는 긴 스택 트레이스를 버립니다. 예외 자체는 실행기가 `오류:` 줄로 찍습니다.
+뒤 두 실행의 `2>/dev/null`은 Streamlit이 stderr로 찍는 긴 스택 트레이스를 버립니다. 예외 자체는 실행기가 `오류:` 줄로 찍습니다.
 
 ![Step 4까지의 구성](diagrams/step4.svg)
 
-**확인.** 출력은 다음과 같습니다(`WARNING streamlit…ScriptRunContext` 한 줄은 `AppTest`가 브라우저 없이 돌 때 나오는 경고로 무시합니다).
+**확인.** 걸린 시간은 실행마다 다르므로 `<N>초`로 가렸습니다. 출력은 다음과 같습니다(`WARNING streamlit…ScriptRunContext` 한 줄은 `AppTest`가 브라우저 없이 돌 때 나오는 경고로 무시합니다).
 
 ```text
 가드 확인: 가드: 이름 조회 거부 192.0.2.1
 처음 화면: 제목 ['🤖 Local ChatGPT Clone', 'About'] | 채팅 입력 1 | 오류 []
-질문 '안녕': 0.17초
+질문 '안녕': <N>초
    user | 안녕
    assistant | 가짜 응답입니다. 받은 메시지는 1개입니다.
    오류: []
-질문 '방금 뭐라고 했어?': 0.16초
+질문 '방금 뭐라고 했어?': <N>초
    user | 안녕
    assistant | 가짜 응답입니다. 받은 메시지는 1개입니다.
    user | 방금 뭐라고 했어?
@@ -384,14 +404,24 @@ session_state.messages 역할: ['user', 'assistant', 'user', 'assistant']
 --- 모델을 모르는 서버(47403)
 가드 확인: 가드: 이름 조회 거부 192.0.2.1
 처음 화면: 제목 ['🤖 Local ChatGPT Clone', 'About'] | 채팅 입력 1 | 오류 []
-질문 '안녕': 0.16초
+질문 '안녕': <N>초
    user | 안녕
    assistant | None
    오류: ["model 'llama3.1:latest' not found (status code: 404)"]
 session_state.messages 역할: ['user']
+--- 아무도 듣지 않는 포트(47409)
+가드 확인: 가드: 이름 조회 거부 192.0.2.1
+처음 화면: 제목 ['🤖 Local ChatGPT Clone', 'About'] | 채팅 입력 1 | 오류 []
+질문 '안녕': <N>초
+   user | 안녕
+   assistant | None
+   오류: ['[WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다']
+session_state.messages 역할: ['user']
 ```
 
-첫 요청의 `roles`는 `['user']`, 둘째는 `['user', 'assistant', 'user']`입니다. 기록 전체를 보낸다는 뜻이고, 그래서 대화가 길어질수록 요청이 커집니다. 모델이 없는 서버에서는 화면에 `ResponseError`가 뜨고, 기록에는 user만 남았습니다(`['user']`). 이때 다음 질문을 보내면 user 메시지가 두 개 연달아 갑니다. 22행이 호출(30행) **앞**에서 user를 붙이고, 예외가 나면 34행에 닿지 않기 때문입니다. 이 문서는 그 다음 질문은 돌리지 않았고 소스로만 따랐습니다.
+첫 요청의 `roles`는 `['user']`, 둘째는 `['user', 'assistant', 'user']`입니다. 기록 전체를 보낸다는 뜻이고, 그래서 대화가 길어질수록 요청이 커집니다. 모델이 없는 서버에서는 화면에 `ResponseError`가 뜨고, 기록에는 user만 남았습니다(`['user']`). 이때 다음 질문을 보내면 user 메시지가 두 개 연달아 갑니다. 22행이 호출(30행) **앞**에서 user를 붙이고, 예외가 나면 34행에 닿지 않기 때문입니다. 이 문서는 그 다음 질문은 돌리지 않았고 소스로만 따랐습니다. 듣는 이 없는 포트에서는 `ollama` 0.6.1이 스트리밍 요청의 연결 실패를 `ConnectionError`로 바꾸지 않아서 `httpx.ConnectError` 그대로 화면에 뜹니다(위 마지막 실행, `_client.py`의 171-187행은 `HTTPStatusError`만 `ResponseError`로 바꿉니다).
+
+**진짜 Ollama로 쓰는 길(이 문서는 실행하지 않았습니다).** Ollama를 설치하고 `ollama pull llama3.1`로 모델을 받은 뒤, 사본 폴더에서 `streamlit run chatgpt_clone_llama3.py --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false`를 실행해 브라우저에서 엽니다. 이 길에는 실행기도 소켓 가드도 없으므로 요청은 독자의 `127.0.0.1:11434`(또는 `OLLAMA_HOST`가 가리키는 곳)로 갑니다. 원본 폴더에는 ①의 README가 없습니다.
 
 ### Step 5. 실험 ②: LM Studio 대화를 돌린다
 
@@ -408,29 +438,29 @@ session_state.messages 역할: ['user']
     )
 ```
 
-`OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")`(9행)에 `base_url`을 직접 주었으므로 환경변수 `OPENAI_BASE_URL`은 쓰이지 않습니다(`openai/_client.py`는 `base_url is None`일 때만 그 변수를 읽습니다). 그래서 실행기가 생성자를 감쌉니다. 1234는 LM Studio의 문서가 예로 드는 포트이고, 모델 자리에는 OpenAI 모델 이름이 아니라 LM Studio가 보여 주는 식별자를 넣습니다([LM Studio 문서](https://lmstudio.ai/docs/developer/openai-compat)). ①과 달리 `stream`이 없어서 답이 한꺼번에 옵니다. 그리고 답을 기록에 붙인 뒤(33행) 화면에 그립니다(36행). 이 순서 때문에 새 답은 `with st.chat_message("assistant")` 안에서 한 번, 다음 실행의 기록 반복문에서 한 번 그려집니다.
+`OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")`(9행)에 `base_url`을 직접 주었으므로 환경변수 `OPENAI_BASE_URL`은 쓰이지 않습니다(`openai/_client.py`는 `base_url is None`일 때만 그 변수를 읽습니다). 그래서 실행기가 생성자를 감쌉니다. 1234는 LM Studio의 문서가 예로 드는 포트이고, 모델 자리에는 OpenAI 모델 이름이 아니라 LM Studio가 보여 주는 식별자를 넣습니다([LM Studio 문서](https://lmstudio.ai/docs/developer/openai-compat)). ①과 달리 `stream`이 없어서 답이 한꺼번에 옵니다. 그리고 ①과 마찬가지로 새 답은 이번 실행에서 한 번 그려지고(36행), 다음 실행부터는 맨 위의 기록 반복문(16-18행)이 그립니다.
 
 **할 일.**
 
 ```bash
 cd "${LAB:?}" && py run_app.py "$APPW/local_chatgpt_clone/chatgpt_clone_llama3.py" --lmstudio "$PORT_LMS" "안녕" "방금 뭐라고 했어?"
 py show.py "$LABW/requests-lms.jsonl"
-echo "--- 아무도 듣지 않는 포트(47409)"
+echo "--- 아무도 듣지 않는 포트($PORT_DEAD)"
 py run_app.py "$APPW/local_chatgpt_clone/chatgpt_clone_llama3.py" --lmstudio "$PORT_DEAD" --allow "$PORT_DEAD" "안녕" 2>/dev/null
 ```
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
-**확인.**
+**확인.** 걸린 시간은 실행마다 다르므로 `<N>초`로 가렸습니다(마지막 실행만 8초 안팎입니다).
 
 ```text
 가드 확인: 가드: 이름 조회 거부 192.0.2.1
 처음 화면: 제목 ['ChatGPT Clone using Llama-3 🦙'] | 채팅 입력 1 | 오류 []
-질문 '안녕': 0.70초
+질문 '안녕': <N>초
    user | 안녕
    assistant | 가짜 응답입니다. 받은 메시지는 1개입니다.
    오류: []
-질문 '방금 뭐라고 했어?': 0.18초
+질문 '방금 뭐라고 했어?': <N>초
    user | 안녕
    assistant | 가짜 응답입니다. 받은 메시지는 1개입니다.
    user | 방금 뭐라고 했어?
@@ -442,13 +472,15 @@ session_state.messages 역할: ['user', 'assistant', 'user', 'assistant']
 --- 아무도 듣지 않는 포트(47409)
 가드 확인: 가드: 이름 조회 거부 192.0.2.1
 처음 화면: 제목 ['ChatGPT Clone using Llama-3 🦙'] | 채팅 입력 1 | 오류 []
-질문 '안녕': 8.07초
+질문 '안녕': <N>초
    user | 안녕
    오류: ['Connection error.']
 session_state.messages 역할: ['user']
 ```
 
-요청에 `Authorization: Bearer lm-studio`와 `temperature: 0.7`이 실렸고 `stream`은 없습니다. 마지막 실행에서는 SDK가 연결 실패를 두 번 다시 시도한 뒤(`DEFAULT_MAX_RETRIES = 2`, `openai` 패키지의 `_constants.py` 10행) `APIConnectionError`를 냈고, 그 사이 8초가 걸렸습니다. LM Studio의 서버를 켜지 않고 이 앱을 쓰면 질문마다 이 대기를 겪는다는 뜻입니다.
+요청에 `Authorization: Bearer lm-studio`와 `temperature: 0.7`이 실렸고 `stream`은 없습니다. 마지막 실행에서는 SDK가 연결 실패를 두 번 다시 시도한 뒤(`DEFAULT_MAX_RETRIES = 2`, `openai` 패키지의 `_constants.py` 10행) `APIConnectionError`를 냈고, 그 사이 8초 안팎이 걸렸습니다. LM Studio의 서버를 켜지 않고 이 앱을 쓰면 질문마다 이 대기를 겪는다는 뜻입니다.
+
+**진짜 LM Studio로 쓰는 길(이 문서는 실행하지 않았습니다).** LM Studio에서 Llama 3 모델을 받아 올리고 로컬 서버를 켠 뒤(앱 README의 4번), 사본 폴더에서 `streamlit run local_chatgpt_clone/chatgpt_clone_llama3.py --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false`를 실행합니다. 실행기가 없으므로 요청은 소스에 박힌 독자의 `localhost:1234`로 갑니다. 모델 이름(29행)은 LM Studio가 보여 주는 식별자와 같아야 합니다.
 
 ### Step 6. 무거운 셋(③④⑤)을 소스로 읽는다
 
@@ -467,7 +499,7 @@ with st.sidebar:
         gpt4_model = ChatOpenAI(model_name="gpt-4o-mini")
 ```
 
-123행은 키를 **프로세스 전체**의 환경변수에 넣습니다. Streamlit 서버 하나에 여러 브라우저가 붙으면 모두 같은 프로세스라서 마지막에 입력한 키가 모두의 키가 됩니다. 혼자 쓰는 로컬에서는 문제가 아니고, 같이 쓰는 서버에서는 문제입니다. 변수 이름 `gpt4_model`은 `gpt-4o-mini`를 가리킵니다. `crewai`는 받은 `ChatOpenAI` 객체를 LangChain 모델로 쓰지 않고 `model_name`·`api_key` 같은 속성을 읽어 자기 `LLM`을 만듭니다(`crewai` 패키지 `utilities/llm_utils.py`의 60-83행). 호출 수는 순차 과정이라 태스크마다 최소 한 번, 즉 **최소 셋**입니다. 에이전트가 되풀이하면 더 늘어납니다. `gpt-4o-mini`는 100만 토큰당 입력 $0.15, 출력 $0.60이고 폐기 안내가 없습니다([OpenAI 모델 문서](https://developers.openai.com/api/docs/models/gpt-4o-mini)). 텔레메트리는 기본으로 켜져 있고(CrewAI 문서는 크루·에이전트 ID, 도구 사용 횟수, LLM 설정, 시간을 모은다고 하고 프롬프트와 응답은 모으지 않는다고 합니다), `CREWAI_DISABLE_TELEMETRY=true`나 `OTEL_SDK_DISABLED=true`로 끕니다([CrewAI 텔레메트리 문서](https://docs.crewai.com/en/telemetry), 설치 판은 `crewai_core` 패키지 `telemetry.py`의 269-271행에서 그 변수 셋을 봅니다).
+123행은 키를 **프로세스 전체**의 환경변수에 넣습니다. Streamlit 서버 하나에 여러 브라우저가 붙으면 모두 같은 프로세스라서, 다른 세션의 실행과 겹치면 남의 키로 호출될 수 있습니다(소스로 확인: `crewai`는 에이전트를 만들 때 그 환경변수를 읽습니다). 혼자 쓰는 로컬에서는 문제가 아니고, 같이 쓰는 서버에서는 문제입니다. 변수 이름 `gpt4_model`은 `gpt-4o-mini`를 가리킵니다. `crewai`는 받은 `ChatOpenAI` 객체를 LangChain 모델로 쓰지 않고 `model_name`·`api_key` 같은 속성을 읽어 자기 `LLM`을 만듭니다(`crewai` 패키지 `utilities/llm_utils.py`의 60-83행). 호출 수는 순차 과정이라 태스크마다 최소 한 번, 즉 **최소 셋**입니다. 에이전트가 되풀이하면 더 늘어납니다. `gpt-4o-mini`는 100만 토큰당 입력 $0.15, 출력 $0.60이고 폐기 안내가 없습니다([OpenAI 모델 문서](https://developers.openai.com/api/docs/models/gpt-4o-mini)). 텔레메트리는 기본으로 켜져 있고(CrewAI 문서는 크루·에이전트 ID, 도구 사용 횟수, LLM 설정, 시간을 모은다고 하고 프롬프트와 응답은 모으지 않는다고 합니다), `CREWAI_DISABLE_TELEMETRY=true`로 끕니다(`OTEL_SDK_DISABLED=true`도 같은 효과입니다)([CrewAI 텔레메트리 문서](https://docs.crewai.com/en/telemetry), 설치 판은 `crewai_core` 패키지 `telemetry.py`의 269-271행에서 `OTEL_SDK_DISABLED`·`CREWAI_DISABLE_TELEMETRY`·`CREWAI_DISABLE_TRACKING` 셋을 봅니다).
 
 **④ 웹 긁기.** 주소와 질문, 키를 받아 `SmartScraperGraph(...).run()`을 부릅니다(28-35행). 설정은 다음 여덟 줄입니다.
 
@@ -544,7 +576,7 @@ llm_router_app/llm_router.py:42:            messages=[{"role": "user", "content"
 
 ```bash
 kill $(cat "${LAB:?}/pids"); sleep 1
-netstat -ano | grep -E "127.0.0.1:(47401|47402|47403) .*LISTENING" || echo "세 포트가 비었다"
+netstat -ano | grep -E "127.0.0.1:($PORT_OLLAMA|$PORT_LMS|$PORT_NOMODEL) .*LISTENING" || echo "세 포트가 비었다"
 ```
 
 ## 요청 한 건이 흐르는 과정
@@ -571,7 +603,7 @@ netstat -ano | grep -E "127.0.0.1:(47401|47402|47403) .*LISTENING" || echo "세 
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| ①에서 `ConnectionError: Failed to connect to Ollama…` | Ollama가 안 떠 있다(`ollama` 패키지 `_client.py`의 127-135행, `httpx.ConnectError` 처리, 이 문서는 돌리지 않음) | `ollama serve`나 Ollama 앱을 켠다. 주소를 바꿨다면 `OLLAMA_HOST`를 맞춘다 |
+| ①에서 `httpx.ConnectError`(Windows는 `[WinError 10061]`, Linux·macOS는 `Connection refused`류) | Ollama가 안 떠 있다. 이 앱은 `stream=True`라서 `ollama` 0.6.1이 `ConnectionError`로 바꾸지 않는다(`_client.py`의 171-187행). Step 4에서 듣는 이 없는 포트로 재현했다 | `ollama serve`나 Ollama 앱을 켠다. 주소를 바꿨다면 `OLLAMA_HOST`를 맞춘다 |
 | ①에서 `ResponseError: model 'llama3.1:latest' not found (status code: 404)` | 서버에 그 모델이 없다. Step 4에서 가짜 서버로 재현했다 | 진짜 Ollama라면 `ollama pull llama3.1`. 앱의 모델 이름은 30행에 박혀 있다 |
 | ①②에서 오류 뒤 다음 질문이 이상한 답을 낸다 | 오류 전에 user가 기록에 붙었다. 다음 요청이 user 둘을 연달아 보낸다(소스로 확인) | 대화를 새로 시작한다(새로고침). 고치려면 호출 뒤에 기록을 붙이도록 순서를 바꾼다 |
 | ②에서 질문마다 몇 초 뒤 `Connection error.` | LM Studio 서버가 꺼져 있다. SDK가 두 번 다시 시도한다(Step 5에서 8초) | LM Studio에서 서버를 켠다. 포트를 바꿨다면 9행의 `base_url`을 고친다(환경변수로는 안 바뀐다) |
@@ -579,6 +611,7 @@ netstat -ano | grep -E "127.0.0.1:(47401|47402|47403) .*LISTENING" || echo "세 
 | ③을 따로 설치했더니 `No module named 'langchain_openai'` | 루트 `requirements.txt`에 `langchain-openai`가 없다. `scrapegraphai`가 끌어온다 | `langchain-openai`를 함께 설치한다(소스로 확인, 돌리지 않음) |
 | ④를 처음 돌리자 브라우저 오류 | `playwright install`을 하지 않았다(공식 문서는 별도 단계라고 설명하고, 이 문서는 돌리지 않음) | `playwright install chromium`을 한 번 돌린다 |
 | ④에서 창이 눈앞에 뜬다 | `"headless": False`(21행) | 창이 필요 없으면 `True`로 바꾼다 |
+| ⑤의 `pip install -r requirements.txt`가 `Invalid requirement`류로 멈춘다 | `llm_router_app/requirements.txt`의 2행이 따옴표째(`"routellm[serve,eval]"`) 적혀 있어 요구 지정자로 읽히지 않는다(리뷰어가 `packaging`으로 확인, pip는 돌리지 않음) | 따옴표를 뺀 `routellm[serve,eval]`로 설치한다(torch를 끌어옵니다) |
 | ⑤에서 환경변수로 넣은 키가 안 먹는다 | 3행이 자리 문자열로 덮어쓴다 | 3-4행을 지우거나 `os.environ.setdefault`로 바꾼다 |
 | ⑤에서 약한 모델 쪽 질문이 실패한다 | Together가 그 모델을 2026-02-25에 서버리스에서 제거했다고 적었다(추정) | 약한 모델을 현재 제공되는 모델로 바꾼다 |
 
@@ -613,6 +646,6 @@ netstat -ano | grep -E "127.0.0.1:(47401|47402|47403) .*LISTENING" || echo "세 
 | 17 🔎 AI 브라우저 도구 | 162–163 | 2 |
 | 18 🧪 기타 LLM 앱 | 164–167 | 4 |
 
-처음 읽는다면 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)를 한 번 하고 [Day 1 · xAI Finance Agent](../day001-xai-finance-agent/README.md)에서 시작하세요. 코드 한 파일로 에이전트가 무엇인지 보는 날이고, 순서는 학습 난이도 순이며 볼륨 안에서는 작은 앱부터 갑니다. 프레임워크를 체계적으로 배우고 싶다면 볼륨 2의 첫날 [Day 14 · Google ADK Crash Course · 1_starter_agent](../day014-adk-1-starter-agent/README.md)가 입구입니다. 로컬 모델만으로 해 보고 싶다면 볼륨 5의 [Day 47 · 🦙 Local RAG Agent](../day047-local-rag-agent/README.md)가 있고, 오늘 ①②는 같은 방향의 가장 작은 예입니다.
+처음 읽는다면 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)를 한 번 하고 [Day 1 · xAI Finance Agent](../day001-xai-finance-agent/README.md)에서 시작하세요. 코드 한 파일로 에이전트가 무엇인지 보는 날입니다. 처음 계획은 볼륨 안을 작은 앱부터 놓았고, 나중에 더한 앱은 볼륨 끝에 붙었습니다. 프레임워크를 체계적으로 배우고 싶다면 볼륨 2의 첫날 [Day 14 · Google ADK Crash Course · 1_starter_agent](../day014-adk-1-starter-agent/README.md)가 입구입니다. 로컬 모델만으로 해 보고 싶다면 볼륨 5의 [Day 47 · 🦙 Local RAG Agent](../day047-local-rag-agent/README.md)가 있고, 오늘 ①②는 같은 방향의 가장 작은 예입니다.
 
-볼륨 16~18(Day 154~167)의 문서는 앞 볼륨과 다르게 쓰였습니다. 스킬 묶음, 브라우저 확장, 그리고 여러 모양의 작은 앱이라서, 비용이 드는 외부 서비스를 부르지 않고 소스와 가짜 서버로 배선만 확인한 날이 많습니다. 각 문서가 **실행한 것과 소스로만 읽은 것**을 갈라 적었으니, 따라 하기 전에 그 구분을 먼저 보세요.
+이 시리즈의 문서는 키가 드는 바깥 서비스를 부르지 않았습니다(Day 100 무렵부터는 많은 날이 가짜 서버로 배선을 확인했습니다). 각 문서가 **실행한 것과 소스로만 읽은 것**을 갈라 적었으니, 따라 하기 전에 그 구분을 먼저 보세요. 볼륨 16~18은 스킬 묶음, 브라우저 확장, 여러 모양의 작은 앱을 다룹니다.
