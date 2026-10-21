@@ -1,0 +1,22 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+renderer: "화면 (index.html)" { class: ours }
+main: "주 프로세스 (main.js)" { class: ours }
+ollama: "Ollama (gemma3:1b)" { class: ext }
+
+user -> renderer: "질문을 쓰고 Send"
+renderer -> main: "generate-thinking-paths (질문)"
+main -> ollama: "POST /api/generate (경로 넷 JSON)"
+ollama -> main: "response 글"
+main -> renderer: "paths (JSON 못 읽으면 기성 넷)"
+user -> renderer: "경로의 2단계 클릭"
+renderer -> main: "execute-thinking-path (1~2단계)"
+main -> ollama: "POST /api/generate (1~2단계)"
+ollama -> main: "response 글"
+main -> renderer: "response"
+renderer -> main: "generate-updated-paths (1초 뒤)"
+main -> ollama: "POST /api/generate (새 경로 넷)"
+ollama -> main: "response 글"
+main -> renderer: "paths"

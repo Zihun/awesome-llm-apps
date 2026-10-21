@@ -1,0 +1,14 @@
+...@../../_tools/theme
+direction: down
+
+user: "독자" { class: person }
+app: "Electron 앱" {
+  class: group
+  renderer: "화면 (index.html)" { class: ours }
+  main: "주 프로세스 (main.js)" { class: ours }
+}
+ollama: "Ollama (gemma3:1b)" { class: ext }
+
+user -> app: "질문 · 클릭"
+app.renderer -> app.main: "IPC invoke"
+app.main -> ollama: "POST /api/generate"
