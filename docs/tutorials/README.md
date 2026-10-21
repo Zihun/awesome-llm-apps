@@ -1,6 +1,6 @@
 # awesome-llm-apps 167일 튜토리얼
 
-이 리포에 있는 앱을 하루에 하나씩, 처음부터 끝까지 따라 만드는 시리즈입니다. 하루 분량은 60~90분이고, 매 일차는 완성 아키텍처와 각 단계의 시스템 구성을 D2 다이어그램으로 보여 줍니다. 순서는 학습 난이도 순이며 볼륨 안에서는 작은 앱부터 갑니다.
+이 리포에 있는 앱을 하루에 하나씩, 처음부터 끝까지 따라 만드는 시리즈입니다. 하루 분량은 날마다 머리말에 예상 소요로 적혀 있고(40~260분, 가운데 값 100분), 매 일차는 완성 아키텍처와 각 단계의 시스템 구성을 D2 다이어그램으로 보여 줍니다. 볼륨 순서는 학습 난이도를 기준으로 정했습니다.
 
 ## 이렇게 진행하세요
 
@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 167일 일정
 
-진도: 163 / 167일 완료
+진도: 167 / 167일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -309,8 +309,8 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 164](day164-gpt-oss-critique-improvement-loop/README.md) | 🔄 GPT-OSS Advanced Critique & Improvement Loop | [advanced_llm_apps/gpt_oss_critique_improvement_loop](../../advanced_llm_apps/gpt_oss_critique_improvement_loop/) |
-| ⬜ | Day 165 | 📄 Resume & Job Matcher | [advanced_llm_apps/resume_job_matcher](../../advanced_llm_apps/resume_job_matcher/) |
-| ⬜ | Day 166 | ThinkPath Chatbot  🧠 | [advanced_llm_apps/thinkpath_chatbot_app](../../advanced_llm_apps/thinkpath_chatbot_app/) |
-| ⬜ | Day 167 | Cursor Ai Experiments | [advanced_llm_apps/cursor_ai_experiments](../../advanced_llm_apps/cursor_ai_experiments/) |
+| ✅ | [Day 164](day164-gpt-oss-critique-improvement-loop/README.md) | 🔄 GPT-OSS Advanced Critique & Improvement Loop | [advanced_llm_apps/gpt_oss_critique_improvement_loop](../../advanced_llm_apps/gpt_oss_critique_improvement_loop/) |
+| ✅ | [Day 165](day165-resume-job-matcher/README.md) | 📄 Resume & Job Matcher | [advanced_llm_apps/resume_job_matcher](../../advanced_llm_apps/resume_job_matcher/) |
+| ✅ | [Day 166](day166-thinkpath-chatbot-app/README.md) | ThinkPath Chatbot  🧠 | [advanced_llm_apps/thinkpath_chatbot_app](../../advanced_llm_apps/thinkpath_chatbot_app/) |
+| ✅ | [Day 167](day167-cursor-ai-experiments/README.md) | Cursor Ai Experiments | [advanced_llm_apps/cursor_ai_experiments](../../advanced_llm_apps/cursor_ai_experiments/) |
 
