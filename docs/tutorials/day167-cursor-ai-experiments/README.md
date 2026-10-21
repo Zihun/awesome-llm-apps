@@ -646,6 +646,6 @@ netstat -ano | grep -E "127.0.0.1:($PORT_OLLAMA|$PORT_LMS|$PORT_NOMODEL) .*LISTE
 | 17 🔎 AI 브라우저 도구 | 162–163 | 2 |
 | 18 🧪 기타 LLM 앱 | 164–167 | 4 |
 
-처음 읽는다면 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)를 한 번 하고 [Day 1 · xAI Finance Agent](../day001-xai-finance-agent/README.md)에서 시작하세요. 코드 한 파일로 에이전트가 무엇인지 보는 날입니다. 처음 계획은 볼륨 안을 작은 앱부터 놓았고, 나중에 더한 앱은 볼륨 끝에 붙었습니다. 프레임워크를 체계적으로 배우고 싶다면 볼륨 2의 첫날 [Day 14 · Google ADK Crash Course · 1_starter_agent](../day014-adk-1-starter-agent/README.md)가 입구입니다. 로컬 모델만으로 해 보고 싶다면 볼륨 5의 [Day 47 · 🦙 Local RAG Agent](../day047-local-rag-agent/README.md)가 있고, 오늘 ①②는 같은 방향의 가장 작은 예입니다.
+처음 읽는다면 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)를 한 번 하고 [Day 1 · xAI Finance Agent](../day001-xai-finance-agent/README.md)에서 시작하세요. 코드 한 파일로 에이전트가 무엇인지 보는 날입니다. 처음 계획(스펙)은 볼륨 안을 작은 앱부터 놓는 것이었지만, 지금 앱의 줄 수로 세면 18개 볼륨 가운데 12개는 그 순서가 아닙니다. 그러니 볼륨 안의 순서보다 볼륨 순서(학습 난이도)를 따라가세요. 프레임워크를 체계적으로 배우고 싶다면 볼륨 2의 첫날 [Day 14 · Google ADK Crash Course · 1_starter_agent](../day014-adk-1-starter-agent/README.md)가 입구입니다. 로컬 모델만으로 해 보고 싶다면 볼륨 5의 [Day 47 · 🦙 Local RAG Agent](../day047-local-rag-agent/README.md)가 있고, 오늘 ①②는 같은 방향의 가장 작은 예입니다.
 
 이 시리즈의 문서는 키가 드는 바깥 서비스를 부르지 않았습니다(Day 100 무렵부터는 많은 날이 가짜 서버로 배선을 확인했습니다). 각 문서가 **실행한 것과 소스로만 읽은 것**을 갈라 적었으니, 따라 하기 전에 그 구분을 먼저 보세요. 볼륨 16~18은 스킬 묶음, 브라우저 확장, 여러 모양의 작은 앱을 다룹니다.
