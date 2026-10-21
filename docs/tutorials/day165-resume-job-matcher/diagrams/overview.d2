@@ -1,0 +1,19 @@
+...@../../_tools/theme
+direction: down
+
+front: "사용자 쪽" {
+  class: group
+  user: 사용자 { class: person }
+  docs: "이력서·공고 (PDF·TXT)" { class: file }
+}
+
+
+ui: "화면·프롬프트 (app.py)" { class: ours }
+extract: "글 뽑기 (PyMuPDF)" { class: ours }
+ollama: "Llama 3 (Ollama, 로컬)" { class: ext }
+report: "resume_match_report.md" { class: file }
+
+front -> ui: 파일 업로드 · 버튼 클릭
+ui -> extract: PDF 바이트
+ui <-> ollama: 프롬프트 / 응답
+ui -> report: 내려받기

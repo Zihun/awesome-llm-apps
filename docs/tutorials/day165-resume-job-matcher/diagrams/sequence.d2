@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: 사용자 { class: person }
+ui: 앱 (app.py) { class: ours }
+ollama: Llama 3 (Ollama, 로컬) { class: ext }
+
+user -> ui: 이력서·공고 올리고 버튼 클릭
+ui -> ui: PyMuPDF로 PDF에서 글 뽑기 (TXT는 UTF-8 해석)
+ui -> ollama: POST /api/generate (model, prompt, stream=false)
+ollama -> ui: JSON (response)
+ui -> user: Match Analysis (마크다운)
+ui -> user: 내려받기 버튼
