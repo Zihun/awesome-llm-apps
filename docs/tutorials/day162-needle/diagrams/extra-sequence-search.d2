@@ -1,0 +1,13 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+sentences: "sentences.mjs" { class: ours }
+search: "search.mjs" { class: ours }
+gw: "AI Gateway (Jev)" { class: ext }
+
+search -> search: "validate (한도 검사)"
+search -> sentences: "makePayload: sentenceSpans(문단)"
+sentences -> search: "문장 범위 [start, end]"
+search -> gw: "POST /v1/evaluate (Bearer 키)"
+gw -> search: "answers (probability · choice)"
+search -> search: "parseAnswers · 0.58"

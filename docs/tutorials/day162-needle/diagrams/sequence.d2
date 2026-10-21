@@ -4,20 +4,11 @@ shape: sequence_diagram
 user: "독자" { class: person }
 content: "content.js" { class: ours }
 bg: "background.js" { class: ours }
-dev: "dev.mjs · api" { class: ours }
-search: "search.mjs" { class: ours }
-gw: "AI Gateway (Jev)" { class: ext }
+dev: "dev.mjs" { class: ours }
 
 user -> content: "질문 입력 (0.7초 쉬면 검색)"
+content -> content: "collect: 문단 모으기"
 content -> bg: "NEEDLE_SEARCH {query, blocks}"
-bg -> dev: "POST /api/search (+ 토큰)"
-dev -> search: "search(본문)"
-search -> search: "validate · makePayload"
-search -> gw: "POST /v1/evaluate (Bearer 키)"
-gw -> search: "answers (probability · choice)"
-search -> search: "parseAnswers · 0.58 이상"
-search -> dev: "scores · matches · focus 범위"
+bg -> dev: "POST /api/search (+ x-needle-token)"
 dev -> bg: "JSON 200"
-bg -> content: "응답"
-content -> content: "범위 변환 · 강조 칠하기"
-content -> user: "강조 문장 · n of m connections"
+bg -> content: "sendResponse"

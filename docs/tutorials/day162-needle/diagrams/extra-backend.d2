@@ -1,13 +1,16 @@
 ...@../../_tools/theme
 direction: down
 
-dev: "로컬 서버 (dev.mjs)" { class: ours }
-api: "검색 함수 (api/search.js)" { class: ours }
+dev: "서버 (dev.mjs)" { class: ours }
+api: "함수 (api/search.js)" { class: ours }
 search: "검증·점수 (search.mjs)" { class: ours }
 sentences: "문장 분리 (sentences.mjs)" { class: ours }
-gateway: "Vercel AI Gateway → Jev (가짜 서버로 대신)" { class: ext }
+gateway: "AI Gateway·Jev (가짜 서버로 대신)" { class: ext }
 dotenv: "키 (.env 또는 AI_GATEWAY_API_KEY)" { class: file }
+http: "접근 검사 (http.mjs)" { class: ours }
 
+dev -> http: "accessError(요청 머리)"
+api -> http: "accessError 다시"
 dev -> api: "본문 (512,000바이트 이하)"
 api -> search: "search(본문)"
 search -> sentences: "문장 범위"

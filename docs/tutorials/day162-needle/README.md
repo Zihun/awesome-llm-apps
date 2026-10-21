@@ -1,6 +1,6 @@
 # Day 162 · 🪡 Needle - A New Way to Find
 
-> 볼륨 17 🔎 AI 브라우저 도구 · 난이도 ★★☆ · 예상 소요 130분(붙여 넣을 블록 열네 개를 돌리고, 서버 셋과 확장 소스 600줄가량을 읽으며 출력을 소스와 맞대 보는 데 시간이 듭니다. 본문은 2,600낱말이지만 읽는 시간보다 손으로 돌리는 시간이 큽니다) · API 비용 대략 0원(가짜 게이트웨이만 썼습니다. 진짜 Vercel AI Gateway로 쓰면 크레딧이 들지만 Jev의 단가는 이 문서가 읽은 Vercel 문서에 없고 모델 목록 페이지에 있다고만 되어 있습니다) · 원본 앱: `advanced_llm_apps/needle`
+> 볼륨 17 🔎 AI 브라우저 도구 · 난이도 ★★☆ · 예상 소요 140분(붙여 넣을 블록 열네 개를 돌리고, 서버 셋과 확장 소스 600줄가량을 읽으며 출력을 소스와 맞대 보는 데 시간이 듭니다. 본문은 2,800낱말이지만 읽는 시간보다 손으로 돌리는 시간이 큽니다) · API 비용 대략 0원(가짜 게이트웨이만 썼습니다. 진짜 Vercel AI Gateway로 쓰면 크레딧이 들지만 Jev의 단가는 이 문서가 읽은 Vercel 문서에 없고 모델 목록 페이지에 있다고만 되어 있습니다) · 원본 앱: `advanced_llm_apps/needle`
 
 ## 오늘 만들 것
 
@@ -11,8 +11,8 @@
 이 문서는 진짜 AI Gateway를 부르지 않았고 크롬도 띄우지 않았고 `npm install`도 하지 않았습니다. 서버(`server/dev.mjs`)와 시험 세 개는 **실제로 돌렸습니다**. 가짜 게이트웨이는 내가 만든 대본(동의어 표와 낱말 일치로 점수를 짓는 40줄)이라서, 아래의 "0.90"이나 "일치 5개"는 Jev가 낸 값이 아니라 **앱이 그 값을 어떻게 다루는지**를 보이는 값입니다. 확장(`extension/`)과 React 화면(`src/*.jsx`)은 소스로만 읽었습니다.
 
 1. 한 번의 검색은 게이트웨이 요청 **한 건**입니다. 문단마다 불리언 질문 하나, 문장이 둘 이상이면 선택 질문 하나가 더 붙습니다. 내장 문서 `stay`는 문단 13개로 질문 26개입니다(Step 1, 4).
-2. 문단 본문은 요청 안에 두 번 실립니다(`state.passages`와 선택 질문의 문장 목록). 레시피 문서에서 앱 본문 1,601바이트가 게이트웨이 요청 10,988바이트가 됐습니다(Step 6).
-3. 서버는 `127.0.0.1`에서만 듣고, 토큰이 없으면 **누구든** 검색할 수 있습니다. Origin·CORS 검사는 없습니다. 다른 사이트의 `text/plain` POST가 preflight 없이 200으로 처리됐습니다. `NEEDLE_ACCESS_TOKEN`을 두면 틀린 요청이 401이 되고, 이 토큰은 로컬에서도 두는 편이 낫습니다(Step 5).
+2. 요청은 커집니다. 레시피 문서에서 앱 본문 1,601바이트가 게이트웨이 요청 10,988바이트가 됐습니다. 늘어난 몫의 대부분은 질문마다 되풀이되는 영어 지시문(5,511바이트)과 기준(1,656바이트)이고, 문단·문장이 두 번 실리는 몫은 1KB 남짓입니다(Step 6).
+3. 서버는 `127.0.0.1`에서만 듣고, 토큰이 없으면 **누구든** 검색할 수 있습니다. Origin·CORS 검사는 없습니다. 다른 사이트를 흉내 낸 Node 요청(`Origin`을 단 `text/plain` POST)이 preflight 없이 200으로 처리됐습니다. 크롬의 Local Network Access 허락 창이 이 길을 막을 수 있지만 그것에 기대지는 않습니다(Step 5). `NEEDLE_ACCESS_TOKEN`을 두면 틀린 요청이 401이 되고, 이 토큰은 로컬에서도 두는 편이 낫습니다(Step 5).
 4. 요청 본문은 512,000바이트(→ 413), 문단은 160개·문단당 2,200자·전체 60,000자, 질문은 400자까지입니다(Step 5).
 5. 게이트웨이의 401·402·403은 모두 HTTP 502로, 429만 429로 바뀌어 나옵니다(Step 6).
 6. 문장 나누기는 `Intl.Segmenter("en")`입니다. 한국어 문장은 맞게 나뉘지만 `Dr.`·`sec.` 같은 영어 약어에서 문장이 끊깁니다(Step 3).
@@ -109,7 +109,7 @@ export FAKE_PORT=51911 APP_PORT=51913 APP2_PORT=51915
 export FAKE_LOG="$LAB/logs/fake.jsonl" LAST_REQ="$LAB/logs/last-request.json"
 EOF
   source "$LAB/env.sh" && {
-    for d in server api src tests extension; do cp -r "$REPO/advanced_llm_apps/needle/$d" "$NEEDLE_DIR/$d"; done
+    for d in server api src tests extension; do mkdir -p "$NEEDLE_DIR/$d" && cp -r "$REPO/advanced_llm_apps/needle/$d/." "$NEEDLE_DIR/$d/"; done
     cp "$REPO/advanced_llm_apps/needle/package.json" "$REPO/advanced_llm_apps/needle/vercel.json" "$NEEDLE_DIR/"
     printf 'AI_GATEWAY_API_KEY=fake-from-dotenv\n' > "$NEEDLE_DIR/.env"
     ls "$NEEDLE_DIR"
@@ -135,7 +135,7 @@ vercel.json
 
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
-cat > "$LABDIR/docs-count.mjs" <<'EOF'
+cat > "${LABDIR:?}/docs-count.mjs" <<'EOF'
 // 사용: node docs-count.mjs  → 웹 앱에 내장된 문서와 문단·질문 수를 센다
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -148,7 +148,7 @@ for (const d of documents) {
   console.log(`${d.id.padEnd(7)} 문단 ${String(b.length).padStart(2)}  글자 ${b.reduce((n, x) => n + x.text.length, 0)}  게이트웨이 질문 ${b.length + multi}  예시: ${d.suggestions[0]}`);
 }
 EOF
-node "$LABDIR/docs-count.mjs"
+node "${LABDIR:?}/docs-count.mjs"
 ```
 
 ```text
@@ -167,11 +167,11 @@ thread  문단 11  글자 1545  게이트웨이 질문 20  예시: what price di
 
 **목적.** 앱이 부르는 곳은 `https://ai-gateway.vercel.sh/v1/evaluate` 하나입니다(`advanced_llm_apps/needle/server/search.mjs:125`). 이 문서는 그 주소를 루프백의 가짜 서버로 돌리고, 가드가 빠지면 앱이 아예 돌지 않게 만듭니다.
 
-**할 일.** Vercel 문서는 이 API의 요청을 `model`·`state`·`questions`로 설명하고, 질문 종류를 `boolean`(확률)·`choice`(선택지)·`score`로 둡니다. 응답에는 `answers`와 `usage`가 있습니다. 이 페이지는 `evaluation`이라는 옛 이름으로 들어가면 `Decision` 페이지로 이어졌고, "결정 모델은 예전에 평가 모델이라 불렀고 `/v1/evaluate`는 그대로"라고 밝힙니다(읽은 날 2026-10-21). Jev는 TypeSafe AI가 "빠르고 타입이 있는 결정"을 위해 만든 모델로 소개되고, 글을 생성하지 않고 선택·점수·확률을 돌려줍니다. 가짜 서버는 이 모양만 흉내 냅니다. 파일은 넷입니다.
+**할 일.** Vercel 문서는 이 API의 요청을 `model`·`state`·`questions`로 설명하고, 질문 종류를 `boolean`(확률)·`choice`(선택지)·`score`로 둡니다. 응답에는 `answers`와 `usage`가 있습니다. 이 페이지는 `evaluation`이라는 옛 이름으로 들어가면 `Decision` 페이지로 이어졌고, "결정 모델은 예전에 평가 모델이라 불렀다"고 밝히고, `experimental_evaluate`와 `gateway.evaluationModel()`은 폐기 예정 별칭으로 남는다고 적습니다. `/v1/evaluate`는 HTTP API 절에 그대로 적혀 있습니다(읽은 날 2026-10-21). Jev는 TypeSafe AI가 "빠르고 타입이 있는 결정"을 위해 만든 모델로 소개되고, 글을 생성하지 않고 선택·점수·확률을 돌려줍니다. 가짜 서버는 이 모양만 흉내 냅니다. 파일은 넷입니다.
 
 - `fake-gateway.mjs`: `127.0.0.1`에서만 듣고 `POST /v1/evaluate`만 받습니다. 질문 낱말 일치로 확률을 지어내고, 선택 질문은 낱말이 가장 많이 든 문장을 고릅니다. 질문에 `__401__`·`__429__`·`__incomplete__`가 들어 있으면 그 오류를 냅니다(Step 6). 받은 요청은 `last-request.json`과 기록 파일에 남깁니다.
-- `guard.mjs`: 앱 프로세스 안에서 `fetch`와 `net` 연결을 가로챕니다. 위 주소는 가짜 서버로 바꾸고 루프백 밖은 모두 막습니다. 불러지자마자 예약 주소 `192.0.2.1`로 `fetch`와 `net.connect`를 시도해 **둘 다 막히는지 먼저 단언**하고, 아니면 프로세스를 끝냅니다.
-- `serve.mjs`: 가드를 불러오고, 불러졌는지 단언하고, 사본이 `LAB` 안인지 보고, 그 폴더로 옮겨 `server/dev.mjs`를 부릅니다. 가드를 부르는 줄을 빼도, 단언을 빼도 앱은 돌지 않습니다(아래에서 한 줄을 빼 보입니다).
+- `guard.mjs`: 앱 프로세스 안에서 `fetch`와 `net`·`tls` 연결을 가로챕니다. 위 주소는 가짜 서버로 바꾸고 루프백 밖으로 가는 이 세 길은 막습니다(`dns`를 직접 부르는 코드는 막지 않지만 이 앱은 그런 코드를 쓰지 않고, 연결을 만들기 전에 호스트부터 보므로 앱의 `fetch`는 이름 조회까지 가지 못합니다). 불러지자마자 예약 주소 `192.0.2.1`로 `fetch`·`net.connect`·`tls.connect`를 시도해 **셋 다 막히는지 먼저 단언**하고, 아니면 프로세스를 끝냅니다.
+- `serve.mjs`: 가드를 불러오고, 불러졌는지 단언하고, 사본이 `LAB` 안인지 보고, 그 폴더로 옮겨 `server/dev.mjs`를 부릅니다. 가드를 부르는 줄을 빼면 단언이 앱을 멈춥니다(아래에서 그 줄을 빼 보입니다). 단언 줄만 빼면 가드는 그대로 걸려 있어 안전은 변하지 않습니다.
 - `mkbody.mjs`: 내장 문서와 질문으로 앱이 보내는 것과 같은 본문을 만듭니다.
 
 ```bash
@@ -197,7 +197,7 @@ const server = http.createServer((req, res) => {
     const send = (code, obj) => { res.statusCode = code; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(obj)); };
     if (req.method !== "POST" || req.url !== "/v1/evaluate") return send(404, { error: "not found" });
     const body = JSON.parse(raw), q = body.state.search;
-    appendFileSync(process.env.FAKE_LOG, JSON.stringify({ auth: req.headers.authorization, model: body.model, passages: body.state.passages.length, questions: Object.keys(body.questions).length }) + "\n");
+    appendFileSync(process.env.FAKE_LOG, JSON.stringify({ auth: /^Bearer fake-/.test(req.headers.authorization || "") ? req.headers.authorization : "(fake- 로 시작하지 않아 가렸습니다)", model: body.model, passages: body.state.passages.length, questions: Object.keys(body.questions).length }) + "\n");
     writeFileSync(process.env.LAST_REQ, JSON.stringify(body, null, 2));
     if (q.includes("__401__")) return send(401, {});
     if (q.includes("__429__")) return send(429, {});
@@ -220,8 +220,9 @@ const server = http.createServer((req, res) => {
 server.listen(port, "127.0.0.1", () => console.log(`가짜 게이트웨이: http://127.0.0.1:${port}`));
 EOF
 cat > "${LABDIR:?}/guard.mjs" <<'EOF'
-// 앱 프로세스 안의 가드. ai-gateway.vercel.sh/v1/evaluate 를 가짜 서버로 돌리고, 루프백 밖은 모두 막는다.
+// 앱 프로세스 안의 가드. ai-gateway.vercel.sh/v1/evaluate 를 가짜 서버로 돌리고, fetch·net·tls 연결은 루프백 밖이면 막는다(dns를 직접 부르는 코드는 막지 않는다).
 import net from "node:net";
+import tls from "node:tls";
 const FAKE = `http://127.0.0.1:${Number(process.env.FAKE_PORT)}/v1/evaluate`;
 const GATEWAY = "https://ai-gateway.vercel.sh/v1/evaluate";
 const LOOP = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
@@ -238,20 +239,21 @@ const hostOf = (args) => {
   if (typeof o === "object" && o !== null) return o.path ? "localhost" : o.host || "localhost";
   return typeof args[1] === "string" ? args[1] : "localhost";
 };
-for (const [owner, name] of [[net.Socket.prototype, "connect"], [net, "connect"], [net, "createConnection"]]) {
+for (const [owner, name] of [[net.Socket.prototype, "connect"], [net, "connect"], [net, "createConnection"], [tls, "connect"]]) {
   const real = owner[name];
   owner[name] = function (...args) {
     if (!LOOP.has(hostOf(args))) throw refuse(hostOf(args));
     return real.apply(this, args);
   };
 }
-// 가드가 정말 걸렸는지 예약 주소(192.0.2.1)로 먼저 확인한다. 걸리지 않았으면 여기서 멈춘다.
+// 가드가 정말 걸렸는지 예약 주소(192.0.2.1)로 fetch·net·tls 세 길을 먼저 확인한다. 걸리지 않았으면 여기서 멈춘다.
 let blocked = 0;
 try { await fetch("http://192.0.2.1/"); } catch (e) { if (e.code === "ELABGUARD") blocked++; }
 try { net.connect(80, "192.0.2.1"); } catch (e) { if (e.code === "ELABGUARD") blocked++; }
-if (blocked !== 2) { console.error("가드가 걸리지 않았습니다. 멈춥니다."); process.exit(1); }
+try { tls.connect(443, "192.0.2.1"); } catch (e) { if (e.code === "ELABGUARD") blocked++; }
+if (blocked !== 3) { console.error("가드가 걸리지 않았습니다. 멈춥니다."); process.exit(1); }
 globalThis[Symbol.for("needle.lab.guard")] = true;
-console.log("가드 확인: 예약 주소 두 길 모두 막힘");
+console.log("가드 확인: 예약 주소 세 길 모두 막힘");
 EOF
 cat > "${LABDIR:?}/serve.mjs" <<'EOF'
 // 앱 서버를 가드 아래서 띄운다. 가드를 부르는 줄이나 아래 단언을 빼면 앱은 돌지 않는다.
@@ -277,17 +279,18 @@ ls "$LABDIR"
 ```
 
 ```text
+docs-count.mjs
 fake-gateway.mjs
 guard.mjs
 mkbody.mjs
 serve.mjs
 ```
 
-Node 24에는 환경 변수의 프록시를 `fetch`에 쓰는 설정이 있습니다. 공식 문서(CLI 문서의 `--use-env-proxy`·`NODE_USE_ENV_PROXY=1`, v24.0.0에 추가, `NO_PROXY`는 시작 때 읽음)와 `http` 문서(`http.setGlobalProxyFromEnv`는 `fetch()`와 `http.request()` 둘 다에 켠다)를 읽었고, 후자의 예제는 `NO_PROXY=localhost,127.0.0.1`을 직접 적습니다. 루프백이 자동으로 빠진다는 말은 없습니다. 독자의 셸에 프록시가 있고 Node가 그것을 쓰도록 켜져 있으면 **루프백 요청도 독자의 프록시로 갈 수 있습니다.** 직접 확인해 보입니다. 프록시 주소는 아무도 듣지 않는 루프백 포트(9)입니다.
+Node 24에는 환경 변수의 프록시를 `fetch`에 쓰는 설정이 있습니다. 공식 문서(CLI 문서의 `--use-env-proxy`와 `NODE_USE_ENV_PROXY=1`은 v24.0.0, `--use-env-proxy`는 v24.5.0에 추가, `NO_PROXY`는 시작 때 읽음)와 `http` 문서(`http.setGlobalProxyFromEnv`는 `fetch()`와 `http.request()` 둘 다에 켠다)를 읽었고, 후자의 예제는 `NO_PROXY=localhost,127.0.0.1`을 직접 적습니다. 루프백이 자동으로 빠진다는 말은 없습니다. 독자의 셸에 프록시가 있고 Node가 그것을 쓰도록 켜져 있으면 **루프백 요청도 독자의 프록시로 갈 수 있습니다.** 직접 확인해 보입니다. 프록시 주소는 아무도 듣지 않는 루프백 포트(9)입니다.
 
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
-cat > "$LABDIR/proxytest.mjs" <<'EOF'
+cat > "${LABDIR:?}/proxytest.mjs" <<'EOF'
 // Node가 환경 변수의 프록시를 fetch에 쓰는지, 루프백 요청이 거기로 새는지 본다. 프록시 주소는 아무도 안 듣는 루프백 포트다.
 import http from "node:http";
 const s = http.createServer((q, r) => r.end("직접 도착")).listen(0, "127.0.0.1", async () => {
@@ -299,11 +302,11 @@ const s = http.createServer((q, r) => r.end("직접 도착")).listen(0, "127.0.0
 });
 EOF
 echo "--- 프록시 변수 없음(이 문서의 기본)"
-node "$LABDIR/proxytest.mjs"
+node "${LABDIR:?}/proxytest.mjs"
 echo "--- NODE_USE_ENV_PROXY=1 + HTTP_PROXY, NO_PROXY 없음"
-NODE_USE_ENV_PROXY=1 HTTP_PROXY=http://127.0.0.1:9 NO_PROXY= no_proxy= node "$LABDIR/proxytest.mjs"
+NODE_USE_ENV_PROXY=1 HTTP_PROXY=http://127.0.0.1:9 NO_PROXY= no_proxy= node "${LABDIR:?}/proxytest.mjs"
 echo "--- 같은 것 + NO_PROXY=127.0.0.1"
-NODE_USE_ENV_PROXY=1 HTTP_PROXY=http://127.0.0.1:9 NO_PROXY=127.0.0.1 no_proxy=127.0.0.1 node "$LABDIR/proxytest.mjs"
+NODE_USE_ENV_PROXY=1 HTTP_PROXY=http://127.0.0.1:9 NO_PROXY=127.0.0.1 no_proxy=127.0.0.1 node "${LABDIR:?}/proxytest.mjs"
 ```
 
 ```text
@@ -319,8 +322,8 @@ NODE_USE_ENV_PROXY=1 HTTP_PROXY=http://127.0.0.1:9 NO_PROXY=127.0.0.1 no_proxy=1
 
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
-grep -v '^import "./guard.mjs";' "$LABDIR/serve.mjs" > "$LABDIR/serve-noguard.mjs"
-PORT=$APP_PORT node "$LABDIR/serve-noguard.mjs" --production; echo "종료 코드 $?"
+grep -v '^import "./guard.mjs";' "${LABDIR:?}/serve.mjs" > "${LABDIR:?}/serve-noguard.mjs"
+PORT=$APP_PORT node "${LABDIR:?}/serve-noguard.mjs" --production; echo "종료 코드 $?"
 ```
 
 ```text
@@ -385,7 +388,7 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'fflate' imported from <LAB>/w
 
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
-cat > "$LABDIR/spans.mjs" <<'EOF'
+cat > "${LABDIR:?}/spans.mjs" <<'EOF'
 // 사용: node spans.mjs  → 서버가 문장을 어떻게 나누는지 본다(server/sentences.mjs 그대로)
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -393,7 +396,7 @@ const { sentenceSpans } = await import(pathToFileURL(resolve(process.env.NEEDLE_
 for (const t of ["취소는 7일 전까지 무료입니다. 이후에는 첫날 요금이 환불되지 않습니다. 문의는 3.5일 안에 주세요.", "Dr. Kim said no. Fees apply (see sec. 3.2). Done!"])
   console.log(JSON.stringify(sentenceSpans(t).map((s) => [s.start, s.end, s.text])));
 EOF
-node "$LABDIR/spans.mjs"
+node "${LABDIR:?}/spans.mjs"
 ```
 
 ```text
@@ -415,14 +418,14 @@ node "$LABDIR/spans.mjs"
 
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
-: > "$FAKE_LOG"
+: > "${FAKE_LOG:?}"
 up() { for _ in $(seq 1 50); do curl -s --noproxy '*' -o /dev/null "$1" && return 0; sleep 0.2; done; echo "서버가 안 떴습니다: $1"; return 1; }
-node "$LABDIR/fake-gateway.mjs" > "$LAB/logs/fake.out" 2>&1 &
-echo $! > "$LAB/logs/fake.pid"
-PORT=$APP_PORT node "$LABDIR/serve.mjs" --production > "$LAB/logs/app-a.out" 2>&1 &
-echo $! > "$LAB/logs/app-a.pid"
+node "${LABDIR:?}/fake-gateway.mjs" > "${LAB:?}/logs/fake.out" 2>&1 &
+echo $! > "${LAB:?}/logs/fake.pid"
+PORT=$APP_PORT node "${LABDIR:?}/serve.mjs" --production > "${LAB:?}/logs/app-a.out" 2>&1 &
+echo $! > "${LAB:?}/logs/app-a.pid"
 up "http://127.0.0.1:$FAKE_PORT/" ; up "http://127.0.0.1:$APP_PORT/api/health"
-cat "$LAB/logs/app-a.out"
+cat "${LAB:?}/logs/app-a.out"
 echo "--- health"
 curl -s --noproxy '*' "http://127.0.0.1:$APP_PORT/api/health"; echo
 echo "--- GET /api/search"
@@ -430,7 +433,7 @@ curl -s --noproxy '*' -w ' [%{http_code}]\n' "http://127.0.0.1:$APP_PORT/api/sea
 ```
 
 ```text
-가드 확인: 예약 주소 두 길 모두 막힘
+가드 확인: 예약 주소 세 길 모두 막힘
 Needle running at http://127.0.0.1:51913
 --- health
 {"configured":true,"model":"typesafe-ai/jev"}
@@ -442,7 +445,7 @@ Needle running at http://127.0.0.1:51913
 
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
-cat > "$LABDIR/show.mjs" <<'EOF'
+cat > "${LABDIR:?}/show.mjs" <<'EOF'
 // 사용: <응답 JSON> | node show.mjs  → 점수 순위와 강조 문장만 간추려 찍는다
 let raw = "";
 for await (const c of process.stdin) raw += c;
@@ -454,13 +457,13 @@ for (const s of r.scores.slice(0, 5))
 EOF
 for q in "hidden fees" "can I bring my dog?"; do
   echo "=== stay / $q"
-  node "$LABDIR/mkbody.mjs" stay "$q" > "$LAB/logs/body.json"
-  curl -s --noproxy '*' -H 'Content-Type: application/json' --data-binary @"$LAB/logs/body.json" "http://127.0.0.1:$APP_PORT/api/search" | node "$LABDIR/show.mjs"
+  node "${LABDIR:?}/mkbody.mjs" stay "$q" > "${LAB:?}/logs/body.json"
+  curl -s --noproxy '*' -H 'Content-Type: application/json' --data-binary @"${LAB:?}/logs/body.json" "http://127.0.0.1:$APP_PORT/api/search" | node "${LABDIR:?}/show.mjs"
 done
 echo "=== 가짜 서버가 받은 마지막 요청(질문 키)"
 node -e 'const b=JSON.parse(require("fs").readFileSync(process.env.LAST_REQ,"utf8"));console.log(Object.keys(b),b.model,JSON.stringify(b.state.search),b.state.passages.length+"개");const k=Object.keys(b.questions);console.log(k.length+"개:",k.slice(0,3).join(","),"...");console.log(b.questions.b2.type,Object.keys(b.questions.b2.criteria).join("/"));console.log(b.questions.focus_b2.type,JSON.stringify(b.questions.focus_b2.criteria))'
 echo "=== 가짜 서버 기록"
-cat "$FAKE_LOG"
+cat "${FAKE_LOG:?}"
 ```
 
 ```text
@@ -507,19 +510,19 @@ choice {"s0":"Check-in begins at 3 pm and check-out is by 11 am.","s1":"Early ar
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
 up() { for _ in $(seq 1 50); do curl -s --noproxy '*' -o /dev/null "$1" && return 0; sleep 0.2; done; echo "서버가 안 떴습니다: $1"; return 1; }
-PORT=$APP2_PORT NEEDLE_ACCESS_TOKEN=lab-token AI_GATEWAY_API_KEY=fake-from-shell node "$LABDIR/serve.mjs" --production > "$LAB/logs/app-b.out" 2>&1 &
-echo $! > "$LAB/logs/app-b.pid"
+PORT=$APP2_PORT NEEDLE_ACCESS_TOKEN=lab-token AI_GATEWAY_API_KEY=fake-from-shell node "${LABDIR:?}/serve.mjs" --production > "${LAB:?}/logs/app-b.out" 2>&1 &
+echo $! > "${LAB:?}/logs/app-b.pid"
 up "http://127.0.0.1:$APP2_PORT/api/health"
-node "$LABDIR/mkbody.mjs" stay "hidden fees" > "$LAB/logs/body.json"
+node "${LABDIR:?}/mkbody.mjs" stay "hidden fees" > "${LAB:?}/logs/body.json"
 B="http://127.0.0.1:$APP2_PORT/api/search"
 echo "--- 토큰 서버(B): 없음 / 틀림 / 맞음"
-curl -s --noproxy '*' -w ' [%{http_code}]\n' -H 'Content-Type: application/json' --data-binary @"$LAB/logs/body.json" "$B"
-curl -s --noproxy '*' -w ' [%{http_code}]\n' -H 'x-needle-token: wrong' -H 'Content-Type: application/json' --data-binary @"$LAB/logs/body.json" "$B"
-curl -s --noproxy '*' -o /dev/null -w '[%{http_code}]\n' -H 'x-needle-token: lab-token' -H 'Content-Type: application/json' --data-binary @"$LAB/logs/body.json" "$B"
+curl -s --noproxy '*' -w ' [%{http_code}]\n' -H 'Content-Type: application/json' --data-binary @"${LAB:?}/logs/body.json" "$B"
+curl -s --noproxy '*' -w ' [%{http_code}]\n' -H 'x-needle-token: wrong' -H 'Content-Type: application/json' --data-binary @"${LAB:?}/logs/body.json" "$B"
+curl -s --noproxy '*' -o /dev/null -w '[%{http_code}]\n' -H 'x-needle-token: lab-token' -H 'Content-Type: application/json' --data-binary @"${LAB:?}/logs/body.json" "$B"
 echo "--- health는 토큰 없이도 열린다(B)"
 curl -s --noproxy '*' -w ' [%{http_code}]\n' "http://127.0.0.1:$APP2_PORT/api/health"
 echo "--- 가짜 서버가 받은 Authorization(A는 .env, B는 셸)"
-grep -o '"auth":"[^"]*"' "$FAKE_LOG" | sort | uniq -c
+grep -o '"auth":"[^"]*"' "${FAKE_LOG:?}" | sort | uniq -c
 ```
 
 ```text
@@ -539,10 +542,11 @@ Origin과 CORS는 소스에 없습니다(`advanced_llm_apps/needle/server/dev.mj
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
 A="http://127.0.0.1:$APP_PORT/api/search"
-cat > "$LABDIR/probe.mjs" <<'EOF'
+cat > "${LABDIR:?}/probe.mjs" <<'EOF'
 // 사용: node probe.mjs <포트>  → 다른 사이트의 Origin을 단 요청 둘을 보내고 응답 머리를 간추려 찍는다
 import http from "node:http";
 import { readFileSync } from "node:fs";
+if (!process.env.LAB) throw new Error("LAB 없음");
 const body = readFileSync(process.env.LAB + "/logs/body.json");
 const send = (label, method, headers, payload) => new Promise((done) => {
   const req = http.request({ host: "127.0.0.1", port: Number(process.argv[2]), path: "/api/search", method, headers: { Origin: "http://evil.example", ...headers } }, (res) => {
@@ -558,22 +562,23 @@ const send = (label, method, headers, payload) => new Promise((done) => {
 await send("OPTIONS preflight", "OPTIONS", { "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type" });
 await send("POST text/plain  ", "POST", { "Content-Type": "text/plain" }, body);
 EOF
-node "$LABDIR/probe.mjs" "$APP_PORT"
+node "${LABDIR:?}/probe.mjs" "$APP_PORT"
 echo "--- 서버가 듣는 주소"
-netstat -ano | grep -E ":($APP_PORT|$APP2_PORT|$FAKE_PORT) .*LISTENING"
+{ netstat -ano 2>/dev/null || netstat -ltn; } | grep -E ":($APP_PORT|$APP2_PORT|$FAKE_PORT) .*LISTEN"
 echo "--- 한도 셋"
-cat > "$LABDIR/mklimits.mjs" <<'EOF'
+cat > "${LABDIR:?}/mklimits.mjs" <<'EOF'
 import { writeFileSync } from "node:fs";
+if (!process.env.LAB) throw new Error("LAB 없음");
 const dir = process.env.LAB + "/logs/";
 const blk = (i, n) => ({ id: `b${i}`, text: "x".repeat(n) });
 writeFileSync(dir + "big.json", JSON.stringify({ query: "fees", blocks: Array.from({ length: 300 }, (_, i) => blk(i, 2000)) }));
 writeFileSync(dir + "many.json", JSON.stringify({ query: "fees", blocks: Array.from({ length: 161 }, (_, i) => blk(i, 20)) }));
 writeFileSync(dir + "long-query.json", JSON.stringify({ query: "q".repeat(401), blocks: [blk(0, 20)] }));
 EOF
-node "$LABDIR/mklimits.mjs"
+node "${LABDIR:?}/mklimits.mjs"
 for f in big many long-query; do
-  printf '%s (%s바이트): ' "$f" "$(wc -c < "$LAB/logs/$f.json" | tr -d ' ')"
-  curl -s --noproxy '*' -w ' [%{http_code}]\n' -H 'Content-Type: application/json' --data-binary @"$LAB/logs/$f.json" "$A"
+  printf '%s (%s바이트): ' "$f" "$(wc -c < "${LAB:?}/logs/$f.json" | tr -d ' ')"
+  curl -s --noproxy '*' -w ' [%{http_code}]\n' -H 'Content-Type: application/json' --data-binary @"${LAB:?}/logs/$f.json" "$A"
 done
 ```
 
@@ -581,9 +586,9 @@ done
 OPTIONS preflight -> 405 cache-control: no-store | allow: POST
 POST text/plain   -> 200 cache-control: no-store
 --- 서버가 듣는 주소
-  TCP    127.0.0.1:51911        0.0.0.0:0              LISTENING       30732
-  TCP    127.0.0.1:51913        0.0.0.0:0              LISTENING       5140
-  TCP    127.0.0.1:51915        0.0.0.0:0              LISTENING       51408
+  TCP    127.0.0.1:51911        0.0.0.0:0              LISTENING       49492
+  TCP    127.0.0.1:51913        0.0.0.0:0              LISTENING       36536
+  TCP    127.0.0.1:51915        0.0.0.0:0              LISTENING       51132
 --- 한도 셋
 big (607117바이트): {"error":"Document is too large."} [413]
 many (7001바이트): {"error":"Search between 1 and 160 passages at a time."} [400]
@@ -593,7 +598,7 @@ long-query (466바이트): {"error":"Keep your search under 400 characters."} [4
 읽는 법은 이렇습니다.
 
 - 응답에 CORS 머리가 하나도 없고 preflight(`OPTIONS`)는 405입니다. 그런데 `Content-Type: text/plain`으로 보낸 POST는 **200으로 처리됐습니다.** 서버가 본문을 `JSON.parse`할 때 `Content-Type`을 보지 않기 때문입니다(`advanced_llm_apps/needle/api/search.js:12-18`).
-- MDN의 CORS 문서에 따르면 `text/plain`·`application/x-www-form-urlencoded`·`multipart/form-data`만 preflight 없는 "단순 요청"이 될 수 있고, `application/json`이나 `x-needle-token` 같은 사용자 머리는 preflight를 부릅니다. 그리고 응답에 `Access-Control-Allow-Origin`이 없으면 그 페이지의 스크립트는 응답을 **읽지 못합니다.** 그러니 내가 연 어떤 웹 페이지가 브라우저에서 `127.0.0.1:4199`로 `text/plain` POST를 쏘면(실제 브라우저로는 시험하지 않았고 위 규칙과 Node 요청으로 짐작한 것입니다), 결과는 못 읽어도 서버는 검색을 하고 **내 게이트웨이 키로 요금이 나갑니다.**
+- MDN의 CORS 문서에 따르면 `text/plain`·`application/x-www-form-urlencoded`·`multipart/form-data`만 preflight 없는 "단순 요청"이 될 수 있고, `application/json`이나 `x-needle-token` 같은 사용자 머리는 preflight를 부릅니다. 그리고 응답에 `Access-Control-Allow-Origin`이 없으면 그 페이지의 스크립트는 응답을 **읽지 못합니다.** 그러니 내가 연 어떤 웹 페이지가 브라우저에서 `127.0.0.1:4199`로 `text/plain` POST를 쏘면(실제 브라우저로는 시험하지 않았고, 위 규칙과 Node 요청으로 짐작한 것입니다), 결과는 못 읽어도 서버는 검색을 하고 **내 게이트웨이 키로 요금이 나갑니다.** 다만 크롬 142부터는 Local Network Access 허락 창이 공용 사이트에서 루프백으로 가는 요청에 사용자 허락을 요구합니다(Chrome 개발자 블로그, 이 문서는 확인하지 못했습니다). 그 창은 브라우저 쪽 방어이고 서버는 여전히 열려 있으므로 토큰 권고는 그대로입니다.
 - 토큰을 두면 이 길이 막힙니다. 토큰이 있으면 서버는 `x-needle-token` 없는 요청을 401로 거절하고, 그 머리를 붙이려는 다른 사이트의 요청은 preflight를 먼저 보내야 하는데 `OPTIONS`가 405라 거기서 멈춥니다. 앱 README는 "로컬에서는 토큰을 비워 두라"고 하지만, 키가 든 서버라면 로컬에서도 `NEEDLE_ACCESS_TOKEN`을 두고 확장 설정에 같은 값을 넣는 편이 안전합니다.
 - 한도: 본문이 512,000바이트를 넘으면 413(`advanced_llm_apps/needle/server/dev.mjs:32-39`, 서버는 읽는 도중 끊습니다), 문단 161개나 질문 401자는 400입니다(`advanced_llm_apps/needle/server/search.mjs:21-54`). 위 세 줄이 각각 607,117·7,001·466바이트 본문의 결과입니다.
 
@@ -611,13 +616,25 @@ long-query (466바이트): {"error":"Keep your search under 400 characters."} [4
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
 A="http://127.0.0.1:$APP_PORT/api/search"
 for q in __401__ __429__ __incomplete__; do
-  node "$LABDIR/mkbody.mjs" recipe "$q" > "$LAB/logs/body.json"
+  node "${LABDIR:?}/mkbody.mjs" recipe "$q" > "${LAB:?}/logs/body.json"
   printf '%s -> ' "$q"
-  curl -s --noproxy '*' -w ' [%{http_code}]\n' -H 'Content-Type: application/json' --data-binary @"$LAB/logs/body.json" "$A"
+  curl -s --noproxy '*' -w ' [%{http_code}]\n' -H 'Content-Type: application/json' --data-binary @"${LAB:?}/logs/body.json" "$A"
 done
 echo "--- 레시피 문서 한 건: 앱이 보낸 본문과 게이트웨이로 간 요청의 크기(바이트)"
-printf '앱 본문 %s\n' "$(wc -c < "$LAB/logs/body.json" | tr -d ' ')"
-node -e 'const b=JSON.parse(require("fs").readFileSync(process.env.LAST_REQ,"utf8"));const n=(x)=>JSON.stringify(x).length;console.log("게이트웨이 요청",n(b),"= state",n(b.state),"+ questions",n(b.questions),"(질문",Object.keys(b.questions).length+"개)")'
+printf '앱 본문 %s\n' "$(wc -c < "${LAB:?}/logs/body.json" | tr -d ' ')"
+cat > "${LABDIR:?}/sizes.mjs" <<'EOF'
+// 사용: node sizes.mjs  → 가짜 서버가 받은 마지막 요청이 무엇으로 이루어졌는지 바이트로 나눈다
+import { readFileSync } from "node:fs";
+if (!process.env.LAST_REQ) throw new Error("LAST_REQ 없음");
+const b = JSON.parse(readFileSync(process.env.LAST_REQ, "utf8"));
+const n = (x) => JSON.stringify(x).length;
+const qs = Object.values(b.questions);
+const sum = (f) => qs.reduce((t, q) => t + f(q), 0);
+const bool = qs.filter((q) => q.type === "boolean"), choice = qs.filter((q) => q.type === "choice");
+console.log(`요청 ${n(b)} = state ${n(b.state)} + questions ${n(b.questions)} (질문 ${qs.length}개: boolean ${bool.length}, choice ${choice.length})`);
+console.log(`질문 지시문 ${sum((q) => n(q.instructions))} · boolean 기준 ${bool.reduce((t, q) => t + n(q.criteria), 0)} · choice 보기(문장 사본) ${choice.reduce((t, q) => t + n(q.criteria), 0)} · 문단 본문 ${n(b.state.passages.map((p) => p.text))}`);
+EOF
+node "${LABDIR:?}/sizes.mjs"
 ```
 
 ```text
@@ -626,12 +643,13 @@ __429__ -> {"error":"Too many searches. Give it a moment and try again."} [429]
 __incomplete__ -> {"error":"Jev returned an incomplete evaluation. Please try again."} [502]
 --- 레시피 문서 한 건: 앱이 보낸 본문과 게이트웨이로 간 요청의 크기(바이트)
 앱 본문 1601
-게이트웨이 요청 10988 = state 1603 + questions 9336 (질문 15개)
+요청 10988 = state 1603 + questions 9336 (질문 15개: boolean 8, choice 7)
+질문 지시문 5511 · boolean 기준 1656 · choice 보기(문장 사본) 1353 · 문단 본문 1412
 ```
 
 `search()`는 게이트웨이의 401을 "서버의 키가 거절됐다"로, 402·403·429도 각자의 문구로 바꾸지만, HTTP 상태는 429만 그대로고 나머지는 모두 502입니다(`advanced_llm_apps/needle/server/search.mjs:142-154`). 그래서 확장 쪽에서 "502"만 보면 키 문제인지 일시 장애인지 알 수 없고 문구를 읽어야 합니다. 게이트웨이에 닿지 못하면(네트워크 오류) `Could not reach AI Gateway`, 45초가 넘으면 `Jev took too long`입니다(`advanced_llm_apps/needle/server/search.mjs:132-141`). 확장은 55초를 기다립니다(`advanced_llm_apps/needle/extension/background.js:32`). Vercel 설정의 함수 제한은 60초(`advanced_llm_apps/needle/vercel.json:5`)라 이 세 숫자가 45 < 55 < 60으로 겹치지 않게 놓였습니다. `answers`가 비어 있으면 `incomplete evaluation`으로 502이고, 불완전한 응답 한 조각이라도 있으면 전체가 실패합니다(검색 결과를 일부만 돌려주지 않습니다).
 
-크기 쪽은 `makePayload`가 본문 문단을 `state.passages`에 한 번 싣고, 문장이 둘 이상인 문단마다 선택 질문의 보기에 문장을 다시 싣기 때문에 생깁니다. 레시피 문서는 앱 본문 1,601바이트가 게이트웨이 요청 10,988바이트(질문 15개)가 됐습니다. 약 6.9배입니다. 진짜 요금은 입력 토큰으로 계산되므로 이 배수가 중요합니다. 이 문서는 진짜 단가를 모르고, 가짜 서버의 `usage`(길이를 4로 나눈 값)는 지어낸 값입니다.
+크기는 `makePayload`가 만드는 질문에서 생깁니다. 레시피 문서는 앱 본문 1,601바이트가 게이트웨이 요청 10,988바이트(질문 15개, 약 6.9배)가 됐고, 그 가운데 질문 쪽이 9,336바이트입니다. 위 `sizes.mjs`가 나눈 것을 보면 **질문마다 똑같이 붙는 영어 지시문**이 5,511바이트, 불리언 질문의 기준(`true`/`false` 설명)이 1,656바이트로 가장 큽니다(`advanced_llm_apps/needle/server/search.mjs:60-65, 71`). 문장이 둘 이상인 문단의 선택 질문에 문장이 다시 실리는 몫은 1,353바이트이고, 문단 본문 자체는 1,412바이트입니다. 질문 수는 문단 수 + 문장이 둘 이상인 문단 수라서 문서가 길어질수록 이 고정 문구가 그 수만큼 되풀이됩니다. 진짜 요금은 입력 토큰으로 계산되므로 이 배수가 중요합니다. 이 문서는 진짜 단가를 모르고, 가짜 서버의 `usage`(길이를 4로 나눈 값)는 지어낸 값입니다.
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
@@ -645,7 +663,7 @@ __incomplete__ -> {"error":"Jev returned an incomplete evaluation. Please try ag
 
 1. 아이콘을 누르면 `background.js`가 `text-range.js`와 `content.js`를 그 탭에 넣고, 넣지 못하면(크롬 시스템 쪽 등) 설정 쪽을 엽니다(`advanced_llm_apps/needle/extension/background.js:5-14`). 이미 떠 있으면 `content.js`가 패널을 닫습니다(`advanced_llm_apps/needle/extension/content.js:2-6`). 패널은 shadow root(`mode: "open"`)에 그려져 페이지 CSS와 섞이지 않습니다(`advanced_llm_apps/needle/extension/content.js:10`).
 2. 글자를 입력하고 0.7초 쉬면 검색합니다(`advanced_llm_apps/needle/extension/content.js:201-208`). `collect()`는 `p,li,pre,blockquote,h1~h4,td,figcaption`를 모읍니다. `nav,header,footer,script,style`과 편집 가능한 영역 안, 보이지 않는 요소는 빼고, 안에 다른 후보를 품은 요소는 건너뛰어 가장 안쪽 문단만 남깁니다. 12자 미만은 버리고 2,200자를 넘는 문단은 건너뛰며 "일부 생략"이라 알립니다. 160개·60,000자에서 멈춥니다(`advanced_llm_apps/needle/extension/content.js:26-60`). 서버 한도와 같은 숫자라서 서버가 `invalid passage`로 거절할 일이 드뭅니다.
-3. 검색은 `chrome.runtime.sendMessage`로 서비스 워커에 맡기고(`advanced_llm_apps/needle/extension/content.js:144-150`), 워커가 저장소에서 서버 주소·토큰을 읽어 `fetch(`${server}/api/search`)`를 보냅니다(`advanced_llm_apps/needle/extension/background.js:15-33`). 페이지가 아니라 워커가 보내고, `manifest.json`의 `host_permissions`에 `127.0.0.1`·`localhost`가 선언돼 있습니다(`advanced_llm_apps/needle/extension/manifest.json:6-8`). 서버가 CORS 머리를 하나도 주지 않는데도 확장이 서버를 부를 수 있는 것은 이 권한 덕이라고 알려져 있지만, 이 문서는 브라우저에서 확인하지 못했습니다.
+3. 검색은 `chrome.runtime.sendMessage`로 서비스 워커에 맡기고(`advanced_llm_apps/needle/extension/content.js:144-150`), 워커가 저장소에서 서버 주소·토큰을 읽어 `` fetch(`${server}/api/search`) ``를 보냅니다(`advanced_llm_apps/needle/extension/background.js:15-33`). 페이지가 아니라 워커가 보내고, `manifest.json`의 `host_permissions`에 `127.0.0.1`·`localhost`가 선언돼 있습니다(`advanced_llm_apps/needle/extension/manifest.json:6-8`). 서버가 CORS 머리를 하나도 주지 않는데도 확장이 서버를 부를 수 있는 것은 이 권한 덕이라고 알려져 있지만, 이 문서는 브라우저에서 확인하지 못했습니다.
 4. 응답의 `matches`마다 문단 전체를 옅은 초록(`needle-matches`), 서버가 고른 문장을 진한 초록(`needle-sentences`), 지금 고른 것을 가장 진한 초록(`needle-active`)으로 칠합니다. CSS Custom Highlight API(`CSS.highlights`, `Highlight`)를 쓰므로 DOM을 바꾸지 않습니다. 이 API가 없으면 칠하지 않고 스크롤만 합니다(`advanced_llm_apps/needle/extension/content.js:70-118`). `manifest.json`의 `minimum_chrome_version`은 105입니다(`advanced_llm_apps/needle/extension/manifest.json:35`).
 5. 서버가 준 글자 위치를 `NeedleTextRange`가 DOM `Range`로 바꿉니다. 문단의 `textContent`가 보낸 글과 달라졌으면(그 사이 페이지가 바뀌었으면) `null`을 돌려주고 그 문장은 칠하지 않습니다. 앞의 공백 길이를 더하고, 텍스트 노드를 차례로 걸으며 시작·끝 노드를 찾습니다. 그래서 문장이 `<b>`나 `<a>`로 쪼개진 텍스트 노드를 가로질러도 됩니다(`advanced_llm_apps/needle/extension/text-range.js:1-39`, Step 3의 시험이 이 부분을 돌렸습니다).
 6. 설정 쪽은 주소가 `http`나 `https`인지, 원격이면 `https`인지 보고(`advanced_llm_apps/needle/extension/options.js:12-23`), 그 서버에 대한 권한을 `chrome.permissions.request`로 요청합니다. 요청하는 출처는 `프로토콜//호스트/*` 꼴이라 포트는 들어가지 않습니다(`advanced_llm_apps/needle/extension/options.js:24-26`). 토큰은 `chrome.storage.local`에 평문으로 저장됩니다(`advanced_llm_apps/needle/extension/options.js:28-31`). 앱 README도 이를 밝힙니다.
@@ -660,43 +678,57 @@ __incomplete__ -> {"error":"Jev returned an incomplete evaluation. Please try ag
 ```bash
 source "${LAB:?LAB을 먼저 정하세요}/env.sh" || return
 for n in app-a app-b fake; do
-  pid=$(cat "$LAB/logs/$n.pid" 2>/dev/null) || continue
+  pid=$(cat "${LAB:?}/logs/$n.pid" 2>/dev/null) || continue
   if kill -0 "$pid" 2>/dev/null; then kill "$pid" && echo "$n($pid) 끔"; else echo "$n($pid) 이미 없음"; fi
 done
 sleep 1
-netstat -ano | grep -E ":($APP_PORT|$APP2_PORT|$FAKE_PORT) .*LISTENING" || echo "듣는 서버 없음"
+for p in "$FAKE_PORT" "$APP_PORT" "$APP2_PORT"; do
+  if curl -s --noproxy '*' -o /dev/null "http://127.0.0.1:$p/"; then echo "$p 아직 응답함"; else echo "$p 꺼짐"; fi
+done
 ```
 
 ```text
-app-a(918) 끔
-app-b(2584) 이미 없음
-fake(917) 끔
-듣는 서버 없음
+app-a(2231) 끔
+app-b(2320) 끔
+fake(2230) 끔
+51911 꺼짐
+51913 꺼짐
+51915 꺼짐
 ```
-
-(둘째 줄의 "이미 없음"은 이 문서의 실습 중 두 번째 서버를 앞 단계 끝에서 이미 끈 경우입니다. 이 문서의 순서대로 따라 하면 셋 다 "끔"이 나옵니다.)
 
 ![Step 7까지의 구성](diagrams/step7.svg)
 
-**확인.** 마지막 줄이 `듣는 서버 없음`이면 됩니다.
+**확인.** 마지막 세 줄이 모두 `꺼짐`이면 됩니다. (포트가 닫혔는지는 `curl`로 봅니다. `netstat` 출력은 운영체제마다 다릅니다.)
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-페이지에서 질문을 입력하고 0.7초 쉬면 `content.js`가 보이는 문단을 모아(최대 160개) 서비스 워커에 `NEEDLE_SEARCH`로 맡기고, 워커가 `POST /api/search`를 보냅니다. 서버는 토큰과 크기를 확인한 뒤 `search()`에 본문을 넘깁니다. `search()`는 본문을 검증하고(`validate`) 질문을 만든 뒤(`makePayload`) 게이트웨이에 `Bearer` 키로 `POST /v1/evaluate`를 보냅니다. 게이트웨이의 `answers`를 `parseAnswers`가 해석하고, 문단마다 점수와 고른 문장의 글자 위치를 점수순으로 늘어놓은 뒤 `0.58` 이상만 `matches`로 가려 서버가 JSON으로 돌려줍니다. 워커가 그것을 `content.js`에 넘기면 `content.js`가 글자 위치를 DOM 범위로 바꿔 형광펜을 칠하고 "n of m connections"를 띄웁니다. 그림에는 문단 모으기와 토큰 검사를 따로 그리지 않았습니다. Step 7과 Step 5가 그 둘을 다룹니다.
+아래 다섯 그림이 이 그림의 화살표 사이에서 일어나는 일을 나눠 그렸습니다. 같은 메시지는 한 그림에만 있습니다.
+
+![설정 읽기·쓰기](diagrams/extra-sequence-settings.svg)
+
+![서버 문 앞의 접근 검사](diagrams/extra-sequence-token.svg)
+
+![서버 안의 호출](diagrams/extra-sequence-call.svg)
+
+![검증·질문·점수](diagrams/extra-sequence-search.svg)
+
+![강조 칠하기](diagrams/extra-sequence-paint.svg)
+
+페이지에서 질문을 입력하고 0.7초 쉬면 `content.js`가 보이는 문단을 모읍니다(`collect`, 최대 160개). 그것을 `NEEDLE_SEARCH`로 워커에 맡기면 워커는 저장소에서 서버 주소·토큰을 읽고(설정 그림, 그 값은 `options.js`가 저장한 것) `POST /api/search`를 보냅니다. 서버 안에서는 `dev.mjs`가 `http.mjs`의 `accessError`로 요청 머리를 보고 본문을 512,000바이트까지 읽은 뒤 `api/search.js`의 핸들러를 부르고, 핸들러가 `accessError`를 한 번 더 부른 다음 `search()`를 부릅니다(접근 검사 그림과 호출 그림). `search()`는 본문을 검증하고(`validate`) 질문을 만들며(`makePayload`, 이때 `sentences.mjs`가 문장 범위를 줍니다) 게이트웨이에 `Bearer` 키로 `POST /v1/evaluate`를 보내고, `answers`를 `parseAnswers`가 해석해 `0.58` 이상만 `matches`로 가립니다(검증·질문·점수 그림). 결과는 `api/search.js`를 거쳐 `dev.mjs`가 `200` JSON으로 워커에 돌려주고, 워커가 `sendResponse`로 `content.js`에 넘깁니다(첫 그림 끝). `content.js`는 `text-range.js`로 글자 위치를 DOM 범위로 바꿔 형광펜을 칠하고 "n of m connections"를 띄웁니다(강조 그림). 아이콘을 누를 때 워커가 스크립트를 넣는 일은 [`extra-extension`](diagrams/extra-extension.svg)에 있습니다.
 
 ## 실행 체크리스트
 
 - [ ] `LAB`이 저장소 밖의 새 절대 경로이고, 점검이 통과해 `env.sh`가 만들어졌다
 - [ ] 사본에 `server`·`api`·`src`·`tests`·`extension`이 있고 `.env`에는 가짜 키 한 줄뿐이다
-- [ ] `guard.mjs`가 "예약 주소 두 길 모두 막힘"을 찍는다
+- [ ] `guard.mjs`가 "예약 주소 세 길 모두 막힘"을 찍는다
 - [ ] 시험 13개가 통과하고 `package.test.mjs`는 `fflate`가 없어 실패한다(설치하지 않았으므로 정상)
 - [ ] `/api/health`가 `configured: true`, `GET /api/search`가 405다
 - [ ] 같은 질문의 일치가 5개(hidden fees)와 2개(can I bring my dog?)다
 - [ ] 토큰 서버가 없음·틀림 401, 맞음 200이고, 단순 요청(`text/plain`)이 200으로 처리된다
 - [ ] 413·400·400이 나오고, `__401__`·`__429__`·`__incomplete__`가 502·429·502다
-- [ ] 마지막에 `듣는 서버 없음`이다
+- [ ] 마지막 세 포트가 모두 `꺼짐`이다
 - [ ] 원본 폴더 `advanced_llm_apps/needle`에 `git status`로 본 변경이 없다
 
 ## 문제 해결
@@ -722,7 +754,7 @@ fake(917) 끔
 ## 더 해보기
 
 - 스크래치 사본의 `server/dev.mjs`에서 `/api/search`를 처리하기 전에 `Origin` 머리가 있고 허용 목록(없음, 크롬 확장 `chrome-extension://…`, `http://127.0.0.1:4199`)에 없으면 403으로 거절하게 고치고, `probe.mjs`의 `text/plain` POST가 200에서 403으로 바뀌는지 보세요. 확장의 워커가 보내는 요청에 어떤 `Origin`이 붙는지는 이 문서가 확인하지 못했습니다.
-- `advanced_llm_apps/needle/server/search.mjs:67-75`처럼 문장을 보기로 다시 싣는 대신 문장 번호만 `state`에서 고르게 바꾸면 요청이 얼마나 줄지 Step 6의 크기 측정(`last-request.json`)으로 재 보세요. 모델이 같은 정확도를 내는지는 가짜 서버로는 알 수 없습니다. 진짜 키를 가진 뒤에 같은 질문 열 개로 견줘 보세요.
+- `advanced_llm_apps/needle/server/search.mjs:67-75`처럼 문장을 보기로 다시 싣는 줄을 빼고 문장 번호만 고르게 해도 줄어드는 것은 Step 6에서 잰 1,353바이트쯤입니다. 더 큰 몫은 질문마다 되풀이되는 지시문(5,511바이트)이니, 지시문을 짧게 고치거나 문단 id만 다르게 하나로 합친 질문 구조를 스크래치 사본에 만들고 `sizes.mjs`로 요청 크기를 다시 재 보세요. 모델이 같은 정확도를 내는지는 가짜 서버로는 알 수 없으니 진짜 키를 가진 뒤에 같은 질문 열 개로 견줘 보세요.
 - `sentences.mjs`에 `Dr.`·`sec.` 같은 영어 약어 목록을 두어 그 뒤에서는 끊지 않게 고치고 `spans.mjs`로 `Dr. Kim said no.`가 한 문장으로 나오는지 보세요. 한국어 약어(`제3조 제1항` 같은 법령 인용)는 이 문서가 시험하지 않았습니다.
 
 ## 다음 날 예고

@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+options: "options.js" { class: ours }
+store: "chrome.storage" { class: store }
+bg: "background.js" { class: ours }
+
+options -> store: "set({server, token})"
+bg -> store: "get([server, token])"
+store -> bg: "주소 · 토큰"

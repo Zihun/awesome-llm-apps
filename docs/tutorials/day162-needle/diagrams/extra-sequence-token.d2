@@ -1,0 +1,12 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+dev: "dev.mjs" { class: ours }
+http: "http.mjs" { class: ours }
+api: "api/search.js" { class: ours }
+
+dev -> http: "accessError(요청 머리)"
+http -> dev: "null 또는 401·503"
+dev -> dev: "본문 읽기 (512,000B)"
+api -> http: "accessError 다시"
+http -> api: "null 또는 401·503"

@@ -1,0 +1,11 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+dev: "dev.mjs" { class: ours }
+api: "api/search.js" { class: ours }
+search: "search.mjs" { class: ours }
+
+dev -> api: "searchHandler(req, res)"
+api -> search: "search(JSON.parse(raw))"
+search -> api: "결과 (scores · matches)"
+api -> dev: "200 JSON"

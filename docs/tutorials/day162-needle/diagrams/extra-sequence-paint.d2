@@ -1,0 +1,10 @@
+...@../../_tools/theme
+shape: sequence_diagram
+
+user: "독자" { class: person }
+content: "content.js" { class: ours }
+range: "text-range.js" { class: ours }
+
+content -> range: "NeedleTextRange(문단, focus)"
+range -> content: "DOM Range"
+content -> user: "강조 문장 · n of m connections"
