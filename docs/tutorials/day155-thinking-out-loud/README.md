@@ -627,4 +627,4 @@ ref-echo.md: 137 words, 1 problem(s)
 
 ## 다음 날 예고
 
-[Day 156 · 🏺 Commit Archaeologist](../day156-commit-archaeologist/README.md) — 같은 볼륨의 세 번째 스킬이지만 오늘과 달리 스크립트가 있습니다. `agent_skills/commit-archaeologist`에는 `scripts/archaeologist.py`(388줄, git을 하위 프로세스로 부름), `references/reading-git-history.md`(82줄), `SKILL.md`(132줄)가 있고, 파일이나 줄 범위가 왜 그 모양이 되었는지를 로컬 git 이력에서 복원합니다. 오늘은 약속을 읽는 날이었고 다음 날은 그 약속을 코드가 지킵니다.
+[Day 156 · 🏺 Commit Archaeologist](../day156-commit-archaeologist/README.md) — 같은 볼륨의 세 번째 스킬이지만 오늘과 달리 스크립트가 있습니다. `agent_skills/commit-archaeologist`에는 `scripts/archaeologist.py`(390줄, git을 하위 프로세스로 부름), `references/reading-git-history.md`(82줄), `SKILL.md`(132줄)가 있고, 파일이나 줄 범위가 왜 그 모양이 되었는지를 로컬 git 이력에서 복원합니다. 오늘은 약속을 읽는 날이었고 다음 날은 그 약속을 코드가 지킵니다.
