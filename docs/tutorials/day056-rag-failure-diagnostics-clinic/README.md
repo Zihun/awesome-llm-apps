@@ -1,10 +1,10 @@
 # Day 056 · 🩺 RAG Failure Diagnostics Clinic
 
-> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 70분 · API 비용 대략 진단 1건에 GPT-4o 채팅 완성 1회 분, 대략치(키가 없어 실제 과금은 확인 못함) — `OPENAI_BASE_URL`을 다른 호환 엔드포인트로 돌리면 비용 없는 실행도 가능 · 원본 앱: `rag_tutorials/rag_failure_diagnostics_clinic`
+> 볼륨 5 📀 RAG · 난이도 ★★☆ · 예상 소요 80분 · API 비용 대략 진단 1건에 GPT-4o 채팅 완성 1회 분, 대략치(키가 없어 실제 과금은 확인 못함) — `OPENAI_BASE_URL`을 다른 호환 엔드포인트로 돌리면 비용 없는 실행도 가능 · 원본 앱: `rag_tutorials/rag_failure_diagnostics_clinic`
 
 ## 오늘 만들 것
 
-지난 9일은 전부 검색 파이프라인을 조립했습니다. 오늘은 파이프라인을 하나도 만들지 않습니다. 의존성은 `openai>=1.6.0` 한 줄뿐이고(이 문서를 쓰며 설치했을 때는 **openai 3.18.0**이 나머지 13개 패키지와 함께 받아졌습니다, 직접 확인), 벡터 저장소도 임베딩도 Streamlit도 없습니다. 완성물은 299줄짜리 커맨드라인 스크립트 하나로, 사용자가 겪은 버그를 문장으로 묘사하면 모델에게 그 문장을 12개의 이름 붙은 실패 패턴(P01~P12, `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:16-77`) 중 하나로 분류시키고 근거와 최소 수정안을 받아 `rag_failure_report.json`에 저장합니다. `build_system_prompt()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:137-168`)는 이 12개 패턴을 하나도 빠짐없이 id·이름·한줄 요약째로 시스템 프롬프트에 통째로 밀어넣지만, 응답 형식을 강제하는 장치 — JSON 스키마도, 함수 호출(tool/function calling)도 — 는 어디에도 없습니다(소스로 확인). "Primary pattern / Secondary candidates / Reasoning / Minimal structural fix" 네 섹션은 그저 프롬프트 문장으로 부탁할 뿐입니다. 그래서 이 도구가 실제로 보는 것은 인덱스도 로그도 트레이스도 아니라 사용자가 타이핑한 문장 그 자체뿐입니다 — 검색이 정말 있었는지, 벡터가 정말 그 값이었는지 이 스크립트는 확인할 방법이 없고 오직 사용자의 서술을 신뢰합니다. 흥미로운 지점은 이 12개 이름표를 앞선 6일(Day 047~052)이 실제로 겪은 결함에 대어 보면 몇 개는 정확히 들어맞고 몇 개는 이름만 비슷할 뿐 실제로는 다르다는 것인데, 자세한 대조는 Step 2에 모아 뒀습니다. 키가 없는 독자에게 중요한 사실 하나 — `make_client_and_model()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:171-183`)이 `OPENAI_API_KEY`가 없으면 `getpass()`로 터미널을 막지만, 그건 `main()`이 이 함수를 부른 뒤의 일입니다. `PATTERNS`와 `build_system_prompt()`는 그 앞에 있는 순수 파이썬이라 키도 네트워크도 없이 그대로 실행되고 12개 패턴 전문을 그대로 보여줍니다(직접 확인, Step 1·3) — 이 문서 대부분의 확인이 여기 서 있습니다. 기본값도 짚어 둘 만합니다 — 키를 주지 않으면 베이스 URL은 `"https://api.openai.com/v1"`, 모델은 `"gpt-4o"`로 떨어집니다(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:177-178`, 직접 확인). 마지막으로 `run_once()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:240-282`)의 리포트 저장은 응답 내용을 전혀 검사하지 않습니다 — API 호출 자체가 예외를 던지면 리포트 파일은 아예 안 생기지만, 호출은 성공했는데 모델이 거절하거나 형식을 안 지킨 답을 내놓아도 그 텍스트가 그대로 `assistant_markdown`에 저장됩니다(직접 확인, Step 6). 완성하면 터미널에서 버그를 하나 고르거나 붙여넣어 진단 마크다운과 JSON 리포트를 받는 과정을 보게 됩니다. 아래는 완성된 구조입니다.
+지난 9일은 전부 검색 파이프라인을 조립했습니다. 오늘은 파이프라인을 하나도 만들지 않습니다. 의존성은 `openai>=1.6.0` 한 줄뿐이고(이 문서를 쓰며 설치했을 때는 **openai 3.36.0**이 나머지 13개 패키지와 함께 받아졌습니다, 직접 확인), 벡터 저장소도 임베딩도 Streamlit도 없습니다. 완성물은 324줄짜리 커맨드라인 스크립트 하나로, 사용자가 겪은 버그를 문장으로 묘사하면 모델에게 그 문장을 12개의 이름 붙은 실패 패턴(P01~P12, `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:16-77`) 중 하나로 분류시키고 근거와 최소 수정안을 받아 `rag_failure_report.json`에 저장합니다. `build_system_prompt()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:137-168`)는 이 12개 패턴을 하나도 빠짐없이 id·이름·한줄 요약째로 시스템 프롬프트에 통째로 밀어넣지만, 응답 형식을 강제하는 장치 — JSON 스키마도, 함수 호출(tool/function calling)도 — 는 어디에도 없습니다(소스로 확인). "Primary pattern / Secondary candidates / Reasoning / Minimal structural fix" 네 섹션은 그저 프롬프트 문장으로 부탁할 뿐입니다. 그래서 이 도구가 실제로 보는 것은 인덱스도 로그도 트레이스도 아니라 사용자가 타이핑한 문장 그 자체뿐입니다 — 검색이 정말 있었는지, 벡터가 정말 그 값이었는지 이 스크립트는 확인할 방법이 없고 오직 사용자의 서술을 신뢰합니다. 흥미로운 지점은 이 12개 이름표를 앞선 6일(Day 047~052)이 실제로 겪은 결함에 대어 보면 몇 개는 정확히 들어맞고 몇 개는 이름만 비슷할 뿐 실제로는 다르다는 것인데, 자세한 대조는 Step 2에 모아 뒀습니다. 키가 없는 독자에게 중요한 사실 하나 — `make_client_and_model()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:171-183`)이 `OPENAI_API_KEY`가 없으면 `getpass()`로 터미널을 막지만, 그건 `main()`이 이 함수를 부른 뒤의 일입니다. `PATTERNS`와 `build_system_prompt()`는 그 앞에 있는 순수 파이썬이라 키도 네트워크도 없이 그대로 실행되고 12개 패턴 전문을 그대로 보여줍니다(직접 확인, Step 1·3) — 이 문서 대부분의 확인이 여기 서 있습니다. 기본값도 짚어 둘 만합니다 — 키를 주지 않으면 베이스 URL은 `"https://api.openai.com/v1"`, 모델은 `"gpt-4o"`로 떨어집니다(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:177-178`, 직접 확인). 마지막으로 리포트 저장의 문턱입니다. 이 문서를 처음 쓴 때의 `run_once()`는 응답 내용을 전혀 검사하지 않아서, 호출은 성공했는데 모델이 거절하거나 형식을 안 지킨 답을 내놓아도 그 텍스트가 그대로 `assistant_markdown`에 저장됐습니다. 원본이 PR #1234(커밋 `e2ee7c71`, 2026-10-18 병합)에서 이를 고쳐 `extract_diagnosis()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:240-258`)를 더했습니다. 지금은 고를 답이 없거나, 답이 비었거나, 토큰 한도로 잘렸거나, `Primary pattern` 절이 없으면 "… Report not saved."를 찍고 저장하지 않습니다(직접 확인, Step 6). 남은 틈은 이 검사가 글자 `primary pattern`이 들어 있는지만 본다는 것입니다 — P01~P12 id가 유효한지는 아직 보지 않습니다(직접 확인, Step 6). 완성하면 터미널에서 버그를 하나 고르거나 붙여넣어 진단 마크다운과 JSON 리포트를 받는 과정을 보게 됩니다. 아래는 완성된 구조입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -25,9 +25,10 @@
 | 시스템 프롬프트 조립 (`build_system_prompt`) | `PATTERNS` 전체를 규칙 설명과 함께 하나의 텍스트로 조립 | `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:137-168` |
 | 클라이언트·모델 설정 (`make_client_and_model`) | 키·베이스 URL·모델 이름을 환경변수에서 읽고, 없으면 `getpass()`/기본값으로 채움 | `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:171-183` |
 | 버그 선택 (`choose_bug_description`) | 내장 예시 3개 메뉴 또는 자유 붙여넣기 수집 | `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:186-237` |
-| 진단 실행 (`run_once`) | 완성 호출, 콘솔 출력, 리포트 저장(성공 시에만) | `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:240-282` |
+| 답 검사 (`extract_diagnosis`) | 응답에서 답을 꺼내고, 비었거나 잘렸거나 `Primary pattern` 절이 없으면 문제 문장을 돌려줌 (원본 PR #1234에서 추가) | `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:240-258` |
+| 진단 실행 (`run_once`) | 완성 호출, 콘솔 출력, 문제가 없을 때만 리포트 저장 | `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:261-307` |
 | OpenAI 호환 API | 시스템 프롬프트+버그 설명을 받아 마크다운 진단 생성 | 코드 없음 (외부 서비스) |
-| `rag_failure_report.json` | 마지막 진단 1건의 `bug_description`·`model`·`assistant_markdown`을 저장 | `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:271-280`, `rag_tutorials/rag_failure_diagnostics_clinic/.gitignore:1` |
+| `rag_failure_report.json` | 마지막으로 저장된 진단 1건의 `bug_description`·`model`·`assistant_markdown`을 저장 | `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:296-305`, `rag_tutorials/rag_failure_diagnostics_clinic/.gitignore:1` |
 
 ## 단계별 진행
 
@@ -53,7 +54,7 @@ uv pip install -r requirements.txt
 openai>=1.6.0
 ```
 
-(1줄입니다.) 이 문서를 쓰며 설치했을 때는 **openai 3.18.0**이 총 14개 패키지와 함께 받아졌습니다(직접 확인) — `anyio`, `pydantic`/`pydantic-core`, `jiter`, `sniffio`, `typing-extensions`는 익숙하지만, `openai`가 실제로 요구하는 HTTP 계층은 `httpx`/`httpcore`가 아니라 **`httpx2`/`httpcore2`**입니다(`uv pip show openai`의 `Requires:` 줄로 직접 확인) — 이 볼륨의 다른 어떤 날에도 나오지 않은 패키지 이름입니다.
+(1줄입니다.) 이 문서를 쓰며 설치했을 때는 **openai 3.36.0**이 총 14개 패키지와 함께 받아졌습니다(직접 확인) — `anyio`, `pydantic`/`pydantic-core`, `jiter`, `sniffio`, `typing-extensions`는 익숙하지만, `openai`가 실제로 요구하는 HTTP 계층은 `httpx`/`httpcore`가 아니라 **`httpx2`/`httpcore2`**입니다(`uv pip show openai`의 `Requires:` 줄로 직접 확인) — 이 볼륨의 다른 어떤 날에도 나오지 않은 패키지 이름입니다.
 
 코드는 이 한 줄이 전부지만 "키 없이 어디까지 되는가"가 이 문서 전체를 가르는 선이므로 지금 확정해 둡니다: `PATTERNS`와 `build_system_prompt()`는 모듈을 그냥 `import`하기만 해도 정의되는 순수 파이썬입니다 — `getpass()`도 API 호출도 이 시점에는 등장하지 않습니다(아래 확인이 그 증거입니다). `python rag_failure_diagnostics_clinic.py`처럼 파일을 그대로 실행하는 것과 `import rag_failure_diagnostics_clinic`은 다른 이야기입니다 — 실행은 `main()`을 부르고, `import`는 부르지 않습니다(소스로 확인, `if __name__ == "__main__":` 가드). 이 문서는 이후에도 스크립트를 맨몸으로 실행하지 않고 함수를 직접 불러 씁니다 — 그래야 `getpass()`가 터미널을 막는 일 없이 정확히 무엇이 어디서 멈추는지 재현할 수 있습니다.
 
@@ -374,13 +375,13 @@ print('>>> blank choice + blank paste -> returns:', repr(bug_empty))
 
 (전체 출력에는 메뉴 텍스트와 선택한 버그 설명 전문도 함께 찍힙니다 — 위 `grep`은 판정 줄만 추린 것입니다. PowerShell이면 `grep` 대신 `Select-String ">>>"`.)
 
-### Step 6. run_once()와 리포트 파일 — 성공만 남고 실패는 흔적이 없다
+### Step 6. run_once()와 리포트 파일 — 문제 있는 답은 찍되 저장하지 않는다
 
-**목적.** 완성 호출에 실제로 무엇이 담기는지, 그리고 리포트 파일이 성공·실패·"성공했지만 내용이 이상한 응답" 세 경우에 각각 어떻게 되는지 확인합니다.
+**목적.** 완성 호출에 실제로 무엇이 담기는지, 그리고 리포트 파일이 정상 답·빈 답·잘린 답·절이 없는 답·호출 실패에 각각 어떻게 되는지 확인합니다. 마지막에는 새 검사가 아직 못 거르는 답도 직접 찾아봅니다.
 
 **할 일.**
 
-`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:248-266`
+`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:269-287`
 
 ```python
     try:
@@ -406,11 +407,39 @@ print('>>> blank choice + blank paste -> returns:', repr(bug_empty))
 
 메시지는 `system`(패턴 12개가 담긴 프롬프트 전체) 하나와 `user`(고정 안내 문장 + 버그 설명) 하나, 딱 둘뿐입니다. `temperature=0.2`로 비교적 결정적인 답을 노리지만 스트리밍도, 재시도도 없습니다. API 호출이 예외를 던지면 메시지만 찍고 즉시 `return`합니다 — 아래에서 볼 리포트 저장 코드까지 아예 도달하지 않습니다.
 
-`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:268-282`
+`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:240-258`
 
 ```python
-    reply = completion.choices[0].message.content or ""
-    print(reply)
+def extract_diagnosis(completion) -> tuple:
+    """Return (reply, problem). problem is None only for a usable diagnosis."""
+    choices = getattr(completion, "choices", None)
+    if not choices:
+        return "", "The model response contained no choices."
+
+    choice = choices[0]
+    message = getattr(choice, "message", None)
+    reply = (getattr(message, "content", None) or "").strip()
+    if not reply:
+        return "", "The model returned an empty reply."
+
+    if getattr(choice, "finish_reason", None) == "length":
+        return reply, "The reply was cut off by the token limit."
+
+    if "primary pattern" not in reply.lower():
+        return reply, "The reply has no 'Primary pattern' section."
+
+    return reply, None
+```
+
+`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:289-307`
+
+```python
+    reply, problem = extract_diagnosis(completion)
+    if reply:
+        print(reply)
+    if problem:
+        print(f"\n{problem} Report not saved.\n")
+        return
 
     report = {
         "bug_description": bug,
@@ -426,14 +455,16 @@ print('>>> blank choice + blank paste -> returns:', repr(bug_empty))
         print(f"\nCould not write report file: {exc}\n")
 ```
 
-여기까지 왔다는 것은 API 호출이 예외 없이 **성공**했다는 뜻일 뿐, 모델이 실제로 유효한 진단을 내놓았다는 뜻은 아닙니다 — `reply`의 내용은 전혀 검사하지 않고 그대로 `assistant_markdown`에 담아 `rag_failure_report.json`(현재 작업 디렉터리 기준 상대 경로, 소스로 확인)에 덮어씁니다. 그러니까 세 경우가 갈립니다: (1) 호출이 예외를 던지면 리포트 파일은 아예 생기지 않고, (2) 호출이 성공하고 모델이 규칙을 지킨 마크다운을 돌려주면 그 내용이 저장되며, (3) 호출은 성공했지만 모델이 형식을 어기거나 아예 거절 문구를 돌려줘도 그 거절 문구가 유효한 진단인 것처럼 그대로 저장됩니다 — (3)은 코드에 응답 내용을 검사하는 장치가 없다는 데서 나오는 결론이라 소스로 확인한 것이고, 아래 확인은 그 결론을 가짜 거절 문구로 직접 재현합니다.
+이 문서를 처음 쓴 때의 원본은 여기가 `reply = completion.choices[0].message.content or ""`와 `print(reply)` 두 줄이었고, 응답 내용을 전혀 검사하지 않았습니다. 원본이 PR #1234(커밋 `e2ee7c71`, 2026-10-18 병합)에서 이를 고쳤습니다. 이제 `extract_diagnosis()`는 `(reply, problem)` 쌍을 돌려주고, `problem`이 `None`일 때만 쓸 만한 진단으로 칩니다. 문제로 치는 경우는 넷입니다: 고를 `choices`가 없거나, 답이 비었거나(공백뿐이어도 포함), `finish_reason`이 `"length"`이거나, 소문자로 바꾼 답에 `primary pattern`이 없을 때입니다. 문제가 있으면 `run_once()`는 답이 있을 때 그 답을 찍은 뒤 `problem` 문장 끝에 "Report not saved."를 붙여 찍고 저장하지 않은 채 돌아옵니다(`return`). 그래서 라운드를 마치면 `main()`의 "Debug another bug? (y/n)"로 이어집니다. 저장은 문제가 없을 때만 일어나고, 파일 경로는 여전히 현재 작업 디렉터리 기준 상대 경로이며 매번 `"w"`로 덮어씁니다(소스로 확인).
+
+그러니 이제 다섯 경우가 갈립니다: (1) 호출이 예외를 던지면 리포트 파일은 안 생기고, (2) 정상 답이면 저장되며, (3) 빈 답, (4) 토큰 한도로 잘린 답, (5) `Primary pattern` 절이 없는 답(거절 문구 포함)은 찍고도 저장하지 않습니다. 남은 틈은 검사가 얕다는 것입니다. `extract_diagnosis()`는 문자열 `primary pattern`이 어디에든 들어 있는지만 보므로, 절의 모양을 갖추지 않았거나 존재하지 않는 id(`P99`)를 골랐거나 "primary pattern을 고를 수 없다"고 말하는 거절 문구도 문제 없음으로 통과해 저장됩니다. P01~P12 중 하나인지 보는 코드는 소스에 없습니다(소스로 확인, 아래 확인에서 직접 재현).
 
 ![Step 6까지의 구성](diagrams/step6.svg)
 
-**확인.** 가짜 클라이언트 셋(정상 반환 / 거절 문구 반환 / 예외 발생)으로 `run_once()`를 그대로 실행해, 리포트 파일 생성 여부와 거절 문구가 그대로 저장되는지를 확인합니다.
+**확인.** 가짜 클라이언트 여섯(정상 / 거절 문구 / 빈 답 / 잘린 답 / `choices`가 빈 응답 / 예외 발생)으로 `run_once()`를 그대로 실행해, 리포트 파일 생성 여부와 찍히는 이유를 확인합니다. 이어서 `extract_diagnosis()`를 직접 불러 남은 틈 세 가지를 재현합니다. 여러 줄이라 파일로 만들어 돌립니다.
 
 ```bash
-uv run --no-project python -c "
+cat > check_branches.py <<'EOF'
 import builtins, os, json
 import rag_failure_diagnostics_clinic as clinic
 
@@ -444,27 +475,39 @@ def fake_input(answers):
 class Msg:
     def __init__(s, c): s.content = c
 class Choice:
-    def __init__(s, c): s.message = Msg(c)
+    def __init__(s, c, finish='stop'):
+        s.message = Msg(c)
+        s.finish_reason = finish
 class Completion:
-    def __init__(s, c): s.choices = [Choice(c)]
+    def __init__(s, c, finish='stop'): s.choices = [Choice(c, finish)]
+class NoChoices:
+    choices = []
 
-class ClientOK:
-    class chat:
-        class completions:
-            def create(**kw): return Completion('## Primary pattern\nP04\n...')
-class ClientRefuse:
-    class chat:
-        class completions:
-            def create(**kw): return Completion(\"I can't help classify that, sorry.\")
+def make(completion):
+    class C:
+        class chat:
+            class completions:
+                def create(**kw): return completion
+    return C
+
 class ClientFail:
     class chat:
         class completions:
             def create(**kw): raise RuntimeError('connection refused')
 
-sp = clinic.build_system_prompt()
-BUG = \"My retriever returns yesterday's page content after I re-crawl the site.\"
+cases = [
+    ('success', make(Completion('## Primary pattern\nP04\n...'))),
+    ('refusal', make(Completion("I can't help classify that, sorry."))),
+    ('empty', make(Completion('   '))),
+    ('truncated', make(Completion('## Primary pattern\nP04\n- the re-crawl', 'length'))),
+    ('nochoices', make(NoChoices)),
+    ('failure', ClientFail),
+]
 
-for name, client in [('success', ClientOK), ('refusal', ClientRefuse), ('failure', ClientFail)]:
+sp = clinic.build_system_prompt()
+BUG = "My retriever returns yesterday's page content after I re-crawl the site."
+
+for name, client in cases:
     if os.path.exists('rag_failure_report.json'):
         os.remove('rag_failure_report.json')
     builtins.input = fake_input(['p', BUG, ''])
@@ -474,50 +517,70 @@ for name, client in [('success', ClientOK), ('refusal', ClientRefuse), ('failure
     if exists:
         saved = json.load(open('rag_failure_report.json', encoding='utf-8'))['assistant_markdown']
     print(f'>>> {name}: report file exists = {exists}, saved text = {saved!r}')
-" 2>&1 | grep -E "^(>>>|Error while|Saved report)"
+
+print('>>> --- 남은 틈: extract_diagnosis()를 직접 호출 ---')
+for text in ["## Primary pattern\nP99 (invented id)",
+             "Sorry, I cannot name a primary pattern for this.",
+             "## Primary pattern\n"]:
+    reply, problem = clinic.extract_diagnosis(Completion(text))
+    print(f'>>> problem = {problem!r} / reply = {reply!r}')
+EOF
+uv run --no-project python check_branches.py 2>&1 | grep -E "^(>>>|Error while|Saved report|The )"
 ```
 
 ```
 Saved report to rag_failure_report.json
 >>> success: report file exists = True, saved text = '## Primary pattern\nP04\n...'
-Saved report to rag_failure_report.json
->>> refusal: report file exists = True, saved text = "I can't help classify that, sorry."
+The reply has no 'Primary pattern' section. Report not saved.
+>>> refusal: report file exists = False, saved text = None
+The model returned an empty reply. Report not saved.
+>>> empty: report file exists = False, saved text = None
+The reply was cut off by the token limit. Report not saved.
+>>> truncated: report file exists = False, saved text = None
+The model response contained no choices. Report not saved.
+>>> nochoices: report file exists = False, saved text = None
 Error while calling the model: connection refused
 >>> failure: report file exists = False, saved text = None
+>>> --- 남은 틈: extract_diagnosis()를 직접 호출 ---
+>>> problem = None / reply = '## Primary pattern\nP99 (invented id)'
+>>> problem = None / reply = 'Sorry, I cannot name a primary pattern for this.'
+>>> problem = None / reply = '## Primary pattern'
 ```
 
-(전체 출력에는 메뉴·버그 설명·모델 응답 전문도 함께 찍힙니다 — 위 `grep`은 판정에 필요한 줄만 추린 것입니다. PowerShell이면 `Select-String` 사용. 이 확인이 끝난 폴더에는 `rag_failure_report.json`이 남아 있을 수 있습니다 — `.gitignore:1`이 커밋을 막아 주지만 삭제는 직접 해야 합니다.)
+거절 문구는 이제 저장되지 않고(`refusal` 줄), 빈 답·잘린 답·`choices` 없는 응답도 이유와 함께 막힙니다. 남은 틈은 마지막 세 줄입니다 — 존재하지 않는 `P99`를 고른 답, "primary pattern을 고를 수 없다"는 거절, 제목 줄만 있고 본문이 없는 답이 모두 `problem = None`으로 통과합니다. (전체 출력에는 메뉴·버그 설명·모델 응답 전문도 함께 찍힙니다 — 위 `grep`은 판정에 필요한 줄만 추린 것입니다. PowerShell이면 heredoc 대신 here-string(`@' … '@ | Set-Content check_branches.py`)으로 만들고 `grep` 대신 `Select-String`을 쓰세요. 마지막 경우(`failure`)가 시작 전에 앞 경우의 `rag_failure_report.json`을 지우고 새로 만들지 않으므로 이 확인이 끝난 폴더에는 리포트 파일이 남지 않습니다. 다만 `check_branches.py`는 남으니 확인이 끝나면 지우세요.)
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-`main()`은 `build_system_prompt()`로 시스템 프롬프트를 한 번 만들고 `make_client_and_model()`로 클라이언트를 준비한 뒤, `run_once()`를 반복 호출하는 단순한 while 루프입니다. 한 라운드 안에서는 먼저 `choose_bug_description()`이 메뉴를 보여주고 사용자의 선택(예시 또는 붙여넣기)을 문자열로 받습니다. 그 문자열이 비어 있지 않으면 `run_once()`는 시스템 프롬프트(패턴 12개 전문)와 사용자 메시지(고정 안내 + 버그 설명)를 묶어 OpenAI 호환 API에 완성 요청 하나를 보냅니다. 응답이 예외 없이 돌아오면 콘솔에 그대로 출력하고 `bug_description`·`model`·`assistant_markdown` 세 필드를 `rag_failure_report.json`에 덮어씁니다 — 이전 라운드의 리포트는 그 순간 사라집니다. 호출이 예외를 던지면 오류 메시지만 찍고 리포트는 만들지 않은 채 그 라운드를 끝냅니다. 라운드가 끝나면 "Debug another bug? (y/n)"를 물어 루프를 이어가거나 끝냅니다. 이 흐름 전체는 실제 API 키 없이, 각 구간(메뉴·프롬프트 조립·리포트 저장)을 가짜 클라이언트와 가짜 입력으로 개별 실행해 확인한 것입니다 — 진짜 모델이 실제로 어떤 패턴을 고르는지는 키가 없어 관측하지 못했습니다.
+`main()`은 `build_system_prompt()`로 시스템 프롬프트를 한 번 만들고 `make_client_and_model()`로 클라이언트를 준비한 뒤, `run_once()`를 반복 호출하는 단순한 while 루프입니다. 한 라운드 안에서는 먼저 `choose_bug_description()`이 메뉴를 보여주고 사용자의 선택(예시 또는 붙여넣기)을 문자열로 받습니다. 그 문자열이 비어 있지 않으면 `run_once()`는 시스템 프롬프트(패턴 12개 전문)와 사용자 메시지(고정 안내 + 버그 설명)를 묶어 OpenAI 호환 API에 완성 요청 하나를 보냅니다. 응답이 예외 없이 돌아오면 `extract_diagnosis()`가 답을 꺼내 검사하고, 답이 있으면 콘솔에 그대로 출력합니다. 문제가 없을 때만 `bug_description`·`model`·`assistant_markdown` 세 필드를 `rag_failure_report.json`에 덮어씁니다 — 이전 라운드의 리포트는 그 순간 사라집니다. 문제가 있으면(`choices` 없음·빈 답·토큰 한도로 잘림·`Primary pattern` 절 없음) 이유와 "Report not saved."를 찍고 저장 없이 라운드를 끝내며, 이때는 이전 리포트가 그대로 남습니다. 호출이 예외를 던지면 오류 메시지만 찍고 리포트는 만들지 않은 채 그 라운드를 끝냅니다. 라운드가 끝나면 "Debug another bug? (y/n)"를 물어 루프를 이어가거나 끝냅니다. 이 흐름 전체는 실제 API 키 없이, 각 구간(메뉴·프롬프트 조립·리포트 저장)을 가짜 클라이언트와 가짜 입력으로 개별 실행해 확인한 것입니다 — 진짜 모델이 실제로 어떤 패턴을 고르는지는 키가 없어 관측하지 못했습니다.
 
 ## 실행 체크리스트
 
-- [ ] `uv venv && uv pip install -r requirements.txt`로 openai 3.18.0 등 14개 패키지를 설치했다(추가 설치 불필요)
+- [ ] `uv venv && uv pip install -r requirements.txt`로 openai 3.36.0 등 14개 패키지를 설치했다(추가 설치 불필요)
 - [ ] `PATTERNS`가 정확히 12개, P01~P12 순서이고 `build_system_prompt()`가 그 전문을 그대로 담는다는 것을 키·네트워크 없이 확인했다
 - [ ] Day 047~052의 실제 결함을 이 12개 패턴에 대조해 4개(P02·P04·P07·P11)는 들어맞고 P10은 이름만 비슷하다는 것을 직접 대조했다
 - [ ] `OPENAI_MODEL`/`OPENAI_BASE_URL`이 없으면 각각 `"gpt-4o"`/`"https://api.openai.com/v1"`로 떨어진다는 것을 코드와 실행으로 확인했다
 - [ ] 키가 없으면 `getpass()`가 패턴 메뉴보다 먼저 터미널을 막는다는 것을 확인했다
 - [ ] 메뉴의 예시 선택·자유 붙여넣기·빈 입력 처리 경로를 모두 실행해봤다
-- [ ] 가짜 클라이언트로 성공·거절·실패 세 경우를 실행해, 실패만 리포트 파일을 안 남기고 거절 문구도 성공 취급으로 그대로 저장된다는 것을 확인했다
+- [ ] 가짜 클라이언트로 정상·거절·빈 답·잘린 답·`choices` 없음·호출 실패 여섯 경우를 실행해, 정상 답만 리포트 파일이 생기고 나머지는 이유를 찍고 저장하지 않는다는 것을 확인했다
+- [ ] `extract_diagnosis()`가 `primary pattern`이라는 글자만 보므로 존재하지 않는 id(`P99`)를 고른 답은 아직 통과한다는 것을 직접 재현했다
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 키 없이 스크립트를 그냥 실행했더니 메뉴도 안 뜨고 터미널이 그대로 멈춤 | `make_client_and_model()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:171-183`)의 `getpass()`가 패턴 메뉴가 뜨기 전에 먼저 실행되어 입력을 기다림(직접 확인, Step 4) | `OPENAI_API_KEY`(필요하면 `OPENAI_BASE_URL`·`OPENAI_MODEL`도) 환경변수를 먼저 설정하거나, 이 문서처럼 함수만 따로 불러 키 없이 패턴을 확인. bash: `export OPENAI_API_KEY="sk-..."`, PowerShell: `$env:OPENAI_API_KEY="sk-..."` |
-| 두 번째 진단을 실행했더니 `rag_failure_report.json`에서 첫 번째 결과가 사라짐 | `run_once()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:277-280`)가 매번 같은 파일 이름을 `"w"` 모드로 열어 덮어씀 — 타임스탬프도 append 옵션도 없음(소스로 확인) | 여러 건을 남기려면 실행할 때마다 파일을 직접 복사하거나 이름을 바꿔 둘 것 |
-| 리포트 파일에 패턴 분류도 없이 애매한 텍스트만 저장됨 | `run_once()`는 모델 응답이 네 섹션을 갖췄는지, 패턴 id가 유효한지 전혀 검증하지 않고 받은 텍스트를 그대로 `assistant_markdown`에 저장함(직접 확인, Step 6 — 성공 응답이면 내용과 무관하게 저장됨) | 리포트를 곧이곧대로 믿지 말고 내용을 직접 읽고 판단. 검증 코드를 추가하려면 "더 해보기" 참고 |
-| 스크립트를 저장소 루트 등 다른 위치에서 실행했더니 `rag_failure_report.json`이 안 보임 | `open("rag_failure_report.json", ...)`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:278`)이 스크립트 위치가 아니라 현재 작업 디렉터리 기준 상대 경로임(소스로 확인) | 앱 자신의 안내대로 `cd rag_tutorials/rag_failure_diagnostics_clinic` 후 실행 |
+| 두 번째 진단을 실행했더니 `rag_failure_report.json`에서 첫 번째 결과가 사라짐 | `run_once()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:302-305`)가 매번 같은 파일 이름을 `"w"` 모드로 열어 덮어씀 — 타임스탬프도 append 옵션도 없음(소스로 확인) | 여러 건을 남기려면 실행할 때마다 파일을 직접 복사하거나 이름을 바꿔 둘 것 |
+| 진단을 돌렸는데 답은 찍히고 "… Report not saved."가 나오며 리포트 파일이 새로 안 생기거나 옛 내용 그대로임 | `extract_diagnosis()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:240-258`)가 `choices` 없음·빈 답·`finish_reason == "length"`·`Primary pattern` 절 없음 중 하나를 문제로 쳐서 저장을 건너뜀(직접 확인, Step 6). PR #1234 전에는 이런 답도 그대로 저장됐음 | 잘림이면 모델의 출력 토큰 한도를 늘리거나 더 큰 모델로, 절이 없으면 답을 읽고 프롬프트나 모델을 바꿔 다시 시도 |
+| 리포트 파일에 패턴 분류가 이상한 id(`P99` 등)이거나 본문이 비어 있는데 저장됨 | 새 검사는 소문자로 바꾼 답에 `primary pattern`이 들어 있는지만 보고, 유효한 P01~P12 id인지·절에 본문이 있는지는 보지 않음(소스로 확인, Step 6에서 `P99`·제목만 있는 답으로 직접 재현) | 리포트를 곧이곧대로 믿지 말고 내용을 직접 읽고 판단. 검증을 더하려면 "더 해보기" 참고 |
+| 스크립트를 저장소 루트 등 다른 위치에서 실행했더니 `rag_failure_report.json`이 안 보임 | `open("rag_failure_report.json", ...)`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:303`)이 스크립트 위치가 아니라 현재 작업 디렉터리 기준 상대 경로임(소스로 확인) | 앱 자신의 안내대로 `cd rag_tutorials/rag_failure_diagnostics_clinic` 후 실행 |
 
 ## 더 해보기
 
 - `PATTERNS`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:16-77`)에 이 볼륨에서 실제로 반복됐지만 열두 개 어디에도 안 들어맞는 결함 — 예를 들어 "라이브러리 메서드 이름이 버전마다 바뀐다"(Day 047·048·049) — 을 P13으로 추가하고, `build_system_prompt()`가 자동으로 포함하는지 확인해보기
-- `run_once()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:268-274`)에 저장 전 "## Primary pattern" 섹션과 유효한 P01~P12 id가 실제로 들어 있는지 검사하는 코드를 추가해, 문제 해결에서 확인한 "거절 응답도 그대로 저장되는" 상황을 스스로 막아보기
-- 리포트 파일 이름에 타임스탬프를 붙이도록 `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:278`를 고쳐, 앱 자신의 원래 README가 제안한 "여러 리포트를 인시던트 라이브러리처럼 커밋" 용도가 실제로 되는지 실험해보기
+- `extract_diagnosis()`(`rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:255-256`)의 마지막 검사(`primary pattern` 글자 포함 여부)를 더 조여, "## Primary pattern" 절 아래에 `PATTERNS`에 있는 P01~P12 id가 실제로 들어 있을 때만 통과시켜 보기 — 원본이 "Primary pattern 절 검사"는 구현했지만 id 검사는 아직 없어, 문제 해결의 `P99` 답이 지금도 저장됩니다
+- 리포트 파일 이름에 타임스탬프를 붙이도록 `rag_tutorials/rag_failure_diagnostics_clinic/rag_failure_diagnostics_clinic.py:303`를 고쳐, 앱 자신의 원래 README가 제안한 "여러 리포트를 인시던트 라이브러리처럼 커밋" 용도가 실제로 되는지 실험해보기
 
 ## 다음 날 예고
 
