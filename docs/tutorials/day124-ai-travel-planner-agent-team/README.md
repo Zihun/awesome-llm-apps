@@ -1,12 +1,12 @@
 # Day 124 · 🌏 AI Travel Planner Agent Team
 
-> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(앱이 쓰는 모델 `google/gemini-2.0-flash-001`은 Google 폐기 문서에 종료일 2026-06-01로 올라 있고 OpenRouter의 오늘 모델 목록에도 없으며, `uv sync`가 오늘 풀어내는 환경은 import조차 되지 않는다) · 예상 소요 200분(앱은 `backend/`와 `client/` 두 덩어리에 파일이 92개지만 여행 계획 요청 하나가 지나가는 길만 따라가고, 설치를 세 번 고쳐야 하고, 가짜 서버 셋과 대역 DB를 세워 터미널 둘로 돌려 보고, 실패 경로 넷을 일부러 일으켜 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 한 번에 $0.1 이하 — 모델 부분만의 어림입니다. 가짜 서버가 받은 모델 요청 12건의 본문(`json.dumps`한 요청 전체)이 합쳐 78,164자(4자당 1토큰으로 어림잡아 입력 약 2만 토큰)였고, 대체 모델로 쓸 `google/gemini-3.6-flash`는 OpenRouter 모델 목록(https://openrouter.ai/api/v1/models, 2026-10-10 확인)에서 입력 $0.75·출력 $3.75/1M 토큰입니다. 출력 길이와 실제 Exa·Firecrawl 도구 결과의 크기, 두 서비스의 요금은 확인하지 못했습니다. 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team`
+> 볼륨 8 🤝 Multi-agent Teams · 난이도 ★★★ ⚠(앱이 쓰는 모델 `google/gemini-2.0-flash-001`은 Google 폐기 문서에 종료일 2026-06-01로 올라 있고 OpenRouter의 오늘 모델 목록에도 없으며, `uv sync`가 오늘 풀어내는 환경은 import조차 되지 않는다) · 예상 소요 220분(앱은 `backend/`와 `client/` 두 덩어리에 파일이 92개지만 여행 계획 요청 하나가 지나가는 길만 따라가고, 설치를 세 번 고쳐야 하고, 가짜 서버 셋과 대역 DB를 세워 터미널 둘로 돌려 보고, 실패 경로 넷을 일부러 일으켜 봐야 해서 읽는 시간보다 손으로 돌려 보는 시간이 더 걸립니다) · API 비용 대략 한 번에 $0.1 이하 — 모델 부분만의 어림입니다. 가짜 서버가 받은 모델 요청 12건의 본문(`json.dumps`한 요청 전체)이 합쳐 78,164자(4자당 1토큰으로 어림잡아 입력 약 2만 토큰)였고, 대체 모델로 쓸 `google/gemini-3.6-flash`는 OpenRouter 모델 목록(https://openrouter.ai/api/v1/models, 2026-10-10 확인)에서 입력 $0.75·출력 $3.75/1M 토큰입니다. 출력 길이와 실제 Exa·Firecrawl 도구 결과의 크기, 두 서비스의 요금은 확인하지 못했습니다. 이 문서의 가짜 서버 실험은 무료 · 원본 앱: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team`
 
 ## 오늘 만들 것
 
 출발지·목적지·날짜·예산·여행 취향을 일곱 단계 폼에 적어 제출하면 여행 계획이 만들어지는 웹 앱입니다. 프로세스가 둘입니다. Next.js 클라이언트(`client/`)는 폼 값을 PostgreSQL에 저장하고 Python 백엔드(`backend/`, FastAPI)에 "이 계획을 만들라"고 알린 뒤 곧바로 상세 화면으로 넘어가 5초마다 DB를 읽습니다. 백엔드는 요청을 받자마자 응답을 돌려주고, 백그라운드 작업이 agno 에이전트 일곱을 **차례로** 돌립니다. 목적지 조사, 항공편, 호텔, 식당, 일정, 예산, 그리고 앞 글을 JSON으로 바꾸는 변환 에이전트입니다. 단계마다 DB의 `currentStep`을 바꾸고, 끝나면 결과를 DB에 넣습니다. 원본 폴더에는 추적되는 파일이 92개이고 잠금 파일 둘(`uv.lock`·`pnpm-lock.yaml`)을 빼도 9,180줄입니다(`git ls-files`로 직접 셈). 오늘은 요청 하나가 지나가는 길만 따라가고 나머지는 아래 컴포넌트 표에 역할만 적습니다.
 
-직접 돌려 보고 알게 된 특이점이 아홉입니다. 첫째, 앱 이름과 달리 팀은 일하지 않습니다. `Team`은 만들어지지만 한 번도 `run`되지 않고, 계획은 에이전트 여섯을 `arun`으로 차례로 부른 결과입니다(Step 2·5). 둘째, 모델 `google/gemini-2.0-flash-001`은 내려갔습니다(Step 2). 셋째, 오늘 `uv sync`로는 앱이 import되지 않습니다. 잠금 파일은 `agno` 1.5.6에 묶여 있는데 `pyproject.toml`은 `agno>=2.3.24`를 요구하고, 고쳐 설치해도 앱의 `tools/scrape.py`와 agno의 `FirecrawlTools`가 서로 다른 `firecrawl-py`를 요구해 PyPI의 어떤 버전으로도 둘이 함께 되지 않습니다(Step 1). 넷째, DB에 닿지 못하면 서버가 아예 뜨지 않습니다(Step 4). 다섯째, 항공편 도구는 어떤 예외든 삼키고 빈 목록을 돌려주며, 기본 경로가 실패하면 조회 주소를 제3자 사이트 `try.playwright.tech`로 보냅니다(Step 3). 여섯째, 변환 에이전트가 받는 글에는 예산 에이전트의 글이 들어 있지 않습니다(Step 5). 일곱째, 모델 호출이 실패해도 agno의 `arun`은 예외를 던지지 않고, 앱은 에이전트의 "답"으로 에이전트가 받은 질문을 그대로 이어 붙입니다. 마지막에야 JSON 변환이 실패하면 오류 문구는 모델 오류가 아니라 JSON 오류로 나옵니다(Step 7). 여덟째, `Dockerfile`은 없는 폴더를 복사합니다(Step 4). 아홉째, `main.py`는 서버를 모든 네트워크 인터페이스(`0.0.0.0`)에 엽니다(Step 4).
+직접 돌려 보고 알게 된 특이점이 아홉입니다. 첫째, 앱 이름과 달리 팀은 일하지 않습니다. `Team`은 만들어지지만 한 번도 `run`되지 않고, 계획은 에이전트 여섯을 `arun`으로 차례로 부른 결과입니다(Step 2·5). 둘째, 모델 `google/gemini-2.0-flash-001`은 내려갔습니다(Step 2). 셋째, 오늘 `uv sync`로는 앱이 import되지 않습니다. 잠금 파일은 `agno` 1.5.6에 묶여 있는데 `pyproject.toml`은 `agno>=2.3.24`를 요구하고, `google-genai`·`firecrawl-py`를 올려야 import됩니다(Step 1). 예전에는 올려도 앱의 `tools/scrape.py`와 agno의 `FirecrawlTools`가 서로 다른 `firecrawl-py`를 요구해 어떤 버전으로도 둘이 함께 되지 않았는데, 원본이 PR #1226(커밋 `b8aded55`, 2026-10-18 병합)에서 `ScrapeOptions` import를 지워 지금은 올린 환경에서 앱이 그대로 import됩니다. 넷째, DB에 닿지 못하면 서버가 아예 뜨지 않습니다(Step 4). 다섯째, 항공편 도구는 어떤 예외든 삼키고 빈 목록을 돌려주며, 기본 경로가 실패하면 조회 주소를 제3자 사이트 `try.playwright.tech`로 보냅니다(Step 3). 여섯째, 변환 에이전트가 받는 글에는 예산 에이전트의 글이 들어 있지 않습니다(Step 5). 일곱째, 모델 호출이 실패해도 agno의 `arun`은 예외를 던지지 않고, 앱은 에이전트의 "답"으로 에이전트가 받은 질문을 그대로 이어 붙입니다. 마지막에야 JSON 변환이 실패하면 오류 문구는 모델 오류가 아니라 JSON 오류로 나옵니다(Step 7). 여덟째, `Dockerfile`은 없는 폴더를 복사합니다(Step 4). 아홉째, `main.py`는 서버를 모든 네트워크 인터페이스(`0.0.0.0`)에 엽니다(Step 4).
 
 키가 없어도 `backend/`의 Step 1~7이 모두 됩니다. 모델·Exa·Firecrawl은 내 PC의 가짜 서버가 대신하고, Google Flights 조회는 인자를 기록하는 대역 함수로, PostgreSQL은 같은 모델 정의로 만든 SQLite 파일로 바꿉니다. `client/`는 설치도 실행도 하지 않았고 소스를 읽었습니다(`npm install`·`prisma generate`를 하지 않음). 이 문서를 만들며 앱 코드가 OpenRouter·Exa·Firecrawl·Google·agno로 보낸 요청은 한 건도 없습니다(값을 확인하려고 Google·OpenAI 문서와 OpenRouter 모델 목록·PyPI 페이지는 읽었습니다). 그래서 문서에 나오는 계획 내용은 가짜 서버의 고정 문장이고 어떤 여행 정보의 근거도 아닙니다. 실제 모델이 도구를 어떤 순서로 부르는지, 실제 Exa·Firecrawl·Google Flights 응답, PostgreSQL에서의 동작, 브라우저에서 보이는 화면은 확인하지 못했습니다. 아래는 완성된 아키텍처입니다.
 
@@ -47,7 +47,7 @@ $env:PYTHONIOENCODING = "utf-8"
 | 나머지 클라이언트 | 인증 화면(`app/auth/page.tsx`)·인증 라우트(`app/api/auth/[...all]/route.ts`, `lib/auth.ts`), 계획 목록(`app/plans/page.tsx`·`app/api/plans/route.ts`), 첫 화면(`app/page.tsx`), UI 부품(`components/`), 스키마 SQL(`client/schema.sql`)과 Prisma 마이그레이션(`prisma/migrations/`). 요청 경로 밖이라 다루지 않는다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/plans/page.tsx:1-389` |
 | 재시도 라우트 | 상태 행을 `processing`으로 바꾸고 저장된 폼 값으로 백엔드를 다시 부른다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/app/api/plans/[id]/retry/route.ts:1-139` |
 | Prisma 스키마 | 사용자·세션(better-auth)과 `trip_plan`·`trip_plan_status`·`trip_plan_output`·`plan_tasks` | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/client/prisma/schema.prisma:1-162` |
-| FastAPI 앱 (`api/app.py`) | 시작할 때 DB 풀을 만들고, CORS를 모두 허용하고, `/api/health`와 `/api/plan/trigger`를 단다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/api/app.py:12-55` |
+| FastAPI 앱 (`api/app.py`) | 시작할 때 DB 풀을 만들고, CORS를 `ALLOWED_ORIGINS`(기본 `http://localhost:3000,http://127.0.0.1:3000`)에 든 출처로만 열고, `/api/health`와 `/api/plan/trigger`를 단다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/api/app.py:13-64` |
 | 라우터 (`router/plan.py`) | 작업 행을 만들고 백그라운드 작업을 띄운 뒤 곧바로 응답한다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/router/plan.py:13-84` |
 | 계획 서비스 (`services/plan_service.py`) | 폼을 마크다운으로 바꾸고, 에이전트 여섯과 변환 에이전트를 차례로 부르고, 단계마다 상태를 쓰고, 결과를 저장한다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/services/plan_service.py:30-413` |
 | 에이전트 여섯 | 목적지·항공편·호텔·식당·일정·예산. 앞 넷과 일정은 도구가 있다 | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/destination.py:6-67`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/flight.py:6-67`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/hotel.py:7-81`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/food.py:5-115`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/itinerary.py:11-126`, `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/budget.py:4-39` |
@@ -93,7 +93,7 @@ uv pip install -U google-genai "firecrawl-py>=3"
 
 (pip 대안은 `pip install -r`로 풀 수 없습니다. 이 폴더에는 `requirements.txt`가 없고 `pyproject.toml`과 `uv.lock`뿐이기 때문입니다. PowerShell도 같은 세 줄입니다. `cd`만 `\`로 쓰면 됩니다. 실행해 보지 못했습니다.) 이 문서의 출력은 저장소 안의 폴더에 `.venv`를 만들지 않으려고 폴더를 스크래치로 복사해 `UV_PROJECT_ENVIRONMENT`로 가상환경 위치를 따로 준 환경에서 얻었습니다. 같은 명령을 앱 폴더에서 돌리면 `backend/.venv`가 생기는데 이 경로는 저장소의 `.gitignore`에 있습니다(`git check-ignore`로 직접 확인). 대신 `uv.lock`이 고쳐 쓰입니다. 아래 둘째 단락의 까닭 때문입니다.
 
-의존성은 `pyproject.toml`이 정합니다. 열다섯 개 가운데 요청 경로에 쓰이는 것은 `agno`, `fastapi`, `uvicorn`, `sqlalchemy`, `asyncpg`(DB 드라이버), `exa-py`, `firecrawl-py`, `fast-flights`, `loguru`, `python-dotenv`, `pydantic`, `cuid2`입니다. `boto3`·`mem0ai`는 코드 어디에도 import되지 않고, `google-genai`는 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/config/llm.py:1`이 쓰지도 않는 Gemini 클래스를 불러오고 agno 3.1.2의 그 클래스가 새 `google-genai`를 요구해서 필요합니다(Step 2).
+의존성은 `pyproject.toml`이 정합니다. 열다섯 개 가운데 요청 경로에 쓰이는 것은 `agno`, `fastapi`, `uvicorn`, `sqlalchemy`, `asyncpg`(DB 드라이버), `exa-py`, `firecrawl-py`, `fast-flights`, `loguru`, `python-dotenv`, `pydantic`, `cuid2`입니다. `boto3`·`mem0ai`는 코드 어디에도 import되지 않고, `google-genai`는 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/config/llm.py:1`이 쓰지도 않는 Gemini 클래스를 불러오고 agno 3.1.8의 그 클래스가 새 `google-genai`를 요구해서 필요합니다(Step 2).
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/pyproject.toml:1-23`
 
@@ -136,7 +136,7 @@ error: The lockfile at `uv.lock` needs to be updated, but `--locked` was provide
 
 (위는 uv 0.7.2의 문구입니다. uv 0.11.33은 같은 잠금에 `error: The lockfile at uv.lock needs to be updated, but --check was provided.`와 `hint: To update the lockfile, run uv lock.`을 냅니다. 둘 다 직접 확인했습니다.)
 
-두 길이 있고 둘 다 막힙니다. 잠금 그대로(`uv sync --frozen`) 설치하면 `agno` 1.5.6이 들어오고, 앱은 첫 에이전트 파일에서 멈춥니다(`agno` 2.x 이후의 이름 `add_datetime_to_context`를 씀: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/destination.py:63`). 잠금을 갱신하는 `uv sync`는 `agno`를 3.1.2로 올리지만 잠금에 있던 `google-genai`·`firecrawl-py` 같은 패키지는 그대로 둡니다. 그러면 세 곳에서 막힙니다. 직접 확인한 출력입니다(`uv sync --frozen` 환경의 `import agents.destination`, `uv sync` 환경의 `import config.llm`과 `import agents.destination` 끝 줄).
+두 길이 있고 둘 다 막힙니다. 잠금 그대로(`uv sync --frozen`) 설치하면 `agno` 1.5.6이 들어오고, 앱은 첫 에이전트 파일에서 멈춥니다(`agno` 2.x 이후의 이름 `add_datetime_to_context`를 씀: `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/agents/destination.py:63`). 잠금을 갱신하는 `uv sync`는 `agno`를 3.1.8로 올리지만 잠금에 있던 `google-genai`·`firecrawl-py` 같은 패키지는 그대로 둡니다. 그러면 세 곳에서 막힙니다. 직접 확인한 출력입니다(`uv sync --frozen` 환경의 `import agents.destination`, `uv sync` 환경의 `import config.llm`과 `import agents.destination` 끝 줄).
 
 ```text
 TypeError: Agent.__init__() got an unexpected keyword argument 'add_datetime_to_context'
@@ -144,42 +144,125 @@ ImportError: `google-genai` not installed or not at the latest version. Please i
 ImportError: `firecrawl-py` not installed. Please install using `pip install firecrawl-py`
 ```
 
-첫 줄이 `--frozen`, 나머지 둘이 `uv sync` 환경입니다(첫 줄은 이 Step 끝의 가짜 키를 셸에 둔 상태에서 나오고, 키가 없으면 그보다 먼저 `ValueError: API key must be provided as an argument or in EXA_API_KEY environment variable`로 멈춥니다. 직접 확인). 둘째 줄은 `config/llm.py`의 첫 줄이 쓰지 않는 `Gemini`를 불러와서 나고(잠금의 `google-genai` 1.18.0이 agno 3.1.2가 요구하는 이름 `FileSearch`를 갖지 못함), 셋째 줄은 `agno.tools.firecrawl`이 `from firecrawl.types import ScrapeOptions`를 하는데 잠금의 `firecrawl-py` 2.7.1에 `firecrawl.types`가 없어서 납니다. 위 명령의 `uv pip install -U`가 이 둘을 올립니다. 그런데 올리면 **앱 자신의** import가 새로 막힙니다.
+첫 줄이 `--frozen`, 나머지 둘이 `uv sync` 환경입니다(첫 줄은 이 Step 끝의 가짜 키를 셸에 둔 상태에서 나오고, 키가 없으면 그보다 먼저 `ValueError: API key must be provided as an argument or in EXA_API_KEY environment variable`로 멈춥니다. 직접 확인). 둘째 줄은 `config/llm.py`의 첫 줄이 쓰지 않는 `Gemini`를 불러와서 나고(잠금의 `google-genai` 1.18.0이 agno 3.1.8가 요구하는 이름 `FileSearch`를 갖지 못함), 셋째 줄은 `agno.tools.firecrawl`이 `from firecrawl.types import ScrapeOptions`를 하는데 잠금의 `firecrawl-py` 2.7.1에 `firecrawl.types`가 없어서 납니다. 위 명령의 `uv pip install -U`가 이 둘을 올립니다. 그러면 **앱 자신의** import는 어떨까요. 예전에는 올리는 순간 여기가 막혔습니다.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:1`
 
 ```python
-from firecrawl import FirecrawlApp, ScrapeOptions
+from firecrawl import FirecrawlApp
 ```
 
-`firecrawl-py` 4.50.0에는 이 이름이 없고(`V1ScrapeOptions`로 바뀜) `FirecrawlApp`도 새 클래스라 `scrape_url`이 없습니다. 어느 버전이 둘을 함께 만족하는지 찾아봤습니다. 2.7.1·2.16.0·2.16.5는 앱이 쓰는 이름과 `scrape_url`이 있지만 `firecrawl.types`가 없고, 3.0.2·3.0.3·3.4.0·4.0.0·4.50.0은 `firecrawl.types`가 있지만 `from firecrawl import ScrapeOptions`와 `FirecrawlApp.scrape_url`이 없습니다(직접 확인). agno 쪽도 시험한 일곱 버전(2.0.0·2.2.10·2.3.23·2.3.24·2.6.22·3.0.0·3.1.2) 모두 `firecrawl.types`를 요구해 agno를 내려도 풀리지 않습니다(2.0.0·2.2.10·2.3.23·3.1.2는 import를 해 봤고 2.3.24·2.6.22·3.0.0은 소스를 읽어 확인). 그래서 앱 파일을 고치지 않고 풀려면 별칭이 필요합니다. 4.x에는 옛 API가 `V1FirecrawlApp`·`V1ScrapeOptions`로 남아 있습니다. 별칭 파일 `shim.py`를 `backend/`에 둡니다. 앱보다 **먼저** import해야 하고, agno가 새 `FirecrawlApp`을 먼저 잡게 하려고 `agno.tools.firecrawl`을 그 안에서 import합니다.
+원본이 이 줄을 PR #1226(커밋 `b8aded55`, 2026-10-18 병합)에서 `from firecrawl import FirecrawlApp, ScrapeOptions`에서 위의 한 줄로 고쳤습니다. 고치기 전 줄은 올린 `firecrawl-py` 4.50.0에서 `ImportError: cannot import name 'ScrapeOptions' from 'firecrawl'`로 앱을 시작도 못 하게 했고, 이 문서의 이전 판은 `firecrawl-py` 2.7.1~4.50.0의 어느 버전도 앱과 agno를 함께 만족하지 않는다고 적고 별칭 파일로 풀었습니다. 그 시험은 원본이 고치기 전의 앱 기준이라 다시 하지 않았습니다. 지금은 앱 파일을 그대로 두고 `uv sync`, `uv pip install -U google-genai "firecrawl-py>=3"`를 한 환경(`firecrawl-py` 4.53.3)에서 별칭 없이 `api.app`이 import됩니다. 가짜 키를 셸에 둔 상태에서 직접 확인한 출력입니다.
+
+```bash
+export FIRECRAWL_API_KEY=fc-fake EXA_API_KEY=exa-fake OPENROUTER_API_KEY=or-fake
+uv run --no-project python -c "import api.app; print('api.app import OK (no shim)')"
+```
+
+```text
+api.app import OK (no shim)
+```
+
+남은 걸림돌은 `scrape_website`가 부르는 `app.scrape_url`입니다. 이 문서의 이전 판은 "4.x의 `FirecrawlApp`은 새 클래스라 `scrape_url`이 없다"고 적었습니다. 오늘 확인하니 클래스에는 정말 없지만(`hasattr(firecrawl.FirecrawlApp, "scrape_url")`이 `False`) 클라이언트를 만들면 인스턴스에 붙습니다. 증상이 시작 때의 `ImportError`에서 첫 스크랩 때의 `AttributeError`로 바뀌는 일은 일어나지 않습니다. 가짜 Firecrawl 서버를 자기 포트에 세우고, 별칭 없이 앱의 `scrape_website`를 한 번 불러 보면 압니다. 가짜 서버는 받은 POST 요청을 찍고 경로와 상관없이 같은 마크다운을 돌려줍니다.
 
 ```python
-# firecrawl-py 3.x 이상에서도 앱의 옛 import(tools/scrape.py:1)가 되게 하는 별칭이다. 앱 파일은 고치지 않는다.
+# 가짜 Firecrawl 서버. POST 요청을 받아 한 줄씩 찍고, 마크다운 하나를 돌려준다. 사용: python fake_fc.py <포트>
+import json
+import sys
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+
+class H(BaseHTTPRequestHandler):
+    def do_POST(self):
+        body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        print("REQ", self.path, "auth=" + str(self.headers.get("Authorization")), body.decode(), flush=True)
+        out = json.dumps({"success": True, "data": {"markdown": "# Fake Hotel\nfrom fake firecrawl", "metadata": {"statusCode": 200}}}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(out)))
+        self.end_headers()
+        self.wfile.write(out)
+
+    def log_message(self, *a):
+        pass
+
+
+HTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
+```
+
+```python
+# backend/ 에서 실행한다. 별칭 없이 앱의 tools/scrape.py를 import하고, 클라이언트만 가짜 서버로 돌려 scrape_website를 한 번 부른다.
+# 사용: python check_scrape.py <가짜 서버 포트>
+import importlib.metadata as md
+import os
+import sys
+import warnings
+
+os.environ["FIRECRAWL_API_KEY"] = "fc-fake"
+os.environ["EXA_API_KEY"] = "exa-fake"
+os.environ["OPENROUTER_API_KEY"] = "or-fake"
+
+import firecrawl
+import tools.scrape as s
+
+print("firecrawl-py", md.version("firecrawl-py"))
+print("클래스에 scrape_url:", hasattr(firecrawl.FirecrawlApp, "scrape_url"), "| 인스턴스에 scrape_url:", hasattr(s.app, "scrape_url"))
+print("from firecrawl import ScrapeOptions:", hasattr(firecrawl, "ScrapeOptions"))
+s.app = firecrawl.FirecrawlApp(api_key="fc-fake", api_url=f"http://127.0.0.1:{sys.argv[1]}")
+with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter("always")
+    out = s.scrape_website.entrypoint("https://hotel.example/rooms")
+print("scrape_website ->", repr(out))
+print("경고:", sorted({x.category.__name__ for x in w}))
+```
+
+```bash
+uv run --no-project python fake_fc.py 48510 > fake_fc.log &
+uv run --no-project python check_scrape.py 48510
+cat fake_fc.log
+```
+
+`uv sync` 뒤 `-U`까지 한 환경(`firecrawl-py` 4.53.3)에서 직접 확인한 출력입니다. 서버 로그의 요청 본문은 `json.dumps`한 한 줄 그대로입니다.
+
+```text
+firecrawl-py 4.53.3
+클래스에 scrape_url: False | 인스턴스에 scrape_url: True
+from firecrawl import ScrapeOptions: True
+scrape_website -> '# Fake Hotel\nfrom fake firecrawl'
+경고: ['DeprecationWarning']
+REQ /v2/scrape auth=Bearer fc-fake {"url": "https://hotel.example/rooms", "onlyMainContent": true, "waitFor": 30000, "skipTlsVerification": true, "removeBase64Images": true, "fastMode": false, "blockAds": true, "storeInCache": true, "maxAge": 14400000, "formats": ["markdown"], "timeout": 60000, "mobile": false, "origin": "python-sdk@4.53.3"}
+```
+
+앱이 부른 `scrape_url(url, formats=["markdown"], wait_for=30000, timeout=60000)`는 v2 `scrape`로 넘어가(`firecrawl/v2/client.py`의 `scrape_url`, 소스를 읽어 확인) `POST /v2/scrape`가 되고, 반환값의 `.markdown`이 그대로 나옵니다. 4.53.3은 이 v1식 호출에 `DeprecationWarning`을 한 번 냅니다. `firecrawl-py`만 4.50.0으로 낮춘 환경에서 같은 스크립트를 돌리면 인스턴스에 `scrape_url`이 있고 같은 요청이 같은 답을 받으며 경고는 없습니다. 다만 4.50.0에서는 `from firecrawl import ScrapeOptions`가 `False`입니다. 원본이 그 import를 지웠기 때문에 앱은 문제가 없습니다. 내려간 환경에서는 `tools.scrape`만 import해 시험했고 `api.app`은 시험하지 않았습니다.
+
+그러면 이 Step의 별칭은 앱 import에는 필요 없습니다. 아래 Step들의 가짜 서버 실험이 여전히 `shim.py`를 앞에 import하는 까닭은 다른 데 있습니다. 지금의 `FirecrawlApp`(새 `Firecrawl` 클래스)은 `FIRECRAWL_API_URL` 환경변수를 읽지 않고 생성 인자 `api_url`만 봅니다(`firecrawl/client.py`와 `firecrawl/v2/`에서 그 변수를 읽는 줄이 없음, 소스를 읽어 확인). 옛 클라이언트 `V1FirecrawlApp`은 읽습니다(설치된 `firecrawl/v1/client.py`의 541행 `os.getenv`). 그래서 앱 파일을 고치지 않고 환경변수 하나로 가짜 서버에 보내려고 별칭을 씁니다. 값은 치러야 합니다. 별칭을 건 실험에서 가짜 서버가 받는 요청은 `/v1/scrape`이고, 실제 앱이 오늘 보내는 것은 위의 `/v2/scrape`입니다. Step 3 이후 출력의 `fire /v1/scrape`는 이 별칭 때문입니다. 별칭 파일 `shim.py`를 `backend/`에 둡니다. 앱보다 **먼저** import해야 하고, agno가 새 `FirecrawlApp`을 먼저 잡게 하려고 `agno.tools.firecrawl`을 그 안에서 import합니다.
+
+```python
+# 가짜 서버 실험용 별칭이다. 앱 import에는 필요 없다.
+# firecrawl-py 4.x의 FirecrawlApp(새 Firecrawl 클래스)은 FIRECRAWL_API_URL을 읽지 않는다. 그 환경변수를 읽는 옛 클라이언트(V1FirecrawlApp)로 바꿔, 앱이 만드는 클라이언트가 가짜 서버로 가게 한다.
 import firecrawl
 import agno.tools.firecrawl  # noqa: F401  agno가 새 FirecrawlApp을 먼저 잡게 한다
 firecrawl.FirecrawlApp = firecrawl.V1FirecrawlApp
-firecrawl.ScrapeOptions = firecrawl.V1ScrapeOptions
 ```
 
-(복사본의 `tools/scrape.py` 첫 줄을 `from firecrawl import V1FirecrawlApp as FirecrawlApp, V1ScrapeOptions as ScrapeOptions`로 고쳐도 같습니다. 이 문서는 원본을 건드리지 않으려고 별칭 파일을 썼습니다.) 설치된 버전은 이렇습니다(직접 확인, 열한 줄). `uv sync`만 했을 때와 `uv pip install -U` 뒤를 나란히 적습니다.
+(이 문서는 원본을 건드리지 않으려고 별칭 파일을 썼습니다.) 설치된 버전은 이렇습니다(2026-10-22에 다시 확인, 열한 줄). `uv sync`만 했을 때와 `uv pip install -U` 뒤를 나란히 적습니다.
 
 ```text
 패키지          uv sync 직후   -U 뒤
-agno            3.1.2          3.1.2
+agno            3.1.8          3.1.8
 asyncpg         0.30.0         0.30.0
 exa-py          1.13.1         1.13.1
 fast-flights    2.2            2.2
 fastapi         0.115.12       0.115.12
-firecrawl-py    2.7.1          4.50.0
-google-genai    1.18.0         2.29.0
+firecrawl-py    2.7.1          4.53.3
+google-genai    1.18.0         2.32.0
 openai          1.82.1         1.82.1
-pydantic        2.11.5         2.14.0
+pydantic        2.11.5         2.14.1
 sqlalchemy      2.0.41         2.0.41
 uvicorn         0.34.2         0.34.2
 ```
 
-한 가지 더, 이 환경에서는 `uv run`을 그냥 쓰면 안 됩니다. 프로젝트 환경을 잠금에 맞춰 **되돌리기** 때문입니다. 복사한 환경에서 시험하자 `uv run python …`이 `Uninstalled 25 packages`·`Installed 25 packages`를 찍고 `google-genai`를 1.18.0으로, `firecrawl-py`를 2.7.1로 되돌렸습니다(직접 확인). 이 시리즈의 명령은 `uv run --no-project`를 씁니다. 프로젝트를 찾지 않아 동기화도 하지 않고 폴더의 `.venv`를 그대로 쓰므로, 올린 패키지가 그대로 남습니다(`backend/.venv`에 같은 환경을 두고 시험: `google-genai` 2.29.0·`firecrawl-py` 4.50.0 유지, `shim`과 `api.app` import 통과).
+한 가지 더, 이 환경에서는 `uv run`을 그냥 쓰면 안 됩니다. 프로젝트 환경을 잠금에 맞춰 **되돌리기** 때문입니다. 복사한 환경에서 시험하자 `uv run python …`이 `Uninstalled 25 packages`·`Installed 25 packages`를 찍고 `google-genai`를 1.18.0으로, `firecrawl-py`를 2.7.1로 되돌렸습니다(직접 확인). 이 시리즈의 명령은 `uv run --no-project`를 씁니다. 프로젝트를 찾지 않아 동기화도 하지 않고 폴더의 `.venv`를 그대로 쓰므로, 올린 패키지가 그대로 남습니다(2026-10-10에 `backend/.venv`에 같은 환경을 두고 시험: `google-genai` 2.29.0·`firecrawl-py` 4.50.0 유지, `shim`과 `api.app` import 통과. 이 시험은 다시 하지 않았습니다).
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -543,9 +626,9 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
-20행은 `0.0.0.0`입니다. 모든 네트워크 인터페이스에 열려 같은 네트워크의 다른 기기가 접속할 수 있습니다. CORS도 모든 출처를 허용합니다(`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/api/app.py:45-51`). 이 문서는 `python main.py`를 실행하지 않았고, `main`을 import한 뒤 `uvicorn.run(main.app, host="127.0.0.1", …)`로 루프백에만 엽니다. 독자도 같은 이유로 `uvicorn main:app --host 127.0.0.1 --port 8000`처럼 열기를 권합니다. 포트 8000은 흔한 번호라 이미 다른 프로그램이 쓰고 있지 않은지 `netstat -ano`로 먼저 보세요. 시작할 때 하는 일은 `lifespan`입니다.
+20행은 `0.0.0.0`입니다. 모든 네트워크 인터페이스에 열려 같은 네트워크의 다른 기기가 접속할 수 있습니다. CORS는 예전에는 모든 출처를 허용했지만 지금은 허용 목록입니다(아래). 이 문서는 `python main.py`를 실행하지 않았고, `main`을 import한 뒤 `uvicorn.run(main.app, host="127.0.0.1", …)`로 루프백에만 엽니다. 독자도 같은 이유로 `uvicorn main:app --host 127.0.0.1 --port 8000`처럼 열기를 권합니다. 포트 8000은 흔한 번호라 이미 다른 프로그램이 쓰고 있지 않은지 `netstat -ano`로 먼저 보세요. 시작할 때 하는 일은 `lifespan`입니다.
 
-`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/api/app.py:18-35`
+`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/api/app.py:19-36`
 
 ```python
 @asynccontextmanager
@@ -568,7 +651,88 @@ async def lifespan(app: FastAPI):
     logger.info("API server shutting down")
 ```
 
-`initialize_db_pool()`이 DB에 `SELECT 1`을 던져 보고 실패하면 예외를 그대로 올려 **서버가 뜨지 않습니다**.
+CORS는 `FastAPI(...)`를 만든 바로 뒤에 걸립니다. 허용할 출처를 환경변수 `ALLOWED_ORIGINS`에서 읽습니다.
+
+`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/api/app.py:46-60`
+
+```python
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+    ).split(",")
+    if origin.strip()
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+원본은 예전에 `allow_origins=["*"]`로 모든 출처를 열었습니다. PR #1221(커밋 `368a64d2`, 2026-10-18 병합)이 이것을 `ALLOWED_ORIGINS`(쉼표로 구분, 값마다 앞뒤 공백을 지움)로 좁혔고, 값이 없을 때의 기본은 Next.js 개발 서버의 기본 포트에 맞춘 `http://localhost:3000`과 `http://127.0.0.1:3000`입니다. 메서드와 헤더는 여전히 모두 허용입니다(`allow_credentials=True`도 그대로). 클라이언트를 다른 주소에 올리면 그 주소를 `ALLOWED_ORIGINS`에 넣어야 브라우저가 응답을 읽습니다. FastAPI의 `TestClient`로 출처를 바꿔 가며 `/api/health`를 부르고, 같은 출처로 사전 요청(`OPTIONS`)도 보냅니다. `with` 없이 쓰므로 `lifespan`(DB 풀)은 돌지 않고 네트워크에도 나가지 않습니다.
+
+```python
+# backend/ 에서 실행한다. 별칭 없이 api.app을 import하고, FastAPI TestClient로 Origin을 바꿔 가며 /api/health를 부른다.
+# TestClient를 `with` 없이 쓰므로 lifespan(DB 풀)은 돌지 않고, 네트워크에도 나가지 않는다.
+# 사용: python check_cors.py   (ALLOWED_ORIGINS를 바꿔 보려면 환경변수를 준다)
+import os
+
+os.environ["FIRECRAWL_API_KEY"] = "fc-fake"
+os.environ["EXA_API_KEY"] = "exa-fake"
+os.environ["OPENROUTER_API_KEY"] = "or-fake"
+
+from fastapi.testclient import TestClient
+
+import sys
+import api.app  # noqa: F401
+m = sys.modules["api.app"]
+
+print("ALLOWED_ORIGINS env:", os.environ.get("ALLOWED_ORIGINS"))
+print("allowed_origins:", m.allowed_origins)
+client = TestClient(m.app)
+for origin in ["http://localhost:3000", "http://127.0.0.1:3000", "https://app.example", "http://evil.example"]:
+    r = client.get("/api/health", headers={"Origin": origin})
+    pre = client.options(
+        "/api/health",
+        headers={"Origin": origin, "Access-Control-Request-Method": "POST"},
+    )
+    print(
+        f"{origin:24} GET {r.status_code} allow-origin={r.headers.get('access-control-allow-origin')}"
+        f" | preflight {pre.status_code} {pre.text[:24]!r}"
+    )
+```
+
+`api/__init__.py`가 `from .app import app`을 하므로 `import api.app as m`으로는 모듈이 아니라 `FastAPI` 객체가 잡힙니다. 위 스크립트가 `sys.modules["api.app"]`을 쓰는 까닭입니다. 환경변수 없이 한 번, 두 값을 준 채로 한 번 돌립니다(loguru가 stderr에 찍는 DEBUG 줄은 `2>/dev/null`로 뺐습니다).
+
+```bash
+uv run --no-project python check_cors.py 2>/dev/null
+ALLOWED_ORIGINS="https://app.example, http://localhost:3000" uv run --no-project python check_cors.py 2>/dev/null
+```
+
+직접 확인한 출력입니다.
+
+```text
+ALLOWED_ORIGINS env: None
+allowed_origins: ['http://localhost:3000', 'http://127.0.0.1:3000']
+http://localhost:3000    GET 200 allow-origin=http://localhost:3000 | preflight 200 'OK'
+http://127.0.0.1:3000    GET 200 allow-origin=http://127.0.0.1:3000 | preflight 200 'OK'
+https://app.example      GET 200 allow-origin=None | preflight 400 'Disallowed CORS origin'
+http://evil.example      GET 200 allow-origin=None | preflight 400 'Disallowed CORS origin'
+ALLOWED_ORIGINS env: https://app.example, http://localhost:3000
+allowed_origins: ['https://app.example', 'http://localhost:3000']
+http://localhost:3000    GET 200 allow-origin=http://localhost:3000 | preflight 200 'OK'
+http://127.0.0.1:3000    GET 200 allow-origin=None | preflight 400 'Disallowed CORS origin'
+https://app.example      GET 200 allow-origin=https://app.example | preflight 200 'OK'
+http://evil.example      GET 200 allow-origin=None | preflight 400 'Disallowed CORS origin'
+```
+
+허용되지 않은 출처의 단순 `GET`도 서버는 200으로 답합니다. 달라지는 것은 `Access-Control-Allow-Origin` 머리글이 없다는 점이고, 그러면 브라우저가 그 페이지의 스크립트에 응답을 넘기지 않습니다. 사전 요청이 필요한 요청(`POST`에 JSON 본문 등)은 400 `Disallowed CORS origin`으로 거절됩니다. CORS는 브라우저가 지키는 약속이라 `curl`처럼 브라우저가 아닌 클라이언트는 막지 못합니다. 서버를 `0.0.0.0`에 여는 문제(위)는 CORS가 좁아져도 그대로입니다. 환경변수를 주면 기본값은 통째로 대체됩니다(두 번째 실행에서 `127.0.0.1:3000`이 막힌 것).
+
+`lifespan`이 부르는 `initialize_db_pool()`이 DB에 `SELECT 1`을 던져 보고 실패하면 예외를 그대로 올려 **서버가 뜨지 않습니다**.
 
 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/services/db_service.py:24-27`
 
@@ -609,8 +773,8 @@ uv run --no-project python prep_db.py fake.db
 import os, sys, json, time
 BACKEND_PORT, FAKE_PORT = int(sys.argv[1]), int(sys.argv[2])
 FAKE = f"http://127.0.0.1:{FAKE_PORT}"
-os.environ["FIRECRAWL_API_URL"] = FAKE                       # FirecrawlApp(api_key=...)가 읽는 주소
-# 1) firecrawl-py 4.x: 앱의 옛 import가 되도록 별칭을 건다(shim.py)
+os.environ["FIRECRAWL_API_URL"] = FAKE                       # 옛 클라이언트(V1FirecrawlApp)가 읽는 주소
+# 1) firecrawl-py 4.x: FirecrawlApp을 FIRECRAWL_API_URL을 읽는 옛 클라이언트로 바꾸는 별칭을 건다(shim.py)
 import shim  # noqa: F401
 # 2) Exa 클라이언트 주소
 import exa_py.api as ea
@@ -1587,8 +1751,9 @@ Firecrawl가 마크다운을 돌려주고 모델이 호텔 글을 쓰며, 서비
 
 ## 실행 체크리스트
 
-- [ ] `uv sync` 뒤 `uv lock --check`가 낡은 잠금을 알려 주는 것과, `google-genai`·`firecrawl-py`를 올려도 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:1`이 막히는 까닭을 읽었다
-- [ ] `shim.py`를 앞에 import하면 가짜 키로 `api.app`이 import되는 것을 봤고, `uv run`을 그냥 쓰면 올린 패키지가 되돌려지는 것을 알았다
+- [ ] `uv sync` 뒤 `uv lock --check`가 낡은 잠금을 알려 주는 것과, `google-genai`·`firecrawl-py`를 올려야 import되는 것과, 원본이 PR #1226에서 `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:1`의 `ScrapeOptions`를 지워 올린 뒤에도 앱이 별칭 없이 import되는 것을 봤다
+- [ ] 별칭 없이 가짜 키로 `api.app`이 import되는 것과, 가짜 서버 실험에서만 `shim.py`를 쓰는 까닭(새 `FirecrawlApp`은 `FIRECRAWL_API_URL`을 읽지 않아 가짜 서버가 `/v1/scrape`를 받는다)을 알았고, `uv run`을 그냥 쓰면 올린 패키지가 되돌려지는 것을 알았다
+- [ ] `check_cors.py`로 `ALLOWED_ORIGINS` 기본값이 두 출처만 허용하고 다른 출처에는 `Access-Control-Allow-Origin`이 없는 것을 봤다
 - [ ] `check_agents.py`로 에이전트 여섯의 모델·재시도·도구와 `Team`이 호출되지 않는 것을 확인했다
 - [ ] Google 폐기 표에서 `gemini-2.0-flash-001`의 종료일 2026-06-01을 읽었고, OpenRouter 목록에 그 ID가 없는 것을 봤다
 - [ ] `check_tools.py`로 Kayak URL(인코딩 없음)과 항공편 예외 삼킴(`[]`), 스크랩 대역을 봤다
@@ -1608,9 +1773,10 @@ Firecrawl가 마크다운을 돌려주고 모델이 호텔 글을 쓰며, 서비
 |---|---|---|
 | `uv lock --check`가 `needs to be updated, but --locked was provided` | `uv.lock`이 `agno` 1.5.6에 묶였고 `pyproject.toml`은 `agno>=2.3.24`(직접 확인). uv 버전에 따라 문구가 `--locked`가 아니라 `--check`로 나옵니다 | `uv sync`가 잠금을 고쳐 씁니다. 끝나면 `git checkout -- uv.lock`으로 되돌릴 수 있습니다 |
 | `TypeError: Agent.__init__() got an unexpected keyword argument 'add_datetime_to_context'` | `uv sync --frozen`이 `agno` 1.5.6을 설치했다. 이 이름은 agno 2.x 이후의 것(직접 확인) | `--frozen`을 쓰지 않는다 |
-| ``ImportError: `google-genai` not installed or not at the latest version`` | agno 3.1.2의 Gemini 클래스가 `FileSearch` 등을 요구하는데 잠금의 `google-genai` 1.18.0에는 없다. `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/config/llm.py:1`이 쓰지도 않는 `Gemini`를 import한다(직접 확인) | `uv pip install -U google-genai`(직접 확인: 2.29.0에서 import됨) |
+| ``ImportError: `google-genai` not installed or not at the latest version`` | agno 3.1.8의 Gemini 클래스가 `FileSearch` 등을 요구하는데 잠금의 `google-genai` 1.18.0에는 없다. `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/config/llm.py:1`이 쓰지도 않는 `Gemini`를 import한다(직접 확인) | `uv pip install -U google-genai`(직접 확인: 2.32.0에서 import됨) |
 | ``ImportError: `firecrawl-py` not installed`` (`agno/tools/firecrawl.py`) | agno는 `firecrawl.types`를 요구하는데 2.7.1에는 없다(직접 확인) | `uv pip install -U "firecrawl-py>=3"` |
-| `ImportError: cannot import name 'ScrapeOptions' from 'firecrawl'` (`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:1`) | `firecrawl-py` 3.x 이상은 옛 이름이 `V1ScrapeOptions`·`V1FirecrawlApp`이다. 어느 버전도 agno와 앱을 함께 만족하지 않는다(직접 확인) | 별칭 `shim.py`를 앞에 import하거나 복사본의 `scrape.py:1`을 고친다 |
+| `ImportError: cannot import name 'ScrapeOptions' from 'firecrawl'` (`advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:1`) | 원본이 PR #1226(커밋 `b8aded55`) 전에 낸 오류다. 그 전의 `scrape.py:1`이 `ScrapeOptions`를 import했는데 `firecrawl-py` 4.50.0에는 그 이름이 없었다. 지금의 앱은 `FirecrawlApp`만 import하고 4.50.0·4.53.3에서 별칭 없이 import된다(직접 확인) | 원본을 최신으로 받는다. 예전 복사본이면 `scrape.py:1`을 `from firecrawl import FirecrawlApp`으로 고친다 |
+| 브라우저 콘솔의 `blocked by CORS policy`(`No 'Access-Control-Allow-Origin' header`) 또는 사전 요청의 `400 Disallowed CORS origin` | 클라이언트를 `ALLOWED_ORIGINS`에 없는 주소에서 열었다. 기본값은 `http://localhost:3000`과 `http://127.0.0.1:3000`뿐이다(기본값과 400 응답은 `check_cors.py`로 직접 확인했고, 브라우저 콘솔의 문구는 확인하지 못했다) | `ALLOWED_ORIGINS="https://내주소,http://localhost:3000"`처럼 쉼표로 이어 준다. 값을 주면 기본값은 대체된다 |
 | `ValueError: No API key provided` 또는 `API key must be provided as an argument or in EXA_API_KEY` | `advanced_ai_agents/multi_agent_apps/agent_teams/ai_travel_planner_agent_team/backend/tools/scrape.py:7`과 `ExaTools`가 import 때 키를 요구한다(직접 확인) | 두 키를 셸이나 `.env`에 둔다 |
 | `uv run python …` 뒤 갑자기 `ImportError`가 다시 난다 | `uv run`이 환경을 잠금에 맞춰 되돌려 올린 패키지를 지웠다(직접 확인: 25개) | `uv run --no-project`를 쓴다 |
 | `sqlalchemy.exc.ArgumentError: Could not parse SQLAlchemy URL` 뒤 `Application startup failed` | `DATABASE_URL`이 비어 있다(기본값 `""`). 시작 때 DB 풀을 만들지 못하면 서버가 뜨지 않는다(직접 확인) | 값을 넣는다 |
