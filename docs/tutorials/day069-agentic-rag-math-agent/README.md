@@ -239,7 +239,7 @@ class InputValidator(dspy.Module):
 이 튜토리얼의 첫 판은 여기서 결함을 적었습니다. 예전 코드는 예시를 `dspy.ChainOfThought(ClassifyMath, examples=[...])`에 넘겼는데 그 인자는 few-shot 데모가 되지 않았고, 그렇게 만든 모듈은 `forward()`가 부르지도 않았습니다. 원본이 PR #1236(커밋 `1ee4f2d`, 2026-10-18 병합)에서 고쳤습니다. 지금 동작을 가짜 LM(`dspy.utils.dummies.DummyLM`, 모델 호출 없음)으로 확인합니다.
 
 ```bash
-PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+LITELLM_LOCAL_MODEL_COST_MAP=True PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import rag.guardrails as g
 iv = g.InputValidator()
 ex = g.MATH_CLASSIFIER_EXAMPLES
@@ -259,7 +259,7 @@ has validate_question: False
 예시는 35개(Yes 33 + No 2)이고, 이전 판의 38개에서 중복 문항이 빠진 것입니다. `validate_question`은 아예 없어졌고, 실제로 도는 `classifier`가 35개를 데모로 지닙니다. 이 데모가 요청에 실리는지는 `DummyLM`에 답을 미리 넣어 두고 `forward()`를 한 번 불러, 모델에 나간 메시지를 세어 봅니다.
 
 ```bash
-PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+LITELLM_LOCAL_MODEL_COST_MAP=True PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import dspy
 from dspy.utils.dummies import DummyLM
 import rag.guardrails as g
@@ -318,7 +318,7 @@ def parse_verdict(verdict) -> Optional[bool]:
 글자가 아닌 문자는 앞에서 건너뛰고, 처음 나오는 낱말이 `yes`나 `no`면 그 값을 돌려줍니다. 둘 다 아니면 `None`이고, 호출한 쪽이 경고를 찍은 뒤 입력 가드는 "수학 아님", 출력 가드는 "검증 실패"로 칩니다. 모델 호출 없이 몇 가지 응답으로 읽어 봅니다.
 
 ```bash
-PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+LITELLM_LOCAL_MODEL_COST_MAP=True PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 from rag.guardrails import parse_verdict
 for s in ['Yes', 'yes.', '**Yes**', 'Yes, this is math.', 'No', 'no!', 'Maybe', '', None, 'Not sure', 'Yesterday']:
     print(repr(s), '->', parse_verdict(s))
@@ -372,7 +372,7 @@ class OutputValidator(dspy.Module):
 `question`/`answer` 필드에 타입 힌트(`: str`)가 없는데도(`ClassifyMath`의 필드들과 비교됩니다) DSPy 2.6.18은 문제없이 처리합니다(직접 확인, 아래). 애매한 판정(`unsure` 같은 것)을 만나면 `False`를 돌려주므로, 오케스트레이터에서는 "검증 실패"와 같은 길로 갑니다. 가짜 LM으로 세 번 불러 봅니다.
 
 ```bash
-PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+LITELLM_LOCAL_MODEL_COST_MAP=True PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import dspy
 from dspy.utils.dummies import DummyLM
 import rag.guardrails as g
@@ -604,7 +604,7 @@ ResponseHandlingException : [WinError 10061] 대상 컴퓨터에서 연결을 �
 고쳐진 웹 폴백은 진짜 Tavily 없이 `requests.post`를 가짜로 바꿔 치우고 확인합니다. 키 없음, 정상 응답, 답이 `null`, 상태 코드 500, JSON이 아닌 본문을 차례로 넣습니다.
 
 ```bash
-PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+LITELLM_LOCAL_MODEL_COST_MAP=True PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import requests
 import rag.query_router as qr
 class Fake:
@@ -649,7 +649,7 @@ html -> None
 키가 없으면 요청 자체를 보내지 않고(`calls: 0`), 나머지 실패는 모두 `None`이며, 요청에는 `timeout=20`이 실립니다. 시간 초과 자체는 이 가짜로는 보이지 않아 소스로만 읽었습니다. 설치된 `requests/exceptions.py`에서 `Timeout`이 `RequestException`의 하위 클래스(71행)이므로 `except (requests.RequestException, ValueError)`에 걸립니다. 이어서 오케스트레이터 전체를 모델 없이 한 번 돌립니다. Qdrant 실패, 웹 검색 없음, 출력 가드가 두 번 모두 실패하는 가장 나쁜 길입니다.
 
 ```bash
-PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+LITELLM_LOCAL_MODEL_COST_MAP=True PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import rag.query_router as qr
 class Seq:
     def __init__(self, *v):
@@ -856,7 +856,7 @@ def benchmark_math_agent(limit: int = 10):
 새 채점이 옛 채점과 얼마나 다른지는, 저장소에 커밋된 50문항 응답에 새 함수를 적용해 다시 세어 봅니다. 모델은 부르지 않고, 파일에 이미 있는 응답(`Predicted`)과 정답(`Expected`)만 씁니다. 같은 응답에 옛 규칙(`expected.lower() in response.lower()`)도 다시 적용해 나란히 놓습니다.
 
 ```bash
-PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+LITELLM_LOCAL_MODEL_COST_MAP=True PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import re
 import sys
 sys.path.insert(0, 'app')
@@ -905,7 +905,7 @@ CSV의 Correct 열: 33 / 옛 판정 다시 계산: 33 / 둘이 같은가: True
 새 규칙의 경계는 작은 입력으로도 확인합니다.
 
 ```bash
-PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+LITELLM_LOCAL_MODEL_COST_MAP=True PYTHONIOENCODING=utf-8 uv run --no-project python -c "
 import sys
 sys.path.insert(0, 'app')
 from benchmark import is_answer_correct
