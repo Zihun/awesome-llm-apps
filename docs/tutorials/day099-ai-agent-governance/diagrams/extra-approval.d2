@@ -1,6 +1,8 @@
 ...@../../_tools/theme
 shape: sequence_diagram
 
+audit: "감사 로그 (audit_log)" { class: store }
+engine: "PolicyEngine" { class: ours }
 wrapper: "governed_tool 래퍼" { class: ours }
 prompt: "승인 프롬프트\n(get_human_approval)" { class: ours }
 user: "사용자" { class: person }
@@ -10,3 +12,5 @@ prompt -> user: "print(\"APPROVAL REQUIRED\nAction: delete_file\nArgs: {'path': 
 prompt -> user: "input(\"Approve? [y/N]: \")"
 user -> prompt: "y"
 prompt -> wrapper: "True"
+wrapper -> engine: "_log_audit(action,\nPolicyResult(ALLOW,\n\"Human approved\nthe action\"))"
+engine -> audit: "append(AuditEntry(ALLOW,\nhuman_approval))"
