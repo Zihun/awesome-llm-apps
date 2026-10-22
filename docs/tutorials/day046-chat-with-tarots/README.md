@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-"💬 Chat with X" 볼륨의 마지막 날이자, 이 볼륨에서 세 가지가 동시에 다른 앱입니다. 첫째, 폴더 위치부터 다릅니다 — 다른 일곱 날이 모두 사는 `chat_with_X_tutorials/` 밑이 아니라 `advanced_llm_apps/chat-with-tarots`에 홀로 있습니다. 둘째, 지금까지 이 볼륨을 다섯 번 지배한 `embedchain`이 코드 어디에도 없습니다(`requirements.txt` 직접 확인) — 대신 `langchain`과 `langchain-ollama`로 파이프라인을 직접 손으로 조립합니다. 셋째, 웹에서 아무것도 긁어오지 않습니다 — 타로 카드 78장(메이저 아르카나 22장 + 마이너 아르카나 56장)의 이름·정방향/역방향 의미·상징 설명을 담은 `data/tarots.csv`를 리포에 그대로 들고 다닙니다. 이 세 가지가 이 앱을 Day 039~045가 부딪힌 문제들로부터 자유롭게 해주는지, 아니면 다른 문제로 바꿔치기하는지를 오늘 직접 확인합니다 — 결론부터 말하면 `chroma-hnswlib` 네이티브 휠 문제는 애초에 발생하지 않지만(embedchain·chromadb 의존성이 없으므로), `requirements.txt`에 버전 하한이 전혀 없다는 같은 원인이 이번에는 다른 벽 — 오늘 기준 최신 `langchain`(1.4.2)에서 `langchain.prompts` 서브모듈 자체가 사라져 앱이 임포트 단계에서 바로 죽는 문제 — 를 만듭니다(직접 확인, Step 1). 그리고 질문마다 벡터스토어를 통째로 재구축하던 Day 039의 재수집 함정도 없습니다 — 애초에 임베딩도, 벡터 검색도 없기 때문입니다. 이 앱이 "지식베이스"라고 부르는 것은 CSV 78행 전체를 딕셔너리로 옮겨 둔 것이 전부이고, 질문이 들어오면 `generate_random_draw()`가 그 딕셔너리의 카드 이름 중 `num_cards`장을 **`random.sample`로 순수하게 무작위 선택**합니다 — 이 함수는 애초에 질문 텍스트를 인자로 받지도 않습니다(직접 확인, Step 3). 뽑힌 카드의 정방향/역방향 의미와 상징 설명 텍스트만 그대로 프롬프트에 붙여넣어(`prepare_prompt_input()`) 로컬 Ollama가 서빙하는 `phi4`(마이크로소프트의 14B 파라미터 모델, 다운로드 9.1GB — ollama.com 라이브러리 페이지로 확인)에게 해석을 요청합니다. 즉 여기엔 임베딩도 유사도 검색도 없습니다 — 질문과 무관하게 뽑힌 카드 몇 장의 사전 정의된 텍스트를 모델에게 던지고 그럴듯한 산문으로 엮어 달라고 시키는 작은 로컬 파이프라인입니다. 카드가 "무엇을 예언한다"는 틀은 이 문서에서 다루지 않습니다 — 오늘의 관심사는 질문과 답 사이에서 정확히 무엇이 선택되고, 무엇이 프롬프트에 실리고, 로컬 모델이 거기에 무엇을 더하는지, 그 기계적인 경로뿐입니다. 완성하면 카드 수(3·5·7)를 고르고 자유 텍스트로 맥락을 적어 "Draw and Analyze"를 누르면, 무작위로 뽑힌 카드 이미지와 `phi4`가 생성한 해석이 함께 표시되는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
+"💬 Chat with X" 볼륨의 마지막 날이자, 이 볼륨에서 세 가지가 동시에 다른 앱입니다. 첫째, 폴더 위치부터 다릅니다 — 다른 일곱 날이 모두 사는 `chat_with_X_tutorials/` 밑이 아니라 `advanced_llm_apps/chat-with-tarots`에 홀로 있습니다. 둘째, 지금까지 이 볼륨을 다섯 번 지배한 `embedchain`이 코드 어디에도 없습니다(`requirements.txt` 직접 확인) — 대신 `langchain`과 `langchain-ollama`로 파이프라인을 직접 손으로 조립합니다. 셋째, 웹에서 아무것도 긁어오지 않습니다 — 타로 카드 78장(메이저 아르카나 22장 + 마이너 아르카나 56장)의 이름·정방향/역방향 의미·상징 설명을 담은 `data/tarots.csv`를 리포에 그대로 들고 다닙니다. 이 세 가지가 이 앱을 Day 039~045가 부딪힌 문제들로부터 자유롭게 해주는지, 아니면 다른 문제로 바꿔치기하는지를 오늘 직접 확인합니다 — 결론부터 말하면 `chroma-hnswlib` 네이티브 휠 문제는 애초에 발생하지 않지만(embedchain·chromadb 의존성이 없으므로), `requirements.txt`에 버전 하한이 전혀 없다는 점은 이번에는 다른 벽 — `langchain` 1.x에서 `langchain.prompts` 서브모듈이 사라져 앱이 임포트 단계에서 죽는 문제 — 를 만들었습니다. 다만 이 벽은 원본이 PR #1244(커밋 `a7c22ec9`, 2026-10-18 병합)에서 `langchain_core.prompts`로 임포트를 바꿔 이미 고쳤습니다. 오늘 `requirements.txt`를 그대로 설치하면(`langchain 1.4.7`) 앱이 임포트되고, 가짜 Ollama를 세운 상태에서 체인이 끝까지 돕니다(직접 확인, Step 1·5). 그리고 질문마다 벡터스토어를 통째로 재구축하던 Day 039의 재수집 함정도 없습니다 — 애초에 임베딩도, 벡터 검색도 없기 때문입니다. 이 앱이 "지식베이스"라고 부르는 것은 CSV 78행 전체를 딕셔너리로 옮겨 둔 것이 전부이고, 질문이 들어오면 `generate_random_draw()`가 그 딕셔너리의 카드 이름 중 `num_cards`장을 **`random.sample`로 순수하게 무작위 선택**합니다 — 이 함수는 애초에 질문 텍스트를 인자로 받지도 않습니다(직접 확인, Step 3). 뽑힌 카드의 정방향/역방향 의미와 상징 설명 텍스트만 그대로 프롬프트에 붙여넣어(`prepare_prompt_input()`) 로컬 Ollama가 서빙하는 `phi4`(마이크로소프트의 14B 파라미터 모델, 다운로드 9.1GB — ollama.com 라이브러리 페이지로 확인)에게 해석을 요청합니다. 즉 여기엔 임베딩도 유사도 검색도 없습니다 — 질문과 무관하게 뽑힌 카드 몇 장의 사전 정의된 텍스트를 모델에게 던지고 그럴듯한 산문으로 엮어 달라고 시키는 작은 로컬 파이프라인입니다. 카드가 "무엇을 예언한다"는 틀은 이 문서에서 다루지 않습니다 — 오늘의 관심사는 질문과 답 사이에서 정확히 무엇이 선택되고, 무엇이 프롬프트에 실리고, 로컬 모델이 거기에 무엇을 더하는지, 그 기계적인 경로뿐입니다. 완성하면 카드 수(3·5·7)를 고르고 자유 텍스트로 맥락을 적어 "Draw and Analyze"를 누르면, 무작위로 뽑힌 카드 이미지와 `phi4`가 생성한 해석이 함께 표시되는 화면을 로컬에서 띄우게 됩니다. 아래는 완성된 아키텍처입니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -14,7 +14,6 @@
 |---|---|---|
 | Ollama | 로컬에서 `phi4`를 서빙하는 데몬(`http://localhost:11434`) | https://ollama.com 에서 설치, 백그라운드 데몬으로 상시 실행됨 |
 | `phi4` 모델 | 이 앱이 유일하게 쓰는 채팅 모델 — 14B 파라미터, 다운로드 9.1GB(ollama.com 라이브러리 페이지로 확인, 이 문서는 받지 않음) | `ollama pull phi4` (앱 자체 README도 이 명령을 정확히 안내함, 직접 확인) |
-| langchain 버전 고정 | `requirements.txt`에 버전 하한이 없어 기본 설치는 오늘 기준 langchain 1.4.2로 풀리고 `langchain.prompts` 임포트가 깨짐(Step 1에서 직접 확인) | `uv pip install "langchain<1.0"`로 재설치 |
 | uv | 가상환경 생성과 패키지 설치 | [공통 사전 준비](../README.md#공통-사전-준비-한-번만) 절 참고 |
 
 ## 아키텍처 한눈에 보기
@@ -31,15 +30,15 @@
 
 ## 단계별 진행
 
-### Step 1. 환경 만들기 — 의존성과 임포트가 깨지는 지점
+### Step 1. 환경 만들기 — 버전이 풀려도 임포트가 되는지
 
-**목적.** `requirements.txt` 6줄(주석 제외)을 설치하고, 이 볼륨을 다섯 번 막았던 `chroma-hnswlib` 네이티브 휠 문제가 정말 없는지, 그리고 대신 무엇이 오늘의 벽인지 확인합니다.
+**목적.** `requirements.txt` 6줄(주석 제외)을 설치하고, 이 볼륨을 다섯 번 막았던 `chroma-hnswlib` 네이티브 휠 문제가 정말 없는지, 그리고 하한 없는 `langchain`이 최신으로 풀려도 앱이 임포트되는지 확인합니다.
 
 **할 일.**
 
 ```bash
 cd advanced_llm_apps/chat-with-tarots
-uv venv
+uv venv --python 3.12
 uv pip install -r requirements.txt
 ```
 
@@ -55,22 +54,22 @@ langchain-ollama
 ollama
 ```
 
-여섯 줄 모두 버전 하한이 없습니다. `embedchain`도 `chromadb`도 요구하지 않으므로(목록에 없음, 직접 확인) 이 볼륨의 다른 날들을 막았던 `chroma-hnswlib` 사전 빌드 wheel 문제는 애초에 발생하지 않습니다 — 이 컴퓨터의 기본 `uv venv`(Python 3.13.3, 직접 확인 — Day 039·043·044와 같은 버전)로 그대로 68개 패키지가 설치됩니다.
+여섯 줄 모두 버전 하한이 없습니다. `embedchain`도 `chromadb`도 요구하지 않으므로(목록에 없음, 직접 확인) 이 볼륨의 다른 날들을 막았던 `chroma-hnswlib` 사전 빌드 wheel 문제는 애초에 발생하지 않습니다 — Python 3.12.10(`uv venv --python 3.12`, 직접 확인)으로 그대로 66개 패키지가 설치됩니다.
 
 직접 확인한 출력(발췌):
 
 ```
-Resolved 68 packages in 15.14s
-Prepared 7 packages in 5.65s
-Installed 68 packages in 33.14s
+Resolved 66 packages in 483ms
+Prepared 17 packages in 1.41s
+Installed 66 packages in 3.50s
 ```
 
-핵심 버전(직접 확인): `streamlit 1.64.0`, `pandas 3.0.6`, `langchain 1.4.2`, `langchain-core 1.6.4`, `langchain-ollama 1.1.0`, `ollama 0.6.2`. 그런데 설치가 끝난 뒤 `app.py`의 첫 임포트 줄부터 막힙니다.
+핵심 버전(직접 확인): `streamlit 1.66.1`, `pandas 3.0.6`, `langchain 1.4.7`, `langchain-core 1.6.13`, `langchain-ollama 1.1.0`, `ollama 0.6.3`. `langchain`은 1.x로 풀렸고, 이 판의 최상위 패키지에는 `langchain.prompts`가 없습니다(직접 확인: 같은 환경에서 `importlib.util.find_spec('langchain.prompts')`가 `None`). 그래도 앱은 임포트됩니다. `app.py`의 첫 줄이 `langchain_core`에서 `PromptTemplate`을 가져오기 때문입니다.
 
 `advanced_llm_apps/chat-with-tarots/app.py:1-7`
 
 ```python
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 import pandas as pd
 from langchain_core.runnables import RunnableParallel, RunnableLambda # Import necessary for LCEL
 import random
@@ -79,45 +78,7 @@ import helpers.help_func as hf
 from PIL import Image
 ```
 
-직접 확인한 출력:
-
-```
-Traceback (most recent call last):
-  File "<string>", line 1, in <module>
-    from langchain.prompts import PromptTemplate; print('langchain.prompts OK')
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ModuleNotFoundError: No module named 'langchain.prompts'
-```
-
-원인을 설치된 패키지 자체에서 직접 확인했습니다: `langchain 1.4.2`의 최상위 패키지에는 `agents`·`chat_models`·`embeddings`·`mcp`·`messages`·`rate_limiters`·`tools`만 남아 있고 `prompts`가 없습니다 — `import langchain`을 하고 `dir(langchain)`을 찍어도 공개 이름이 하나도 없습니다(직접 확인). `PromptTemplate` 클래스 자체는 사라지지 않았습니다 — `from langchain_core.prompts import PromptTemplate`는 그대로 성공합니다(직접 확인). 즉 클래스는 `langchain_core`에 그대로 있는데, `langchain` 1.x가 0.x 시절의 재수출 경로(`langchain.prompts`)를 더 이상 제공하지 않는 것입니다. 깨지는 지점은 정확히 이 한 줄뿐입니다 — `helpers/help_func.py`는 `langchain_ollama`와 표준 라이브러리만 쓰므로 이 문제와 무관하게 그대로 임포트됩니다(직접 확인).
-
-고치는 방법은 Day 039의 "Python 3.11로 다시 만들기"처럼 환경을 예전 조합으로 고정하는 것입니다 — 이번엔 Python 버전이 아니라 `langchain` 자체를 0.x로 내립니다.
-
-```bash
-uv pip install "langchain<1.0"
-```
-
-직접 확인한 출력:
-
-```
-Resolved 65 packages in 300ms
-Prepared 3 packages in 36.57s
-Uninstalled 4 packages in 5.17s
-Installed 7 packages in 33.20s
- + greenlet==3.5.6
- - langchain==1.4.2
- + langchain==0.3.30
- - langchain-core==1.6.4
- + langchain-core==0.3.86
- - langchain-ollama==1.1.0
- + langchain-ollama==0.3.10
- + langchain-text-splitters==0.3.11
- - packaging==26.3
- + packaging==25.0
- + sqlalchemy==2.0.54
-```
-
-`langchain`·`langchain-core`·`langchain-ollama` 세 패키지가 한꺼번에 0.3.x대로 내려가면서 `langchain-text-splitters`·`greenlet`·`sqlalchemy`가 새로 따라 들어옵니다. 이 상태에서 `python -m py_compile`은 처음부터 끝까지 문제없이 통과한다는 점도 짚어 둘 만합니다 — `py_compile`은 문법만 검사할 뿐 `import`문을 실행하지 않으므로, 이런 런타임 임포트 실패는 문법 검사로는 절대 잡히지 않습니다.
+이 줄은 예전에는 `from langchain.prompts import PromptTemplate`였고, `langchain` 1.x가 풀리는 새 설치에서는 `ModuleNotFoundError: No module named 'langchain.prompts'`로 앱이 시작 단계에서 죽었습니다. 처방은 `uv pip install "langchain<1.0"`였습니다. 원본이 PR #1244(커밋 `a7c22ec9`, 2026-10-18 병합)에서 임포트를 `langchain_core.prompts`로 바꿔 고쳤으므로, 오늘은 그 처방이 필요 없습니다. `langchain_core`는 `requirements.txt`에 이미 있습니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -131,8 +92,10 @@ uv run --no-project python -m py_compile app.py helpers/help_func.py && echo com
 compiled
 ```
 
+`py_compile`은 문법만 검사하고 `import`문을 실행하지 않습니다. 임포트는 따로 확인합니다.
+
 ```bash
-uv run --no-project python -c "import streamlit, pandas; from langchain.prompts import PromptTemplate; from langchain_core.runnables import RunnableParallel, RunnableLambda; from langchain_ollama import ChatOllama; import ollama; from PIL import Image; print('ALL IMPORTS OK')"
+uv run --no-project python -c "import streamlit, pandas; from langchain_core.prompts import PromptTemplate; from langchain_core.runnables import RunnableParallel, RunnableLambda; from langchain_ollama import ChatOllama; import ollama; from PIL import Image; print('ALL IMPORTS OK')"
 ```
 
 ```
@@ -391,7 +354,7 @@ print(f"\nLLM model '{llm.model}' configured.")
 
 모델명은 소스에만 있습니다 — 화면에는 모델 선택 UI가 없고, `phi4` 하나로 고정되어 있습니다. `phi4`는 마이크로소프트의 14B 파라미터 모델로, ollama.com의 `phi4` 라이브러리 페이지(직접 확인)에 따르면 `phi4:latest`/`phi4:14b` 태그 모두 다운로드 9.1GB, 컨텍스트 창 16K입니다. 이 페이지는 최소 RAM을 명시하지 않습니다. Day 040·041이 인용한 것과 같은 출처 — Ollama quickstart 문서의 경험칙(7B→8GB, 13B→16GB, 33B→32GB, 소스로 확인, https://ollama.readthedocs.io/en/quickstart/ ) — 를 적용하면 14B인 `phi4`는 13B 구간에 가장 가까워 16GB가 기준이 됩니다. 문서가 14B를 직접 말하지는 않으므로 이는 외삽입니다(미확인). 이 문서는 `phi4`를 내려받지 않았습니다 — 이 컴퓨터의 `ollama list`로 확인한 로컬 모델 목록에도 없습니다(직접 확인, 아래).
 
-`ChatOllama(...)`를 만드는 것 자체는 데몬과 통신하지 않는다는 것도 소스로 확인했습니다: `langchain-ollama`(1.1.0과, Step 1에서 내려간 0.3.10 양쪽 모두)의 `ChatOllama`는 `validate_model_on_init` 옵션이 있는데 기본값이 `False`입니다 — 즉 이 앱처럼 그 옵션을 켜지 않으면 생성 시점에 Ollama에 어떤 모델이 있는지 묻지도, 없는 모델을 내려받으려 시도하지도 않습니다. 실제로 만들어 봐도 즉시 성공합니다.
+`ChatOllama(...)`를 만드는 것 자체는 데몬과 통신하지 않는다는 것도 소스로 확인했습니다: `langchain-ollama`(1.1.0)의 `ChatOllama`는 `validate_model_on_init` 옵션이 있는데 기본값이 `False`입니다 — 즉 이 앱처럼 그 옵션을 켜지 않으면 생성 시점에 Ollama에 어떤 모델이 있는지 묻지도, 없는 모델을 내려받으려 시도하지도 않습니다. 실제로 만들어 봐도 즉시 성공합니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -426,6 +389,85 @@ llama3.2:latest          a80c4f17acd5    2.0 GB    10 months ago
 embeddinggemma:latest    85462619ee72    621 MB    10 months ago
 gpt-oss:20b              17052f91a42e    13 GB     10 months ago
 ```
+
+`phi4`가 없어도 체인 전체가 끝까지 도는지는 가짜 Ollama로 확인합니다. 아래 파일 `run_chain.py`를 `chat-with-tarots` 폴더 안에 만듭니다. 안에서 하는 일은 셋입니다. 첫째, 자기 프로세스에 `/api/chat`만 흉내 내는 서버를 `127.0.0.1:48301`에 엽니다. 둘째, `ChatOllama`의 `base_url`을 그 주소로 바꿔치기합니다(앱은 `http://localhost:11434`를 박아 두었습니다). 셋째, Streamlit의 `AppTest`로 `app.py`를 돌려 질문을 넣고 버튼을 누릅니다. 진짜 Ollama와 `phi4`는 쓰지 않습니다.
+
+```python
+import json, random, threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+PORT = 48301
+SEEN = []
+
+
+class H(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_POST(self):
+        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        SEEN.append((self.path, body))
+        self.send_response(200)
+        self.send_header("Content-Type", "application/x-ndjson")
+        self.end_headers()
+        for part, done in (("FAKE ", False), ("READING", False), ("", True)):
+            msg = {"model": "phi4", "created_at": "2026-10-22T00:00:00Z",
+                   "message": {"role": "assistant", "content": part}, "done": done}
+            if done:
+                msg["done_reason"] = "stop"
+            self.wfile.write((json.dumps(msg) + "\n").encode())
+
+
+srv = HTTPServer(("127.0.0.1", PORT), H)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+import langchain_ollama
+
+_orig = langchain_ollama.ChatOllama
+
+
+class Patched(_orig):
+    def __init__(self, **kw):
+        kw["base_url"] = f"http://127.0.0.1:{PORT}"
+        super().__init__(**kw)
+
+
+langchain_ollama.ChatOllama = Patched
+
+from streamlit.testing.v1 import AppTest
+
+random.seed(7)
+at = AppTest.from_file("app.py", default_timeout=60)
+at.run()
+print("exceptions after first run:", len(at.exception))
+at.text_area[0].input("Will my career change soon?")
+at.button[0].click().run()
+print("exceptions:", len(at.exception), "errors:", len(at.error))
+print("subheader:", [s.value for s in at.subheader])
+print("reading:", [m.value for m in at.markdown if "FAKE" in m.value])
+path, body = SEEN[0]
+print("fake server got:", path, "model=", body["model"], "messages=", len(body["messages"]))
+print(body["messages"][0]["content"][:230])
+```
+
+```bash
+uv run --no-project python run_chain.py
+```
+
+직접 확인한 출력(앱이 임포트 때 찍는 CSV 적재 로그는 뺐습니다):
+
+```
+exceptions after first run: 0
+exceptions: 0 errors: 0
+subheader: ['✨ Your Cards Revealed:', '📜 The Interpretation:']
+reading: ['FAKE READING']
+fake server got: /api/chat model= phi4 messages= 1
+
+Analyze the following tarot cards, based on the meanings provided (also considering if they are reversed):
+Card: 41-sixofcups.jpg (reversed) - Meaning: Living in the past, forgiveness, lacking playfulness, stuck in the past, movi
+```
+
+임포트부터 체인 조립, 카드 뽑기, 프롬프트 채우기, 모델 호출, 결과 표시까지 `requirements.txt` 그대로 설치한 환경에서 예외 없이 돕니다. 서버가 받은 프롬프트의 첫 카드는 Step 4의 시드 7 출력과 같은 `41-sixofcups.jpg (reversed)`입니다. 응답 문구 `FAKE READING`은 가짜 서버가 만든 것이라 `phi4`의 해석 품질은 이 확인이 말해 주지 않습니다. `ChatOllama`를 바꿔치기하는 `Patched` 줄을 빼면 앱은 `localhost:11434`로 갑니다. 독자의 PC에서 진짜 Ollama가 돌고 있다면 그리로 가서 `phi4`를 부릅니다.
 
 ### Step 6. 화면 표시 — 카드 이미지와 파일명 불일치
 
@@ -559,7 +601,8 @@ EXCEPTION TEXT: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으�
 
 ## 실행 체크리스트
 
-- [ ] `uv venv`로 만든 환경에 `requirements.txt`를 설치했고, 기본 설치는 `langchain.prompts` 임포트가 깨진다는 것과 `uv pip install "langchain<1.0"`로 고쳐진다는 것을 확인했다
+- [ ] `uv venv`로 만든 환경에 `requirements.txt`를 그대로 설치했고(`langchain 1.4.7`), `app.py`가 `langchain_core.prompts`에서 임포트하므로 `langchain<1.0` 처방 없이 모든 임포트가 통과한다는 것을 확인했다
+- [ ] 가짜 Ollama를 자기 포트에 세우고 `AppTest`로 버튼을 눌러, 체인이 프롬프트를 만들어 `/api/chat`으로 보내고 응답을 화면에 표시하는 것을 확인했다
 - [ ] 이 앱은 `embedchain`·`chromadb`를 쓰지 않아 이 볼륨의 네이티브 휠 문제가 애초에 없다는 것을 이해했다
 - [ ] `data/tarots.csv` 78행이 표준 타로 78장(메이저 22 + 마이너 56) 전체라는 것을 확인했다
 - [ ] `generate_random_draw`의 시그니처에 질문 인자가 없다는 것 — 카드 선택이 질문과 무관한 순수 난수라는 것 — 을 직접 확인했다
@@ -574,7 +617,7 @@ EXCEPTION TEXT: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으�
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `python -c "from langchain.prompts import PromptTemplate"`가 `ModuleNotFoundError: No module named 'langchain.prompts'`로 실패 | `requirements.txt`에 버전 하한이 없어 기본 설치가 `langchain 1.4.2`로 풀리는데, 이 버전의 최상위 패키지가 `prompts` 서브모듈을 더 이상 재수출하지 않는다(직접 확인: 설치된 패키지 내용) | `uv pip install "langchain<1.0"`로 재설치(`langchain 0.3.30`대로 하향, 직접 확인) |
+| 시작 때 `ModuleNotFoundError: No module named 'langchain.prompts'` (PR #1244 전의 `app.py`로 돌릴 때) | `langchain` 1.x가 `prompts` 서브모듈을 더 이상 재수출하지 않는다. 오늘의 `app.py`는 `langchain_core.prompts`에서 가져오므로 `requirements.txt` 그대로 설치하면 나지 않는다(직접 확인) | 오늘의 `app.py`를 쓴다. 예전 사본이라면 첫 줄을 `from langchain_core.prompts import PromptTemplate`로 바꾼다 |
 | Strength 카드가 뽑히면 이미지 대신 "Symbol: 08-strength.jpg ... (Image not found ...)" 안내만 뜸 | `data/tarots.csv`의 카드명은 `08-strength.jpg`인데 실제 이미지 파일명은 `08-thestrength.jpg`다(직접 확인, 78개 중 유일한 불일치) | 이 시리즈 방침상 리포의 코드·데이터는 고치지 않는다. 직접 고친다면 이미지 파일명을 `08-strength.jpg`로 바꾸거나 CSV 값을 `08-thestrength.jpg`로 맞추면 된다 |
 | Ollama가 꺼져 있거나 `phi4`가 없을 때 버튼을 누르면 같은 오류 문구가 화면에 두 번 뜸 | `except Exception as e:` 블록이 `st.error(f"...{e}")`를 두 번 호출하는데 둘 다 같은 `{e}`를 담는다(소스로 확인, `app.py:134-136`) | 오류 자체는 `ollama serve`를 실행하고 `ollama pull phi4`로 모델을 받아야 해결된다 — 중복 표시는 이 앱의 특징일 뿐 조치가 필요한 오류는 아니다 |
 
