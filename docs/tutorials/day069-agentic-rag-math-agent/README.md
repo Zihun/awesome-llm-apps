@@ -1,10 +1,12 @@
 # Day 069 · 🧠 Math Tutor Agent – Agentic RAG with Feedback Loop
 
-> 볼륨 5 📀 RAG · 난이도 ★★★ · 예상 소요 90분(Docker로 로컬 Qdrant를 띄우고 OpenAI·Tavily 키 2개를 발급받은 뒤 `rag/vector.py`로 KB를 실제로 구축하는 손 놀리는 시간이 읽는 시간보다 깁니다) · API 비용 대략 질문 1건당 GPT-4o 호출 1회(수학이 아니라고 거절될 때) 또는 3~4회(입력 분류·설명 생성·출력 검증, 검증 실패 시 웹 재설명 1회 추가) + KB 검색마다 질의 임베딩 호출 1회 + Tavily 검색 0~2회 — KB를 처음 구축할 때 JEEBench **전체 문항**(과목 필터 없음, 소스로 확인)에 대한 OpenAI 임베딩 비용이 한 번 더 든다(문항 수는 네트워크가 없어 확인 못함) · 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/agentic_rag_math_agent`
+> 볼륨 5 📀 RAG · 난이도 ★★★ · 예상 소요 110분(Docker로 로컬 Qdrant를 띄우고 OpenAI·Tavily 키 2개를 발급받은 뒤 `rag/vector.py`로 KB를 실제로 구축하는 손 놀리는 시간이 읽는 시간보다 깁니다. 여기에 가짜 LM·가짜 `requests.post`·재채점으로 가드레일, 웹 폴백, 벤치마크를 돌려 보는 확인이 여럿 더해집니다) · API 비용 대략 질문 1건당 GPT-4o 호출 1회(수학이 아니라고 거절될 때) 또는 3~4회(입력 분류·설명 생성·출력 검증, 검증 실패 시 웹 재설명 1회와 그 재검증 1회 추가) + KB 검색마다 질의 임베딩 호출 1회 + Tavily 검색 0~2회 — KB를 처음 구축할 때 JEEBench **전체 문항**(과목 필터 없음, 소스로 확인)에 대한 OpenAI 임베딩 비용이 한 번 더 든다(문항 수는 네트워크가 없어 확인 못함) · 대략치(키가 없어 실제 과금은 확인 못함) · 원본 앱: `rag_tutorials/agentic_rag_math_agent`
 
 ## 오늘 만들 것
 
-JEE(인도 공과대학 입시)급 수학 문제에 단계별 풀이를 내놓는 튜터 에이전트입니다. 질문이 오면 먼저 Qdrant에 저장된 JEEBench 문항·정답 벡터를 코사인 유사도로 검색하고, 확신이 없으면(Day 060·061과 같은 "낮으면 웹으로" 패턴) Tavily 웹 검색으로 넘어갑니다. 그 앞뒤로 DSPy 기반 입력·출력 가드레일이 있어 수학이 아닌 질문을 걸러내고 답변의 타당성을 한 번 더 봅니다. Streamlit 화면에서 사용자가 답변에 👍/👎를 누르면 질문·답변·평가가 로컬 JSON에 쌓이는데, 이 로그를 다시 읽어 프롬프트나 검색을 바꾸는 코드는 없습니다 — "피드백 루프"는 기록까지이고, 그 기록으로 무언가를 자동으로 개선하지는 않습니다(소스로 확인). 참고로 앱 자체 README는 설명 모델을 "GPT-4.1"이라고 적어 놓았지만, 실제 코드 세 곳(`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:11`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:81`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:127`) 모두 `model="gpt-4o"`를 씁니다 — 앱 README 오류입니다.
+JEE(인도 공과대학 입시)급 수학 문제에 단계별 풀이를 내놓는 튜터 에이전트입니다. 질문이 오면 먼저 Qdrant에 저장된 JEEBench 문항·정답 벡터를 코사인 유사도로 검색하고, 확신이 없으면(Day 060·061과 같은 "낮으면 웹으로" 패턴) Tavily 웹 검색으로 넘어갑니다. 그 앞뒤로 DSPy 기반 입력·출력 가드레일이 있어 수학이 아닌 질문을 걸러내고 답변의 타당성을 한 번 더 봅니다. Streamlit 화면에서 사용자가 답변에 👍/👎를 누르면 질문·답변·평가가 로컬 JSON에 쌓이는데, 이 로그를 다시 읽어 프롬프트나 검색을 바꾸는 코드는 없습니다 — "피드백 루프"는 기록까지이고, 그 기록으로 무언가를 자동으로 개선하지는 않습니다(소스로 확인). 참고로 앱 자체 README는 설명 모델을 "GPT-4.1"이라고 적어 놓았지만, 실제 코드 세 곳(`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:13`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:102`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:155`) 모두 `model="gpt-4o"`를 씁니다 — 앱 README 오류입니다.
+
+이 튜토리얼을 처음 쓴 뒤 원본이 한 번 크게 바뀌었습니다. PR #1236(커밋 `1ee4f2d`, 2026-10-18 병합)이 입력 가드레일의 예시를 실제 few-shot 데모로 붙이고, Yes/No 판정을 관대하게 읽게 하고, 웹 폴백에 시간 제한·오류 처리를 넣고, 재시도한 답을 다시 검증하게 하고, 벤치마크 채점을 독립된 토큰 일치로 바꿨습니다. 이 문서는 바뀐 뒤의 코드를 기준으로 합니다.
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -24,11 +26,12 @@ JEE(인도 공과대학 입시)급 수학 문제에 단계별 풀이를 내놓�
 |---|---|---|
 | 사용자 | 질문 입력, 문항 수 선택, 피드백 클릭 | 코드 없음 (브라우저) |
 | Streamlit UI (3탭) | 질문·답변, 피드백 조회, 벤치마크 실행 화면 | `rag_tutorials/agentic_rag_math_agent/app/streamlit.py:1-120` |
-| 질의 오케스트레이터 (`answer_math_question`) | 입력 가드레일 → KB/웹 라우팅 → 출력 가드레일까지 한 번에 실행 | `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:92-149` |
-| 입력 가드레일 (`InputValidator`) | DSPy로 수학 질문인지 zero-shot 분류(예시 38개를 만들어 두지만 few-shot 데모가 아니라 LM 호출 인자로 새고, 그마저 쓰이지 않음 — Step 3) | `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:15-78` |
-| 출력 가드레일 (`OutputValidator`) | DSPy로 최종 답변의 타당성 재검증 | `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:81-98` |
+| 질의 오케스트레이터 (`answer_math_question`) | 입력 가드레일 → KB/웹 라우팅 → 출력 가드레일(실패하면 웹 재시도 뒤 재검증)까지 한 번에 실행 | `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:120-180` |
+| 웹 폴백 (`query_web`, `answer_from_web`) | Tavily 검색(20초 제한, 오류는 `None`)과 설명 생성, 출처 라벨 결정 | `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:52-111` |
+| 입력 가드레일 (`InputValidator`) | DSPy로 수학 질문인지 분류 — 예시 35개를 `self.classifier.demos`로 붙인 few-shot, 판정은 `parse_verdict`가 관대하게 읽음(Step 3) | `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:29-98` |
+| 출력 가드레일 (`OutputValidator`) | DSPy로 최종 답변의 타당성 재검증, 같은 `parse_verdict` 사용 | `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:102-123` |
 | 지식 베이스 구축 (`rag/vector.py`) | JEEBench 문항을 Document화해 Qdrant에 인덱싱하는 1회성 스크립트 | `rag_tutorials/agentic_rag_math_agent/rag/vector.py:17-54` |
-| 벤치마크 실행기 (`benchmark_math_agent`) | JEEBench N문항에 오케스트레이터를 반복 호출해 정확도 집계 | `rag_tutorials/agentic_rag_math_agent/app/benchmark.py:12-51` |
+| 벤치마크 실행기 (`benchmark_math_agent`, `is_answer_correct`) | JEEBench N문항에 오케스트레이터를 반복 호출하고, 정답을 독립된 토큰으로 맞춰 정확도 집계 | `rag_tutorials/agentic_rag_math_agent/app/benchmark.py:13-62` |
 | JEEBench 데이터 로더 | HF에서 JEEBench 중 수학 문항만 필터링 — 파일명은 `load_gsm8k_data.py`이지만 GSM8K가 아니라 JEEBench를 읽습니다(소스로 확인) | `rag_tutorials/agentic_rag_math_agent/data/load_gsm8k_data.py:1-9` |
 | Qdrant (`math_agent` 컬렉션) | 문항·정답 텍스트의 OpenAI 임베딩, 코사인 유사도 검색 | `rag_tutorials/agentic_rag_math_agent/rag/vector.py:29-51`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:29-34` |
 | 피드백 로그 | 👍/👎와 질문·답변을 JSON 배열로 누적(읽어서 되먹이는 코드는 없음) | `rag_tutorials/agentic_rag_math_agent/logs/feedback_log.json` (쓰기: `rag_tutorials/agentic_rag_math_agent/app/streamlit.py:57-82`) |
@@ -190,7 +193,7 @@ uv run --no-project python -c "import rag.vector; print(rag.vector.build_vector_
 
 **할 일.**
 
-`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:15-23`
+`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:17-25`
 
 ```python
 class ClassifyMath(dspy.Signature):
@@ -204,20 +207,142 @@ class ClassifyMath(dspy.Signature):
     verdict: str = dspy.OutputField(desc="Respond with 'Yes' if the question is related to mathematics, 'No' otherwise.")
 ```
 
-`InputValidator.__init__`은 이 시그니처로 두 모듈을 만듭니다 — 예시 없는 `self.classifier = dspy.Predict(ClassifyMath)`와, "What is a square?" 같은 예시 **38개**(Yes 36 + No 2, `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:29-73`, 직접 셈)를 넘긴 `self.validate_question = dspy.ChainOfThought(ClassifyMath, examples=[...])`입니다. 그런데 이 `examples=`는 few-shot 데모가 되지 않습니다 — DSPy 2.6.18의 `ChainOfThought.__init__(self, signature, rationale_field=None, rationale_field_type=str, **config)`에는 `examples`라는 매개변수가 없어 통째로 `**config`로 들어가고, 실제로 생성해서 봐도 `validate_question.predict.demos`는 빈 리스트, `validate_question.predict.config`가 `{'examples': [...38개]}`입니다(직접 확인, 키 없이 생성만). DSPy의 `Predict.forward()`는 이 `config`를 그대로 LM 호출 인자에 합치므로(소스로 확인), 실제 요청이 나간다면 `examples`는 프롬프트 속 데모가 아니라 OpenAI 요청의 최상위 인자로 실립니다(실제로 이 인자를 OpenAI가 받아들이는지는 키가 없어 확인하지 못했습니다). 판정에 쓰이는 것은 어차피 `forward()`뿐입니다.
+예시는 모듈 최상위의 튜플 목록으로 따로 빠져 있습니다.
 
-`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:75-78`
+`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:41-45`
+
+```python
+# Few-shot examples for the input guard
+MATH_CLASSIFIER_EXAMPLES = [
+    ("What is the derivative of x^2?", "Yes"),
+    ("Explain the chain rule in calculus.", "Yes"),
+    ("Why do I need to learn algebra?", "Yes"),
+```
+
+`InputValidator.__init__`은 예시 없는 `self.classifier = dspy.Predict(ClassifyMath)` 하나만 만들고, 그 `demos`에 예시를 `dspy.Example`로 바꿔 붙입니다.
+
+`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:81-90`
+
+```python
+# ✅ Input Validator
+class InputValidator(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.classifier = dspy.Predict(ClassifyMath)
+        # Attach the examples as demos so they are actually sent to the model
+        self.classifier.demos = [
+            dspy.Example(question=q, verdict=v).with_inputs("question")
+            for q, v in MATH_CLASSIFIER_EXAMPLES
+        ]
+```
+
+이 튜토리얼의 첫 판은 여기서 결함을 적었습니다. 예전 코드는 예시를 `dspy.ChainOfThought(ClassifyMath, examples=[...])`에 넘겼는데 그 인자는 few-shot 데모가 되지 않았고, 그렇게 만든 모듈은 `forward()`가 부르지도 않았습니다. 원본이 PR #1236(커밋 `1ee4f2d`, 2026-10-18 병합)에서 고쳤습니다. 지금 동작을 가짜 LM(`dspy.utils.dummies.DummyLM`, 모델 호출 없음)으로 확인합니다.
+
+```bash
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+import rag.guardrails as g
+iv = g.InputValidator()
+ex = g.MATH_CLASSIFIER_EXAMPLES
+print('examples:', len(ex), 'unique:', len({q for q, _ in ex}), 'Yes:', sum(v == 'Yes' for _, v in ex), 'No:', sum(v == 'No' for _, v in ex))
+print('demos on classifier:', len(iv.classifier.demos), type(iv.classifier.demos[0]).__name__)
+print('has validate_question:', hasattr(iv, 'validate_question'))
+"
+```
+
+```
+🔐 Loaded OPENAI_API_KEY: ❌ Missing
+examples: 35 unique: 35 Yes: 33 No: 2
+demos on classifier: 35 Example
+has validate_question: False
+```
+
+예시는 35개(Yes 33 + No 2)이고, 이전 판의 38개에서 중복 문항이 빠진 것입니다. `validate_question`은 아예 없어졌고, 실제로 도는 `classifier`가 35개를 데모로 지닙니다. 이 데모가 요청에 실리는지는 `DummyLM`에 답을 미리 넣어 두고 `forward()`를 한 번 불러, 모델에 나간 메시지를 세어 봅니다.
+
+```bash
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+import dspy
+from dspy.utils.dummies import DummyLM
+import rag.guardrails as g
+lm = DummyLM([{'verdict': 'Yes.'}])
+dspy.configure(lm=lm)
+print('forward ->', g.InputValidator().forward('what is a cone?'))
+msgs = lm.history[0]['messages']
+users = [m for m in msgs if m['role'] == 'user']
+print('messages:', len(msgs), 'user turns:', len(users))
+print(users[0]['content'].splitlines()[1])
+print(users[-1]['content'].splitlines()[1])
+"
+```
+
+```
+🔐 Loaded OPENAI_API_KEY: ❌ Missing
+🧠 InputValidator Response: Yes.
+forward -> True
+messages: 72 user turns: 36
+What is the derivative of x^2?
+what is a cone?
+```
+
+메시지는 시스템 1개 + (질문, 답) 35쌍 + 실제 질문 1개로 모두 72개이고, 첫 사용자 턴이 예시 첫 줄, 마지막이 방금 넣은 질문입니다. 즉 이제 분류는 진짜 few-shot입니다.
+
+`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:92-99`
 
 ```python
     def forward(self, question):
         response = self.classifier(question=question)
         print("🧠 InputValidator Response:", response.verdict)
-        return response.verdict.lower().strip() == "yes"
+        is_math = parse_verdict(response.verdict)
+        if is_math is None:
+            print(f"⚠️ InputValidator got an unclear verdict {response.verdict!r}; treating as not math.")
+            return False
+        return is_math
 ```
 
-`forward()`가 부르는 것은 예시 없는 `self.classifier`뿐, 예시 38개를 단 `self.validate_question`은 어디서도 호출되지 않습니다(소스로 확인) — 애초에 few-shot 데모로 작동하지도 않을 인자였고, 그마저 죽은 코드입니다. 출력 가드레일도 구조는 같습니다.
+판정 문자열은 예전처럼 `.lower().strip() == "yes"`로 비교하지 않고 `parse_verdict`가 읽습니다. 예전 비교는 `Yes.`나 `**Yes**`, `Yes, this is math.`를 모두 "수학 아님"으로 처리했습니다.
 
-`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:81-98`
+`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:29-38`
+
+```python
+def parse_verdict(verdict) -> Optional[bool]:
+    """Read a Yes/No verdict from the model.
+
+    Accepts "Yes", "yes.", "**Yes**", "Yes, this is math." etc. Returns None
+    when the reply is neither, so callers can log it instead of guessing.
+    """
+    match = re.match(r"\W*(yes|no)\b", str(verdict or ""), re.IGNORECASE)
+    if not match:
+        return None
+    return match.group(1).lower() == "yes"
+```
+
+글자가 아닌 문자는 앞에서 건너뛰고, 처음 나오는 낱말이 `yes`나 `no`면 그 값을 돌려줍니다. 둘 다 아니면 `None`이고, 호출한 쪽이 경고를 찍은 뒤 입력 가드는 "수학 아님", 출력 가드는 "검증 실패"로 칩니다. 모델 호출 없이 몇 가지 응답으로 읽어 봅니다.
+
+```bash
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+from rag.guardrails import parse_verdict
+for s in ['Yes', 'yes.', '**Yes**', 'Yes, this is math.', 'No', 'no!', 'Maybe', '', None, 'Not sure', 'Yesterday']:
+    print(repr(s), '->', parse_verdict(s))
+"
+```
+
+```
+🔐 Loaded OPENAI_API_KEY: ❌ Missing
+'Yes' -> True
+'yes.' -> True
+'**Yes**' -> True
+'Yes, this is math.' -> True
+'No' -> False
+'no!' -> False
+'Maybe' -> None
+'' -> None
+None -> None
+'Not sure' -> None
+'Yesterday' -> None
+```
+
+`\b` 덕분에 `Not sure`나 `Yesterday`는 `no`·`yes`로 읽히지 않습니다. 반대로 `Yes ... but no`처럼 처음 낱말이 `yes`면 뒤의 말과 상관없이 참이 되므로, 이 읽기는 관대한 만큼 모델의 첫 낱말을 믿는 셈입니다. 출력 가드레일도 같은 `parse_verdict`를 씁니다.
+
+`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:102-123`
 
 ```python
 class OutputValidator(dspy.Module):
@@ -237,14 +362,40 @@ class OutputValidator(dspy.Module):
             answer=answer
         )
         print("🧠 OutputValidator Response:", response.verdict)
-        return response.verdict.lower().strip() == "yes"
+        is_valid = parse_verdict(response.verdict)
+        if is_valid is None:
+            print(f"⚠️ OutputValidator got an unclear verdict {response.verdict!r}; treating as failed.")
+            return False
+        return is_valid
 ```
 
-`question`/`answer` 필드에 타입 힌트(`: str`)가 없는데도(`ClassifyMath`의 필드들과 비교됩니다) DSPy 2.6.18은 문제없이 처리합니다(직접 확인, 아래).
+`question`/`answer` 필드에 타입 힌트(`: str`)가 없는데도(`ClassifyMath`의 필드들과 비교됩니다) DSPy 2.6.18은 문제없이 처리합니다(직접 확인, 아래). 애매한 판정(`unsure` 같은 것)을 만나면 `False`를 돌려주므로, 오케스트레이터에서는 "검증 실패"와 같은 길로 갑니다. 가짜 LM으로 세 번 불러 봅니다.
+
+```bash
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+import dspy
+from dspy.utils.dummies import DummyLM
+import rag.guardrails as g
+dspy.configure(lm=DummyLM([{'verdict': 'Yes, correct.'}, {'verdict': 'unsure'}, {'verdict': 'No.'}]))
+for _ in range(3):
+    print('->', g.OutputValidator().forward('q', 'a'))
+"
+```
+
+```
+🔐 Loaded OPENAI_API_KEY: ❌ Missing
+🧠 OutputValidator Response: Yes, correct.
+-> True
+🧠 OutputValidator Response: unsure
+⚠️ OutputValidator got an unclear verdict 'unsure'; treating as failed.
+-> False
+🧠 OutputValidator Response: No.
+-> False
+```
 
 ![Step 3까지의 구성](diagrams/step3.svg)
 
-**확인.** 이 파일을 임포트만 해도 8행의 `print("🔐 Loaded OPENAI_API_KEY:", "✅ Found" if OPENAI_API_KEY else "❌ Missing")`가 곧바로 실행됩니다. 표준출력이 파이프로 나가는 터미널(Git Bash·mintty, 또는 출력을 캡처·리다이렉트하는 경우)에서는 Day 019(Step 2)에서 다룬 것과 같은 증상 — 이 이모지를 `cp949`로 인코딩하지 못해 API 키보다 먼저 나는 오류 — 가 납니다(직접 확인). 이 조건은 "한국어 Windows 콘솔"이 아니라 "표준출력이 파이프인가"입니다 — 진짜 콘솔 창(파이프가 아님)에서는 나지 않습니다.
+**확인.** 이 파일을 임포트만 해도 10행의 `print("🔐 Loaded OPENAI_API_KEY:", "✅ Found" if OPENAI_API_KEY else "❌ Missing")`가 곧바로 실행됩니다. 표준출력이 파이프로 나가는 터미널(Git Bash·mintty, 또는 출력을 캡처·리다이렉트하는 경우)에서는 Day 019(Step 2)에서 다룬 것과 같은 증상 — 이 이모지를 `cp949`로 인코딩하지 못해 API 키보다 먼저 나는 오류 — 가 납니다(직접 확인). 이 조건은 "한국어 Windows 콘솔"이 아니라 "표준출력이 파이프인가"입니다 — 진짜 콘솔 창(파이프가 아님)에서는 나지 않습니다.
 
 ```bash
 uv run --no-project python -c "import rag.guardrails"
@@ -272,7 +423,7 @@ formulas, definitions (e.g., 'what is calculus'),examples to any topic, or theor
 Return only 'Yes' or 'No' as your final verdict.
 ```
 
-(Step 1에서 `config/.env`에 실제 키를 채웠다면 첫 줄은 `✅ Found`로 나옵니다 — 이 확인은 키를 아직 안 넣었거나 비워 둔 경우입니다.) `dspy.LM(...)`·`dspy.Predict(...)`·`dspy.ChainOfThought(...)` 생성 자체는 키가 없어도 예외 없이 끝납니다 — 실제 OpenAI 요청은 `.forward()`를 호출할 때 비로소 나가므로, 이번 확인에서는 생성자까지만 부르고 `.forward()`는 부르지 않았습니다.
+(Step 1에서 `config/.env`에 실제 키를 채웠다면 첫 줄은 `✅ Found`로 나옵니다 — 이 확인은 키를 아직 안 넣었거나 비워 둔 경우입니다.) `dspy.LM(...)`·`dspy.Predict(...)`·`dspy.ChainOfThought(...)` 생성 자체는 키가 없어도 예외 없이 끝납니다 — 실제 OpenAI 요청은 `.forward()`를 호출할 때 비로소 나갑니다. 그래서 위의 `.forward()` 확인들은 모두 `DummyLM`으로 `dspy.configure(lm=...)`를 바꿔 치우고 불렀고, 진짜 OpenAI에는 한 번도 닿지 않았습니다.
 
 ### Step 4. 질의 오케스트레이션 — KB 우선, 안 되면 웹 폴백
 
@@ -280,7 +431,7 @@ Return only 'Yes' or 'No' as your final verdict.
 
 **할 일.**
 
-`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:36-49`
+`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:37-50`
 
 ```python
 def query_kb(question: str):
@@ -301,7 +452,7 @@ def query_kb(question: str):
 
 `load_kb_index()`는 Step 2가 만든 로컬 `storage/`와 Qdrant 컬렉션을 함께 읽습니다. 이 유사도값을 얼마나 믿을지가 이 앱의 핵심 판단인데, 코드에 남은 주석이 그 이유를 설명합니다.
 
-`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:86-89`
+`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:114-117`
 
 ```python
 # query_kb returns a cosine similarity (higher = better); with OpenAI embeddings
@@ -312,7 +463,7 @@ KB_SIMILARITY_THRESHOLD = 0.80
 
 이 저장소의 커밋 이력을 보면(`git log -p`로 확인) 문턱은 원래 `similarity > 0.`였다가, "OpenAI 임베딩은 아무 영어 문장 둘을 비교해도 코사인이 대체로 0보다 커서 사실상 모든 질문이 통과했다"는 이유로 0.80으로 올려졌습니다 — Day 060이 만난 "원점수 코사인을 문턱과 직접 비교"하는 같은 종류의 함정을, 이 앱은 이미 고친 상태로 커밋돼 있습니다. 오케스트레이터는 이 값을 이렇게 씁니다.
 
-`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:92-99`
+`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:120-127`
 
 ```python
 def answer_math_question(question: str):
@@ -322,10 +473,10 @@ def answer_math_question(question: str):
         return "⚠️ This assistant only answers math-related academic questions."
 
     answer = ""
-    from_kb = False
+    source = "KB"
 ```
 
-`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:101-106`
+`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:129-134`
 
 ```python
     try:
@@ -336,41 +487,96 @@ def answer_math_question(question: str):
             print("✅ High similarity KB match, using GPT for step-by-step explanation...")
 ```
 
-`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:127-131`
+`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:155-158`
 
 ```python
             llm = OpenAI(api_key=OPENAI_API_KEY, model="gpt-4o")
             answer = llm.complete(prompt).text
-            from_kb = True
         else:
             raise ValueError("Low similarity match or empty")
 ```
 
 여기서 중요한 것은 `try` 블록 전체가 `query_kb`의 **모든** 예외를 잡는다는 점입니다 — 유사도 미달로 직접 던진 `ValueError`든, Qdrant가 꺼져 있어 나는 접속 예외든 구분하지 않습니다.
 
-`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:133-149`
+`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:160-180`
 
 ```python
     except Exception as e:
         print("⚠️ Using Web fallback because:", e)
-        web_content = query_web(question)
-        answer = explain_with_openai(question, web_content)
-        from_kb = False
+        answer, source = answer_from_web(question)
 
-    print(f"📦 Answer Source: {'KB' if from_kb else 'Web'}")
+    print(f"📦 Answer Source: {source}")
 
     # Final Output Guardrail Check
     if not output_validator.forward(question, answer):
         print("⚠️ Final answer failed validation — retrying with web content...")
+        answer, source = answer_from_web(question)
+        print(f"📦 Answer Source: {source}")
 
-        web_content = query_web(question)
-        answer = explain_with_openai(question, web_content)
-        from_kb = False
+        # Re-check the retry instead of returning it unvalidated
+        if not output_validator.forward(question, answer):
+            print("⚠️ Retried answer also failed validation.")
+            answer = (
+                "⚠️ This answer could not be verified by the output guardrail. "
+                "Please double-check it.\n\n" + answer
+            )
 
     return answer
 ```
 
-즉 Qdrant를 아예 안 띄웠거나 Step 2를 건너뛰어 `storage/`가 없어도, `answer_math_question`은 에러 없이 웹 검색으로 계속 동작합니다 — KB가 조용히 빠져 있다는 것을 로그(`⚠️ Using Web fallback because: ...`) 말고는 알 방법이 없습니다. 출력 가드레일이 실패하면 웹 검색으로 한 번 더 설명을 만들지만, 이 재시도 결과를 다시 검증하지는 않고 그대로 반환합니다(소스로 확인) — "검증 없는 재시도 1회"가 이 앱의 재시도 상한입니다. 이 분기 전체를 그림으로 보면 다음과 같습니다.
+즉 Qdrant를 아예 안 띄웠거나 Step 2를 건너뛰어 `storage/`가 없어도, `answer_math_question`은 에러 없이 웹 검색으로 계속 동작합니다 — KB가 조용히 빠져 있다는 것을 로그(`⚠️ Using Web fallback because: ...`) 말고는 알 방법이 없습니다. 출력 가드레일이 실패하면 웹 검색으로 한 번 더 설명을 만들고, 이번에는 그 재시도 결과를 출력 가드레일에 다시 통과시킵니다. 또 실패하면 답을 버리지는 않고 "검증하지 못했다"는 경고를 앞에 붙여 돌려줍니다.
+
+이 튜토리얼의 첫 판은 이 재시도가 "검증 없는 재시도 1회"라고 적었습니다. 원본이 PR #1236(커밋 `1ee4f2d`, 2026-10-18 병합)에서 고쳤고, 웹 폴백도 같이 바뀌었습니다. 웹 검색 쪽은 이렇습니다.
+
+`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:52-82`
+
+```python
+WEB_SEARCH_TIMEOUT = 20  # seconds
+
+
+def query_web(question: str) -> Optional[str]:
+    """Return Tavily's answer, or None if the search failed or found nothing."""
+    if not TAVILY_API_KEY:
+        print("⚠️ Web search skipped: TAVILY_API_KEY is not set")
+        return None
+
+    url = "https://api.tavily.com/search"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "api_key": TAVILY_API_KEY,
+        "query": question,
+        "search_depth": "basic",
+        "include_answer": True,
+        "include_raw_content": False
+    }
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=WEB_SEARCH_TIMEOUT)
+        response.raise_for_status()
+        data = response.json()
+    except (requests.RequestException, ValueError) as e:
+        print(f"⚠️ Web search failed: {e}")
+        return None
+
+    answer = data.get("answer") if isinstance(data, dict) else None
+    if not isinstance(answer, str) or not answer.strip():
+        print("⚠️ Web search returned no answer")
+        return None
+    return answer
+```
+
+예전에는 `requests.post`에 시간 제한이 없었고, 응답을 상태 코드 확인 없이 JSON으로 읽어 `data.get("answer", "No answer found.")`를 돌려줬습니다. 이제는 키가 없거나, 요청이 실패하거나(시간 초과·상태 코드 오류·JSON 아님), 답이 비어 있으면 모두 `None`입니다. `None`을 받은 쪽은 이렇게 갈라집니다.
+
+`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:107-111`
+
+```python
+def answer_from_web(question: str):
+    """Answer via the web fallback. Returns (answer, source label)."""
+    web_content = query_web(question)
+    source = "Web" if web_content else "Model only (web search unavailable)"
+    return explain_with_openai(question, web_content), source
+```
+
+웹 내용이 없으면 `explain_with_openai`가 프롬프트의 웹 내용 자리에 `(No web content was found. Answer from your own math knowledge.)`를 채워 모델이 자기 지식으로 답하게 하고(`rag_tutorials/agentic_rag_math_agent/rag/query_router.py:84-86`), 출처 라벨은 `Model only (web search unavailable)`이 됩니다. 이 분기 전체를 그림으로 보면 다음과 같습니다.
 
 ![KB 대 웹 라우팅과 출력 가드레일 재시도](diagrams/extra-routing.svg)
 
@@ -394,6 +600,92 @@ ResponseHandlingException : [WinError 10061] 대상 컴퓨터에서 연결을 �
 ```
 
 (첫 줄은 `rag.query_router`가 임포트하는 `rag.guardrails`가 찍는 것입니다 — Step 3과 같은 줄입니다. 표준에러에는 pydantic의 `UnsupportedFieldAttributeWarning`도 함께 찍히는데 이 확인과는 무관합니다.) Qdrant가 없으면 `query_kb`는 이렇게 실패하고, `answer_math_question`이라면 이 예외를 그대로 삼켜 `query_web`으로 넘어갑니다.
+
+고쳐진 웹 폴백은 진짜 Tavily 없이 `requests.post`를 가짜로 바꿔 치우고 확인합니다. 키 없음, 정상 응답, 답이 `null`, 상태 코드 500, JSON이 아닌 본문을 차례로 넣습니다.
+
+```bash
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+import requests
+import rag.query_router as qr
+class Fake:
+    def __init__(self, code, body):
+        self.code, self.body = code, body
+    def raise_for_status(self):
+        if self.code >= 400:
+            raise requests.HTTPError(f'{self.code} Server Error')
+    def json(self):
+        if isinstance(self.body, str):
+            raise ValueError('Expecting value')
+        return self.body
+cases = {'ok': Fake(200, {'answer': 'pi r^2'}), 'null': Fake(200, {'answer': None}), '500': Fake(500, {}), 'html': Fake(200, '<html>')}
+calls = []
+def fake_post(url, **kw):
+    calls.append((url, kw.get('timeout')))
+    return cases[kw['json']['query']]
+qr.requests.post = fake_post
+qr.TAVILY_API_KEY = None
+print('no key ->', qr.query_web('ok'), 'calls:', len(calls))
+qr.TAVILY_API_KEY = 'fake'
+for q in cases:
+    print(q, '->', repr(qr.query_web(q)))
+print(calls[0])
+"
+```
+
+```
+🔐 Loaded OPENAI_API_KEY: ❌ Missing
+⚠️ Web search skipped: TAVILY_API_KEY is not set
+no key -> None calls: 0
+ok -> 'pi r^2'
+⚠️ Web search returned no answer
+null -> None
+⚠️ Web search failed: 500 Server Error
+500 -> None
+⚠️ Web search failed: Expecting value
+html -> None
+('https://api.tavily.com/search', 20)
+```
+
+키가 없으면 요청 자체를 보내지 않고(`calls: 0`), 나머지 실패는 모두 `None`이며, 요청에는 `timeout=20`이 실립니다. 시간 초과 자체는 이 가짜로는 보이지 않아 소스로만 읽었습니다. 설치된 `requests/exceptions.py`에서 `Timeout`이 `RequestException`의 하위 클래스(71행)이므로 `except (requests.RequestException, ValueError)`에 걸립니다. 이어서 오케스트레이터 전체를 모델 없이 한 번 돌립니다. Qdrant 실패, 웹 검색 없음, 출력 가드가 두 번 모두 실패하는 가장 나쁜 길입니다.
+
+```bash
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+import rag.query_router as qr
+class Seq:
+    def __init__(self, *v):
+        self.v = list(v)
+    def forward(self, *a):
+        return self.v.pop(0)
+class R:
+    text = 'EXPLANATION'
+class FakeLLM:
+    def __init__(self, **kw):
+        pass
+    def complete(self, prompt):
+        return R()
+def no_kb(q):
+    raise RuntimeError('qdrant down')
+qr.query_kb = no_kb
+qr.OpenAI = FakeLLM
+qr.query_web = lambda q: None
+qr.input_validator = Seq(True)
+qr.output_validator = Seq(False, False)
+print(repr(qr.answer_math_question('area?')))
+"
+```
+
+```
+🔐 Loaded OPENAI_API_KEY: ❌ Missing
+🔍 Query: area?
+⚠️ Using Web fallback because: qdrant down
+📦 Answer Source: Model only (web search unavailable)
+⚠️ Final answer failed validation — retrying with web content...
+📦 Answer Source: Model only (web search unavailable)
+⚠️ Retried answer also failed validation.
+'⚠️ This answer could not be verified by the output guardrail. Please double-check it.\n\nEXPLANATION'
+```
+
+답 앞에 경고가 붙어서 나옵니다. 이 길에는 그래도 남는 약점이 둘 있습니다. 하나는 시간 제한이 Tavily에만 걸려 있다는 것입니다(소스로 확인 — 이 앱의 코드는 `OpenAI(...)` 호출과 DSPy 호출에 시간 제한을 넘기지 않습니다). 다른 하나는 경고가 붙은 답이 문자열일 뿐이라, `benchmark_math_agent`가 이 답도 그냥 응답으로 채점한다는 것입니다.
 
 ### Step 5. Streamlit UI와 피드백 로그
 
@@ -522,7 +814,22 @@ print(sum(1 for l in logs if l['feedback'] == 'positive'), 'positive /', len(log
 
 **할 일.**
 
-`rag_tutorials/agentic_rag_math_agent/app/benchmark.py:12-30`
+`rag_tutorials/agentic_rag_math_agent/app/benchmark.py:13-20`
+
+```python
+def is_answer_correct(expected, response: str) -> bool:
+    """Check that the gold answer appears as a standalone token in the response.
+
+    A plain substring test counts gold "C" as correct for any reply containing
+    the letter c, and gold "12" as correct inside "112" or "0.12".
+    """
+    pattern = rf"(?<![A-Za-z0-9.]){re.escape(str(expected).strip())}(?![A-Za-z0-9]|\.\d)"
+    return re.search(pattern, response) is not None
+```
+
+채점 함수가 따로 생겼습니다. 정답 문자열이 응답 속에 **독립된 토큰**으로 나와야 정답입니다. 앞에는 영문자·숫자·마침표가 오면 안 되고, 뒤에는 영문자·숫자나 `.숫자`가 오면 안 됩니다. 이것이 PR #1236(커밋 `1ee4f2d`, 2026-10-18 병합)이 고친 부분입니다. 이 튜토리얼의 첫 판은 채점이 `expected.lower() in response.lower()`라는 부분 문자열 포함이어서, 정답이 `C`면 응답에 소문자 c가 하나만 있어도 정답이 된다고 적었습니다. 이 함수를 쓰는 곳은 아래입니다.
+
+`rag_tutorials/agentic_rag_math_agent/app/benchmark.py:23-41`
 
 ```python
 def benchmark_math_agent(limit: int = 10):
@@ -541,41 +848,87 @@ def benchmark_math_agent(limit: int = 10):
 
         try:
             response = answer_math_question(question)
-            is_correct = expected.lower() in response.lower()
+            is_correct = is_answer_correct(expected, response)
             if is_correct:
                 correct += 1
 ```
 
-정답 판정은 정확히 일치가 아니라 **부분 문자열 포함**입니다 — 모델 설명 어딘가에 정답 문자열이 한 번이라도 등장하면 정답으로 칩니다(소스로 확인). 이 기준이 문항 유형에 따라 얼마나 다르게 작동하는지 저장소에 커밋된 50문항 결과로 직접 집계해 봤습니다.
+새 채점이 옛 채점과 얼마나 다른지는, 저장소에 커밋된 50문항 응답에 새 함수를 적용해 다시 세어 봅니다. 모델은 부르지 않고, 파일에 이미 있는 응답(`Predicted`)과 정답(`Expected`)만 씁니다. 같은 응답에 옛 규칙(`expected.lower() in response.lower()`)도 다시 적용해 나란히 놓습니다.
 
 ```bash
-uv run --no-project python -c "
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+import re
+import sys
+sys.path.insert(0, 'app')
 import pandas as pd
-df = pd.read_csv('benchmark/results_math_50.csv')
-resp = df['Predicted'].str.lower()
-print('a,b,c,d 네 글자가 모두 들어 있는 응답:', resp.apply(lambda r: all(c in r for c in 'abcd')).sum(), '/', len(df))
-df['exp_len'] = df['Expected'].astype(str).str.len()
-single = df[df['exp_len'] == 1]
-is_letter = single['Expected'].astype(str).str.fullmatch('[A-Da-d]')
-print('단일 보기(A~D)', is_letter.sum(), '건 중 정답 처리', single[is_letter]['Correct'].sum(), '건')
-print('정수 답', (~is_letter).sum(), '건 중 정답 처리', single[~is_letter]['Correct'].sum(), '건')
-multi = df[df['exp_len'] > 1]
-print('복수 정답(예: BCD)', len(multi), '건 중 정답 처리', multi['Correct'].sum(), '건')
+from benchmark import is_answer_correct
+df = pd.read_csv('benchmark/results_math_50.csv', dtype={'Expected': str})
+old = df.apply(lambda r: r['Expected'].lower() in str(r['Predicted']).lower(), axis=1)
+new = df.apply(lambda r: is_answer_correct(r['Expected'], str(r['Predicted'])), axis=1)
+print('CSV의 Correct 열:', df['Correct'].sum(), '/ 옛 판정 다시 계산:', old.sum(), '/ 둘이 같은가:', bool((old == df['Correct']).all()))
+kind = df['Expected'].map(lambda e: '단일 보기(A~D)' if len(e) == 1 and e.isalpha() else '정수 답' if e.isdigit() else '복수 정답')
+t = pd.DataFrame({'유형': kind, '문항': 1, '옛 판정': old, '새 판정': new}).groupby('유형').sum()
+print(t.to_string())
+print('합계: 옛', old.sum(), '/ 새', new.sum(), '/', len(df), f'= {new.mean()*100:.1f}%')
+print('옛 O -> 새 X:', int((old & ~new).sum()), '건, 옛 X -> 새 O:', int((~old & new).sum()), '건')
+for i in (6, 40):
+    p = str(df.loc[i, 'Predicted'])
+    e = df.loc[i, 'Expected']
+    m = re.search(rf'(?<![A-Za-z0-9.]){e}(?![A-Za-z0-9]|\.\d)', p)
+    print(i, e, repr(p[max(0, m.start() - 25): m.end() + 15]))
 "
 ```
 
 ```
-a,b,c,d 네 글자가 모두 들어 있는 응답: 50 / 50
-단일 보기(A~D) 18 건 중 정답 처리 18 건
-정수 답 10 건 중 정답 처리 9 건
-복수 정답(예: BCD) 22 건 중 정답 처리 6 건
+🔐 Loaded OPENAI_API_KEY: ❌ Missing
+CSV의 Correct 열: 33 / 옛 판정 다시 계산: 33 / 둘이 같은가: True
+            문항  옛 판정  새 판정
+유형                        
+단일 보기(A~D)  18    18    12
+복수 정답       22     6     2
+정수 답        10     9     9
+합계: 옛 33 / 새 23 / 50 = 46.0%
+옛 O -> 새 X: 10 건, 옛 X -> 새 O: 0 건
+6 A 's analyze each option:\n\n(A) $\\lim _{x \\ri'
+40 C '+Cz=D$ is given by $(A,B,C)$. So, for the'
 ```
 
-50개 응답 **전부**에 a·b·c·d 네 글자가 이미 들어 있습니다(문장 속 관사 "a", "can"의 c 같은 흔한 글자라 당연합니다) — 그래서 정답이 A~D 한 글자인 문항 18건은 모델이 무슨 말을 했든 `expected.lower() in response.lower()`가 항상 참이 되어 **채점상 무조건 정답**입니다(직접 확인). 이 18건을 빼면, 단일 정답 중 실제로 모델 실력을 반영하는 쪽은 정수 답 10건(9건 정답, 유일한 오답은 "7")뿐입니다. 66%라는 최종 수치 자체는 A~D 한 글자 문항의 이 맹점을 그대로 포함합니다.
+읽는 법은 이렇습니다.
 
-복수 정답 22건(정답이 "BC"·"BCD"처럼 보기 여러 개를 합친 문자열)은 6건만 정답 처리됐지만, 나머지 16건을 들여다보면 이유가 섞여 있습니다(직접 대조). 정답 BCD에 모델이 "the correct answer is (A)"라고 끝맺은 경우처럼 **진짜 오답**도 있고, 정답 BC에 모델이 "the correct answer is (B) ... and (C) ..."라고 맞게 답했는데도 "bc"라는 연속 문자열이 없어 오답 처리된 **채점 탓**도 있습니다. 그러므로 "부분 문자열 채점이 복수 정답에 불리하다"는 방향은 맞지만, 16건 전부가 채점 탓이라고 말할 수는 없습니다(직접 대조한 것만 "(직접 확인)"입니다). 마지막에 정확도를 계산합니다.
+- **옛 규칙을 다시 계산하면 CSV의 `Correct` 열과 50개가 모두 같습니다.** 그러므로 저장소의 CSV는 옛 채점으로 매긴 것이고, 33/50 = 66.0%는 옛 채점의 수치입니다.
+- **단일 보기(A~D) 18건은 옛 규칙에서 응답이 무엇이든 전부 정답이었습니다.** 응답 속에 소문자 a·b·c·d가 있기만 하면 통과였기 때문입니다. 새 규칙에서는 12건만 남습니다. 6건은 응답이 "the correct answer is (D) 95" 같은 말로 끝나거나 "none of the options"라고 말하는 등 정답 글자가 독립된 토큰으로 나오지 않습니다.
+- **복수 정답 22건은 6건에서 2건으로 줄었습니다.** `BC`처럼 보기를 합친 문자열이 응답에 그대로 붙어 나와야 하므로, "(B)와 (C)"라고 맞게 답해도 틀린 것으로 칩니다(아래 확인에서 `'answers are (B) and (C)'`는 새 규칙에서도 `False`입니다). 그러므로 복수 정답은 새 규칙에서도 모델 실력보다 답 형식에 좌우됩니다.
+- **정수 답 10건은 9건 그대로입니다.** 옛 규칙에서 맞았던 정수 답이 `112`나 `0.12` 속의 `12` 같은 우연이었던 경우는 이 50건에는 없었습니다.
+- **새 규칙은 옛 규칙에서 틀리던 것을 맞게 바꾸지는 않았습니다**(옛 X → 새 O가 0건). 새 규칙은 옛 규칙보다 항상 더 엄격합니다.
+- **그래도 새 규칙이 통과시킨 12건 가운데 둘은 답이 아닙니다.** 6번은 "각 보기를 분석해 보자"며 보기 `(A)`를 나열한 곳이고, 40번은 정답 `C`가 문제 속 수식 `(A,B,C)`의 한 글자입니다(위 출력 마지막 두 줄, 직접 대조). 독립된 토큰이라는 조건은 "정답 글자가 답으로 쓰였는가"까지 가리지는 못합니다.
 
-`rag_tutorials/agentic_rag_math_agent/app/benchmark.py:49-51`
+새 규칙의 경계는 작은 입력으로도 확인합니다.
+
+```bash
+PYTHONIOENCODING=utf-8 uv run --no-project python -c "
+import sys
+sys.path.insert(0, 'app')
+from benchmark import is_answer_correct
+for e, r in [('C', 'abc cat'), ('C', 'the answer is (C).'), ('12', '0.12'), ('12', '112'), ('12', 'it is 12.5'), ('12', 'the value is 12.'), ('BC', 'answers are (B) and (C)'), ('BC', 'BC')]:
+    print(repr(e), repr(r), '옛:', e.lower() in r.lower(), '새:', is_answer_correct(e, r))
+"
+```
+
+```
+🔐 Loaded OPENAI_API_KEY: ❌ Missing
+'C' 'abc cat' 옛: True 새: False
+'C' 'the answer is (C).' 옛: True 새: True
+'12' '0.12' 옛: True 새: False
+'12' '112' 옛: True 새: False
+'12' 'it is 12.5' 옛: True 새: False
+'12' 'the value is 12.' 옛: True 새: True
+'BC' 'answers are (B) and (C)' 옛: False 새: False
+'BC' 'BC' 옛: True 새: True
+```
+
+마지막에 정확도를 계산합니다.
+
+`rag_tutorials/agentic_rag_math_agent/app/benchmark.py:60-62`
 
 ```python
     df_result = pd.DataFrame(results)
@@ -625,13 +978,13 @@ print(f'{correct}/{len(df)} = {correct/len(df)*100:.1f}%')
 33/50 = 66.0%
 ```
 
-앱 README의 "Current Accuracy: 66%"와 일치합니다 — 다만 부분 문자열 포함 판정 기준이라는 것은 이 README에 적혀 있지 않습니다.
+앱 README의 "Current Accuracy: 66%"와 일치합니다. 다만 이 66%는 옛 부분 문자열 채점의 수치이고, 앱 README(PR #1236 뒤에도 그대로, 소스로 확인)는 이 채점이 어땠는지도, 채점이 바뀌었다는 것도 적지 않습니다. 같은 50개 응답을 새 `is_answer_correct`로 다시 세면 23/50 = 46.0%입니다(위 재채점). 이 46%는 지금 앱을 다시 돌린 결과가 아니라, 옛 코드가 만든 응답을 새 규칙으로 채점한 값입니다. 지금 앱(few-shot 입력 가드, 재검증 출력 가드)이 같은 50문항에서 얼마를 내는지는 키가 없어 재 보지 못했습니다. 앱 README의 "50 random JEEBench Math Questions"도 그대로이며(아래 문제 해결), 이 CSV는 앞에서부터 50개입니다.
 
 ## 요청 한 건이 흐르는 과정
 
 ![요청 시퀀스](diagrams/sequence.svg)
 
-이 그림은 KB 유사도가 문턱(0.80)에 못 미쳐 웹 폴백으로 넘어가는, 가장 흔할 경로를 그린 것입니다. 오케스트레이터가 실제로 내보내는 외부 호출은 OpenAI 넷(입력 검증, 질의 임베딩, 설명 생성, 출력 검증 — 앞뒤 둘은 GPT-4o를 쓰는 DSPy 가드레일), 그리고 Qdrant·Tavily 각 한 번씩입니다. 질의 임베딩은 Qdrant 검색 전에 필요합니다 — `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:38`의 `retrieve()`가 내부에서 호출합니다. 입력 가드레일을 통과한 뒤 질의를 임베딩해 Qdrant에 유사도 검색을 보내고, 0.80 미만이 나오면(또는 Qdrant 접속 자체가 실패하면, Step 4) Tavily로 웹 검색을 하고 그 결과를 GPT-4o에 넘겨 설명을 만듭니다. 다시 출력 가드레일(GPT-4o)을 통과하고 나서야 Streamlit UI로 돌아가 사용자에게 보여집니다. KB 유사도가 0.80 이상이었다면 웹 검색·Tavily 구간 없이 Qdrant가 돌려준 정답만으로 GPT-4o가 설명을 만드는 더 짧은 경로를 탑니다(Step 4의 `extra-routing.svg` 참고 — 출력 검증에 실패하면 그림처럼 재검증 없이 한 번 더 웹으로 재시도합니다). 이 시퀀스는 키가 없어 실제로 끝까지 실행하지는 못했고, Step 3·4에서 각 구간을 개별적으로 확인한 것과 소스 읽기를 이어 붙인 것입니다.
+이 그림은 KB 유사도가 문턱(0.80)에 못 미쳐 웹 폴백으로 넘어가는, 가장 흔할 경로를 그린 것입니다. 오케스트레이터가 실제로 내보내는 외부 호출은 OpenAI 넷(입력 검증, 질의 임베딩, 설명 생성, 출력 검증 — 앞뒤 둘은 GPT-4o를 쓰는 DSPy 가드레일), 그리고 Qdrant·Tavily 각 한 번씩입니다. 질의 임베딩은 Qdrant 검색 전에 필요합니다 — `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:39`의 `retrieve()`가 내부에서 호출합니다. 입력 가드레일을 통과한 뒤 질의를 임베딩해 Qdrant에 유사도 검색을 보내고, 0.80 미만이 나오면(또는 Qdrant 접속 자체가 실패하면, Step 4) Tavily로 웹 검색을 하고 그 결과를 GPT-4o에 넘겨 설명을 만듭니다. 다시 출력 가드레일(GPT-4o)을 통과하고 나서야 Streamlit UI로 돌아가 사용자에게 보여집니다. KB 유사도가 0.80 이상이었다면 웹 검색·Tavily 구간 없이 Qdrant가 돌려준 정답만으로 GPT-4o가 설명을 만드는 더 짧은 경로를 탑니다(Step 4의 `extra-routing.svg` 참고 — 출력 검증에 실패하면 한 번 더 웹으로 재시도하고, 그 재시도 답을 다시 검증해 또 실패하면 경고를 붙여 돌려줍니다. 이 재시도 구간은 그림으로 풀지 않았으므로 Tavily 한 번과 OpenAI 두 번(설명 생성, 재검증)이 더 나갑니다). 이 시퀀스는 키가 없어 실제로 끝까지 실행하지는 못했고, Step 3·4에서 각 구간을 개별적으로 확인한 것과 소스 읽기를 이어 붙인 것입니다.
 
 ## 실행 체크리스트
 
@@ -639,28 +992,29 @@ print(f'{correct}/{len(df)} = {correct/len(df)*100:.1f}%')
 - [ ] `config/.env`에 `OPENAI_API_KEY`·`TAVILY_API_KEY`를 채웠다
 - [ ] Step 2에서 로컬 Qdrant(`docker run -p 6333:6333 qdrant/qdrant`)를 띄우고 `rag/vector.py`로 KB를 실제로 구축했다(Step 4의 확인은 반대로 Qdrant를 끈 채로 한다는 것에 유의)
 - [ ] `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py`를 임포트만 해도, 표준출력이 파이프로 나가는 터미널(Git Bash 등)에서는 `UnicodeEncodeError`가 API 키 확인보다 먼저 난다는 것을 직접 확인했다(Day 019와 같은 증상 — 한국어 Windows 콘솔 자체의 문제가 아니라 파이프 여부의 문제)
-- [ ] `InputValidator.forward()`가 실제로는 예시 38개가 붙은 `self.validate_question`이 아니라 예시 없는 `self.classifier`를 호출한다는 것을, 그리고 그 38개 `examples=`가 애초에 DSPy 2.6.18에서 few-shot 데모가 아니라 LM 호출 인자로 샌다는 것을 확인했다
+- [ ] 입력 가드레일의 예시 35개가 이제 `self.classifier.demos`로 붙어 실제 요청에 실린다는 것(`DummyLM`으로 메시지 72개 확인)과, `parse_verdict`가 `Yes.`·`**Yes**`는 읽고 `Maybe`·`Not sure`는 `None`으로 돌려 경고 후 "수학 아님"·"검증 실패"로 친다는 것을 확인했다
 - [ ] Qdrant를 띄우지 않은 채 `query_kb`를 직접 호출해 `ResponseHandlingException`이 나는 것을, 그리고 `answer_math_question`은 이 예외를 삼켜 웹 검색으로 넘어간다는 것을 확인했다
 - [ ] `logs/feedback_log.json`에 이미 14건의 피드백이 쌓여 있고, 이 파일을 다시 읽어 되먹이는 코드가 없다는 것을 확인했다
-- [ ] `benchmark/results_math_50.csv`를 직접 집계해 66.0%(33/50)가 앱 README의 "66%"와 일치한다는 것을 확인했다
-- [ ] 벤치마크의 정답 판정이 정확히 일치가 아니라 부분 문자열 포함이라는 것, 그리고 응답 50개 전부에 a·b·c·d가 들어 있어 A~D 한 글자 정답은 채점상 항상 통과한다는 것을 직접 집계로 확인했다
+- [ ] `benchmark/results_math_50.csv`를 직접 집계해 옛 채점의 66.0%(33/50)가 앱 README의 "66%"와 일치한다는 것을 확인했다
+- [ ] 같은 50개 응답에 새 `is_answer_correct`(독립된 토큰 일치)를 적용하면 23/50 = 46.0%이고, A~D 한 글자 정답 18건은 12건, 복수 정답 22건은 2건만 남는다는 것을 모델 호출 없이 다시 세어 확인했다
+- [ ] 웹 폴백이 키 없음·500·JSON 아님·답 없음을 모두 `None`으로 돌려주고 `timeout=20`을 싣는다는 것, 그리고 출력 가드가 두 번 실패하면 "could not be verified" 경고가 답 앞에 붙는다는 것을 가짜 `requests.post`와 스텁으로 확인했다
 - [ ] `streamlit run app/streamlit.py`로 실제 앱을 띄우면 3번 탭을 열지 않아도, 그리고 위젯을 건드려 재실행할 때마다 HuggingFace에 접속한다는 것을 직접 확인했다(스텁 로더 + `AppTest`)
 
 ## 문제 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `rag.guardrails`나 이를 임포트하는 아무 모듈이나 불러오면 API 키 오류보다 먼저 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f510'...`로 멈춤 | `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:8`이 이모지가 든 `print`를 모듈 최상위에서 실행하는데, 표준출력이 파이프로 나가는 터미널(Git Bash·mintty, 출력 캡처·리다이렉트 등)에서는 이모지를 `cp949`로 인코딩하지 못함(직접 확인) — Day 019에서 다룬 것과 같은 종류. "한국어 Windows 콘솔"이 원인이 아니라 "표준출력이 파이프인가"가 원인입니다(진짜 콘솔 창에서는 나지 않습니다) | `PYTHONIOENCODING=utf-8 uv run --no-project python ...`처럼 환경변수를 지정(PowerShell은 `$env:PYTHONIOENCODING="utf-8"`)하기. `chcp 65001`은 파이프 출력에는 효과가 없습니다 |
-| Qdrant를 안 띄우거나 `rag_tutorials/agentic_rag_math_agent/rag/vector.py`를 안 돌렸는데도 앱이 에러 없이 계속 답을 내놓음 | `answer_math_question`의 `try`가 `query_kb`의 모든 예외(Qdrant 접속 실패 포함)를 잡아 조용히 웹 검색으로 넘어감(소스로 확인, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:101-137`) | 콘솔 로그의 `⚠️ Using Web fallback because: ...` 줄로 KB가 실제로 쓰였는지 확인하기 |
-| 앱 자체 README가 설명 모델을 "GPT-4.1"이라고 적어 헷갈림 | 코드 세 곳(`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:11`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:81`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:127`) 모두 `model="gpt-4o"`(앱 README 오류, 직접 확인) | 이 문서와 코드를 기준으로 삼기 |
+| `rag.guardrails`나 이를 임포트하는 아무 모듈이나 불러오면 API 키 오류보다 먼저 `UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f510'...`로 멈춤 | `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:10`이 이모지가 든 `print`를 모듈 최상위에서 실행하는데, 표준출력이 파이프로 나가는 터미널(Git Bash·mintty, 출력 캡처·리다이렉트 등)에서는 이모지를 `cp949`로 인코딩하지 못함(직접 확인) — Day 019에서 다룬 것과 같은 종류. "한국어 Windows 콘솔"이 원인이 아니라 "표준출력이 파이프인가"가 원인입니다(진짜 콘솔 창에서는 나지 않습니다) | `PYTHONIOENCODING=utf-8 uv run --no-project python ...`처럼 환경변수를 지정(PowerShell은 `$env:PYTHONIOENCODING="utf-8"`)하기. `chcp 65001`은 파이프 출력에는 효과가 없습니다 |
+| Qdrant를 안 띄우거나 `rag_tutorials/agentic_rag_math_agent/rag/vector.py`를 안 돌렸는데도 앱이 에러 없이 계속 답을 내놓음 | `answer_math_question`의 `try`가 `query_kb`의 모든 예외(Qdrant 접속 실패 포함)를 잡아 조용히 웹 검색으로 넘어감(소스로 확인, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:129-162`) | 콘솔 로그의 `⚠️ Using Web fallback because: ...` 줄로 KB가 실제로 쓰였는지 확인하기 |
+| 앱 자체 README가 설명 모델을 "GPT-4.1"이라고 적어 헷갈림 | 코드 세 곳(`rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:13`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:102`, `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:155`) 모두 `model="gpt-4o"`(앱 README 오류, 직접 확인) | 이 문서와 코드를 기준으로 삼기 |
 | `data/load_gsm8k_data.py`라는 이름만 보고 GSM8K 데이터셋인 줄 알았는데 실제로는 다른 문제가 나옴 | 함수 내부는 `hf://datasets/daman1209arora/jeebench/test.json`(JEEBench)를 읽음 — 파일명과 내용이 다름(소스로 확인) | 이름 대신 `pd.read_json(...)`의 실제 경로를 본다 |
 | 원본 앱 README의 `streamlit run app/streamlit.py` bash 코드 블록이 GitHub에서 이상하게 보임 | 그 코드 펜스는 여는 표시만 있고 닫는 표시가 없음(직접 확인 — 펜스 표시로 `grep -c`를 돌리면 파일 전체에서 1줄만 걸림) | 명령 자체는 정확하므로 그대로 실행하면 됨 |
-| 앱 자체 README의 "50 random JEEBench Math Questions"·`benchmark/results.csv` 문구와 실제 동작이 다름 | 코드는 무작위가 아니라 `df.head(limit)`로 앞에서부터 N개를 뽑고(`rag_tutorials/agentic_rag_math_agent/app/benchmark.py:15`, 소스로 확인), 결과 파일명도 `results.csv`가 아니라 `results_math_{N}.csv`입니다(앱 README:45,47 대 `rag_tutorials/agentic_rag_math_agent/app/streamlit.py:113`) | 앱 README 대신 이 문서와 실제 파일명을 기준으로 삼기 |
+| 앱 자체 README의 "50 random JEEBench Math Questions"·`benchmark/results.csv` 문구와 실제 동작이 다름 | 코드는 무작위가 아니라 `df.head(limit)`로 앞에서부터 N개를 뽑고(`rag_tutorials/agentic_rag_math_agent/app/benchmark.py:26`, 소스로 확인), 결과 파일명도 `results.csv`가 아니라 `results_math_{N}.csv`입니다(앱 README:45,47 대 `rag_tutorials/agentic_rag_math_agent/app/streamlit.py:113`) | 앱 README 대신 이 문서와 실제 파일명을 기준으로 삼기 |
 
 ## 더 해보기
 
-- `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:29-73`의 예시 38개를 `dspy.Example(...)` 목록으로 바꿔 `dspy.teleprompt.LabeledFewShot().compile(...)`로 컴파일하거나 `validate_question.predict.demos`에 직접 채워, 진짜 few-shot 데모가 된 버전을 만들고, `forward()`가 그것을 부르도록 바꿔 예시 없는 `self.classifier`와 판정이 달라지는 질문이 있는지 실제 키로 비교해보기
-- `rag_tutorials/agentic_rag_math_agent/rag/query_router.py:142`의 출력 가드레일 재시도 경로가 재시도한 답을 다시 검증하지 않는다는 것을 이용해, 재시도 후 결과도 `output_validator.forward()`로 한 번 더 확인하는 루프를 만들어보면 몇 번째에 수렴하는지 실제 키로 실험해보기
+- `rag_tutorials/agentic_rag_math_agent/rag/guardrails.py:81-90`의 `self.classifier.demos = [...]` 줄을 주석 처리한 판과 그대로인 판으로, 경계에 있는 질문("What is AI?"와 비슷하지만 수학과 걸친 것 등)을 실제 키로 나란히 분류해, 예시 35개가 판정을 실제로 얼마나 바꾸는지 재어보기
+- 경고("could not be verified")가 붙은 답을 `benchmark_math_agent`가 일반 응답처럼 채점하고 있으니(`rag_tutorials/agentic_rag_math_agent/app/benchmark.py:38-39`), 경고가 붙은 답을 따로 세도록 고쳐 재채점 46%와 비교해보기
 - `logs/feedback_log.json`의 `negative` 항목 2건(Step 5)을 읽어, 실제로 이 피드백을 KB 우선순위나 프롬프트에 반영하는 간단한 재순위화 로직을 직접 설계해보기 — 이 앱에는 없는 "진짜 피드백 루프"입니다
 
 ## 다음 날 예고
