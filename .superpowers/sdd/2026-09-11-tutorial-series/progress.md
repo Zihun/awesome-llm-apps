@@ -8,6 +8,15 @@ Started: 2026-09-11, BASE for Task 1 = 1c91855
 
 ## ▶ 재개 지점 (항상 이 절을 먼저 읽는다 · 볼륨이 끝날 때마다 갱신)
 
+**멈춤 지점 (2026-10-22) — upstream 동기화(8493058) 반영 끝, Day 168 Excaliflow(볼륨 19) 추가, 푸시함(진도 168/168). 전체 check 문제 0건, sync-audit 계획 차이 0. 남은 일 없음 — 새 일은 사용자 지시를 받고.**
+- 동기화: 사용자가 GitHub에서 upstream을 포크로 병합(8493058, 기준 25dbce91)하고 pull. 원본 커밋 26개(PR 12). sync-audit로 영향 11일 + 계획 밖 새 앱 1(excaliflow), 전체 check 39건.
+- Task 35(영향 큼, 고침 sonnet → 내가 표적 확인, opus 리뷰 없음): 083 18278ae(search_web·가짜 Firecrawl), 069 d39a904·90ee071(few-shot·판정·웹 폴백·재채점 33=66% → 23=46%, 새 블록에 LITELLM_LOCAL_MODEL_COST_MAP=True), 099 904c860(ast 해석기·승인 EOF·모델 오류·OPENAI_MODEL).
+- Task 36(영향 중간·작음): 046 cc064f2, 130 ea9cd58, 056 9ead9b8·7849439, 124 bf7af75(CORS ALLOWED_ORIGINS, 새 FirecrawlApp 인스턴스엔 scrape_url 있음 — 내 앞 추정 틀림), 156 ffd88cb, 155 6bf1bb9, 098 1cb04d3(내가, 인용 +3줄).
+- Task 37(Day 168): 계획 f71e823(days.json vol 19 "🛠️ 독립 앱·도구", Day 167 마무리 → 다음 날 예고, 166·167 "시리즈의 마지막 날" 고침), 작성 653b651 → ebd13f4(내가) → 리뷰(opus) ❌ I9·M10 → 고침 4f70a26(독자 가드 listen 실제 주소 단언·connect 배열 host·fetch, 그림 관계 복원, "셈법에 따라 9~14개"). 내가 확인: 블록 11개 붙여 넣기 새 파일 0, 가드 소스, check 0, 19.7/분.
+- 검사: npm test 58/58, 전체 check 통과(001~168), 로드맵 168/168. 하위 에이전트 토큰 약 49만(Task 35) + 54만(Task 36) + 약 90만(Task 37).
+- 사고: 진짜 API·진짜 Ollama·바깥에 닿은 실행 0. 작은 일탈만(임시 파일을 진짜 %TEMP%·D:\ws-llm에 잠깐 썼다 지움, 위험 삭제 검사 거부 3회 — 모두 우회 안 함). python heredoc REPL 사고 0(브리프에 처음부터 금지).
+- 바로잡은 내 실수: 동기화 분석 때 "124는 첫 스크랩에서 AttributeError로 바뀔 것"이라 추정 → 실행해 보니 틀림. 168 마무리에 내가 넣은 "19개 중 12개"는 셈법에 달린 수였음(리뷰가 9·10·14로 셈).
+
 **멈춤 지점 (2026-10-21) — 시리즈 완료. 볼륨 18(Day 164~167)까지 작성·리뷰·수정·확인 끝, 푸시함(진도 167/167). 전체 check 문제 0건. 남은 일 없음 — 새 일은 사용자 지시를 받고.**
 - Task 34(164~167) 전부 complete. 날마다 커밋(작성 → 수정):
   - 164: 5886fac → 0606724
@@ -1819,3 +1828,9 @@ Task 37: 168 작성 (sonnet, affabdc, d168 48700~) dispatched. 동시 3: 고침 
 Task 36: 046 DONE — cc064f2, 21.7/분(1,630/75). langchain 1.4.7에서 임포트 통과(langchain.prompts는 여전히 없지만 앱이 langchain_core에서 가져옴) → langchain<1.0 처방·옛 재현 뺌, 내력 한 줄. Step 5에 가짜 Ollama(48301)+AppTest 블록(model=phi4, FAKE READING). 130 DONE — ea9cd58, 21.3/분(2,126/100). requirements만으로 mcp 1.30.0 → ⚠·Step 1·명령의 "mcp<2" 정리, 2.3.0 실패는 내력으로. 일탈 없음(sed로 펜스 하나 지웠다 복구). 내가 확인: 둘 다 check 0, 펜스 짝 맞음, 옛 처방은 내력 문장에만.
 Task 36: 124 DONE — bf7af75, check 0, 21.3/분(4,677/220). CORS: ALLOWED_ORIGINS 절과 TestClient 확인(허용 출처 머리글·사전 요청 200, 다른 출처 머리글 없음·400 Disallowed CORS origin). Firecrawl: 이제 `from firecrawl import FirecrawlApp`이 임포트되고, 새 FirecrawlApp 인스턴스에는 scrape_url이 있어(클래스에는 없음, 4.50.0·4.53.3) v2 scrape로 넘어감 → AttributeError로 바뀌지 않음(내 앞 추정이 틀렸음, 작성자가 실행으로 정정), 별칭은 가짜 서버 실험에만. 일탈: 가짜 주소 주기 전 첫 확인으로 api.firecrawl.dev 조회 3회(가드가 막음).
 Task 36 완료 — 046·130·056·124·155·156 + 098(내가). 전체 check: 001~167 문제 0, 남은 4건은 미작성 168 골격. 하위 에이전트 토큰 약 54만.
+Task 37: 168 작성 DONE_WITH_CONCERNS — 653b651, check 0, 20.2/분(2,017/100). LLM 안 부름을 도입에서 밝힘, verify.js PASS 8/8, 독자 가드(guard.mjs·serve.mjs)가 listen에 127.0.0.1을 끼움, curl 13회: 폴더 안 server.js·package.json·.gitignore·가짜 .env가 200(서버가 폴더를 통째로 내줌), `..`는 403. 바깥 주소는 글꼴뿐(Google Fonts 8가족, esm.sh Excalifont, unpkg Virgil·Cascadia). 상자 guard.log 13줄(selftest 8 + 줄 빼기 시험의 192.0.2.1 5). 일탈: 불필요한 rm 명령 하나가 안전 검사에 거부(실행 안 됨).
+  내가 고침: 마무리의 "Day 167을 쓸 때 18개 볼륨 중 12개" → 지금 다시 세어 "19개 볼륨 중 12개"(ebd13f4, check 0, 20.2/분).
+Task 37: 리뷰 168 (opus, a2babd7, rv168 48800~) dispatched → review-168.md.
+Task 37: 리뷰 168 DONE — ❌ I9·M10. 문서 그대로 따라 하면 127.0.0.1만, 바깥 0, 블록 10개 걷기 정상, 마무리 표 days.json과 같음. I1 가드 listen: 주소 끼우는 한 줄을 빼도 문법이 맞아 모든 인터페이스에 열리는데 기록엔 127.0.0.1(rec.mjs로 확인), I2 가드 connect가 정규화 배열의 주소를 못 봄(127.0.0.2로 net.connect·http.get·fetch가 ECONNREFUSED까지 감), I3 저장·불러오기 모양 같다 틀림(versionNonce, index.html:2947), I4 펄스는 HUD 단추, I5 verify.js 인용 431-461, I6 Step 1 출력 폭, I7 Step 5 `>> mocks.js` 상대 경로, I8 그림 관계 빠짐·sequence localStorage 배우 접음, I9 "19개 중 12개"(내가 넣은 문장) — 스펙 셈법 9개, 다른 셈법 10·14, 12는 안 나옴. M1 `GET /%00`에 서버 죽음 등. 상자 guard.log 8줄. 일탈: bash -c 안 rm -f가 위험 삭제 검사에 거부(우회 안 함).
+  내 판단: I9는 셈법에 달린 수 → 숫자를 못 박지 말고 "셈법에 따라 9~14개"로.
+Task 37: 168 fix round 1 dispatched (SendMessage affabdc).

@@ -55,7 +55,7 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 ## 168일 일정
 
-진도: 167 / 168일 완료
+진도: 168 / 168일 완료
 
 ### 볼륨 1. 🌱 Starter AI Agents (Day 1–13, 13일)
 
@@ -318,5 +318,5 @@ README에 실려 있지만 코드가 외부 리포에 있는 두 항목은 링�
 
 | 완료 | 일차 | 앱 | 원본 앱 |
 |---|---|---|---|
-| ⬜ | [Day 168](day168-excaliflow/README.md) | ✏️ Excaliflow - Hand-Drawn Diagrams with Live Animated Flows | [advanced_llm_apps/excaliflow](../../advanced_llm_apps/excaliflow/) |
+| ✅ | [Day 168](day168-excaliflow/README.md) | ✏️ Excaliflow - Hand-Drawn Diagrams with Live Animated Flows | [advanced_llm_apps/excaliflow](../../advanced_llm_apps/excaliflow/) |
 
