@@ -526,6 +526,7 @@ for text in ["## Primary pattern\nP99 (invented id)",
     print(f'>>> problem = {problem!r} / reply = {reply!r}')
 EOF
 uv run --no-project python check_branches.py 2>&1 | grep -E "^(>>>|Error while|Saved report|The )"
+rm -f check_branches.py rag_failure_report.json   # 앱 폴더에 시험 파일을 남기지 않는다
 ```
 
 ```
