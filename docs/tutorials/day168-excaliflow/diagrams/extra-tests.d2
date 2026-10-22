@@ -1,0 +1,12 @@
+...@../../_tools/theme
+direction: down
+
+verify: "시험 (verify.js)" { class: ours }
+page: "화면 한 파일 (index.html)" { class: file }
+server: "정적 서버 (server.js)" { class: ours }
+mock: "가짜 브라우저 (window · document · Path2D)" { class: ours }
+
+verify -> page: "script 한 덩어리를 정규식으로 추출"
+verify -> mock: "가짜 객체를 만든다"
+verify -> server: "require 후 emit('request')"
+server -> page: "파일 읽기 (GET /)"

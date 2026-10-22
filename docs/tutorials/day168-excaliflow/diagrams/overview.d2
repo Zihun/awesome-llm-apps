@@ -3,14 +3,15 @@ direction: down
 
 me: "독자" { class: person }
 
-local: "내 컴퓨터 (서버·시험)" {
+local: "내 컴퓨터" {
+  grid-columns: 2
   class: group
+  verify: "시험 (verify.js)" { class: ours }
   server: "정적 서버 (server.js)" { class: ours }
   page: "화면 한 파일 (index.html)" { class: file }
-  verify: "시험 (verify.js)" { class: ours }
 }
 
-browser: "독자의 브라우저 (index.html의 script)" {
+browser: "독자의 브라우저" {
   class: group
   scene: "장면·탭 (state)" { class: ours }
   sketch: "손그림 엔진 (ShapeCache)" { class: ours }
@@ -18,12 +19,13 @@ browser: "독자의 브라우저 (index.html의 script)" {
   export: "내보내기 (save2xPng 외)" { class: ours }
 }
 
-store: "localStorage (excaliflow_workspace_v1)" { class: store }
-fonts: "글꼴 서버 셋 (Google · esm.sh · unpkg)" { class: ext }
-out: "내려받는 파일 (PNG · WebM · JSON)" { class: file }
+store: "localStorage" { class: store }
+fonts: "글꼴 서버 셋" { class: ext }
+out: "내려받는 파일" { class: file }
 
-me -> browser: "그리기 · 단축키"
-local -> browser: "index.html 응답"
-browser -> store: "장면 JSON 자동 저장"
+me -> browser: "그리기"
+me -> local: "curl"
+browser <-> local: "GET · 응답"
 browser -> fonts: "글꼴 요청"
-browser -> out: "내보내기"
+browser <-> store: "저장·복원"
+browser <-> out: "내보내기·가져오기"

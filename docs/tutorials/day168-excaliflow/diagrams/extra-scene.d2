@@ -1,0 +1,15 @@
+...@../../_tools/theme
+direction: down
+
+scene: "장면·탭 (state)" { class: ours }
+sketch: "손그림 엔진 (ShapeCache)" { class: ours }
+flow: "흐름 (computeGraphDepths 외)" { class: ours }
+export: "내보내기 (save2xPng 외)" { class: ours }
+store: "localStorage" { class: store }
+json: "JSON 파일 (.excaliflow)" { class: file }
+
+scene -> sketch: "요소 → 윤곽 경로"
+scene -> flow: "화살표 · 깊이 · 속도"
+scene -> export: "장면 전체"
+scene <-> store: "저장 (바로 · 150ms 뒤) · 복원"
+scene <-> json: "내보내기 · 가져오기 (걸러서)"

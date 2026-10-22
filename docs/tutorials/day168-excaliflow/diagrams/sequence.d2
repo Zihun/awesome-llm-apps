@@ -3,17 +3,19 @@ shape: sequence_diagram
 
 me: "독자" { class: person }
 tab: "브라우저 탭 (index.html)" { class: ours }
+ls: "localStorage" { class: store }
 srv: "정적 서버 (server.js)" { class: ours }
 fonts: "글꼴 서버 셋" { class: ext }
 
 me -> tab: "주소를 연다"
 tab -> srv: "GET /"
-srv -> tab: "index.html (no-cache)"
+srv -> tab: "index.html"
 tab -> fonts: "글꼴 요청"
 fonts -> tab: "woff2"
-tab -> tab: "localStorage에서 탭 읽기 (없으면 템플릿)"
+tab -> ls: "저장된 탭 읽기"
+ls -> tab: "탭들 (없으면 템플릿)"
 me -> tab: "도형·화살표를 그린다"
-tab -> tab: "프레임마다 그림 + 알갱이 갱신"
-tab -> tab: "150ms 쉬면 장면 JSON 저장"
+tab -> tab: "프레임마다 그림 + 알갱이"
+tab -> ls: "150ms 쉬면 장면 JSON 저장"
 me -> tab: "PNG · WebM · JSON 내보내기"
 tab -> me: "파일 내려받기"
