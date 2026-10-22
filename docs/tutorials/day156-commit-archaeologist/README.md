@@ -6,7 +6,7 @@
 
 코딩 에이전트에게 "이 코드는 왜 있나?"를 물으면 답을 만들어 주는 스킬 `commit-archaeologist`를 읽고, 그 스킬이 에이전트 대신 돌리게 하는 스크립트를 직접 돌려 봅니다. 앱이 아니라 폴더입니다. 저장소의 `agent_skills/README.md`는 스킬을 `SKILL.md` 하나와 스크립트·참고 문서가 든 폴더로 설명하고, 에이전트가 그것을 발견해 필요할 때 불러온다고 적습니다. 볼륨 15의 [Day 152](../day152-llama3.2-finetuning/README.md)와 [Day 153](../day153-gemma3-finetuning/README.md)는 모델의 가중치 일부를 학습했습니다. 볼륨 16은 모델 쪽이 아니라 모델에게 주는 지시문과 그 지시문이 실행시키는 도구를 다룹니다. [Day 155](../day155-thinking-out-loud/README.md)의 스킬은 스크립트가 하나도 없는 글 스킬이었고, 오늘 스킬은 이 볼륨에서 처음으로 스크립트를 직접 돌려 볼 수 있는 쪽입니다. 스킬이 무엇이고 시험 단계가 어떻게 나뉘며 어떻게 설치하는지는 볼륨의 첫날 [Day 154](../day154-advisor-orchestrator-worker/README.md)가 다룹니다. 오늘은 그 날의 내용에 기대지 않고, 이 스킬에 필요한 사실만 소스와 공개 문서로 확인해 적었습니다.
 
-스킬의 일은 `git blame`이 하지 않는 것입니다. blame은 줄마다 마지막으로 손댄 사람을 알려 줍니다. 이 스킬은 파일이나 줄 범위가 처음 들어온 커밋, 그 뒤의 수정, 함께 자주 바뀐 파일, 커밋 메시지에 적힌 의도 단서를 모아 JSON으로 내놓고, 에이전트가 그것을 읽어 "왜 있나" 보고서를 쓰게 합니다. 파일은 `SKILL.md`(132줄), `references/reading-git-history.md`(82줄), `scripts/archaeologist.py`(388줄)와 사람용 `README.md`(74줄)입니다. 스크립트는 파이썬 표준 라이브러리와 git만 씁니다.
+스킬의 일은 `git blame`이 하지 않는 것입니다. blame은 줄마다 마지막으로 손댄 사람을 알려 줍니다. 이 스킬은 파일이나 줄 범위가 처음 들어온 커밋, 그 뒤의 수정, 함께 자주 바뀐 파일, 커밋 메시지에 적힌 의도 단서를 모아 JSON으로 내놓고, 에이전트가 그것을 읽어 "왜 있나" 보고서를 쓰게 합니다. 파일은 `SKILL.md`(132줄), `references/reading-git-history.md`(82줄), `scripts/archaeologist.py`(390줄)와 사람용 `README.md`(74줄)입니다. 스크립트는 파이썬 표준 라이브러리와 git만 씁니다.
 
 이 문서는 에이전트(Claude Code, Codex, Cursor 등)를 한 번도 띄우지 않았고 모델도 부르지 않았으며, 3단계 행동 시험도 돌리지 않았습니다. 이 PC의 진짜 `~/.claude/skills`나 다른 에이전트 설정 폴더에는 아무것도 넣지 않았고 `npx skills add`도 실행하지 않았습니다. 대신 스킬 폴더를 스크래치 프로젝트의 `.claude/skills/` 아래로 복사해 설치 모양을 보이고, 이력이 있는 가짜 저장소를 직접 만들어 스크립트를 돌립니다. 저장소의 가짜 작성자는 `Ada Fixture`와 `Ben Fixture`, 메일은 `example.test`입니다. 직접 돌려 보거나 소스로 확인한 것이 여덟입니다.
 
@@ -17,7 +17,7 @@
 5. 커밋 분류는 키워드 판정이고 먼저 맞는 규칙이 이깁니다. `Fix typo in the refactor guide`는 `refactor`이고, "workaround"를 이름에 단 커밋은 `other`입니다. 되돌림(revert) 커밋은 되돌린 커밋의 제목 낱말을 그대로 물려받아 의도 단서가 되풀이됩니다(Step 6).
 6. 이 저장소의 실제 파일 둘에 읽기만으로 돌려 봤습니다. 스쿼시 병합 본문 속 "fix(...)" 때문에 새 스킬을 추가한 커밋이 `fix`로 분류됐고, `docs/tutorials/_tools/theme.d2`의 줄 범위에는 SVG 그림 157개가 "함께 바뀐 파일"로 나왔습니다(Step 7).
 7. 저장소 README의 "Local and private by default"는 스크립트에 대해서는 맞습니다. 다만 JSON에는 작성자 이름·메일과 저장소의 절대 경로가 들어 있어서, 에이전트가 그것을 읽으면 모델 쪽 대화에 실립니다(Step 7).
-8. 결정적 시험 넷은 모두 통과합니다. 2b 시험은 18개 확인을 하지만 작성자가 한 명인 저장소만 쓰고, 줄 모드의 옛 이름과 되돌림 단서 되풀이는 보지 않습니다. 트리거 시험은 낱말이 겹치는 정도만 재서 "what is the story behind this retry loop"가 0점입니다(Step 8).
+8. 결정적 시험 넷은 모두 통과합니다. 2b 시험은 23개 확인을 하지만 작성자가 한 명인 저장소만 쓰고, 줄 모드의 옛 이름과 되돌림 단서 되풀이는 보지 않습니다. 트리거 시험은 낱말이 겹치는 정도만 재서 "what is the story behind this retry loop"가 0점입니다(Step 8).
 
 ![완성 아키텍처](diagrams/overview.svg)
 
@@ -40,12 +40,12 @@
 | 스킬 이름·설명 | 에이전트가 시작할 때 읽는 메타데이터(frontmatter) | `agent_skills/commit-archaeologist/SKILL.md:1-14` |
 | 에이전트용 지시문 | 대상 정하기, 스크립트 실행, JSON 읽기, 보고서 여섯 부분, 증거 규칙 | `agent_skills/commit-archaeologist/SKILL.md:16-132` |
 | 해석 안내 | 파일 이력과 줄 이력, 작성자 두 뜻, 분류, 동반 변경, 신뢰도 | `agent_skills/commit-archaeologist/references/reading-git-history.md:1-82` |
-| git 호출 | 읽기 전용 명령 하나를 돌리고 UTF-8로 풀기 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:33-55` |
-| 입력 검증 | 저장소 찾기, 파일이 저장소 안인지·추적 중인지, 줄 범위 형식과 길이 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:58-106` |
-| 이력 수집 | `log -L` 또는 `log --follow`, 커밋마다 메타데이터와 바뀐 파일 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:109-212` |
-| 현재 작성자 | `blame --line-porcelain`으로 줄 수 세기, 커밋 수와 합치기 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:215-262` |
-| 함께 바뀐 파일 | 옛 이름 모으기, 문턱 계산, 목록 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:265-295` |
-| 보고서 조립과 출력 | 여섯 키 JSON, 사람용 요약, 인자 처리 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:298-388` |
+| git 호출 | 읽기 전용 명령 하나를 돌리고 UTF-8로 풀기 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:33-52` |
+| 입력 검증 | 저장소 찾기, 파일이 저장소 안인지·추적 중인지, 줄 범위 형식과 길이 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:55-103` |
+| 이력 수집 | `log -L` 또는 `log --follow`, 커밋마다 메타데이터와 바뀐 파일 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:106-214` |
+| 현재 작성자 | `blame --line-porcelain`으로 줄 수 세기, 커밋 수와 합치기 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:217-264` |
+| 함께 바뀐 파일 | 옛 이름 모으기, 문턱 계산, 목록 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:267-297` |
+| 보고서 조립과 출력 | 여섯 키 JSON, 사람용 요약, 인자 처리 | `agent_skills/commit-archaeologist/scripts/archaeologist.py:300-390` |
 | 시험 도구 넷 | 구조(`skill_lint.py`), 보안(`skill_scanner.py`), 트리거(`run_trigger_evals.py`), 레지스트리(`registry_lint.py`) | `agent_skills/evals/tools/` |
 | 스킬 시험 자료 | 스크립트 시험, 트리거 사례, 행동 시험 | `agent_skills/evals/commit-archaeologist/` |
 | 레지스트리 | 이름·설명·설치 명령·시험 폴더 | `agent_skills/registry.json` |
@@ -149,12 +149,12 @@ project/.claude/skills/commit-archaeologist/references/reading-git-history.md
 project/.claude/skills/commit-archaeologist/scripts/archaeologist.py
    74 project/.claude/skills/commit-archaeologist/README.md
    82 project/.claude/skills/commit-archaeologist/references/reading-git-history.md
-  388 project/.claude/skills/commit-archaeologist/scripts/archaeologist.py
+  390 project/.claude/skills/commit-archaeologist/scripts/archaeologist.py
   132 project/.claude/skills/commit-archaeologist/SKILL.md
-  676 total
+  678 total
 ```
 
-파일 넷, 676줄입니다. `agent_skills/evals/README.md`는 시험 파일이 설치에 들어가지 않고 "the skill folders contain only what runs at runtime"이라고 적는데, 복사한 폴더에도 `evals/`가 없습니다. 명세의 점진적 불러오기(progressive disclosure)에 맞춰 보면, 에이전트는 시작할 때 `name`과 `description`(이 스킬은 360자)만 읽고, 스킬을 쓰기로 정하면 `SKILL.md` 전체(132줄)를 읽고, `references/`와 `scripts/`의 파일은 필요할 때만 읽거나 돌립니다. Claude Code 문서는 스크립트를 "executed, not loaded"로 적습니다. 소스는 컨텍스트에 들어가지 않고 출력만 들어갑니다.
+파일 넷, 678줄입니다. `agent_skills/evals/README.md`는 시험 파일이 설치에 들어가지 않고 "the skill folders contain only what runs at runtime"이라고 적는데, 복사한 폴더에도 `evals/`가 없습니다. 명세의 점진적 불러오기(progressive disclosure)에 맞춰 보면, 에이전트는 시작할 때 `name`과 `description`(이 스킬은 360자)만 읽고, 스킬을 쓰기로 정하면 `SKILL.md` 전체(132줄)를 읽고, `references/`와 `scripts/`의 파일은 필요할 때만 읽거나 돌립니다. Claude Code 문서는 스크립트를 "executed, not loaded"로 적습니다. 소스는 컨텍스트에 들어가지 않고 출력만 들어갑니다.
 
 ![Step 1까지의 구성](diagrams/step1.svg)
 
@@ -377,7 +377,7 @@ INTENT SIGNALS
 
 도입 커밋은 타임라인의 첫 항목입니다. 파일 이름이 중간에 바뀌었는데도 `src/cache.py` 시절의 첫 커밋까지 닿았습니다. 이력 목록을 만드는 함수를 봅니다.
 
-`agent_skills/commit-archaeologist/scripts/archaeologist.py:109-127`
+`agent_skills/commit-archaeologist/scripts/archaeologist.py:106-124`
 
 ```python
 def history_hashes(repo, path, line_range):
@@ -480,7 +480,7 @@ author Ada Fixture
 
 이 줄들을 처음 넣은 사람은 Ben(`1b820cd`)이지만, 24행(`_entries.pop(key, None)`)은 Ada의 이름 바꾸기 커밋(`e53954a`)이 `_store`를 `_entries`로 고치면서 blame의 주인이 바뀌었습니다. 같은 사람 둘이 `authors`에서 서로 다른 두 숫자로 나뉩니다. `current_lines`는 지금 줄의 blame 수이고, `timeline_commits`는 선택된 타임라인에서 그 사람이 한 커밋 수입니다. 코드는 이 둘을 따로 모읍니다.
 
-`agent_skills/commit-archaeologist/scripts/archaeologist.py:215-237`
+`agent_skills/commit-archaeologist/scripts/archaeologist.py:217-239`
 
 ```python
 def blame_authors(repo, path, line_range):
@@ -520,7 +520,7 @@ def blame_authors(repo, path, line_range):
 
 **할 일.** 계산은 `summarize_co_changes`에 있습니다.
 
-`agent_skills/commit-archaeologist/scripts/archaeologist.py:265-295`
+`agent_skills/commit-archaeologist/scripts/archaeologist.py:267-297`
 
 ```python
 def historical_paths(path, timeline):
@@ -595,7 +595,7 @@ REPEATED CO-CHANGES
   2x  src/prices.py
 ```
 
-세 가지가 보입니다. 첫째, 줄 모드의 타임라인은 6개라서 문턱이 2로 낮아졌습니다. 파일 모드(7개, 문턱 3)에서 숨었던 `README.md`와 `src/prices.py`가 나타났습니다. 이 둘은 첫 커밋과 이름 바꾸기 커밋이 우연히 함께 건드린 파일이라서 `reading-git-history.md`의 "Generated or formatting commits can create meaningless co-change patterns"에 해당합니다. 둘째, `tests/test_cache.py`와 `config/settings.toml`은 두 모드에서 모두 나옵니다. 설정 파일이 TTL 추가, 지역 건너뛰기 추가, 그 되돌림에서 세 번 함께 바뀐 것이 이 이력의 진짜 동반 관계입니다. 셋째, 줄 모드는 맨 위에 `6x src/cache.py`를 적었습니다. 이것은 대상 파일의 옛 이름입니다. 줄 로그에는 내용이 안 바뀐 이름 바꾸기 커밋이 들어오지 않아서 코드가 옛 이름을 모릅니다(`historical_paths`에 현재 이름뿐). 스킬의 2b 시험은 이름 바꾸기 뒤의 "옛 이름은 동반 파일이 아니다"를 파일 모드에서만 시험합니다(`agent_skills/evals/commit-archaeologist/test_archaeologist.py:217-224`). 줄 모드에서 옛 이름처럼 보이는 파일이 비율 1.0으로 맨 위에 있으면 `reading-git-history.md` 확인 목록 5번대로 파일 모드를 같이 돌려 `historical_paths`를 비교합니다.
+세 가지가 보입니다. 첫째, 줄 모드의 타임라인은 6개라서 문턱이 2로 낮아졌습니다. 파일 모드(7개, 문턱 3)에서 숨었던 `README.md`와 `src/prices.py`가 나타났습니다. 이 둘은 첫 커밋과 이름 바꾸기 커밋이 우연히 함께 건드린 파일이라서 `reading-git-history.md`의 "Generated or formatting commits can create meaningless co-change patterns"에 해당합니다. 둘째, `tests/test_cache.py`와 `config/settings.toml`은 두 모드에서 모두 나옵니다. 설정 파일이 TTL 추가, 지역 건너뛰기 추가, 그 되돌림에서 세 번 함께 바뀐 것이 이 이력의 진짜 동반 관계입니다. 셋째, 줄 모드는 맨 위에 `6x src/cache.py`를 적었습니다. 이것은 대상 파일의 옛 이름입니다. 줄 로그에는 내용이 안 바뀐 이름 바꾸기 커밋이 들어오지 않아서 코드가 옛 이름을 모릅니다(`historical_paths`에 현재 이름뿐). 스킬의 2b 시험은 이름 바꾸기 뒤의 "옛 이름은 동반 파일이 아니다"를 파일 모드에서만 시험합니다(`agent_skills/evals/commit-archaeologist/test_archaeologist.py:261-268`). 줄 모드에서 옛 이름처럼 보이는 파일이 비율 1.0으로 맨 위에 있으면 `reading-git-history.md` 확인 목록 5번대로 파일 모드를 같이 돌려 `historical_paths`를 비교합니다.
 
 ![Step 5까지의 구성](diagrams/step5.svg)
 
@@ -618,7 +618,7 @@ INTENT_PATTERNS = (
 )
 ```
 
-`agent_skills/commit-archaeologist/scripts/archaeologist.py:130-145`
+`agent_skills/commit-archaeologist/scripts/archaeologist.py:127-142`
 
 ```python
 def classify_message(subject, body):
@@ -709,7 +709,7 @@ python probe.py $SK
 
 **할 일.** git 호출은 한 곳에서만 나옵니다.
 
-`agent_skills/commit-archaeologist/scripts/archaeologist.py:33-55`
+`agent_skills/commit-archaeologist/scripts/archaeologist.py:33-52`
 
 ```python
 def git(repo, args, required=True):
@@ -718,26 +718,23 @@ def git(repo, args, required=True):
         result = subprocess.run(
             ["git", "-C", repo, *args],
             capture_output=True,
-            text=True,
-            # Decode git output as UTF-8. With text=True and no encoding, Python
-            # uses the locale default (cp1252 on Windows), which raises
-            # UnicodeDecodeError on non-Latin-1 bytes in commit messages or file
-            # content (emoji, em-dashes, …).
-            encoding="utf-8",
-            errors="replace",
             timeout=30,
         )
     except FileNotFoundError as exc:
         raise ArchaeologistError("git is not installed or is not on PATH") from exc
     except subprocess.TimeoutExpired as exc:
         raise ArchaeologistError("git command timed out") from exc
+    # Explicit UTF-8 decoding avoids locale-dependent failures on Windows and
+    # preserves carriage returns in NUL-delimited paths (text mode changes them).
+    stdout = result.stdout.decode("utf-8", errors="replace")
+    stderr = result.stderr.decode("utf-8", errors="replace")
     if result.returncode != 0 and required:
-        detail = result.stderr.strip() or result.stdout.strip() or "git command failed"
+        detail = stderr.strip() or stdout.strip() or "git command failed"
         raise ArchaeologistError(detail)
-    return result.stdout if result.returncode == 0 else ""
+    return stdout if result.returncode == 0 else ""
 ```
 
-`subprocess.run`에 인자 목록을 주고 셸은 쓰지 않으며(파일 이름의 공백이나 특수문자가 명령으로 풀리지 않습니다), 30초 제한이 있고, 출력은 UTF-8로 풉니다. 스크립트에는 `socket`·`urllib`·`http`·`requests` 같은 낱말이 없습니다(`grep`으로 확인). 그래도 실제로 어떤 git 명령이 몇 번 돌고 네트워크를 시도하는지는 실행으로 셉니다. 스킬 스크립트를 같은 프로세스 안에서 돌리면서 `subprocess.run`을 감싸 모든 호출을 기록하고, 소켓 연결과 이름 조회를 막아 시도를 세는 도우미입니다. 이 도우미가 보는 것은 파이썬 프로세스가 시작한 일뿐입니다. git 명령의 종류는 인자 기록으로, 네트워크는 파이썬 쪽 시도 횟수로 봅니다.
+`subprocess.run`에 인자 목록을 주고 셸은 쓰지 않으며(파일 이름의 공백이나 특수문자가 명령으로 풀리지 않습니다), 30초 제한이 있습니다. 출력은 바이트로 받아 직접 UTF-8로 풉니다. 예전에는 `text=True`와 `encoding="utf-8"`로 파이썬이 풀게 했는데, 원본이 PR #1173(커밋 `2d8e556`, 2026-10-18 병합)에서 이렇게 바꿨습니다. 주석이 이유를 적습니다. 텍스트 모드는 NUL로 구분한 경로 속의 캐리지 리턴을 바꿔 버립니다. 같은 PR이 `diff-tree`를 `-z`로 읽게 했습니다(아래 "따옴표가 붙는 경로"). 스크립트에는 `socket`·`urllib`·`http`·`requests` 같은 낱말이 없습니다(`grep`으로 확인). 그래도 실제로 어떤 git 명령이 몇 번 돌고 네트워크를 시도하는지는 실행으로 셉니다. 스킬 스크립트를 같은 프로세스 안에서 돌리면서 `subprocess.run`을 감싸 모든 호출을 기록하고, 소켓 연결과 이름 조회를 막아 시도를 세는 도우미입니다. 이 도우미가 보는 것은 파이썬 프로세스가 시작한 일뿐입니다. git 명령의 종류는 인자 기록으로, 네트워크는 파이썬 쪽 시도 횟수로 봅니다.
 
 `lab156/trace_git.py`
 
@@ -906,6 +903,96 @@ error: fatal: not a git repository (or any of the parent directories): .git
 
 두 번째 줄 `src/cache.py`는 합성 저장소의 옛 이름입니다. 이름이 바뀌어 HEAD에는 없으므로 추적 중이 아니라고 거절합니다(옛 이름으로는 물을 수 없습니다). 일곱 번째 줄은 저장소 자리에 하위 폴더를 주면 git이 맨 위를 찾지만 파일 경로는 그 맨 위 기준이라는 것을 보입니다(`shop/src pricing_cache.py`가 아니라 `shop/src src/pricing_cache.py`). 마지막 줄은 저장소가 아닌 폴더에서 git 자신의 메시지가 그대로 나옵니다. `lab156`가 다른 git 저장소 안에 있으면 `home` 대신 그 바깥 저장소가 잡히므로 이 줄의 출력이 다를 수 있습니다. 작업 폴더를 어떤 저장소 안에도 두지 않는 것이 안전합니다. 입력이 잘못되면 JSON을 내지 않고 종료 코드 2로 끝납니다. `SKILL.md`는 에이전트에게 "report that error and ask for a corrected target"이라고 시킵니다.
 
+이 문서가 처음 쓰였을 때 스크립트는 파일 이름에 공백이나 한글이 들어가면 틀린 이름을 냈습니다. 원본이 PR #1173(커밋 `2d8e556`, 2026-10-18 병합)에서 고쳤습니다. 이름을 `-z`(NUL로 구분)로 받고 복사(`C`) 상태도 다루도록 한 것입니다. git은 기본 설정(`core.quotePath`가 참)에서 `-z` 없이 이름을 낼 때 공백이나 비ASCII 글자가 든 경로를 따옴표로 감싸고 바이트를 `\354\202…`처럼 8진수로 적습니다. 예전 스크립트는 그 문자열을 파일 이름으로 믿었습니다. 합성 저장소에 이름에 공백과 한글이 든 파일 둘을 두고 옛 판과 지금 판을 한 번씩 돌려 봅니다. 아래 도우미를 `lab156/quoted_demo.py`로 저장합니다.
+
+`lab156/quoted_demo.py`
+
+```python
+"""Rename a file whose name has a space and Korean letters, then ask a skill script who changed with it.
+
+    python quoted_demo.py SCRIPT
+"""
+import json
+import os
+import subprocess
+import sys
+
+SCRIPT = sys.argv[1]
+REPO = os.path.abspath("quoted_shop")
+OLD, NEW, NOTE = "src/가격 캐시.py", "src/가격 저장소.py", "docs/사용 설명.md"
+
+
+def git(*args, date=None):
+    env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+    env.update(GIT_AUTHOR_NAME="Ada Fixture", GIT_AUTHOR_EMAIL="ada.fixture@example.test",
+               GIT_COMMITTER_NAME="Ada Fixture", GIT_COMMITTER_EMAIL="ada.fixture@example.test")
+    if date:
+        env.update(GIT_AUTHOR_DATE=date, GIT_COMMITTER_DATE=date)
+    subprocess.run(["git", "-C", REPO, "-c", "commit.gpgsign=false", "-c", "core.quotePath=true", *args],
+                   env=env, capture_output=True, check=True)
+
+
+if not os.path.isdir(REPO):
+    os.makedirs(os.path.join(REPO, "src"))
+    os.makedirs(os.path.join(REPO, "docs"))
+    git("init", "-q")
+    for step, (text, note) in enumerate([("v = 1\n", "first\n"), ("v = 2\n", "second\n")]):
+        for path, body in ((OLD, text), (NOTE, note)):
+            with open(os.path.join(REPO, path), "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(body)
+        git("add", "-A")
+        git("commit", "-q", "-m", "change %d" % (step + 1), date="2026-01-0%dT10:00:00+0000" % (step + 1))
+    git("mv", OLD, NEW)
+    git("commit", "-q", "-m", "refactor: rename module", date="2026-01-03T10:00:00+0000")
+
+raw = subprocess.run(["git", "-C", REPO, "-c", "core.quotePath=true", "diff-tree", "--root", "--no-commit-id",
+                      "--name-status", "-r", "-M", "HEAD~2"], capture_output=True).stdout.decode("utf-8")
+print("git diff-tree without -z:", raw.strip().splitlines()[0])
+run = subprocess.run([sys.executable, SCRIPT, REPO, NEW, "--json"], capture_output=True, encoding="utf-8")
+if run.returncode != 0:
+    print("exit code", run.returncode, "|", run.stderr.strip())
+    sys.exit(0)
+report = json.loads(run.stdout)
+print("introduced_by.changed_files:", report["introduced_by"]["changed_files"])
+print("historical_paths:", report["region"]["historical_paths"])
+print("last rename:", report["timeline"][-1]["renames"])
+print("co_changed:", [(c["file"], c["count"]) for c in report["co_changed"]])
+```
+
+옛 판은 고치기 직전 커밋(`2d8e556^`)에서 꺼냅니다. 얕은 clone이면 그 커밋이 없을 수 있습니다.
+
+```bash
+git -C "$REPO" show 2d8e556^:agent_skills/commit-archaeologist/scripts/archaeologist.py > old_archaeologist.py
+python quoted_demo.py old_archaeologist.py
+python quoted_demo.py $SK
+```
+
+```powershell
+git -C $REPO show 2d8e556^:agent_skills/commit-archaeologist/scripts/archaeologist.py | Set-Content -Encoding utf8 old_archaeologist.py
+python quoted_demo.py old_archaeologist.py
+python quoted_demo.py $SK
+```
+
+**확인.** 옛 판은 따옴표와 8진수가 든 문자열을 파일 이름으로 냈고, 그 바람에 이름이 바뀐 사실도 놓쳤습니다(`historical_paths`에 옛 이름이 없고, 옛 이름이 동반 파일로 3번 올라옵니다). 지금 판은 이름 그대로입니다. 첫 줄은 두 판이 같고(git 자신의 출력이라 `-z`가 없으면 따옴표가 붙습니다), 나머지 네 줄이 다릅니다.
+
+```text
+git diff-tree without -z: A	"docs/\354\202\254\354\232\251 \354\204\244\353\252\205.md"
+introduced_by.changed_files: ['"docs/\\354\\202\\254\\354\\232\\251 \\354\\204\\244\\353\\252\\205.md"', '"src/\\352\\260\\200\\352\\262\\251 \\354\\272\\220\\354\\213\\234.py"']
+historical_paths: ['src/가격 저장소.py']
+last rename: [{'from': '"src/\\352\\260\\200\\352\\262\\251 \\354\\272\\220\\354\\213\\234.py"', 'to': '"src/\\352\\260\\200\\352\\262\\251 \\354\\240\\200\\354\\236\\245\\354\\206\\214.py"'}]
+co_changed: [('"src/\\352\\260\\200\\352\\262\\251 \\354\\272\\220\\354\\213\\234.py"', 3), ('"docs/\\354\\202\\254\\354\\232\\251 \\354\\204\\244\\353\\252\\205.md"', 2)]
+```
+
+```text
+git diff-tree without -z: A	"docs/\354\202\254\354\232\251 \354\204\244\353\252\205.md"
+introduced_by.changed_files: ['docs/사용 설명.md', 'src/가격 캐시.py']
+historical_paths: ['src/가격 저장소.py', 'src/가격 캐시.py']
+last rename: [{'from': 'src/가격 캐시.py', 'to': 'src/가격 저장소.py'}]
+co_changed: [('docs/사용 설명.md', 2)]
+```
+
+첫 블록이 옛 판, 둘째가 지금 판입니다. 지금 판에서는 옛 이름이 `historical_paths`에 들어가서 동반 파일 목록에서 빠지고(Step 5), `docs/사용 설명.md`만 두 번 함께 바뀐 파일로 남습니다. 이 문서는 개행(`\n`)이나 탭이 든 이름까지는 돌려 보지 않았습니다. 원본의 시험이 그것을 보는데, Windows에서는 건너뜁니다(Step 8).
+
 마지막으로 이 저장소의 실제 파일입니다. 저장소를 읽기만 합니다. 실행 앞뒤로 `git -C "$REPO" status --short`가 같은지 보면 됩니다. 이 PC에서는 `.git` 파일 4,650개의 같은 지문 도우미(`python snapshot.py "$REPO"`, 30초 남짓)도 앞뒤가 같았습니다. 출력의 사람 이름 두 개는 `<작성자 A>`·`<작성자 B>`로 가렸습니다. 첫 명령은 스킬의 스크립트 자신입니다.
 
 ```bash
@@ -1009,10 +1096,10 @@ Summary: 0 CRITICAL, 0 WARN, 0 INFO
 PASS  commit-archaeologist: 3 positives clear 3 near-misses (weakest 1.73 vs strongest 0.89)
 Checking registry at ... (mode=check)
   PASS — 0 error(s), 0 warning(s)
-PASS - 18/18 checks
+PASS - 23/23 checks
 ```
 
-(2b 시험은 위 줄 앞에 확인 18개의 `PASS` 줄을 출력합니다.) Windows에서는 2b 시험이 끝나도 `commit-archaeologist-eval-…`라는 임시 폴더가 `TEMP` 아래에 남습니다. 시험은 끝에 `shutil.rmtree(root, ignore_errors=True)`로 지우는데(`agent_skills/evals/commit-archaeologist/test_archaeologist.py:243`) git이 만든 객체 파일이 읽기 전용이라 지워지지 않고 오류가 조용히 무시됩니다. 두 번 돌려 두 폴더가 남는 것을 직접 확인했습니다. 변수 블록이 `TEMP`를 `lab156/tmp`로 돌려 놓았으므로 거기에만 남고, 실습이 끝나면 `lab156` 폴더째 지우면 됩니다. 이 시험이 이 PC의 진짜 임시 폴더를 어지럽히지 않게 하려면 `TEMP`를 돌린 셸에서 돌려야 합니다. 이 시험들이 무엇을 보는지 정리합니다.
+(2b 시험은 위 줄 앞에 확인 23개의 `PASS` 줄을 출력합니다. 끝의 다섯은 "quoted filenames" 묶음으로, 한글·악센트가 든 이름을 저장소에 만들어 이름 바꾸기를 따라가는지 봅니다. 같은 시험은 Windows가 아닌 곳에서만 탭·개행·따옴표가 든 이름 묶음을 더 돌립니다. 소스에 `os.name != "nt"`로 적혀 있고 이 문서는 돌리지 못했습니다.) Windows에서는 2b 시험이 끝나도 `commit-archaeologist-eval-…`라는 임시 폴더가 `TEMP` 아래에 남습니다. 시험은 끝에 `shutil.rmtree(root, ignore_errors=True)`로 지우는데(`agent_skills/evals/commit-archaeologist/test_archaeologist.py:297`) git이 만든 객체 파일이 읽기 전용이라 지워지지 않고 오류가 조용히 무시됩니다. 이 판에서도 한 번 돌리니 폴더 하나가 남는 것을 직접 확인했습니다. 변수 블록이 `TEMP`를 `lab156/tmp`로 돌려 놓았으므로 거기에만 남고, 실습이 끝나면 `lab156` 폴더째 지우면 됩니다. 이 시험이 이 PC의 진짜 임시 폴더를 어지럽히지 않게 하려면 `TEMP`를 돌린 셸에서 돌려야 합니다. 이 시험들이 무엇을 보는지 정리합니다.
 
 | 단계 | 도구 | 보는 것 | 한계 |
 |---|---|---|---|
@@ -1020,7 +1107,7 @@ PASS - 18/18 checks
 | 1b 보안 | `skill_scanner.py` | 설치 유인 문구, 원격 스크립트 파이프, 인증 정보 파일 읽기, 코드에 감춘 페이로드, 스크립트의 네트워크 낱말(선언 없으면 경고) | 패턴만 봄. 이 도구 자신이 "natural-language attacks evade pattern scanners"라고 적음. `SKILL.md`를 끝까지 읽어야 함 |
 | 2 트리거 | `run_trigger_evals.py` | `trigger-cases.json`의 양성 문장이 설명(description)과 낱말이 겹치는 정도가 음성보다 1.15배 넘게 높은가 | 의미가 아니라 낱말 겹침 |
 | 레지스트리 | `registry_lint.py` (기본 `--check`) | `registry.json`이 각 `SKILL.md`의 frontmatter에서 다시 만든 것과 같은가, 스킬이 README 목록 둘에 다 있는가 | 설치 명령이 실제로 동작하는지는 모름. `--write`는 `registry.json`을 다시 쓰므로 이 문서는 쓰지 않았습니다 |
-| 2b 스크립트 | `test_archaeologist.py` | 임시 저장소를 만들어 정렬·동반 변경·작성자·단서·결정성·오류 확인 18개 | 아래 |
+| 2b 스크립트 | `test_archaeologist.py` | 임시 저장소를 만들어 정렬·동반 변경·작성자·단서·결정성·오류 확인 23개(따옴표가 붙는 경로 5개 포함) | 아래 |
 
 트리거 시험을 직접 만져 봅니다. 시험이 쓰는 두 함수를 불러 같은 방식으로 점수를 매기는 도우미입니다.
 
@@ -1111,7 +1198,7 @@ python try_prompts.py $REPO "why does this code exist" "who wrote this function 
 ## 실행 체크리스트
 
 - [ ] 작업 폴더 `lab156`를 어떤 git 저장소 안에도 두지 않고, 변수 블록으로 홈과 임시 폴더를 작업 폴더 안으로 돌렸다
-- [ ] 스킬 폴더를 `project/.claude/skills/`로 복사했고 파일이 네 개(676줄)이며 `evals/`가 없다. 진짜 `~/.claude/skills`에는 아무것도 넣지 않았다
+- [ ] 스킬 폴더를 `project/.claude/skills/`로 복사했고 파일이 네 개(678줄)이며 `evals/`가 없다. 진짜 `~/.claude/skills`에는 아무것도 넣지 않았다
 - [ ] `python make_shop.py shop`의 로그 첫 줄이 `75706c7`이고 일곱 줄이다
 - [ ] 파일 모드 출력의 도입 커밋이 `a758aca…`이고 동반 변경이 `tests/test_cache.py`(4번), `config/settings.toml`(3번)이다
 - [ ] `--lines 22-24`에서 `introduced_by`는 Ben이고 `authors`에 Ben 2줄, Ada 1줄이 나온다
