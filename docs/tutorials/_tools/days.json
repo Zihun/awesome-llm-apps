@@ -1334,5 +1334,13 @@
     "title": "Cursor Ai Experiments",
     "path": "advanced_llm_apps/cursor_ai_experiments",
     "slug": "cursor-ai-experiments"
+  },
+  {
+    "day": 168,
+    "vol": 19,
+    "volLabel": "🛠️ 독립 앱·도구",
+    "title": "✏️ Excaliflow - Hand-Drawn Diagrams with Live Animated Flows",
+    "path": "advanced_llm_apps/excaliflow",
+    "slug": "excaliflow"
   }
 ]

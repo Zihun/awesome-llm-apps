@@ -4,7 +4,7 @@
 
 ## 오늘 만들 것
 
-폴더 하나에 작은 실험 다섯이 들어 있습니다. 이름에 Cursor가 있지만 폴더 안 어디에도 그 글자가 없습니다(Step 2의 `grep`). 다섯 모두 Streamlit 대본 한 파일이고, 파이썬 코드가 모두 323줄입니다. 달라지는 것은 모델을 어디서 얻느냐입니다. 둘은 이 PC에서 도는 서버(Ollama, LM Studio)에 대화 기록을 보내고, 셋은 바깥 서비스를 씁니다(CrewAI 연구 팀, ScrapeGraphAI 웹 긁기, RouteLLM 라우터). 시리즈의 마지막 날이고, 볼륨 18의 마지막 날입니다. 앞 세 날([Day 164](../day164-gpt-oss-critique-improvement-loop/README.md)~[Day 166](../day166-thinkpath-chatbot-app/README.md))이 한 앱을 깊이 팠다면 오늘은 다섯을 얕게 봅니다.
+폴더 하나에 작은 실험 다섯이 들어 있습니다. 이름에 Cursor가 있지만 폴더 안 어디에도 그 글자가 없습니다(Step 2의 `grep`). 다섯 모두 Streamlit 대본 한 파일이고, 파이썬 코드가 모두 323줄입니다. 달라지는 것은 모델을 어디서 얻느냐입니다. 둘은 이 PC에서 도는 서버(Ollama, LM Studio)에 대화 기록을 보내고, 셋은 바깥 서비스를 씁니다(CrewAI 연구 팀, ScrapeGraphAI 웹 긁기, RouteLLM 라우터). 볼륨 18의 마지막 날입니다. 시리즈는 다음 날 Day 168에서 끝납니다. 앞 세 날([Day 164](../day164-gpt-oss-critique-improvement-loop/README.md)~[Day 166](../day166-thinkpath-chatbot-app/README.md))이 한 앱을 깊이 팠다면 오늘은 다섯을 얕게 봅니다.
 
 이 문서는 실험 가운데 **가벼운 둘(①②)만 돌렸습니다.** 진짜 Ollama도 LM Studio도 부르지 않았고, 그 자리에 **내가 쓴 가짜 서버**를 세웠습니다. 가짜 서버는 모델이 아니라 받은 메시지 수를 세어 말하는 쉰일곱 줄입니다. 그래서 아래 "응답"은 배선과 요청 모양을 보이는 것이지 모델 품질을 보이는 것이 아닙니다. 나머지 셋(③④⑤)은 무겁습니다. 설치하지 않았고, 한 번도 실행하지 않았고, **소스와 공식 문서만 읽었습니다.** 알게 된 것은 여섯입니다.
 
@@ -621,31 +621,6 @@ netstat -ano | grep -E "127.0.0.1:($PORT_OLLAMA|$PORT_LMS|$PORT_NOMODEL) .*LISTE
 - ②의 `base_url`을 `os.environ.get("LMSTUDIO_URL", "http://localhost:1234/v1")`로 고치고, 실행기 없이 환경변수만으로 가짜 서버에 가게 해 보세요. 실행기가 SDK를 감싸는 대신 앱이 주소를 설정으로 받는 꼴입니다.
 - RouteLLM 저장소의 로컬 모델 안내(`examples/routing_to_local_models.md`)를 읽고, ⑤의 두 모델을 Ollama의 두 모델로 바꾸는 길을 적어 보세요. `mf` 라우터의 임베딩이 여전히 OpenAI 키를 요구한다는 점이 어디에 걸리는지 찾아보면 됩니다.
 
-## 시리즈 마무리
+## 다음 날 예고
 
-167일은 18개 볼륨입니다. 일차 범위와 일수는 `docs/tutorials/_tools/days.json`의 `vol`·`volLabel`에서 센 것입니다.
-
-| 볼륨 | 일차 | 일수 |
-|---|---|---|
-| 1 🌱 Starter AI Agents | 1–13 | 13 |
-| 2 🧑‍🏫 Crash Courses | 14–34 | 21 |
-| 3 🌱 Starter AI Agents (추가분) | 35–38 | 4 |
-| 4 💬 Chat with X | 39–46 | 8 |
-| 5 📀 RAG | 47–70 | 24 |
-| 6 💾 LLM Apps with Memory | 71–77 | 7 |
-| 7 🚀 Advanced AI Agents | 78–111 | 34 |
-| 8 🤝 Multi-agent Teams | 112–126 | 15 |
-| 9 ♾️ MCP AI Agents | 127–133 | 7 |
-| 10 🎮 Autonomous Game-Playing | 134–136 | 3 |
-| 11 🗣️ Voice AI Agents | 137–140 | 4 |
-| 12 🖼️ Generative UI | 141–147 | 7 |
-| 13 🛰️ Always-on Agents | 148–149 | 2 |
-| 14 🎯 LLM Optimization | 150–151 | 2 |
-| 15 🔧 LLM Fine-tuning | 152–153 | 2 |
-| 16 🧩 Agent Skills | 154–161 | 8 |
-| 17 🔎 AI 브라우저 도구 | 162–163 | 2 |
-| 18 🧪 기타 LLM 앱 | 164–167 | 4 |
-
-처음 읽는다면 [공통 사전 준비](../README.md#공통-사전-준비-한-번만)를 한 번 하고 [Day 1 · xAI Finance Agent](../day001-xai-finance-agent/README.md)에서 시작하세요. 코드 한 파일로 에이전트가 무엇인지 보는 날입니다. 처음 계획(스펙)은 볼륨 안을 작은 앱부터 놓는 것이었지만, 지금 앱의 줄 수로 세면 18개 볼륨 가운데 12개는 그 순서가 아닙니다. 그러니 볼륨 안의 순서보다 볼륨 순서(학습 난이도)를 따라가세요. 프레임워크를 체계적으로 배우고 싶다면 볼륨 2의 첫날 [Day 14 · Google ADK Crash Course · 1_starter_agent](../day014-adk-1-starter-agent/README.md)가 입구입니다. 로컬 모델만으로 해 보고 싶다면 볼륨 5의 [Day 47 · 🦙 Local RAG Agent](../day047-local-rag-agent/README.md)가 있고, 오늘 ①②는 같은 방향의 가장 작은 예입니다.
-
-이 시리즈의 문서는 키가 드는 바깥 서비스를 부르지 않았습니다(Day 100 무렵부터는 많은 날이 가짜 서버로 배선을 확인했습니다). 각 문서가 **실행한 것과 소스로만 읽은 것**을 갈라 적었으니, 따라 하기 전에 그 구분을 먼저 보세요. 볼륨 16~18은 스킬 묶음, 브라우저 확장, 여러 모양의 작은 앱을 다룹니다.
+[Day 168 · ✏️ Excaliflow - Hand-Drawn Diagrams with Live Animated Flows](../day168-excaliflow/README.md) — 볼륨 19 "🛠️ 독립 앱·도구"의 하나뿐인 날이자 시리즈의 마지막 날입니다. 원본 `advanced_llm_apps/excaliflow`는 2026-10-15에 원본 저장소에 더해진 손그림 다이어그램 앱입니다. LLM을 부르지 않고, 의존성 없는 Node 서버(`server.js` 92줄)와 화면 한 장(`index.html` 5,803줄), 시험(`verify.js` 523줄)으로 이루어져 있습니다. 시리즈 마무리는 그날로 옮겼습니다.

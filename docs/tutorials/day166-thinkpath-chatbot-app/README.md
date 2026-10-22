@@ -537,4 +537,4 @@ npm start                                             # electron .
 
 ## 다음 날 예고
 
-[Day 167 · Cursor Ai Experiments](../day167-cursor-ai-experiments/README.md) — 시리즈의 마지막 날입니다. `advanced_llm_apps/cursor_ai_experiments`에는 서로 이어지지 않는 실험 다섯이 있습니다. CrewAI 다중 에이전트 연구자(`multi_agent_researcher.py` 146줄), ScrapeGraphAI 웹 스크레이퍼(`ai_web_scrapper.py` 49줄), 오늘처럼 로컬 Ollama를 쓰는 ChatGPT 흉내(`chatgpt_clone_llama3.py` 40줄)와 LM Studio 판(`local_chatgpt_clone/` 36줄), RouteLLM 라우터(`llm_router_app/llm_router.py` 52줄)입니다. 오늘 본 "로컬 모델 서버에 주소가 박혀 있다"가 거기서도 나오고, 167일 전체를 돌아보는 "시리즈 마무리" 절이 있습니다.
+[Day 167 · Cursor Ai Experiments](../day167-cursor-ai-experiments/README.md) — 볼륨 18의 마지막 날입니다. `advanced_llm_apps/cursor_ai_experiments`에는 서로 이어지지 않는 실험 다섯이 있습니다. CrewAI 다중 에이전트 연구자(`multi_agent_researcher.py` 146줄), ScrapeGraphAI 웹 스크레이퍼(`ai_web_scrapper.py` 49줄), 오늘처럼 로컬 Ollama를 쓰는 ChatGPT 흉내(`chatgpt_clone_llama3.py` 40줄)와 LM Studio 판(`local_chatgpt_clone/` 36줄), RouteLLM 라우터(`llm_router_app/llm_router.py` 52줄)입니다. 오늘 본 "로컬 모델 서버에 주소가 박혀 있다"가 거기서도 나오고, 167일 전체를 돌아보는 "시리즈 마무리" 절이 있습니다.
