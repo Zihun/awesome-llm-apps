@@ -7,7 +7,7 @@ app: "deep_research_openai.py" {
   class: ours
 
   sidebar: "키 입력" { class: ours }
-  tool: "deep_research 도구" { class: ours }
+  tool: "search_web 도구" { class: ours }
   research: "조사 에이전트" { class: ours }
   elaborate: "정교화 에이전트" { class: ours }
   orchestrate: "실행 루틴" { class: ours }
@@ -20,5 +20,5 @@ firecrawl: Firecrawl API { class: ext }
 user -> app: 키 2개·주제 입력, Start Research 클릭
 app.research -> openai: 주제 + 지시문 + 도구 스키마
 app.elaborate -> openai: 주제 + 1차 보고서
-app.tool -> firecrawl: 검색 질의와 파라미터
+app.tool -> firecrawl: 검색 질의(상위 5개 쪽을 마크다운으로)
 app.result -> user: 보고서 표시와 마크다운 다운로드
