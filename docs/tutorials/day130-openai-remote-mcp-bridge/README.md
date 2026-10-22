@@ -1,12 +1,12 @@
 # Day 130 · 🔌 OpenAI Remote MCP Tool Bridge
 
-> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ `requirements.txt`만 설치하면 앱이 첫 연결에서 죽습니다(`mcp`가 2.3.0으로 풀림, Step 1) ⚠ 앱의 기본 모델 `gpt-4o-mini`는 모델 페이지의 기본 스냅숏 `gpt-4o-mini-2024-07-18`이 2027-01-14 종료 예정입니다(사전 준비) · 예상 소요 95분(앱은 파일 하나 269줄이지만 가짜 원격 MCP 서버와 가짜 OpenAI 서버를 직접 저장해 띄우고, 서버 쪽 기록과 앱 출력을 맞대어 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 한 건에 $0.002~0.015(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았습니다. 단가는 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-14)의 표준 요금 입력 $0.15/백만 토큰, 출력 $0.60/백만 토큰입니다. 도구를 한 번 쓰면 모델 호출이 두 번이고 입력은 도구 정의 전부와 결과(한 번에 12,000자까지)가 쌓여 수천~1만 토큰이면 $0.002 안팎, 예산 6을 다 쓰고 결과가 모두 12,000자면 입력 누계 10만 토큰 안팎으로 어림해 $0.015 안팎입니다. 기본 원격 서버 Parallel Search MCP는 키 없이 쓰는 무료 주소입니다) · 원본 앱: `mcp_ai_agents/openai_remote_mcp_bridge`
+> 볼륨 9 ♾️ MCP AI Agents · 난이도 ★★☆ ⚠ 앱의 기본 모델 `gpt-4o-mini`는 모델 페이지의 기본 스냅숏 `gpt-4o-mini-2024-07-18`이 2027-01-14 종료 예정입니다(사전 준비) · 예상 소요 100분(앱은 파일 하나 269줄이지만 가짜 원격 MCP 서버와 가짜 OpenAI 서버를 직접 저장해 띄우고, 서버 쪽 기록과 앱 출력을 맞대어 보는 시간이 읽는 시간보다 큽니다) · API 비용 대략 한 건에 $0.002~0.015(⚠ 추정입니다. 이 문서는 OpenAI를 한 번도 부르지 않았습니다. 단가는 모델 페이지(https://developers.openai.com/api/docs/models/gpt-4o-mini, 2026-10-14)의 표준 요금 입력 $0.15/백만 토큰, 출력 $0.60/백만 토큰입니다. 도구를 한 번 쓰면 모델 호출이 두 번이고 입력은 도구 정의 전부와 결과(한 번에 12,000자까지)가 쌓여 수천~1만 토큰이면 $0.002 안팎, 예산 6을 다 쓰고 결과가 모두 12,000자면 입력 누계 10만 토큰 안팎으로 어림해 $0.015 안팎입니다. 기본 원격 서버 Parallel Search MCP는 키 없이 쓰는 무료 주소입니다) · 원본 앱: `mcp_ai_agents/openai_remote_mcp_bridge`
 
 ## 오늘 만들 것
 
 볼륨 9 "♾️ MCP AI Agents"의 넷째 날입니다. Day 127~129의 원본 앱 소스를 읽어 보면 MCP 서버가 모두 내 PC에서 자식 프로세스로 뜹니다. `mcp_ai_agents/notion_mcp_agent/notion_mcp_agent.py:60-62`는 `StdioServerParameters(command="npx", …)`, `mcp_ai_agents/github_mcp_agent/github_agent.py:74-75`는 `command="docker"`, `mcp_ai_agents/browser_mcp_agent/mcp_agent.config.yaml:13-14`는 `command: "npx"`입니다(셋 다 소스로 확인했고 실행하지 않았습니다). 오늘 앱은 다릅니다. `streamable_http_client(server_url)`에 주소 하나를 주면 끝이고(`openai_remote_mcp_bridge.py:123`), 내 PC에는 아무 프로세스도 뜨지 않습니다. 에이전트 프레임워크도 없습니다. `requirements.txt`는 `openai>=1.40.0`과 `mcp>=1.28.1` 두 줄이고, 도구를 모델에게 보여 주고 부름을 받아 전달하는 반복문을 파일 하나가 직접 짭니다. 흐름은 이렇습니다. 원격 MCP 서버에 연결해 도구를 쪽(page)마다 모두 모으고, 각 도구를 OpenAI 함수 도구로 바꿔 모델에게 주고, 모델이 `tool_calls`를 내면 MCP로 전달하고, 결과를 12,000자로 자른 `tool` 메시지로 돌려줍니다. 도구 부름은 `--max-tool-calls`(기본 6)까지만 받습니다.
 
-직접 돌려 알게 된 것이 넷입니다. 첫째, 오늘 `requirements.txt`를 그대로 설치하면 `mcp` 2.3.0이 깔리고, 이 앱은 그 판에서 세 군데가 맞지 않아 첫 연결에서 죽습니다. `mcp<2`를 더해 1.30.0으로 돌립니다(Step 1). 둘째, `--list-tools`는 OpenAI 키가 없어도 되지만 원격 서버에는 바로 붙고, 기본 주소는 실제 `https://search.parallel.ai/mcp`입니다. 그래서 이 문서의 모든 명령은 `--server-url`을 루프백 가짜 서버로 줍니다(Step 3). 셋째, 서버가 도구 하나라도 OpenAI가 받지 못하는 모양이면 그 한 개 때문에 모델 호출 전에 전체가 멈추고, `--tools`로 골라 빼야 합니다(Step 4). 넷째, 터미널의 `[truncated N characters]` 숫자는 모델이 받은 글의 숫자가 아닙니다(Step 7).
+직접 돌려 알게 된 것이 넷입니다. 첫째, 오늘 `requirements.txt`를 그대로 설치하면 `mcp` 1.30.0이 깔리고 앱이 돕니다. 원본이 PR #1214(커밋 `938be235`, 2026-10-18 병합)에서 `mcp>=1.28.1,<2`로 상한을 박았기 때문입니다. 그 전에는 `mcp` 2.3.0이 풀려, 이 앱이 세 군데가 맞지 않아 첫 연결에서 죽었습니다(Step 1, Step 3). 둘째, `--list-tools`는 OpenAI 키가 없어도 되지만 원격 서버에는 바로 붙고, 기본 주소는 실제 `https://search.parallel.ai/mcp`입니다. 그래서 이 문서의 모든 명령은 `--server-url`을 루프백 가짜 서버로 줍니다(Step 3). 셋째, 서버가 도구 하나라도 OpenAI가 받지 못하는 모양이면 그 한 개 때문에 모델 호출 전에 전체가 멈추고, `--tools`로 골라 빼야 합니다(Step 4). 넷째, 터미널의 `[truncated N characters]` 숫자는 모델이 받은 글의 숫자가 아닙니다(Step 7).
 
 이 문서는 Parallel에도 OpenAI에도 요청을 보내지 않습니다. 두 서버를 모두 이 PC의 임의 포트에 띄운 가짜로 대신하고, 가짜 서버의 도구와 답은 제가 지어낸 대본입니다. 진짜 Parallel Search MCP의 도구는 `web_search`와 `web_fetch` 둘이고 키 없이 쓸 수 있다고 Parallel 문서(https://docs.parallel.ai/integrations/mcp/search-mcp, 2026-10-14 확인)에 적혀 있지만, 그 서버에 붙어 보지는 않았으므로 도구의 인자 모양은 모릅니다. 아래는 완성된 아키텍처입니다. 일곱 칸은 한 파일 안의 함수들이고 번호는 코드가 실행되는 순서입니다. 화살표는 칸이 아니라 파일 전체에 닿습니다. 칸 사이의 호출 순서는 아래 "요청 한 건이 흐르는 과정"이 맡고, 어느 칸이 바깥과 이야기하는지는 이렇습니다. 사용자의 인자와 환경변수 셋(`OPENAI_API_KEY`·`MCP_SERVER_URL`·`OPENAI_MODEL`)은 1번이, `initialize`와 그 답은 2번이, `tools/list`와 도구 쪽은 3번이, `messages · tools`와 `tool_calls`는 5번이, `tools/call`과 `CallToolResult`는 6번이 주고받고(결과는 7번이 글로 만듭니다), `OPENAI_BASE_URL`은 5번의 SDK가 읽습니다. 터미널로 가는 출력 화살표는 `run_bridge` 안의 `print`들이라 `[connect]`(122행)는 2번, `[discover]`(131행)는 3번, `[tools]`·`[convert]`(145-146행)는 4번, `[final]`(174행)은 5번, `[openai -> mcp]`와 `[mcp -> openai]`(181-183행, 207행)는 6번에서 나갑니다(코드 위치는 아래 표). 4번 칸은 아래 표의 두 행(`select_tools`와 `mcp_tool_to_openai`)을 한 칸에 담았습니다.
 
@@ -47,7 +47,7 @@
 
 각 Step 그림에서 주황으로 칠해진 칸이 그 Step에서 다루는 함수입니다. 화살표는 칸이 아니라 파일 전체에 닿으므로, 어느 칸이 보내는지는 위 "오늘 만들 것"의 대응을 보세요.
 
-### Step 1. 환경 만들기 — 설치는 되지만 `mcp`가 2.3.0입니다
+### Step 1. 환경 만들기 — `requirements.txt`가 `mcp` 1.x로 묶입니다
 
 **목적.** 원본을 건드리지 않도록 작업 폴더에 복사본과 가상환경을 만들고, 키 없이 어디까지 가는지 봅니다.
 
@@ -59,10 +59,10 @@ cd bridge-work
 cp <저장소>/mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py .
 cp <저장소>/mcp_ai_agents/openai_remote_mcp_bridge/requirements.txt .
 uv venv
-uv pip install -r requirements.txt "mcp<2"
+uv pip install -r requirements.txt
 ```
 
-(pip 대안: `python -m venv .venv`로 만들고 활성화한 뒤 `pip install -r requirements.txt "mcp<2"`.) 아래 PowerShell 줄은 실행해 보지 못했습니다(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다).
+(pip 대안: `python -m venv .venv`로 만들고 활성화한 뒤 `pip install -r requirements.txt`.) 아래 PowerShell 줄은 실행해 보지 못했습니다(이 문서를 쓴 하네스가 PowerShell 실행을 막습니다).
 
 ```powershell
 mkdir bridge-work
@@ -70,10 +70,19 @@ cd bridge-work
 Copy-Item <저장소>\mcp_ai_agents\openai_remote_mcp_bridge\openai_remote_mcp_bridge.py .
 Copy-Item <저장소>\mcp_ai_agents\openai_remote_mcp_bridge\requirements.txt .
 uv venv
-uv pip install -r requirements.txt "mcp<2"
+uv pip install -r requirements.txt
 ```
 
-이 저장소는 루트에 `pyproject.toml`이 있어 저장소 안에서 `uv run`은 루트 환경을 쓰려 하므로, 이후 `uv run`에는 모두 `--no-project`를 붙입니다. `"mcp<2"`가 왜 필요한지는 Step 3에서 실제로 죽여 보입니다. 파일 맨 위의 가져오기는 이렇습니다.
+이 저장소는 루트에 `pyproject.toml`이 있어 저장소 안에서 `uv run`은 루트 환경을 쓰려 하므로, 이후 `uv run`에는 모두 `--no-project`를 붙입니다. 복사한 `requirements.txt`는 지금 이렇습니다.
+
+`mcp_ai_agents/openai_remote_mcp_bridge/requirements.txt:1-2`
+
+```text
+openai>=1.40.0
+mcp>=1.28.1,<2
+```
+
+`mcp`에 상한 `<2`가 있어 2.x가 풀리지 않습니다. 이 상한은 PR #1214(커밋 `938be235`, 2026-10-18 병합) 전에는 없었고, 그때는 `requirements.txt`만 설치하면 `mcp` 2.3.0이 깔려 앱이 첫 연결에서 죽어서 `"mcp<2"`를 따로 더해야 했습니다(Step 3에 그 실패를 남겼습니다). 파일 맨 위의 가져오기는 이렇습니다.
 
 `mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:3-14`
 
@@ -107,11 +116,11 @@ OPENAI_API_KEY=sk-fake uv run --no-project python openai_remote_mcp_bridge.py --
 
 (PowerShell 5.1에는 `&&`와 `env -u`가 없습니다. 첫 줄은 `uv run --no-project python -m py_compile openai_remote_mcp_bridge.py; if ($?) { echo compiled }`로, 다섯째 줄은 `Remove-Item Env:OPENAI_API_KEY -ErrorAction SilentlyContinue` 다음 줄에 앱 명령을, 여섯째 줄은 `$env:OPENAI_API_KEY="sk-fake"` 다음 줄에 앱 명령을 씁니다. 실행해 보지 못했습니다.)
 
-직접 확인한 결과입니다. 2026-10-14에 설치된 것은 `mcp` 1.30.0, `openai` 3.31.0 등 36개였습니다.
+직접 확인한 결과입니다. 2026-10-22에 `requirements.txt`만으로 설치된 것은 `mcp` 1.30.0, `openai` 3.36.0 등 36개였습니다(Python 3.12.10). 아래 Step 2 이후는 2026-10-14에 `openai` 3.31.0으로 돌렸고, 그 값은 그대로 적습니다. 오늘 위 명령들의 출력은 `openai` 줄 말고 같았습니다.
 
 ```text
 compiled
-mcp 1.30.0 openai 3.31.0
+mcp 1.30.0 openai 3.36.0
 ...
 openai_remote_mcp_bridge.py: error: provide a task or use --list-tools
 ...
@@ -484,7 +493,7 @@ cat fake_mcp.log.jsonl
 
 실패 모양도 봅니다. 서버 경로를 틀리면 `Bridge failed: Session terminated`, 듣는 서버가 없으면 `Bridge failed: All connection attempts failed`입니다(둘 다 직접 확인, 종료 코드 1). 뒤쪽 메시지는 내부 예외가 `ExceptionGroup`(`unhandled errors in a TaskGroup (1 sub-exception)`)으로 오는 것을 `explain_error`(`:34-40`)가 풀어 쓴 결과입니다.
 
-`mcp<2`가 필요한 까닭도 여기서 보입니다. 같은 파일을 `requirements.txt`만으로 깐 환경(`mcp` 2.3.0)에서 돌리면 다음과 같이 죽습니다(직접 확인).
+`requirements.txt`의 `<2` 상한이 필요한 까닭도 여기서 보입니다. 상한이 생기기 전(PR #1214 전)의 `requirements.txt`만으로 깐 환경(`mcp` 2.3.0)에서 같은 파일을 돌리면 다음과 같이 죽었습니다(2026-10-14에 직접 확인, 오늘은 상한 때문에 이 판이 풀리지 않아 다시 돌리지 않았습니다).
 
 ```text
 [connect] http://127.0.0.1:53707/mcp
@@ -847,7 +856,7 @@ caption
 
 ## 실행 체크리스트
 
-- [ ] `uv pip install -r requirements.txt "mcp<2"`로 `mcp` 1.30.0이 설치됐다
+- [ ] `uv pip install -r requirements.txt`만으로 `mcp` 1.30.0이 설치됐다(`requirements.txt`의 `<2` 상한)
 - [ ] 키 없이 task를 주면 `OPENAI_API_KEY is required when running a task.`와 종료 코드 1이고 `[connect]`가 찍히지 않는다
 - [ ] 두 가짜 서버가 임의 포트에 떠 있고 `OPENAI_BASE_URL`이 앱 터미널에 걸려 있다
 - [ ] 모든 앱 명령에 `--server-url`이 있다(`--list-tools`도)
@@ -862,7 +871,7 @@ caption
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `Bridge failed: not enough values to unpack (expected 3, got 2)` | `requirements.txt`의 `mcp>=1.28.1`이 오늘 2.3.0으로 풀림. 2.x는 `streamable_http_client`가 스트림 둘만 내놓음 | `uv pip install -r requirements.txt "mcp<2"`. 고쳐 보면 `timedelta`와 `cursor` 인자도 2.x와 맞지 않음(Step 3) |
+| `Bridge failed: not enough values to unpack (expected 3, got 2)` | `mcp` 2.x가 깔린 환경. 2.x는 `streamable_http_client`가 스트림 둘만 내놓음. 오늘의 `requirements.txt`(`mcp>=1.28.1,<2`)는 2.x를 풀지 않지만, PR #1214 전의 사본이나 `mcp`를 따로 올린 환경에서 난다 | `uv pip install -r requirements.txt`로 다시 깔거나 `"mcp<2"`를 더한다. 고쳐 보면 `timedelta`와 `cursor` 인자도 2.x와 맞지 않음(Step 3) |
 | `AsyncClient.__init__() got an unexpected keyword argument 'proxies'` | 하한 `openai==1.40.0`을 `httpx` 0.28과 함께 깔면 남(`openai==1.40.0`, `mcp==1.28.1`로 확인) | `openai`를 새 판으로 둔다. 하한 버전에 고정하지 않는다 |
 | `OPENAI_API_KEY is required when running a task.`와 종료 코드 1 | task를 줬는데 환경변수가 없음. 연결보다 앞에서 검사함 | 가짜 서버로는 `sk-fake`. `--list-tools`는 키가 필요 없음 |
 | `Bridge failed: All connection attempts failed` | 그 주소·포트에서 듣는 서버가 없음. 안쪽 예외는 `ExceptionGroup`이고 `explain_error`가 풀어 줌 | `--server-url`의 포트와 `fake_mcp.py`가 찍은 포트를 맞춘다 |
@@ -877,7 +886,7 @@ caption
 
 ## 더 해보기
 
-- `mcp` 2.x로 옮겨 봅니다. 이 문서가 돌려 본 어긋남은 세 곳입니다. `:123`의 스트림이 둘이라는 것, `:127`의 `read_timeout_seconds`가 `timedelta`가 아니라 숫자라는 것, `:48`의 `list_tools`가 `cursor` 키워드 대신 `params=`를 받는다는 것(서명으로 확인, `types.PaginatedRequestParams(cursor=…)`를 넘기게 됩니다). 고친 파일이 `mcp` 2.3.0에서 `--list-tools`와 Step 3의 서버 기록 세 번을 그대로 내는지 보세요. 이 문서는 세 번째 고침까지 해 보지 않았습니다.
+- `mcp` 2.x로 옮겨 봅니다(원본은 지금 `mcp`를 `<2`로 막아 두었으므로, `uv pip install "mcp>=2"`로 따로 올려야 합니다). 이 문서가 돌려 본 어긋남은 세 곳입니다. `:123`의 스트림이 둘이라는 것, `:127`의 `read_timeout_seconds`가 `timedelta`가 아니라 숫자라는 것, `:48`의 `list_tools`가 `cursor` 키워드 대신 `params=`를 받는다는 것(서명으로 확인, `types.PaginatedRequestParams(cursor=…)`를 넘기게 됩니다). 고친 파일이 `mcp` 2.3.0에서 `--list-tools`와 Step 3의 서버 기록 세 번을 그대로 내는지 보세요. 이 문서는 세 번째 고침까지 해 보지 않았습니다.
 - trace의 `[truncated …]`를 바로잡아 봅니다. `:207`의 `limit_text(result_text, MAX_TRACE_CHARS)`를 그대로 두되, 이미 12,000자로 줄었는지 알 수 있게 모델이 받은 길이를 같이 찍도록 고치고, `big` 시나리오에서 두 숫자가 맞는지 보세요.
 - `READ_TIMEOUT_SECONDS`(`mcp_ai_agents/openai_remote_mcp_bridge/openai_remote_mcp_bridge.py:20`, 120초)를 직접 시험해 봅니다. `fake_mcp.py`에 `asyncio.sleep`을 도는 도구를 더하고 상수를 2로 줄여 그 도구를 부르게 하면 어떤 문구로 끝나는지, `[mcp -> openai]`가 찍히는지 보세요. 이 문서는 해 보지 않았습니다.
 
